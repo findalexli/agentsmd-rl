@@ -75,6 +75,17 @@ checks:
     origin: static
     description: "Pre-existing transition annotations (RouteKind, entry-base) still present"
 
+  # New repo_tests pass_to_pass gates - using git commands
+  - id: test_repo_git_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo is a valid git repository with expected commit checked out"
+
+  - id: test_repo_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has expected file structure for the PR changes"
+
 rubric:
   - rule: "app-page.ts is a build template: do not use require() with relative paths; export helpers from entry-base.ts and access via entryBase.*"
     source:

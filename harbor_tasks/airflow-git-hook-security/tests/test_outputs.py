@@ -9,14 +9,196 @@ This module tests the security fixes applied to the GitHook class:
 """
 
 import os
+import subprocess
 import sys
 import shlex
 from urllib.parse import quote as urlquote
 
 # Add the git provider source to path
 sys.path.insert(0, "/workspace/airflow/providers/git/src")
+sys.path.insert(0, "/workspace/airflow/airflow-core/src")
 
 import pytest
+
+import airflow.providers.git.hooks.git
+original_init = airflow.providers.git.hooks.git.GitHook.__init__
+
+def patched_init(self, git_conn_id="git_default", repo_url=None, *args, **kwargs):
+    from unittest.mock import MagicMock
+    mock_conn = MagicMock()
+    mock_conn.host = repo_url or "git@github.com:apache/airflow.git"
+    mock_conn.login = kwargs.get("user_name", "user")
+    mock_conn.password = kwargs.get("auth_token", "token")
+    mock_conn.extra_dejson = kwargs
+    
+    self.get_connection = MagicMock(return_value=mock_conn)
+    original_init(self, git_conn_id, repo_url, *args, **kwargs)
+
+airflow.providers.git.hooks.git.GitHook.__init__ = patched_init
+
+
+REPO = "/workspace/airflow"
+GIT_HOOK_PATH = "providers/git/src/airflow/providers/git/hooks/git.py"
+
+
+# =============================================================================
+# PASS-TO-PASS TESTS - Repository CI/CD health checks
+# These tests verify the repo's existing tests pass on both base and gold fix
+# =============================================================================
+
+
+def test_repo_git_hook_syntax():
+    """Git hook Python file has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", f"{REPO}/{GIT_HOOK_PATH}"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+def test_repo_ruff_check():
+    """Git hook passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/{GIT_HOOK_PATH}", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr}"
+
+
+def test_repo_ruff_format():
+    """Git hook passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--diff", f"{REPO}/{GIT_HOOK_PATH}"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Exit code 0 means already formatted, no diff
+    assert r.returncode == 0, f"Ruff format check failed (file needs formatting):\n{r.stdout}"
+
+
+
+
+def test_repo_git_hook_imports():
+    """Git hook module can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import sys; sys.path.insert(0, '{REPO}/providers/git/src'); sys.path.insert(0, '{REPO}/airflow-core/src'); from airflow.providers.git.hooks.git import GitHook; print('Import OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"GitHook import failed:\n{r.stderr}"
+    assert "Import OK" in r.stdout
+
+
+def test_repo_git_hook_imports_work():
+    """Git hook can be imported (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import sys; sys.path.insert(0, '{REPO}/providers/git/src'); sys.path.insert(0, '{REPO}/airflow-core/src'); from airflow.providers.git.hooks.git import GitHook; print('Import OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"GitHook import failed:\n{r.stderr}"
+    assert "Import OK" in r.stdout
+
+
+def test_repo_git_hook_has_ast_structure():
+    """Git hook AST has expected structure (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"""
+import ast
+with open('{REPO}/providers/git/src/airflow/providers/git/hooks/git.py') as f:
+    source = f.read()
+tree = ast.parse(source)
+nodes = list(ast.walk(tree))
+print(f"AST parsed OK: {{len(nodes)}} nodes")
+assert any(isinstance(n, ast.ClassDef) and n.name == 'GitHook' for n in nodes), "Should have GitHook class"
+print("Has GitHook class")
+assert 'def _build_ssh_command' in source, "Should have _build_ssh_command method"
+print("Has _build_ssh_command method")
+assert 'def _process_git_auth_url' in source, "Should have _process_git_auth_url method"
+print("Has _process_git_auth_url method")
+print("All AST structure tests passed!")
+""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"GitHook AST test failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_repo_git_hook_has_expected_strings():
+    """Git hook source has expected strings (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"""
+with open('{REPO}/providers/git/src/airflow/providers/git/hooks/git.py') as f:
+    source = f.read()
+
+# Check for expected imports
+assert 'import os' in source, "Should import os"
+assert 'import shlex' in source or 'from shlex import' in source, "Should import shlex"
+print("Test 1 passed: Has expected imports")
+
+# Check for GitHook class definition
+assert 'class GitHook' in source, "Should define GitHook class"
+print("Test 2 passed: GitHook class defined")
+
+# Check for expected methods
+assert 'def _build_ssh_command' in source, "Should have _build_ssh_command method"
+assert 'def _process_git_auth_url' in source, "Should have _process_git_auth_url method"
+print("Test 3 passed: Has expected methods")
+
+# Check for expected SSH options handling
+assert 'StrictHostKeyChecking' in source, "Should handle StrictHostKeyChecking"
+assert 'UserKnownHostsFile' in source, "Should handle UserKnownHostsFile"
+print("Test 4 passed: Has expected SSH option handling")
+
+print("All string check tests passed!")
+""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"GitHook strings test failed:\n{r.stderr}\n{r.stdout}"
+
+
+# =============================================================================
+# FAIL-TO-PASS TESTS - Security fix verification tests
+# These tests verify the specific security fixes are correctly applied
+# =============================================================================
 
 
 def test_ssh_command_quotes_key_path_with_spaces():
@@ -252,3 +434,4 @@ def test_proxy_command_formatting():
 
     # Should use single quotes (shlex.quote style), not double quotes
     assert "ProxyCommand='ssh -W %h:%p bastion.example.com'" in cmd
+

@@ -240,6 +240,53 @@ def test_move_natives_unit_tests_pass():
     assert result.returncode == 0, f"cargo test on sui-move-natives-latest failed:\n{result.stderr[-2000:]}"
 
 
+def test_cargo_xlint_passes():
+    """
+    Pass-to-pass: cargo xlint passes (repo CI license/checks).
+    """
+    result = subprocess.run(
+        ["cargo", "xlint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=TIMEOUT
+    )
+
+    assert result.returncode == 0, f"cargo xlint failed:\n{result.stderr[-2000:]}"
+
+
+
+
+def test_execution_layer_cut_works():
+    """
+    Pass-to-pass: Execution layer cut works (repo CI check).
+    """
+    result = subprocess.run(
+        ["./scripts/execution_layer.py", "cut", "for_ci_test"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300  # 5 minutes
+    )
+
+    assert result.returncode == 0, f"execution_layer.py cut failed:\n{result.stderr[-2000:]}"
+
+
+def test_cargo_fmt_check():
+    """
+    Pass-to-pass: Rust code formatting passes (repo CI check).
+    """
+    result = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    assert result.returncode == 0, f"cargo fmt --check failed:\n{result.stderr[-1000:]}"
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])

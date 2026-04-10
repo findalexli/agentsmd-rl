@@ -102,6 +102,100 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+def _ensure_precommit():
+    """Ensure pre-commit is installed."""
+    try:
+        subprocess.run(["pre-commit", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, check=True)
+
+
+# [repo_ci] pass_to_pass
+def test_repo_pre_commit_trailing_whitespace():
+    """Repo's pre-commit trailing-whitespace check passes (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--all-files"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_pre_commit_eof_fixer():
+    """Repo's pre-commit end-of-file-fixer check passes (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--all-files"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"EOF fixer check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_pre_commit_check_yaml():
+    """Repo's pre-commit check-yaml check passes (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check YAML failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_pre_commit_ruff():
+    """Repo's pre-commit ruff linter check passes (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "ruff", "--all-files"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_pre_commit_ruff_format():
+    """Repo's pre-commit ruff-format check passes (pass_to_pass)."""
+    _ensure_precommit()
+    r = subprocess.run(
+        ["pre-commit", "run", "ruff-format", "--all-files"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit ruff-format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_optimizer_ast_valid():
+    """optimizer.py AST structure is valid with required classes/methods (pass_to_pass)."""
+    code = f"""
+import ast
+source = open('{FILE}').read()
+tree = ast.parse(source)
+found_class = False
+found_init_streams = False
+found_step = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == 'PerLayerOptimWrapper':
+        found_class = True
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef):
+                if item.name == '_init_streams_and_events':
+                    found_init_streams = True
+                elif item.name == 'step':
+                    found_step = True
+assert found_class, 'PerLayerOptimWrapper class not found'
+assert found_init_streams, '_init_streams_and_events method not found'
+assert found_step, 'step method not found'
+print('AST verification OK')
+"""
+    r = subprocess.run(
+        ["python", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST validation failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests using subprocess
 # ---------------------------------------------------------------------------

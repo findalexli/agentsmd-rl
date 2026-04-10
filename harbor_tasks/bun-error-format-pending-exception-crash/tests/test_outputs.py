@@ -13,6 +13,7 @@ brace-counting and verifies the fix structure.
 """
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -22,7 +23,7 @@ TARGET = REPO / "src/bun.js/bindings/JSGlobalObject.zig"
 
 # ---------------------------------------------------------------------------
 # Shared Zig analysis script — invoked via subprocess with fn name + optional
-# typed-error method as positional args.  Outputs JSON to stdout.
+# typed-error method as positional args. Outputs JSON to stdout.
 # ---------------------------------------------------------------------------
 _ANALYSIS_SCRIPT = r"""
 import json, re, sys
@@ -316,12 +317,132 @@ def test_no_catch_out_of_memory_pattern():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — subprocess-based real CI commands
+# These run actual commands from the repo's CI configuration.
+# ---------------------------------------------------------------------------
+
+
+def _ensure_bun_installed() -> Path:
+    """Ensure Bun is installed and return path to the binary."""
+    bun_dir = Path("/tmp/bun-install")
+    bun_bin = bun_dir / "bun-linux-x64" / "bun"
+
+    if bun_bin.exists():
+        return bun_bin
+
+    # Install bun
+    bun_dir.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True,
+        timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "unzip"],
+        capture_output=True,
+        timeout=60,
+    )
+    subprocess.run(
+        [
+            "curl",
+            "-LO",
+            "https://pub-5e11e972747a44bf9aaf9394f185a982.r2.dev/releases/bun-v1.2.10/bun-linux-x64.zip",
+            "--retry", "5",
+        ],
+        capture_output=True,
+        cwd=str(bun_dir),
+        timeout=120,
+    )
+    subprocess.run(
+        ["unzip", "-q", "bun-linux-x64.zip"],
+        capture_output=True,
+        cwd=str(bun_dir),
+        timeout=30,
+    )
+    # Create bunx symlink
+    (bun_bin.parent / "bunx").symlink_to(bun_bin)
+    return bun_bin
+
+
+# [repo_tests] pass_to_pass — ban-words.test.ts from CI
+# CI command: bun ./test/internal/ban-words.test.ts
+def test_repo_banned_words():
+    """Banned words check passes (pass_to_pass) - runs bun ./test/internal/ban-words.test.ts."""
+    bun_bin = _ensure_bun_installed()
+    env = os.environ.copy()
+    env["PATH"] = f"{bun_bin.parent}:{env.get('PATH', '')}"
+
+    # Install dependencies first
+    subprocess.run(
+        [str(bun_bin), "install"],
+        capture_output=True,
+        timeout=180,
+        cwd=str(REPO),
+        env=env,
+    )
+
+    # Run the banned words test
+    r = subprocess.run(
+        [str(bun_bin), "./test/internal/ban-words.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"Banned words test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — int_from_float.test.ts from CI
+# CI command: bun test test/internal/int_from_float.test.ts
+def test_repo_int_from_float():
+    """int_from_float unit test passes (pass_to_pass) - runs bun test test/internal/int_from_float.test.ts."""
+    bun_bin = _ensure_bun_installed()
+    env = os.environ.copy()
+    env["PATH"] = f"{bun_bin.parent}:{env.get('PATH', '')}"
+
+    # Run the int_from_float test
+    r = subprocess.run(
+        [str(bun_bin), "test", "test/internal/int_from_float.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"int_from_float test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — glob-sources.mjs from CI
+# CI command: bun scripts/glob-sources.mjs
+def test_repo_glob_sources():
+    """glob-sources script runs without errors (pass_to_pass) - runs bun scripts/glob-sources.mjs."""
+    bun_bin = _ensure_bun_installed()
+    env = os.environ.copy()
+    env["PATH"] = f"{bun_bin.parent}:{env.get('PATH', '')}"
+
+    # Run the glob-sources script
+    r = subprocess.run(
+        [str(bun_bin), "scripts/glob-sources.mjs"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"glob-sources script failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — TypeScript typecheck
+# CI command: bun run typecheck (tsc --noEmit)
+
+# ---------------------------------------------------------------------------
 # Repo CI/CD pass_to_pass gates — static analysis (no build tools required)
 # These simulate the repo's CI checks that can run without Bun/Zig compilers.
 # ---------------------------------------------------------------------------
 
 
-# [repo_ci] pass_to_pass — verify Zig file has balanced braces
+# [static] pass_to_pass — verify Zig file has balanced braces
 def test_zig_file_balanced_braces():
     """JSGlobalObject.zig has balanced braces (basic syntax check)."""
     raw = TARGET.read_text()
@@ -334,7 +455,7 @@ def test_zig_file_balanced_braces():
     )
 
 
-# [repo_ci] pass_to_pass — verify Zig file has balanced parentheses
+# [static] pass_to_pass — verify Zig file has balanced parentheses
 def test_zig_file_balanced_parens():
     """JSGlobalObject.zig has balanced parentheses (basic syntax check)."""
     raw = TARGET.read_text()
@@ -346,7 +467,7 @@ def test_zig_file_balanced_parens():
     )
 
 
-# [repo_ci] pass_to_pass — verify no obvious Zig syntax errors
+# [static] pass_to_pass — verify no obvious Zig syntax errors
 def test_zig_file_no_double_semicolons():
     """JSGlobalObject.zig has no double semicolons (common syntax error)."""
     raw = TARGET.read_text()
@@ -355,7 +476,7 @@ def test_zig_file_no_double_semicolons():
     assert ";;" not in clean, "Zig file contains double semicolons (;;) - likely syntax error"
 
 
-# [repo_ci] pass_to_pass — verify pub fn syntax is intact
+# [static] pass_to_pass — verify pub fn syntax is intact
 def test_zig_file_pub_fn_syntax():
     """JSGlobalObject.zig pub fn declarations have valid syntax."""
     raw = TARGET.read_text()
@@ -374,7 +495,7 @@ def test_zig_file_pub_fn_syntax():
                 assert False, f"Line {i+1}: pub fn with semicolon (not extern): {stripped[:60]}"
 
 
-# [repo_ci] pass_to_pass — verify no trailing whitespace in modified file
+# [static] pass_to_pass — verify no trailing whitespace in modified file
 def test_zig_file_no_trailing_whitespace():
     """JSGlobalObject.zig has no lines with trailing whitespace (code style)."""
     raw = TARGET.read_text()
@@ -384,3 +505,102 @@ def test_zig_file_no_trailing_whitespace():
             # Only flag if it's not an empty line
             if line.strip():
                 assert False, f"Line {i} has trailing whitespace: {line[:40]!r}"
+
+
+# [static] pass_to_pass — banned patterns from ban-words.test.ts
+def test_no_banned_undefined_comparisons():
+    """JSGlobalObject.zig has no undefined comparisons (UB per ban-words)."""
+    clean = _strip_comments_and_strings(TARGET.read_text())
+    fns = [
+        "createErrorInstance",
+        "createTypeErrorInstance",
+        "createSyntaxErrorInstance",
+        "createRangeErrorInstance",
+    ]
+    banned_patterns = [
+        " != undefined",
+        " == undefined",
+        "undefined != ",
+        "undefined == ",
+    ]
+    for fn_name in fns:
+        region = _find_fn_region(clean, fn_name)
+        if region is None:
+            continue
+        for pattern in banned_patterns:
+            assert pattern not in region, (
+                f"{fn_name} contains banned pattern '{pattern}' - undefined comparison is UB"
+            )
+
+
+# [static] pass_to_pass — no usingnamespace (Zig 0.15 will remove)
+def test_no_usingnamespace_in_target():
+    """JSGlobalObject.zig has no usingnamespace (deprecated in Zig 0.15)."""
+    raw = TARGET.read_text()
+    # Check the relevant section only - around the modified functions
+    clean = _strip_comments_and_strings(raw)
+    fns = [
+        "createErrorInstance",
+        "createTypeErrorInstance",
+        "createSyntaxErrorInstance",
+        "createRangeErrorInstance",
+    ]
+    for fn_name in fns:
+        region = _find_fn_region(clean, fn_name)
+        if region is None:
+            continue
+        assert "usingnamespace" not in region, (
+            f"{fn_name} contains 'usingnamespace' - deprecated in Zig 0.15"
+        )
+
+
+# [static] pass_to_pass — no banned JSValue patterns
+def test_no_banned_jsvalue_patterns():
+    """JSGlobalObject.zig error functions don't use banned JSValue patterns."""
+    clean = _strip_comments_and_strings(TARGET.read_text())
+    fns = [
+        "createErrorInstance",
+        "createTypeErrorInstance",
+        "createSyntaxErrorInstance",
+        "createRangeErrorInstance",
+    ]
+    banned_patterns = [
+        ".jsBoolean(true)",
+        ".jsBoolean(false)",
+        "JSValue.true",
+        "JSValue.false",
+    ]
+    for fn_name in fns:
+        region = _find_fn_region(clean, fn_name)
+        if region is None:
+            continue
+        for pattern in banned_patterns:
+            assert pattern not in region, (
+                f"{fn_name} contains banned pattern '{pattern}' - use .true/.false instead"
+            )
+
+
+# [static] pass_to_pass — no std.debug patterns
+def test_no_std_debug_in_error_functions():
+    """JSGlobalObject.zig error functions don't use std.debug (per ban-words)."""
+    clean = _strip_comments_and_strings(TARGET.read_text())
+    fns = [
+        "createErrorInstance",
+        "createTypeErrorInstance",
+        "createSyntaxErrorInstance",
+        "createRangeErrorInstance",
+    ]
+    banned_patterns = [
+        "std.debug.assert",
+        "std.debug.dumpStackTrace",
+        "std.debug.print",
+        "std.log",
+    ]
+    for fn_name in fns:
+        region = _find_fn_region(clean, fn_name)
+        if region is None:
+            continue
+        for pattern in banned_patterns:
+            assert pattern not in region, (
+                f"{fn_name} contains banned pattern '{pattern}' - use bun equivalent"
+            )

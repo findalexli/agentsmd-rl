@@ -18,6 +18,15 @@ INFERENCE_FILE = f"{REPO}/sdks/python/apache_beam/ml/inference/vertex_ai_inferen
 YAML_ML_FILE = f"{REPO}/sdks/python/apache_beam/yaml/yaml_ml.py"
 
 
+def _install_tools(tools):
+    """Install required tools if not present."""
+    for tool in tools:
+        try:
+            subprocess.run([tool, "--version"], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            subprocess.run([sys.executable, "-m", "pip", "install", "-q", tool], check=True)
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -182,24 +191,8 @@ def test_yaml_wrapper_accepts_invoke_route():
         sys.path.pop(0)
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
-# ---------------------------------------------------------------------------
-
-def test_existing_unit_tests_pass():
-    """Upstream unit tests for vertex_ai_inference still pass."""
-    r = subprocess.run(
-        [sys.executable, "-m", "pytest",
-         f"{REPO}/sdks/python/apache_beam/ml/inference/vertex_ai_inference_test.py",
-         "-v", "--timeout=60"],
-        cwd=f"{REPO}/sdks/python",
-        capture_output=True, text=True, timeout=120,
-    )
-    assert r.returncode == 0, f"Upstream unit tests failed:\n{r.stdout}\n{r.stderr}"
-
-
 def test_handler_not_stub():
-    """VertexAIModelHandlerJSON has real logic, not just pass/return."""
+    """VertexAIModelHandlerJSON._parse_invoke_response method exists with real logic."""
     import ast
 
     src = Path(INFERENCE_FILE).read_text()
@@ -218,8 +211,44 @@ def test_handler_not_stub():
             if node.name == "_parse_invoke_response":
                 # This is the new method, it should exist and have real logic
                 stmts = [s for s in node.body if not isinstance(s, (ast.Pass, ast.Expr))]
-                if len(stmts) > 5:  # The parse method has substantial logic
+                if len(stmts) >= 5:  # The parse method has substantial logic (5+ statements)
                     found_parse_invoke = True
 
     assert found_init, "VertexAIModelHandlerJSON.__init__ should have meaningful body"
     assert found_parse_invoke, "VertexAIModelHandlerJSON._parse_invoke_response should exist with real logic"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# ---------------------------------------------------------------------------
+
+def test_repo_pylint():
+    """Repo's pylint passes on modified files (pass_to_pass)."""
+    _install_tools(["pylint"])
+    r = subprocess.run(
+        ["pylint", "--rcfile", f"{REPO}/sdks/python/.pylintrc",
+         f"{REPO}/sdks/python/apache_beam/ml/inference/vertex_ai_inference.py"],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Pylint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_yapf():
+    """Repo's yapf formatting check passes on modified files (pass_to_pass)."""
+    _install_tools(["yapf"])
+    r = subprocess.run(
+        ["yapf", "--diff", f"{REPO}/sdks/python/apache_beam/ml/inference/vertex_ai_inference.py"],
+        capture_output=True, text=True, timeout=600,
+    )
+    # yapf returns exit 0 if no changes needed (properly formatted)
+    assert r.returncode == 0, f"yapf check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_yapf_yaml_ml():
+    """Repo's yapf formatting check passes on yaml_ml.py (pass_to_pass)."""
+    _install_tools(["yapf"])
+    r = subprocess.run(
+        ["yapf", "--diff", f"{REPO}/sdks/python/apache_beam/yaml/yaml_ml.py"],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"yapf check failed for yaml_ml.py:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

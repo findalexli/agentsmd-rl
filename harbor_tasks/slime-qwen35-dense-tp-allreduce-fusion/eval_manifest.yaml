@@ -62,4 +62,42 @@ checks:
     origin: static
     description: "Changes should be contained to the patch file (<=3 files modified)"
 
-rubric: []
+  - id: repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on slime/ and slime_plugins/"
+
+  - id: repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's import sorting passes on slime/ and slime_plugins/"
+
+  - id: repo_pyproject_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pyproject.toml must exist and be parseable"
+
+rubric:
+  - rule: "Follow existing code style and patterns from neighboring files. Start from reference implementations when modifying similar components."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "18-21"
+      commit: "2640e6cd98c864231b570425e0877dcff295984c"
+
+  - rule: "Preserve data structure contracts. Keep method signatures and return types compatible with existing code when adding new parameters."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "68-72"
+      commit: "2640e6cd98c864231b570425e0877dcff295984c"
+
+  - rule: "Keep type consistency. When adding conditional branches (e.g., isinstance checks), ensure all code paths return compatible types."
+    source:
+      path: ".claude/skills/add-reward-function/SKILL.md"
+      lines: "42-45"
+      commit: "2640e6cd98c864231b570425e0877dcff295984c"
+
+  - rule: "Wire changes correctly. When adding new parameters to class constructors or method calls, ensure they are passed through all necessary layers."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "91-93"
+      commit: "2640e6cd98c864231b570425e0877dcff295984c"

@@ -210,7 +210,7 @@ def test_repo_chat_interface_unit_tests():
         cwd=REPO, capture_output=True, timeout=120,
     )
     subprocess.run(
-        ["pip", "install", "-q", "pytest", "pytest-asyncio"],
+        ["pip", "install", "-q", "pytest", "pytest-asyncio", "fastapi", "pydantic", "pillow", "httpx"],
         capture_output=True, timeout=60,
     )
     # Run specific tests that don't require frontend build or network
@@ -230,4 +230,120 @@ def test_repo_chat_interface_unit_tests():
     )
     assert r.returncode == 0, (
         f"Chat interface unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on chat_interface.py (pass_to_pass)."""
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "-q", "ruff"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", "gradio/chat_interface.py"],
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"ruff format check failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chat_interface_init_unit_tests():
+    """Chat interface init unit tests pass (pass_to_pass) - tests that don't require frontend build."""
+    # Install gradio and test deps
+    subprocess.run(
+        ["pip", "install", "-q", "-e", "."],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    subprocess.run(
+        ["pip", "install", "-q", "pytest", "pytest-asyncio", "fastapi", "pydantic", "pillow", "httpx"],
+        capture_output=True, timeout=60,
+    )
+    # Run only TestInit tests that don't require frontend build
+    tests_to_run = [
+        "test/test_chat_interface.py::TestInit::test_no_fn",
+        "test/test_chat_interface.py::TestInit::test_concurrency_limit",
+        "test/test_chat_interface.py::TestInit::test_custom_textbox",
+        "test/test_chat_interface.py::TestInit::test_events_attached",
+        "test/test_chat_interface.py::TestInit::test_default_accordion_params",
+        "test/test_chat_interface.py::TestInit::test_setting_accordion_params",
+        "test/test_chat_interface.py::TestInit::test_custom_chatbot_with_events",
+    ]
+    r = subprocess.run(
+        ["python", "-m", "pytest"] + tests_to_run + ["-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Chat interface init unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chat_interface_textbox_conflict_tests():
+    """Chat interface textbox conflict tests pass (pass_to_pass)."""
+    # Install gradio and test deps
+    subprocess.run(
+        ["pip", "install", "-q", "-e", "."],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    subprocess.run(
+        ["pip", "install", "-q", "pytest", "pytest-asyncio", "fastapi", "pydantic", "pillow", "httpx"],
+        capture_output=True, timeout=60,
+    )
+    # Run TestTextboxParameterConflicts tests
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_chat_interface.py::TestTextboxParameterConflicts", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Chat interface textbox conflict tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chat_interface_example_messages_tests():
+    """Chat interface example messages tests pass (pass_to_pass) - tests that don't require network."""
+    # Install gradio and test deps
+    subprocess.run(
+        ["pip", "install", "-q", "-e", "."],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    subprocess.run(
+        ["pip", "install", "-q", "pytest", "pytest-asyncio", "fastapi", "pydantic", "pillow", "httpx"],
+        capture_output=True, timeout=60,
+    )
+    # Run only TestExampleMessages tests that don't require frontend build or network
+    # Excluding tests that use the connect fixture which requires frontend build
+    tests_to_run = [
+        "test/test_chat_interface.py::TestExampleMessages::test_setup_example_messages_with_strings",
+        "test/test_chat_interface.py::TestExampleMessages::test_setup_example_messages_with_multimodal",
+        "test/test_chat_interface.py::TestExampleMessages::test_setup_example_messages_with_lists",
+        "test/test_chat_interface.py::TestExampleMessages::test_setup_example_messages_empty",
+        "test/test_chat_interface.py::TestExampleMessages::test_example_icons_set_if_multimodal_false",
+    ]
+    r = subprocess.run(
+        ["python", "-m", "pytest"] + tests_to_run + ["-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Chat interface example messages tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_gradio_import():
+    """Gradio module imports successfully (pass_to_pass)."""
+    # Install gradio
+    subprocess.run(
+        ["pip", "install", "-q", "-e", "."],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["python", "-c", "import gradio; print(gradio.__version__)"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"Gradio import failed:\n{r.stderr[-500:]}"
     )

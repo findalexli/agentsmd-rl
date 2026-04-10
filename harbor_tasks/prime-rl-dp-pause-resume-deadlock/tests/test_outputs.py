@@ -312,6 +312,30 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_py_compile():
+    """patches.py compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", PATCHES],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
+def test_repo_ruff_check_package():
+    """Repo's ruff check passes on prime_rl package (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "--config=/workspace/prime-rl/pyproject.toml", f"{REPO}/src/prime_rl/"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff check on package failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — AGENTS.md rules
 # ---------------------------------------------------------------------------

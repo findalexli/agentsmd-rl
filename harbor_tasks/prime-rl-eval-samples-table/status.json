@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T11:32:23.502235",
-  "total_time": 8430.69,
-  "sandbox_id": "i3swmlo2ljn8a22c3l4q3",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T15:01:11.367370",
+  "total_time": 199.89,
+  "sandbox_id": "iay791m2gst0qxhfug6xp",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -25,10 +25,10 @@
       "notes": "tests look good"
     },
     "p2p_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 206.74,
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1392.46,
       "notes": ""
     },
     "validate": {
@@ -40,25 +40,24 @@
       "notes": "All validation checks passed. Docker build OK. NOP test correctly fails (reward=0) on base commit without log_eval_samples. Gold test passes (reward=1) with solution patch applied. Removed unreasonable rubric rule about errors passing silently - the gold solution try/except in MultiMonitor is intentional fault-tolerance design explicitly allowed by AGENTS.md. Fixed judge.py to return 1.0 when no rubric rules exist.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 128.49
+      "time": 1.63
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.69,
+      "time": 0.15,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.64,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 6152.73,
-      "at": "2026-04-09T06:25:22.262278"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -74,6 +73,30 @@
       "backend": "fireworks",
       "time": 8430.69,
       "at": "2026-04-09T11:32:23.502235"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 963.96,
+      "at": "2026-04-09T14:44:15.125268"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 964.22,
+      "at": "2026-04-09T14:44:15.289024"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 199.89,
+      "at": "2026-04-09T15:01:11.367370"
     }
   ]
 }

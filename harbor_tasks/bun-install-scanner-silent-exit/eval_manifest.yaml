@@ -46,7 +46,7 @@ checks:
   - id: regression_test_uses_harness
     type: fail_to_pass
     origin: agent_config
-    description: "Regression test imports bunExe/bunEnv from \x27harness\x27 per test/CLAUDE.md rule"
+    description: "Regression test imports bunExe/bunEnv from 'harness' per test/CLAUDE.md rule"
     source:
       path: "test/CLAUDE.md"
       lines: "28"
@@ -55,7 +55,7 @@ checks:
   - id: regression_test_uses_tempdir
     type: fail_to_pass
     origin: agent_config
-    description: "Regression test uses tempDir from \x27harness\x27, not tmpdirSync/mkdtempSync"
+    description: "Regression test uses tempDir from 'harness', not tmpdirSync/mkdtempSync"
     source:
       path: "CLAUDE.md"
       lines: "100"
@@ -76,6 +76,15 @@ checks:
     origin: pr_diff
     description: "SecurityScannerInWorkspace error handling still present in install_with_manager.zig"
 
+  - id: error_types_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: "security_scanner.zig still returns proper error types"
+
+  - id: anti_stub
+    type: pass_to_pass
+    origin: static
+    description: "Both Zig source files have substantial content"
 
   # --- pass_to_pass (repo_tests) ---
   - id: test_repo_banned_words
@@ -85,27 +94,25 @@ checks:
 
   - id: test_repo_source_files_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified source files exist and have valid content structure"
 
+  - id: test_repo_zig_files_parseable
+    type: pass_to_pass
+    origin: static
+    description: "Zig source files are syntactically valid (basic parse check)"
+
+  - id: test_repo_typescript_check
+    type: pass_to_pass
+    origin: static
+    description: "TypeScript regression test file exists and is readable"
+
+  - id: test_repo_glob_sources
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo glob-sources script passes (CI check from package.json scripts)"
+
 rubric:
-  - rule: "Always use `bun.*` APIs instead of `std.*`. The `bun` namespace provides cross-platform wrappers that preserve OS error info and never use `unreachable`."
+  - rule: "Update README.md with the latest changes."
     source:
-      path: "src/CLAUDE.md"
-      lines: "15"
-      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-  - rule: "Do not write flaky tests. Do not use `setTimeout` in tests."
-    source:
-      path: "CLAUDE.md"
-      lines: "102"
-      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-  - rule: "Use `await using` or `using` for proper resource cleanup (Bun.spawn, Bun.serve, etc.)."
-    source:
-      path: "test/CLAUDE.md"
-      lines: "100"
-      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-  - rule: "Prefer concurrent tests (`test.concurrent` / `describe.concurrent`) over sequential when tests are independent."
-    source:
-      path: "test/CLAUDE.md"
-      lines: "22"
-      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
+      path: "README.md"

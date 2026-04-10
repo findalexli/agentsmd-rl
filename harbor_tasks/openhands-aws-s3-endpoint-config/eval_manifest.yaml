@@ -17,6 +17,36 @@ checks:
     origin: repo_tests
     description: "Repo's ruff linting passes on target file"
 
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff formatting passes on target file"
+
+  - id: test_repo_unit_test_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit test file for aws_event_service has valid Python syntax"
+
+  - id: test_repo_test_config_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's event service config test file has valid Python syntax"
+
+  - id: test_repo_file_is_git_tracked
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file is tracked in git repo"
+
+  - id: test_repo_unit_tests_aws_event_service
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for aws_event_service pass"
+
+  - id: test_repo_unit_tests_config_event_service_selection
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for event service config selection pass"
+
   # Fail-to-pass tests: verify the bug fix works
   - id: test_pydantic_field_import_present
     type: fail_to_pass
@@ -86,4 +116,15 @@ agent_config:
       - "Write tests with pytest for new code"
 
 # Rubric for soft/subjective checks
-rubric: []
+rubric:
+  - rule: "Follow existing code style and patterns in the target file. Type annotations should use modern Python syntax (e.g., str | None)."
+    source:
+      path: "AGENTS.md"
+      lines: "76-80"
+      commit: "c9b2ce2fb9c61313d80643a489f81728bb9f5b09"
+
+  - rule: "Use Pydantic Field with default_factory for configuration fields that depend on environment variables or dynamic defaults."
+    source:
+      path: "AGENTS.md"
+      lines: "76-80"
+      commit: "c9b2ce2fb9c61313d80643a489f81728bb9f5b09"

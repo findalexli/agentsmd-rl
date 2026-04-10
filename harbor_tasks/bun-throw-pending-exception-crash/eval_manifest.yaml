@@ -70,46 +70,64 @@ checks:
       lines: "16"
       commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
 
-  # Repo CI/CD pass_to_pass gates — EditorConfig compliance
+  # Static pass_to_pass gates — EditorConfig compliance (file-read check)
   - id: test_repo_editorconfig
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified file must comply with .editorconfig (utf-8, lf, trailing whitespace)"
 
-  # Repo CI/CD pass_to_pass gates — Git repository integrity
+  # Repo CI/CD pass_to_pass gates — Zig fmt check (real subprocess command)
+  - id: test_repo_zig_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Zig code must be properly formatted (zig fmt --check)"
+
+  # Repo CI/CD pass_to_pass gates — Git repository integrity (real subprocess command)
   - id: test_repo_git_clean
     type: pass_to_pass
     origin: repo_tests
     description: "Git repository must be in clean state with no uncommitted changes"
 
-  # Repo CI/CD pass_to_pass gates — Zig file syntax basics
+  # Repo CI/CD pass_to_pass gates — Git whitespace check (real subprocess command)
+  - id: test_repo_git_diff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git diff --check must pass (no trailing whitespace, no missing newlines)"
+
+  # Repo CI/CD pass_to_pass gates — Git commit history check (real subprocess command)
+  - id: test_repo_git_log
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository must have valid commit history"
+
+  # Static pass_to_pass gates — Zig file syntax basics (file-read check)
   - id: test_repo_zig_basic_syntax
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Zig file must have balanced braces/parentheses and valid structure"
 
-  # Repo CI/CD pass_to_pass gates — No tabs for indentation
+  # Static pass_to_pass gates — No tabs for indentation (file-read check)
   - id: test_repo_no_tabs_indentation
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Zig file must use spaces for indentation, not tabs"
 
-  # Repo CI/CD pass_to_pass gates — No std.debug.print or std.log
+  # Static pass_to_pass gates — No std.debug.print or std.log (file-read check)
   - id: test_repo_no_std_debug_print_log
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Must not use std.debug.print or std.log (debugging code should not be committed)"
 
-  # Repo CI/CD pass_to_pass gates — No usingnamespace
+  # Static pass_to_pass gates — No usingnamespace (file-read check)
   - id: test_repo_no_usingnamespace
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Must not use usingnamespace (deprecated, will be removed in Zig 0.15)"
 
-  # Repo CI/CD pass_to_pass gates — No allocator.ptr comparisons
+  # Static pass_to_pass gates — No allocator.ptr comparisons (file-read check)
   - id: test_repo_no_allocator_undefined_comparison
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Must not compare allocator.ptr with == or != (UB due to possible undefined context pointer)"
 
 rubric:
@@ -121,3 +139,33 @@ rubric:
       path: "src/CLAUDE.md"
       lines: "16"
       commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
+
+  # Static pass_to_pass gates - No panic/abort in error paths (file-read check)
+  - id: test_repo_no_panic_in_error_paths
+    type: pass_to_pass
+    origin: static
+    description: "Error handling paths should not use @panic which could crash the process"
+
+  # Static pass_to_pass gates - Valid Zig string literal syntax (file-read check)
+  - id: test_repo_zig_string_literal_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Zig file must have valid string literal syntax with no unclosed strings"
+
+  # Static pass_to_pass gates - Consistent function signatures (file-read check)
+  - id: test_repo_consistent_function_signatures
+    type: pass_to_pass
+    origin: static
+    description: "Functions must have consistent parameter and return type formatting"
+
+  # Static pass_to_pass gates - No unreachable in error paths (file-read check)
+  - id: test_repo_no_unreachable_in_error_paths
+    type: pass_to_pass
+    origin: static
+    description: "Error paths should not use unreachable which is undefined behavior"
+
+  # Static pass_to_pass gates - Bun API usage validation (file-read check)
+  - id: test_repo_bun_api_usage
+    type: pass_to_pass
+    origin: static
+    description: "Must use bun.* APIs for common operations (not std.*)"

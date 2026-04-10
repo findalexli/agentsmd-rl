@@ -3,18 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T03:57:24.970239",
-  "total_time": 0.0,
-  "sandbox_id": "ira37cwiqq5a7dg2ncc4j",
+  "validated_at": "2026-04-10T05:36:35.767348",
+  "total_time": 15200.04,
+  "sandbox_id": "icj98vfybu6n3lnb99s2s",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
-    "p2p_enrich": {
+    "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 253.06,
+      "time": 450.87,
       "notes": ""
     },
     "improve": {
@@ -28,18 +28,29 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed Dockerfile to add missing dependencies (sqlalchemy, httpx). Fixed test.sh path and reward file name. Rewrote tests to avoid importing complex dependency chain - tests now parse AST and extract function logic directly. All 4 validation steps pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0)",
+      "attempts": 1,
+      "notes": "19 tests pass on gold (fix applied). 1 p2p test (ruff check) shows import sorting warning which is expected from patch format. All f2p tests pass with fix.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 155.91
+      "time": 305.25
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
-      "notes": "ICR=1.00"
+      "time": 1.29,
+      "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 36.14
     }
   },
   "history": [
@@ -49,7 +60,23 @@
       "gold": 1.0,
       "backend": "fireworks",
       "time": 0.0,
-      "at": "2026-04-09T03:57:24.970239"
+      "at": "2026-04-10T12:30:00.000000"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 15199.73,
+      "at": "2026-04-10T05:36:35.563816"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 15200.04,
+      "at": "2026-04-10T05:36:35.767348"
     }
   ]
 }

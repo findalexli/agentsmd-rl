@@ -119,6 +119,27 @@ checks:
     origin: repo_tests
     description: "Modified files should use bun.tagName instead of std.enums.tagName (repo CI gate)"
 
+  # --- Additional Repo CI-derived pass_to_pass tests ---
+  - id: test_repo_decls_use_decl_literals
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files use decl literals convention per CLAUDE.md (repo CI gate)"
+
+  - id: test_repo_allocator_consistency
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Memory allocation and deallocation use consistent allocator patterns (repo CI gate)"
+
+  - id: test_repo_no_debug_log_patterns
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files do not have std.debug.print or std.log patterns (repo CI gate)"
+
+  - id: test_repo_mysql_structs_complete
+    type: pass_to_pass
+    origin: repo_tests
+    description: "MySQL structs have required fields and deinit methods (repo CI gate)"
+
 rubric:
   - rule: "Decl literals in Zig are recommended. `const decl: Decl = .{ .binding = 0, .value = 0 };`"
     source:

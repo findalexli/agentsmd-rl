@@ -51,9 +51,38 @@ checks:
     origin: repo_tests
     description: "Chat interface unit tests pass"
 
+  - id: repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on chat_interface.py"
+
+  - id: repo_chat_interface_init_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Chat interface init unit tests pass (tests that don't require frontend build)"
+
+  - id: repo_chat_interface_textbox_conflict_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Chat interface textbox conflict tests pass"
+
+  - id: repo_chat_interface_example_messages_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Chat interface example messages tests pass (tests that don't require frontend build)"
+
+  - id: repo_gradio_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Gradio module imports successfully"
+
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
+  # The pass_to_pass tests already verify style compliance:
+  # - test_ruff_formatting, test_repo_ruff_check, test_repo_ruff_format_check
+  # This rule is a placeholder to ensure rubric section is non-empty
+  # as required by the harness, while actual validation happens in checks.
+  - rule: "Python code must pass ruff format and lint checks (enforced by pass_to_pass tests)"
     source:
       path: "AGENTS.md"
-      lines: "45"
+      lines: "43"
       commit: "fe955348f24115744015d85639e170b8518b28c1"

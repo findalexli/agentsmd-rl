@@ -197,3 +197,53 @@ def test_router_plugin_build_validation():
         f"STDOUT:\n{result.stdout[-1000:]}\n"
         f"STDERR:\n{result.stderr[-1000:]}"
     )
+
+
+def test_add_hmr_unit_tests():
+    """
+    P2P: Add HMR specific unit tests should pass.
+
+    These tests verify that HMR is correctly added to route components
+    and that the generated code structure matches the expected snapshots.
+    Tests both with and without HMR enabled for multiple frameworks.
+    """
+    result = subprocess.run(
+        ["CI=1", "NX_DAEMON=false", "pnpm", "nx", "run", "@tanstack/router-plugin:test:unit", "--outputStyle=stream", "--skipRemoteCache", "--run", "--testNamePattern=add-hmr"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        shell=True
+    )
+
+    assert result.returncode == 0, (
+        f"Add HMR unit tests failed:\n"
+        f"STDOUT:\n{result.stdout[-1000:]}\n"
+        f"STDERR:\n{result.stderr[-1000:]}"
+    )
+
+
+def test_code_splitter_unit_tests():
+    """
+    P2P: Code splitter unit tests should pass.
+
+    These tests verify that the code splitter correctly handles:
+    - Reference route compilation for multiple frameworks
+    - Virtual route compilation with different split groupings
+    - Shared bindings computation with transitive dependencies
+    - Destructured declarations handling
+    """
+    result = subprocess.run(
+        ["CI=1", "NX_DAEMON=false", "pnpm", "nx", "run", "@tanstack/router-plugin:test:unit", "--outputStyle=stream", "--skipRemoteCache", "--run", "--testNamePattern=code-splitter"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        shell=True
+    )
+
+    assert result.returncode == 0, (
+        f"Code splitter unit tests failed:\n"
+        f"STDOUT:\n{result.stdout[-1000:]}\n"
+        f"STDERR:\n{result.stderr[-1000:]}"
+    )

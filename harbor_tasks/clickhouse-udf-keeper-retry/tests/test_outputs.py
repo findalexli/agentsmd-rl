@@ -301,3 +301,171 @@ def test_repo_cpp_style():
                 f"C++ style check found issues in target file:\n{r.stdout[-1000:]}"
             )
         # If target file not in output, pre-existing issues are acceptable
+
+
+def test_target_file_no_typos():
+    """
+    PASS TO PASS: Target file has no typos.
+
+    Uses codespell to check for common typos in the target file only.
+    This is a lightweight check that only runs on the modified file.
+    """
+    # Check if codespell is available
+    r = subprocess.run(
+        ["which", "codespell"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    if r.returncode != 0:
+        # Try to install codespell
+        r = subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        r = subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "codespell"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if r.returncode != 0:
+            pytest.skip("codespell not available and could not be installed")
+
+    # Run codespell only on the target file
+    ignore_words = os.path.join(REPO, "ci/jobs/scripts/check_style/codespell-ignore-words.list")
+    ignore_lines = os.path.join(REPO, "ci/jobs/scripts/check_style/codespell-ignore-lines.list")
+
+    cmd = [
+        "codespell",
+        "--quiet-level", "2",
+        FULL_PATH,
+    ]
+
+    # Add ignore files if they exist
+    if os.path.exists(ignore_words):
+        cmd.extend(["--ignore-words", ignore_words])
+    if os.path.exists(ignore_lines):
+        cmd.extend(["--exclude-file", ignore_lines])
+
+    r = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+    # codespell exits 0 if no typos found, 65 if typos found
+    if r.returncode == 65:
+        assert False, f"Typos found in target file:\n{r.stdout}\n{r.stderr}"
+    # Other non-zero exit codes are acceptable (config issues, etc.)
+
+
+def test_target_file_structure():
+    """
+    PASS TO PASS: Target file has valid C++ structure.
+
+    Validates:
+    - Proper include guards (not applicable for .cpp files)
+    - Balanced braces and parentheses
+    - No trailing whitespace
+    - Valid UTF-8 encoding
+    - Proper line endings (no carriage returns)
+    """
+    with open(FULL_PATH, 'rb') as f:
+        raw_content = f.read()
+
+    # Check for valid UTF-8
+    try:
+        content = raw_content.decode('utf-8')
+    except UnicodeDecodeError as e:
+        assert False, f"File is not valid UTF-8: {e}"
+
+    # Check for carriage returns (Windows line endings)
+    assert '\r' not in content, "File contains carriage returns (Windows line endings)"
+
+    # Check for trailing whitespace on lines
+    lines = content.split('\n')
+    for i, line in enumerate(lines, 1):
+        if line.endswith(' ') or line.endswith('\t'):
+            assert False, f"Line {i} has trailing whitespace"
+
+    # Check for balanced braces (basic check)
+    open_braces = content.count('{')
+    close_braces = content.count('}')
+    assert open_braces == close_braces, f"Unbalanced braces: {open_braces} open, {close_braces} close"
+
+    # Check for balanced parentheses (basic check)
+    open_parens = content.count('(')
+    close_parens = content.count(')')
+    assert open_parens == close_parens, f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
+
+    # Check for balanced angle brackets (in templates - allow for comparisons)
+    # This is a heuristic: count < and > but exclude common comparison patterns
+    open_angles = content.count('<')
+    close_angles = content.count('>')
+    # Allow some imbalance due to comparisons, but warn if way off
+    if abs(open_angles - close_angles) > 50:
+        assert False, f"Severely unbalanced angle brackets: {open_angles} open, {close_angles} close"
+
+
+def test_target_file_includes():
+    """
+    PASS TO PASS: Target file has properly formatted includes.
+
+    Validates:
+    - Standard library includes use <angle brackets>
+    - Project includes are properly formatted
+    - No duplicate includes
+    """
+    content = read_target_file()
+    lines = content.split('\n')
+
+    includes = []
+    for line in lines:
+        if line.startswith('#include'):
+            includes.append(line)
+
+    # Check for duplicate includes
+    seen = set()
+    for include in includes:
+        if include in seen:
+            assert False, f"Duplicate include: {include}"
+        seen.add(include)
+
+    # Check that all includes use angle brackets (standard practice in ClickHouse)
+    for include in includes:
+        if '"' in include and '<' not in include:
+            # Local includes with quotes are sometimes used, but check they're intentional
+            pass  # Allow quoted includes
+
+
+def test_repo_yaml_linting():
+    """
+    PASS TO PASS: CI workflow YAML files are valid.
+
+    Validates that GitHub workflow YAML files have valid syntax.
+    Only checks files that exist and are relevant to the PR CI.
+    """
+    import yaml
+
+    workflow_dir = os.path.join(REPO, ".github/workflows")
+    if not os.path.exists(workflow_dir):
+        pytest.skip("GitHub workflows directory not found")
+
+    yaml_files = [
+        "pull_request.yml",
+    ]
+
+    for yaml_file in yaml_files:
+        yaml_path = os.path.join(workflow_dir, yaml_file)
+        if not os.path.exists(yaml_path):
+            continue
+
+        with open(yaml_path, 'r') as f:
+            try:
+                yaml.safe_load(f)
+            except yaml.YAMLError as e:
+                assert False, f"Invalid YAML in {yaml_file}: {e}"

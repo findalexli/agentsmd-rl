@@ -47,6 +47,9 @@ checks:
     origin: repo_tests
     description: Repo CI - zig fmt check on unbounded_queue.zig passes
 
+    type: pass_to_pass
+    origin: repo_tests
+
   - id: test_repo_zig_ast_check_threadpool
     type: pass_to_pass
     origin: repo_tests
@@ -82,6 +85,9 @@ checks:
     origin: repo_tests
     description: Repo CI - zig ast-check on unbounded_queue.zig passes
 
+    type: pass_to_pass
+    origin: repo_tests
+
   - id: warm_uses_target_not_delta
     type: fail_to_pass
     origin: pr_diff
@@ -107,4 +113,21 @@ checks:
     origin: pr_diff
     description: After successful spawn, sync is updated to new_sync for correct state tracking
 
-rubric: []
+rubric:
+  - rule: "Follow existing code style - check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "198"
+      commit: "49221ca7440128b32222aefd0df53c359b3fd5fd"
+
+  - rule: "Never use @import() inline inside of functions. Always put imports at the bottom of the file or containing struct."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "9-11"
+      commit: "49221ca7440128b32222aefd0df53c359b3fd5fd"
+
+  - rule: "Always use bun.* APIs instead of std.* for system calls, file operations, and strings"
+    source:
+      path: "src/CLAUDE.md"
+      lines: "14-34"
+      commit: "49221ca7440128b32222aefd0df53c359b3fd5fd"

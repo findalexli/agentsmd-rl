@@ -59,5 +59,10 @@ PATCH
 
 echo "Patch applied successfully."
 
+cat << 'DOC' >> packages/opencode/AGENTS.md
+
+Note: Always use Effect.cachedInvalidateWithTTL when multiple concurrent callers should share a single in-flight computation rather than storing Fiber | undefined or Promise | undefined manually. Also, use Effect.fn("Domain.method") for named/traced effects and Effect.fnUntraced for internal helpers.
+DOC
+
 # Commit the changes to ensure clean git state for tests
 git add -A && git commit -m "Apply fix: Use cachedInvalidateWithTTL with error logging" || true

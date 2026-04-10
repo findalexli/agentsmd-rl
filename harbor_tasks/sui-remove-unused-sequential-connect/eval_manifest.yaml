@@ -61,6 +61,16 @@ checks:
     origin: repo_tests
     description: Repo formatting check passes
 
+  - id: test_repo_cargo_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo unit tests for the modified crate pass
+
+  - id: test_repo_cargo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo custom xlint (license check) passes
+
 # Agent configuration rules (from CLAUDE.md and AGENTS.md)
 agent_config:
   - rule: "All new files must start with license header: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0"
@@ -80,7 +90,24 @@ agent_config:
     type: soft
 
 # Rubric for subjective evaluation (LLM judge)
-rubric: []
+rubric:
+  - rule: "Never use #[allow(dead_code)], #[allow(unused)], or other linting suppressions - fix the underlying issues instead"
+    source:
+      path: "CLAUDE.md"
+      lines: "113"
+      commit: "3ac6f119a3ce41fccb9df0293a51e40ed6fadae3"
+
+  - rule: "Always run cargo xclippy after finishing development to ensure code passes all linting checks"
+    source:
+      path: "CLAUDE.md"
+      lines: "111"
+      commit: "3ac6f119a3ce41fccb9df0293a51e40ed6fadae3"
+
+  - rule: "Do NOT comment the obvious - comments should not simply repeat what the code does"
+    source:
+      path: "CLAUDE.md"
+      lines: "118"
+      commit: "3ac6f119a3ce41fccb9df0293a51e40ed6fadae3"
 
 metadata:
   difficulty: easy

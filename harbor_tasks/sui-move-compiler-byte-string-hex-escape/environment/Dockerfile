@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     python3-pytest \
     && rm -rf /var/lib/apt/lists/*
 
+# Install rustfmt and clippy for linting checks
+RUN rustup component add rustfmt clippy
+
 # Create log directory
 RUN mkdir -p /logs/verifier
 

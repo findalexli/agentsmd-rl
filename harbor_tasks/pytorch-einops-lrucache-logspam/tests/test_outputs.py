@@ -16,10 +16,10 @@ REPO = "/workspace/pytorch"
 TARGET = f"{REPO}/torch/_dynamo/decorators.py"
 
 # Reusable subprocess script that extracts _allow_in_graph_einops, mocks
-# allow_in_graph / torch, executes the function, and prints which einops
+# allow_in_graph / torch / einops, executes the function, and prints which einops
 # function names were passed to allow_in_graph (one per line).
 _MOCK_EXEC_SCRIPT = r"""
-import ast, builtins, types, json
+import ast, builtins, types, json, sys
 from pathlib import Path
 
 TARGET = "/workspace/pytorch/torch/_dynamo/decorators.py"
@@ -40,17 +40,48 @@ called = []
 def mock_allow_in_graph(fn):
     called.append(getattr(fn, "__name__", str(fn)))
 
+# Create mock einops module with trackable functions
+class MockFn:
+    def __init__(self, name):
+        self.__name__ = name
+    def __call__(self, *a, **kw):
+        return None
+
+mock_einops = types.ModuleType("einops")
+mock_einops.__version__ = "0.8.2"
+for fn_name in ["rearrange", "reduce", "repeat", "einsum", "pack", "unpack"]:
+    setattr(mock_einops, fn_name, MockFn(fn_name))
+
+# Mock einops.einops submodule
+mock_einops.einops = types.ModuleType("einops.einops")
+mock_einops.einops.get_backend = lambda x: None
+
 torch_mock = types.ModuleType("torch")
 torch_mock.randn = lambda *a, **kw: None
 
 orig_import = builtins.__import__
 
 def mock_import(name, *args, **kwargs):
-    if "_torch_specific" in str(name):
+    name_str = str(name)
+    if "_torch_specific" in name_str:
         raise ImportError("mocked")
+    if name_str == "einops" or name_str.startswith("einops."):
+        # Return mock einops or its submodules
+        if name_str == "einops":
+            return mock_einops
+        parts = name_str.split(".")
+        obj = mock_einops
+        for p in parts[1:]:
+            obj = getattr(obj, p, mock_einops)
+        return obj
     return orig_import(name, *args, **kwargs)
 
 builtins.__import__ = mock_import
+
+# Pre-populate sys.modules with our mock
+sys.modules["einops"] = mock_einops
+sys.modules["einops.einops"] = mock_einops.einops
+
 try:
     ns = {
         "allow_in_graph": mock_allow_in_graph,
@@ -265,3 +296,66 @@ def test_not_stub():
             assert stmt_count >= 4, f"Only {stmt_count} statements; function appears to be a stub"
             return
     raise AssertionError("_allow_in_graph_einops function not found")
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — additional CI tests added by p2p enrichment
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_check():
+    """Repo's ruff check passes on modified file (pass_to_pass).
+
+    Runs ruff with only error-level checks (E9, F63, F7, F82) to catch
+    syntax errors and undefined names without enforcing style rules.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_label_utils_tests():
+    """Repo's label_utils tests pass (pass_to_pass).
+
+    Runs lightweight tests from .github/scripts/ that don't require torch build.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", ".github/scripts/test_label_utils.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"label_utils tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_delete_old_branches_tests():
+    """Repo's delete_old_branches tests pass (pass_to_pass).
+
+    Runs lightweight tests from .github/scripts/ that don't require torch build.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
+    r = subprocess.run(
+        ["python3", "-m", "pytest", ".github/scripts/test_delete_old_branches.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"delete_old_branches tests failed:\n{r.stderr[-500:]}"

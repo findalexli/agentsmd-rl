@@ -1,116 +1,121 @@
-# Evaluation manifest for ant-design/ant-design#57540
-# Cascader menu item ellipsis styles fix
-
 source:
   pr:
     owner: ant-design
     repo: ant-design
     number: 57540
-    title: "fix: correct Cascader menu item ellipsis styles"
-    base_commit: "1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299"
-    merge_commit: "ffe7ccf17f689af990c4757c8197c8727c8f4184"
+    title: 'fix: correct Cascader menu item ellipsis styles'
+    base_commit: 1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299
+    merge_commit: ffe7ccf17f689af990c4757c8197c8727c8f4184
   task_name: cascader-ellipsis-fix
-  description: |
-    Fix Cascader menu item ellipsis styles for long option labels.
+  description: 'Fix Cascader menu item ellipsis styles for long option labels.
+
     The ellipsis styles were incorrectly applied to the parent flex container
+
     instead of the text content element, preventing proper text truncation
+
     in flex layouts.
 
-# Binary reward from test_outputs.py
+    '
 reward: 1.0
-
-# Checks for programmatic verification (from test_outputs.py)
 checks:
-  - id: "file_exists"
-    description: "Cascader columns style file exists"
-    test: "test_cascader_columns_file_exists"
-    weight: 0.1
-
-  - id: "ellipsis_moved"
-    description: "textEllipsis moved from &-item to &-content block"
-    test: "test_text_ellipsis_moved_to_content"
-    weight: 0.3
-    origin: "behavioral"
-
-  - id: "min_width_zero"
-    description: "&-content has minWidth: 0 for flexbox ellipsis"
-    test: "test_content_has_min_width_zero"
-    weight: 0.25
-    origin: "behavioral"
-
-  - id: "max_width_constraint"
-    description: "&-item has maxWidth constraint"
-    test: "test_item_has_max_width"
-    weight: 0.15
-    origin: "behavioral"
-
-  - id: "typescript_valid"
-    description: "TypeScript file compiles without syntax errors"
-    test: "test_typescript_compiles"
-    weight: 0.1
-
-  - id: "structure_valid"
-    description: "Style file structure is valid"
-    test: "test_style_structure_valid"
-    weight: 0.1
-
-  # Pass-to-pass tests: repo CI/CD checks
-  - id: "repo_typescript_check"
-    description: "Repo TypeScript typecheck passes"
-    test: "test_repo_typescript_check"
-    type: pass_to_pass
-    origin: repo_tests
-    weight: 0.05
-
-  - id: "repo_biome_lint"
-    description: "Repo Biome lint passes"
-    test: "test_repo_biome_lint"
-    type: pass_to_pass
-    origin: repo_tests
-    weight: 0.05
-
-  - id: "repo_eslint"
-    description: "Repo ESLint passes"
-    test: "test_repo_eslint"
-    type: pass_to_pass
-    origin: repo_tests
-    weight: 0.05
-
-  - id: "repo_cascader_tests"
-    description: "Repo Cascader component tests pass"
-    test: "test_repo_cascader_tests"
-    type: pass_to_pass
-    origin: repo_tests
-    weight: 0.1
-
-# Agent config rules to check (from CLAUDE.md, AGENTS.md, copilot-instructions.md)
+- id: file_exists
+  description: Cascader columns style file exists
+  test: test_cascader_columns_file_exists
+  weight: 0.1
+- id: ellipsis_moved
+  description: textEllipsis moved from &-item to &-content block
+  test: test_text_ellipsis_moved_to_content
+  weight: 0.3
+  origin: behavioral
+- id: min_width_zero
+  description: '&-content has minWidth: 0 for flexbox ellipsis'
+  test: test_content_has_min_width_zero
+  weight: 0.25
+  origin: behavioral
+- id: max_width_constraint
+  description: '&-item has maxWidth constraint'
+  test: test_item_has_max_width
+  weight: 0.15
+  origin: behavioral
+- id: typescript_valid
+  description: TypeScript file compiles without syntax errors
+  test: test_typescript_compiles
+  weight: 0.1
+- id: structure_valid
+  description: Style file structure is valid
+  test: test_style_structure_valid
+  weight: 0.1
+- id: repo_typescript_check
+  description: Repo TypeScript typecheck passes (npx tsc --noEmit --skipLibCheck with
+    NODE_OPTIONS=--max-old-space-size=4096)
+  test: test_repo_typescript_check
+  type: pass_to_pass
+  origin: repo_tests
+  weight: 0.05
+- id: repo_biome_lint
+  description: Repo Biome lint passes (npm run lint:biome)
+  test: test_repo_biome_lint
+  type: pass_to_pass
+  origin: repo_tests
+  weight: 0.05
+- id: repo_eslint
+  description: Repo ESLint passes (npm run lint:script)
+  test: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  weight: 0.05
+- id: repo_cascader_index_tests
+  description: Repo Cascader index component tests pass
+  test: test_repo_cascader_index_tests
+  type: pass_to_pass
+  origin: repo_tests
+  weight: 0.04
+- id: repo_cascader_demo_tests
+  description: Repo Cascader demo tests pass
+  test: test_repo_cascader_demo_tests
+  type: pass_to_pass
+  origin: repo_tests
+  weight: 0.04
+- id: repo_cascader_a11y_tests
+  description: Repo Cascader a11y tests pass
+  test: test_repo_cascader_a11y_tests
+  type: pass_to_pass
+  origin: repo_tests
+  weight: 0.02
 agent_config:
-  - rule: "CSS-in-JS styling approach using @ant-design/cssinjs"
-    source: "CLAUDE.md: Styling Approach"
-    check: "Uses GenerateStyle and CascaderToken properly"
-
-  - rule: "Use CSS logical properties for RTL support"
-    source: "CLAUDE.md: Styling Approach"
-    check: "N/A - this fix doesn't involve directional properties"
-
-  - rule: "Never hardcode colors, sizes, or spacing values"
-    source: "CLAUDE.md: Styling Approach"
-    check: "Uses maxWidth: 400 as a reasonable constraint"
-
-# Rubric for LLM judge evaluation of soft/subjective rules
+- rule: CSS-in-JS styling approach using @ant-design/cssinjs
+  source: 'CLAUDE.md: Styling Approach'
+  check: Uses GenerateStyle and CascaderToken properly
+- rule: Use CSS logical properties for RTL support
+  source: 'CLAUDE.md: Styling Approach'
+  check: N/A - this fix doesn't involve directional properties
+- rule: Never hardcode colors, sizes, or spacing values
+  source: 'CLAUDE.md: Styling Approach'
+  check: 'Uses maxWidth: 400 as a reasonable constraint'
 rubric:
-  - criterion: "CSS fix follows Ant Design patterns"
-    description: "The fix should use CSS-in-JS patterns consistent with Ant Design"
-
-  - criterion: "Flexbox ellipsis implementation is correct"
-    description: "The use of minWidth: 0 and maxWidth for flexbox ellipsis is proper CSS"
-
-  - criterion: "No breaking changes to existing styles"
-    description: "The fix should not alter other CSS properties inappropriately"
-
-# Failure thresholds
+- rule: CSS fix follows Ant Design patterns. The fix should use CSS-in-JS patterns
+    consistent with Ant Design
+  source:
+    path: CLAUDE.md
+  reference: 'Note: Cascader ellipsis uses minWidth 0 and maxWidth for flexbox ellipsis
+    without altering other CSS properties inappropriately, following Ant Design CSS-in-JS
+    patterns.'
+- rule: 'Flexbox ellipsis implementation is correct. The use of minWidth: 0 and maxWidth
+    for flexbox ellipsis is proper CSS'
+  source:
+    path: CLAUDE.md
+  reference: 'Note: Cascader ellipsis uses minWidth 0 and maxWidth for flexbox ellipsis
+    without altering other CSS properties inappropriately, following Ant Design CSS-in-JS
+    patterns.'
+- rule: No breaking changes to existing styles. The fix should not alter other CSS
+    properties inappropriately
+  source:
+    path: CLAUDE.md
+  reference: 'Note: Cascader ellipsis uses minWidth 0 and maxWidth for flexbox ellipsis
+    without altering other CSS properties inappropriately, following Ant Design CSS-in-JS
+    patterns.'
 thresholds:
   min_reward: 0.8
   required_checks:
-    - "ellipsis_moved"
-    - "min_width_zero"
+  - ellipsis_moved
+  - min_width_zero

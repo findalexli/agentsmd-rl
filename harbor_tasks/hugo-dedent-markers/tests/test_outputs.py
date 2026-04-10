@@ -358,3 +358,60 @@ def test_repo_go_mod_verify():
         timeout=60
     )
     assert result.returncode == 0
+
+
+def test_repo_staticcheck_hugocontext():
+    """Hugo's hugocontext package passes staticcheck (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "install", "honnef.co/go/tools/cmd/staticcheck@latest"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    # staticcheck install may return 0 even with output
+    result = subprocess.run(
+        ["staticcheck", "./markup/goldmark/hugocontext/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0
+
+
+def test_repo_check_hugocontext():
+    """Hugo's hugocontext package passes gofmt check (pass_to_pass)."""
+    result = subprocess.run(
+        ["gofmt", "-l", "."],
+        cwd=f"{REPO}/markup/goldmark/hugocontext",
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0
+    assert result.stdout.strip() == "", f"Unformatted files: {result.stdout}"
+
+
+def test_repo_hugolib_content_tests():
+    """Hugo's hugolib content-related tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "test", "-v", "-run", "TestContent", "./hugolib/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0
+
+
+def test_repo_markup_goldmark_internal():
+    """Hugo's goldmark internal package tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "test", "-v", "./markup/goldmark/internal/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0

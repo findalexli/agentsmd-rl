@@ -205,3 +205,75 @@ def test_ruff_format():
     assert r.returncode == 0, (
         f"ruff format failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual repo CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo CI: ruff check
+def test_repo_ruff_check():
+    """Repo's ruff check passes on the target file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: Python syntax check via py_compile
+def test_repo_python_syntax():
+    """Target file compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo tests: ConfigTestUtils
+def test_repo_config_common_kwargs():
+    """Repo's config_common_kwargs test passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            "import sys; sys.path.insert(0, '/workspace/transformers'); "
+            "import unittest; from tests.utils.test_configuration_utils import ConfigTestUtils; "
+            "suite = unittest.TestSuite(); "
+            "suite.addTest(ConfigTestUtils('test_config_common_kwargs_is_complete')); "
+            "runner = unittest.TextTestRunner(verbosity=0); "
+            "result = runner.run(suite); "
+            "sys.exit(0 if result.wasSuccessful() else 1)",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"config_common_kwargs test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo tests: ConfigTestUtils
+def test_repo_config_from_string():
+    """Repo's config_from_string test passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            "import sys; sys.path.insert(0, '/workspace/transformers'); "
+            "import unittest; from tests.utils.test_configuration_utils import ConfigTestUtils; "
+            "suite = unittest.TestSuite(); "
+            "suite.addTest(ConfigTestUtils('test_config_from_string')); "
+            "runner = unittest.TextTestRunner(verbosity=0); "
+            "result = runner.run(suite); "
+            "sys.exit(0 if result.wasSuccessful() else 1)",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"config_from_string test failed:\n{r.stderr[-500:]}"

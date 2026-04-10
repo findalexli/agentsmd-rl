@@ -47,11 +47,46 @@ checks:
     origin: repo_tests
     description: WebSocket handler tests pass
 
-
   - id: test_repo_error_message_banner_tests
     type: pass_to_pass
     origin: repo_tests
     description: Error message banner component tests pass
+
+  - id: test_repo_use_websocket_hook_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: useWebSocket hook tests pass
+
+  - id: test_repo_use_event_store_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: useEventStore tests pass
+
+  - id: test_repo_ws_client_provider_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: WebSocket client provider tests pass
+
+  - id: test_repo_conversation_store_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Conversation store tests pass
+
+  - id: test_repo_i18n_duplicate_keys_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: i18n duplicate keys tests pass
+
+  - id: test_repo_api_conversation_service_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: v1-conversation-service API tests pass
+
+  - id: test_repo_websocket_url_utils_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: WebSocket URL utility tests pass
+
   # Fail-to-pass checks (actual fix verification)
   - id: test_server_error_event_type_exists
     type: fail_to_pass
@@ -95,4 +130,21 @@ checks:
     source: AGENTS.md
     description: Tests for ServerErrorEvent handling exist in the test suite
 
-rubric: []
+rubric:
+  - rule: "Follow existing code style for event type definitions. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "119-140"
+      commit: "a198599d917fca47c467715b43858fc30f8082d4"
+
+  - rule: "Add corresponding type guard functions when adding new event types."
+    source:
+      path: "AGENTS.md"
+      lines: "299-310"
+      commit: "a198599d917fca47c467715b43858fc30f8082d4"
+
+  - rule: "Run frontend linting with 'npm run lint:fix' and ensure build passes with 'npm run build' before submitting changes."
+    source:
+      path: "AGENTS.md"
+      lines: "16-24"
+      commit: "a198599d917fca47c467715b43858fc30f8082d4"

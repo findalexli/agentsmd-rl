@@ -4,7 +4,7 @@ Repo: vercel/next.js @ 15d9b4d7f923e637d1661b109df639a918f59c8a
 PR:   92354
 
 Tests verify that code paths importing node:stream are guarded with
-NEXT_RUNTIME === 'edge' checks using proper if/else DCE-safe patterns.
+NEXT_RUNTIME == 'edge' checks using proper if/else DCE-safe patterns.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
@@ -48,32 +48,19 @@ def _extract_function_body(src: str, func_name: str) -> str | None:
 
 # [pr_diff] fail_to_pass
 def test_webToReadable_edge_guard():
-    """webToReadable must check NEXT_RUNTIME === 'edge' before require('node:stream')."""
+    """webToReadable must check NEXT_RUNTIME before require node:stream."""
     src = HELPER.read_text()
     body = _extract_function_body(src, "webToReadable")
-    assert body is not None, "webToReadable function not found in node-web-streams-helper.ts"
-
+    assert body is not None, "webToReadable function not found"
     # Must have NEXT_RUNTIME edge check
     edge_check = re.search(r"NEXT_RUNTIME\s*===\s*['\"]edge['\"]", body)
-    assert edge_check is not None, (
-        "webToReadable must check process.env.NEXT_RUNTIME === 'edge'"
-    )
-
-    # The edge check must come BEFORE the first require('node:stream')
+    assert edge_check is not None, "webToReadable must check NEXT_RUNTIME"
     require_match = re.search(r"require\(['\"]node:stream['\"]\)", body)
-    assert require_match is not None, (
-        "webToReadable must still have require('node:stream') for non-edge runtime"
-    )
-    assert edge_check.start() < require_match.start(), (
-        "NEXT_RUNTIME === 'edge' check must appear before require('node:stream')"
-    )
-
-    # The edge branch must throw an error (not silently skip)
+    assert require_match is not None, "webToReadable must have require"
+    assert edge_check.start() < require_match.start(), "edge check before require"
     edge_pos = edge_check.end()
     between = body[edge_pos : require_match.start()]
-    assert "throw" in between, (
-        "The edge runtime branch must throw an error when node:stream is unavailable"
-    )
+    assert "throw" in between, "edge branch must throw"
 
 
 # [pr_diff] fail_to_pass
@@ -82,75 +69,43 @@ def test_streamToUint8Array_edge_delegation():
     src = HELPER.read_text()
     body = _extract_function_body(src, "streamToUint8Array")
     assert body is not None, "streamToUint8Array function not found"
-
     edge_check = re.search(r"NEXT_RUNTIME\s*===\s*['\"]edge['\"]", body)
-    assert edge_check is not None, (
-        "streamToUint8Array must check process.env.NEXT_RUNTIME === 'edge'"
-    )
-
-    # In the edge branch (between the edge check and require), should call webstreamToUint8Array
+    assert edge_check is not None, "must check NEXT_RUNTIME"
     require_match = re.search(r"require\(['\"]node:stream['\"]\)", body)
-    assert require_match is not None, (
-        "streamToUint8Array must still have require('node:stream') for non-edge runtime"
-    )
+    assert require_match is not None, "must have require"
     edge_branch = body[edge_check.end() : require_match.start()]
-    assert "webstreamToUint8Array" in edge_branch, (
-        "Edge runtime branch must delegate to webstreamToUint8Array"
-    )
+    assert "webstreamToUint8Array" in edge_branch, "must delegate to webstreamToUint8Array"
 
 
 # [pr_diff] fail_to_pass
 def test_prerender_tee_edge_guard():
     """ReactServerResult tee must guard node:stream usage with edge runtime check."""
     src = PRERENDER.read_text()
-
-    # Find all require('node:stream') positions
     requires = list(re.finditer(r"require\(['\"]node:stream['\"]\)", src))
-    assert len(requires) > 0, "app-render-prerender-utils.ts must have require('node:stream')"
-
-    # Each require must be preceded by a NEXT_RUNTIME edge check
+    assert len(requires) > 0, "must have require node:stream"
     for req in requires:
         preceding = src[: req.start()]
         edge_checks = list(re.finditer(r"NEXT_RUNTIME\s*===\s*['\"]edge['\"]", preceding))
-        assert len(edge_checks) > 0, (
-            f"require('node:stream') at offset {req.start()} in "
-            "app-render-prerender-utils.ts must be preceded by a "
-            "NEXT_RUNTIME === 'edge' check"
-        )
+        assert len(edge_checks) > 0, f"require at {req.start()} needs edge check"
 
 
 # [pr_diff] fail_to_pass
 def test_render_result_edge_guards():
     """RenderResult must guard all node:stream requires with edge runtime checks."""
     src = RENDER_RESULT.read_text()
-
     requires = list(re.finditer(r"require\(['\"]node:stream['\"]\)", src))
-    assert len(requires) > 0, "render-result.ts must have require('node:stream')"
-
+    assert len(requires) > 0, "must have require node:stream"
     edge_checks = list(re.finditer(r"NEXT_RUNTIME\s*===\s*['\"]edge['\"]", src))
-
-    # The PR adds 2 edge guards (toReadableStream and tee each have a
-    # code path with require('node:stream'))
-    assert len(edge_checks) >= 2, (
-        f"render-result.ts must have at least 2 NEXT_RUNTIME === 'edge' checks, "
-        f"found {len(edge_checks)}"
-    )
-
-    # Each require must be preceded by an edge check
+    assert len(edge_checks) >= 2, f"need >=2 edge checks, found {len(edge_checks)}"
     for req in requires:
         preceding = src[: req.start()]
-        checks_before = list(
-            re.finditer(r"NEXT_RUNTIME\s*===\s*['\"]edge['\"]", preceding)
-        )
-        assert len(checks_before) > 0, (
-            f"require('node:stream') at offset {req.start()} in render-result.ts "
-            "must be preceded by a NEXT_RUNTIME === 'edge' check"
-        )
+        checks_before = list(re.finditer(r"NEXT_RUNTIME\s*===\s*['\"]edge['\"]", preceding))
+        assert len(checks_before) > 0, f"require at {req.start()} needs edge check"
 
 
 # [pr_diff] fail_to_pass
 def test_edge_error_codes():
-    """errors.json must include edge-runtime-specific error messages for stream operations."""
+    """errors.json must include edge-runtime-specific error messages."""
     r = subprocess.run(
         [
             "node",
@@ -158,32 +113,24 @@ def test_edge_error_codes():
             """
 const errors = require('./packages/next/errors.json');
 const vals = Object.values(errors);
-// At least 3 error messages must mention 'edge runtime' (for the 3 guarded code paths)
 const edgeErrors = vals.filter(v => v.toLowerCase().includes('edge runtime'));
 if (edgeErrors.length < 3) {
-    console.error('Expected >= 3 edge runtime errors, found ' + edgeErrors.length);
-    console.error('Found:', JSON.stringify(edgeErrors));
+    console.error("Expected >= 3 edge runtime errors, found " + edgeErrors.length);
     process.exit(1);
 }
-// At least one must relate to streams/Readable
-const streamRelated = edgeErrors.filter(v =>
-    v.includes('Readable') || v.includes('stream') || v.includes('webToReadable')
-);
+const streamRelated = edgeErrors.filter(v => v.includes('Readable') || v.includes('stream') || v.includes('webToReadable'));
 if (streamRelated.length < 1) {
-    console.error('No stream-related edge runtime errors found');
+    console.error("No stream-related edge runtime errors found");
     process.exit(1);
 }
-console.log('Found', edgeErrors.length, 'edge runtime error codes');
+console.log("OK");
 """,
         ],
         cwd=REPO,
         capture_output=True,
         timeout=30,
     )
-    assert r.returncode == 0, (
-        f"errors.json missing edge runtime error codes:\n"
-        f"{r.stdout.decode()}\n{r.stderr.decode()}"
-    )
+    assert r.returncode == 0, f"errors.json check failed: {r.stderr.decode()}"
 
 
 # ---------------------------------------------------------------------------
@@ -191,24 +138,16 @@ console.log('Found', edgeErrors.length, 'edge runtime error codes');
 # ---------------------------------------------------------------------------
 
 
-# [agent_config] fail_to_pass — AGENTS.md:404 @ 15d9b4d7f923e637d1661b109df639a918f59c8a
+# [agent_config] fail_to_pass
 def test_require_node_stream_dce_safe():
-    """All require('node:stream') must be in else branches of if/else for DCE safety.
-
-    Per AGENTS.md line 404: 'Keep require() behind compile-time if/else
-    branches for DCE (avoid early-return/throw patterns).'
-    """
+    """All require node:stream must be in else branches for DCE safety."""
     files_to_check = [HELPER, PRERENDER, RENDER_RESULT]
-
     for fpath in files_to_check:
         src = fpath.read_text()
         lines = src.splitlines()
-
         for i, line in enumerate(lines):
             if "require(" not in line or "node:stream" not in line:
                 continue
-
-            # Look backwards for the nearest enclosing else branch
             found_else = False
             for j in range(i - 1, max(i - 30, -1), -1):
                 prev = lines[j].strip()
@@ -218,10 +157,7 @@ def test_require_node_stream_dce_safe():
                 if prev.startswith("else {") or prev == "else{":
                     found_else = True
                     break
-            assert found_else, (
-                f"require('node:stream') at {fpath.name}:{i + 1} must be inside "
-                f"an else branch (if/else pattern) for DCE safety per AGENTS.md"
-            )
+            assert found_else, f"require at {fpath.name}:{i+1} must be in else branch"
 
 
 # ---------------------------------------------------------------------------
@@ -236,7 +172,57 @@ def test_modified_files_valid():
         assert fpath.exists(), f"{fpath} does not exist"
         content = fpath.read_text()
         line_count = len(content.splitlines())
-        assert line_count > 50, (
-            f"{fpath.name} has only {line_count} lines, expected >50"
-        )
+        assert line_count > 50, f"{fpath.name} has only {line_count} lines"
     assert ERRORS_JSON.exists(), "errors.json does not exist"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks
+# ---------------------------------------------------------------------------
+
+
+def _setup_corepack():
+    """Enable corepack for pnpm."""
+    subprocess.run(["corepack", "enable"], capture_output=True, cwd=REPO)
+    subprocess.run(["corepack", "prepare", "pnpm@9.6.0", "--activate"], capture_output=True, cwd=REPO)
+
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_error_codes_valid():
+    """Error codes validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "check-error-codes.js"],
+        capture_output=True, text=True, timeout=60,
+        cwd=str(Path(REPO) / "packages" / "next"),
+    )
+    assert r.returncode == 0, f"Error codes check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_helper():
+    """Prettier formatting check for node-web-streams-helper.ts passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "--yes", "prettier", "--check", "packages/next/src/server/stream-utils/node-web-streams-helper.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_prerender():
+    """Prettier formatting check for app-render-prerender-utils.ts passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "--yes", "prettier", "--check", "packages/next/src/server/app-render/app-render-prerender-utils.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_render_result():
+    """Prettier formatting check for render-result.ts passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "--yes", "prettier", "--check", "packages/next/src/server/render-result.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+

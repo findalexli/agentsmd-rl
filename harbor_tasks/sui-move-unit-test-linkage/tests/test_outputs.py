@@ -111,3 +111,39 @@ def test_external_crates_move_check():
         timeout=600
     )
     assert result.returncode == 0, f"cargo check in external-crates/move failed:\n{result.stderr[-1000:]}"
+
+
+def test_cargo_fmt_check():
+    """Pass-to-pass: Verify rustfmt check passes on the entire repo."""
+    result = subprocess.run(
+        ["cargo", "fmt", "--check", "--all"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, f"cargo fmt --check failed:\n{result.stderr[-500:]}"
+
+
+def test_move_vm_runtime_check():
+    """Pass-to-pass: Verify cargo check passes on move-vm-runtime crate."""
+    result = subprocess.run(
+        ["cargo", "check", "-p", "move-vm-runtime"],
+        cwd=f"{REPO}/external-crates/move",
+        capture_output=True,
+        text=True,
+        timeout=600
+    )
+    assert result.returncode == 0, f"cargo check move-vm-runtime failed:\n{result.stderr[-1000:]}"
+
+
+def test_move_unit_test_lib_test():
+    """Pass-to-pass: Verify move-unit-test library tests pass."""
+    result = subprocess.run(
+        ["cargo", "test", "-p", "move-unit-test", "--lib"],
+        cwd=f"{REPO}/external-crates/move",
+        capture_output=True,
+        text=True,
+        timeout=600
+    )
+    assert result.returncode == 0, f"move-unit-test lib tests failed:\n{result.stderr[-1000:]}"

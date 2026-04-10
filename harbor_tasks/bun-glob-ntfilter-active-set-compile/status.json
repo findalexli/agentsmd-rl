@@ -3,34 +3,36 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T01:49:22.416334",
-  "total_time": 724.99,
-  "sandbox_id": "iqcdwvft5ac15se5kjo3n",
+  "validated_at": "2026-04-10T02:32:06.645552",
+  "total_time": 4130.13,
+  "sandbox_id": "i8mj2u8h3opq1apw9kxr1",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
-    "p2p_enrichment": {
-      "status": "completed",
-      "timestamp": "2026-04-09T08:46:07.693457",
-      "ci_commands_discovered": [
-        "bun lint (via npx oxlint src/js) - JavaScript/TypeScript linting",
-        "bun run zig:check - requires zig compiler (not in container)",
-        "bun run banned - requires bun runtime (not in container)",
-        "bun run typecheck - requires tsc, bun (not in container)"
-      ],
-      "p2p_tests_added": [
-        "test_repo_oxlint_js - Mirrors bun lint CI check using npx oxlint",
-        "test_repo_globwalker_zig_valid - Syntax/structure validation of GlobWalker.zig",
-        "test_repo_no_banned_patterns - Check for banned patterns near fix site"
-      ],
-      "notes": "Added npx oxlint as a working CI-derived p2p gate. Container lacks bun/zig toolchains for other CI commands. Using Python static analysis for remaining p2p gates."
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build OK, NOP test reward=0 (expected), Gold test reward=1 (14/14 tests passed). Rubric judge ICR=1.0 with API keys.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 123.46
     },
-    "p2p_enrich": {
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.26,
+      "notes": "ICR=0.50"
+    },
+    "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 348.97,
+      "time": 352.58,
       "notes": ""
     },
     "improve": {
@@ -39,24 +41,6 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
-    },
-    "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "rubric_icr": 1.0,
-      "attempts": 2,
-      "notes": "All validation checks passed. Fixed: (1) judge.py logic - moved rules check before API key check so empty rubric returns 1.0, (2) eval_manifest.yaml - removed irrelevant memory management rubric rule that didn't apply to this control-flow-only fix (no allocations, no defer needed).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 143.98
-    },
-    "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.69,
-      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -65,32 +49,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:26:10.257456"
+      "time": 749.95,
+      "at": "2026-04-09T20:30:58.545105"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 803.87,
-      "at": "2026-04-09T01:26:10.421096"
+      "time": 987.35,
+      "at": "2026-04-09T22:15:35.922891"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:49:22.252449"
+      "time": 987.62,
+      "at": "2026-04-09T22:15:36.090449"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 724.99,
-      "at": "2026-04-09T01:49:22.416334"
+      "time": 4129.87,
+      "at": "2026-04-10T02:32:06.482108"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4130.13,
+      "at": "2026-04-10T02:32:06.645552"
     }
   ]
 }

@@ -97,6 +97,24 @@ def test_repo_torch_cuda_check():
     )
     assert r.returncode == 0, f"Torch CUDA check failed: {r.stdout}{r.stderr}"
 
+
+
+def test_repo_check_init_lazy_imports():
+    """Modified files have valid lazy imports (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_init_lazy_imports.py", QWEN3_NEXT, QWEN3_5],
+        capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Init lazy imports check failed: {r.stdout}{r.stderr}"
+
+def test_repo_attention_backend_docs():
+    """Attention backend documentation is up to date (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/generate_attention_backend_docs.py", "--check"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Attention backend docs check failed: {r.stdout}{r.stderr}"
+
 # Fail-to-pass tests
 def test_qwen3next_forward_no_custom_op():
     _, tree = _parse_file(QWEN3_NEXT)

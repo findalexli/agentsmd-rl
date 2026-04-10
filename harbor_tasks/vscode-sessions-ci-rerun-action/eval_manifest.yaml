@@ -62,6 +62,41 @@ checks:
     origin: repo_tests
     description: "GitHubPRCIFetcher has valid class structure and methods"
 
+  - id: repo_modified_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All modified TypeScript files exist and are readable via Node.js"
+
+  - id: repo_getcheckruns_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GitHubPRCIFetcher preserves getCheckRuns method (verified via Node.js subprocess)"
+
+  - id: repo_getcheckrunannotations_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GitHubPullRequestCIModel preserves getCheckRunAnnotations method (verified via Node.js subprocess)"
+
+  - id: repo_openongithub_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ciStatusWidget preserves ci.openOnGitHub action (verified via Node.js subprocess)"
+
+  - id: repo_typescript_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified TypeScript files have valid syntax - balanced strings/comments (Node.js check)"
+
+  - id: repo_fetcher_class_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GitHubPRCIFetcher has valid class structure with export and constructor (Node.js check)"
+
+  - id: repo_model_class_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GitHubPullRequestCIModel has valid class structure with extends Disposable (Node.js check)"
+
   - id: named_regex_capture_groups
     type: fail_to_pass
     origin: agent_config

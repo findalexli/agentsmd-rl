@@ -85,6 +85,21 @@ def _ensure_ruff():
         )
 
 
+def _ensure_pytest_deps():
+    """Ensure pytest and gradio dependencies are installed."""
+    # Check if gradio is installed by trying to import it
+    r = subprocess.run(
+        ["python", "-c", "import gradio"],
+        capture_output=True, text=True, timeout=30,
+    )
+    if r.returncode != 0:
+        # Install dependencies
+        subprocess.run(
+            ["pip", "install", "pytest", "gradio", "hypothesis", "gradio_client", "-q"],
+            capture_output=True, text=True, timeout=180,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -114,6 +129,36 @@ def test_repo_ruff_format():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_pytest_reload():
+    """Repo's reload tests pass (pass_to_pass)."""
+    _ensure_pytest_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_reload.py", "-v"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Reload tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_pytest_utils_configs():
+    """Repo's utils config equivalence tests pass (pass_to_pass)."""
+    _ensure_pytest_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::test_assert_configs_are_equivalent", "-v"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils config tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_pytest_utils_ner():
+    """Repo's utils NER format tests pass (pass_to_pass)."""
+    _ensure_pytest_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestFormatNERList", "-v"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils NER tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -38,8 +38,34 @@ verifier:
       origin: standard
       type: pass_to_pass
 
+    # PASS-TO-PASS tests from repo CI
+    - id: test_repo_formatting
+      description: "Repo's code formatting passes (cargo fmt --check)"
+      origin: repo_tests
+      type: pass_to_pass
+
+    - id: test_repo_xlint
+      description: "Repo's xlint check passes (license headers and project lints)"
+      origin: repo_tests
+      type: pass_to_pass
+
+    - id: test_repo_git_checks
+      description: "Repo's git checks pass (git history and file naming validation)"
+      origin: repo_tests
+      type: pass_to_pass
+
   # No agent config derived rules for this task (no relevant repo-specific configs)
   agent_config: []
 
-  # No rubric needed for this task (all checks are programmatic)
-  rubric: []
+  rubric:
+    - rule: "Do NOT comment the obvious. Comments should explain non-obvious logic, not narrate code."
+      source:
+        path: "CLAUDE.md"
+        lines: "116-130"
+        commit: "f8024baa75086db5a440d98247ecfd3d1ee90c73"
+
+    - rule: "Use assert! (not debug_assert!) for conditions that must hold in production, especially for unrecoverable errors."
+      source:
+        path: "CLAUDE.md"
+        lines: "108-114"
+        commit: "f8024baa75086db5a440d98247ecfd3d1ee90c73"

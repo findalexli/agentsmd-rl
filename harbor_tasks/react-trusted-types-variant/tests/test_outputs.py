@@ -94,10 +94,22 @@ def test_existing_variant_flags_intact():
     content = _read_target()
     required_flags = [
         "alwaysThrottleRetries",
-        "enableInternalInstanceMap",
+        "disableLegacyContextForFunctionComponents",
+        "disableSchedulerTimeoutInWorkLoop",
+        "enableHiddenSubtreeInsertionEffectCleanup",
+        "enableNoCloningMemoCache",
+        "enableObjectFiber",
+        "enableRetryLaneExpiration",
+        "enableTransitionTracing",
+        "enableSchedulingProfiler",
+        "enableInfiniteRenderLoopDetection",
+        "enableFastAddPropertiesInDiffing",
         "enableViewTransition",
+        "enableScrollEndPolyfill",
         "enableFragmentRefs",
+        "enableFragmentRefsScrollIntoView",
         "enableAsyncDebugInfo",
+        "enableInternalInstanceMap",
     ]
     missing = []
     for flag in required_flags:
@@ -130,3 +142,40 @@ def test_hardcoded_section_comment_preserved():
     assert "don" in content and "want to add more hardcoded ones" in content, (
         "Warning comment 'don't want to add more hardcoded ones' was removed"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — React CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_yarn_flags():
+    """React feature flags validation passes (pass_to_pass).
+
+    Runs yarn flags which validates all feature flag configurations,
+    including the ReactFeatureFlags.www-dynamic.js file being modified.
+    """
+    r = subprocess.run(
+        ["yarn", "flags"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"yarn flags failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yarn_lint():
+    """React codebase linting passes (pass_to_pass).
+
+    Runs yarn lint to ensure all JS files pass ESLint checks.
+    """
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"yarn lint failed:\n{r.stderr[-500:]}"

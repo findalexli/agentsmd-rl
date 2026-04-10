@@ -24,7 +24,7 @@ checks:
     type: pytest
     origin: agent_config
     source:
-      file: CLAUDE.md
+      path: CLAUDE.md
       rule: "Prefer immutable data (const, readonly)"
     file: test_outputs.py
     function: test_plain_text_const
@@ -60,6 +60,18 @@ checks:
     file: test_outputs.py
     function: test_repo_clipboard_ts_syntax
 
+
+  - id: repo-clipboard-test-ts-syntax
+    title: clipboard.test.ts has valid TypeScript syntax
+    description: |
+      The clipboard.test.ts file must have valid TypeScript syntax that can be parsed.
+      Uses prettier --parser typescript to validate without requiring full type check.
+      This is a pass_to_pass check from the repo CI pipeline.
+    type: pass_to_pass
+    origin: repo_tests
+    file: test_outputs.py
+    function: test_repo_clipboard_test_ts_syntax
+
   - id: repo-filledbutton-scss-syntax
     title: FilledButton.scss has valid SCSS syntax
     description: |
@@ -70,30 +82,32 @@ checks:
     file: test_outputs.py
     function: test_repo_filledbutton_scss_syntax
 
-  - id: repo-clipboard-test-exists
-    title: clipboard.test.ts exists and is accessible
+  - id: repo-clipboard-test-syntax
+    title: clipboard.test.ts has valid TypeScript syntax
     description: |
-      The clipboard.test.ts file should exist and contain the expected test content.
-      This is a pass_to_pass check to ensure the test file wasn't accidentally removed.
+      The clipboard.test.ts file must have valid TypeScript syntax that can be parsed.
+      Uses prettier --parser typescript to validate without requiring full type check.
+      This is a pass_to_pass check from the repo CI pipeline.
     type: pass_to_pass
     origin: repo_tests
     file: test_outputs.py
-    function: test_repo_clipboard_test_exists
+    function: test_repo_clipboard_test_syntax
 
-  - id: repo-constants-ts-exists
-    title: constants.ts exists and is accessible
+  - id: repo-constants-ts-syntax
+    title: constants.ts has valid TypeScript syntax
     description: |
-      The constants.ts file should exist in the common package.
-      This is a pass_to_pass check to ensure shared constants are available.
+      The constants.ts file must have valid TypeScript syntax that can be parsed.
+      Uses prettier --parser typescript to validate without requiring full type check.
+      This is a pass_to_pass check from the repo CI pipeline.
     type: pass_to_pass
     origin: repo_tests
     file: test_outputs.py
-    function: test_repo_constants_ts_exists
+    function: test_repo_constants_ts_syntax
 
 # Rubric for soft/subjective rules
 rubric:
-  - id: immutable-preference
-    description: "Prefer immutable data (const, readonly)"
+  - id: clipboard-fallback-docs
+    description: "Document clipboard fallback architecture"
     source:
-      file: CLAUDE.md
-      lines: "Prefer immutable data (const, readonly)"
+      path: CLAUDE.md
+      lines: "Clipboard operations must have fallbacks"

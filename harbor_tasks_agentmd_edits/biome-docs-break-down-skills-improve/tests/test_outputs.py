@@ -69,12 +69,159 @@ def test_justfile_syntax():
     assert "ready:" in content, "justfile missing existing ready recipe"
 
 
+def test_justfile_valid_structure():
+    """Repo justfile has valid structure with no unclosed blocks (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", r"""
+import re
+text = open("/workspace/biome/justfile").read()
+lines = text.split('\n')
+errors = []
+for i, line in enumerate(lines, 1):
+    stripped = line.strip()
+    if not stripped or stripped.startswith('#'):
+        continue
+    # Check for odd number of single braces (not {{ or }})
+    single_braces = stripped.replace('{{', '').replace('}}', '')
+    if single_braces.count('{') != single_braces.count('}'):
+        errors.append(f"Line {i}: Unmatched braces in: {line[:60]}")
+if errors:
+    print("ERRORS:")
+    for e in errors:
+        print(f"  - {e}")
+    exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"justfile structure validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout, "justfile structure check did not pass"
+
+
 def test_existing_skills_intact():
     """Other existing skill files should still be present."""
     for skill_dir in ["biome-developer", "testing-codegen", "lint-rule-development",
                       "formatter-development", "parser-development"]:
         skill_path = Path(f"{REPO}/.claude/skills/{skill_dir}/SKILL.md")
         assert skill_path.exists(), f"Existing skill {skill_dir}/SKILL.md should still exist"
+
+
+def test_skill_files_valid_frontmatter():
+    """All existing skill files have valid YAML frontmatter format (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", r"""
+import re
+import os
+
+skills_dir = "/workspace/biome/.claude/skills"
+errors = []
+
+for skill_name in os.listdir(skills_dir):
+    skill_path = os.path.join(skills_dir, skill_name, "SKILL.md")
+    if not os.path.isfile(skill_path):
+        continue
+
+    text = open(skill_path).read()
+
+    # Check for YAML frontmatter
+    m = re.match(r'^---\n(.*?)\n---', text, re.DOTALL)
+    if not m:
+        errors.append(f"{skill_name}: No YAML frontmatter found")
+        continue
+
+    fm_text = m.group(1)
+    # Parse frontmatter fields
+    fields = {}
+    for line in fm_text.split('\n'):
+        if ':' in line and not line.strip().startswith('#'):
+            k, v = line.split(':', 1)
+            fields[k.strip()] = v.strip()
+
+    required = ['name', 'description', 'compatibility']
+    for field in required:
+        if field not in fields:
+            errors.append(f"{skill_name}: Missing required field '{field}'")
+
+    if fields.get('name') != skill_name:
+        errors.append(f"{skill_name}: Frontmatter name '{fields.get('name')}' doesn't match directory name")
+
+if errors:
+    print("ERRORS:")
+    for e in errors:
+        print(f"  - {e}")
+    exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Skill frontmatter validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout, "Skill frontmatter check did not pass"
+
+
+def test_readme_valid_structure():
+    """Skills README.md has valid structure and required sections (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", r"""
+text = open("/workspace/biome/.claude/skills/README.md").read()
+
+# Check required sections
+required_sections = [
+    "## What Are Skills?",
+    "## Available Skills",
+    "## Quick Workflow Guide",
+    "## File Organization",
+]
+
+for section in required_sections:
+    if section not in text:
+        print(f"Missing required section: {section}")
+        exit(1)
+
+# Check for table formatting (proper markdown tables)
+import re
+table_pattern = r'\| \s*.*?\s* \| \s*.*?\s* \|'
+if not re.search(table_pattern, text):
+    print("No properly formatted tables found in README")
+    exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"README structure validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout, "README structure check did not pass"
+
+
+def test_cargo_toml_valid():
+    """Cargo.toml has valid structure and workspace members (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", r"""
+import re
+text = open("/workspace/biome/Cargo.toml").read()
+
+# Check for workspace section
+if '[workspace]' not in text:
+    print("Missing [workspace] section")
+    exit(1)
+
+# Check for members
+if 'members' not in text:
+    print("Missing members definition in workspace")
+    exit(1)
+
+# Check for key workspace dependencies
+key_deps = ['biome_analyze', 'biome_cli', 'biome_formatter']
+for dep in key_deps:
+    if dep not in text:
+        print(f"Missing expected dependency: {dep}")
+        exit(1)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo.toml validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout, "Cargo.toml structure check did not pass"
 
 
 # ---------------------------------------------------------------------------

@@ -187,8 +187,8 @@ def test_repo_lint_script():
 def test_repo_biome_lint():
     """Repo Biome lint check passes (pass_to_pass)."""
     r = subprocess.run(
-        ["npx", "biome", "lint"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        ["npm", "run", "lint:biome"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Biome lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
@@ -198,7 +198,7 @@ def test_repo_rowselection_tests():
     r = subprocess.run(
         ["npm", "test", "--", "--testPathPatterns=Table.rowSelection",
          "--no-coverage", "--maxWorkers=1"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Table rowSelection tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
@@ -210,3 +210,14 @@ def test_repo_test_node():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Node tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_tsc():
+    """Repo TypeScript typecheck passes (pass_to_pass)."""
+    env = os.environ.copy()
+    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=600, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

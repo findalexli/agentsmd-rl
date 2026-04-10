@@ -1,19 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T02:11:51.221523",
-  "total_time": 2073.9,
-  "sandbox_id": "ivbv7wlrbemjrpvnbqtqp",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-10T05:57:30.928870",
+  "total_time": 145.81,
+  "sandbox_id": "ick24s5sefo525lcs6pzs",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "timestamp": "2026-04-09T09:09:00Z",
-      "notes": "Added 3 repo_tests pass_to_pass gates to verify CI/CD quality checks that work without node_modules. Discovered CI commands from .github/workflows/ci.yml and package.json scripts. The repo uses pnpm and has complex CI with typecheck (tsc), lint (oxlint), format (oxfmt), and tests (vitest). Dependencies are not installed in Docker image so only static analysis tests could be added. New tests: test_repo_file_structure (verifies expected msteams extension files exist), test_repo_no_debug_code (checks no console.log/debugger in production code), test_repo_import_validity (validates imports don't escape package boundary)."
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 2034.84,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -37,14 +39,25 @@
       "notes": "All validations passed: Docker build successful, NOP test correctly returns reward=0 (3 fail-to-pass tests fail as expected on buggy base commit), Gold test correctly returns reward=1 (all 13 tests pass after solve.sh patch applied). Tests cover: streamReceivedTokens reset, isFinalized guard, pendingFinalize awaiting, single-segment suppression, group chat passthrough, stub detection, cross-boundary imports, ts-nocheck, escaped imports, SDK self-imports, plus 3 repo_tests for file structure, debug code, and import validity.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 81.36
+      "time": 4.28
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.7,
+      "time": 1.29,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 53.79
     }
   },
   "history": [
@@ -63,6 +76,30 @@
       "backend": "fireworks",
       "time": 2073.9,
       "at": "2026-04-09T02:11:51.221523"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 800.31,
+      "at": "2026-04-09T14:41:31.476980"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 800.57,
+      "at": "2026-04-09T14:41:31.642992"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 145.81,
+      "at": "2026-04-09T15:00:17.291441"
     }
   ]
 }

@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions needed by Appwrite
+RUN pip3 install --break-system-packages pytest
+
 RUN docker-php-ext-install zip
 
 # Set up working directory

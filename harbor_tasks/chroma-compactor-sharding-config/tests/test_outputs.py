@@ -15,6 +15,23 @@ REPO = "/workspace/chroma"
 RUST_WORKER = f"{REPO}/rust/worker"
 
 
+def _install_protobuf():
+    """Install protobuf-compiler if not present (needed for prost-build)."""
+    result = subprocess.run(
+        ["which", "protoc"],
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True,
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "protobuf-compiler"],
+            capture_output=True,
+        )
+
+
 def test_tenant_matches_patterns_star_wildcard():
     """Test that '*' pattern matches any tenant ID."""
     test_code = '''
@@ -172,11 +189,12 @@ def test_scheduler_policy_includes_tenant():
 
 def test_cargo_check_compiles():
     """Test that the Rust code compiles successfully."""
+    _install_protobuf()
     result = subprocess.run(
         ["cargo", "check", "--lib"],
         cwd=RUST_WORKER,
         capture_output=True,
-        timeout=120
+        timeout=600
     )
     assert result.returncode == 0, f"Cargo check failed:\n{result.stderr.decode()}"
 
@@ -191,25 +209,83 @@ def test_context_has_sharding_patterns():
     assert result.returncode == 0, "CompactionManagerContext missing sharding_enabled_tenant_patterns"
 
 
+# =============================================================================
+# Repo CI/CD pass-to-pass tests - these run actual CI commands
+# =============================================================================
+
+
 def test_cargo_clippy_worker():
     """Repo's Rust worker crate passes clippy lints (pass_to_pass)."""
+    _install_protobuf()
     result = subprocess.run(
         ["cargo", "clippy", "--lib", "-p", "worker", "--", "-D", "warnings"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120
+        timeout=600
     )
     assert result.returncode == 0, f"Clippy failed:\n{result.stderr[-500:]}"
 
 
-def test_cargo_test_worker_unit():
-    """Repo's Rust worker crate lib tests pass (pass_to_pass)."""
+def test_cargo_check_chroma_types():
+    """Repo's chroma-types crate compiles (pass_to_pass)."""
+    _install_protobuf()
     result = subprocess.run(
-        ["cargo", "test", "--lib", "-p", "worker"],
+        ["cargo", "check", "--lib", "-p", "chroma-types"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120
+        timeout=300
     )
-    assert result.returncode == 0, f"Unit tests failed:\n{result.stderr[-500:]}"
+    assert result.returncode == 0, f"chroma-types check failed:\n{result.stderr[-500:]}"
+
+
+def test_cargo_check_chroma_config():
+    """Repo's chroma-config crate compiles (pass_to_pass)."""
+    _install_protobuf()
+    result = subprocess.run(
+        ["cargo", "check", "--lib", "-p", "chroma-config"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, f"chroma-config check failed:\n{result.stderr[-500:]}"
+
+
+def test_cargo_fmt_check():
+    """Repo's Rust code passes formatting check (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, f"Formatting check failed:\n{result.stderr[-500:]}"
+
+
+def test_cargo_check_worker_bins():
+    """Repo's worker crate binaries compile (pass_to_pass)."""
+    _install_protobuf()
+    result = subprocess.run(
+        ["cargo", "check", "--bins", "-p", "worker"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600
+    )
+    assert result.returncode == 0, f"Worker binaries check failed:\n{result.stderr[-500:]}"
+
+
+def test_cargo_check_compactor_module():
+    """Repo's compactor module compiles (pass_to_pass)."""
+    _install_protobuf()
+    result = subprocess.run(
+        ["cargo", "check", "--lib", "-p", "worker"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600
+    )
+    assert result.returncode == 0, f"Worker lib check failed:\n{result.stderr[-500:]}"

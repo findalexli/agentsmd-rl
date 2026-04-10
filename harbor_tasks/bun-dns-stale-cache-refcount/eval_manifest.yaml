@@ -50,7 +50,7 @@ checks:
     origin: pr_diff
     description: "isExpired still performs TTL comparison"
 
-  # Anti-stub (pass-to-pass)
+  # Anti-stub (pass-to_pass)
   - id: isexpired_not_stub
     type: pass_to_pass
     origin: pr_diff
@@ -83,7 +83,7 @@ checks:
   # CI-derived (repo_tests) — pass_to_pass gates from bun repo CI checks
   - id: zig_no_debug_prints
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified Zig functions must not use std.debug.print or std.log"
     source:
       path: "test/internal/ban-words.test.ts"
@@ -91,7 +91,7 @@ checks:
 
   - id: zig_no_undefined_comparisons
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified Zig functions must not compare values to undefined (UB)"
     source:
       path: "test/internal/ban-words.test.ts"
@@ -99,7 +99,7 @@ checks:
 
   - id: zig_no_arguments_old
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified Zig functions must not use deprecated .arguments_old() API"
     source:
       path: "test/internal/ban-words.test.ts"
@@ -107,7 +107,7 @@ checks:
 
   - id: zig_no_usingnamespace
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified code must not use usingnamespace (removed in Zig 0.15)"
     source:
       path: "test/internal/ban-words.test.ts"
@@ -115,11 +115,75 @@ checks:
 
   - id: zig_no_std_mutex
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified Zig functions must use bun.Mutex instead of std.Thread.Mutex"
     source:
       path: "test/internal/ban-words.test.ts"
       commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_std_strings
+    type: pass_to_pass
+    origin: static
+    description: "Modified Zig functions must use bun.strings instead of std.mem.indexOfAny or std.unicode"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_std_hash_maps
+    type: pass_to_pass
+    origin: static
+    description: "Modified Zig functions must use bun.StringHashMap instead of std.StringHashMap"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_bun_import_inline
+    type: pass_to_pass
+    origin: static
+    description: "Modified code must not use @import('bun') inline (only import bun once at top)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_jsboolean_true_false
+    type: pass_to_pass
+    origin: static
+    description: "Modified Zig functions must use .true/.false instead of .jsBoolean(true/false)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: zig_no_allocator_ptr_compare
+    type: pass_to_pass
+    origin: static
+    description: "Modified Zig functions must not compare allocator.ptr (UB if undefined)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  # Real CI subprocess tests (repo_tests) — these actually run CI commands
+  - id: repo_ban_words
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Run the repo's ban-words CI check using bun"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "7960fe985dfa3418b507777a5a61289defbdb9dc"
+
+  - id: repo_zig_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Verify dns.zig has valid Zig syntax (balanced braces/parens)"
+
+  - id: repo_zig_no_hard_tabs
+    type: pass_to_pass
+    origin: static
+    description: "Verify dns.zig doesn't use hard tabs (coding style)"
+
+  - id: repo_dns_file_not_empty
+    type: pass_to_pass
+    origin: static
+    description: "Verify dns.zig is a non-trivial file with multiple functions"
 
 rubric:
   - rule: "In Zig code, be careful with allocators and use defer for cleanup."

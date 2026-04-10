@@ -18,6 +18,12 @@ REPO = Path("/workspace/ant-design")
 TARGET_FILE = REPO / "components" / "date-picker" / "style" / "panel.ts"
 
 
+def _install_deps():
+    """Install pnpm and dependencies."""
+    subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, check=True)
+    subprocess.run(["pnpm", "install"], capture_output=True, cwd=REPO, check=True)
+
+
 def test_file_exists():
     """Target file must exist."""
     assert TARGET_FILE.exists(), f"Target file not found: {TARGET_FILE}"
@@ -110,3 +116,26 @@ def test_no_regression_in_other_components():
     # Check for other expected CSS properties that shouldn't be affected
     assert "timeColumnWidth" in content, "timeColumnWidth token missing"
     assert "motionDurationMid" in content, "motionDurationMid token missing"
+
+
+# ===== Pass-to-Pass Tests (Repo CI/CD) =====
+
+def test_repo_biome_lint():
+    """Repo's Biome lint check passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["npm", "run", "lint:biome"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Biome lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint():
+    """Repo's ESLint check passes (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["npm", "run", "lint:script"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    # ESLint exits with 0 for warnings only, non-zero for errors
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

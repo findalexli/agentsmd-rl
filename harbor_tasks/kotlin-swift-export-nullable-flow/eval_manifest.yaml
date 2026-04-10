@@ -6,71 +6,196 @@ source_pr:
   base_commit: e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f
 
 checks:
-  # Fail-to-pass checks (behavioral tests)
+  # ==============================================================================
+  # PASS_TO_PASS CHECKS - Repo CI/CD Sanity Checks
+  # These verify that existing repo functionality remains intact.
+  # They should pass both on the base commit AND after the gold fix.
+  # ==============================================================================
+
+  - id: test_p2p_kotlin_coroutine_files_exist
+    type: pass_to_pass
+    origin: static
+    description: Core Kotlin coroutine support files exist and are non-empty
+
+  - id: test_p2p_header_has_valid_syntax
+    type: pass_to_pass
+    origin: static
+    description: Header file has valid C-style syntax with NS_ASSUME_NONNULL guards
+
+  - id: test_p2p_kotlin_has_swift_flow_iterator_class
+    type: pass_to_pass
+    origin: static
+    description: Kotlin file has SwiftFlowIterator class with required methods
+
+  - id: test_p2p_kotlin_has_swift_job_class
+    type: pass_to_pass
+    origin: static
+    description: Kotlin file has SwiftJob class for cancellation support
+
+  - id: test_p2p_swift_has_kotlin_flow_iterator
+    type: pass_to_pass
+    origin: static
+    description: Swift file has KotlinFlowIterator class with AsyncIteratorProtocol
+
+  - id: test_p2p_swift_has_kotlin_flow_sequence
+    type: pass_to_pass
+    origin: static
+    description: Swift file has KotlinFlowSequence with AsyncSequence conformance
+
+  - id: test_p2p_swift_has_kotlin_task
+    type: pass_to_pass
+    origin: static
+    description: Swift file has KotlinTask class for job bridging
+
+  - id: test_p2p_test_data_files_exist
+    type: pass_to_pass
+    origin: static
+    description: Test data files exist with expected structure
+
+  - id: test_p2p_swift_callback_signature_exists
+    type: pass_to_pass
+    origin: static
+    description: Header has callback signature for SwiftFlowIterator_next
+
+  - id: test_p2p_kotlin_exported_bridge_functions_exist
+    type: pass_to_pass
+    origin: static
+    description: Kotlin file has required @ExportedBridge functions
+
+  - id: test_p2p_swift_imports_kotlin_runtime
+    type: pass_to_pass
+    origin: static
+    description: Swift file imports required Kotlin runtime modules
+
+  - id: test_p2p_repo_structure_valid
+    type: pass_to_pass
+    origin: static
+    description: Repository directory structure is intact
+
+  # ==============================================================================
+  # PASS_TO_PASS CHECKS - Real CI Commands (subprocess.run)
+  # These run actual repo commands to verify functionality.
+  # ==============================================================================
+
+  - id: test_p2p_git_repo_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git repository is in clean state
+
+  - id: test_p2p_java_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: Java version is correct (OpenJDK 21)
+
+  - id: test_p2p_shell_scripts_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Shell scripts have valid syntax
+  - id: test_p2p_git_tracked_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: Core Swift export files are tracked by git
+
+  - id: test_p2p_shell_scripts_all_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: All shell scripts in scripts/ have valid syntax
+
+  - id: test_p2p_git_log_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git log works and shows expected commit
+
+  - id: test_p2p_gradle_help_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: Gradle wrapper is executable and can show help
+
+
+  # ==============================================================================
+  # FAIL_TO_PASS CHECKS - The actual fix verification
+  # These verify the nullable Flow fix is properly implemented.
+  # They should FAIL on base commit and PASS after the fix.
+  # ==============================================================================
+
   - id: test_header_has_bool_parameter
     type: fail_to_pass
-    origin: agent_config
-    source: "Header signature requires bool parameter to distinguish null value from completion"
-    description: "KotlinCoroutineSupport.h callback has (bool, void*) signature"
+    origin: pr_diff
+    description: KotlinCoroutineSupport.h callback has (bool, void*) signature
 
   - id: test_kt_has_value_wrapper_class
     type: fail_to_pass
-    origin: agent_config
-    source: "Inner Value wrapper class needed to wrap emitted values"
-    description: "KotlinCoroutineSupport.kt has inner Value class"
+    origin: pr_diff
+    description: KotlinCoroutineSupport.kt has inner Value wrapper class
 
   - id: test_kt_next_returns_value_type
     type: fail_to_pass
-    origin: agent_config
-    source: "next() must return Value? to distinguish null from completion"
-    description: "next() function returns Value? instead of T?"
+    origin: pr_diff
+    description: next() function returns Value? instead of T?
 
   - id: test_kt_continuation_uses_value_wrapper
     type: fail_to_pass
-    origin: agent_config
-    source: "Values must be wrapped in Value class when resuming continuation"
-    description: "continuation.resume() wraps value in Value class"
+    origin: pr_diff
+    description: continuation.resume() wraps value in Value class
 
   - id: test_kt_callback_has_bool_and_value
     type: fail_to_pass
-    origin: agent_config
-    source: "Interop callback signature must include boolean flag for null handling"
-    description: "SwiftFlowIterator_next callback has (Boolean, NativePtr) parameters"
+    origin: pr_diff
+    description: SwiftFlowIterator_next callback has (Boolean, NativePtr) parameters
 
   - id: test_kt_callback_passes_boolean_flag
     type: fail_to_pass
-    origin: agent_config
-    source: "Continuation must pass true for present values, false for completion"
-    description: "Callback passes boolean flag indicating value presence"
+    origin: pr_diff
+    description: Callback passes boolean flag indicating value presence
 
   - id: test_swift_callback_handles_bool
     type: fail_to_pass
-    origin: agent_config
-    source: "Swift side must handle boolean flag in callback"
-    description: "Swift callback has arg0 (bool) and arg1 (value) parameters"
+    origin: pr_diff
+    description: Swift callback has arg0 (bool) and arg1 (value) parameters
 
   - id: test_swift_handles_boolean_for_optional
     type: fail_to_pass
-    origin: agent_config
-    source: "Swift must use boolean to decide between .some(element) and .none"
-    description: "Swift uses boolean flag to determine .some vs .none"
+    origin: pr_diff
+    description: Swift uses boolean flag to determine .some vs .none
 
   - id: test_kt_test_file_has_nullable_flow_function
     type: fail_to_pass
-    origin: agent_config
-    source: "Test data needs nullable Flow for validation"
-    description: "Test file has testNullable() with Flow<Elem?>"
+    origin: pr_diff
+    description: Test file has testNullable() with Flow<Elem?>
 
   - id: test_swift_test_has_nullable_test
     type: fail_to_pass
-    origin: agent_config
-    source: "Swift tests must validate nullable flow behavior"
-    description: "Swift test file has testNullable() async test"
+    origin: pr_diff
+    description: Swift test file has testNullable() async test
 
   - id: test_swift_test_includes_null_in_expected
     type: fail_to_pass
-    origin: agent_config
-    source: "Test should verify nil values are properly passed through"
-    description: "Swift test expects array with nil values"
+    origin: pr_diff
+    description: Swift test expects array with nil values
 
-rubric: []
+  # ==============================================================================
+  # BEHAVIORAL FAIL_TO_PASS CHECKS - Code execution tests
+  # These use subprocess.run() to execute actual code
+  # ==============================================================================
+
+  - id: test_repo_kotlin_files_compile
+    type: fail_to_pass
+    origin: repo_tests
+    description: Kotlin files compile successfully with gradle (behavioral test)
+
+  - id: test_swift_export_module_assembles
+    type: fail_to_pass
+    origin: repo_tests
+    description: swift-export-standalone module assembles successfully (behavioral test)
+
+rubric:
+  - rule: "BEFORE modifying code in any area, identify the area and read its documentation"
+    source:
+      path: ".ai/guidelines.md"
+      lines: "31"
+      commit: "e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f"
+  - rule: "Commit tests together with corresponding code changes"
+    source:
+      path: ".ai/guidelines.md"
+      lines: "82"
+      commit: "e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f"

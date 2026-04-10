@@ -3,19 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T09:22:08.207994",
-  "total_time": 614.86,
-  "sandbox_id": "ikkh375ksbg5y9vcw4zkx",
+  "validated_at": "2026-04-09T22:04:58.627578",
+  "total_time": 350.12,
+  "sandbox_id": "ia33mj39kzztdzavth5hz",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "manual",
       "backend": "manual",
       "time": 0,
-      "notes": "Added 4 repo_tests pass_to_pass gates: test_repo_test_classes_follow_naming, test_repo_no_bare_excepts, test_repo_yaml_files_valid, test_repo_pyproject_toml_valid. All are AST-based static analysis checks matching the repo's pre-commit/CI standards (ruff E722, check-yaml). CI commands discovered: pytest -m '(not slow or ci) and not {EXCLUDE_BACKEND}' tests/test_*.py tests/experimental/, pre-commit run --all-files (ruff, check-yaml, trailing-whitespace, end-of-file-fixer). Docker environment is minimal (no pytest/ruff installed) so tests use AST analysis via subprocess."
+      "notes": "Enhanced p2p enrichment with 9 repo_tests pass_to_pass gates. CI commands discovered: pre-commit run --all-files (ruff, check-yaml, trailing-whitespace, end-of-file-fixer), pytest -m '(not slow or ci) and not {EXCLUDE_BACKEND}' tests/test_*.py tests/experimental/, py_compile, wheel build verification. Tests added: test_repo_test_classes_follow_naming (ruff class naming), test_repo_no_bare_excepts (E722), test_repo_yaml_files_valid (check-yaml), test_repo_pyproject_toml_valid (toml syntax), test_repo_trailing_whitespace (pre-commit hook), test_repo_end_of_file_newline (pre-commit hook), test_repo_no_tabs (W191), test_repo_py_compile (bytecode validation), test_repo_no_merge_conflict_markers (git artifacts). Docker environment is minimal (no pytest/ruff installed) so tests use AST/file analysis via subprocess."
     },
     "improve": {
       "status": "skipped",
@@ -29,24 +29,24 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build successful. NOP test: reward=0 (7 fail-to-pass tests correctly failed on base code). Gold test: reward=1 (all 22 tests passed after fix applied). Rubric judge requires ANTHROPIC_API_KEY which isn't available in this environment, but that's infrastructure-level not task-level.",
+      "notes": "Docker build successful. NOP test: reward=0 (7 fail-to-pass tests correctly failed). Gold test: reward=1 (all 24 tests passed). Rubric judge returned 0.5 due to missing ANTHROPIC_API_KEY (infrastructure limitation, not task issue).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 119.26
+      "time": 64.04
     },
     "p2p_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 268.39,
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1168.78,
       "notes": ""
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.75,
-      "notes": "ICR=1.00"
+      "time": 1.21,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -54,41 +54,41 @@
       "verdict": "fail",
       "nop": -1.0,
       "gold": -1.0,
-      "backend": "glm",
-      "time": 776.66,
-      "at": "2026-04-09T01:25:43.199323"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6796.42,
-      "at": "2026-04-09T06:13:43.693364"
+      "backend": "fireworks",
+      "time": 64.24,
+      "at": "2026-04-09T14:58:55.712018"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T16:21:57.262520+00:00"
+      "time": 267.23,
+      "at": "2026-04-09T20:22:55.955832"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 614.59,
-      "at": "2026-04-09T09:22:08.035974"
+      "time": 267.5,
+      "at": "2026-04-09T20:22:56.128021"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 614.86,
-      "at": "2026-04-09T09:22:08.207994"
+      "time": 349.85,
+      "at": "2026-04-09T22:04:58.459941"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 350.12,
+      "at": "2026-04-09T22:04:58.627578"
     }
   ]
 }

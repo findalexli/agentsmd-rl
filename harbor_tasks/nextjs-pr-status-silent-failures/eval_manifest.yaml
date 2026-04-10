@@ -27,6 +27,36 @@ checks:
     origin: repo_tests
     description: "pr-status.js must parse without errors in strict mode"
 
+  - id: test_repo_pr_status_script_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pr-status.js must have expected structure and exports"
+
+  - id: test_repo_pr_status_no_banned_patterns
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pr-status.js must not contain banned/unsafe patterns"
+
+  - id: test_repo_pr_status_has_required_helpers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pr-status.js must have all required helper functions"
+
+  - id: test_repo_pr_status_uses_strict_mode_compatible_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pr-status.js must use syntax compatible with strict mode"
+
+  - id: test_repo_node_syntax_check_pr_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: "JavaScript syntax check on pr-status.js via node --check must pass"
+
+  - id: test_repo_prettier_check_pr_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check on pr-status.js must pass"
+
   - id: categorize_timed_out_as_failed
     type: fail_to_pass
     origin: pr_diff
@@ -56,3 +86,25 @@ checks:
     type: pass_to_pass
     origin: pr_diff
     description: "categorizeJobs must still correctly classify failure and success conclusions"
+
+rubric:
+  - rule: "Split work into smaller, individually verifiable tasks. Before starting, break the overall goal into incremental steps where each step produces a result that can be checked independently. Verify each task before moving on to the next."
+    source:
+      path: "CLAUDE.md"
+      lines: "340-350"
+      commit: "3421858b5bef076965d99fd88fedc483193a496e"
+  - rule: "Use context-efficient workflows for external API calls. Save responses to variables or files, then analyze without re-fetching. Do not re-fetch the same API data to analyze from different angles."
+    source:
+      path: "CLAUDE.md"
+      lines: "290-295"
+      commit: "3421858b5bef076965d99fd88fedc483193a496e"
+  - rule: "Always treat environment variable values as sensitive unless they are known test-mode flags. Never print or paste secret values (tokens, API keys, cookies) in responses, commits, or shared logs."
+    source:
+      path: "CLAUDE.md"
+      lines: "265-270"
+      commit: "3421858b5bef076965d99fd88fedc483193a496e"
+  - rule: "Do NOT add 'Generated with Claude Code' or co-author footers to commits or PRs. Keep commit messages concise and descriptive."
+    source:
+      path: "CLAUDE.md"
+      lines: "305-310"
+      commit: "3421858b5bef076965d99fd88fedc483193a496e"

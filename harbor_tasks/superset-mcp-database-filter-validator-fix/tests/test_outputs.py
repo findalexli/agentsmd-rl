@@ -21,6 +21,10 @@ from pathlib import Path
 REPO_PATH = Path("/workspace/superset")
 
 
+# Docker-internal repo path - the path inside the Docker container
+REPO = "/workspace/superset"
+
+
 def _run_python(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute Python code in the repo directory."""
     return subprocess.run(
@@ -252,54 +256,123 @@ print("PASS: parse utilities imported from schema_utils")
 # =============================================================================
 
 
-def test_mcp_service_python_syntax():
-    """All MCP service Python files have valid syntax (pass_to_pass)."""
-    mcp_path = REPO_PATH / "superset" / "mcp_service"
-    assert mcp_path.exists(), f"MCP service directory not found: {mcp_path}"
-
-    errors = []
-    for py_file in mcp_path.rglob("*.py"):
-        try:
-            compile(py_file.read_text(), py_file.name, "exec")
-        except SyntaxError as e:
-            errors.append(f"{py_file.relative_to(REPO_PATH)}: {e}")
-
-    assert not errors, f"Syntax errors found:\n" + "\n".join(errors)
-
-
-def test_mcp_service_ast_parseable():
-    """All MCP service Python files can be parsed by AST module (pass_to_pass)."""
-    mcp_path = REPO_PATH / "superset" / "mcp_service"
-
-    errors = []
-    for py_file in mcp_path.rglob("*.py"):
-        try:
-            ast.parse(py_file.read_text())
-        except SyntaxError as e:
-            errors.append(f"{py_file.relative_to(REPO_PATH)}: {e}")
-
-    assert not errors, f"AST parse errors found:\n" + "\n".join(errors)
-
-
-def test_modified_database_files_syntax():
-    """Modified database module files have valid Python syntax (pass_to_pass)."""
+def test_repo_mcp_database_syntax():
+    """Modified MCP database files have valid Python syntax (pass_to_pass)."""
     files_to_check = [
-        REPO_PATH / "superset" / "mcp_service" / "database" / "schemas.py",
-        REPO_PATH / "superset" / "mcp_service" / "database" / "tool" / "list_databases.py",
-        REPO_PATH / "superset" / "mcp_service" / "app.py",
+        f"{REPO}/superset/mcp_service/database/schemas.py",
+        f"{REPO}/superset/mcp_service/database/tool/list_databases.py",
+        f"{REPO}/superset/mcp_service/app.py",
+        f"{REPO}/superset/mcp_service/mcp_core.py",
     ]
-
     for file_path in files_to_check:
-        assert file_path.exists(), f"File not found: {file_path}"
-        content = file_path.read_text()
-        try:
-            compile(content, file_path.name, "exec")
-        except SyntaxError as e:
-            assert False, f"Syntax error in {file_path.relative_to(REPO_PATH)}: {e}"
+        result = subprocess.run(
+            ["python", "-m", "py_compile", file_path],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert result.returncode == 0, f"Syntax error in {file_path}:\n{result.stderr}"
+
+
+def test_repo_mcp_database_unit_tests():
+    """MCP database tools unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "pip", "install", "-q", "pytest-mock", "pytest-asyncio", "&&",
+            "SUPERSET_TESTENV=true",
+            "SUPERSET_SECRET_KEY=test",
+            "python", "-m", "pytest",
+            "tests/unit_tests/mcp_service/database/tool/test_database_tools.py",
+            "-v", "--tb=short", "-x",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+        executable="/bin/bash",
+        shell=True,
+    )
+    assert result.returncode == 0, f"Unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_mcp_schemas_import():
+    """MCP database schemas module imports successfully (pass_to_pass)."""
+    code = f"""
+import sys
+sys.path.insert(0, "{REPO}")
+
+# Test that the schemas module can be imported and has expected classes
+from superset.mcp_service.database.schemas import DatabaseFilter, ListDatabasesRequest
+
+# Verify classes are defined (Pydantic models have model_fields)
+assert hasattr(DatabaseFilter, 'model_fields'), "DatabaseFilter should be a Pydantic model"
+assert hasattr(ListDatabasesRequest, 'model_fields'), "ListDatabasesRequest should be a Pydantic model"
+
+# Verify the classes are instantiable
+filter_obj = DatabaseFilter(col="database_name", opr="eq", value="test")
+assert filter_obj.col == "database_name", f"Expected col='database_name', got {{filter_obj.col}}"
+
+request_obj = ListDatabasesRequest(page=1, page_size=10)
+assert request_obj.page == 1, f"Expected page=1, got {{request_obj.page}}"
+
+print("PASS: MCP database schemas module imports successfully")
+"""
+    result = subprocess.run(
+        ["python", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Import test failed:\n{result.stderr}"
+
+
+def test_repo_mcp_common_schema_discovery():
+    """MCP common schema_discovery module imports successfully (pass_to_pass)."""
+    code = f"""
+import sys
+sys.path.insert(0, "{REPO}")
+
+# Test that the schema_discovery module exists and has DATABASE_DEFAULT_COLUMNS
+from superset.mcp_service.common.schema_discovery import DATABASE_DEFAULT_COLUMNS
+
+# Verify it's a list/collection
+assert isinstance(DATABASE_DEFAULT_COLUMNS, (list, tuple, set)), \
+    f"DATABASE_DEFAULT_COLUMNS should be a collection, got {{type(DATABASE_DEFAULT_COLUMNS)}}"
+assert len(DATABASE_DEFAULT_COLUMNS) > 0, "DATABASE_DEFAULT_COLUMNS should not be empty"
+
+print("PASS: DATABASE_DEFAULT_COLUMNS imported from schema_discovery")
+"""
+    result = subprocess.run(
+        ["python", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"schema_discovery import test failed:\n{result.stderr}"
+
+
+def test_repo_mcp_service_py_syntax():
+    """All MCP service Python files have valid syntax (pass_to_pass)."""
+    cmd = f"find {REPO}/superset/mcp_service -name '*.py' -exec python -m py_compile {{}} +"
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        shell=True,
+    )
+    assert result.returncode == 0, f"Syntax errors found:\n{result.stderr}"
+
+
+# =============================================================================
+# Static Analysis Tests (origin: static - NOT repo_tests)
+# =============================================================================
 
 
 def test_database_schemas_has_database_filter_class():
-    """Database schemas module contains DatabaseFilter class (pass_to_pass)."""
+    """Database schemas module contains DatabaseFilter class (static)."""
     file_path = REPO_PATH / "superset" / "mcp_service" / "database" / "schemas.py"
     assert file_path.exists(), f"File not found: {file_path}"
 
@@ -315,7 +388,7 @@ def test_database_schemas_has_database_filter_class():
 
 
 def test_database_schemas_has_list_databases_request_class():
-    """Database schemas module contains ListDatabasesRequest class (pass_to_pass)."""
+    """Database schemas module contains ListDatabasesRequest class (static)."""
     file_path = REPO_PATH / "superset" / "mcp_service" / "database" / "schemas.py"
 
     tree = ast.parse(file_path.read_text())
@@ -330,7 +403,7 @@ def test_database_schemas_has_list_databases_request_class():
 
 
 def test_list_databases_has_tool_function():
-    """list_databases.py contains the list_databases tool function (pass_to_pass)."""
+    """list_databases.py contains the list_databases tool function (static)."""
     file_path = REPO_PATH / "superset" / "mcp_service" / "database" / "tool" / "list_databases.py"
     assert file_path.exists(), f"File not found: {file_path}"
 
@@ -349,7 +422,7 @@ def test_list_databases_has_tool_function():
 
 
 def test_app_py_has_documentation():
-    """app.py contains documentation/instructions (pass_to_pass)."""
+    """app.py contains documentation/instructions (static)."""
     file_path = REPO_PATH / "superset" / "mcp_service" / "app.py"
     assert file_path.exists(), f"File not found: {file_path}"
 

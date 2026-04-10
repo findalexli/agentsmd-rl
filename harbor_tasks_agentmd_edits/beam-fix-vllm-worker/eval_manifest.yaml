@@ -9,6 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files must parse without errors
+- id: test_repo_ast_parsing_vllm_completion
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_text_completion.py parses as valid Python AST via subprocess
+- id: test_repo_ast_parsing_vllm_inference
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_inference.py parses as valid Python AST via subprocess
+- id: test_repo_git_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is at the expected base commit
+- id: test_repo_py_compile_vllm_completion
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_text_completion.py compiles without errors via py_compile
+- id: test_repo_py_compile_vllm_inference
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_inference.py compiles without errors via py_compile
 - id: parse_args_default_max_num_seqs
   type: fail_to_pass
   origin: pr_diff
@@ -36,6 +56,10 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: run() accepts a vllm_server_kwargs parameter for programmatic use
+- id: test_readme_documents_gpu_memory_settings
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents GPU memory constraints and vLLM tuning flags
 rubric:
 - rule: Documentation update is consistent with the tone and format of the existing
     README

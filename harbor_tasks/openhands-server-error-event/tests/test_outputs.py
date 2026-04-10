@@ -261,3 +261,121 @@ def test_repo_error_message_banner_tests():
         timeout=60,
     )
     assert result.returncode == 0, f"Error message banner tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+
+
+def test_repo_use_websocket_hook_tests():
+    """useWebSocket hook tests pass (pass_to_pass).
+
+    Tests for the useWebSocket hook which is core infrastructure for WebSocket
+    communication. Relevant to the ServerErrorEvent handling changes.
+    From the repo's test suite.
+    """
+    result = subprocess.run(
+        ["npx", "vitest", "run", "__tests__/hooks/use-websocket.test.ts"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"useWebSocket hook tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+
+
+def test_repo_use_event_store_tests():
+    """useEventStore tests pass (pass_to_pass).
+
+    Tests for the useEventStore which manages event state including error events.
+    Relevant to the ServerErrorEvent handling changes.
+    From the repo's test suite.
+    """
+    result = subprocess.run(
+        ["npx", "vitest", "run", "__tests__/stores/use-event-store.test.ts"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"useEventStore tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+
+
+def test_repo_ws_client_provider_tests():
+    """WebSocket client provider tests pass (pass_to_pass).
+
+    Tests for the WsClientProvider which manages WebSocket connections.
+    Relevant to the ServerErrorEvent handling changes.
+    From the repo's test suite.
+    """
+    result = subprocess.run(
+        ["npx", "vitest", "run", "__tests__/context/ws-client-provider.test.tsx"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"WsClientProvider tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+
+
+def test_repo_conversation_store_tests():
+    """Conversation store tests pass (pass_to_pass).
+
+    Tests for the conversation store which manages conversation state.
+    Relevant to the ServerErrorEvent handling changes.
+    From the repo's test suite.
+    """
+    result = subprocess.run(
+        ["npx", "vitest", "run", "__tests__/stores/conversation-store.test.ts"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"Conversation store tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+
+
+def test_repo_i18n_duplicate_keys_tests():
+    """i18n duplicate keys tests pass (pass_to_pass).
+
+    Tests for i18n translation key duplicates which ensures translation integrity.
+    From the repo's test suite via .github/workflows/lint.yml.
+    """
+    result = subprocess.run(
+        ["npx", "vitest", "run", "__tests__/i18n/duplicate-keys.test.ts"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"i18n duplicate keys tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+
+
+def test_repo_api_conversation_service_tests():
+    """v1-conversation-service API tests pass (pass_to_pass).
+
+    Tests for the API service which interacts with the server.
+    Relevant to the ServerErrorEvent handling changes.
+    From the repo's test suite.
+    """
+    result = subprocess.run(
+        ["npx", "vitest", "run", "__tests__/api/v1-conversation-service.test.ts"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"API conversation service tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+
+
+def test_repo_websocket_url_utils_tests():
+    """WebSocket URL utility tests pass (pass_to_pass).
+
+    Tests for the WebSocket URL generation utilities.
+    Relevant to the WebSocket connection infrastructure.
+    From the repo's test suite.
+    """
+    result = subprocess.run(
+        ["npx", "vitest", "run", "__tests__/utils/websocket-url.test.ts", "__tests__/build-websocket-url.test.ts"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"WebSocket URL utility tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"

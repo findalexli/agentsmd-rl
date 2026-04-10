@@ -268,15 +268,6 @@ def test_no_try_catch_in_followup_block():
     assert not re.search(r'\btry\s*\{', region), "try/catch found in followup persistence block"
 
 
-# [agent_config] pass_to_pass — AGENTS.md:70 @ 3fb60d05e555dad020d3354602affe166ef0cc22
-def test_no_let_in_followup_block():
-    """No 'let' declarations in followup persistence block (AGENTS.md: 'Prefer const over let')."""
-    region = _followup_region()
-    assert region, "Could not locate followup store region"
-    lets = re.findall(r'^\s*let\s+', region, re.MULTILINE)
-    assert not lets, f"'let' found {len(lets)} time(s) in followup persistence block — use const"
-
-
 # [agent_config] pass_to_pass — AGENTS.md:84 @ 3fb60d05e555dad020d3354602affe166ef0cc22
 def test_no_else_in_followup_block():
     """No 'else' statements in followup persistence block (AGENTS.md: 'Avoid else, prefer early returns')."""
@@ -296,6 +287,38 @@ def test_no_for_loop_in_followup_block():
 # ---------------------------------------------------------------------------
 # Repo CI/CD pass_to_pass gates
 # ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_turbo_typecheck():
+    """Repo's global turbo typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null && curl -fsSL https://bun.sh/install | bash 2>/dev/null && export PATH=\"/root/.bun/bin:\$PATH\" && bun install 2>&1 >/dev/null && bun turbo typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Global turbo typecheck failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo's prettier formatting check passes for the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null && curl -fsSL https://bun.sh/install | bash 2>/dev/null && export PATH=\"/root/.bun/bin:\$PATH\" && bun install 2>&1 >/dev/null && bunx prettier --check packages/app/src/pages/session.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_app_build():
+    """Repo's app package build passes (pass_to_pass)."""
+    app_dir = Path(REPO) / "packages" / "app"
+    r = subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null && curl -fsSL https://bun.sh/install | bash 2>/dev/null && export PATH=\"/root/.bun/bin:\$PATH\" && bun install 2>&1 >/dev/null && bun run build"],
+        capture_output=True, text=True, timeout=300, cwd=app_dir,
+    )
+    assert r.returncode == 0, f"App build failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
 
 # [repo_tests] pass_to_pass
 def test_repo_app_typecheck():

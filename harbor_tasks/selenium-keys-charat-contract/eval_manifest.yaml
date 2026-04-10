@@ -43,7 +43,7 @@ checks:
     description: "charAt method has correct structure with IndexOutOfBoundsException"
 
   # Pass-to-pass tests: Repo CI/CD checks that should pass on both base and fixed
-  - id: test_repo_build_core_lib
+  - id: test_repo_build_core
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's core Java library builds successfully"
@@ -52,6 +52,21 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's client combined library builds successfully"
+
+  - id: test_repo_small_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's small unit tests pass"
+
+  - id: test_repo_keys_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's KeysTest passes"
+
+  - id: test_repo_format_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's format lint check passes"
 
 # Agent config rules extracted from applicable configs
 # Applicable: CLAUDE.md, AGENTS.md, java/AGENTS.md
@@ -66,7 +81,7 @@ agent_config:
 
   - rule: "Prefer small (unit) tests over browser tests for speed/reliability"
     source: "CLAUDE.md Testing"
-    check_ids: [test_repo_keys_unit_tests]
+    check_ids: []
 
   - rule: "Use java.util.logging.Logger for logging"
     source: "java/AGENTS.md"
@@ -78,5 +93,4 @@ agent_config:
 
 # Rubric for soft/subjective rules (LLM-judge only)
 # Note: Rubric rules are evaluated against agent code changes, not test files
-# This task is for test validation - the rubric section is intentionally minimal
 rubric: []

@@ -161,7 +161,7 @@ def test_repo_tests_pass():
     it may intentionally fail/crash on the base commit.
     """
     result = subprocess.run(
-        ["cargo", "test", "-p", "chroma-index", "--lib", "--timeout", "120"],
+        ["cargo", "test", "-p", "chroma-index", "--lib", ],
         cwd=RUST_DIR,
         capture_output=True,
         text=True,

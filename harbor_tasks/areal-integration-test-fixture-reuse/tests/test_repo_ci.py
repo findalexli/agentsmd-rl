@@ -146,3 +146,135 @@ print("PASS")
 ''')
     assert r.returncode == 0, f"pyproject.toml validity check failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+def test_repo_trailing_whitespace():
+    """No trailing whitespace in test files (pass_to_pass).
+
+    Matches pre-commit trailing-whitespace hook.
+    """
+    r = _run_py(f'''
+from pathlib import Path
+
+ALL_FILES = {ALL_FILES!r}
+
+for fpath in ALL_FILES:
+    content = Path(fpath).read_text()
+    lines = content.splitlines()
+    for i, line in enumerate(lines, 1):
+        if line != line.rstrip():
+            raise AssertionError(
+                f"{{fpath}}: Line {{i}} has trailing whitespace"
+            )
+print("PASS")
+''')
+    assert r.returncode == 0, f"Trailing whitespace check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_end_of_file_newline():
+    """Test files must end with a single newline (pass_to_pass).
+
+    Matches pre-commit end-of-file-fixer hook.
+    """
+    r = _run_py(f'''
+from pathlib import Path
+
+ALL_FILES = {ALL_FILES!r}
+
+for fpath in ALL_FILES:
+    content = Path(fpath).read_bytes()
+    if not content:
+        continue
+    # Check file ends with exactly one newline (not multiple, not none)
+    if not content.endswith(b"\\n"):
+        raise AssertionError(f"{{fpath}}: File does not end with newline")
+    # Check for multiple trailing newlines
+    trailing = 0
+    for b in reversed(content):
+        if b == ord("\\n"):
+            trailing += 1
+        else:
+            break
+    if trailing != 1:
+        raise AssertionError(f"{{fpath}}: File has {{trailing}} trailing newlines, expected 1")
+print("PASS")
+''')
+    assert r.returncode == 0, f"End-of-file newline check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_no_tabs():
+    """No tab characters in test files (pass_to_pass).
+
+    Matches ruff W191 (tab characters) check.
+    """
+    r = _run_py(f'''
+from pathlib import Path
+
+ALL_FILES = {ALL_FILES!r}
+
+for fpath in ALL_FILES:
+    content = Path(fpath).read_text()
+    lines = content.splitlines()
+    for i, line in enumerate(lines, 1):
+        if "\\t" in line:
+            raise AssertionError(f"{{fpath}}: Line {{i}} contains tab character")
+print("PASS")
+''')
+    assert r.returncode == 0, f"No-tabs check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_py_compile():
+    """All test files must compile to valid Python bytecode (pass_to_pass).
+
+    Matches Python pre-commit py_compile check - validates syntax AND byte-compilation.
+    Catches syntax errors that AST parsing alone might miss.
+    """
+    r = _run_py(f'''
+import py_compile
+from pathlib import Path
+
+ALL_FILES = {ALL_FILES!r}
+
+for fpath in ALL_FILES:
+    try:
+        py_compile.compile(fpath, doraise=True)
+    except py_compile.PyCompileError as e:
+        raise AssertionError(f"{{fpath}}: Failed to compile - {{e}}")
+print("PASS")
+''')
+    assert r.returncode == 0, f"Python compilation check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_no_merge_conflict_markers():
+    """No merge conflict markers at line starts in test files (pass_to_pass).
+
+    Standard pre-commit check for leftover git merge artifacts.
+    Only checks for markers at the start of lines (after optional whitespace),
+    not decorative lines like '# =======...' which appear mid-line.
+    """
+    r = _run_py(f'''
+from pathlib import Path
+
+# Git merge conflict markers at START of lines (after optional whitespace)
+LINE_START_MARKERS = ["<<<<<<< ", "=======", ">>>>>>> "]
+ALL_FILES = {ALL_FILES!r}
+
+for fpath in ALL_FILES:
+    content = Path(fpath).read_text()
+    lines = content.splitlines()
+    for i, line in enumerate(lines, 1):
+        # Strip leading whitespace to check for marker at line start
+        stripped = line.lstrip()
+        for marker in LINE_START_MARKERS:
+            if stripped.startswith(marker):
+                raise AssertionError(
+                    f"{{fpath}}: Line {{i}} starts with merge conflict marker"
+                )
+print("PASS")
+''')
+    assert r.returncode == 0, f"Merge conflict marker check failed: {r.stderr}"
+    assert "PASS" in r.stdout

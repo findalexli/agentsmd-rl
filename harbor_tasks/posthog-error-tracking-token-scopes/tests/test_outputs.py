@@ -67,6 +67,89 @@ def test_importable():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI gate tests
+# ---------------------------------------------------------------------------
+
+def test_repo_error_tracking_syntax():
+    """Error tracking test file has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import ast; ast.parse(open(\"/workspace/posthog/products/error_tracking/backend/api/test/test_error_tracking_api.py\").read()); print(\"OK\")"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Test file syntax error:\n{r.stderr}"
+
+
+def test_repo_ruff_check_error_tracking():
+    """Error tracking code passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "/workspace/posthog/products/error_tracking/backend/api/"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed for error_tracking:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_ruff_format_check():
+    """Error tracking code is properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", "/workspace/posthog/products/error_tracking/backend/api/issues.py"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_viewset_schema_annotations():
+    """ErrorTrackingIssueViewSet has schema annotations on custom actions (pass_to_pass).
+
+    Per AGENTS.md: When touching a viewset or serializer, ensure schema annotations
+    are present (@extend_schema or @validated_request on viewset methods).
+    """
+    src = Path(f"{REPO}/{TARGET}").read_text()
+    tree = ast.parse(src)
+
+    # Find the ErrorTrackingIssueViewSet class
+    viewset_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "ErrorTrackingIssueViewSet":
+            viewset_class = node
+            break
+
+    assert viewset_class is not None, "ErrorTrackingIssueViewSet class not found"
+
+    # Find custom action methods (those with @action decorator)
+    action_methods = []
+    for item in viewset_class.body:
+        if isinstance(item, ast.FunctionDef) or isinstance(item, ast.AsyncFunctionDef):
+            # Check if method has @action decorator
+            for decorator in item.decorator_list:
+                if isinstance(decorator, ast.Call):
+                    if isinstance(decorator.func, ast.Name) and decorator.func.id == "action":
+                        action_methods.append(item.name)
+                elif isinstance(decorator, ast.Name) and decorator.id == "action":
+                    action_methods.append(item.name)
+
+    # Custom actions in ErrorTrackingIssueViewSet: merge, split, assign, cohort, values, bulk
+    expected_actions = {"merge", "split", "assign", "cohort", "values", "bulk"}
+    found_actions = set(action_methods)
+
+    # Check that expected custom actions exist
+    missing = expected_actions - found_actions
+    assert not missing, f"Expected custom action methods not found: {missing}"
+
+    # Check that each action method has proper docstrings or annotations
+    # This is a lightweight check ensuring the methods have substance
+    for item in viewset_class.body:
+        if isinstance(item, ast.FunctionDef) and item.name in expected_actions:
+            # Must have a docstring or body with more than just pass
+            has_docstring = ast.get_docstring(item) is not None
+            has_body = len(item.body) > 1 or (
+                len(item.body) == 1 and not isinstance(item.body[0], ast.Pass)
+            )
+            assert has_docstring or has_body, (
+                f"Custom action '{item.name}' appears to be a stub without implementation"
+            )
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

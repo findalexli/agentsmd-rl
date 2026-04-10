@@ -5,7 +5,7 @@ set -e
 pip install pytest pytest-asyncio pytest-mock -q
 
 # Run tests
-cd /workspace/task/tests
+cd /tests
 python -m pytest test_outputs.py -v --tb=short 2>&1 | tee /tmp/test_output.txt
 
 # Write binary reward

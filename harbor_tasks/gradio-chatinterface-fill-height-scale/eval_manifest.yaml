@@ -99,6 +99,30 @@ checks:
       path: ".github/workflows/test-hygiene.yml"
       command: "python scripts/generate_skill.py --check"
 
+  - id: repo_ruff_lint_chat_interface
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on modified file (from test-python.yml)"
+    source:
+      path: ".github/workflows/test-python.yml"
+      command: "python -m ruff check gradio/chat_interface.py"
+
+  - id: repo_chatbot_component_unit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Chatbot component unit tests pass (from test-python.yml)"
+    source:
+      path: ".github/workflows/test-python.yml"
+      command: "python -m pytest test/components/test_chatbot.py::TestChatbot::test_component_functions"
+
+  - id: repo_chatbot_avatar_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Chatbot avatar tests pass (from test-python.yml)"
+    source:
+      path: ".github/workflows/test-python.yml"
+      command: "python -m pytest test/components/test_chatbot.py -k avatar"
+
 rubric:
   - rule: "Be consistent with the style of the surrounding code."
     source:

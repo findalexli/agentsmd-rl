@@ -1,28 +1,59 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T06:48:24.873371",
-  "total_time": 6049.23,
-  "sandbox_id": "i4tpeiloiccdt0z1t38xl",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T00:37:07.393738",
+  "total_time": 9479.55,
+  "sandbox_id": "ihu4al1540bxa5z3qkdps",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 78.58,
-      "notes": ""
+      "notes": "Added 11 new pass_to_pass tests from repo CI. CI commands found: pnpm test (vitest), pnpm exec eslint, node --check. Added tests: test_const_tag_shadow, test_const_tag_each_arrow, test_const_tag_invalidate, test_const_tag_hoisting, test_const_tag_if_else, test_compiler_errors, test_validator, test_eslint_function_js, test_syntax_check_node, test_syntax_check (static), test_not_stub (static)."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 706.88,
+      "time": 568.55,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 39.86,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py: the _create_and_run_test function was creating temp test samples in /tmp instead of the actual samples directory where vitest looks. Tests were being skipped (not run), causing false positives. Changed to create samples in the correct location (SAMPLES/sample_name) and cleaned up afterward.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 204.31
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -33,6 +64,38 @@
       "backend": "fireworks",
       "time": 6049.23,
       "at": "2026-04-09T06:48:24.873371"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1476.34,
+      "at": "2026-04-09T14:52:47.454987"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.1,
+      "backend": "fireworks",
+      "time": 1476.59,
+      "at": "2026-04-09T14:52:47.614347"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9479.28,
+      "at": "2026-04-10T00:37:07.223413"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9479.55,
+      "at": "2026-04-10T00:37:07.393738"
     }
   ]
 }

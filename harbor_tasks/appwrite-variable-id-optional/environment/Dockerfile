@@ -1,11 +1,15 @@
 FROM php:8.3-cli
 
-# Install Python3 and pip for pytest
+# Install Python3, pip, git, and composer dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     git \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Install pytest
 RUN pip3 install pytest --break-system-packages
@@ -21,8 +25,5 @@ RUN git clone --filter=blob:none https://github.com/appwrite/appwrite.git && \
 # Create log directory for verifier
 RUN mkdir -p /logs/verifier
 
-# Copy test files
-COPY tests/test_outputs.py /workspace/test_outputs.py
-
-# Default command runs tests
-CMD ["bash", "/workspace/test.sh"]
+# Default command
+CMD ["bash"]

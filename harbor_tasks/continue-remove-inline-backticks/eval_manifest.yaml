@@ -42,5 +42,28 @@ checks:
     origin: "test"
     test_function: "test_accepted_tool_call_starts_unaffected"
 
-# No rubric rules - this is a straightforward string fix
-rubric: []
+  # Pass-to-pass tests (repo CI checks)
+  - id: "repo_prettier_check"
+    description: "Repo's Prettier formatting check passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    test_function: "test_repo_prettier_check"
+
+  - id: "repo_tsc_core"
+    description: "Core TypeScript compilation passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    test_function: "test_repo_tsc_core"
+
+rubric:
+  - rule: "Follow formatting and linting standards. Run `npm run format` and `npm run lint` / `npm run lint:fix` before creating changes."
+    source:
+      path: "extensions/cli/AGENTS.md"
+      lines: "116-117"
+      commit: "b09c4ba1f3438bd29b5556a52d81fa5463134fd3"
+
+  - rule: "Relative import paths require explicit file extensions (e.g., 'from "./test.js"' instead of 'from "./test"')."
+    source:
+      path: "extensions/cli/AGENTS.md"
+      lines: "107"
+      commit: "b09c4ba1f3438bd29b5556a52d81fa5463134fd3"

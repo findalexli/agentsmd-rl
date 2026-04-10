@@ -34,12 +34,12 @@ checks:
 
   - id: core_ci_steps_present
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Core CI action steps (Install Python, ffmpeg, cache, uv venv) still present"
 
   - id: textbox_copy_test_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Textbox copy test case and assertion still exist"
 
   - id: cache_key_includes_hashfiles
@@ -59,8 +59,18 @@ checks:
 
   - id: test_action_file_references_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Files referenced in action.yml must exist"
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python linter (ruff check) runs successfully"
+
+  - id: test_repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python format check (ruff format --check) runs successfully"
 
 rubric:
   - rule: "Be consistent with the style of the surrounding code."

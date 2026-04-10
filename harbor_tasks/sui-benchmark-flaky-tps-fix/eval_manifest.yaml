@@ -33,7 +33,24 @@ source:
         - Formats & lints all Rust & Move, run before commit: ./scripts/lint.sh
         - Alternatively: cargo fmt --all -- --check, cargo xclippy
 
-rubric: []
+rubric:
+  - rule: "Always run tests before submitting changes. Framework changes require snapshot updates."
+    source:
+      path: "CLAUDE.md"
+      lines: "108-111"
+      commit: "f6a774c2b71765b0bad451efe9b5ca171438eb72"
+
+  - rule: "ALWAYS run `cargo xclippy` after finishing development to ensure code passes all linting checks."
+    source:
+      path: "CLAUDE.md"
+      lines: "115"
+      commit: "f6a774c2b71765b0bad451efe9b5ca171438eb72"
+
+  - rule: "NEVER disable or ignore tests - all tests must pass and be enabled. NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other linting suppressions - fix the underlying issues instead."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-117"
+      commit: "f6a774c2b71765b0bad451efe9b5ca171438eb72"
 
 checks:
   # Fail-to-pass checks
@@ -59,21 +76,21 @@ checks:
       The old integer division pattern (num_txes / duration.as_secs()) is removed
       and replaced with floating-point calculation.
 
-  # Pass-to-pass checks (basic validation)
+  # Pass-to-pass checks (static file checks)
   - id: test_rust_syntax_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: |
       Rust code has valid syntax: balanced braces/parentheses, proper variable
       declarations, and correct use of format! macro and .max(1.0).
 
-  - id: test_yaml_syntax_valid
+  - id: test_workflow_has_min_tps
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: |
-      Workflow YAML has valid structure and proper --min-tps 0.01 setting.
+      Workflow YAML has valid structure and contains min-tps parameter.
 
-  # Pass-to-pass checks (repo CI/CD)
+  # Pass-to-pass checks (actual repo CI tests)
   - id: test_repo_cargo_fmt
     type: pass_to_pass
     origin: repo_tests
@@ -88,3 +105,17 @@ checks:
       Repo git checks pass (scripts/git-checks.sh).
       Validates no submodules, no case-insensitive filename conflicts,
       and no trailing whitespace in commits.
+
+  - id: test_repo_cargo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Repo custom linter passes (cargo xlint).
+      Validates license headers and other linting rules.
+
+  - id: test_repo_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Workflow YAML files are syntactically valid (yaml.safe_load).
+      Validates YAML syntax using Python PyYAML.

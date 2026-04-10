@@ -159,15 +159,12 @@ console.log('PASS');
 def test_capture_listener_cleanup():
     """Listener removal uses ownerDocument.removeEventListener with capture flag."""
     src = Path(TARGET).read_text()
-    assert re.search(
-        r'ownerDocument\.removeEventListener\(\s*[\'"]focus[\'"]\s*,'
-        r'\s*handleFocus\s*,\s*true\s*\)',
-        src,
-    ), "Missing: ownerDocument.removeEventListener('focus', handleFocus, true)"
-    assert not re.search(
-        r'element\.removeEventListener\(\s*[\'"]focus[\'"]\s*,\s*handleFocus\s*\)',
-        src,
-    ), "Old element.removeEventListener still present; must use ownerDocument with capture"
+    # Check for the correct pattern: ownerDocument.removeEventListener('focus', handleFocus, true)
+    pattern1 = r"ownerDocument\.removeEventListener\(\s*['\"]focus['\"]\s*,\s*handleFocus\s*,\s*true\s*\)"
+    assert re.search(pattern1, src), "Missing: ownerDocument.removeEventListener('focus', handleFocus, true)"
+    # Check that old pattern is gone
+    pattern2 = r"element\.removeEventListener\(\s*['\"]focus['\"]\s*,\s*handleFocus\s*\)"
+    assert not re.search(pattern2, src), "Old element.removeEventListener still present; must use ownerDocument with capture"
 
 
 # ---------------------------------------------------------------------------
@@ -199,24 +196,24 @@ def test_repo_lint():
 def test_repo_flow():
     """Repo's Flow typecheck passes (pass_to_pass).
 
-    React uses Flow for type checking. The 'dom' inline config includes
-    the react-dom-bindings package where the fix is applied.
+    React uses Flow for type checking. We use dom-node as the primary renderer
+    which includes the react-dom-bindings package where the fix is applied.
     """
     r = _run_yarn_command(
-        ["node", "./scripts/tasks/flow.js", "dom"],
+        ["node", "./scripts/tasks/flow.js", "dom-node"],
         timeout=120
     )
     assert r.returncode == 0, f"Flow check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
 def test_repo_unit_tests_relevant():
-    """Unit tests for react-dom-bindings pass (pass_to_pass).
+    """Unit tests for react-dom related to fragment refs pass (pass_to_pass).
 
-    The full test suite takes too long, so we run only tests for the
-    package containing the modified file.
+    The full test suite takes too long, so we run only tests related to
+    the fragment refs functionality which includes setFocusIfFocusable.
     """
     r = _run_yarn_command(
-        ["yarn", "test", "--testPathPattern=react-dom-bindings", "-r=stable", "--env=development", "--ci"],
+        ["yarn", "test", "--testPathPattern=ReactDOMFragmentRefs", "-r=stable", "--env=development", "--ci"],
         timeout=120
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

@@ -28,21 +28,27 @@ def test_single_fixture_executes_correctly():
     assert fixture is not None, "No single fixture file found under pages/api/ or app/api/"
 
     # Execute handler with mocked request and verify it returns correct id
+    # Convert ES module syntax to CommonJS for Node.js execution
     code = f"""
 const AsyncLocalStorage = require('async_hooks').AsyncLocalStorage;
 global.AsyncLocalStorage = AsyncLocalStorage;
 global.Response = class Response {{
-  constructor(body) {{ this.body = body; }}
+  constructor(body) {{ this.body = JSON.stringify(body); }}
   json() {{ return Promise.resolve(JSON.parse(this.body)); }}
+  static json(body) {{ return new Response(body); }}
 }};
 global.fetch = async () => ({{ text: async () => 'ok' }});
 
-const code = require('fs').readFileSync('{fixture}', 'utf8');
+const fs = require('fs');
+let code = fs.readFileSync('{fixture}', 'utf8');
+// Strip export const config line and convert export default to exports.default
+code = code.replace(/export const config = .*/g, '');
+code = code.replace(/export default /, 'exports.default = ');
 const vm = require('vm');
 const exports = {{}};
 const context = {{ AsyncLocalStorage, Response: global.Response, fetch: global.fetch, console, exports, require }};
 vm.createContext(context);
-vm.runInContext(code.replace(/export default /, 'exports.default = '), context);
+vm.runInContext(code, context);
 
 const handler = context.exports.default;
 const mockRequest = {{ headers: {{ get: (k) => k === 'req-id' ? 'test-req-42' : null }} }};
@@ -64,21 +70,27 @@ def test_multiple_fixture_executes_correctly():
     assert fixture is not None, "No multiple fixture file found under pages/api/ or app/api/"
 
     # Execute handler with mocked request and verify it returns correct id and nestedId
+    # Convert ES module syntax to CommonJS for Node.js execution
     code = f"""
 const AsyncLocalStorage = require('async_hooks').AsyncLocalStorage;
 global.AsyncLocalStorage = AsyncLocalStorage;
 global.Response = class Response {{
-  constructor(body) {{ this.body = body; }}
+  constructor(body) {{ this.body = JSON.stringify(body); }}
   json() {{ return Promise.resolve(JSON.parse(this.body)); }}
+  static json(body) {{ return new Response(body); }}
 }};
 global.fetch = async () => ({{ text: async () => 'ok' }});
 
-const code = require('fs').readFileSync('{fixture}', 'utf8');
+const fs = require('fs');
+let code = fs.readFileSync('{fixture}', 'utf8');
+// Strip export const config line and convert export default to exports.default
+code = code.replace(/export const config = .*/g, '');
+code = code.replace(/export default /, 'exports.default = ');
 const vm = require('vm');
 const exports = {{}};
 const context = {{ AsyncLocalStorage, Response: global.Response, fetch: global.fetch, console, exports, require }};
 vm.createContext(context);
-vm.runInContext(code.replace(/export default /, 'exports.default = '), context);
+vm.runInContext(code, context);
 
 const handler = context.exports.default;
 const mockRequest = {{ headers: {{ get: (k) => k === 'req-id' ? 'test-req-99' : null }} }};
@@ -352,6 +364,104 @@ def test_no_broken_imports():
                 # These are likely provided by the test harness
                 if 'e2e-utils' not in import_path and 'next-test-utils' not in import_path:
                     assert False, f"Import not resolvable: {import_path}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_e2e_utils_import():
+    """Repo test file imports from e2e-utils (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    # Both base (createNext) and gold (nextTestSetup) use e2e-utils
+    assert "from 'e2e-utils'" in code or 'from "e2e-utils"' in code, \
+        "Test file must import from e2e-utils"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_next_test_utils_import():
+    """Repo test file imports fetchViaHTTP from next-test-utils (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    # Both base and gold use fetchViaHTTP from next-test-utils
+    assert "from 'next-test-utils'" in code or 'from "next-test-utils"' in code, \
+        "Test file must import from next-test-utils"
+    assert "fetchViaHTTP" in code, \
+        "Test file must use fetchViaHTTP from next-test-utils"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_describe_block():
+    """Repo test file has a describe block (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    assert re.search(r"\bdescribe\s*\(", code), \
+        "Test file must have a describe block"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_it_test_pattern():
+    """Repo test file has it/test calls (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    # Check for it() or test() calls - both base and gold use it()
+    assert re.search(r"\b(it|test)\s*[\(\.]", code), \
+        "Test file must have it() or test() calls"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_als_pattern():
+    """Repo test or fixture files reference AsyncLocalStorage pattern (pass_to_pass)."""
+    test_code = TEST_FILE.read_text()
+    # Check in test file first, then in fixture files if they exist
+    if "AsyncLocalStorage" in test_code:
+        return
+    # Check fixture files (gold fix has fixtures)
+    for name in ["single", "multiple"]:
+        fixture = _find_fixture(name)
+        if fixture:
+            fixture_code = Path(fixture).read_text()
+            if "AsyncLocalStorage" in fixture_code:
+                return
+    assert False, "AsyncLocalStorage pattern not found in test or fixture files"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_req_id_pattern():
+    """Repo test file uses req-id header pattern (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    # Both base and gold use req-id headers
+    assert "req-id" in code, \
+        "Test file must use req-id header pattern"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_promise_all_pattern():
+    """Repo test file uses Promise.all for concurrent requests (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    # Both base and gold use Promise.all for concurrent requests
+    assert "Promise.all" in code, \
+        "Test file must use Promise.all for concurrent requests"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_edge_runtime_pattern():
+    """Repo test or fixture files reference edge runtime config (pass_to_pass)."""
+    test_code = TEST_FILE.read_text()
+    # Check in test file first, then in fixture files if they exist
+    if "runtime: 'edge'" in test_code or 'runtime: "edge"' in test_code:
+        return
+    # Check fixture files (gold fix has fixtures)
+    for name in ["single", "multiple"]:
+        fixture = _find_fixture(name)
+        if fixture:
+            fixture_code = Path(fixture).read_text()
+            if "runtime: 'edge'" in fixture_code or 'runtime: "edge"' in fixture_code:
+                return
+    assert False, "Edge runtime config not found in test or fixture files"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_no_commonjs():
+    """Repo test file does not use CommonJS require/module.exports (pass_to_pass)."""
+    code = TEST_FILE.read_text()
+    # Next.js tests should use ES modules, not CommonJS
+    assert "require(" not in code or "import " in code, \
+        "Test file should prefer ES modules over CommonJS"
 
 
 # ---------------------------------------------------------------------------

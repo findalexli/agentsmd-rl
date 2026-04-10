@@ -136,7 +136,7 @@ def test_escape_handler_order():
         "Could not find 'slash_starts_regex()' in QuotesSeen impl"
     )
 
-    # Find the general escape handler: the `if byte == b'\\'` that contains
+    # Find the general escape handler: the `if byte == b\'\\\\'` that contains
     # `self.prev_non_ws_byte = Some(byte)`.  The in_regex handler does NOT
     # set prev_non_ws_byte, so this pattern uniquely identifies the general
     # handler.
@@ -225,4 +225,33 @@ def test_repo_cargo_test_spec_tests_html_parser():
     )
     assert r.returncode == 0, (
         f"cargo test --test spec_tests failed:\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass - Repo CI: cargo fmt
+def test_repo_cargo_fmt():
+    """Repo's cargo fmt -- --check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"cargo fmt check failed:\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass - Repo CI: quotes_seen unit tests (regression for PR #9728)
+def test_repo_quotes_seen_unit_tests():
+    """QuotesSeen lexer unit tests pass - these test the modified escape handler code (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "biome_html_parser", "--lib", "--", "lexer::quotes_seen"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    output = r.stdout + r.stderr
+    assert r.returncode == 0, (
+        f"quotes_seen unit tests failed:\n{output[-2000:]}"
+    )
+    # Verify the tests actually ran (not 0 tests)
+    assert "0 passed" not in output, (
+        "Expected quotes_seen tests to run, but 0 passed"
     )

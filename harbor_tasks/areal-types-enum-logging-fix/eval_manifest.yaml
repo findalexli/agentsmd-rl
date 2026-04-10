@@ -107,21 +107,22 @@ checks:
     origin: repo_ci
     description: "Modified Python files are properly formatted (repo CI check)"
 
+  - id: test_repo_ruff_check_fix
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files have no auto-fixable lint issues via ruff check --fix"
+
+  - id: test_repo_import_sorting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files follow isort conventions via ruff import sorting"
+
 rubric:
-  - rule: "Follow existing code patterns in the same module."
-    source:
-      path: "AGENTS.md"
-      lines: "40"
-      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+  - rule: "Changes add str-compatible Enum classes (ApiType, InputName) with correct member values in types.py."
+    reference: "class ApiType(str, Enum): COMPLETION = 'completion' RESPONSE = 'response' NONE = 'none'"
 
-  - rule: "Backward compat: add fields with defaults; deprecate before removing; avoid type changes."
-    source:
-      path: "AGENTS.md"
-      lines: "162-163"
-      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+  - rule: "Changes add proper return type annotations (-> ApiType, -> InputName) on properties in types.py."
+    reference: "def api_type(self) -> ApiType: def input_name_for_logging(self) -> InputName:"
 
-  - rule: "Reward function should handle exceptions and return 0.0 on error, not raise."
-    source:
-      path: ".claude/skills/add-reward/SKILL.md"
-      lines: "175"
-      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
+  - rule: "Changes add areal.utils.logging import, create logger with PascalCase name, and replace print() with logger.info() in clevr_count_70k.py."
+    reference: "from areal.utils import logging\nlogger = logging.getLogger('CLEVR70KReward')\nlogger.info(f'completions: ...')"

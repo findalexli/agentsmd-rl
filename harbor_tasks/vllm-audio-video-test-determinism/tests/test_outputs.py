@@ -313,3 +313,60 @@ def test_repo_boolean_context_manager():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Boolean context manager check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_forbidden_imports():
+    """Repo's forbidden imports check passes on target test file (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        timeout=60,
+    )
+
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_forbidden_imports.py", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_torch_cuda():
+    """Repo's torch.cuda API check passes on target test file (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        timeout=60,
+    )
+
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_torch_cuda.py", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Torch CUDA check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_init_lazy_imports():
+    """Repo's root __init__ lazy imports check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/tools/pre_commit/check_init_lazy_imports.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Init lazy imports check failed:\n{r.stdout}\n{r.stderr}"

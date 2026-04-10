@@ -60,6 +60,181 @@ def test_routes_module_ruff_check():
     assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_routes_module_ruff_format():
+    """Ruff format check passes on gradio/routes.py (pass_to_pass)."""
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ruff"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", "gradio/routes.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_routes_imports():
+    """Gradio routes module imports successfully (pass_to_pass)."""
+    r = _run_python("""
+from gradio.routes import App, APIRouter
+print("PASS")
+""")
+    assert r.returncode == 0, f"Routes import failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_route_utils_imports():
+    """Gradio route_utils module imports successfully (pass_to_pass)."""
+    r = _run_python("""
+from gradio import route_utils
+from gradio.route_utils import get_root_url
+print("PASS")
+""")
+    assert r.returncode == 0, f"route_utils import failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_get_root_url():
+    """Repo's get_root_url unit tests pass (pass_to_pass).
+
+    Tests the core get_root_url function from route_utils which is critical
+    for the /run/ endpoint fix. Includes 8 parametrized test cases.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest", "httpx", "requests"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_routes.py::test_get_root_url", "-x", "--no-header", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"get_root_url tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_get_root_url_headers():
+    """Repo's get_root_url_headers unit tests pass (pass_to_pass).
+
+    Tests get_root_url with various X-Forwarded headers (16 parametrized cases).
+    Critical for proper root URL calculation in the /run/ endpoint context.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest", "httpx", "requests"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_routes.py::test_get_root_url_headers", "-x", "--no-header", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"get_root_url_headers tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_get_api_call_path():
+    """Repo's get_api_call_path unit tests pass (pass_to_pass).
+
+    Tests the get_api_call_path function used for API route path extraction.
+    Includes 9 parametrized test cases covering queue/join and call endpoints.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest", "httpx", "requests"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_routes.py::test_get_api_call_path_queue_join", "-x", "--no-header", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"get_api_call_path tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_get_api_call_path_generic_call():
+    """Repo's get_api_call_path_generic_call unit tests pass (pass_to_pass).
+
+    Tests get_api_call_path for the /call/ endpoints (8 parametrized cases).
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest", "httpx", "requests"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_routes.py::test_get_api_call_path_generic_call", "-x", "--no-header", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"get_api_call_path_generic_call tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_get_request_origin():
+    """Repo's get_request_origin unit tests pass (pass_to_pass).
+
+    Tests the get_request_origin function with various headers (4 parametrized cases).
+    Used for determining request origin in API endpoints.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest", "httpx", "requests"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_routes.py::test_get_request_origin_with_headers", "-x", "--no-header", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"get_request_origin tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_starts_with_protocol():
+    """Repo's starts_with_protocol unit tests pass (pass_to_pass).
+
+    Tests URL protocol detection used for security checks in route_utils.
+    Includes 16 parametrized test cases.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_routes.py::test_starts_with_protocol", "-x", "--no-header", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"starts_with_protocol tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compare_passwords_securely():
+    """Repo's compare_passwords_securely unit tests pass (pass_to_pass).
+
+    Tests constant-time password comparison from route_utils.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_routes.py::test_compare_passwords_securely", "-x", "--no-header", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"compare_passwords_securely tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_slugify():
+    """Repo's slugify unit tests pass (pass_to_pass).
+
+    Tests the slugify utility function from route_utils.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/test_routes.py::test_slugify", "-x", "--no-header", "-q"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"slugify tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

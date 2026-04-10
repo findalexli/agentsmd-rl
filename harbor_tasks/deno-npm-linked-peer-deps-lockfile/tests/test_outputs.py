@@ -166,3 +166,55 @@ def test_deno_npm_check():
         f"Cargo check failed:\nstdout:\n{r.stdout[-1500:]}\n"
         f"stderr:\n{r.stderr[-1500:]}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_lib_tests_locked():
+    """deno_npm library tests pass with --locked (CI pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_npm", "--lib", "--locked"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Locked library tests failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_clippy_locked():
+    """deno_npm passes clippy linting with --locked (CI pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--locked", "-p", "deno_npm", "--lib"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Clippy --locked failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_lockfile():
+    """deno_lockfile tests pass (related crate pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_lockfile", "--lib"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"deno_lockfile tests failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_deno_npm_all_features():
+    """deno_npm compiles with all features enabled (CI pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "deno_npm", "--all-features"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Check all-features failed:\nstdout:\n{r.stdout[-1500:]}\n"
+        f"stderr:\n{r.stderr[-1500:]}"
+    )

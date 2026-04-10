@@ -190,3 +190,47 @@ def test_resolve_server_reference_throws_error():
         "resolveServerReference must still contain its throw statement — "
         "the fix is only a type annotation change, not a logic change"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint passes on the codebase (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_markup():
+    """Flow type checking passes for markup renderer (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "markup"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_server():
+    """ReactFlightServer unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "ReactFlightServer", "-r=stable", "--env=development"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlightServer tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight():
+    """ReactFlight client unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "ReactFlight-test", "-r=stable", "--env=development"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlight tests failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"

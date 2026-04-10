@@ -3,32 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T01:55:39.233110",
-  "total_time": 1101.84,
-  "sandbox_id": "it0t4clcmg433gu1wpb24",
+  "validated_at": "2026-04-10T03:24:14.871062",
+  "total_time": 7258.58,
+  "sandbox_id": "izdi2s3reykqqcb8yzcpc",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09",
-      "ci_commands_discovered": [
-        "ruff check gradio/utils.py",
-        "python -m py_compile gradio/utils.py"
-      ],
-      "ci_commands_added": [
-        "test_repo_ruff",
-        "test_repo_utils_no_syntax_errors",
-        "test_repo_safe_join_extractable"
-      ],
-      "notes": [
-        "Discovered repo CI from .github/workflows/test-python.yml",
-        "Added ruff lint check (repo standard linter)",
-        "Added py_compile syntax check (lightweight, no deps needed)",
-        "Added safe_join extraction test (validates function integrity)",
-        "Skipped full pytest suite (requires many deps: numpy, pydantic, etc)",
-        "Skipped typecheck (ty not available in image, mypy has pre-existing errors)"
-      ]
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 250.8,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -48,36 +35,61 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
+      "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All 4 validations passed: Docker build successful, NOP test reward=0 (fail-to-pass tests correctly fail on buggy base), Gold test reward=1 (all 9 tests pass after fix applied). Rubric judge skipped - requires Anthropic API key which is not available (Fireworks key present instead). The gold solution adds `or filename.startswith(\"/\")` check to safe_join() to reject absolute paths on Windows Python 3.14 where os.path.isabs() returns False for /-prefixed paths.",
+      "notes": "All validations passed: Docker build successful, NOP test reward=0 (fail-to-pass tests correctly fail on buggy base), Gold test reward=1 (all 12 tests pass after fix), Rubric judge ICR=1.0 (gold solution follows style rule).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 96.54
+      "time": 103.85
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.66,
-      "notes": "ICR=1.00"
+      "time": 1.46,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:55:39.069150"
+      "time": 1610.12,
+      "at": "2026-04-09T20:45:18.652798"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 1101.84,
-      "at": "2026-04-09T01:55:39.233110"
+      "time": 1822.4,
+      "at": "2026-04-09T22:29:30.906262"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1822.67,
+      "at": "2026-04-09T22:29:31.070165"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7258.33,
+      "at": "2026-04-10T03:24:14.714467"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7258.58,
+      "at": "2026-04-10T03:24:14.871062"
     }
   ]
 }

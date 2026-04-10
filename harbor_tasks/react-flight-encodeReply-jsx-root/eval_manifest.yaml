@@ -68,5 +68,42 @@ checks:
     origin: repo_tests
     description: "ReactFlightDOMReply module tests pass"
 
+  - id: repo_react_flight_dom_reply_stable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactFlightDOMReply stable channel tests pass"
+
+  - id: repo_react_flight_dom_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactFlightDOM module tests pass"
+
+  - id: repo_react_flight_stable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactFlight module tests pass on stable channel"
+
 rubric:
-  []
+  - rule: "Error messages must be string literals. Dynamic parts should be appended after the literal string."
+    source:
+      path: ".eslintrc.js"
+      lines: "300-306"
+      commit: "2dd9b7cf76c31df5d7e26e5199e3c362c3e94f95"
+
+  - rule: "Use === instead of == for comparisons (null/undefined check is the only exception)."
+    source:
+      path: ".eslintrc.js"
+      lines: "233"
+      commit: "2dd9b7cf76c31df5d7e26e5199e3c362c3e94f95"
+
+  - rule: "Run yarn prettier and yarn linc before committing to ensure CI passes."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "8-12"
+      commit: "2dd9b7cf76c31df5d7e26e5199e3c362c3e94f95"
+
+  - rule: "Include Flow type annotations (@flow) in source files and run yarn flow to check types."
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "20-24"
+      commit: "2dd9b7cf76c31df5d7e26e5199e3c362c3e94f95"

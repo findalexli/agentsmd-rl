@@ -57,11 +57,31 @@ checks:
     origin: repo_tests
     description: Repo enterprise server unit tests pass
 
-  - id: test_repo_pyproject_valid
+  - id: test_repo_ruff_format
     type: pass_to_pass
     origin: repo_tests
-    description: Repo pyproject.toml is valid
+    description: Repo Ruff format check passes on enterprise/server
+
+  - id: test_repo_pyproject_valid
+    type: pass_to_pass
+    origin: static
+    description: Repo pyproject.toml is valid TOML
 
 rubric:
-  # Rubric is empty because this is a straightforward technical fix with clear behavioral tests
-  []
+  - rule: "Pre-commit hooks must be installed before making changes and must pass before pushing"
+    source:
+      path: "AGENTS.md"
+      lines: "16,18,24"
+      commit: "8f87ef59c72f1c7bae2b937164caf99731ac8e83"
+
+  - rule: "Backend Python changes must pass Ruff linting, Mypy type checks, and formatting checks"
+    source:
+      path: "AGENTS.md"
+      lines: "20,28-31"
+      commit: "8f87ef59c72f1c7bae2b937164caf99731ac8e83"
+
+  - rule: "Enterprise code should use relative imports without the 'enterprise.' prefix"
+    source:
+      path: "AGENTS.md"
+      lines: "202-205"
+      commit: "8f87ef59c72f1c7bae2b937164caf99731ac8e83"

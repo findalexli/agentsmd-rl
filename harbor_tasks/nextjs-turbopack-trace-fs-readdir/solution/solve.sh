@@ -26,7 +26,7 @@ index a3c5df54e92f2..c8747e2de23d5 100644
 +                    ),
                      WellKnownFunctionKind::PathToFileUrl => (
                          "url.pathToFileURL".to_string(),
-                         "The Node.js url.pathToFileURL method: https://url/html#urlpathtofileurlpath",
+                         "The Node.js url.pathToFileURL method: https://nodejs.org/api/url.html#urlpathtofileurlpath",
 @@ -3484,6 +3488,7 @@ pub enum WellKnownFunctionKind {
      RequireContextRequireResolve(RequireContextValue),
      Define,
@@ -148,7 +148,7 @@ index d2bc337c89d79..b0e842b02ecfd 100644
 +#[case::wildcard3("wildcard3")]
  // #[case::yarn_workspace_esm("yarn-workspace-esm")]
  // #[case::yarn_workspaces("yarn-workspaces")]
- // #[case::zeromq_node_gyp("zeromq-node_gyp")]
+ // #[case::zeromq_node_gyp("zeromq-node-gyp")]
 
 PATCH
 

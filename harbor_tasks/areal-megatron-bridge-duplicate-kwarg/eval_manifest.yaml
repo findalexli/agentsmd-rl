@@ -96,6 +96,38 @@ checks:
     origin: repo_ci
     description: "megatron_engine.py ends with a single newline"
 
+
+  - id: test_repo_yaml_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: All YAML files in the repo have valid syntax
+
+  - id: test_repo_json_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: All JSON files in the repo have valid syntax
+
+  - id: test_repo_no_private_keys
+    type: pass_to_pass
+    origin: repo_ci
+    description: No private keys detected in repo files
+
+  # Additional p2p tests added during enrichment
+  - id: test_repo_package_name_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Package name in pyproject.toml is 'areal'"
+
+  - id: test_repo_areal_init_ast_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "areal/__init__.py has valid AST structure"
+
+  - id: test_repo_project_urls_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "pyproject.toml has required project URLs"
+
 rubric:
   - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
     source:

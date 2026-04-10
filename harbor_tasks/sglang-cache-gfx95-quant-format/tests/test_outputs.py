@@ -198,6 +198,40 @@ def test_repo_file_structure():
     assert "forward" in methods, "DeepseekV2DecoderLayer.forward not found"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Repo's black format check passes on modified file (pass_to_pass)."""
+    import subprocess
+
+    try:
+        subprocess.run(["pip", "install", "-q", "black"], check=True, capture_output=True)
+    except Exception:
+        pass
+
+    r = subprocess.run(
+        ["black", "--check", "--diff", TARGET_FILE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo's isort check passes on modified file (pass_to_pass)."""
+    import subprocess
+
+    try:
+        subprocess.run(["pip", "install", "-q", "isort"], check=True, capture_output=True)
+    except Exception:
+        pass
+
+    r = subprocess.run(
+        ["isort", "--check-only", "--diff", TARGET_FILE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """Modified function is not a stub (has real logic, not just pass/return)."""

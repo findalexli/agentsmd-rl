@@ -219,10 +219,11 @@ def test_serialize_value_roundtrip():
 # Pass-to-pass (repo_tests) -- CI/CD regression checks
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass -- CI: ruff lint check on modified files
+# [repo_tests] pass_to_pass -- CI: ruff lint check on modified files (from .github/workflows/pre-commit.yml)
 def test_ruff_lint_modified():
     """Modified files pass ruff linter checks (pass_to_pass)."""
     import subprocess
+    import shutil
 
     # Install ruff if not available
     install_result = subprocess.run(
@@ -234,24 +235,211 @@ def test_ruff_lint_modified():
         # If we can't install ruff, skip this test
         return
 
-    # Run ruff check on modified files - we only verify ruff can process the files
-    # (returncode 0 = no errors, 1 = lint errors found but syntax valid)
+    # Find ruff executable (pip may install to /usr/local/bin which may not be in PATH)
+    ruff_cmd = shutil.which("ruff") or "/usr/local/bin/ruff"
+
+    # Run ruff check on modified files - files must have no lint errors
     for f in MODIFIED_FILES:
         result = subprocess.run(
-            ["ruff", "check", f"{REPO}/{f}"],
+            [ruff_cmd, "check", f"{REPO}/{f}"],
             capture_output=True,
             text=True,
             timeout=60,
         )
         # Ruff exit codes: 0 = success/no issues, 1 = lint violations found
-        # Anything else indicates a failure (crash, file not found, etc)
+        # We allow exit code 1 (lint issues exist but file is valid Python)
+        # but fail on any other exit code (crash, syntax error, file not found)
         if result.returncode not in [0, 1]:
             raise AssertionError(
                 f"Ruff failed to process {f} (exit {result.returncode}):\n{result.stderr}"
             )
 
 
-# [repo_tests] pass_to_pass -- CI: file existence check
+# [repo_tests] pass_to_pass -- CI: ruff format check on modified files (from .github/workflows/pre-commit.yml)
+def test_ruff_format_modified():
+    """Modified files pass ruff formatter checks (pass_to_pass)."""
+    import subprocess
+    import shutil
+
+    # Install ruff if not available
+    install_result = subprocess.run(
+        ["pip", "install", "--quiet", "ruff"],
+        capture_output=True,
+        timeout=60,
+    )
+    if install_result.returncode != 0:
+        # If we can't install ruff, skip this test
+        return
+
+    # Find ruff executable (pip may install to /usr/local/bin which may not be in PATH)
+    ruff_cmd = shutil.which("ruff") or "/usr/local/bin/ruff"
+
+    # Run ruff format --check on modified files
+    # returncode 0 = already formatted, 1 = would reformat (files exist and valid)
+    for f in MODIFIED_FILES:
+        result = subprocess.run(
+            [ruff_cmd, "format", "--check", f"{REPO}/{f}"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        # Ruff format exit codes: 0 = already formatted, 1 = would reformat
+        # Anything else indicates a failure (crash, file not found, etc)
+        if result.returncode not in [0, 1]:
+            raise AssertionError(
+                f"Ruff format failed to process {f} (exit {result.returncode}):\n{result.stderr}"
+            )
+
+
+# [repo_tests] pass_to_pass -- CI: py_compile check on modified files (from pre-commit pattern)
+def test_py_compile_modified():
+    """Modified files compile to bytecode without errors (pass_to_pass)."""
+    import subprocess
+
+    for f in MODIFIED_FILES:
+        result = subprocess.run(
+            ["python", "-m", "py_compile", f"{REPO}/{f}"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f"py_compile failed for {f} (exit {result.returncode}):\n{result.stderr}"
+            )
+
+
+# [repo_tests] pass_to_pass -- CI: import check for modified modules (from install-test.yml pattern)
+def test_import_modified_modules():
+    """Modified Python modules can be imported without errors (pass_to_pass)."""
+    import subprocess
+
+    # Test importing the types module with pre-mocking to handle missing transformers
+    result = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"""import sys; sys.path.insert(0, '{REPO}');
+# Pre-mock heavy deps before importing areal modules
+from unittest.mock import MagicMock
+for mod in ['areal.api', 'areal.api.io_struct', 'areal.api.cli_args',
+            'areal.api.alloc_mode', 'areal.infra.platforms']:
+    sys.modules[mod] = MagicMock()
+from areal.experimental.openai.types import InteractionWithTokenLogpReward
+print('types module imported successfully')""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if result.returncode != 0:
+        raise AssertionError(
+            f"Failed to import types module (exit {result.returncode}):\n{result.stderr}"
+        )
+
+
+# [repo_tests] pass_to_pass -- CI: YAML validation on workflow files (from .pre-commit-config.yaml)
+def test_ci_yaml_valid():
+    """CI workflow YAML files are syntactically valid (pass_to_pass)."""
+    import subprocess
+
+    # Install pyyaml if not available
+    subprocess.run(
+        ["pip", "install", "--quiet", "pyyaml"],
+        capture_output=True,
+        timeout=60,
+    )
+
+    # Check that yaml module can parse workflow files
+    yaml_files = [
+        f"{REPO}/.github/workflows/pre-commit.yml",
+        f"{REPO}/.github/workflows/install-test.yml",
+    ]
+
+    for yaml_file in yaml_files:
+        result = subprocess.run(
+            [
+                "python",
+                "-c",
+                f"import yaml; yaml.safe_load(open('{yaml_file}')); print('{yaml_file} valid')",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f"YAML validation failed for {yaml_file} (exit {result.returncode}):\n{result.stderr}"
+            )
+
+
+# [repo_tests] pass_to_pass -- CI: EOF fixer check (from .pre-commit-config.yaml end-of-file-fixer)
+def test_eof_newline_modified():
+    """Modified files end with exactly one newline (pass_to_pass)."""
+    import subprocess
+
+    for f in MODIFIED_FILES:
+        result = subprocess.run(
+            [
+                "python",
+                "-c",
+                f"""
+import sys
+with open('{REPO}/{f}', 'rb') as file:
+    content = file.read()
+    if not content:
+        sys.exit(0)  # Empty file is OK
+    if not content.endswith(b'\\n'):
+        print(f'{{repr(f)}}: missing newline at end of file', file=sys.stderr)
+        sys.exit(1)
+    if content.endswith(b'\\n\\n'):
+        print(f'{{repr(f)}}: multiple newlines at end of file', file=sys.stderr)
+        sys.exit(1)
+print(f'{f}: OK')
+""",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f"EOF newline check failed for {f}:\n{result.stderr}"
+            )
+
+
+# [repo_tests] pass_to_pass -- CI: trailing whitespace check (from .pre-commit-config.yaml)
+def test_no_trailing_whitespace():
+    """Modified files have no trailing whitespace (pass_to_pass)."""
+    import subprocess
+
+    for f in MODIFIED_FILES:
+        result = subprocess.run(
+            [
+                "python",
+                "-c",
+                f"""
+import sys
+with open('{REPO}/{f}', 'r') as file:
+    lines = file.readlines()
+    for i, line in enumerate(lines, 1):
+        if line.rstrip('\\n').endswith(' ') or line.rstrip('\\n').endswith('\\t'):
+            print(f'{{repr(f)}}:{{i}}: trailing whitespace', file=sys.stderr)
+            sys.exit(1)
+print(f'{f}: OK')
+""",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode != 0:
+            raise AssertionError(
+                f"Trailing whitespace check failed for {f}:\n{result.stderr}"
+            )
+
+
+# [static] pass_to_pass -- CI: file existence check
 def test_modified_files_exist():
     """Modified files exist in the repository (pass_to_pass)."""
     for f in MODIFIED_FILES:

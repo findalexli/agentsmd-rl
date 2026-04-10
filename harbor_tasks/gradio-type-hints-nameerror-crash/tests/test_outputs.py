@@ -42,15 +42,15 @@ def _install_test_deps() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — repo CI/CD checks that must pass before AND after
+# Pass-to-pass (repo_tests) - repo CI/CD checks that must pass before AND after
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_check():
-    """Repo's ruff linter passes on gradio/utils.py (pass_to_pass)."""
+    """Repo's ruff linter passes on gradio/utils.py and test/test_utils.py (pass_to_pass)."""
     _install_ruff()
     r = subprocess.run(
-        ["python", "-m", "ruff", "check", "gradio/utils.py"],
+        ["python", "-m", "ruff", "check", "gradio/utils.py", "test/test_utils.py"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -61,10 +61,10 @@ def test_repo_ruff_check():
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_format():
-    """Repo's ruff format check passes on gradio/utils.py (pass_to_pass)."""
+    """Repo's ruff format check passes on gradio/utils.py and test/test_utils.py (pass_to_pass)."""
     _install_ruff()
     r = subprocess.run(
-        ["python", "-m", "ruff", "format", "--check", "gradio/utils.py"],
+        ["python", "-m", "ruff", "format", "--check", "gradio/utils.py", "test/test_utils.py"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -87,8 +87,36 @@ def test_repo_unit_tests():
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-1000:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_check_function_inputs_match():
+    """Repo's TestCheckFunctionInputsMatch unit tests pass (pass_to_pass)."""
+    _install_test_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestCheckFunctionInputsMatch", "-v"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check function inputs match tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_function_params():
+    """Repo's TestFunctionParams unit tests pass (pass_to_pass)."""
+    _install_test_deps()
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestFunctionParams", "-v"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Function params tests failed:\n{r.stderr[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -101,7 +129,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -132,7 +160,7 @@ def test_nameerror_returns_empty_dict():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression + anti-stub
+# Pass-to-pass (pr_diff) - regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass

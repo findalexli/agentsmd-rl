@@ -139,6 +139,36 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff linter passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        "pip install ruff -q 2>/dev/null && ruff check tools/convert_torch_dist_to_hf.py",
+        cwd=REPO, capture_output=True, text=True, timeout=120, shell=True,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Black formatter check passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        "pip install black -q 2>/dev/null && black --check tools/convert_torch_dist_to_hf.py",
+        cwd=REPO, capture_output=True, text=True, timeout=120, shell=True,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """isort import order check passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        "pip install isort -q 2>/dev/null && isort --check-only --profile=black tools/convert_torch_dist_to_hf.py",
+        cwd=REPO, capture_output=True, text=True, timeout=120, shell=True,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_plugin_generate_contracts():
     """Plugin generate contracts pass (pass_to_pass)."""
     deps = "pytest numpy packaging pyyaml omegaconf tqdm httpx pybase64 pylatexenc sympy aiohttp pillow"

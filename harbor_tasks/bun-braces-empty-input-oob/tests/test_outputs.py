@@ -240,13 +240,14 @@ def test_repo_oxlint_brace_test():
         run: bun lint  # which runs oxlint
     """
     r = subprocess.run(
-        ["npx", "oxlint", "--deny-warnings", "test/js/bun/shell/brace.test.ts"],
+        ["npx", "oxlint", "test/js/bun/shell/brace.test.ts"],
         capture_output=True,
         text=True,
         timeout=120,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"oxlint failed on brace.test.ts:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    # Check for "0 errors" in output since --deny-warnings causes exit 1 on warnings
+    assert "0 errors" in r.stdout, f"oxlint found errors in brace.test.ts:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass — JS lint on shell lex tests
@@ -257,16 +258,118 @@ def test_repo_oxlint_shell_lex():
     From .github/workflows/lint.yml: bun lint (oxlint on src/js and test)
     """
     r = subprocess.run(
-        ["npx", "oxlint", "--deny-warnings", "test/js/bun/shell/lex.test.ts"],
+        ["npx", "oxlint", "test/js/bun/shell/lex.test.ts"],
         capture_output=True,
         text=True,
         timeout=120,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"oxlint failed on lex.test.ts:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    # Check for "0 errors" in output since --deny-warnings causes exit 1 on warnings
+    assert "0 errors" in r.stdout, f"oxlint found errors in lex.test.ts:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
-# [repo_tests] pass_to_pass — git repository integrity
+# [repo_tests] pass_to_pass — JS lint on shell bunshell tests
+def test_repo_oxlint_shell_bunshell():
+    """Repo's oxlint passes on shell/bunshell.test.ts (pass_to_pass).
+
+    Tests that the main shell test file has no lint errors.
+    From .github/workflows/lint.yml: bun lint (oxlint on src/js and test)
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "test/js/bun/shell/bunshell.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Check for "0 errors" in output since --deny-warnings causes exit 1 on warnings
+    assert "0 errors" in r.stdout, f"oxlint found errors in bunshell.test.ts:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — JS lint on shell parse tests
+def test_repo_oxlint_shell_parse():
+    """Repo's oxlint passes on shell/parse.test.ts (pass_to_pass).
+
+    Tests that the shell parser test file has no lint errors.
+    From .github/workflows/lint.yml: bun lint (oxlint on src/js and test)
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "test/js/bun/shell/parse.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Check for "0 errors" in output since --deny-warnings causes exit 1 on warnings
+    assert "0 errors" in r.stdout, f"oxlint found errors in parse.test.ts:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Prettier format check on shell test files
+def test_repo_prettier_shell_tests():
+    """Repo's shell test files are properly formatted (pass_to_pass).
+
+    From .github/workflows/format.yml:
+      - bun run prettier (checks formatting on scripts, packages, src, test)
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "test/js/bun/shell/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"prettier check failed on shell tests:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [static] pass_to_pass — Banned words check for Zig files
+def test_repo_banned_words_zig():
+    """Modified Zig files do not contain banned words (pass_to_pass).
+
+    From test/internal/ban-words.test.ts:
+      - std.debug.assert: Use bun.assert instead
+      - std.debug.print: Don't let this be committed
+      - std.log: Don't let this be committed
+      - std.fs: Prefer bun.sys + bun.FD instead of std.fs
+      - std.posix: Prefer bun.sys APIs
+      - std.os: Prefer bun.sys APIs
+      - std.process: Use bun.spawn instead
+    """
+    # Get diff to see what Zig files were modified
+    diff = _get_diff()
+    if not diff:
+        # No changes yet - check the base file itself for banned words
+        content = _src()
+    else:
+        # Check only added lines in Zig files
+        content = "\n".join(_added_lines(diff))
+
+    # Banned words/patterns from ban-words.test.ts that apply to Zig
+    banned_patterns = [
+        ("std.debug.assert", "Use bun.assert instead"),
+        ("std.debug.print", "Don't let this be committed"),
+        ("std.debug.dumpStackTrace", "Use bun.handleErrorReturnTrace instead"),
+        ("std.log", "Don't let this be committed"),
+        ("std.fs.Dir", "Prefer bun.sys + bun.FD instead of std.fs"),
+        ("std.fs.cwd", "Prefer bun.FD.cwd()"),
+        ("std.fs.File", "Prefer bun.sys + bun.FD instead of std.fs"),
+        ("std.fs.openFileAbsolute", "Prefer bun.sys + bun.FD instead of std.fs"),
+        (".stdFile()", "Prefer bun.sys + bun.FD instead of std.fs.File"),
+        (".stdDir()", "Prefer bun.sys + bun.FD instead of std.fs.File"),
+        ("std.posix", "Prefer bun.sys APIs instead of std.posix"),
+        ("std.os.", "Prefer bun.sys APIs instead of std.os"),
+        ("std.process", "Use bun.spawn instead of std.process"),
+        ("allocator.ptr ==", "Allocator pointer comparison is undefined behavior"),
+        ("allocator.ptr !=", "Allocator pointer comparison is undefined behavior"),
+        ("alloc.ptr ==", "Allocator pointer comparison is undefined behavior"),
+        ("alloc.ptr !=", "Allocator pointer comparison is undefined behavior"),
+        ("usingnamespace", "Zig 0.15 will remove usingnamespace"),
+    ]
+
+    for pattern, reason in banned_patterns:
+        assert pattern not in content, f"Banned word '{pattern}' found: {reason}"
+
+
+# [static] pass_to_pass — git repository integrity
 def test_repo_git_status_clean():
     """Git repository has clean status at base commit (pass_to_pass).
 
@@ -346,3 +449,12 @@ def test_no_catch_outofmemory_pattern():
         assert "catch bun.outOfMemory()" not in line, (
             f"Use bun.handleOom() not catch bun.outOfMemory(): {line.strip()}"
         )
+
+
+# [repo_tests] pass_to_pass — TypeScript typecheck
+def test_repo_typecheck():
+    """TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "-p", "typescript", "tsc", "--noEmit"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"

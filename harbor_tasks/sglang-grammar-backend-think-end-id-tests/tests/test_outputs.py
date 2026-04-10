@@ -301,3 +301,39 @@ def test_repo_black_prod_file():
         timeout=60,
     )
     assert r.returncode == 0, f"Black check failed on production file:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_test_file():
+    """Test file must pass isort import sorting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["isort", "--check-only", TEST_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"isort check failed on test file:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_prod_file():
+    """Production file must pass isort import sorting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["isort", "--check-only", PROD_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"isort check failed on production file:\n{r.stdout}{r.stderr}"

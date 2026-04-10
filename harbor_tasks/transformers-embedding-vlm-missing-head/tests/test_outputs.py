@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 import sys
 from pathlib import Path
 
@@ -216,3 +217,187 @@ def test_colpali_no_conversion_mapping():
         "colpali should not have a conversion mapping entry — "
         "with base model, no vlm->vlm.model renaming is needed"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests (pass_to_pass, repo_tests) — subprocess.run() commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "ruff",
+            "check",
+            "src/transformers/models/colpali/modeling_colpali.py",
+            "src/transformers/models/colqwen2/modeling_colqwen2.py",
+            "src/transformers/models/colmodernvbert/modeling_colmodernvbert.py",
+            "src/transformers/conversion_mapping.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "ruff",
+            "format",
+            "--check",
+            "src/transformers/models/colpali/modeling_colpali.py",
+            "src/transformers/models/colqwen2/modeling_colqwen2.py",
+            "src/transformers/models/colmodernvbert/modeling_colmodernvbert.py",
+            "src/transformers/conversion_mapping.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unittest_colpali():
+    """ColPali unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "datasets", "parameterized", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python",
+            "-m",
+            "unittest",
+            "tests.models.colpali.test_modeling_colpali.ColPaliForRetrievalModelTest.test_can_be_initialized_on_meta",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ColPali unit test failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unittest_colqwen2():
+    """ColQwen2 unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "datasets", "parameterized", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python",
+            "-m",
+            "unittest",
+            "tests.models.colqwen2.test_modeling_colqwen2.ColQwen2ForRetrievalModelTest.test_can_be_initialized_on_meta",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ColQwen2 unit test failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unittest_colmodernvbert():
+    """ColModernVBert unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "datasets", "parameterized", "Pillow", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python",
+            "-m",
+            "unittest",
+            "tests.models.colmodernvbert.test_modeling_colmodernvbert.ColModernVBertForRetrievalModelTest.test_can_be_initialized_on_meta",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ColModernVBert unit test failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_missing_keys_colpali():
+    """ColPali missing keys test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "datasets", "parameterized", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python",
+            "-m",
+            "unittest",
+            "tests.models.colpali.test_modeling_colpali.ColPaliForRetrievalModelTest.test_correct_missing_keys",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ColPali missing keys test failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_missing_keys_colqwen2():
+    """ColQwen2 missing keys test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "datasets", "parameterized", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python",
+            "-m",
+            "unittest",
+            "tests.models.colqwen2.test_modeling_colqwen2.ColQwen2ForRetrievalModelTest.test_correct_missing_keys",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ColQwen2 missing keys test failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

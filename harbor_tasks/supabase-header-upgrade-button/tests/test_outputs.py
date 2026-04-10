@@ -362,3 +362,63 @@ def test_repo_layout_header_tests():
         cwd=f"{REPO}/apps/studio",
     )
     assert r.returncode == 0, f"LayoutHeader tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_navigation_bar_utils():
+    """Repo's unit tests for NavigationBar utils pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "NavigationBar.utils"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"NavigationBar utils tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_telemetry_first_touch_store():
+    """Repo's telemetry-first-touch-store tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "telemetry-first-touch-store"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/packages/common",
+    )
+    assert r.returncode == 0, f"Telemetry first touch store tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_posthog_tests():
+    """Repo's posthog tracking tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "posthog"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Posthog tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_local_version_popover():
+    """Repo's LocalVersionPopover tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "LocalVersionPopover"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"LocalVersionPopover tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_studio_unit_tests():
+    """Repo's studio unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "test"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Studio unit tests failed:\n{r.stderr[-500:]}"

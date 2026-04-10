@@ -182,6 +182,87 @@ def test_upgrade_runner_syntax():
         f"Bash syntax check failed for upgrade_runner.sh:\n{result.stderr}"
 
 
+def test_create_tpcds_shellcheck():
+    """Verify create_tpcds.sh passes shellcheck (pass_to_pass)."""
+    script_file = f"{REPO}/tests/docker_scripts/create_tpcds.sh"
+    result = subprocess.run(
+        ['shellcheck', '-x', script_file],
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    # Allow warnings/info (exit code <= 1)
+    assert result.returncode <= 1, \
+        f"Shellcheck found errors in create_tpcds.sh:\n{result.stdout}\n{result.stderr}"
+
+
+def test_create_tpcds_syntax():
+    """Verify create_tpcds.sh bash syntax is valid (pass_to_pass)."""
+    script_file = f"{REPO}/tests/docker_scripts/create_tpcds.sh"
+    result = subprocess.run(
+        ['bash', '-n', script_file],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    assert result.returncode == 0, \
+        f"Bash syntax check failed for create_tpcds.sh:\n{result.stderr}"
+
+
+def test_create_tpch_shellcheck():
+    """Verify create_tpch.sh passes shellcheck (pass_to_pass)."""
+    script_file = f"{REPO}/tests/docker_scripts/create_tpch.sh"
+    result = subprocess.run(
+        ['shellcheck', '-x', script_file],
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    # Allow warnings/info (exit code <= 1)
+    assert result.returncode <= 1, \
+        f"Shellcheck found errors in create_tpch.sh:\n{result.stdout}\n{result.stderr}"
+
+
+def test_create_tpch_syntax():
+    """Verify create_tpch.sh bash syntax is valid (pass_to_pass)."""
+    script_file = f"{REPO}/tests/docker_scripts/create_tpch.sh"
+    result = subprocess.run(
+        ['bash', '-n', script_file],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    assert result.returncode == 0, \
+        f"Bash syntax check failed for create_tpch.sh:\n{result.stderr}"
+
+
+def test_attach_gdb_lib_shellcheck():
+    """Verify attach_gdb.lib passes shellcheck (pass_to_pass)."""
+    lib_file = f"{REPO}/tests/docker_scripts/attach_gdb.lib"
+    result = subprocess.run(
+        ['shellcheck', '-x', lib_file],
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    # Allow warnings/info (exit code <= 1)
+    assert result.returncode <= 1, \
+        f"Shellcheck found errors in attach_gdb.lib:\n{result.stdout}\n{result.stderr}"
+
+
+def test_attach_gdb_lib_syntax():
+    """Verify attach_gdb.lib bash syntax is valid (pass_to_pass)."""
+    lib_file = f"{REPO}/tests/docker_scripts/attach_gdb.lib"
+    result = subprocess.run(
+        ['bash', '-n', lib_file],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    assert result.returncode == 0, \
+        f"Bash syntax check failed for attach_gdb.lib:\n{result.stderr}"
+
+
 def test_no_date_based_randomization_anywhere():
     """Ensure no other date-based randomization patterns remain in the file."""
     with open(TARGET_FILE, 'r') as f:

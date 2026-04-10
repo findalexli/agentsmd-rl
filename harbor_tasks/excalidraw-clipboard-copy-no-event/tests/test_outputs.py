@@ -134,52 +134,84 @@ def test_scss_success_color():
 def test_repo_clipboard_ts_syntax():
     """Repo's clipboard.ts has valid TypeScript syntax (pass_to_pass).
 
-    Uses prettier to parse the file - will fail on syntax errors but not formatting.
+    Uses prettier --parser typescript to validate the file can be parsed.
+    This catches syntax errors without requiring full type checking.
     """
-    # Use prettier in write mode to /dev/null to validate syntax without checking formatting
-    # Prettier exits with error on parse errors but succeeds on formatting-only issues
     r = subprocess.run(
-        ["bash", "-c", f"npx prettier --no-config --parser typescript {CLIPBOARD_TS} > /dev/null 2>&1"],
+        ["npx", "prettier", "--no-config", "--parser", "typescript", str(CLIPBOARD_TS)],
         capture_output=True,
         text=True,
         timeout=60,
         cwd=REPO,
     )
-    # If prettier can parse the file (even if not formatted), it succeeds
-    assert r.returncode == 0, f"clipboard.ts has TypeScript syntax errors that prevent parsing"
+    assert r.returncode == 0, f"clipboard.ts has TypeScript syntax errors"
+
+
+def test_repo_clipboard_test_ts_syntax():
+    """Repo's clipboard.test.ts has valid TypeScript syntax (pass_to_pass).
+
+    Uses prettier --parser typescript to validate test file syntax.
+    This is a repo CI gate - the test file must be syntactically valid.
+    """
+    test_file = REPO / "packages" / "excalidraw" / "clipboard.test.ts"
+    r = subprocess.run(
+        ["npx", "prettier", "--no-config", "--parser", "typescript", str(test_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"clipboard.test.ts has TypeScript syntax errors"
 
 
 def test_repo_filledbutton_scss_syntax():
     """Repo's FilledButton.scss has valid SCSS syntax (pass_to_pass).
 
-    Uses prettier to parse the file - will fail on syntax errors but not formatting.
+    Uses prettier --parser scss to validate the file can be parsed.
+    This catches syntax errors without requiring full SCSS compilation.
     """
-    # Use prettier to parse without format checking
     r = subprocess.run(
-        ["bash", "-c", f"npx prettier --no-config --parser scss {BUTTON_SCSS} > /dev/null 2>&1"],
+        ["npx", "prettier", "--no-config", "--parser", "scss", str(BUTTON_SCSS)],
         capture_output=True,
         text=True,
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"FilledButton.scss has SCSS syntax errors that prevent parsing"
+    assert r.returncode == 0, f"FilledButton.scss has SCSS syntax errors"
 
 
-def test_repo_clipboard_test_exists():
-    """Repo's clipboard.test.ts exists and is accessible (pass_to_pass)."""
+def test_repo_clipboard_test_syntax():
+    """Repo's clipboard.test.ts has valid TypeScript syntax (pass_to_pass).
+
+    Uses prettier --parser typescript to validate the file can be parsed.
+    This catches syntax errors without requiring full type checking.
+    """
     test_file = REPO / "packages" / "excalidraw" / "clipboard.test.ts"
-    assert test_file.exists(), "clipboard.test.ts should exist in the repo"
+    r = subprocess.run(
+        ["npx", "prettier", "--no-config", "--parser", "typescript", str(test_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"clipboard.test.ts has TypeScript syntax errors"
 
-    # Verify it has content
-    content = test_file.read_text()
-    assert len(content) > 0, "clipboard.test.ts should not be empty"
-    assert "parseClipboard" in content, "clipboard.test.ts should contain parseClipboard tests"
 
+def test_repo_constants_ts_syntax():
+    """Repo's constants.ts has valid TypeScript syntax (pass_to_pass).
 
-def test_repo_constants_ts_exists():
-    """Repo's constants.ts exists and is accessible (pass_to_pass)."""
+    The constants.ts file must be syntactically valid TypeScript.
+    Uses prettier to validate without requiring full type check.
+    """
     constants_file = REPO / "packages" / "common" / "src" / "constants.ts"
-    assert constants_file.exists(), "constants.ts should exist in the repo"
+    r = subprocess.run(
+        ["npx", "prettier", "--no-config", "--parser", "typescript", str(constants_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"constants.ts has TypeScript syntax errors"
 
 
 if __name__ == "__main__":

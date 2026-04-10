@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T06:17:22.959728",
-  "total_time": 6548.47,
-  "sandbox_id": "i5x1hngayfoa95u1g2ror",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T22:04:09.162897",
+  "total_time": 300.64,
+  "sandbox_id": "",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "Failed after 5 E2B rate-limit retries",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -18,60 +18,45 @@
       "notes": "All 4 validation checks passed: (1) Docker build succeeded, (2) NOP test reward=0 (4 f2p tests correctly failed on base commit), (3) Gold test reward=1 (all 11 tests passed after gold fix), (4) Rubric judge ICR=1.0 (previous run). Task is fully validated.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 93.84
+      "time": 88.12
     },
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T08:16:00Z",
-      "ci_commands_found": [
-        "npx oxlint --format=github (from .github/workflows/lint.yml)",
-        "npx prettier --check (from .github/workflows/format.yml)",
-        "tsc --noEmit (from package.json typecheck script)"
-      ],
-      "tests_added": [
-        "test_repo_prettier_format \u2014 verifies bake files match repo's prettier style",
-        "test_repo_oxlint \u2014 verifies bake files pass oxlint correctness rules",
-        "test_bake_harness_syntax \u2014 verifies TypeScript syntax is valid"
-      ],
-      "notes": "Added 3 p2p tests from repo CI/CD. Docker build succeeded. All 7 p2p tests pass on base commit. 4 f2p tests correctly fail before gold patch."
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 12.24,
+      "notes": ""
     },
     "p2p_enrich": {
-      "status": "ok",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 113.09,
-      "notes": ""
+      "notes": "Verified 7 p2p tests pass on base commit: test_syntax_check, test_valid_response_loads, test_valid_response_with_charset, test_no_dynamic_import_in_client_fixture, test_repo_prettier_format, test_repo_oxlint, test_bake_harness_syntax. Tests cover CI checks from format.yml (prettier) and lint.yml (oxlint)."
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
+      "model": "opus",
+      "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.68,
-      "notes": "ICR=1.00"
+      "time": 1.24,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:21:58.505318"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 552.11,
-      "at": "2026-04-09T01:21:58.679352"
+      "time": 67.05,
+      "at": "2026-04-09T14:58:58.531947"
     },
     {
       "verdict": "pass",
@@ -79,23 +64,31 @@
       "gold": 1.0,
       "backend": "fireworks",
       "time": 120,
-      "at": "2026-04-09T13:20:00"
+      "at": "2026-04-10T00:00:00"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T06:17:22.799266"
+      "time": 419.7,
+      "at": "2026-04-09T20:25:28.411027"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 6548.47,
-      "at": "2026-04-09T06:17:22.959728"
+      "time": 419.95,
+      "at": "2026-04-09T20:25:28.574907"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 300.64,
+      "at": "2026-04-09T22:04:09.162897"
     }
   ]
 }

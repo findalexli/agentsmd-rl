@@ -207,6 +207,48 @@ def test_disable_kinds_tests_pass():
         )
 
 
+def test_go_vet():
+    """
+    P2P: Repo code passes go vet static analysis on config and hugolib packages (pass_to_pass).
+    """
+    env = os.environ.copy()
+    env["GOTOOLCHAIN"] = "auto"
+    result = subprocess.run(
+        ["go", "vet", "./config/...", "./hugolib/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=env,
+    )
+
+    if result.returncode != 0:
+        raise AssertionError(
+            f"go vet failed:\nstdout: {result.stdout[-500:]}\nstderr: {result.stderr[-500:]}"
+        )
+
+
+def test_taxonomy_tests_pass():
+    """
+    P2P: All taxonomy tests in hugolib pass (pass_to_pass).
+    """
+    env = os.environ.copy()
+    env["GOTOOLCHAIN"] = "auto"
+    result = subprocess.run(
+        ["go", "test", "-v", "-run", "^TestTaxonomies", "./hugolib/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=env,
+    )
+
+    if result.returncode != 0:
+        raise AssertionError(
+            f"Taxonomy tests failed:\nstdout: {result.stdout[-1000:]}\nstderr: {result.stderr[-500:]}"
+        )
+
+
 def test_taxonomy_parsing_no_panic():
     """
     F2P: Verify Hugo doesn't panic or hang with empty taxonomy values.
@@ -264,3 +306,107 @@ Hello.
 
         # We allow non-zero exit codes (config issues etc), but not hangs/panics
         # The test passes if we got here without timeout
+
+
+
+
+def test_hugolib_config_loading():
+    """
+    P2P: Hugo config loading tests pass (pass_to_pass).
+    Tests the config loading functionality that exercises the code path
+    where the taxonomies decoder fix is applied.
+    """
+    import subprocess
+    import os
+    REPO = "/workspace/hugo"
+
+    env = os.environ.copy()
+    env["GOTOOLCHAIN"] = "auto"
+    result = subprocess.run(
+        ["go", "test", "-v", "-run", "^TestLoadConfig$", "./hugolib/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=env,
+    )
+
+    if result.returncode != 0:
+        raise AssertionError(
+            f"Config loading tests failed:\\nstdout: {result.stdout[-1000:]}\\nstderr: {result.stderr[-500:]}"
+        )
+
+
+def test_hugolib_cascade_taxonomies():
+    """
+    P2P: Cascade taxonomies config tests pass (pass_to_pass).
+    Tests cascade configuration with taxonomies, exercising the config
+    parsing code paths related to the fix.
+    """
+    import subprocess
+    import os
+    REPO = "/workspace/hugo"
+
+    env = os.environ.copy()
+    env["GOTOOLCHAIN"] = "auto"
+    result = subprocess.run(
+        ["go", "test", "-v", "-run", "^TestCascadeBuildOptionsTaxonomies$", "./hugolib/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=env,
+    )
+
+    if result.returncode != 0:
+        raise AssertionError(
+            f"Cascade taxonomies tests failed:\\nstdout: {result.stdout[-1000:]}\\nstderr: {result.stderr[-500:]}"
+        )
+
+def test_allconfig_package():
+    """
+    P2P: Config allconfig package explicitly passes (pass_to_pass).
+    """
+    import subprocess
+    import os
+    REPO = "/workspace/hugo"
+
+    env = os.environ.copy()
+    env["GOTOOLCHAIN"] = "auto"
+    result = subprocess.run(
+        ["go", "test", "-v", "./config/allconfig/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=env,
+    )
+
+    if result.returncode != 0:
+        raise AssertionError(
+            f"Config allconfig tests failed:\nstdout: {result.stdout[-1000:]}\nstderr: {result.stderr[-500:]}"
+        )
+
+
+def test_staticcheck_allconfig():
+    """
+    P2P: staticcheck passes for the modified allconfig package.
+    """
+    import subprocess
+    import os
+    REPO = "/workspace/hugo"
+
+    env = os.environ.copy()
+    env["GOTOOLCHAIN"] = "auto"
+    
+    result = subprocess.run(
+        ["go", "run", "honnef.co/go/tools/cmd/staticcheck@latest", "./config/allconfig/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env=env,
+    )
+    
+    if result.returncode != 0:
+        raise AssertionError(f"staticcheck failed:\nstdout: {result.stdout[-500:]}\nstderr: {result.stderr[-500:]}")

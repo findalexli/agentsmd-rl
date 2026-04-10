@@ -227,7 +227,10 @@ def test_no_trailing_whitespace(svelte_src):
 # - pnpm ts:check: fails due to pre-existing TypeScript errors in cs.js
 # - pnpm test:run: requires additional build steps and playwright setup
 # - pnpm --filter @gradio/client test: requires browser testing infrastructure
-# Only pnpm format:check and client build pass on the base commit.
+# Working p2p tests discovered from .github/workflows/tests-js.yml:
+# - pnpm format:check: Prettier formatting check (CI gate)
+# - pnpm --filter @gradio/client build: Client package build (CI gate)
+# - pnpm --filter @gradio/client test:node: Client unit tests in node mode (CI gate)
 
 def _setup_pnpm():
     """Install pnpm and dependencies (shared setup for repo CI tests)."""
@@ -262,3 +265,20 @@ def test_repo_client_build():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+def test_repo_client_tests_node():
+    """Repo's client library unit tests pass in node mode (pass_to_pass)."""
+    _setup_pnpm()
+    # Build client first (required for tests)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+    # Run client tests in node mode (from CI workflow tests-js.yml)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "test:node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client node tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+

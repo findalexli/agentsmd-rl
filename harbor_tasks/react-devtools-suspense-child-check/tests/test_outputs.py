@@ -25,11 +25,10 @@ def test_syntax_check():
     """store.js must be syntactically valid JavaScript."""
     r = subprocess.run(
         ["node", "--check", STORE],
-        capture_output=True,
-        timeout=30,
+        capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, (
-        f"Syntax error in store.js:\n{r.stderr.decode()}"
+        f"Syntax error in store.js:\n{r.stderr}"
     )
 
 

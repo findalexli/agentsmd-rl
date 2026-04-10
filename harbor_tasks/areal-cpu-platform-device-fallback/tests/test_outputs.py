@@ -532,3 +532,154 @@ def test_new_cpu_methods_have_return_types():
         assert found[method] is not None, (
             f"CpuPlatform.{method}() has no return type annotation (AGENTS.md:99)"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repository CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Ruff linting passes on modified files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff==0.14.9", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "check"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff formatting check passes on modified files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff==0.14.9", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Modified files compile as valid Python (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stderr[-500:]}"
+# [repo_tests] pass_to_pass
+# [repo_tests] pass_to_pass
+def test_repo_ast_parse():
+    """All modified files parse as valid AST (pass_to_pass)."""
+    for f in MODIFIED_FILES:
+        r = subprocess.run(
+            ["python3", "-c", f"import ast; ast.parse(open('{f}').read())"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"AST parsing failed for {f}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_all():
+    """Ruff linting passes on the entire areal package (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff==0.14.9", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "check", "areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting on areal/ failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_all():
+    """Ruff formatting check passes on the entire areal package (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff==0.14.9", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check on areal/ failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_yaml():
+    """Pre-commit YAML check passes on all files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit YAML check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_json():
+    """Pre-commit JSON check passes on all files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["pre-commit", "run", "check-json", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit JSON check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_eof():
+    """Pre-commit end-of-file fixer passes on all files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit EOF fixer failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_whitespace():
+    """Pre-commit trailing whitespace check passes on all files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit trailing whitespace check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_large_files():
+    """Pre-commit check for large files passes (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["pre-commit", "run", "check-added-large-files", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit large files check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_private_keys():
+    """Pre-commit check for private keys passes (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["pre-commit", "run", "detect-private-key", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit private keys check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_nbstripout():
+    """Pre-commit notebook stripout check passes on all files (pass_to_pass)."""
+    subprocess.run(["pip", "install", "pre-commit", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["pre-commit", "run", "nbstripout---Strip-notebook-output", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Return code 0 means passed, but pre-commit may return non-zero for other reasons
+    # We only care that it doesn't find issues with notebooks
+    if r.returncode != 0:
+        # Check if the output indicates actual failure vs just "no files to check"
+        if "Failed" in r.stdout or "Failed" in r.stderr:
+            assert False, f"Pre-commit nbstripout check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+    # If we get here, it passed (or no relevant files to check)

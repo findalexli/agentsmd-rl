@@ -65,6 +65,63 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that run actual repo commands
+# ---------------------------------------------------------------------------
+
+def test_repo_prettier_format():
+    """Repo code formatting passes Prettier check (pass_to_pass)."""
+    # Check formatting on the modified files
+    modified_files = [
+        "packages/opencode/src/cli/cmd/tui/component/dialog-model.tsx",
+        "packages/opencode/src/cli/cmd/tui/component/dialog-variant.tsx",
+        "packages/opencode/src/cli/cmd/tui/routes/session/index.tsx",
+    ]
+    for file in modified_files:
+        r = subprocess.run(
+            ["npx", "prettier", "--check", f"{REPO}/{file}"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Prettier check failed for {file}:\n{r.stderr[-500:]}"
+
+
+def test_repo_node_syntax_check():
+    """Modified TSX files have balanced braces via Node.js parser (pass_to_pass)."""
+    # Use Node.js to verify brace balance (same logic as syntax_check but via subprocess)
+    r = _run_node("""
+import { readFileSync } from 'fs';
+
+const files = [
+  'packages/opencode/src/cli/cmd/tui/component/dialog-model.tsx',
+  'packages/opencode/src/cli/cmd/tui/component/dialog-variant.tsx',
+  'packages/opencode/src/cli/cmd/tui/routes/session/index.tsx',
+];
+
+for (const file of files) {
+  const code = readFileSync(file, 'utf8');
+  let depth = 0;
+  for (const ch of code) {
+    if (ch === '{') depth++;
+    else if (ch === '}') depth--;
+    if (depth < 0) {
+      console.error(`Unbalanced braces in ${file}: depth went negative`);
+      process.exit(1);
+    }
+  }
+  if (depth !== 0) {
+    console.error(`Unbalanced braces in ${file}: final depth=${depth}`);
+    process.exit(1);
+  }
+}
+console.log('PASS');
+""")
+    assert r.returncode == 0, f"Node syntax check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via Node subprocess
 # ---------------------------------------------------------------------------
 

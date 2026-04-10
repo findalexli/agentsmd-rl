@@ -84,11 +84,11 @@ checks:
       lines: "202"
       commit: "dfeab6396380f27be96ccb7cb642b57a5a25ef58"
 
-  # Repo CI/CD checks (pass_to_pass) - AST-based static analysis
+  # Repo CI/CD checks (pass_to_pass) - AST-based static analysis matching pre-commit/CI
   - id: test_repo_test_classes_follow_naming
     type: pass_to_pass
     origin: repo_tests
-    description: "All test classes follow Test* naming convention (matches ruff/pre-commit check)"
+    description: "All test classes follow Test* naming convention (matches ruff/pre-commit)"
 
   - id: test_repo_no_bare_excepts
     type: pass_to_pass
@@ -104,6 +104,31 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: "pyproject.toml is valid TOML (basic syntax check for repo's main config)"
+
+  - id: test_repo_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace in test files (matches pre-commit trailing-whitespace hook)"
+
+  - id: test_repo_end_of_file_newline
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test files end with single newline (matches pre-commit end-of-file-fixer hook)"
+
+  - id: test_repo_no_tabs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No tab characters in test files (matches ruff W191)"
+
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All test files compile to valid Python bytecode (matches py_compile pre-commit check)"
+
+  - id: test_repo_no_merge_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No merge conflict markers in test files (standard pre-commit check)"
 
 rubric:
   - rule: "Follow existing code patterns in the same module"

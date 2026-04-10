@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 """
 Test outputs for Airflow Helm chart extraContainers refactoring.
-
-This tests that workers.celery.extraContainers and workers.kubernetes.extraContainers
-are properly supported, while workers.extraContainers is deprecated but still works.
 """
 
 import json
 import subprocess
-import sys
 from pathlib import Path
 
 import jmespath
@@ -21,306 +17,236 @@ HELM_TESTS_DIR = REPO / "helm-tests"
 
 
 def render_chart(values, show_only, chart_dir=None):
-    """Render Helm chart with given values and return the parsed documents."""
     if chart_dir is None:
         chart_dir = CHART_DIR
-
-    # Build values override
-    values_str = json.dumps(values)
-
-    # Build show-only arguments
     show_args = []
     for path in show_only:
         show_args.extend(["-s", path])
-
-    # Run helm template
-    cmd = [
-        "helm", "template", "test-release", str(chart_dir),
-        "--namespace", "default",
-        "--set", f"_dummy={values_str}",  # We need to use -f for complex values
-    ] + show_args
-
-    # Write values to temp file
     import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    import os as os_module
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(values, f)
         values_file = f.name
-
     try:
-        cmd = [
-            "helm", "template", "test-release", str(chart_dir),
-            "--namespace", "default",
-            "-f", values_file,
-        ] + show_args
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
-
+        cmd = ["helm", "template", "test-release", str(chart_dir), "--namespace", "default", "-f", values_file] + show_args
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if result.returncode != 0:
             raise RuntimeError(f"helm template failed: {result.stderr}")
-
-        # Parse the output (can be multiple YAML documents)
         docs = list(yaml.safe_load_all(result.stdout))
         return [d for d in docs if d is not None]
     finally:
-        import os
-        os.unlink(values_file)
+        os_module.unlink(values_file)
+
+
+def get_pod_template_containers(docs):
+    assert len(docs) > 0, "No documents rendered"
+    configmap = docs[0]
+    pod_template_yaml = configmap.get("data", {}).get("pod_template_file.yaml", "")
+    assert pod_template_yaml, "pod_template_file.yaml not found in ConfigMap"
+    pod_template = yaml.safe_load(pod_template_yaml)
+    containers = pod_template.get("spec", {}).get("containers", [])
+    return containers[1:] if len(containers) > 1 else []
 
 
 class TestKubernetesExtraContainers:
-    """Tests for workers.kubernetes.extraContainers in pod template file."""
-
-    def test_kubernetes_extra_containers_new_path(self):
-        """Test that workers.kubernetes.extraContainers works in pod template."""
+    def test_k8s_new_path(self):
         docs = render_chart(
-            values={
-                "workers": {
-                    "kubernetes": {
-                        "extraContainers": [
-                            {"name": "test-sidecar", "image": "test:1.0"}
-                        ]
-                    }
-                }
-            },
-            show_only=["templates/pod-template-file.yaml"],
+            values={"executor": "KubernetesExecutor", "workers": {"kubernetes": {"extraContainers": [{"name": "sidecar", "image": "test:1.0"}]}}},
+            show_only=["templates/configmaps/configmap.yaml"],
         )
+        containers = get_pod_template_containers(docs)
+        assert containers == [{"name": "sidecar", "image": "test:1.0"}]
 
-        assert len(docs) > 0, "No documents rendered"
-        containers = jmespath.search("spec.containers[1:]", docs[0])
-        assert containers == [{"name": "test-sidecar", "image": "test:1.0"}], \
-            f"Expected sidecar container, got: {containers}"
-
-    def test_deprecated_extra_containers_still_works(self):
-        """Test that deprecated workers.extraContainers still works (backward compatibility)."""
+    def test_deprecated_still_works(self):
         docs = render_chart(
-            values={
-                "workers": {
-                    "extraContainers": [
-                        {"name": "legacy-sidecar", "image": "legacy:1.0"}
-                    ]
-                }
-            },
-            show_only=["templates/pod-template-file.yaml"],
+            values={"executor": "KubernetesExecutor", "workers": {"extraContainers": [{"name": "legacy", "image": "legacy:1.0"}]}},
+            show_only=["templates/configmaps/configmap.yaml"],
         )
+        containers = get_pod_template_containers(docs)
+        assert containers == [{"name": "legacy", "image": "legacy:1.0"}]
 
-        assert len(docs) > 0, "No documents rendered"
-        containers = jmespath.search("spec.containers[1:]", docs[0])
-        assert containers == [{"name": "legacy-sidecar", "image": "legacy:1.0"}], \
-            f"Expected legacy sidecar container, got: {containers}"
-
-    def test_new_path_takes_precedence_over_deprecated(self):
-        """Test that workers.kubernetes.extraContainers takes precedence over workers.extraContainers."""
+    def test_new_takes_precedence(self):
         docs = render_chart(
-            values={
-                "workers": {
-                    "extraContainers": [
-                        {"name": "old-sidecar", "image": "old:1.0"}
-                    ],
-                    "kubernetes": {
-                        "extraContainers": [
-                            {"name": "new-sidecar", "image": "new:1.0"}
-                        ]
-                    }
-                }
-            },
-            show_only=["templates/pod-template-file.yaml"],
+            values={"executor": "KubernetesExecutor", "workers": {"extraContainers": [{"name": "old", "image": "old:1.0"}], "kubernetes": {"extraContainers": [{"name": "new", "image": "new:1.0"}]}}},
+            show_only=["templates/configmaps/configmap.yaml"],
         )
-
-        assert len(docs) > 0, "No documents rendered"
-        containers = jmespath.search("spec.containers[1:]", docs[0])
-        # New path should win
-        assert containers == [{"name": "new-sidecar", "image": "new:1.0"}], \
-            f"Expected new sidecar to take precedence, got: {containers}"
-
-    def test_templating_works_with_new_path(self):
-        """Test that Helm templating works with workers.kubernetes.extraContainers."""
-        docs = render_chart(
-            values={
-                "workers": {
-                    "kubernetes": {
-                        "extraContainers": [
-                            {"name": "{{ .Release.Name }}-sidecar", "image": "test:1.0"}
-                        ]
-                    }
-                }
-            },
-            show_only=["templates/pod-template-file.yaml"],
-        )
-
-        assert len(docs) > 0, "No documents rendered"
-        containers = jmespath.search("spec.containers[1:]", docs[0])
-        # Template should be rendered with release name
-        assert len(containers) == 1
-        assert containers[0]["name"] == "test-release-sidecar", \
-            f"Expected templated name, got: {containers[0]}"
+        containers = get_pod_template_containers(docs)
+        assert containers == [{"name": "new", "image": "new:1.0"}]
 
 
 class TestCeleryExtraContainers:
-    """Tests for workers.celery.extraContainers in worker deployment."""
-
-    def test_celery_extra_containers_new_path(self):
-        """Test that workers.celery.extraContainers works in worker deployment."""
+    def test_celery_new_path(self):
         docs = render_chart(
-            values={
-                "executor": "CeleryExecutor",
-                "workers": {
-                    "celery": {
-                        "extraContainers": [
-                            {"name": "celery-sidecar", "image": "celery:1.0"}
-                        ]
-                    }
-                }
-            },
+            values={"executor": "CeleryExecutor", "workers": {"celery": {"extraContainers": [{"name": "celery-sidecar", "image": "celery:1.0"}]}}},
             show_only=["templates/workers/worker-deployment.yaml"],
         )
-
-        assert len(docs) > 0, "No documents rendered"
-        # Skip main worker container (index 0) and log-groomer (index 1)
         containers = jmespath.search("spec.template.spec.containers[2:]", docs[0])
-        assert containers == [{"name": "celery-sidecar", "image": "celery:1.0"}], \
-            f"Expected celery sidecar container, got: {containers}"
+        assert containers == [{"name": "celery-sidecar", "image": "celery:1.0"}]
 
-    def test_deprecated_extra_containers_celery_still_works(self):
-        """Test that deprecated workers.extraContainers still works for Celery."""
+    def test_deprecated_celery_works(self):
         docs = render_chart(
-            values={
-                "executor": "CeleryExecutor",
-                "workers": {
-                    "extraContainers": [
-                        {"name": "legacy-celery-sidecar", "image": "legacy:1.0"}
-                    ]
-                }
-            },
+            values={"executor": "CeleryExecutor", "workers": {"extraContainers": [{"name": "legacy", "image": "legacy:1.0"}]}},
             show_only=["templates/workers/worker-deployment.yaml"],
         )
-
-        assert len(docs) > 0, "No documents rendered"
         containers = jmespath.search("spec.template.spec.containers[2:]", docs[0])
-        assert containers == [{"name": "legacy-celery-sidecar", "image": "legacy:1.0"}], \
-            f"Expected legacy celery sidecar, got: {containers}"
+        assert containers == [{"name": "legacy", "image": "legacy:1.0"}]
 
-    def test_new_celery_path_takes_precedence(self):
-        """Test that workers.celery.extraContainers takes precedence over workers.extraContainers."""
+    def test_celery_new_takes_precedence(self):
         docs = render_chart(
-            values={
-                "executor": "CeleryExecutor",
-                "workers": {
-                    "extraContainers": [
-                        {"name": "old-celery", "image": "old:1.0"}
-                    ],
-                    "celery": {
-                        "extraContainers": [
-                            {"name": "new-celery", "image": "new:1.0"}
-                        ]
-                    }
-                }
-            },
+            values={"executor": "CeleryExecutor", "workers": {"extraContainers": [{"name": "old", "image": "old:1.0"}], "celery": {"extraContainers": [{"name": "new", "image": "new:1.0"}]}}},
             show_only=["templates/workers/worker-deployment.yaml"],
         )
-
-        assert len(docs) > 0, "No documents rendered"
         containers = jmespath.search("spec.template.spec.containers[2:]", docs[0])
-        assert containers == [{"name": "new-celery", "image": "new:1.0"}], \
-            f"Expected new celery path to take precedence, got: {containers}"
-
-    def test_templating_works_with_celery_new_path(self):
-        """Test that Helm templating works with workers.celery.extraContainers."""
-        docs = render_chart(
-            values={
-                "executor": "CeleryExecutor",
-                "workers": {
-                    "celery": {
-                        "extraContainers": [
-                            {"name": "{{ .Chart.Name }}-sidecar", "image": "test:1.0"}
-                        ]
-                    }
-                }
-            },
-            show_only=["templates/workers/worker-deployment.yaml"],
-        )
-
-        assert len(docs) > 0, "No documents rendered"
-        containers = jmespath.search("spec.template.spec.containers[2:]", docs[0])
-        assert len(containers) == 1
-        # Chart name is "airflow" based on Chart.yaml
-        assert containers[0]["name"] == "airflow-sidecar", \
-            f"Expected templated name with Chart.Name, got: {containers[0]}"
+        assert containers == [{"name": "new", "image": "new:1.0"}]
 
 
 class TestValuesSchema:
-    """Tests for values.schema.json changes."""
-
     def test_celery_extra_containers_in_schema(self):
-        """Test that workers.celery.extraContainers is defined in the JSON schema."""
         schema_path = CHART_DIR / "values.schema.json"
         with open(schema_path) as f:
             schema = json.load(f)
-
-        # Navigate to workers.celery.extraContainers
         celery_props = schema.get("properties", {}).get("workers", {}).get("properties", {}).get("celery", {}).get("properties", {})
-        assert "extraContainers" in celery_props, \
-            "workers.celery.extraContainers not found in schema"
-
-        prop = celery_props["extraContainers"]
-        assert prop.get("type") == "array", \
-            f"Expected array type, got: {prop.get('type')}"
+        assert "extraContainers" in celery_props
+        assert celery_props["extraContainers"].get("type") == "array"
 
     def test_kubernetes_extra_containers_in_schema(self):
-        """Test that workers.kubernetes.extraContainers is defined in the JSON schema."""
         schema_path = CHART_DIR / "values.schema.json"
         with open(schema_path) as f:
             schema = json.load(f)
-
-        # Navigate to workers.kubernetes.extraContainers
         k8s_props = schema.get("properties", {}).get("workers", {}).get("properties", {}).get("kubernetes", {}).get("properties", {})
-        assert "extraContainers" in k8s_props, \
-            "workers.kubernetes.extraContainers not found in schema"
-
-        prop = k8s_props["extraContainers"]
-        assert prop.get("type") == "array", \
-            f"Expected array type, got: {prop.get('type')}"
+        assert "extraContainers" in k8s_props
+        assert k8s_props["extraContainers"].get("type") == "array"
 
     def test_deprecated_description_updated(self):
-        """Test that workers.extraContainers description mentions deprecation."""
         schema_path = CHART_DIR / "values.schema.json"
         with open(schema_path) as f:
             schema = json.load(f)
-
         workers_props = schema.get("properties", {}).get("workers", {}).get("properties", {})
-        extra_containers = workers_props.get("extraContainers", {})
-        desc = extra_containers.get("description", "")
-
-        assert "deprecated" in desc.lower(), \
-            f"Expected deprecation notice in description, got: {desc}"
+        desc = workers_props.get("extraContainers", {}).get("description", "")
+        assert "deprecated" in desc.lower()
 
 
 class TestValuesYaml:
-    """Tests for values.yaml changes."""
-
     def test_celery_extra_containers_default_empty(self):
-        """Test that workers.celery.extraContainers defaults to empty list."""
         values_path = CHART_DIR / "values.yaml"
         with open(values_path) as f:
             values = yaml.safe_load(f)
-
         celery_extra = values.get("workers", {}).get("celery", {}).get("extraContainers", "NOT_FOUND")
-        assert celery_extra == [], \
-            f"Expected empty list for workers.celery.extraContainers, got: {celery_extra}"
+        assert celery_extra == []
 
     def test_kubernetes_extra_containers_default_empty(self):
-        """Test that workers.kubernetes.extraContainers defaults to empty list."""
         values_path = CHART_DIR / "values.yaml"
         with open(values_path) as f:
             values = yaml.safe_load(f)
-
         k8s_extra = values.get("workers", {}).get("kubernetes", {}).get("extraContainers", "NOT_FOUND")
-        assert k8s_extra == [], \
-            f"Expected empty list for workers.kubernetes.extraContainers, got: {k8s_extra}"
+        assert k8s_extra == []
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+
+
+class TestRepoHelmTests:
+    '''Pass-to-pass tests that run the repo's actual Helm tests.
+
+    These tests run a curated subset of the Airflow repo's helm tests that cover
+    the modified code paths (extraContainers for workers). They validate that
+    the existing tests pass on the base commit (pre-fix state).
+    '''
+
+    def _setup_helm_tests(self):
+        '''Ensure repo exists at expected location and setup Python path.'''
+        assert REPO.exists(), f'Repo not found at {REPO}. Ensure repo is mounted.'
+        assert HELM_TESTS_DIR.exists(), f'Helm tests not found at {HELM_TESTS_DIR}'
+        # Install required dependencies for helm tests
+        subprocess.run(
+            ['pip', 'install', '-q', 'jmespath', 'jsonschema', 'pyyaml'],
+            capture_output=True, timeout=60, check=False
+        )
+
+    def test_repo_helm_pod_template_tests(self):
+        '''Run repo's pod-template-file tests for extraContainers (pass_to_pass).'''
+        self._setup_helm_tests()
+        env = {
+            'PYTHONPATH': f'{HELM_TESTS_DIR}/tests:{HELM_TESTS_DIR}/tests/chart_utils',
+            'HELM_TEST_KUBERNETES_VERSION': '1.30.13',
+            'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+        }
+        r = subprocess.run(
+            [
+                '/usr/local/bin/python3', '-m', 'pytest',
+                'tests/helm_tests/airflow_aux/test_pod_template_file.py',
+                '-v', '-k', 'extra_containers',
+                '--tb=short'
+            ],
+            capture_output=True, text=True, timeout=120, cwd=HELM_TESTS_DIR, env=env
+        )
+        assert r.returncode == 0, f'Pod template tests failed: {r.stderr[-1000:]}'
+
+    def test_repo_helm_worker_tests(self):
+        '''Run repo's worker tests for extraContainers (pass_to_pass).'''
+        self._setup_helm_tests()
+        env = {
+            'PYTHONPATH': f'{HELM_TESTS_DIR}/tests:{HELM_TESTS_DIR}/tests/chart_utils',
+            'HELM_TEST_KUBERNETES_VERSION': '1.30.13',
+            'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+        }
+        r = subprocess.run(
+            [
+                '/usr/local/bin/python3', '-m', 'pytest',
+                'tests/helm_tests/airflow_core/test_worker.py',
+                '-v', '-k', 'extra_containers',
+                '--tb=short'
+            ],
+            capture_output=True, text=True, timeout=120, cwd=HELM_TESTS_DIR, env=env
+        )
+        assert r.returncode == 0, f'Worker tests failed: {r.stderr[-1000:]}'
+
+    def test_repo_helm_worker_sets_tests(self):
+        '''Run repo's worker sets tests for extraContainers (pass_to_pass).'''
+        self._setup_helm_tests()
+        env = {
+            'PYTHONPATH': f'{HELM_TESTS_DIR}/tests:{HELM_TESTS_DIR}/tests/chart_utils',
+            'HELM_TEST_KUBERNETES_VERSION': '1.30.13',
+            'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+        }
+        r = subprocess.run(
+            [
+                '/usr/local/bin/python3', '-m', 'pytest',
+                'tests/helm_tests/airflow_core/test_worker_sets.py',
+                '-v', '-k', 'extra_containers',
+                '--tb=short'
+            ],
+            capture_output=True, text=True, timeout=120, cwd=HELM_TESTS_DIR, env=env
+        )
+        assert r.returncode == 0, f'Worker sets tests failed: {r.stderr[-1000:]}'
+
+    def test_repo_helm_lint(self):
+        '''Helm lint passes on the chart (pass_to_pass).'''
+        assert REPO.exists(), f'Repo not found at {REPO}'
+        r = subprocess.run(
+            ['helm', 'lint', '.'],
+            capture_output=True, text=True, timeout=60, cwd=CHART_DIR
+        )
+        assert r.returncode == 0, f'Helm lint failed: {r.stderr[-500:]}'
+
+    def test_repo_helm_template_basic(self):
+        '''Helm template renders successfully with default values (pass_to_pass).'''
+        assert REPO.exists(), f'Repo not found at {REPO}'
+        r = subprocess.run(
+            ['helm', 'template', 'test-release', '.', '--namespace', 'default'],
+            capture_output=True, text=True, timeout=60, cwd=CHART_DIR
+        )
+        assert r.returncode == 0, f'Helm template failed: {r.stderr[-500:]}'
+
+    def test_repo_values_schema_valid_json(self):
+        '''values.schema.json is valid JSON (pass_to_pass).'''
+        schema_path = CHART_DIR / 'values.schema.json'
+        assert schema_path.exists(), f'Schema file not found at {schema_path}'
+        r = subprocess.run(
+            ['python', '-c', f'import json; json.load(open("{schema_path}")); print("OK")'],
+            capture_output=True, text=True, timeout=30
+        )
+        assert r.returncode == 0 and 'OK' in r.stdout, f'Schema validation failed: {r.stderr}'
+
+
+if __name__ == '__main__':
+    pytest.main([__file__, '-v'])

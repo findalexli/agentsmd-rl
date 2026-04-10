@@ -110,6 +110,74 @@ def test_interpolate_values_change():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo code quality check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", str(TARGET)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_perceiver_unit():
+    """Perceiver model unit tests pass via subprocess (pass_to_pass)."""
+    test_code = '''
+import torch
+from transformers.models.perceiver.modeling_perceiver import (
+    PerceiverTrainablePositionEncoding,
+)
+from transformers import PerceiverConfig
+from transformers.models.perceiver.modeling_perceiver import PerceiverModel
+
+# Test 1: PerceiverTrainablePositionEncoding creation
+pe = PerceiverTrainablePositionEncoding(index_dims=(4, 4), num_channels=32)
+assert pe.position_embeddings.shape == (16, 32), f"Expected (16, 32), got {pe.position_embeddings.shape}"
+
+# Test 2: Test forward method works
+pe.eval()
+with torch.no_grad():
+    output = pe(batch_size=1)
+    assert output.shape == (1, 16, 32), f"Expected (1, 16, 32), got {output.shape}"
+
+# Test 3: Test that config-based PerceiverModel instantiation works
+config = PerceiverConfig(
+    d_model=64,
+    num_latents=10,
+    d_latents=64,
+    num_blocks=1,
+    num_self_attends_per_block=2,
+    num_cross_attention_heads=1,
+    num_self_attention_heads=1,
+    cross_attention_widening_factor=1,
+    self_attention_widening_factor=1,
+)
+
+model = PerceiverModel(config)
+assert model is not None, "Model creation failed"
+
+# Test 4: Forward pass on PerceiverModel works
+model.eval()
+with torch.no_grad():
+    inputs = torch.randn(1, 5, 64)
+    outputs = model(inputs=inputs)
+    assert outputs.last_hidden_state is not None
+
+print("All perceiver unit tests passed!")
+'''
+    r = subprocess.run(
+        ["python", "-c", test_code],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_perceiver_imports():
     """Core perceiver classes import successfully."""
     from transformers.models.perceiver.modeling_perceiver import (

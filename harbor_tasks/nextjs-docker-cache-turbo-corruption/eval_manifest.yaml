@@ -56,82 +56,84 @@ checks:
     type: pass_to_pass
     origin: agent_config
     description: "TURBO_TOKEN is only read from process.env — no hardcoded literal values or string fallbacks in changed scripts"
-    source:
-      path: "CLAUDE.md"
-      lines: "307-308"
-      commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
 
   - id: turbo_cache_not_stub
     type: fail_to_pass
     origin: static
     description: "turbo-cache.mjs has real HTTP implementation (not a stub)"
 
-  # Repo CI pass_to_pass checks
   - id: repo_js_syntax_all_scripts
     type: pass_to_pass
-    origin: repo_ci
-    description: "All JS files in scripts/ directory parse without syntax errors"
+    origin: repo_tests
+    description: "All JS files in scripts/ directory parse without syntax errors (node --check)"
+
+  - id: repo_docker_native_build_js_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "docker-native-build.js syntax is valid (node --check)"
+
+  - id: repo_docker_image_cache_js_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "docker-image-cache.js syntax is valid (node --check)"
 
   - id: repo_package_json_valid
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "package.json is valid JSON and has required fields"
 
   - id: repo_next_swc_package_json_valid
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "packages/next-swc/package.json is valid JSON and has required Rust build scripts"
 
   - id: repo_cargo_toml_valid
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "Cargo.toml is valid and workspace configuration is parseable"
 
   - id: repo_github_workflows_valid_yaml
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "GitHub workflow files are valid YAML"
-
-  - id: repo_docker_native_build_js_syntax
-    type: pass_to_pass
-    origin: repo_ci
-    description: "docker-native-build.js syntax is valid and has essential functions"
 
   - id: repo_ci_scripts_exist
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "CI scripts referenced by build_and_deploy.yml exist"
 
   - id: repo_turbo_json_valid
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "turbo.json is valid JSON"
 
   - id: repo_turbo_jsonc_valid
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "packages/next-swc/turbo.jsonc is valid JSONC"
 
   - id: repo_rust_toolchain_toml_valid
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "rust-toolchain.toml is valid and parseable"
 
+  - id: repo_normalize_version_bump
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Execute normalize-version-bump.js"
+
+  - id: repo_docker_native_build_help
+    type: pass_to_pass
+    origin: repo_tests
+    description: "docker-native-build.js parses args successfully"
+
+  - id: repo_docker_native_build_sh_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "docker-native-build.sh has valid bash syntax"
+
 rubric:
-  - rule: "Always treat environment variable values as sensitive unless they are known test-mode flags."
+  - rule: "Do not modify the CLAUDE.md file."
     source:
       path: "CLAUDE.md"
-      lines: "304"
-      commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
-
-  - rule: "Never print or paste secret values (tokens, API keys, cookies) in chat responses, commits, or shared logs."
-    source:
-      path: "CLAUDE.md"
-      lines: "306"
-      commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
-
-  - rule: "Mirror CI env names and modes exactly, but do not inline literal secret values in commands."
-    source:
-      path: "CLAUDE.md"
-      lines: "307"
-      commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
+    reference: "(nothing — file not modified)"

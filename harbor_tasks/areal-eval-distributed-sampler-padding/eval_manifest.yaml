@@ -47,6 +47,21 @@ checks:
     origin: repo_tests
     description: "Repo's ruff formatting passes on dataloader.py"
 
+  - id: repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dataloader.py compiles as valid Python bytecode"
+
+  - id: no_trailing_whitespace
+    type: pass_to_pass
+    origin: static
+    description: "dataloader.py has no trailing whitespace"
+
+  - id: eof_newline
+    type: pass_to_pass
+    origin: static
+    description: "dataloader.py ends with a newline"
+
   - id: no_wildcard_imports
     type: pass_to_pass
     origin: agent_config
@@ -75,13 +90,13 @@ checks:
       commit: "fdca82dc09e76052fd6ee2fe22afcdc5ff044743"
 
 rubric:
-  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
+  - rule: "EvalDistributedSampler has explicit type annotations on __init__ parameters (dataset, num_replicas, rank, shuffle, seed, drop_last)"
     source:
-      path: "AGENTS.md"
-      lines: "81"
-      commit: "fdca82dc09e76052fd6ee2fe22afcdc5ff044743"
-  - rule: "Explicit type hints; reuse areal/api/cli_args.py dataclasses; heavy optional deps inside functions."
+      path: "areal/utils/dataloader.py"
+      lines: "77-85"
+      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
+  - rule: "EvalDistributedSampler correctly handles total_size calculation without padding when drop_last=False"
     source:
-      path: "AGENTS.md"
-      lines: "100-101"
-      commit: "fdca82dc09e76052fd6ee2fe22afcdc5ff044743"
+      path: "areal/utils/dataloader.py"
+      lines: "88-91"
+      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"

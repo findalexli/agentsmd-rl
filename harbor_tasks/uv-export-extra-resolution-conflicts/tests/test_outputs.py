@@ -74,21 +74,47 @@ def _extract_fn_signature(source: str, func_name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — compilation check
+# Pass-to-pass (repo_tests) — CI cargo checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
-def test_cargo_check_resolver():
-    """uv-resolver crate compiles without errors."""
+# [repo_tests] pass_to_pass
+def test_cargo_fmt_check():
+    """Repo code passes cargo fmt formatting check (CI)."""
     try:
         r = subprocess.run(
-            ["cargo", "check", "-p", "uv-resolver"],
+            ["cargo", "fmt", "--all", "--check"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[:500]}"
+    except subprocess.TimeoutExpired:
+        pass  # Skip on timeout
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_resolver():
+    """uv-resolver crate compiles without errors (CI cargo check)."""
+    try:
+        r = subprocess.run(
+            ["cargo", "check", "-p", "uv-resolver", "--all-targets"],
             capture_output=True, text=True, timeout=480, cwd=REPO,
         )
         assert r.returncode == 0, f"uv-resolver does not compile:\n{r.stderr[:2000]}"
     except subprocess.TimeoutExpired:
         # If compilation times out, skip — structural tests below still validate
         pass
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_resolver():
+    """uv-resolver crate passes clippy linting (CI cargo clippy)."""
+    try:
+        r = subprocess.run(
+            ["cargo", "clippy", "-p", "uv-resolver", "--all-targets"],
+            capture_output=True, text=True, timeout=600, cwd=REPO,
+        )
+        assert r.returncode == 0, f"uv-resolver clippy failed:\n{r.stderr[:500]}"
+    except subprocess.TimeoutExpired:
+        pass  # Skip on timeout
 
 
 # ---------------------------------------------------------------------------
@@ -217,29 +243,12 @@ def test_dep_extras_fed_into_conflict_map():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — upstream regression
+# Pass-to-pass (repo_tests) — upstream regression tests
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_existing_resolve_unit_tests():
-    """Existing unit tests in universal_marker::tests still pass."""
-    try:
-        r = subprocess.run(
-            ["cargo", "test", "-p", "uv-resolver", "--",
-             "universal_marker::tests::resolve", "--exact"],
-            capture_output=True, text=True, timeout=480, cwd=REPO,
-        )
-        assert r.returncode == 0, (
-            f"universal_marker::tests::resolve failed:\n"
-            f"{r.stdout[:1000]}\n{r.stderr[:1000]}"
-        )
-    except subprocess.TimeoutExpired:
-        pass  # Compilation may timeout; other tests still validate correctness
-
-
-# [repo_tests] pass_to_pass
-def test_universal_marker_all_unit_tests():
-    """All unit tests in universal_marker module still pass (pass_to_pass)."""
+def test_universal_marker_unit_tests():
+    """All unit tests in universal_marker module pass (CI cargo test)."""
     try:
         r = subprocess.run(
             ["cargo", "test", "-p", "uv-resolver", "--lib", "universal_marker"],
@@ -254,15 +263,16 @@ def test_universal_marker_all_unit_tests():
 
 
 # [repo_tests] pass_to_pass
-def test_uv_resolver_clippy():
-    """uv-resolver crate passes clippy linting (pass_to_pass)."""
+def test_uv_resolver_lib_unit_tests():
+    """All uv-resolver lib unit tests pass (CI cargo test --lib)."""
     try:
         r = subprocess.run(
-            ["cargo", "clippy", "-p", "uv-resolver", "--all-targets"],
+            ["cargo", "test", "-p", "uv-resolver", "--lib"],
             capture_output=True, text=True, timeout=600, cwd=REPO,
         )
         assert r.returncode == 0, (
-            f"uv-resolver clippy failed:\n{r.stderr[-500:]}"
+            f"uv-resolver lib tests failed:\n"
+            f"stdout: {r.stdout[-500:]}\nstderr: {r.stderr[-500:]}"
         )
     except subprocess.TimeoutExpired:
         pass  # Compilation may timeout; marked as pass

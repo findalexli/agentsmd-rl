@@ -9,6 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Source file exists with TurboPersistence struct and core structure
+- id: test_repo_module_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All declared Rust module files exist in turbo-persistence crate
+- id: test_repo_source_integrity
+  type: pass_to_pass
+  origin: static
+  description: Source files are not truncated/corrupted (line count check)
+- id: test_repo_no_tabs
+  type: pass_to_pass
+  origin: static
+  description: Source files use spaces for indentation (Rust style convention)
+- id: test_repo_valid_utf8
+  type: pass_to_pass
+  origin: static
+  description: Source files are valid UTF-8 encoding
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and has expected base commit
 - id: struct_has_atomic_bool
   type: fail_to_pass
   origin: pr_diff
@@ -22,14 +42,6 @@ checks:
   origin: pr_diff
   description: AtomicBool is updated at both meta_files mutation points (load_directory
     and commit)
-- id: test_repo_module_files_exist
-  type: pass_to_pass
-  origin: repo_tests
-  description: All declared Rust module files exist in turbo-persistence crate
-- id: test_repo_source_integrity
-  type: pass_to_pass
-  origin: repo_tests
-  description: Source files are not truncated/corrupted (line count check)
 rubric:
 - rule: cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt
   source:

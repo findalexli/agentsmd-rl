@@ -1,7 +1,7 @@
 FROM node:22-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux python3 \
+    git curl ca-certificates build-essential tmux python3 python3-pytest python3-yaml python3-pip python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git init /repo && \
@@ -15,3 +15,4 @@ RUN git init /repo && \
 RUN mkdir -p /logs/verifier
 
 WORKDIR /repo
+RUN pip3 install --break-system-packages pytest pytest-json-ctrf

@@ -85,4 +85,46 @@ checks:
     origin: repo_tests
     description: "Repo's main transformers package imports without errors"
 
-rubric: []
+  - id: test_repo_check_dummies
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's check_dummies.py utility passes"
+
+  - id: test_repo_check_inits
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's check_inits.py utility passes"
+
+  - id: test_repo_image_processing_backends_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: "image_processing_backends module imports without errors"
+
+  - id: test_repo_divide_to_patches_importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "divide_to_patches function is importable from image_transforms"
+
+  - id: test_repo_modified_files_parse_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files parse without AST errors"
+
+rubric:
+  - rule: "Module aliases for backward compatibility should be registered in sys.modules with __file__ explicitly set to avoid triggering circular imports via inspect operations."
+    source:
+      path: "CLAUDE.md"
+      lines: "36-40"
+      commit: "e6ed96c7e93a6408a151e3177793212b02b8bb53"
+
+  - rule: "When re-exporting functions or classes for backward compatibility, use # noqa: F401 with a comment explaining the purpose."
+    source:
+      path: "CLAUDE.md"
+      lines: "2"
+      commit: "e6ed96c7e93a6408a151e3177793212b02b8bb53"
+
+  - rule: "Always add specific error codes to # type: ignore comments (e.g., # type: ignore[call-arg]), never use bare # type: ignore."
+    source:
+      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
+      lines: "180-186"
+      commit: "e6ed96c7e93a6408a151e3177793212b02b8bb53"

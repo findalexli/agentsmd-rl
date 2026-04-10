@@ -72,7 +72,7 @@ checks:
     origin: repo_tests
     description: "Repository is at expected base commit"
 
-  # New CI/CD p2p tests added during enrichment
+  # CI/CD p2p tests
   - id: repo_cargo_toml_dependencies
     type: pass_to_pass
     origin: repo_tests
@@ -128,6 +128,151 @@ checks:
     origin: repo_tests
     description: "Crate lib.rs files export the expected modules"
 
+  # New CI/CD configuration validation tests (p2p enrichment)
+  # These validate the repo is ready for cargo check/clippy/test
+  - id: repo_workspace_cargo_toml_syntax
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "Root Cargo.toml has valid workspace syntax for cargo check"
+
+  - id: repo_next_api_cargo_toml_complete
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "next-api Cargo.toml has complete configuration for cargo build"
+
+  - id: repo_next_napi_bindings_cargo_toml_complete
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "next-napi-bindings Cargo.toml has complete configuration for cargo build"
+
+  - id: repo_rust_toolchain_config_valid
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "rust-toolchain.toml has valid configuration for CI"
+
+  - id: repo_rustfmt_config_complete
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: ".rustfmt.toml has complete formatting configuration for cargo fmt"
+
+  - id: repo_cargo_lock_exists
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "Cargo.lock exists for reproducible builds"
+
+  - id: repo_git_configured
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "Git repository is properly configured for CI operations"
+
+  - id: repo_modified_files_have_valid_rust_structure
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "Modified Rust files have structure valid for cargo check/clippy"
+
+  - id: repo_ci_workflows_referenced
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "CI workflow files exist and reference Rust checks"
+
+  - id: repo_whole_app_module_graphs_valid_signature
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "Existing whole_app_module_graphs method has valid signature"
+
+  - id: repo_get_all_compilation_issues_valid_signature
+    type: pass_to_pass
+    origin: repo_ci_validations
+    description: "get_all_compilation_issues_inner_operation has valid signature"
+
+
+  # New subprocess-based repo_tests for CI command validation (p2p enrichment)
+
+
+  - id: test_repo_cargo_toml_python_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Root Cargo.toml is valid TOML via Python parser"
+
+  - id: test_repo_next_api_cargo_toml_python_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "next-api Cargo.toml is valid TOML via Python parser"
+
+  - id: test_repo_next_napi_bindings_cargo_toml_python_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "next-napi-bindings Cargo.toml is valid TOML via Python parser"
+
+  - id: test_repo_rust_toolchain_toml_python_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "rust-toolchain.toml is valid TOML via Python parser"
+
+  - id: test_repo_rustfmt_toml_python_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: ".rustfmt.toml is valid TOML via Python parser"
+
+
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "package.json is valid JSON via Python parser"
+
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository has clean status at base commit"
+
+  - id: test_repo_git_log_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git log shows expected base commit"
+
+  - id: test_repo_shell_syntax_cargo_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shell syntax check on Cargo.toml files via cat"
+
+  - id: test_repo_shell_syntax_next_api_cargo
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shell syntax check on next-api Cargo.toml"
+
+  - id: test_repo_shell_syntax_next_napi_bindings_cargo
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shell syntax check on next-napi-bindings Cargo.toml"
+
+  - id: test_repo_modified_files_readable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Rust files are readable via cat"
+
+  - id: test_repo_ls_crates_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ls command works on crates directory"
+
+  - id: test_repo_find_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "find command locates modified Rust files"
+
+  - id: test_repo_grep_turbo_tasks_in_project
+    type: pass_to_pass
+    origin: repo_tests
+    description: "grep finds turbo_tasks in project.rs"
+
+  - id: test_repo_grep_whole_app_in_project
+    type: pass_to_pass
+    origin: repo_tests
+    description: "grep finds whole_app_module_graph in project.rs"
+
+  - id: test_repo_grep_compilation_issues_in_bindings
+    type: pass_to_pass
+    origin: repo_tests
+    description: "grep finds get_all_compilation_issues in bindings"
 rubric:
   - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt"
     source:

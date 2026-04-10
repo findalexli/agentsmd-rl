@@ -19,18 +19,16 @@ RUN git clone --depth=1 https://github.com/facebook/react.git . \
     && git fetch --depth=1 origin ${BASE_COMMIT} \
     && git checkout ${BASE_COMMIT}
 
-# Sanitize snapshot (no .git history)
-RUN rm -rf .git \
+# Configure git first (needed for git commit)
+RUN git config --global user.email "agent@test.com" \
+    && git config --global user.name "Agent" \
+    && rm -rf .git \
     && git init \
     && git add -A \
     && git commit -m "snapshot"
 
 # Install minimal dependencies (just what we need for testing - no build)
 RUN yarn install --frozen-lockfile --ignore-scripts 2>/dev/null || yarn install --frozen-lockfile
-
-# Configure git
-RUN git config --global user.email "agent@test.com" \
-    && git config --global user.name "Agent"
 
 # Set environment
 ENV NODE_ENV=test

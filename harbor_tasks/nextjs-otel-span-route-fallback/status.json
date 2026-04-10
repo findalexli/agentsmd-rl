@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T06:31:10.646114",
-  "total_time": 7182.16,
-  "sandbox_id": "it7ipsxz5lxoq56lyjaoi",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T23:15:24.465678",
+  "total_time": 4576.26,
+  "sandbox_id": "ic1czzaeuw0n05brvwx5p",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during validate",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -19,17 +19,41 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
+      "model": "opus",
+      "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 1020.8,
+      "status": "error",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 71.91,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 94.49,
+      "notes": ""
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py: (1) Fixed JavaScript syntax error in _ROUTE_EVAL_JS with unescaped quotes, (2) Fixed test_repo_otel_parent_span_structure to accept both single and double quotes in rootSpanAttributes.get. Added git commit to solve.sh for test_repo_git_status_clean. All 13 tests pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 302.39
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.27,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -40,6 +64,30 @@
       "backend": "fireworks",
       "time": 7182.16,
       "at": "2026-04-09T06:31:10.646114"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 184.61,
+      "at": "2026-04-09T15:00:56.086756"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4575.97,
+      "at": "2026-04-09T23:15:24.294964"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4576.26,
+      "at": "2026-04-09T23:15:24.465678"
     }
   ]
 }

@@ -330,3 +330,38 @@ def test_repo_module_check():
     )
 
     assert result.returncode == 0, f"go mod verify failed:\n{result.stderr}"
+
+
+def test_repo_staticcheck_minifiers():
+    """Repo's minifiers package passes staticcheck (pass_to_pass)."""
+    # Install staticcheck if not present
+    subprocess.run(
+        ["go", "install", "honnef.co/go/tools/cmd/staticcheck@latest"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    result = subprocess.run(
+        ["staticcheck", "./minifiers/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    assert result.returncode == 0, f"staticcheck failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_race_minifiers():
+    """Repo's minifiers package passes race detector (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "test", "-race", "-count=1", "./minifiers/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    assert result.returncode == 0, f"Race detector test failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"

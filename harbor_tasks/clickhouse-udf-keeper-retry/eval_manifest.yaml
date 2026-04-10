@@ -53,6 +53,27 @@ checks:
     origin: repo_tests
     description: "C++ style checks (check_cpp.sh) - validates no new style issues in target file"
 
+  # Additional pass-to-pass tests added during p2p enrichment
+  - id: test_target_file_no_typos
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file typo check using codespell"
+
+  - id: test_target_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file structure validation (UTF-8, balanced braces/parens, no trailing whitespace)"
+
+  - id: test_target_file_includes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file include validation (no duplicates, proper format)"
+
+  - id: test_repo_yaml_linting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "GitHub workflow YAML syntax validation"
+
 # Agent config rules to follow (from .claude/CLAUDE.md and .github/copilot-instructions.md)
 agent_config:
   - rule: "Add new tests instead of extending existing ones"
@@ -72,4 +93,21 @@ agent_config:
     severity: blocker
 
 # Rubric for LLM evaluation (soft/subjective rules)
-rubric: []
+rubric:
+  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "4-5"
+      commit: "dae8318c5ed52baecd784a85a67c45d985b20d6a"
+
+  - rule: "When writing text such as documentation, comments, or commit messages, write names of functions and methods without parentheses (as f instead of f()) when referring to the function itself rather than its application."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "7-8"
+      commit: "dae8318c5ed52baecd784a85a67c45d985b20d6a"
+
+  - rule: "Include clear, explanatory comments for complex retry logic and error handling paths, explaining the why behind the implementation choices."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "102-104"
+      commit: "dae8318c5ed52baecd784a85a67c45d985b20d6a"

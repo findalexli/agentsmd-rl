@@ -56,6 +56,31 @@ checks:
     origin: repo_tests
     description: "Repo's Network unit tests pass"
 
+  - id: test_phpstan_network_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's PHPStan static analysis passes on Network directory"
+
+  - id: test_pint_lint_network_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Pint lint check passes on Network directory"
+
+
+  - id: test_composer_audit_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's composer dependencies pass security audit"
+
+  - id: test_cors_unit_tests_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CORS unit tests pass"
+
+  - id: test_email_validator_unit_tests_p2p
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Email validator unit tests pass"
 agent_config:
   - rule: "Code should follow PSR-12 coding standard"
     check: test_unit_tests_pass  # PHPUnit includes style checks indirectly
@@ -65,4 +90,21 @@ agent_config:
     check: test_tauri_localhost_valid
     source: AGENTS.md
 
-rubric: []
+rubric:
+  - rule: "Use comprehensive PHPDoc comments for new constants and methods"
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "1aa2c7ff2b5216803cb50c0faea58ce2ae380b3f"
+
+  - rule: "Follow existing code style. Check neighboring files for patterns when adding new constants or mappings."
+    source:
+      path: "AGENTS.md"
+      lines: "39-43"
+      commit: "1aa2c7ff2b5216803cb50c0faea58ce2ae380b3f"
+
+  - rule: "Update documentation if adding features. New platform schemes should be properly documented following existing patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "85"
+      commit: "1aa2c7ff2b5216803cb50c0faea58ce2ae380b3f"

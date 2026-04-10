@@ -50,6 +50,22 @@ def _run_node(js_code: str, timeout: int = 10) -> str:
         os.unlink(tmp_path)
 
 
+def _ensure_deps():
+    """Ensure pnpm is installed and dependencies are installed."""
+    # Install pnpm if needed
+    try:
+        subprocess.run(["pnpm", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, check=True)
+    
+    # Check if node_modules exists
+    if not Path(f"{REPO}/node_modules").exists():
+        subprocess.run(
+            ["pnpm", "install"],
+            capture_output=True, text=True, timeout=300, cwd=REPO,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — target file must exist
 # ---------------------------------------------------------------------------
@@ -260,21 +276,43 @@ catch(e) { console.log('FAIL: ' + (e as Error).message); }
 # [repo_tests] pass_to_pass
 def test_repo_format_check():
     """Repo's Prettier format check passes (pass_to_pass)."""
-    # Install pnpm if not available
-    env = os.environ.copy()
-    try:
-        subprocess.run(["pnpm", "--version"], capture_output=True, check=True, env=env)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # pnpm not available, install it
-        subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, check=True)
-
+    _ensure_deps()
     r = subprocess.run(
         ["pnpm", "exec", "prettier", "--ignore-path", ".config/.prettierignore",
          "--check", "--config", ".config/.prettierrc.json",
          "--plugin", "prettier-plugin-svelte", "."],
-        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    _ensure_deps()
+    # Build client first (required for tests)
+    r1 = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r1.returncode == 0, f"Client build failed:\n{r1.stderr[-500:]}"
+
+    r2 = subprocess.run(
+        ["pnpm", "test:run"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r2.returncode == 0, f"Unit tests failed:\n{r2.stdout[-1000:]}{r2.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_tests():
+    """Repo's client package tests pass (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "test"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

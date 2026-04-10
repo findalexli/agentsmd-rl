@@ -1,30 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T04:47:38.931843",
-  "total_time": 9580.11,
-  "sandbox_id": "iyme8mjap52babw6j6vhr",
-  "backend": "fireworks",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-10T05:45:25.686021",
+  "total_time": 15730.0,
+  "sandbox_id": "inzfvr5v6mcwfv13fl2gx",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 0.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "timestamp": "2026-04-09T11:40:00Z",
-      "ci_commands_found": [
-        "npx oxlint src/infra/clawhub.ts",
-        "npx oxfmt --check src/infra/clawhub.ts",
-        "pnpm test (vitest - requires dependencies)",
-        "pnpm lint (oxlint --type-aware - requires dependencies)",
-        "pnpm build (requires canvas/ui build steps)"
-      ],
-      "p2p_tests_added": [
-        "test_repo_lint_clawhub - runs oxlint on target file",
-        "test_repo_format_clawhub - runs oxfmt format check on target file"
-      ],
-      "notes": "Added 2 pass_to_pass tests from repo CI/CD. TypeScript typecheck (tsc --noEmit) requires too much memory (>3GB). Unit tests require pnpm install which isn't available in test container. The lint and format checks work without dependencies and run in <120s."
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 411.62,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -54,14 +45,14 @@
       ],
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 293.6
+      "time": 1.6
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
-      "notes": "ICR=0.00"
+      "time": 1.27,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -70,16 +61,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T04:47:38.758299"
+      "time": 9580.11,
+      "at": "2026-04-09T04:47:38.931843"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 9580.11,
-      "at": "2026-04-09T04:47:38.931843"
+      "time": 799.48,
+      "at": "2026-04-09T14:41:30.688715"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 799.79,
+      "at": "2026-04-09T14:41:30.866244"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 148.07,
+      "at": "2026-04-09T15:00:19.542435"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "gemini",
+      "time": 15730.0,
+      "at": "2026-04-10T05:45:25.686021"
     }
   ]
 }

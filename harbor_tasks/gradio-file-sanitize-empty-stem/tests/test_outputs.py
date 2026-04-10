@@ -137,6 +137,187 @@ def test_gradio_client_utils_tests():
             os.rename(conftest_bak, conftest)
 
 
+# [repo_tests] pass_to_pass
+def test_gradio_client_lint():
+    """Repo's gradio_client code passes ruff lint (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "client/python/gradio_client"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_client_format():
+    """Repo's gradio_client code passes ruff format check (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "client/python/gradio_client"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_client_is_valid_file_type():
+    """Repo's is_valid_file_type tests pass (pass_to_pass)."""
+    import subprocess
+    import os
+
+    client_dir = f"{REPO}/client/python"
+    conftest = f"{client_dir}/test/conftest.py"
+    conftest_bak = f"{conftest}.bak"
+
+    if os.path.exists(conftest):
+        os.rename(conftest, conftest_bak)
+
+    try:
+        r = subprocess.run(
+            ["python", "-m", "pytest", "test/test_utils.py::test_is_valid_file_type", "-v"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=client_dir,
+        )
+        assert r.returncode == 0, f"is_valid_file_type tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    finally:
+        if os.path.exists(conftest_bak):
+            os.rename(conftest_bak, conftest)
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_client_get_mimetype():
+    """Repo's get_mimetype tests pass (pass_to_pass)."""
+    import subprocess
+    import os
+
+    client_dir = f"{REPO}/client/python"
+    conftest = f"{client_dir}/test/conftest.py"
+    conftest_bak = f"{conftest}.bak"
+
+    if os.path.exists(conftest):
+        os.rename(conftest, conftest_bak)
+
+    try:
+        r = subprocess.run(
+            ["python", "-m", "pytest", "test/test_utils.py::test_get_mimetype", "-v"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=client_dir,
+        )
+        assert r.returncode == 0, f"get_mimetype tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    finally:
+        if os.path.exists(conftest_bak):
+            os.rename(conftest_bak, conftest)
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_client_json_schema():
+    """Repo's json_schema_to_python_type tests pass (pass_to_pass)."""
+    import subprocess
+    import os
+
+    client_dir = f"{REPO}/client/python"
+    conftest = f"{client_dir}/test/conftest.py"
+    conftest_bak = f"{conftest}.bak"
+
+    if os.path.exists(conftest):
+        os.rename(conftest, conftest_bak)
+
+    try:
+        r = subprocess.run(
+            ["python", "-m", "pytest", "test/test_utils.py::test_json_schema_to_python_type", "-v"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=client_dir,
+        )
+        assert r.returncode == 0, f"json_schema tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    finally:
+        if os.path.exists(conftest_bak):
+            os.rename(conftest_bak, conftest)
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_client_python_type_schema():
+    """Repo's python_type_to_json_schema tests pass (pass_to_pass)."""
+    import subprocess
+    import os
+
+    client_dir = f"{REPO}/client/python"
+    conftest = f"{client_dir}/test/conftest.py"
+    conftest_bak = f"{conftest}.bak"
+
+    if os.path.exists(conftest):
+        os.rename(conftest, conftest_bak)
+
+    try:
+        r = subprocess.run(
+            ["python", "-m", "pytest", "test/test_utils.py", "-v", "-k", "python_type_to_json_schema"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=client_dir,
+        )
+        assert r.returncode == 0, f"python_type_to_json_schema tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    finally:
+        if os.path.exists(conftest_bak):
+            os.rename(conftest_bak, conftest)
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_client_construct_args():
+    """Repo's construct_args tests pass (pass_to_pass)."""
+    import subprocess
+    import os
+
+    client_dir = f"{REPO}/client/python"
+    conftest = f"{client_dir}/test/conftest.py"
+    conftest_bak = f"{conftest}.bak"
+
+    if os.path.exists(conftest):
+        os.rename(conftest, conftest_bak)
+
+    try:
+        r = subprocess.run(
+            ["python", "-m", "pytest", "test/test_utils.py::TestConstructArgs", "-v"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=client_dir,
+        )
+        assert r.returncode == 0, f"construct_args tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    finally:
+        if os.path.exists(conftest_bak):
+            os.rename(conftest_bak, conftest)
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------

@@ -228,6 +228,46 @@ def test_repo_format():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_pytest_http_server():
+    """Repository HTTP server tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "pytest-asyncio", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pytest:\n{r.stderr.decode()[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_http_server.py", "-v"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTTP server tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pytest_analytics():
+    """Repository analytics tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "pytest-asyncio", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pytest:\n{r.stderr.decode()[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_analytics.py", "-v"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Analytics tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_typecheck():
     """Repository Python typecheck passes on modified file (pass_to_pass)."""
     import pytest
@@ -258,3 +298,26 @@ def test_repo_typecheck():
             pytest.skip(f"Type check skipped due to missing dependencies: {r.stderr[-500:]}")
 
     assert r.returncode == 0, f"Type check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [static] pass_to_pass
+def test_repo_ts_syntax():
+    """Modified TypeScript file exists and has expected structure (pass_to_pass)."""
+    ts_path = Path(REPO) / "js" / "tootils" / "src" / "app-launcher.ts"
+
+    # File must exist
+    assert ts_path.exists(), f"TypeScript file not found: {ts_path}"
+
+    content = ts_path.read_text()
+
+    # Basic TypeScript sanity checks (file read, not subprocess - origin: static)
+    # Check that key functions from the modified code exist
+    assert "waitForServerReady" in content, (
+        "app-launcher.ts should contain waitForServerReady function"
+    )
+    assert "launchGradioApp" in content, (
+        "app-launcher.ts should contain launchGradioApp function"
+    )
+    assert "http" in content, (
+        "app-launcher.ts should reference http module for server polling"
+    )

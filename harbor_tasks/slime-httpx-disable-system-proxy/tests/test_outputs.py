@@ -186,6 +186,40 @@ def test_repo_compileall():
     assert r.returncode == 0, f"Compileall failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Modified file passes black format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    if r.returncode != 0:
+        pytest.skip("Could not install black (no network)")
+
+    r = subprocess.run(
+        ["black", "--check", "slime/utils/http_utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mypy_typecheck():
+    """Modified file passes mypy type checking (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "mypy", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    if r.returncode != 0:
+        pytest.skip("Could not install mypy (no network)")
+
+    r = subprocess.run(
+        ["mypy", "slime/utils/http_utils.py", "--ignore-missing-imports"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mypy type check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------

@@ -49,6 +49,57 @@ def test_repo_format_tests():
     assert r.returncode == 0, f"Format tests failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_cross_spawn_spawner():
+    """Repo's cross-spawn-spawner Effect tests pass (pass_to_pass).""" 
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/effect/cross-spawn-spawner.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Cross-spawn-spawner tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_instance_state():
+    """Repo's instance-state Effect tests pass (pass_to_pass).""" 
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/effect/instance-state.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Instance-state tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_process_util():
+    """Repo's Process utility tests pass (pass_to_pass).""" 
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/util/process.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Process utility tests failed:\n{r.stderr[-500:]}"
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_apply_patch():
+    """Repo's apply_patch tool tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/tool/apply_patch.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Apply patch tool tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_edit_tool():
+    """Repo's edit tool tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/tool/edit.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Edit tool tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff / static) — regression + compilation gates
 # ---------------------------------------------------------------------------

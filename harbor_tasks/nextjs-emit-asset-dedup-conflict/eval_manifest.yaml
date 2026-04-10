@@ -25,7 +25,7 @@ checks:
   - id: emit_and_emit_rebase_preserved
     type: pass_to_pass
     origin: pr_diff
-    description: "emit() and emit_rebase() turbo_tasks functions still exist"
+    description: "emit() and emit_rebase() turbo_tasks functions still exist (verified via cargo check)"
 
   - id: emit_assets_function_signature
     type: pass_to_pass
@@ -35,27 +35,27 @@ checks:
   - id: emit_conflict_issue_struct
     type: fail_to_pass
     origin: pr_diff
-    description: "EmitConflictIssue struct exists with asset_path: FileSystemPath and detail: RcStr fields"
+    description: "EmitConflictIssue struct exists with asset_path: FileSystemPath and detail: RcStr fields (verified via cargo check)"
 
   - id: emit_conflict_issue_impls_issue
     type: fail_to_pass
     origin: pr_diff
-    description: "EmitConflictIssue implements Issue trait with Emit stage, Error severity, and conflict title"
+    description: "EmitConflictIssue implements Issue trait with Emit stage, Error severity, and conflict title (verified via cargo check)"
 
   - id: assets_diff_function
     type: fail_to_pass
     origin: pr_diff
-    description: "assets_diff turbo_tasks function compares two assets' content and writes conflicting versions"
+    description: "assets_diff turbo_tasks function compares two assets' content and writes conflicting versions (verified via cargo check)"
 
   - id: issue_stage_emit_variant
     type: fail_to_pass
     origin: pr_diff
-    description: "IssueStage::Emit variant exists and displays as 'emit'"
+    description: "IssueStage::Emit variant exists and displays as 'emit' (verified via cargo check)"
 
   - id: emit_assets_dedup_logic
     type: fail_to_pass
     origin: pr_diff
-    description: "emit_assets groups assets by path, checks for duplicate conflicts, uses join! for parallel emission"
+    description: "emit_assets groups assets by path, checks for duplicate conflicts, uses join! for parallel emission (verified via cargo check)"
 
   - id: imports_cargo_fmt_sorted
     type: fail_to_pass
@@ -66,9 +66,39 @@ checks:
       lines: "414"
       commit: "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"
 
+  - id: rust_files_no_merge_conflicts
+    type: pass_to_pass
+    origin: static
+    description: "Modified Rust files have no merge conflict markers"
+
+  - id: rust_files_valid_braces
+    type: pass_to_pass
+    origin: static
+    description: "Modified Rust files have balanced braces (basic syntax check)"
+
+  - id: emit_rs_no_broken_imports
+    type: pass_to_pass
+    origin: static
+    description: "emit.rs has no obviously broken import paths"
+
+  - id: next_core_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "next-core package compiles without errors via cargo check"
+
+  - id: turbopack_core_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "turbopack-core package compiles without errors via cargo check"
+
 rubric:
   - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
     source:
       path: "CLAUDE.md"
       lines: "414"
       commit: "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"
+
+  - id: repo_check_error_codes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Next.js error codes script passes"

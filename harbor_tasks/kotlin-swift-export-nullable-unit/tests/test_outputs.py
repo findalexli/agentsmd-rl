@@ -510,6 +510,122 @@ def test_integration_tests_structure():
     assert generation_tests.exists(), "Generation test data directory should exist"
 
 
+def test_nullable_type_golden_results_structure():
+    """
+    P2P: Nullable type golden results exist with expected files (pass_to_pass).
+
+    Validates the golden result files for nullable type tests are present.
+    These files are used by the integration tests to verify generated code.
+    """
+    golden_result = REPO / "native/swift/swift-export-standalone-integration-tests/simple/testData/generation/nullable_type/golden_result/main"
+
+    assert golden_result.exists(), "Golden result directory should exist"
+    assert (golden_result / "main.kt").exists(), "main.kt golden result should exist"
+    assert (golden_result / "main.swift").exists(), "main.swift golden result should exist"
+    assert (golden_result / "main.h").exists(), "main.h golden result should exist"
+
+    # Verify files are non-empty
+    assert (golden_result / "main.kt").stat().st_size > 0, "main.kt should not be empty"
+    assert (golden_result / "main.swift").stat().st_size > 0, "main.swift should not be empty"
+    assert (golden_result / "main.h").stat().st_size > 0, "main.h should not be empty"
+
+
+def test_nullable_type_test_data_exists():
+    """
+    P2P: Nullable type test data file exists with valid content (pass_to_pass).
+
+    Validates the test input file for nullable type generation tests.
+    """
+    test_data_file = REPO / "native/swift/swift-export-standalone-integration-tests/simple/testData/generation/nullable_type/nullable_type.kt"
+
+    assert test_data_file.exists(), "nullable_type.kt test data should exist"
+    content = test_data_file.read_text()
+
+    # Verify test data has expected structure
+    assert "// KIND: STANDALONE" in content, "Test data should have KIND marker"
+    assert "// MODULE: main" in content, "Test data should have MODULE marker"
+    assert "class Bar" in content, "Test data should define Bar class"
+    assert "fun foo(a: Bar?):" in content, "Test data should have nullable Bar function"
+
+
+def test_sir_providers_source_files():
+    """
+    P2P: Sir providers module source files exist and are valid (pass_to_pass).
+
+    Validates that the core source files in sir-providers module are present.
+    """
+    providers_src = REPO / "native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/BridgeProvider"
+
+    assert providers_src.exists(), "BridgeProvider source directory should exist"
+    assert (providers_src / "TypeBridging.kt").exists(), "TypeBridging.kt should exist"
+    assert (providers_src / "SirBridgeProviderImpl.kt").exists(), "SirBridgeProviderImpl.kt should exist"
+    assert (providers_src / "Types.kt").exists(), "Types.kt should exist"
+
+    # Validate TypeBridging.kt has valid structure
+    type_bridging = providers_src / "TypeBridging.kt"
+    content = type_bridging.read_text()
+
+    assert content.count("{") > 0, "TypeBridging.kt should have opening braces"
+    # Balanced braces check (allowing for minor mismatches in edge cases)
+    open_braces = content.count("{")
+    close_braces = content.count("}")
+    assert abs(open_braces - close_braces) <= 5, f"TypeBridging.kt has significantly unbalanced braces: {open_braces} vs {close_braces}"
+
+
+def test_sir_module_structure():
+    """
+    P2P: SIR (Swift Intermediate Representation) module structure is valid (pass_to_pass).
+
+    Validates that the core SIR module has expected source files.
+    """
+    sir_src = REPO / "native/swift/sir/src/org/jetbrains/kotlin/sir"
+
+    assert sir_src.exists(), "SIR source directory should exist"
+
+    # Check for key SIR element files (SirNominalType is defined in SirType.kt)
+    required_files = [
+        "SirElementBase.kt",
+        "SirType.kt",
+        "SirBridge.kt",
+    ]
+
+    for filename in required_files:
+        assert (sir_src / filename).exists(), f"Required SIR file {filename} should exist"
+
+
+def test_swift_export_standalone_module():
+    """
+    P2P: Swift export standalone module has valid structure (pass_to_pass).
+
+    Validates that the swift-export-standalone module exists with expected files.
+    """
+    standalone_src = REPO / "native/swift/swift-export-standalone/src"
+
+    assert standalone_src.exists(), "Swift export standalone source directory should exist"
+
+    # Check build.gradle.kts exists
+    build_file = REPO / "native/swift/swift-export-standalone/build.gradle.kts"
+    assert build_file.exists(), "swift-export-standalone should have build.gradle.kts"
+
+
+def test_repo_gradle_structure():
+    """
+    P2P: Repository has valid Gradle build structure (pass_to_pass).
+
+    Validates that the build files exist and are properly configured.
+    """
+    import os
+
+    assert (REPO / "build.gradle.kts").exists(), "Root build.gradle.kts should exist"
+    assert (REPO / "settings.gradle").exists(), "settings.gradle should exist"
+    assert (REPO / "gradlew").exists(), "gradlew wrapper should exist"
+    assert (REPO / "gradle").is_dir(), "gradle directory should exist"
+
+    # Check gradle wrapper is executable
+    gradlew = REPO / "gradlew"
+    assert os.access(str(gradlew), os.X_OK), "gradlew should be executable"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

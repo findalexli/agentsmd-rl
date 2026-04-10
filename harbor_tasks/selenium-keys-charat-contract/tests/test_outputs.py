@@ -10,6 +10,7 @@ import re
 
 REPO = "/workspace/selenium"
 KEYS_JAVA = f"{REPO}/java/src/org/openqa/selenium/Keys.java"
+BAZEL_TIMEOUT = 600  # 10 minutes for bazel builds/tests
 
 
 def _run_bazel(command, timeout=600):
@@ -209,15 +210,39 @@ def test_charat_code_structure():
 # =============================================================================
 
 
-def test_repo_build_core_lib():
+def test_repo_build_core():
     """Repo's core Java library builds successfully (pass_to_pass)."""
-    r = _run_bazel(["build", "//java/src/org/openqa/selenium:core-lib"], timeout=120)
-    assert r.returncode == 0, f"Core lib build failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+    r = _run_bazel(["build", "//java/src/org/openqa/selenium:core"], timeout=BAZEL_TIMEOUT)
+    assert r.returncode == 0, f"Core build failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
 
 
 def test_repo_build_client_combined():
     """Repo's client combined library builds successfully (pass_to_pass)."""
-    r = _run_bazel(["build", "//java/src/org/openqa/selenium:client-combined-lib"], timeout=120)
-    assert r.returncode == 0, f"Client combined lib build failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+    r = _run_bazel(["build", "//java/src/org/openqa/selenium:client-combined"], timeout=BAZEL_TIMEOUT)
+    assert r.returncode == 0, f"Client combined build failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_repo_small_tests():
+    """Repo's small unit tests pass (pass_to_pass)."""
+    r = _run_bazel(["test", "//java/test/org/openqa/selenium:SmallTests", "--test_size_filters=small"], timeout=BAZEL_TIMEOUT)
+    assert r.returncode == 0, f"Small tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_repo_keys_test():
+    """Repo's KeysTest passes (pass_to_pass)."""
+    r = _run_bazel(["test", "//java/test/org/openqa/selenium:KeysTest"], timeout=BAZEL_TIMEOUT)
+    assert r.returncode == 0, f"KeysTest failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_repo_format_lint():
+    """Repo's format lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/format.sh", "--lint"],
+        capture_output=True,
+        text=True,
+        timeout=BAZEL_TIMEOUT,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 

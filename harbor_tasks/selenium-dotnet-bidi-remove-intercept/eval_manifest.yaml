@@ -54,21 +54,49 @@ checks:
     description: Tests updated to use AddInterceptAsync instead of removed methods
 
   # Pass-to-pass tests (behavior that should remain)
+  # File-content based checks (origin: static)
   - id: test_addintercept_api_still_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: AddInterceptAsync method still available as replacement API
 
   - id: test_csharp_syntax_valid
     type: pass_to_pass
-    origin: repo_tests
-    description: C# syntax validation passes
+    origin: static
+    description: C# syntax validation via brace balancing
 
   - id: test_dotnet_project_structure_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: .NET project structure is valid (no references to deleted files)
 
+  # CI command based checks (origin: repo_tests) - using subprocess.run()
+  - id: test_repo_dotnet_format_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET webdriver project whitespace formatting passes (dotnet format whitespace --verify-no-changes)
+
+  - id: test_repo_dotnet_format_analyzers
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET webdriver project analyzers pass (dotnet format analyzers --verify-no-changes)
+
+  - id: test_repo_dotnet_test_project_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET test project whitespace formatting passes (dotnet format whitespace --verify-no-changes)
+
+  - id: test_repo_dotnet_support_project_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET support project whitespace formatting passes (dotnet format whitespace --verify-no-changes)
+
+  - id: test_repo_dotnet_restore
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET project restore succeeds (dotnet restore)
+
+  # Legacy tests kept for compatibility
   - id: test_dotnet_format_check
     type: pass_to_pass
     origin: repo_tests
@@ -77,12 +105,12 @@ checks:
   - id: test_dotnet_test_project_format_check
     type: pass_to_pass
     origin: repo_tests
-    description: .NET test project formatting passes
+    description: .NET test project formatting passes (dotnet format --verify-no-changes --severity error)
 
   - id: test_dotnet_support_project_format_check
     type: pass_to_pass
     origin: repo_tests
-    description: .NET support project formatting passes
+    description: .NET support project formatting passes (dotnet format --verify-no-changes --severity error)
 
 # Rubric for soft/subjective checks (evaluated by LLM judge)
 rubric:

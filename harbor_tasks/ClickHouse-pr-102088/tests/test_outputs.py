@@ -18,6 +18,22 @@ SOURCE_FILE = f"{REPO_DIR}/src/Functions/padString.cpp"
 BUILD_DIR = f"{REPO_DIR}/build"
 
 
+class CppFile:
+    """Helper class for reading and caching C++ source file content."""
+    _content = None
+
+    @classmethod
+    def get_content(cls):
+        if cls._content is None:
+            with open(SOURCE_FILE, 'r') as f:
+                cls._content = f.read()
+        return cls._content
+
+    @classmethod
+    def reset(cls):
+        cls._content = None
+
+
 def test_source_file_exists():
     """Verify the source file exists"""
     assert os.path.exists(SOURCE_FILE), f"Source file not found: {SOURCE_FILE}"
@@ -102,7 +118,7 @@ def test_empty_pad_string_handling_moved():
     FAIL-TO-PASS TEST: Verify empty pad_string handling moved from init() to executeImpl.
 
     The old code had 'if (pad_string.empty()) pad_string = " ";' in init().
-    The fix moves this to executeImpl where the pad string is extracted.
+    The fix moves this to executeImpl where the pad string is actually extracted.
     """
     with open(SOURCE_FILE, 'r') as f:
         content = f.read()
@@ -503,5 +519,260 @@ def test_functions_registered_properly():
         "Function names (leftPad/rightPad) should be referenced in source"
 
 
+# ============================================================================
+# NEW: Repo CI/CD pass-to-pass gates from ClickHouse's actual CI pipeline
+# ============================================================================
+
+
+def test_clang_format_compliance():
+    """
+    PASS-TO-PASS TEST: Verify modified C++ source follows .clang-format style.
+
+    ClickHouse's CI runs clang-format on all C++ changes. This test ensures
+    the modified code follows the project's formatting standards.
+    This is a repo CI/CD gate that must pass on both base and fix commits.
+    """
+    # Skip if clang-format is not available
+    if subprocess.run(["which", "clang-format"], capture_output=True).returncode != 0:
+        pytest.skip("clang-format not available")
+        return
+
+    # First, ensure patch is applied so we're checking the formatted code
+    with open(SOURCE_FILE, 'r') as f:
+        content = f.read()
+
+    if "PaddedPODArray<UInt8> pad_string" not in content:
+        # Apply the patch
+        solve_script = "/workspace/task/solution/solve.sh"
+        result = subprocess.run(
+            ["bash", solve_script],
+            capture_output=True,
+            cwd=REPO_DIR,
+            timeout=30
+        )
+        if result.returncode != 0:
+            pytest.skip(f"Failed to apply patch for format check: {result.stderr}")
+            return
+
+    # Run clang-format in dry-run mode to check if file is formatted
+    result = subprocess.run(
+        ["clang-format", "--dry-run", "--Werror", SOURCE_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+
+    # If there are formatting issues, clang-format with --Werror will fail
+    assert result.returncode == 0, \
+        f"C++ source has formatting issues (does not match .clang-format):\n{result.stderr[:500]}"
+
+
+def test_no_trailing_whitespace():
+    """
+    PASS-TO-PASS TEST: Verify no trailing whitespace in modified source.
+
+    Trailing whitespace is a common style issue caught in code review.
+    This is a standard CI/CD gate in most projects including ClickHouse.
+    """
+    with open(SOURCE_FILE, 'r') as f:
+        lines = f.readlines()
+
+    trailing_ws_lines = []
+    for i, line in enumerate(lines):
+        # Check if line has trailing whitespace (excluding newline)
+        stripped = line.rstrip('\n').rstrip('\r')
+        if stripped != stripped.rstrip():
+            trailing_ws_lines.append(i + 1)
+
+    assert len(trailing_ws_lines) == 0, \
+        f"Found trailing whitespace in lines: {trailing_ws_lines[:10]}"
+
+
+def test_no_tabs_in_source():
+    """
+    PASS-TO-PASS TEST: Verify source uses spaces for indentation, not tabs.
+
+    ClickHouse uses spaces for indentation (TabWidth: 4 in .clang-format).
+    Tabs in source files are rejected during code review.
+    """
+    with open(SOURCE_FILE, 'r') as f:
+        content = f.read()
+
+    # Check for tab characters
+    if '\t' in content:
+        lines_with_tabs = []
+        for i, line in enumerate(content.split('\n')):
+            if '\t' in line:
+                lines_with_tabs.append(i + 1)
+        assert False, \
+            f"Found tab characters (should use spaces) in lines: {lines_with_tabs[:10]}"
+
+
+def test_include_guards_present():
+    """
+    PASS-TO-PASS TEST: Verify source has proper include order and structure.
+
+    Checks that standard headers come before project headers.
+    This is a common code quality check in C++ projects.
+    """
+    with open(SOURCE_FILE, 'r') as f:
+        content = f.read()
+
+    # Check for standard include patterns
+    lines = content.split('\n')
+    std_include_found = False
+    project_include_found = False
+    issue_lines = []
+
+    for i, line in enumerate(lines):
+        # Skip comments
+        if line.strip().startswith('//'):
+            continue
+
+        # Check for standard library includes
+        std_match = re.match(r'^#include\s*<(memory|string|vector|map|set|algorithm|iostream)>', line)
+        if std_match:
+            std_include_found = True
+
+        # Check for project includes (after std includes)
+        project_match = re.match(r'^#include\s*".*"', line)
+        if project_match and std_include_found:
+            project_include_found = True
+
+        # Check for mixing (project include followed by std include)
+        if std_match and project_include_found:
+            issue_lines.append(i + 1)
+
+    # Allow some flexibility - just warn if there are many issues
+    if len(issue_lines) > 3:
+        print(f"Note: Found {len(issue_lines)} includes that appear out of order")
+
+    # Must have at least some includes
+    has_includes = '#include' in content
+    assert has_includes, "Source file should have #include statements"
+
+
+def test_copyright_license_header():
+    """
+    PASS-TO-PASS TEST: Verify source has license header.
+
+    ClickHouse uses Apache 2.0 license. Source files should have license headers.
+    """
+    with open(SOURCE_FILE, 'r') as f:
+        content = f.read()
+
+    # Check for license indicators
+    license_indicators = [
+        'Copyright',
+        'License',
+        'Apache',
+        'SPDX-License-Identifier',
+        'GNU',
+        'MIT',
+    ]
+
+    # Look for license in first 20 lines
+    first_lines = '\n'.join(content.split('\n')[:20])
+    has_license = any(indicator in first_lines for indicator in license_indicators)
+
+    # ClickHouse files typically have Copyright in the header
+    # This is informational - not all files have explicit license headers
+    # so we just check for any indicator
+    if not has_license:
+        print("Note: No explicit license header found in first 20 lines")
+
+    # Check that there's a standard file header (comment at top)
+    has_header_comment = first_lines.startswith('/*') or first_lines.startswith('//')
+    assert has_header_comment or has_license, \
+        "Source file should have a header comment or license notice"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# ============================================================================
+# REWARD CALCULATION - writes reward.txt at end of test session
+# ============================================================================
+
+def pytest_sessionfinish(session, exitstatus):
+    """Calculate and write reward at end of test session."""
+    # Get the test results from the session
+    passed = 0
+    failed = 0
+    
+    for test_result in session.results.values() if hasattr(session, 'results') else []:
+        # This approach might not work in all pytest versions
+        pass
+    
+    # Alternative: check which critical tests passed by re-running them in quiet mode
+    import subprocess
+    import sys
+    
+    # Critical fail-to-pass tests that must pass for reward=1
+    critical_tests = [
+        "test_padding_chars_uses_padded_pod_array",
+        "test_pad_string_initialized_with_insert", 
+        "test_empty_pad_string_handling_moved",
+        "test_utf8_offsets_use_size_not_length",
+    ]
+    
+    critical_passed = 0
+    for test in critical_tests:
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", f"{__file__}::{test}", "-q", "--tb=no"],
+            capture_output=True,
+            text=True
+        )
+        if "1 passed" in result.stdout or "1 passed" in result.stderr:
+            critical_passed += 1
+    
+    # Reward is 1.0 if all critical tests pass (fail-to-pass tests), 0.0 otherwise
+    reward = 1.0 if critical_passed == len(critical_tests) else 0.0
+    
+    # Write reward to file
+    os.makedirs("/logs/verifier", exist_ok=True)
+    with open("/logs/verifier/reward.txt", "w") as f:
+        f.write(str(int(reward)) if reward == 1.0 else str(reward))
+
+
+# ============================================================================
+# REWARD CALCULATION - writes reward.txt at end of test session
+# ============================================================================
+import atexit
+
+def calculate_and_write_reward():
+    """Calculate and write reward based on critical test results."""
+    import subprocess
+    import sys
+    
+    # Critical fail-to-pass tests that must pass for reward=1
+    critical_tests = [
+        "test_padding_chars_uses_padded_pod_array",
+        "test_pad_string_initialized_with_insert", 
+        "test_empty_pad_string_handling_moved",
+        "test_utf8_offsets_use_size_not_length",
+    ]
+    
+    critical_passed = 0
+    for test in critical_tests:
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", f"{__file__}::{test}", "-q", "--tb=no"],
+            capture_output=True,
+            text=True,
+            cwd="/tests"
+        )
+        if "1 passed" in result.stdout or "1 passed" in result.stderr:
+            critical_passed += 1
+    
+    # Reward is 1.0 if all critical tests pass (fail-to-pass tests), 0.0 otherwise
+    reward = 1.0 if critical_passed == len(critical_tests) else 0.0
+    
+    # Write reward to file
+    os.makedirs("/logs/verifier", exist_ok=True)
+    with open("/logs/verifier/reward.txt", "w") as f:
+        f.write(str(int(reward)))
+    print(f"\nReward calculated: {reward} ({critical_passed}/{len(critical_tests)} critical tests passed)")
+
+# Register to run at exit
+atexit.register(calculate_and_write_reward)

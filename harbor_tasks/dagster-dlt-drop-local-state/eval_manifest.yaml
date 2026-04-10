@@ -7,20 +7,47 @@ source_pr:
   base_commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
 
 checks:
-  - id: test_drop_state_with_restore_from_destination
-    type: behavioral
-    description: "Verify drop() is called when restore_from_destination is True"
-    points: 4
-
-  - id: test_drop_pending_packages_when_restore_disabled
-    type: behavioral
-    description: "Verify drop_pending_packages() is called when restore_from_destination is False"
-    points: 3
-
+  # Behavioral tests (fail_to_pass - these test the fix)
   - id: test_stale_state_interference_regression
     type: behavioral
     description: "Verify stale state from previous runs doesn't interfere"
-    points: 3
+    points: 5
+
+  - id: test_drop_state_called
+    type: behavioral
+    description: "Verify drop() is called during dagster-dlt runs"
+    points: 5
+
+  # Pass-to-pass tests (repo CI/CD checks that must pass on both base and fix)
+  - id: test_repo_dagster_dlt_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dagster-dlt test suite passes"
+    points: 1
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff lint check on dagster-dlt passes"
+    points: 1
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check on dagster-dlt passes"
+    points: 1
+
+  - id: test_repo_pyright
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pyright type check on dagster-dlt passes"
+    points: 1
+
+  - id: test_repo_dagster_core_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dagster core and dagster-dlt can be imported without errors"
+    points: 1
 
 agent_config:
   - file: CLAUDE.md
@@ -31,7 +58,18 @@ agent_config:
         origin: CLAUDE.md
         lines: "MANDATORY: After ANY Python code changes, ALWAYS run make ruff"
 
-rubric: []
+rubric:
+  - rule: "Use comments to explain invariants, design decisions, and WHY code exists, not just narrate WHAT the code does."
+    source:
+      path: ".claude/coding_conventions.md"
+      lines: "1-10"
+      commit: "095d02df486d2ab390f8d2385e1ef9413ecf37e0"
+
+  - rule: "Follow Google-style docstrings for public functions and classes. Include Args, Returns, and Raises sections where applicable."
+    source:
+      path: ".claude/coding_conventions.md"
+      lines: "320-322"
+      commit: "095d02df486d2ab390f8d2385e1ef9413ecf37e0"
 
 scoring:
   max_points: 10

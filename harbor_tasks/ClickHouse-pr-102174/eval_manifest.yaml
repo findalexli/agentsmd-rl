@@ -1,54 +1,64 @@
 eval_manifest:
   version: 1.0
   checks:
-    # Fail-to-pass tests (verify the fix)
-    - id: test_zookeeper_session_renewal_in_retry
-      type: fail_to_pass
-      origin: solution
-      description: Verify the fix includes ZooKeeper session renewal on retry
-
-    - id: test_object_names_fetched_in_retry_loop
-      type: fail_to_pass
-      origin: solution
-      description: Verify getObjectNamesAndSetWatch is called inside retry loop
-
-    - id: test_tryloadobject_uses_current_zookeeper
-      type: fail_to_pass
-      origin: solution
-      description: Verify tryLoadObject uses current_zookeeper inside retry loop
-
-    - id: test_current_zookeeper_variable_declared
-      type: fail_to_pass
-      origin: solution
-      description: Verify current_zookeeper variable is declared before retry loop
-
-    - id: test_no_sleep_based_race_condition_fixes
-      type: fail_to_pass
-      origin: solution
-      description: Verify no sleep calls are used to fix race conditions
-
-    - id: test_allman_brace_style_for_new_code
-      type: fail_to_pass
-      origin: solution
-      description: Verify Allman-style braces are used for new/modified code
-
-    # Pass-to-pass tests (verify repo CI/CD checks pass)
-    - id: test_repo_ci_pytest_xfail_xpass
-      type: pass_to_pass
-      origin: repo_tests
-      description: CI framework pytest xfail/xpass tests pass
-
-    - id: test_repo_praktika_imports
-      type: pass_to_pass
-      origin: repo_tests
-      description: Praktika CI framework imports work correctly
-
-    - id: test_repo_python_syntax_ci_tests
-      type: pass_to_pass
-      origin: repo_tests
-      description: CI test files have valid Python syntax
-
-    - id: test_target_file_cpp_syntax_valid
-      type: pass_to_pass
-      origin: repo_tests
-      description: Target C++ file has valid syntax (basic clang syntax check)
+  - id: test_zookeeper_session_renewal_in_retry
+    type: fail_to_pass
+    origin: solution
+    description: Verify the fix includes ZooKeeper session renewal on retry
+  - id: test_object_names_fetched_in_retry_loop
+    type: fail_to_pass
+    origin: solution
+    description: Verify getObjectNamesAndSetWatch is called inside retry loop
+  - id: test_tryloadobject_uses_current_zookeeper
+    type: fail_to_pass
+    origin: solution
+    description: Verify tryLoadObject uses current_zookeeper inside retry loop
+  - id: test_current_zookeeper_variable_declared
+    type: fail_to_pass
+    origin: solution
+    description: Verify current_zookeeper variable is declared before retry loop
+  - id: test_no_sleep_based_race_condition_fixes
+    type: fail_to_pass
+    origin: solution
+    description: Verify no sleep calls are used to fix race conditions
+  - id: test_allman_brace_style_for_new_code
+    type: fail_to_pass
+    origin: solution
+    description: Verify Allman-style braces are used for new/modified code
+  - id: test_repo_ci_pytest_xfail_xpass
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI framework pytest xfail/xpass tests pass
+  - id: test_repo_praktika_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Praktika CI framework imports work correctly
+  - id: test_repo_python_syntax_ci_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI test files have valid Python syntax
+  - id: test_target_file_cpp_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target C++ file has valid syntax (basic clang syntax check)
+rubric:
+- rule: 'Exception safety on all control-flow paths: Check that every resource acquired
+    before a potentially-throwing call is released on the exception path (including
+    early returns, loop continues, and branches added).'
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: '140'
+    commit: 172e4255c5cba41c87722d66c33f459256d56ce7
+- rule: 'Core-area scrutiny: For changes in Keeper/coordination, verify invariants
+    hold under concurrent operations and check all error paths.'
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 214-215
+    commit: 172e4255c5cba41c87722d66c33f459256d56ce7
+- rule: 'Semantic correctness & fix completeness: Partial / asymmetric fixes: when
+    a behavior is changed in one code path, check whether symmetric paths need the
+    same change.'
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 184-185
+    commit: 172e4255c5cba41c87722d66c33f459256d56ce7

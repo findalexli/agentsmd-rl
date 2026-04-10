@@ -1,0 +1,61 @@
+# Supplementary pass-to-pass checks for ClickHouse repo CI compliance
+# These tests verify the code follows ClickHouse repository conventions
+
+p2p_checks_added:
+  - id: test_repo_code_format_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source file follows ClickHouse whitespace conventions (no trailing whitespace, no tabs)"
+    implementation: Python regex-based check
+    rationale: ClickHouse CI enforces no trailing whitespace and uses spaces for indentation
+
+  - id: test_repo_include_order
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Include statements are properly formatted with angle brackets for system headers"
+    implementation: Python string analysis
+    rationale: Standard library includes should use <...> format in ClickHouse
+
+  - id: test_repo_namespace_conventions
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Code uses DB namespace and anonymous namespace following ClickHouse conventions"
+    implementation: Python string search
+    rationale: ClickHouse code should be in DB namespace or anonymous namespace
+
+  - id: test_repo_const_correctness
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Methods that don't modify state are declared const"
+    implementation: Python regex pattern matching
+    rationale: ClickHouse CI enforces const correctness
+
+  - id: test_repo_template_usage
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Template parameters follow ClickHouse naming conventions (is_utf8)"
+    implementation: Python string search
+    rationale: Template<bool is_utf8> is the ClickHouse convention for UTF-8 variants
+
+  - id: test_repo_function_naming
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Classes use PascalCase naming (PaddingChars)"
+    implementation: Python regex pattern matching
+    rationale: ClickHouse uses PascalCase for class names
+
+# CI/CD Commands Discovered
+# =========================
+# The ClickHouse repository uses praktika-based CI with the following commands:
+# - python3 -m praktika run 'Style check'
+# - python3 -m praktika run 'Build (arm_tidy)'  # clang-tidy
+# - python3 -m praktika run 'Build (amd_asan_ubsan)'  # ASan/UBSan builds
+#
+# Container Limitations:
+# - The current Docker container only has Python (no C++ toolchain)
+# - Cannot run clang-format, clang-tidy, or actual C++ compilation
+# - Used Python-based static analysis as alternative
+#
+# Test File Location:
+# Supplementary tests are in /workspace/task/test_outputs_supplement.py
+# These tests are separate from the main tests/test_outputs.py due to file permissions

@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T11:59:46.918849",
-  "total_time": 10074.22,
-  "sandbox_id": "iazrn9ao37jjb7jzynct0",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T15:01:14.661782",
+  "total_time": 203.19,
+  "sandbox_id": "iq651z0gpfk8193h55bpd",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -18,10 +18,10 @@
       "notes": "Added 4 repo CI/CD checks as pass_to_pass gates: test_repo_typecheck (npm run tsc), test_repo_check_deps (npm run check-deps), test_repo_lint_tests (npm run lint-tests), test_repo_build (npm run build). All verified passing on base commit 72310c757282e397fcd280e85602adcdf0d581ca."
     },
     "p2p_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1063.04,
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 10.27,
       "notes": ""
     },
     "improve": {
@@ -39,25 +39,17 @@
       "notes": "Fixed two test bugs: 1) test_download_cancel_method was checking braceDepth AFTER counting braces, so it never found cancel() at depth 1. Fixed by checking depth BEFORE counting. 2) test_context_close_cancels_downloads found 'disposeBrowserContext' in a comment instead of the actual call. Fixed by searching for 'send('Target.disposeBrowserContext'' instead. All checks now pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1252.49
+      "time": 1.61
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.7,
-      "notes": "ICR=1.00"
+      "time": 2.38,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 6041.6,
-      "at": "2026-04-09T06:19:46.621785"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -73,6 +65,30 @@
       "backend": "fireworks",
       "time": 10074.22,
       "at": "2026-04-09T11:59:46.918849"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1024.55,
+      "at": "2026-04-09T14:45:15.658545"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1024.71,
+      "at": "2026-04-09T14:45:15.772032"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 203.19,
+      "at": "2026-04-09T15:01:14.661782"
     }
   ]
 }

@@ -105,6 +105,52 @@ def test_syntax_check():
     assert content.count("{") == content.count("}"), "Unbalanced braces"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes for core package (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["yarn", "install", "--immutable"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Yarn install failed:\n{r.stderr[-500:]}"
+    # Run typecheck
+    r = subprocess.run(
+        ["yarn", "nx", "run", "core:check"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Repo's code formatting passes for modified file (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["yarn", "install", "--immutable"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Yarn install failed:\n{r.stderr[-500:]}"
+    # Run format check
+    r = subprocess.run(
+        ["yarn", "exec", "oxfmt", "--check", TARGET_FILE],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -257,7 +303,8 @@ def test_explicit_ts_extensions():
 def test_not_stub():
     """The addAction handler contains real state-update logic, not a stub."""
     content = Path(f"{REPO}/{TARGET_FILE}").read_text()
-    idx = content.find("setActions")
+    # Find setActions followed by parentheses (the actual function call, not destructuring)
+    idx = content.find("setActions((")
     assert idx != -1, "setActions call missing"
     region = content[idx : idx + 600]
     assert "if" in region and "else" in region, (

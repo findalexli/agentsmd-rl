@@ -33,45 +33,60 @@ checks:
     origin: structural
     description: "The test file must include the new test case for STARTING with disconnected websocket"
 
-  # Pass-to-pass tests (repo health checks)
+  # Pass-to-pass tests - file existence checks (origin: static)
   - id: test_status_utility_file_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "The status.ts utility file exists"
 
   - id: test_test_file_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "The status.test.ts test file exists"
 
-  - id: test_status_test_file_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All status utility tests pass (repo's own test suite)"
-
-  # CI/CD gate tests (pass-to-pass for repo integrity)
+  # Pass-to-pass tests - repo CI/CD gates (origin: repo_tests)
   - id: test_repo_typecheck
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo TypeScript typecheck passes"
+    description: "Repo TypeScript typecheck passes (npm run typecheck)"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo unit tests pass (npm test -- --run)"
 
   - id: test_repo_build
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo frontend build passes"
+    description: "Repo frontend build passes (npm run build)"
 
   - id: test_repo_lint
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo lint checks pass"
+    description: "Repo lint checks pass (npm run lint)"
 
   - id: test_repo_status_tests
     type: pass_to_pass
     origin: repo_tests
-    description: "Status utility-specific tests pass"
+    description: "Status utility-specific tests pass (npm test -- --run status.test.ts)"
+
+  - id: test_repo_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Translation completeness check passes (npm run check-translation-completeness)"
 
 # No agent configs were found in this repo at the base commit
 agent_config: []
 
-# No rubric needed - this is a straightforward bug fix
-rubric: []
+rubric:
+  - rule: "Pre-commit hooks must pass before pushing changes. For frontend changes, run: npm run lint:fix && npm run build"
+    source:
+      path: "AGENTS.md"
+      lines: "24-30"
+      commit: "0b935669f35dff09303f42daf3e39c4cbb2678ed"
+
+  - rule: "Follow existing code style in the frontend. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "104-107"
+      commit: "0b935669f35dff09303f42daf3e39c4cbb2678ed"

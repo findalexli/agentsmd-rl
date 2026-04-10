@@ -42,6 +42,33 @@ checks:
     origin: static
     description: "Svelte files have real content with existing component features intact"
 
+  # Static checks - file reading/AST parsing (not CI commands)
+  - id: repo_svelte_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Svelte files are valid JS/HTML syntax"
+
+  - id: repo_imports_parse
+    type: pass_to_pass
+    origin: static
+    description: "Repo's Python imports parse correctly"
+
+  - id: repo_svelte_balanced_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Svelte files have balanced braces and parentheses"
+
+  - id: repo_python_docstring_structure
+    type: pass_to_pass
+    origin: static
+    description: "Python docstrings in html.py have valid structure"
+
+  - id: repo_html_component_api
+    type: pass_to_pass
+    origin: static
+    description: "HTML component class has expected API structure"
+
+  # CI/CD checks - actual repo commands via subprocess.run()
   - id: repo_python_syntax
     type: pass_to_pass
     origin: repo_tests
@@ -57,19 +84,29 @@ checks:
     origin: repo_tests
     description: "Repo's Python formatting passes on html.py"
 
-  - id: repo_svelte_syntax
+  - id: repo_html_component_pytest
     type: pass_to_pass
     origin: repo_tests
-    description: "Svelte files are valid JS/HTML syntax"
+    description: "Repo's HTML component pytest tests pass (17 tests covering _to_publish_format and API)"
 
-  - id: repo_imports_parse
+  - id: repo_html_api_pytest
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's Python imports parse correctly"
+    description: "Repo's HTML API tests (TestHTML class) pass (2 tests covering get_config and interface)"
 
 rubric:
   - rule: "Be consistent with the style of the surrounding code."
     source:
       path: "AGENTS.md"
-      lines: "45"
+      lines: "43-45"
+      commit: "f4c3a6dcb45218722d3150baef953c731d3eccf2"
+  - rule: "Keep documentation (docstrings) accurate and up-to-date when adding new features like the watch function."
+    source:
+      path: "AGENTS.md"
+      lines: "43"
+      commit: "f4c3a6dcb45218722d3150baef953c731d3eccf2"
+  - rule: "Follow existing Svelte/TypeScript patterns in the js/html directory for reactive features."
+    source:
+      path: "AGENTS.md"
+      lines: "43-45"
       commit: "f4c3a6dcb45218722d3150baef953c731d3eccf2"

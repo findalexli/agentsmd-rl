@@ -310,3 +310,169 @@ def test_check_mypy_diff_py_syntax():
     )
     assert result.returncode == 0, \
         f"check-mypy-diff.py has syntax errors: {result.stderr}"
+
+
+def test_clang_tidy_cache_sh_syntax():
+    """clang-tidy-cache.sh has valid bash syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/docker/binary-builder/clang-tidy-cache.sh"
+    result = subprocess.run(
+        ["bash", "-n", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"clang-tidy-cache.sh has syntax errors: {result.stderr}"
+
+
+def test_docker_in_docker_sh_syntax():
+    """docker_in_docker.sh has valid bash syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/docker_in_docker.sh"
+    result = subprocess.run(
+        ["bash", "-n", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"docker_in_docker.sh has syntax errors: {result.stderr}"
+
+
+def test_docker_server_config_sh_syntax():
+    """docker_server/config.sh has valid bash syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/docker_server/config.sh"
+    result = subprocess.run(
+        ["bash", "-n", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"config.sh has syntax errors: {result.stderr}"
+
+
+def test_check_ci_py_syntax():
+    """check_ci.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/check_ci.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"check_ci.py has syntax errors: {result.stderr}"
+
+
+def test_find_tests_py_syntax():
+    """find_tests.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/find_tests.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"find_tests.py has syntax errors: {result.stderr}"
+
+
+def test_done_py_syntax():
+    """done.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/done.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"done.py has syntax errors: {result.stderr}"
+
+
+def test_log_parser_py_syntax():
+    """log_parser.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/log_parser.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"log_parser.py has syntax errors: {result.stderr}"
+
+
+def test_check_settings_style_runs():
+    """check-settings-style runs without crashing (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/check_style/check-settings-style"
+    env = os.environ.copy()
+    env["ROOT_PATH"] = REPO
+
+    result = subprocess.run(
+        ["bash", script_path],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+        env=env
+    )
+    output = result.stdout + result.stderr
+    assert "syntax error" not in output.lower(), \
+        f"Script failed with syntax error: {output[:500]}"
+    assert "unexpected token" not in output.lower(), \
+        f"Script failed with unexpected token: {output[:500]}"
+
+
+def test_check_mypy_runs():
+    """check-mypy script runs without crashing (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/check_style/check-mypy"
+    result = subprocess.run(
+        ["bash", script_path],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO
+    )
+    output = result.stdout + result.stderr
+    assert "syntax error" not in output.lower(), \
+        f"Script failed with syntax error: {output[:500]}"
+    assert "unexpected token" not in output.lower(), \
+        f"Script failed with unexpected token: {output[:500]}"
+
+
+def test_check_aspell_runs():
+    """check_aspell.sh runs without crashing (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/check_style/check_aspell.sh"
+    env = os.environ.copy()
+    env["ROOT_PATH"] = REPO
+
+    result = subprocess.run(
+        ["bash", script_path],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+        env=env
+    )
+    output = result.stdout + result.stderr
+    assert "syntax error" not in output.lower(), \
+        f"Script failed with syntax error: {output[:500]}"
+    assert "unexpected token" not in output.lower(), \
+        f"Script failed with unexpected token: {output[:500]}"
+
+
+def test_check_typos_runs():
+    """check_typos.sh runs without crashing (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/check_style/check_typos.sh"
+    env = os.environ.copy()
+    env["ROOT_PATH"] = REPO
+
+    result = subprocess.run(
+        ["bash", script_path],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+        env=env
+    )
+    output = result.stdout + result.stderr
+    assert "syntax error" not in output.lower(), \
+        f"Script failed with syntax error: {output[:500]}"
+    assert "unexpected token" not in output.lower(), \
+        f"Script failed with unexpected token: {output[:500]}"
+
+

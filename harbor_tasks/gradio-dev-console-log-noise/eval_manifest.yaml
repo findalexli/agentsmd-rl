@@ -7,6 +7,7 @@ source:
   merge_commit: "7326ea312bee7ccdaf4a1e4e11ace8f11b607ca5"
 
 checks:
+  # Fail-to-pass tests (must fail before fix, pass after fix)
   - id: mount_component_log_removed
     type: fail_to_pass
     origin: pr_diff
@@ -22,6 +23,7 @@ checks:
     origin: pr_diff
     description: "main.ts console.log('mode', mode) removed"
 
+  # Pass-to-pass tests (must pass both before and after fix)
   - id: svelte_core_mounting_intact
     type: pass_to_pass
     origin: pr_diff
@@ -37,6 +39,7 @@ checks:
     origin: pr_diff
     description: "main.ts custom element registration and lifecycle preserved (6 markers)"
 
+  # Repo CI/CD tests (pass_to_pass - must pass on both base and gold commits)
   - id: test_repo_format_check
     type: pass_to_pass
     origin: repo_tests
@@ -47,25 +50,22 @@ checks:
     origin: repo_tests
     description: "Repo's client package builds successfully (CI: pnpm --filter @gradio/client build)"
 
-  - id: test_repo_client_tests
+  - id: test_repo_core_init_tests
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's client package tests pass (CI: pnpm --filter @gradio/client test)"
+    description: "Repo's core init tests pass - tests MountCustomComponent.svelte (CI: pnpm vitest run js/core/src/init.test.ts)"
 
-  - id: test_repo_core_tests
+  - id: test_repo_spa_component_tests
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's core JS module tests pass (CI: pnpm vitest run js/core)"
+    description: "Repo's SPA component tests pass - tests main.ts (CI: pnpm vitest run js/spa/test/components.test.ts)"
 
-rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "424a4e4bcfeace96f7f5a678b56a578ad2002cf4"
+  - id: test_repo_client_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's client package unit tests pass (CI: pnpm --filter @gradio/client test)"
 
-  - rule: "Frontend code must be formatted with prettier."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "424a4e4bcfeace96f7f5a678b56a578ad2002cf4"
+  - id: test_repo_core_i18n_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's core i18n tests pass (CI: pnpm vitest run js/core/src/i18n.test.ts)"

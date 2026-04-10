@@ -162,6 +162,16 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass - syntax check for modified module
+def test_repo_workflow_syntax():
+    """Modified workflow.py compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------

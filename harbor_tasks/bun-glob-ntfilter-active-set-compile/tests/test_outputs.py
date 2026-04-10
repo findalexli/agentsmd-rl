@@ -87,7 +87,7 @@ def test_source_file_exists_balanced_braces():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core fix verification
+# Fail-to-pass (pr_diff) - core fix verification
 # ---------------------------------------------------------------------------
 
 
@@ -116,9 +116,9 @@ def test_fix_uses_active_bitset():
     block = "\n".join(lines)
     assert block, "setNameFilter call site not found in source"
     assert re.search(r"\bactive\.\w+\(", block), (
-        "No BitSet method call on 'active' near setNameFilter — "
+        "No BitSet method call on 'active' near setNameFilter - "
         "fix must derive component index from active BitSet "
-        "(e.g., active.findFirstSet(), active.count())"
+        "(e.g. active.findFirstSet(), active.count())"
     )
 
 
@@ -128,17 +128,17 @@ def test_multi_active_conditional():
     block = "\n".join(lines)
     assert block, "setNameFilter call site not found in source"
     assert re.search(r"\.count\(\)", block), (
-        "No .count() check on active set — fix must check if multiple "
+        "No .count() check on active set - fix must check if multiple "
         "components are active to decide whether to apply the NT filter"
     )
     assert "null" in block, (
-        "No null fallback — when multiple components are active, "
+        "No null fallback - when multiple components are active, "
         "setNameFilter must receive null to skip single-component filtering"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression checks
+# Pass-to-pass (pr_diff) - regression checks
 # ---------------------------------------------------------------------------
 
 
@@ -163,7 +163,7 @@ def test_compute_nt_filter_function_preserved():
         "assert 'fn computeNtFilter' in code, 'computeNtFilter function was removed'\n"
         "idx = code.index('fn computeNtFilter')\n"
         "sig = code[idx:idx+200]\n"
-        "assert 'u32' in sig, 'computeNtFilter signature changed — missing u32 param'\n"
+        "assert 'u32' in sig, 'computeNtFilter signature changed - missing u32 param'\n"
         "print('PASS')\n"
     )
     assert r.returncode == 0, f"Failed: {r.stderr}"
@@ -194,56 +194,77 @@ def test_compute_nt_filter_still_called():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD equivalent validation
-# Container lacks bun/zig toolchains, using Python static analysis
+# Pass-to-pass (repo_tests) - CI/CD equivalent validation
+# Container lacks bun/zig toolchains, using npx-based CI commands
 # ---------------------------------------------------------------------------
 
 
-def test_repo_globwalker_zig_valid():
-    """GlobWalker.zig has valid Zig syntax indicators (pass_to_pass)."""
-    r = _run_py(
-        "from pathlib import Path\n"
-        "code = Path(r'/workspace/bun/src/glob/GlobWalker.zig').read_text()\n"
-        "# Check basic Zig file structure indicators\n"
-        "assert code.count('pub fn ') > 0, 'No public functions found'\n"
-        "assert code.count('const ') > 0, 'No const declarations found'\n"
-        "assert code.count('var ') > 0, 'No var declarations found'\n"
-        "# Check for balanced parentheses (basic sanity check)\n"
-        "open_parens = code.count('(')\n"
-        "close_parens = code.count(')')\n"
-        "assert abs(open_parens - close_parens) <= 10, f'Unbalanced parens: {open_parens} vs {close_parens}'\n"
-        "# Check for balanced brackets\n"
-        "open_brackets = code.count('[')\n"
-        "close_brackets = code.count(']')\n"
-        "assert abs(open_brackets - close_brackets) <= 5, f'Unbalanced brackets: {open_brackets} vs {close_brackets}'\n"
-        "print('PASS')\n"
-    )
-    assert r.returncode == 0, f"Repo GlobWalker.zig validation failed: {r.stderr}"
-    assert "PASS" in r.stdout
+def test_repo_oxlint_js():
+    """JavaScript/TypeScript linting passes with oxlint (pass_to_pass).
 
-
-def test_repo_no_banned_patterns():
-    """No banned patterns in GlobWalker.zig (pass_to_pass).
-
-    Checks for patterns banned in bun CI per test/internal/ban-words.test.ts
+    Mirrors 'bun lint' CI check using oxlint on src/js directory.
     """
-    r = _run_py(
-        "from pathlib import Path\n"
-        "code = Path(r'/workspace/bun/src/glob/GlobWalker.zig').read_text()\n"
-        "banned_patterns = [\n"
-        "    'std.debug.assert',  # Use bun.assert instead\n"
-        "    'std.debug.print',   # Don't commit debug prints\n"
-        "    'std.log',           # Don't commit logs\n"
-        "    'usingnamespace',    # Zig 0.15 will remove\n"
-        "]\n"
-        "for pattern in banned_patterns:\n"
-        "    if pattern in code:\n"
-        "        print(f'FAIL: Found banned pattern: {pattern}')\n"
-        "        exit(1)\n"
-        "print('PASS')\n"
+    r = subprocess.run(
+        ["npx", "oxlint", "src/js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Banned patterns check failed: {r.stderr}"
-    assert "PASS" in r.stdout
+    # oxlint returns 0 when no errors found (warnings are OK)
+    assert r.returncode == 0, f"oxlint found errors:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check_scripts():
+    """Scripts directory formatting check passes with prettier (pass_to_pass).
+
+    Mirrors CI formatting check for scripts directory.
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "scripts/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"prettier check failed for scripts/:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+
+
+def test_repo_prettier_check_docs():
+    """Docs directory formatting check passes with prettier (pass_to_pass).
+
+    Mirrors CI formatting check for docs directory.
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "docs/", "--ignore-unknown"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"prettier check failed for docs/:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check_glob_tests():
+    """Glob-related test files formatting check passes with prettier (pass_to_pass).
+
+    Mirrors CI formatting check for glob test files that exercise GlobWalker code.
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "test/js/node/fs/glob.test.ts", "test/js/node/path/matches-glob.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"prettier check failed for glob test files:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+def test_repo_git_status_clean():
+    """Git repository is in a clean state (pass_to_pass).
+
+    Verifies that the repo was checked out properly without uncommitted changes
+    except for the expected fix file (src/glob/GlobWalker.zig).
+    """
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    # Allow for the presence of test files being mounted and the fix file
+    # Filter out expected modified files (GlobWalker.zig is the fix target)
+    modified_files = [line for line in r.stdout.splitlines() if line.startswith(" M")]
+    unexpected = [f for f in modified_files if "GlobWalker.zig" not in f and not f.startswith(" M test/")]
+    assert len(unexpected) == 0, f"Unexpected modified source files: {unexpected}"
 
 
 # ---------------------------------------------------------------------------
@@ -267,16 +288,3 @@ def test_no_inline_import_near_fix():
     for line in lines:
         if line and "@import" in line:
             raise AssertionError(f"Inline @import near fix: {line}")
-
-
-def test_repo_oxlint_js():
-    """JavaScript/TypeScript linting passes with oxlint (pass_to_pass).
-
-    Mirrors 'bun lint' CI check using oxlint on src/js directory.
-    """
-    r = subprocess.run(
-        ["npx", "oxlint", "src/js"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    # oxlint returns 0 when no errors found (warnings are OK)
-    assert r.returncode == 0, f"oxlint found errors:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

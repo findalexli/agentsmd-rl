@@ -385,3 +385,37 @@ def test_repo_script_imports():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Script import failed:\n{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass
+def test_repo_flake8():
+    """Diffusion script passes flake8 syntax check (pass_to_pass)."""
+    import subprocess
+
+    # Install flake8 if not available
+    subprocess.run(["pip", "install", "flake8", "--quiet"], check=False, capture_output=True)
+
+    r = subprocess.run(
+        ["flake8", "--select=E9,F63,F7,F82", "scripts/ci/utils/diffusion/generate_diffusion_dashboard.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"flake8 check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass
+def test_repo_script_help():
+    """Diffusion script CLI loads and shows help (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python3", "scripts/ci/utils/diffusion/generate_diffusion_dashboard.py", "--help"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Script --help failed:\n{r.stderr[-500:]}"
+    assert "Generate diffusion cross-framework comparison dashboard" in r.stdout, "Unexpected help output"

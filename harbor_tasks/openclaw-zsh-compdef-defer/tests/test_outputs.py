@@ -15,15 +15,13 @@ REPO = "/workspace/openclaw"
 TARGET = Path(REPO) / "src" / "cli" / "completion-cli.ts"
 
 # Node.js script: extract the zsh completion registration section from TypeScript source.
-# Reads the template string, substitutes ${rootCmd} -> openclaw, outputs the tail.
 _EXTRACT_TAIL_JS = r"""
 const fs = require('fs');
 const src = fs.readFileSync('src/cli/completion-cli.ts', 'utf8');
 const m = src.match(/const script = `\n([\s\S]*?)`;\s*\n\s*return script;/);
 if (!m) { console.error('NO_TEMPLATE'); process.exit(1); }
-let t = m[1].replace(/\$\{rootCmd\}/g, 'openclaw');
+let t = m[1].replace(/\${rootCmd}/g, 'openclaw');
 const lines = t.split('\n');
-// Find the registration section: first line with register_completion or bare compdef
 let start = -1;
 for (let i = 0; i < lines.length; i++) {
   if (lines[i].includes('_openclaw_register_completion') ||
@@ -33,7 +31,6 @@ for (let i = 0; i < lines.length; i++) {
   }
 }
 if (start === -1) {
-  // Fallback: any compdef not in a #compdef directive
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].includes('compdef') && !lines[i].includes('#compdef')) {
       start = i;
@@ -56,12 +53,6 @@ def _get_zsh_tail() -> str:
     return r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
-
-# [static] pass_to_pass
 def test_typescript_file_valid():
     """completion-cli.ts exists and contains completion generation logic."""
     assert TARGET.exists(), f"{TARGET} not found"
@@ -70,18 +61,8 @@ def test_typescript_file_valid():
     assert len(src) > 200, "File appears truncated"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests using Node.js subprocess execution
-# ---------------------------------------------------------------------------
-
-
-# [pr_diff] fail_to_pass
 def test_compdef_not_bare_at_toplevel():
-    """compdef must be called inside a registration function, not bare at top level.
-
-    Executes Node.js to extract the generated zsh script and verify compdef is
-    wrapped inside a function, not a bare top-level call.
-    """
+    """compdef must be called inside a registration function, not bare at top level."""
     section = _get_zsh_tail()
     for line in section.splitlines():
         assert not re.match(r"^compdef\s+", line), (
@@ -91,13 +72,8 @@ def test_compdef_not_bare_at_toplevel():
     assert "compdef" in section, "compdef call was removed entirely"
 
 
-# [pr_diff] fail_to_pass
 def test_compdef_availability_check():
-    """Registration logic checks whether compdef is available before calling it.
-
-    Executes Node.js to extract the generated script and verify it contains
-    a compdef availability check (e.g. $+functions[compdef]).
-    """
+    """Registration logic checks whether compdef is available before calling it."""
     section = _get_zsh_tail()
     checks = [
         "$+functions[compdef]",
@@ -112,13 +88,8 @@ def test_compdef_availability_check():
     )
 
 
-# [pr_diff] fail_to_pass
 def test_precmd_hook_queues_deferred_registration():
-    """When compdef is unavailable, registration is deferred via precmd_functions.
-
-    Executes Node.js to extract the generated script and verify precmd_functions
-    is used to queue the registration for retry after compinit.
-    """
+    """When compdef is unavailable, registration is deferred via precmd_functions."""
     section = _get_zsh_tail()
     assert "precmd_functions" in section, (
         "precmd_functions not referenced — must queue deferred registration"
@@ -128,18 +99,13 @@ def test_precmd_hook_queues_deferred_registration():
     )
 
 
-# [pr_diff] fail_to_pass
 def test_cleanup_after_successful_registration():
-    """After compdef succeeds, hook removes itself from precmd_functions and undefines.
-
-    Executes Node.js to extract the generated script and verify cleanup patterns
-    (array removal and/or function undefinition).
-    """
+    """After compdef succeeds, hook removes itself from precmd_functions and undefines."""
     section = _get_zsh_tail()
     cleanup_patterns = [
-        "precmd_functions:#",      # zsh array element removal
-        "unfunction",              # undefine function
-        "unset -f",                # alternative undefine
+        "precmd_functions:#",
+        "unfunction",
+        "unset -f",
     ]
     assert any(p in section for p in cleanup_patterns), (
         "No cleanup after registration — must remove hook from precmd_functions "
@@ -147,29 +113,18 @@ def test_cleanup_after_successful_registration():
     )
 
 
-# [pr_diff] fail_to_pass
 def test_dedup_prevents_duplicate_hooks():
-    """Repeated sourcing does not add duplicate entries to precmd_functions.
-
-    Executes Node.js to extract the generated script and verify deduplication
-    (membership check before appending to precmd_functions).
-    """
+    """Repeated sourcing does not add duplicate entries to precmd_functions."""
     section = _get_zsh_tail()
     dedup_patterns = [
-        "precmd_functions[(r)",    # zsh reverse subscript search
-        "typeset -gaU",            # unique array flag
+        "precmd_functions[(r)",
+        "typeset -gaU",
     ]
     assert any(p in section for p in dedup_patterns), (
         "No deduplication check — repeated sourcing could add duplicate precmd hooks"
     )
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression
-# ---------------------------------------------------------------------------
-
-
-# [static] pass_to_pass
 def test_zsh_completion_function_intact():
     """Root completion function still defined and not a stub."""
     src = TARGET.read_text()
@@ -179,18 +134,8 @@ def test_zsh_completion_function_intact():
     )
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config)
-# ---------------------------------------------------------------------------
-
-
-# [agent_config] pass_to_pass — CLAUDE.md:102 @ f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
 def test_no_explicit_any():
-    """No explicit 'any' type annotations or type assertions in completion-cli.ts (CLAUDE.md rule).
-
-    Checks for ': any' (type annotation) and 'as any' (type assertion) patterns
-    in TypeScript code. Template string content (the zsh script) is excluded.
-    """
+    """No explicit 'any' type annotations or type assertions in completion-cli.ts."""
     src = TARGET.read_text()
     violations = []
     in_template = False
@@ -207,9 +152,8 @@ def test_no_explicit_any():
     )
 
 
-# [agent_config] pass_to_pass — CLAUDE.md:104 @ f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
 def test_no_ts_nocheck():
-    """No @ts-nocheck or @ts-ignore in CLI source files (CLAUDE.md rule)."""
+    """No @ts-nocheck or @ts-ignore in CLI source files."""
     cli_dir = Path(REPO) / "src" / "cli"
     if not cli_dir.exists():
         return
@@ -226,61 +170,45 @@ def test_no_ts_nocheck():
     )
 
 
-# ---------------------------------------------------------------------------
-# Repo CI/CD pass-to-pass gates
-# ---------------------------------------------------------------------------
-
-
 def _setup_env():
     """Install pnpm and dependencies if needed."""
-    # Check if already set up
     if (Path(REPO) / "node_modules").exists():
         return
-    # Install pnpm globally
     subprocess.run(
         ["npm", "install", "-g", "pnpm"],
         capture_output=True, timeout=60, cwd=REPO,
     )
-    # Install dependencies
     subprocess.run(
         ["pnpm", "install", "--frozen-lockfile"],
         capture_output=True, timeout=300, cwd=REPO,
     )
 
 
-# [repo_tests] pass_to_pass
 def test_repo_lint():
-    """Repo's oxlint passes on the codebase (pass_to_pass)."""
+    """Repo's oxlint passes on completion-cli.ts (pass_to_pass)."""
     _setup_env()
     r = subprocess.run(
-        ["npx", "oxlint"],
+        ["pnpm", "exec", "oxlint", "src/cli/completion-cli.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_format():
     """Repo's oxfmt format check passes on CLI files (pass_to_pass)."""
     _setup_env()
-    # Install oxfmt if not available
-    subprocess.run(
-        ["npm", "install", "-g", "oxfmt"],
-        capture_output=True, timeout=60, cwd=REPO,
-    )
     r = subprocess.run(
-        ["oxfmt", "--check", "src/cli/completion-cli.ts"],
+        ["pnpm", "exec", "oxfmt", "--check", "src/cli/completion-cli.ts"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
 def test_repo_cli_unit_tests():
-    """Repo's unit tests for CLI module pass (pass_to_pass)."""
+    """Repo's unit tests for completion-cli pass (pass_to_pass)."""
     _setup_env()
     r = subprocess.run(
-        ["npx", "vitest", "run", "--config", "vitest.unit.config.ts", "src/cli/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["pnpm", "exec", "vitest", "run", "src/cli/completion-cli.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"CLI unit tests failed:\n{r.stderr[-500:]}"

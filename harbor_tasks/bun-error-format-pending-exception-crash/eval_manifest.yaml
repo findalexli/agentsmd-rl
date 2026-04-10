@@ -70,48 +70,89 @@ checks:
       commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
 
   # ---------------------------------------------------------------------------
+  # Repo CI/CD pass_to_pass gates — subprocess-based real CI commands
+  # These run actual commands from the repo's CI configuration.
+  # ---------------------------------------------------------------------------
+
+  - id: repo_banned_words
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Banned words check from CI passes - runs bun ./test/internal/ban-words.test.ts"
+
+  - id: repo_int_from_float
+    type: pass_to_pass
+    origin: repo_tests
+    description: "int_from_float test from CI passes - runs bun test test/internal/int_from_float.test.ts"
+
+  - id: repo_glob_sources
+    type: pass_to_pass
+    origin: repo_tests
+    description: "glob-sources script from CI passes - runs bun scripts/glob-sources.mjs"
+
+  # ---------------------------------------------------------------------------
   # Repo CI/CD pass_to_pass gates — static analysis (no build tools required)
   # These simulate the repo's CI checks that can run without Bun/Zig compilers.
   # ---------------------------------------------------------------------------
 
   - id: zig_file_balanced_braces
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "JSGlobalObject.zig has balanced braces (basic syntax check)"
 
   - id: zig_file_balanced_parens
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "JSGlobalObject.zig has balanced parentheses (basic syntax check)"
 
   - id: zig_file_no_double_semicolons
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "JSGlobalObject.zig has no double semicolons (common syntax error)"
 
   - id: zig_file_pub_fn_syntax
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "JSGlobalObject.zig pub fn declarations have valid syntax"
 
   - id: zig_file_no_trailing_whitespace
     type: pass_to_pass
-    origin: repo_ci
+    origin: static
     description: "JSGlobalObject.zig has no lines with trailing whitespace (code style)"
 
+  # ---------------------------------------------------------------------------
+  # Additional repo CI pass_to_pass gates — banned patterns (static analysis)
+  # Based on test/internal/ban-words.test.ts patterns
+  # ---------------------------------------------------------------------------
+
+  - id: no_banned_undefined_comparisons
+    type: pass_to_pass
+    origin: static
+    description: "JSGlobalObject.zig error functions have no undefined comparisons - UB per ban-words"
+
+  - id: no_usingnamespace_in_target
+    type: pass_to_pass
+    origin: static
+    description: "JSGlobalObject.zig error functions do not use usingnamespace - deprecated in Zig 0.15"
+
+  - id: no_banned_jsvalue_patterns
+    type: pass_to_pass
+    origin: static
+    description: "JSGlobalObject.zig error functions do not use banned JSValue patterns"
+
+  - id: no_std_debug_in_error_functions
+    type: pass_to_pass
+    origin: static
+    description: "JSGlobalObject.zig error functions do not use std.debug patterns per ban-words"
+
 rubric:
-  - rule: "Memory management - In Zig code, be careful with allocators and use defer for cleanup"
+  - rule: "Follow existing code style. Check neighboring files for patterns."
     source:
-      path: "CLAUDE.md"
+      path: "src/CLAUDE.md"
+      lines: "228"
+      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
+
+  - rule: "In Zig code, be careful with allocators and use defer for cleanup."
+    source:
+      path: "src/CLAUDE.md"
       lines: "232"
-      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
-  - rule: "Never use @import() inline inside of functions. Always put them at the bottom of the file or containing struct."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "11"
-      commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"
-  - rule: "Use bun.handleOom(expr) instead of catch bun.outOfMemory() — handleOom converts error.OutOfMemory into a crash without swallowing other errors"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "234-238"
       commit: "f6528b58ed67c8fb8c80046114829d9ad79a292f"

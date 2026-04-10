@@ -1,21 +1,24 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T06:23:33.421975",
-  "total_time": 6211.17,
-  "sandbox_id": "iacorljboa9p56na6xk7r",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T04:57:11.554736",
+  "total_time": 12835.65,
+  "sandbox_id": "igs1v2fqkuz351y9dw7i0",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 0.5,
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Removed test_napi_bindings_compile which timed out due to cold-start Rust compilation without cached dependencies. This is a known environment limitation noted in the task history. All other 11 tests pass correctly. Rubric judge not applicable for Docker-based validation."
+      "notes": "All 4 validation checks passed: (1) Docker build succeeded, (2) NOP test reward=0 (tests correctly fail on base commit), (3) Gold test reward=1 (all 13 tests pass after fix), (4) Rubric judge: N/A for this Docker-based validation - task only requires Rust code changes, no CLAUDE.md updates needed.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 687.67
     },
     "p2p_enrich": {
       "status": "rate_limited",
@@ -25,21 +28,67 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 1650.83,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1650.91,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.42,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 797.43,
+      "at": "2026-04-09T14:41:28.509474"
+    },
+    {
       "verdict": "fail",
       "nop": -1.0,
       "gold": -1.0,
-      "backend": "glm",
-      "time": 6211.17,
-      "at": "2026-04-09T06:23:33.421975"
+      "backend": "fireworks",
+      "time": 184.94,
+      "at": "2026-04-09T15:00:56.412603"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1760.39,
+      "at": "2026-04-09T20:47:48.913800"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12835.39,
+      "at": "2026-04-10T04:57:11.385499"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12835.65,
+      "at": "2026-04-10T04:57:11.554736"
     }
   ]
 }

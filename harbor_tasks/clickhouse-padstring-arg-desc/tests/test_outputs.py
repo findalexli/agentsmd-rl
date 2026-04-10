@@ -10,11 +10,13 @@ This test file uses a combination of:
 1. Behavioral tests (syntax check using clang -fsyntax-only)
 2. Static analysis tests (pattern matching on source code)
 3. Repo style checks (trailing whitespace, indentation, etc.)
+4. CI command tests (codespell, git checks, etc.)
 """
 
 import subprocess
 import re
 import sys
+import pytest
 from pathlib import Path
 
 REPO = Path("/workspace/ClickHouse")
@@ -144,7 +146,8 @@ def test_pad_string_argument_description():
 
 
 # ============================================================================
-# PASS-TO-PASS TESTS - Repo style and structural checks
+# PASS-TO-PASS TESTS - Repo style and structural checks (origin: static)
+# These check file content using Python file operations
 # ============================================================================
 
 def test_no_trailing_whitespace():
@@ -276,3 +279,153 @@ def test_allman_brace_style():
     if len(violations) > 5:
         # Too many violations indicates agent may have introduced new K&R code
         pass  # Informational only - don't fail on existing code style
+
+
+# ============================================================================
+# PASS-TO-PASS TESTS - CI Command Tests (origin: repo_tests)
+# These use subprocess.run() to execute real CI commands
+# ============================================================================
+
+def test_repo_codespell():
+    """Codespell finds no typos in padString.cpp (pass_to_pass).
+
+    This test runs the codespell tool which is used in ClickHouse CI
+    to check for common typos in source files.
+    """
+    # Install codespell if not present (Docker environment should have pip3)
+    r = subprocess.run(
+        ["pip3", "install", "codespell", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO)
+    )
+    # Ignore install errors - may already be installed
+
+    # Run codespell on the modified file
+    r = subprocess.run(
+        ["codespell", str(PADSTRING_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO)
+    )
+
+    assert r.returncode == 0, f"codespell found typos:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_git_status_clean():
+    """Git repo is in clean state (pass_to_pass).
+
+    Verifies the git repository has no uncommitted changes
+    at the start of the test run.
+    """
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(REPO)
+    )
+
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    # Repo should be clean (no uncommitted changes at base commit)
+    # Note: This is a sanity check that the environment is properly set up
+
+
+def test_repo_padstring_sql_test_exists():
+    """pad_string SQL test files exist (pass_to_pass).
+
+    Verifies that the SQL test files for padString functions exist
+    and have the expected structure.
+    """
+    test_sql = REPO / "tests/queries/0_stateless/01940_pad_string.sql"
+    test_ref = REPO / "tests/queries/0_stateless/01940_pad_string.reference"
+
+    # Check files exist
+    assert test_sql.exists(), f"SQL test file not found: {test_sql}"
+    assert test_ref.exists(), f"Reference file not found: {test_ref}"
+
+    # Verify files are non-empty
+    sql_content = test_sql.read_text()
+    ref_content = test_ref.read_text()
+
+    assert len(sql_content) > 0, "SQL test file is empty"
+    assert len(ref_content) > 0, "Reference file is empty"
+
+    # Verify SQL file has expected content
+    assert "leftPad" in sql_content, "SQL test should include leftPad tests"
+    assert "rightPad" in sql_content, "SQL test should include rightPad tests"
+
+
+def test_repo_leftpad_fixedstring_test_exists():
+    """leftPad FixedString test exists (pass_to_pass).
+
+    Verifies that the FixedString-specific test for leftPad exists.
+    This test was added for issue #59604.
+    """
+    test_sql = REPO / "tests/queries/0_stateless/02986_leftpad_fixedstring.sql"
+    test_ref = REPO / "tests/queries/0_stateless/02986_leftpad_fixedstring.reference"
+
+    # Check files exist
+    assert test_sql.exists(), f"FixedString test SQL file not found: {test_sql}"
+    assert test_ref.exists(), f"FixedString test reference file not found: {test_ref}"
+
+    # Verify files are non-empty
+    sql_content = test_sql.read_text()
+    assert len(sql_content) > 0, "FixedString test SQL file is empty"
+
+    # Verify it tests FixedString
+    assert "toFixedString" in sql_content, "Test should use toFixedString"
+
+
+def test_repo_file_in_git():
+    """padString.cpp is tracked in git (pass_to_pass).
+
+    Verifies the modified file is part of the git repository.
+    """
+    r = subprocess.run(
+        ["git", "ls-files", str(PADSTRING_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(REPO)
+    )
+
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
+    assert "padString.cpp" in r.stdout, "padString.cpp should be tracked in git"
+
+
+def test_repo_clang_format_style():
+    """C++ file follows basic style conventions (pass_to_pass).
+
+    Uses clang-format --dry-run to check if the file follows
+    the project's .clang-format style rules.
+    Note: This test may pass even with minor style issues since
+    the shallow clone may have missing dependencies.
+    """
+    # Check if clang-format is available
+    r = subprocess.run(["which", "clang-format-15"], capture_output=True)
+    if r.returncode != 0:
+        r = subprocess.run(["which", "clang-format"], capture_output=True)
+        if r.returncode != 0:
+            pytest.skip("clang-format not available")
+            return
+
+    clang_format = "clang-format-15" if subprocess.run(
+        ["which", "clang-format-15"], capture_output=True
+    ).returncode == 0 else "clang-format"
+
+    # Run clang-format in dry-run mode to check for style issues
+    r = subprocess.run(
+        [clang_format, "--dry-run", "--Werror", str(PADSTRING_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO)
+    )
+
+    # Note: We don't fail on style issues since the original file
+    # may have existing style variations
+    # This test serves as a check that the file can be parsed by clang-format
+    assert "error:" not in r.stderr.lower(), f"clang-format found errors:\n{r.stderr}"

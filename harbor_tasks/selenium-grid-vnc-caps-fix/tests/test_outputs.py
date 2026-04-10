@@ -235,6 +235,57 @@ def test_repo_format_lint():
     assert result.returncode == 0, "Format lint check failed"
 
 
+def test_repo_buildifier_check():
+    """P2P: Bazel build files are properly formatted (pass_to_pass).
+
+    The repo's Bazel build files (BUILD.bazel, *.bzl) should be properly
+    formatted according to buildifier standards. This is a standard CI check.
+    """
+    result = subprocess.run(
+        ["bazel", "run", "//:buildifier", "--", "-mode=check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+
+    if result.returncode != 0:
+        print(f"STDOUT:\n{result.stdout}")
+        print(f"STDERR:\n{result.stderr}")
+
+    assert result.returncode == 0, "Buildifier check failed - Bazel files need formatting"
+
+
+def test_repo_java_grid_node_config_tests():
+    """P2P: Grid node config tests pass (pass_to_pass).
+
+    The repo's grid node config tests (SessionCapabilitiesMutatorTest,
+    NodeOptionsTest, DriverServiceSessionFactoryTest) should pass on the
+    base commit. These tests cover the modified SessionCapabilitiesMutator
+    functionality.
+    """
+    result = subprocess.run(
+        [
+            "bazel",
+            "test",
+            "//java/test/org/openqa/selenium/grid/node/config:SessionCapabilitiesMutatorTest",
+            "//java/test/org/openqa/selenium/grid/node/config:NodeOptionsTest",
+            "--test_output=errors",
+            "--cache_test_results=no",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+
+    if result.returncode != 0:
+        print(f"STDOUT:\n{result.stdout}")
+        print(f"STDERR:\n{result.stderr}")
+
+    assert result.returncode == 0, "Grid node config tests failed"
+
+
 if __name__ == "__main__":
     import pytest
 

@@ -144,10 +144,10 @@ def test_weak_header_included():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — existing class structure preserved
+# Pass-to-pass (static) — existing class structure preserved
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_class_extends_script_fetcher():
     """NodeVMScriptFetcher must still extend JSC::ScriptFetcher."""
     code = _header_code()
@@ -156,7 +156,7 @@ def test_class_extends_script_fetcher():
     ), "Class must still extend JSC::ScriptFetcher"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_dynamic_import_callback_preserved():
     """dynamicImportCallback() method must still exist."""
     code = _header_code()
@@ -165,10 +165,57 @@ def test_dynamic_import_callback_preserved():
     )
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_m_owner_field_exists():
     """m_owner field must still exist (not simply deleted to 'fix' the leak)."""
     code = _header_code()
     assert re.search(r"[A-Za-z_<>:]+\s+m_owner\s*[;=]", code), (
         "m_owner field was removed entirely — owner() must still work"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — CI/CD: Verify related VM module files exist
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_nodevm_headers_exist():
+    """Related NodeVM header files must exist (pass_to_pass)."""
+    headers = [
+        Path(REPO) / "src/bun.js/bindings/NodeVM.h",
+        Path(REPO) / "src/bun.js/bindings/NodeVMScript.h",
+        Path(REPO) / "src/bun.js/bindings/NodeVMSourceTextModule.h",
+    ]
+    for h in headers:
+        assert h.exists(), f"{h} does not exist"
+        assert h.stat().st_size > 0, f"{h} is empty"
+
+
+# [static] pass_to_pass
+def test_header_guard_present():
+    """NodeVMScriptFetcher.h must have proper header guard (pass_to_pass)."""
+    code = HEADER.read_text()
+    # Check for #pragma once or traditional include guards
+    has_pragma_once = "#pragma once" in code
+    has_ifndef_guard = re.search(r"#ifndef\s+\w+_H\s*\n#define\s+\w+_H", code)
+    assert has_pragma_once or has_ifndef_guard, (
+        "Header must have include guard (#pragma once or #ifndef/#define)"
+    )
+
+
+# [static] pass_to_pass
+def test_cpp_syntax_balanced_braces():
+    """NodeVMScriptFetcher.h must have balanced braces (basic C++ sanity check)."""
+    code = _header_code()
+    # Count opening and closing braces
+    open_count = code.count("{")
+    close_count = code.count("}")
+    assert open_count == close_count, (
+        f"Unbalanced braces: {open_count} opening, {close_count} closing"
+    )
+    # Also check parentheses
+    open_paren = code.count("(")
+    close_paren = code.count(")")
+    assert open_paren == close_paren, (
+        f"Unbalanced parentheses: {open_paren} opening, {close_paren} closing"
     )

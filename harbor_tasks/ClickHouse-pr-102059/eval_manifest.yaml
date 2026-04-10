@@ -72,6 +72,23 @@ task:
       description: Target file uses spaces not tabs
 
   # Soft/subjective rules for LLM judge (optional)
-  rubric: []
+  rubric:
+    - rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line). This is enforced by the style check in CI."
+      source:
+        path: ".claude/CLAUDE.md"
+        lines: "145"
+        commit: "4d79f6ea35f896060e55128fe8ca4216f455d9c0"
+
+    - rule: "When mentioning logical errors, say 'exception' instead of 'crash', because they don't crash the server in the release build."
+      source:
+        path: ".claude/CLAUDE.md"
+        lines: "11"
+        commit: "4d79f6ea35f896060e55128fe8ca4216f455d9c0"
+
+    - rule: "Never use sleep in C++ code to fix race conditions - this is stupid and not acceptable!"
+      source:
+        path: ".claude/CLAUDE.md"
+        lines: "147"
+        commit: "4d79f6ea35f896060e55128fe8ca4216f455d9c0"
 
 timeout_seconds: 300

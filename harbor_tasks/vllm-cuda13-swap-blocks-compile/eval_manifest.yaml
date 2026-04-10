@@ -37,25 +37,36 @@ checks:
     origin: pr_diff
     description: "Fix must use mutable_data_ptr() instead of const data_ptr() + const_cast"
 
-  # Pass-to-pass repo_tests — CI/CD checks from the repo
+  # Pass-to-pass static checks (file content validation)
   - id: repo_source_valid_cpp_syntax
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Source file must have balanced braces and valid C++ structure"
 
   - id: repo_includes_cuda_headers
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Source must include necessary CUDA/ROCm headers"
 
   - id: repo_swap_blocks_signature
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "swap_blocks_batch must have correct function signature"
 
   - id: repo_no_syntax_errors
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Source file must not contain obvious syntax errors"
+
+  # Pass-to-pass repo_tests — Real CI commands that execute repo tooling
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python linter (ruff) passes on vllm/__init__.py"
+
+  - id: test_repo_shellcheck_workflow_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shell scripts in workflows pass shellcheck validation"
 
 rubric: []

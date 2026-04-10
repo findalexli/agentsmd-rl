@@ -167,3 +167,75 @@ def test_suspense_tab_syntax():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Syntax error in SuspenseTab.js:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - version check
+def test_repo_version_check():
+    """Repo version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "version-check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - flags check
+def test_repo_flags():
+    """Repo flags check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flags"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flags check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - print warnings check
+def test_repo_print_warnings():
+    """Repo print warnings check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/test_print_warnings.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print warnings check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - license check
+def test_repo_license_check():
+    """Repo license check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - prettier check on modified files
+def test_repo_prettier_config_files():
+    """Prettier check passes for DevTools config files (pass_to_pass)."""
+    for path in ALL_CONFIGS:
+        r = subprocess.run(
+            ["npx", "prettier", "--check", path],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Prettier check failed for {path}:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - yarn install check
+def test_repo_yarn_install_check():
+    """Yarn can verify dependencies are installed (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--check-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Exit code 0 means all dependencies are installed correctly
+    assert r.returncode == 0, f"Yarn check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - node can parse package.json
+def test_repo_package_json_valid():
+    """package.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json is invalid:\n{r.stderr[-500:]}"

@@ -57,6 +57,23 @@ checks:
       The repo's format lint check (./scripts/format.sh --lint) should pass
       on both base and fixed commits, ensuring code follows formatting standards.
 
+  - id: "repo_buildifier_check"
+    name: "Bazel buildifier check passes"
+    type: "p2p"
+    origin: "repo_tests"
+    description: |
+      The repo's Bazel build files should be properly formatted according to
+      buildifier standards. This runs 'bazel run //:buildifier -- -mode=check'.
+
+  - id: "repo_java_grid_node_config_tests"
+    name: "Grid node config tests pass"
+    type: "p2p"
+    origin: "repo_tests"
+    description: |
+      The repo's grid node config tests (SessionCapabilitiesMutatorTest, NodeOptionsTest)
+      should pass on both base and fixed commits. These tests cover the modified
+      SessionCapabilitiesMutator functionality.
+
   - id: "follows_java_agent_config"
     name: "Follows Java AGENTS.md conventions"
     type: "p2p"
@@ -70,4 +87,21 @@ checks:
       lines: "1-30"
 
 # Rubric for soft/subjective checks (LLM-judge only)
-rubric: []
+rubric:
+  - rule: "Comments should explain *why*, not *what* - prefer well-named methods over comments that narrate code"
+    source:
+      path: "AGENTS.md"
+      lines: "65-66"
+      commit: "b1a7b8de7bf8c9889627914888adee44c01f925a"
+
+  - rule: "Code changes should follow existing code style and pass formatting checks (./scripts/format.sh)"
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "b1a7b8de7bf8c9889627914888adee44c01f925a"
+
+  - rule: "Use Javadoc for public APIs with @param, @return, and @throws as applicable"
+    source:
+      path: "java/AGENTS.md"
+      lines: "22-30"
+      commit: "b1a7b8de7bf8c9889627914888adee44c01f925a"

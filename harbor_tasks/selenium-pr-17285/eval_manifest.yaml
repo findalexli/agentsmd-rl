@@ -80,27 +80,37 @@ checks:
     origin: code_change
     description: SourceActions<T> has correct new signature with IEnumerable parameter
 
-  # Pass-to-pass tests (maintain existing behavior)
+  # Pass-to-pass tests - static file checks (no subprocess)
   - id: test_source_actions_syntax
     type: pass_to_pass
-    origin: repo_tests
-    description: SourceActions.cs has valid C# syntax
+    origin: static
+    description: SourceActions.cs has valid C# syntax (balanced braces, etc.)
 
   - id: test_sourceactions_consistency
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: SourceActions.cs has consistent structure
 
   - id: test_inputmodule_consistency
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: InputModule.cs has consistent structure
 
-  # Repo CI/CD checks as pass-to-pass tests
+  - id: test_bidi_input_files_exist
+    type: pass_to_pass
+    origin: static
+    description: BiDi Input module files exist and are readable
+
+  # Pass-to-pass tests - actual CI commands (repo_tests)
   - id: test_repo_dotnet_format_error_only
     type: pass_to_pass
     origin: repo_tests
     description: .NET code passes dotnet format --severity error with no syntax errors
+
+  - id: test_repo_dotnet_format_bidi_input
+    type: pass_to_pass
+    origin: repo_tests
+    description: BiDi Input files pass dotnet format --severity error
 
   - id: test_repo_dotnet_restore_webdriver
     type: pass_to_pass
@@ -112,10 +122,10 @@ checks:
     origin: repo_tests
     description: Test project can restore NuGet packages
 
-  - id: test_bidi_input_files_exist
+  - id: test_repo_dotnet_restore_support
     type: pass_to_pass
     origin: repo_tests
-    description: BiDi Input module files exist and are readable
+    description: Support project can restore NuGet packages
 
 # No agent_config checks - the Selenium repo doesn't have specific
 # coding standards in AGENTS.md that apply to this refactoring.

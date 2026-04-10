@@ -169,6 +169,60 @@ def test_repo_vue_router_build():
     assert r.returncode == 0, f"vue-router build test failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_react_router_useblocker_tests():
+    """Repo's useBlocker unit tests pass for react-router (pass-to-pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "--run", "tests/useBlocker.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/react-router",
+    )
+    assert r.returncode == 0, f"react-router useBlocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_solid_router_useblocker_tests():
+    """Repo's useBlocker unit tests pass for solid-router (pass-to-pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "--run", "tests/useBlocker.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/solid-router",
+    )
+    assert r.returncode == 0, f"solid-router useBlocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_vue_router_useblocker_tests():
+    """Repo's useBlocker unit tests pass for vue-router (pass-to-pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "--run", "tests/useBlocker.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/vue-router",
+    )
+    assert r.returncode == 0, f"vue-router useBlocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_react_router_blocker_tests():
+    """Repo's blocker unit tests pass for react-router (pass-to-pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "--run", "tests/blocker.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/react-router",
+    )
+    assert r.returncode == 0, f"react-router blocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_solid_router_blocker_tests():
+    """Repo's blocker unit tests pass for solid-router (pass-to-pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "--run", "tests/blocker.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/solid-router",
+    )
+    assert r.returncode == 0, f"solid-router blocker tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_vue_router_blocker_tests():
+    """Repo's blocker unit tests pass for vue-router (pass-to-pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "--run", "tests/blocker.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/vue-router",
+    )
+    assert r.returncode == 0, f"vue-router blocker tests failed:\n{r.stderr[-500:]}"
+
+
 def test_useblocker_type_export_regression():
     """Verify the TS4023 regression scenario is fixed (fail-to-pass).
 

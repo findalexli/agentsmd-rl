@@ -262,6 +262,17 @@ public class TestCheckedException {
         raise AssertionError(f"Checked exception handling broken:\n{result.stdout}\n{result.stderr}")
 
 
+def test_file_compiles():
+    """
+    Lazy.java should compile successfully (pass_to_pass).
+    Compiles the concurrent package to verify the source is valid.
+    """
+    cmd = ["bazel", "build", "//java/src/org/openqa/selenium/concurrent:concurrent"]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, cwd=REPO)
+    if result.returncode != 0:
+        raise AssertionError(f"Compile failed:\n{result.stderr[-1000:]}")
+
+
 def test_bazel_build_concurrent():
     """
     Bazel build for the concurrent target should succeed.
@@ -306,6 +317,7 @@ def test_java_format():
 if __name__ == "__main__":
     # Run all test functions
     test_functions = [
+        test_file_compiles,
         test_bazel_build_concurrent,
         test_bazel_test_concurrent_smalltests,
         test_java_format,

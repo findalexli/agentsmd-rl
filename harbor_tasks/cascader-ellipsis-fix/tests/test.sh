@@ -8,7 +8,7 @@ LOGS_DIR="/logs/verifier"
 mkdir -p "$LOGS_DIR"
 
 # Install pytest if not available
-pip3 install pytest --quiet 2>/dev/null || pip install pytest --quiet 2>/dev/null
+pip3 install pytest --quiet 2>/dev/null || pip install pytest --quiet 2>/dev/null || true
 
 # Run the test file directly to get the REWARD output
 python3 /tests/test_outputs.py 2>&1 | tee "$LOGS_DIR/test_output.log"

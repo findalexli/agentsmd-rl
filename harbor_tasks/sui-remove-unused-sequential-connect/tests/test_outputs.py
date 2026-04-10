@@ -115,3 +115,21 @@ def test_cargo_fmt():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Formatting check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_test():
+    """Repo's unit tests for the modified crate pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "sui-indexer-alt-framework-store-traits", "--", "--test-threads=1"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_xlint():
+    """Repo's custom xlint (license check) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "xlint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"xlint check failed:\n{r.stderr[-500:]}"

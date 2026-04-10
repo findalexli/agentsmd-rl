@@ -209,3 +209,17 @@ def test_repo_lint_packages():
     """Repo's package consistency check passes (pass_to_pass)."""
     r = _run_npm_command("npm run lint-packages", timeout=NPM_TIMEOUT)
     assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_deps():
+    """Repo's DEPS constraints check passes (pass_to_pass)."""
+    r = _run_npm_command("npm run check-deps", timeout=NPM_TIMEOUT)
+    assert r.returncode == 0, f"Check DEPS failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_types():
+    """Repo's type generation and checking passes (pass_to_pass)."""
+    r = _run_npm_command("npm run test-types", timeout=NPM_TIMEOUT)
+    assert r.returncode == 0, f"Test types failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"

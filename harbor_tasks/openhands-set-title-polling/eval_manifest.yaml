@@ -4,6 +4,8 @@ source:
   base_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
   merge_commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
 
+rubric: []
+
 checks:
   - id: test_polling_constants_exist
     type: fail_to_pass
@@ -45,19 +47,39 @@ checks:
   - id: test_imports_work
     type: pass_to_pass
     origin: repo_tests
-    description: Module imports work correctly
+    description: Module imports work correctly (SetTitleCallbackProcessor can be imported)
 
-  - id: test_repo_precommit_hooks
+  - id: test_repo_ruff_linting_modified_file
     type: pass_to_pass
-    origin: repo_ci
-    description: Repo's pre-commit hooks (ruff, mypy, format) pass
+    origin: repo_tests
+    description: Ruff linting passes on the modified set_title_callback_processor.py file
 
   - id: test_repo_ruff_linting
     type: pass_to_pass
     origin: repo_ci
     description: Repo's ruff linting passes on openhands/ directory
 
+  - id: test_repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes on the modified file
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax check passes on the modified file
+
+  - id: test_repo_unit_tests_modified_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for the modified SetTitleCallbackProcessor pass
+
   - id: test_repo_app_server_unit_tests
     type: pass_to_pass
     origin: repo_tests
     description: Repo's app_server unit tests pass
+
+  - id: test_repo_precommit_hooks
+    type: pass_to_pass
+    origin: repo_ci
+    description: Repo's pre-commit hooks (ruff, mypy, format) pass

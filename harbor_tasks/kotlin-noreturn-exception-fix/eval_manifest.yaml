@@ -45,52 +45,100 @@ checks:
     description: All three locations (h, cpp, kt) consistently use RUNTIME_NORETURN
 
   # ============================================================================
-  # PASS-TO-PASS TESTS (Repo integrity - these pass on base and fixed)
+  # PASS-TO-PASS TESTS (Static checks - file content verification)
   # ============================================================================
   - id: test_files_exist
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Required source files exist in the repository
 
   - id: test_cpp_syntax_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: C++ source files have valid syntax (balanced braces)
 
   - id: test_kotlin_syntax_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Kotlin source file has valid structure
 
   - id: test_cpp_header_guards_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: C++ header files have proper include guards
 
   - id: test_cpp_valid_extern_c
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: C++ header has valid extern C blocks for C linkage
 
   - id: test_kotlin_code_patterns
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Kotlin file follows repo code style patterns
 
   - id: test_copyright_headers_present
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: All modified files have JetBrains copyright headers
 
   - id: test_no_trailing_whitespace
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Modified files have minimal trailing whitespace
 
   - id: test_repo_git_state_clean
     type: pass_to_pass
     origin: repo_tests
     description: Git repository is in a valid state
+
+  # ============================================================================
+  # NEW PASS-TO-PASS TESTS (Repo CI/CD - added during p2p enrichment)
+  # ============================================================================
+  - id: test_repo_clang_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: Clang compiler is available and functional
+
+  - id: test_repo_git_log
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git history is accessible and has commits
+
+  - id: test_repo_exceptions_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Exceptions.cpp has valid include structure via grep check
+
+  - id: test_repo_clang_basic_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: C++ files pass basic clang preprocessor syntax check
+
+  - id: test_repo_cpp_codestyle_naming
+    type: pass_to_pass
+    origin: static
+    description: C++ code follows repo naming conventions (PascalCase, SCREAMING_SNAKE_CASE)
+
+  - id: test_repo_file_naming_convention
+    type: pass_to_pass
+    origin: static
+    description: Files follow repo naming conventions (.h/.cpp, PascalCase)
+
+  - id: test_repo_include_structure
+    type: pass_to_pass
+    origin: static
+    description: C++ files have valid include structure
+
+  - id: test_repo_kotlin_package_structure
+    type: pass_to_pass
+    origin: static
+    description: Kotlin file follows repo package/directory structure
+
+  - id: test_repo_common_attributes
+    type: pass_to_pass
+    origin: static
+    description: Common.h defines required attribute macros
 
 # Agent config rules to check (from applicable config files)
 agent_config:
@@ -100,4 +148,28 @@ agent_config:
     test_ids: ["test_all_three_locations_consistent"]
 
 # Soft/subjective rules for LLM judge evaluation (rubric-based)
-rubric: []
+# Extracted from docs/code_authoring_and_core_review.md and compiler/AGENTS.md
+rubric:
+  - rule: "Use area prefix in commit subject line (e.g., [K/N] for Kotlin/Native changes)"
+    source:
+      path: "docs/code_authoring_and_core_review.md"
+      lines: "35"
+      commit: "c962899eaa18746e5b6f2e4d9a6d0f5785d49a06"
+
+  - rule: "Commit message subject line should use imperative mood and be under 72 characters"
+    source:
+      path: "docs/code_authoring_and_core_review.md"
+      lines: "57"
+      commit: "c962899eaa18746e5b6f2e4d9a6d0f5785d49a06"
+
+  - rule: "Reference YouTrack issue in commit message using ^KT-XXXXX syntax (e.g., ^KT-61748 Fixed)"
+    source:
+      path: "docs/code_authoring_and_core_review.md"
+      lines: "52"
+      commit: "c962899eaa18746e5b6f2e4d9a6d0f5785d49a06"
+
+  - rule: "Commit message should explain not just what is done but also how and why"
+    source:
+      path: "docs/code_authoring_and_core_review.md"
+      lines: "54-56"
+      commit: "c962899eaa18746e5b6f2e4d9a6d0f5785d49a06"

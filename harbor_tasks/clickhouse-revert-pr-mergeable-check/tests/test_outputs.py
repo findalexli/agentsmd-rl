@@ -170,7 +170,7 @@ def test_revert_pr_logic_unit():
 
 
 def test_repo_ci_tests():
-    """Repo's CI pytest tests pass (pass_to_pass)."""
+    """Repo's CI pytest tests in ci/tests/ pass (pass_to_pass)."""
     r = subprocess.run(
         [sys.executable, "-m", "pytest", "ci/tests/", "-v"],
         capture_output=True,
@@ -178,11 +178,13 @@ def test_repo_ci_tests():
         timeout=120,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"CI tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    err_msg = r.stderr[-500:] if r.stderr else ""
+    out_msg = r.stdout[-1000:] if r.stdout else ""
+    assert r.returncode == 0, f"CI tests failed:\n{out_msg}\n{err_msg}"
 
 
 def test_repo_python_syntax_native_jobs():
-    """Python syntax check on native_jobs.py passes (pass_to_pass)."""
+    """Python syntax check on ci/praktika/native_jobs.py passes (pass_to_pass)."""
     r = subprocess.run(
         [sys.executable, "-m", "py_compile", "ci/praktika/native_jobs.py"],
         capture_output=True,
@@ -191,3 +193,81 @@ def test_repo_python_syntax_native_jobs():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+def test_repo_praktika_python_syntax():
+    """All Python files in ci/praktika have valid syntax (pass_to_pass)."""
+    import glob
+    py_files = glob.glob(str(REPO / "ci" / "praktika" / "*.py"))
+    # Filter out __pycache__ files if any
+    py_files = [f for f in py_files if not f.endswith("__pycache__.py")]
+
+    failed = []
+    for f in py_files:
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", f],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if r.returncode != 0:
+            failed.append((f, r.stderr))
+
+    assert not failed, f"Syntax errors found:\n" + "\n".join(f"{f}: {e}" for f, e in failed)
+
+
+def test_repo_ci_structure():
+    """CI directory structure is valid with all key files present (pass_to_pass)."""
+    # Verify key directories exist
+    required_dirs = [
+        REPO / "ci" / "praktika",
+        REPO / "ci" / "tests",
+        REPO / "ci" / "jobs",
+        REPO / "ci" / "workflows",
+    ]
+    for d in required_dirs:
+        assert d.exists() and d.is_dir(), f"Required directory missing: {d}"
+
+    # Verify key files exist
+    key_files = [
+        REPO / "ci" / "praktika" / "__init__.py",
+        REPO / "ci" / "praktika" / "result.py",
+        REPO / "ci" / "praktika" / "native_jobs.py",
+        REPO / "ci" / "praktika" / "_environment.py",
+    ]
+    for f in key_files:
+        assert f.exists(), f"Required file missing: {f}"
+        # Check each file has valid Python syntax
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(f)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"Syntax error in {f}:\n{r.stderr}"
+
+
+def test_repo_praktika_core_imports():
+    """Core praktika modules can be imported successfully (pass_to_pass).
+
+    This test validates that the modified native_jobs module and its dependencies
+    can be imported without errors. Installs requests package if needed.
+    """
+    # Install requests if not present (required for imports)
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--quiet", "requests"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    # Import test - add ci/ to path
+    import_code = "import sys; sys.path.insert(0, '/workspace/ClickHouse/ci'); from praktika.result import Result, ResultTranslator; from praktika._environment import _Environment; print('SUCCESS: Core praktika imports work')"
+    r = subprocess.run(
+        [sys.executable, "-c", import_code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import test failed:\n{r.stderr}\n{r.stdout}"
+    assert "SUCCESS" in r.stdout, f"Expected success message not found:\n{r.stdout}"

@@ -338,6 +338,38 @@ def test_not_stub():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_shellcheck():
+    """Repo's check_binary.sh passes shellcheck (pass_to_pass)."""
+    import subprocess
+
+    check_binary_sh = Path(REPO) / ".ci" / "pytorch" / "check_binary.sh"
+    assert check_binary_sh.exists(), f"check_binary.sh not found at {check_binary_sh}"
+
+    # Install shellcheck if not available
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    r = subprocess.run(
+        ["shellcheck", str(check_binary_sh)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"shellcheck failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
 def test_smoke_test_py_compile():
     """Repo's smoke_test Python files compile without syntax errors (pass_to_pass)."""
     import py_compile
@@ -393,3 +425,42 @@ def test_smoke_test_flake8():
         timeout=120,
     )
     assert r.returncode == 0, f"Flake8 check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_scripts_compile():
+    """Repo's shell scripts in .ci/pytorch pass shellcheck (pass_to_pass)."""
+    import subprocess
+
+    # Install shellcheck
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    # Check key shell scripts related to smoke test / binary check
+    scripts = [
+        (".ci/pytorch/check_binary.sh", []),
+        (".ci/pytorch/common_utils.sh", ["-e", "SC2317"]),  # ignore unreachable cmd warnings
+    ]
+
+    for script, extra_args in scripts:
+        script_path = Path(REPO) / script
+        if script_path.exists():
+            cmd = ["shellcheck", "-x"] + extra_args + [str(script_path)]
+            r = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                cwd=REPO,
+            )
+            assert r.returncode == 0, f"shellcheck failed for {script}:\n{r.stdout}{r.stderr}"

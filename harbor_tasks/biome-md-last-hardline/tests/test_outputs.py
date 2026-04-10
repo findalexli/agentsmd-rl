@@ -13,160 +13,100 @@ from pathlib import Path
 
 REPO = "/workspace/biome"
 
-# Custom Rust test code that exercises the markdown formatter directly.
-# Written to quick_test.rs before running cargo test.
-QUICK_TEST_RS = r'''
-use biome_markdown_formatter::{MdFormatLanguage, context::MdFormatOptions};
-use biome_markdown_parser::parse_markdown;
-
-fn format_md(source: &str) -> String {
-    let parse = parse_markdown(source);
-    let options = MdFormatOptions::default();
-    let result = biome_formatter::format_node(
-        &parse.syntax(),
-        MdFormatLanguage::new(options),
-        false,
-    ).unwrap();
-    result.print().unwrap().as_code().to_string()
-}
-
-// Single-line paragraph ending with hard line break (two trailing spaces).
-// The trailing spaces should be removed since the paragraph ends there anyway.
-#[test]
-fn test_single_last_hardline() {
-    let output = format_md("foo  \n\n");
-    assert!(!output.starts_with("foo  \n"),
-        "Trailing spaces on last hard line should be removed. Got: {:?}", output);
-    assert!(output.starts_with("foo\n"),
-        "Content should be preserved without trailing spaces. Got: {:?}", output);
-}
-
-// Multi-line paragraph: middle hard line preserved, last one removed.
-#[test]
-fn test_multi_last_hardline() {
-    let output = format_md("aaa     \nbbb     \n\n");
-    // Middle hard line (aaa) should keep its two-space marker
-    assert!(output.contains("aaa  \n"),
-        "Middle hard line should be preserved with 2 spaces. Got: {:?}", output);
-    // Last hard line (bbb) should NOT have trailing spaces
-    assert!(!output.contains("bbb  \n"),
-        "Last hard line trailing spaces should be removed. Got: {:?}", output);
-    assert!(output.contains("bbb\n"),
-        "Last line content should be preserved. Got: {:?}", output);
-}
-
-// Varied content to prevent hardcoded constant solutions.
-#[test]
-fn test_varied_last_hardline() {
-    let output = format_md("hello world  \ngoodbye  \n\n");
-    assert!(output.contains("hello world  \n"),
-        "Middle hard line should be preserved. Got: {:?}", output);
-    assert!(output.contains("goodbye\n"),
-        "Last hard line trailing spaces should be removed. Got: {:?}", output);
-    assert!(!output.contains("goodbye  \n"),
-        "Should not have trailing spaces on last line. Got: {:?}", output);
-}
-'''
+# Pre-built test binaries from Docker image (avoids rebuild disk space issues)
+PREBUILT_DIR = f"{REPO}/target/debug/deps"
+PRETTIER_TESTS_BIN = f"{PREBUILT_DIR}/prettier_tests-a6b733937f766aac"
+SPEC_TESTS_BIN = f"{PREBUILT_DIR}/spec_tests-eb1a2b4fc04afb19"
+QUICK_TEST_BIN = f"{PREBUILT_DIR}/quick_test-bd8b494489ee3ad7"
 
 
-def _ensure_quick_test():
-    """Write the custom Rust test file to the formatter crate."""
-    qt_path = os.path.join(REPO, "crates/biome_markdown_formatter/tests/quick_test.rs")
-    Path(qt_path).write_text(QUICK_TEST_RS)
+def _run_prebuilt_test(binary_path: str, test_filter: str = "", timeout: int = 600) -> subprocess.CompletedProcess:
+    cmd = [binary_path]
+    if test_filter:
+        cmd.extend([test_filter, "--test-threads=1"])
+    else:
+        cmd.append("--test-threads=1")
+    return subprocess.run(cmd, cwd=REPO, capture_output=True, timeout=timeout)
 
-
-def _run_rust_test(test_name: str, timeout: int = 600) -> subprocess.CompletedProcess:
-    """Run a specific Rust test from the quick_test module."""
-    return subprocess.run(
-        ["cargo", "test", "-p", "biome_markdown_formatter",
-         "--test", "spec_tests", f"quick_test::{test_name}", "--", "--exact"],
-        cwd=REPO, capture_output=True, timeout=timeout,
-    )
-
-
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_cargo_check():
     """Formatter crate compiles without errors."""
-    _ensure_quick_test()
+    env = os.environ.copy()
+    env["CARGO_INCREMENTAL"] = "0"
     r = subprocess.run(
         ["cargo", "check", "-p", "biome_markdown_formatter"],
-        cwd=REPO, capture_output=True, timeout=600,
+        cwd=REPO, capture_output=True, timeout=600, env=env,
     )
-    assert r.returncode == 0, (
-        f"Compilation failed:\n{r.stderr.decode()[-2000:]}"
-    )
+    assert r.returncode == 0, f"Compilation failed:\n{r.stderr.decode()[-2000:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_markdown_formatter_tests():
     """Repo's markdown formatter prettier tests pass (pass_to_pass)."""
-    # Run prettier_tests only - these don't depend on quick_test.rs content
-    r = subprocess.run(
-        ["cargo", "test", "-p", "biome_markdown_formatter", "--test", "prettier_tests", "--", "--test-threads=1"],
-        cwd=REPO, capture_output=True, text=True, timeout=120,
-    )
-    assert r.returncode == 0, (
-        f"Markdown formatter tests failed:\n{r.stderr[-500:]}"
-    )
+    r = _run_prebuilt_test(PRETTIER_TESTS_BIN, "", timeout=600)
+    assert r.returncode == 0, f"Markdown formatter prettier tests failed:\n{r.stderr.decode()[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_markdown_parser_check():
     """Markdown parser crate compiles without errors (pass_to_pass)."""
+    env = os.environ.copy()
+    env["CARGO_INCREMENTAL"] = "0"
     r = subprocess.run(
         ["cargo", "check", "-p", "biome_markdown_parser"],
-        cwd=REPO, capture_output=True, text=True, timeout=120,
+        cwd=REPO, capture_output=True, text=True, timeout=120, env=env,
     )
-    assert r.returncode == 0, (
-        f"Markdown parser check failed:\n{r.stderr[-500:]}"
-    )
+    assert r.returncode == 0, f"Markdown parser check failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_markdown_formatter_spec_tests():
     """Repo's markdown formatter spec tests pass (pass_to_pass)."""
-    # Run only formatter tests, exclude quick_test which has the fail_to_pass tests
-    r = subprocess.run(
-        ["cargo", "test", "-p", "biome_markdown_formatter", "--test", "spec_tests", "formatter", "--", "--test-threads=1"],
-        cwd=REPO, capture_output=True, text=True, timeout=120,
-    )
-    assert r.returncode == 0, (
-        f"Markdown formatter spec tests failed:\n{r.stderr[-500:]}"
-    )
+    r = _run_prebuilt_test(SPEC_TESTS_BIN, "formatter", timeout=600)
+    assert r.returncode == 0, f"Markdown formatter spec tests failed:\n{r.stderr.decode()[-500:]}"
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - Additional test for markdown syntax crate
+def test_markdown_syntax_check():
+    """Markdown syntax crate compiles without errors (pass_to_pass)."""
+    env = os.environ.copy()
+    env["CARGO_INCREMENTAL"] = "0"
+    r = subprocess.run(
+        ["cargo", "check", "-p", "biome_markdown_syntax"],
+        cwd=REPO, capture_output=True, text=True, timeout=120, env=env,
+    )
+    assert r.returncode == 0, f"Markdown syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Additional test for markdown factory crate
+def test_markdown_factory_check():
+    """Markdown factory crate compiles without errors (pass_to_pass)."""
+    env = os.environ.copy()
+    env["CARGO_INCREMENTAL"] = "0"
+    r = subprocess.run(
+        ["cargo", "check", "-p", "biome_markdown_factory"],
+        cwd=REPO, capture_output=True, text=True, timeout=120, env=env,
+    )
+    assert r.returncode == 0, f"Markdown factory check failed:\n{r.stderr[-500:]}"
+
 
 # [pr_diff] fail_to_pass
 def test_single_last_hardline():
     """Single-line paragraph: trailing hard line break spaces removed."""
-    _ensure_quick_test()
-    r = _run_rust_test("test_single_last_hardline")
-    assert r.returncode == 0, (
-        f"Test failed:\\n{r.stdout.decode()[-1000:]}\\n{r.stderr.decode()[-1000:]}"
-    )
+    r = _run_prebuilt_test(QUICK_TEST_BIN, "test_single_last_hardline", timeout=600)
+    assert r.returncode == 0, f"Test failed:\n{r.stdout.decode()[-1000:]}\n{r.stderr.decode()[-1000:]}"
 
 
 # [pr_diff] fail_to_pass
 def test_multi_last_hardline():
     """Multi-line paragraph: last hard line removed, middle preserved."""
-    _ensure_quick_test()
-    r = _run_rust_test("test_multi_last_hardline")
-    assert r.returncode == 0, (
-        f"Test failed:\\n{r.stdout.decode()[-1000:]}\\n{r.stderr.decode()[-1000:]}"
-    )
+    r = _run_prebuilt_test(QUICK_TEST_BIN, "test_multi_last_hardline", timeout=600)
+    assert r.returncode == 0, f"Test failed:\n{r.stdout.decode()[-1000:]}\n{r.stderr.decode()[-1000:]}"
 
 
 # [pr_diff] fail_to_pass
 def test_varied_last_hardline():
     """Different paragraph content to prevent hardcoded solutions."""
-    _ensure_quick_test()
-    r = _run_rust_test("test_varied_last_hardline")
-    assert r.returncode == 0, (
-        f"Test failed:\\n{r.stdout.decode()[-1000:]}\\n{r.stderr.decode()[-1000:]}"
-    )
+    r = _run_prebuilt_test(QUICK_TEST_BIN, "test_varied_last_hardline", timeout=600)
+    assert r.returncode == 0, f"Test failed:\n{r.stdout.decode()[-1000:]}\n{r.stderr.decode()[-1000:]}"

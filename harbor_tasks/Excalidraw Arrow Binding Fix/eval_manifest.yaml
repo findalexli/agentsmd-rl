@@ -85,7 +85,48 @@ checks:
     origin: repo_tests
     points: 5
 
-rubric: []
+  - id: repo_math_tests
+    name: Repo Math Package Tests
+    description: Repo's math package tests pass on the fix
+    test: test_repo_math_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    points: 5
+
+  - id: repo_common_tests
+    name: Repo Common Package Tests
+    description: Repo's common package tests pass on the fix
+    test: test_repo_common_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    points: 5
+
+  - id: repo_utils_tests
+    name: Repo Utils Package Tests
+    description: Repo's utils package tests pass on the fix
+    test: test_repo_utils_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    points: 5
+
+rubric:
+  - rule: "Prefer implementations without allocation where possible. Use efficient point comparison methods."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "13"
+      commit: "60ab14c2f633112613843eec3c049f6da0f566e8"
+
+  - rule: "Use the Point type from packages/math/src/types.ts for math-related code instead of { x, y } objects."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "21"
+      commit: "60ab14c2f633112613843eec3c049f6da0f566e8"
+
+  - rule: "Prefer immutable data (const, readonly) for variables that don't change."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "14"
+      commit: "60ab14c2f633112613843eec3c049f6da0f566e8"
 
 metadata:
   difficulty: medium

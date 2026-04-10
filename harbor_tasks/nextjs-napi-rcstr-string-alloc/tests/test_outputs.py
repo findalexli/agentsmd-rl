@@ -266,3 +266,23 @@ def test_repo_cargo_fmt():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_napi():
+    """next-napi-bindings crate compiles with cargo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "next-napi-bindings"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_clippy_napi():
+    """next-napi-bindings crate passes cargo clippy (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "next-napi-bindings", "--no-deps"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo clippy failed:\n{r.stderr[-1000:]}"

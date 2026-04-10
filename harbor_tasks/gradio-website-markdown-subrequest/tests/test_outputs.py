@@ -35,8 +35,8 @@ def _run_tsx(script: str, timeout: int = 30) -> str:
 def test_syntax_check():
     """Target TypeScript file must parse without errors."""
     out = _run_tsx(f"""
-const mod = await import('{REPO}/{TARGET}');
-process.stdout.write('OK');
+const mod = await import("{REPO}/{TARGET}");
+process.stdout.write("OK");
 """)
     assert out == "OK", f"TypeScript parse failed: {out}"
 
@@ -49,25 +49,25 @@ process.stdout.write('OK');
 def test_doc_redirect():
     """serveDocMarkdown returns 3xx redirect to /api/markdown/<doc> for LLM UA."""
     out = _run_tsx("""
-const mod = await import('/repo/js/_website/functions/_shared.ts');
-for (const doc of ['textbox', 'slider', 'chatbot']) {
-    const req = new Request('https://example.com/docs/' + doc, {
-        headers: { 'user-agent': 'claudebot' }
+const mod = await import("/repo/js/_website/functions/_shared.ts");
+for (const doc of ["textbox", "slider", "chatbot"]) {
+    const req = new Request("https://example.com/docs/" + doc, {
+        headers: { "user-agent": "claudebot" }
     });
     let nextCalled = false;
     const ctx = {
         request: req,
         params: { doc },
-        next: () => { nextCalled = true; return new Response('fallthrough'); }
+        next: () => { nextCalled = true; return new Response("fallthrough"); }
     };
     const res = await mod.serveDocMarkdown(ctx);
-    const loc = res.headers.get('location') || '';
-    if (res.status < 300 || res.status >= 400 || !loc.includes('/api/markdown/' + doc) || nextCalled) {
-        process.stdout.write('FAIL:' + doc);
+    const loc = res.headers.get("location") || "";
+    if (res.status < 300 || res.status >= 400 || !loc.includes("/api/markdown/" + doc) || nextCalled) {
+        process.stdout.write("FAIL:" + doc);
         process.exit(0);
     }
 }
-process.stdout.write('PASS');
+process.stdout.write("PASS");
 """)
     assert out == "PASS", f"serveDocMarkdown redirect check failed: {out}"
 
@@ -76,25 +76,25 @@ process.stdout.write('PASS');
 def test_guide_redirect():
     """serveGuideMarkdown returns 3xx redirect to /api/markdown/guide/<guide> for LLM UA."""
     out = _run_tsx("""
-const mod = await import('/repo/js/_website/functions/_shared.ts');
-for (const guide of ['quickstart', 'sharing-your-app', 'blocks-and-event-listeners']) {
-    const req = new Request('https://example.com/guides/' + guide, {
-        headers: { 'user-agent': 'GPTBot/1.0' }
+const mod = await import("/repo/js/_website/functions/_shared.ts");
+for (const guide of ["quickstart", "sharing-your-app", "blocks-and-event-listeners"]) {
+    const req = new Request("https://example.com/guides/" + guide, {
+        headers: { "user-agent": "GPTBot/1.0" }
     });
     let nextCalled = false;
     const ctx = {
         request: req,
         params: { guide },
-        next: () => { nextCalled = true; return new Response('fallthrough'); }
+        next: () => { nextCalled = true; return new Response("fallthrough"); }
     };
     const res = await mod.serveGuideMarkdown(ctx);
-    const loc = res.headers.get('location') || '';
-    if (res.status < 300 || res.status >= 400 || !loc.includes('/api/markdown/guide/' + guide) || nextCalled) {
-        process.stdout.write('FAIL:' + guide);
+    const loc = res.headers.get("location") || "";
+    if (res.status < 300 || res.status >= 400 || !loc.includes("/api/markdown/guide/" + guide) || nextCalled) {
+        process.stdout.write("FAIL:" + guide);
         process.exit(0);
     }
 }
-process.stdout.write('PASS');
+process.stdout.write("PASS");
 """)
     assert out == "PASS", f"serveGuideMarkdown redirect check failed: {out}"
 
@@ -107,31 +107,31 @@ def test_no_subrequest():
 let fetchCalled = false;
 globalThis.fetch = () => {
     fetchCalled = true;
-    return Promise.resolve(new Response('{"markdown":"x"}', { status: 200 }));
+    return Promise.resolve(new Response({markdown:x}, { status: 200 }));
 };
 
-const mod = await import('/repo/js/_website/functions/_shared.ts');
+const mod = await import("/repo/js/_website/functions/_shared.ts");
 for (const [fn, params] of [
-    ['serveDocMarkdown', { doc: 'textbox' }],
-    ['serveDocMarkdown', { doc: 'chatbot' }],
-    ['serveGuideMarkdown', { guide: 'quickstart' }],
+    ["serveDocMarkdown", { doc: "textbox" }],
+    ["serveDocMarkdown", { doc: "chatbot" }],
+    ["serveGuideMarkdown", { guide: "quickstart" }],
 ]) {
     fetchCalled = false;
-    const req = new Request('https://example.com/test', {
-        headers: { 'user-agent': 'claudebot' }
+    const req = new Request("https://example.com/test", {
+        headers: { "user-agent": "claudebot" }
     });
     const ctx = {
         request: req,
         params,
-        next: () => new Response('fallthrough')
+        next: () => new Response("fallthrough")
     };
     await mod[fn](ctx);
     if (fetchCalled) {
-        process.stdout.write('FAIL:' + fn + ':' + JSON.stringify(params));
+        process.stdout.write("FAIL:" + fn + ":" + JSON.stringify(params));
         process.exit(0);
     }
 }
-process.stdout.write('PASS');
+process.stdout.write("PASS");
 """)
     assert out == "PASS", f"Subrequest detection failed: {out}"
 
@@ -144,29 +144,29 @@ process.stdout.write('PASS');
 def test_non_llm_fallthrough():
     """Non-LLM user-agents fall through to next() for both handlers."""
     out = _run_tsx("""
-const mod = await import('/repo/js/_website/functions/_shared.ts');
+const mod = await import("/repo/js/_website/functions/_shared.ts");
 for (const [fn, params] of [
-    ['serveDocMarkdown', { doc: 'textbox' }],
-    ['serveDocMarkdown', { doc: 'slider' }],
-    ['serveGuideMarkdown', { guide: 'quickstart' }],
-    ['serveGuideMarkdown', { guide: 'sharing-your-app' }],
+    ["serveDocMarkdown", { doc: "textbox" }],
+    ["serveDocMarkdown", { doc: "slider" }],
+    ["serveGuideMarkdown", { guide: "quickstart" }],
+    ["serveGuideMarkdown", { guide: "sharing-your-app" }],
 ]) {
-    const req = new Request('https://example.com/test', {
-        headers: { 'user-agent': 'Mozilla/5.0 Chrome/120' }
+    const req = new Request("https://example.com/test", {
+        headers: { "user-agent": "Mozilla/5.0 Chrome/120" }
     });
     let nextCalled = false;
     const ctx = {
         request: req,
         params,
-        next: () => { nextCalled = true; return new Response('normal page', { status: 200 }); }
+        next: () => { nextCalled = true; return new Response("normal page", { status: 200 }); }
     };
     const res = await mod[fn](ctx);
     if (!nextCalled || res.status !== 200) {
-        process.stdout.write('FAIL:' + fn);
+        process.stdout.write("FAIL:" + fn);
         process.exit(0);
     }
 }
-process.stdout.write('PASS');
+process.stdout.write("PASS");
 """)
     assert out == "PASS", f"Non-LLM fallthrough check failed: {out}"
 
@@ -190,31 +190,55 @@ def test_prettier_formatting():
 def test_exports_callable():
     """serveDocMarkdown and serveGuideMarkdown are exported async functions."""
     out = _run_tsx("""
-const mod = await import('/repo/js/_website/functions/_shared.ts');
-if (typeof mod.serveDocMarkdown === 'function' && typeof mod.serveGuideMarkdown === 'function') {
-    process.stdout.write('PASS');
+const mod = await import("/repo/js/_website/functions/_shared.ts");
+if (typeof mod.serveDocMarkdown === "function" && typeof mod.serveGuideMarkdown === "function") {
+    process.stdout.write("PASS");
 } else {
-    process.stdout.write('FAIL:doc=' + typeof mod.serveDocMarkdown + ',guide=' + typeof mod.serveGuideMarkdown);
+    process.stdout.write("FAIL:doc=" + typeof mod.serveDocMarkdown + ",guide=" + typeof mod.serveGuideMarkdown);
 }
 """)
     assert out == "PASS", f"Exports check failed: {out}"
 
 
 # ---------------------------------------------------------------------------
-# Repo CI/CD pass-to-pass tests — verify repo's own checks pass on base commit
-# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass tests — verify repos
 
 # [repo_tests] pass_to_pass
-def test_repo_typescript_syntax():
-    """Target TypeScript file must compile without errors (pass_to_pass)."""
-    script = f"""
-const mod = await import('{REPO}/{TARGET}');
-if (typeof mod.serveDocMarkdown === 'function' && typeof mod.serveGuideMarkdown === 'function') {{
-    process.stdout.write('PASS');
-}} else {{
-    process.stdout.write('FAIL: exports not found');
-    process.exit(1);
-}}
-"""
-    out = _run_tsx(script)
-    assert out == "PASS", f"TypeScript syntax check failed: {out}"
+def test_repo_wrangler_build():
+    """Repo's wrangler pages functions build passes (pass_to_pass).
+
+    This verifies that the Cloudflare Pages Functions compile successfully,
+    including the target _shared.ts file with serveDocMarkdown and
+    serveGuideMarkdown handlers.
+    """
+    result = subprocess.run(
+        ["npx", "wrangler", "pages", "functions", "build",
+         "--directory=functions", "--outdir=/tmp/wrangler-test"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd="/repo/js/_website",
+    )
+    assert result.returncode == 0, (
+        f"wrangler functions build failed:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_build():
+    """Repo's @gradio/client package builds successfully (pass_to_pass).
+
+    Builds the client package which is a prerequisite for many other
+    operations in the repo, ensuring the JavaScript/TypeScript
+    infrastructure is functional.
+    """
+    result = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"Client build failed:\n{result.stdout}\n{result.stderr}"
+    )

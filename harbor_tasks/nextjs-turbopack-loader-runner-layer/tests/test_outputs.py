@@ -1,5 +1,4 @@
-"""
-Task: nextjs-turbopack-loader-runner-layer
+"""Task: nextjs-turbopack-loader-runner-layer
 Repo: vercel/next.js @ b6ff1f6079694da08af88cec5cac7381e22cea10
 PR:   91727
 
@@ -13,6 +12,7 @@ comparing them across files.
 """
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -158,3 +158,46 @@ def test_layer_new_call_syntax():
     assert "Layer::new(rcstr!" in fn_body, (
         "Layer::new must use rcstr! macro for the layer name"
     )
+
+
+# [repo_ci] pass_to_pass - cargo fmt ASCII order check (no Rust toolchain, verify via Python)
+def test_cargo_fmt_ascii_order():
+    """Verify use statements follow ASCII order (uppercase before lowercase).
+
+    From AGENTS.md: "cargo fmt uses ASCII order (uppercase before lowercase)"
+    This is a pass_to_pass check ensuring the codebase follows fmt conventions.
+    """
+    src = TARGET.read_text()
+
+    # Find all use statement blocks (consecutive use lines)
+    lines = src.splitlines()
+
+    for i, line in enumerate(lines):
+        if line.strip().startswith("use "):
+            # Check if this is part of a use block
+            block = [line.strip()]
+            j = i + 1
+            while j < len(lines) and lines[j].strip().startswith("use "):
+                block.append(lines[j].strip())
+                j += 1
+
+            # Extract the crate names from each use statement for ASCII comparison
+            # Format: use xxx::yyy; or use xxx::{...};
+            names = []
+            for use_line in block:
+                match = re.match(r'use\\s+([^:{;]+)', use_line)
+                if match:
+                    names.append(match.group(1))
+
+            # The key check: uppercase should come before lowercase
+            # e.g., "Regex" (R=82) should come before "anyhow" (a=97)
+            for k in range(len(names) - 1):
+                if names[k][0].islower() and names[k+1][0].isupper():
+                    assert False, (
+                        f"ASCII order violation at line {i+k+1}: "
+                        f"'{names[k]}' (lowercase) before '{names[k+1]}' (uppercase). "
+                        f"Uppercase should come first in ASCII order."
+                    )
+
+            # Skip the rest of this block
+            break  # Only check the first use block in the function

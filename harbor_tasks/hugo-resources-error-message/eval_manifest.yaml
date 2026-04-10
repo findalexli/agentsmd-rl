@@ -29,24 +29,73 @@ p2p_checks:
     description: "Error message format uses fmt.Sprintf with correct pattern"
     test: "test_error_message_format"
 
-  # Repo CI/CD pass-to-pass tests
-  - id: "go_vet_resources"
+  # Repo CI/CD pass-to-pass tests (actual CI commands via subprocess.run())
+  - id: "gofmt_resources"
     type: pass_to_pass
     origin: repo_tests
-    description: "Go vet passes on resources package"
-    test: "test_go_vet_resources"
+    description: "gofmt reports no formatting issues in resources directory"
+    test: "test_gofmt_resources"
+
+  - id: "gofmt_transform_go"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "transform.go passes gofmt formatting check"
+    test: "test_gofmt_transform_go"
+
+  - id: "transform_go_syntax_valid"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "transform.go has valid Go syntax (parses correctly)"
+    test: "test_transform_go_syntax_valid"
+
+  - id: "go_vet_resources_images"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "go vet passes on resources/images subdirectory"
+    test: "test_go_vet_resources_images"
+
+  - id: "go_build_all_possible"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Full project build check (only fails on Go version, not code issues)"
+    test: "test_go_build_all_possible"
+
+  - id: "go_vet_all"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "go vet passes on entire project (comprehensive check)"
+    test: "test_go_vet_all"
 
   - id: "go_build_all"
     type: pass_to_pass
     origin: repo_tests
-    description: "Full project builds successfully"
+    description: "go build passes on entire project (comprehensive check)"
     test: "test_go_build_all"
 
-  - id: "go_test_resources_other"
+  # Static checks (file reads, not CI commands)
+  - id: "repo_files_exist"
     type: pass_to_pass
-    origin: repo_tests
-    description: "Other tests in resources package pass"
-    test: "test_go_test_resources_other"
+    origin: static
+    description: "Essential repo files exist and are readable"
+    test: "test_repo_files_exist"
+
+  - id: "repo_test_files_exist"
+    type: pass_to_pass
+    origin: static
+    description: "Test files exist for the resources package"
+    test: "test_repo_test_files_exist"
+
+  - id: "go_mod_valid"
+    type: pass_to_pass
+    origin: static
+    description: "go.mod is valid and readable"
+    test: "test_go_mod_valid"
+
+  - id: "resources_package_declaration"
+    type: pass_to_pass
+    origin: static
+    description: "All resources package files have correct package declarations"
+    test: "test_resources_package_declaration"
 
 # Agent configuration rules to check
 agent_config:
@@ -71,4 +120,17 @@ agent_config:
     applies_to: "resources/transform.go"
 
 # Rubric for soft/subjective checks (LLM evaluation only)
-rubric: []
+# Note: This task involves code changes to improve error messages, not documentation edits.
+# Code style validation is handled through pass-to-pass tests (gofmt, syntax checks, etc.)
+rubric:
+  - rule: "Avoid global state at (almost) all cost. Don't introduce new global variables."
+    source:
+      path: "AGENTS.md"
+      lines: "8"
+      commit: "44dc3847f4c91e86b1afa2350d42559bdecbaca9"
+
+  - rule: "Look for existing helper functions before creating new ones. Assume similar problems have been solved before."
+    source:
+      path: "AGENTS.md"
+      lines: "9"
+      commit: "44dc3847f4c91e86b1afa2350d42559bdecbaca9"

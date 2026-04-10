@@ -1,4 +1,14 @@
 {
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T00:31:31.625493",
+  "total_time": 9143.75,
+  "sandbox_id": "igkersbtpu466tm9z5zfo",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -11,7 +21,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 439.91,
+      "time": 141.54,
       "notes": ""
     },
     "improve": {
@@ -20,6 +30,64 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 57.12,
+      "notes": ""
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py: The parseArgs_function_works and env_fallback_works tests were failing because the test harness included the full script which has a main() call at the end. After the test code ran successfully, it continued to execute main() which failed with 'Missing required argument: --pr'. Fixed by adding process.exit(0) after the test passes to prevent execution of main(). All 4 checks pass: Docker build OK, NOP test reward=0, Gold test reward=1, Rubric rules verified manually (all 3 rules satisfied).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 274.25
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.23,
+      "notes": "ICR=0.50"
     }
-  }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1478.32,
+      "at": "2026-04-09T14:52:49.451525"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1478.6,
+      "at": "2026-04-09T14:52:49.624408"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9143.47,
+      "at": "2026-04-10T00:31:31.453365"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9143.75,
+      "at": "2026-04-10T00:31:31.625493"
+    }
+  ]
 }

@@ -42,6 +42,11 @@ checks:
     origin: pr_diff
     description: "Scheduler must guard device_control_env_var assignment against empty string"
 
+  - id: archon_engine_cpu_device
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Archon engine _create_device_model must set device to cpu when platform is CPU"
+
   - id: no_wildcard_imports
     type: pass_to_pass
     origin: agent_config
@@ -51,14 +56,44 @@ checks:
       lines: "93"
       commit: "6208006db64ac29aded7be33963e86503ba9e28e"
 
+  - id: test_repo_syntax_all_modules
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All areal Python files must have valid syntax (repo CI check)"
+
+  - id: test_repo_cpu_platform_importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CpuPlatform module can be imported with minimal dependencies"
+
+  - id: test_repo_pyproject_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pyproject.toml must be valid TOML (repo CI check)"
+
+  - id: test_repo_example_configs_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Example YAML configs must be valid (repo CI check)"
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on modified files (repo CI check)"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff formatting check passes on modified files (repo CI check)"
+
 rubric:
-  - rule: "Follow existing code patterns in the same module"
+  - rule: "Code changes should follow existing patterns in modified modules"
     source:
-      path: "CLAUDE.md"
-      lines: "76"
+      path: "areal/infra/platforms/cpu.py"
+      lines: "platform.py base class patterns"
       commit: "6208006db64ac29aded7be33963e86503ba9e28e"
-  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
+  - rule: "Platform methods should have proper return type annotations"
     source:
-      path: ".claude/rules/code-style.md"
-      lines: "7"
+      path: "areal/infra/platforms/cpu.py"
+      lines: "memory_allocated, memory_reserved, mem_get_info, empty_cache"
       commit: "6208006db64ac29aded7be33963e86503ba9e28e"

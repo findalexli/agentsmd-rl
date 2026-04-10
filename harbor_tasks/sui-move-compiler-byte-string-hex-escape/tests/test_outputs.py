@@ -196,3 +196,93 @@ def test_move_compiler_all_tests_pass():
     output = result.stdout + result.stderr
     assert result.returncode == 0, \
         f"move-compiler tests failed:\n{output[-2000:]}"
+
+
+def test_move_compiler_fmt():
+    """
+    Repo CI: Code formatting check passes (pass_to_pass).
+    Ensures the codebase follows standard formatting.
+    """
+    result = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=f"{REPO}/external-crates/move"
+    )
+
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, \
+        f"Format check failed:\n{output[-1000:]}"
+
+
+def test_move_compiler_lib_tests():
+    """
+    Repo CI: Library unit tests pass (pass_to_pass).
+    Fast unit tests for the move-compiler crate.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "move-compiler", "--lib", "--", "--test-threads=4"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=f"{REPO}/external-crates/move"
+    )
+
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, \
+        f"Library tests failed:\n{output[-1000:]}"
+
+
+def test_move_compiler_parser_tests():
+    """
+    Repo CI: Parser tests pass (pass_to_pass).
+    Tests the parser module which handles byte string parsing.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "move-compiler", "--test", "move_check_testsuite", "parser", "--", "--test-threads=4"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=f"{REPO}/external-crates/move"
+    )
+
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, \
+        f"Parser tests failed:\n{output[-1000:]}"
+
+
+def test_move_compiler_expansion_tests():
+    """
+    Repo CI: Expansion tests pass (pass_to_pass).
+    Tests the expansion module which includes byte_string processing.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "move-compiler", "--test", "move_check_testsuite", "expansion", "--", "--test-threads=4"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=f"{REPO}/external-crates/move"
+    )
+
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, \
+        f"Expansion tests failed:\n{output[-1000:]}"
+
+
+def test_move_compiler_hexstring_tests():
+    """
+    Repo CI: Hexstring tests pass (pass_to_pass).
+    Tests hex string parsing which is related to the fix.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "move-compiler", "--test", "move_check_testsuite", "hexstring", "--", "--test-threads=4"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=f"{REPO}/external-crates/move"
+    )
+
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, \
+        f"Hexstring tests failed:\n{output[-1000:]}"

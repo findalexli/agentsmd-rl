@@ -107,6 +107,33 @@ checks:
       lines: "17"
       commit: "26382c6216797e65a1b43dea8646725332f62e07"
 
+  # Repo CI/CD pass_to_pass checks
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes on packages/opencode"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests pass for opencode package"
+
+  - id: test_repo_theme_store_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Theme store unit tests pass (covers theme.tsx context)"
+
+  - id: test_repo_turbo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Root turbo typecheck passes (CI command: bun turbo typecheck)"
+
+  - id: test_repo_turbo_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Root turbo test passes for opencode package (CI command: bun turbo test)"
+
+
 rubric:
   - rule: "Keep things in one function unless composable or reusable"
     source:

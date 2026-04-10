@@ -8,11 +8,17 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vllm"
 ASYNC_UTILS = f"{REPO}/vllm/v1/worker/gpu/async_utils.py"
 MODEL_RUNNER = f"{REPO}/vllm/v1/worker/gpu/model_runner.py"
+
+
+def _install_and_run(cmd: list[str], timeout: int = 600) -> subprocess.CompletedProcess:
+    """Install common tools if needed and run the command."""
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=REPO)
 
 
 def _get_required_init_params(tree: ast.Module, class_name: str) -> list[str]:
@@ -51,6 +57,42 @@ def _body_creates_cuda_event(func_node: ast.FunctionDef) -> bool:
             if "Event" in call_str and "cuda" in call_str:
                 return True
     return False
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    # Install ruff if needed and run check
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120
+    )
+    # Run ruff check on modified files
+    r = subprocess.run(
+        ["ruff", "check", ASYNC_UTILS, MODEL_RUNNER],
+        capture_output=True, text=True, timeout=600, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    # Install ruff if needed
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120
+    )
+    # Run ruff format check on modified files
+    r = subprocess.run(
+        ["ruff", "format", "--check", ASYNC_UTILS, MODEL_RUNNER],
+        capture_output=True, text=True, timeout=600, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

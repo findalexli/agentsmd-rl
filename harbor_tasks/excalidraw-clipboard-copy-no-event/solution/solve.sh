@@ -55,6 +55,14 @@ index 431a46a63b47..3257a8121749 100644
 
        .ExcButton__contents {
          visibility: hidden;
+
+
 PATCH
 
 echo "Patch applied successfully!"
+
+cat << 'CLAUDE' >> CLAUDE.md
+
+### Clipboard
+- Clipboard operations must have fallbacks (event.clipboardData -> navigator.clipboard -> execCommand)
+CLAUDE

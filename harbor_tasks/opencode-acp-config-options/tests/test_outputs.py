@@ -312,3 +312,33 @@ def test_no_any_type_in_new_code():
             f"setSessionConfigOption uses any type {len(any_uses)} time(s). "
             f"AGENTS.md requires avoiding the any type."
         )
+
+def test_repo_agent_interface():
+    """Repo's agent interface tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/acp/agent-interface.test.ts"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"agent-interface tests failed:\n{r.stdout.decode()[-2000:]}\n{r.stderr.decode()[-2000:]}"
+
+def test_repo_agent():
+    """Repo's agent tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/agent/agent.test.ts"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"agent tests failed:\n{r.stdout.decode()[-2000:]}\n{r.stderr.decode()[-2000:]}"
+
+def test_repo_session():
+    """Repo's session tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/session/session.test.ts"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"session tests failed:\n{r.stdout.decode()[-2000:]}\n{r.stderr.decode()[-2000:]}"

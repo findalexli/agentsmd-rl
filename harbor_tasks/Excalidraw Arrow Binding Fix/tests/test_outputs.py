@@ -234,3 +234,30 @@ def test_repo_element_tests_pass():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Element tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_math_tests_pass():
+    """Repo's math package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test:app", "--run", "packages/math"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Math tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_common_tests_pass():
+    """Repo's common package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test:app", "--run", "packages/common"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Common tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_utils_tests_pass():
+    """Repo's utils package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test:app", "--run", "packages/utils"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils tests failed:\n{r.stderr[-500:]}"

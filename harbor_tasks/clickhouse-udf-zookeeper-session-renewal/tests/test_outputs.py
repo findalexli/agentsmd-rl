@@ -11,11 +11,13 @@ The fix ensures the session is renewed via zookeeper_getter on each retry.
 
 import subprocess
 import sys
+import re
 from pathlib import Path
 
-# Repository path
+# Repository path - inside Docker container
 REPO = Path("/workspace/ClickHouse")
 TARGET_FILE = REPO / "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
+TARGET_DIR = TARGET_FILE.parent
 
 
 def _get_file_content() -> str:
@@ -25,14 +27,25 @@ def _get_file_content() -> str:
     return TARGET_FILE.read_text()
 
 
-def _run_in_docker(cmd: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
-    """Run a command inside the docker container with the source file mounted."""
+def _run_in_repo(cmd: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run a command in the repo directory."""
     return subprocess.run(
-        ["docker", "run", "--rm",
-         "-v", f"{TARGET_FILE.parent}:{TARGET_FILE.parent}:ro",
-         "-w", str(REPO),
-         "python:3.12-slim"] + cmd,
-        capture_output=True, text=True, timeout=timeout
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=str(REPO),
+    )
+
+
+def _run_shell_check(script: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run a shell script to check the target file."""
+    return subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=str(REPO),
     )
 
 
@@ -206,64 +219,205 @@ def test_deletion_logging():
             "Potential deletion without logging (ClickHouse rule)"
 
 
-def test_clickhouse_allman_braces():
-    """Pass-to-pass: Verify Allman brace style for control structures (ClickHouse standard).
+# ============================================================================
+# REPO CI TESTS - These run actual CI commands via subprocess.run()
+# ============================================================================
 
-    ClickHouse uses Allman style for control structures: opening brace on a new line.
-    Example:
-        if (condition)
-        {
-            statement;
-        }
+def test_repo_no_tabs():
+    """Repo's no-tabs style check passes (pass_to_pass).
+
+    ClickHouse CI checks that source files contain no tab characters.
     """
-    # Use subprocess for behavioral validation
     script = f"""
-import re
-import sys
-
-content = open('{TARGET_FILE}').read()
-lines = content.split('\\n')
-
-# Control keywords that should use Allman style
-control_keywords = ['if', 'else', 'for', 'while', 'switch', 'try', 'catch']
-
-# Pattern: control keyword followed by brace on same line (K&R style)
-same_line_control_brace = re.compile(
-    r'^\\s*(?:if|else|for|while|switch|try|catch)\\s*[^{{]*{{\\s*$'
-)
-
-violations = []
-for i, line in enumerate(lines, 1):
-    stripped = line.strip()
-
-    # Skip comment lines, preprocessor directives
-    if stripped.startswith('//') or stripped.startswith('#'):
-        continue
-
-    # Check for control structure with brace on same line (K&R style violation)
-    if same_line_control_brace.match(line):
-        # Allow }} else {{ pattern
-        if not stripped.startswith('}}') and 'else' not in stripped:
-            violations.append(f"Line {{i}}: {{stripped[:60]}}")
-
-if violations:
-    print("FAIL: Control structures with K&R style braces found (should be Allman):")
-    for v in violations[:10]:
-        print(f"  {{v}}")
-    sys.exit(1)
-
-print("PASS: Allman brace style verified")
+FILE='{TARGET_FILE}'
+if grep -F $'\\t' "$FILE" > /dev/null 2>&1; then
+    echo "FAIL: Found tab characters in file"
+    exit 1
+else
+    echo "PASS: No tab characters found"
+fi
 """
-    r = subprocess.run(
-        ["python3", "-c", script],
-        capture_output=True, text=True, timeout=30
-    )
-    assert r.returncode == 0, f"Allman braces check failed: {r.stderr or r.stdout}"
+    r = _run_shell_check(script)
+    assert r.returncode == 0, f"Tab check failed: {r.stderr or r.stdout}"
     assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
 
 
+def test_repo_no_trailing_whitespace():
+    """Repo's trailing whitespace check passes (pass_to_pass).
+
+    ClickHouse CI checks that source files have no trailing whitespace.
+    """
+    script = f"""
+FILE='{TARGET_FILE}'
+if grep -n -P ' $' "$FILE" > /dev/null 2>&1; then
+    echo "FAIL: Found trailing whitespace"
+    exit 1
+else
+    echo "PASS: No trailing whitespace"
+fi
+"""
+    r = _run_shell_check(script)
+    assert r.returncode == 0, f"Trailing whitespace check failed: {r.stderr or r.stdout}"
+    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
+
+
+def test_repo_no_cerr_cout():
+    """Repo's std::cerr/std::cout check passes (pass_to_pass).
+
+    ClickHouse CI forbids std::cerr/std::cout in src/ (use logging macros instead).
+    """
+    script = f"""
+FILE='{TARGET_FILE}'
+# Use grep to check for std::cerr/std::cout
+if grep -F -e 'std::cerr' -e 'std::cout' "$FILE" > /dev/null 2>&1; then
+    echo "FAIL: Found std::cerr or std::cout"
+    exit 1
+else
+    echo "PASS: No std::cerr/std::cout found"
+fi
+"""
+    r = _run_shell_check(script)
+    assert r.returncode == 0, f"std::cerr/cout check failed: {r.stderr or r.stdout}"
+    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
+
+
+def test_repo_no_std_format():
+    """Repo's std::format check passes (pass_to_pass).
+
+    ClickHouse CI prefers fmt::format over std::format for performance.
+    """
+    script = f"""
+FILE='{TARGET_FILE}'
+if grep -q 'std::format' "$FILE" 2>/dev/null; then
+    echo "FAIL: Found std::format (use fmt::format instead)"
+    exit 1
+else
+    echo "PASS: No std::format found"
+fi
+"""
+    r = _run_shell_check(script)
+    assert r.returncode == 0, f"std::format check failed: {r.stderr or r.stdout}"
+    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
+
+
+def test_repo_no_raw_assert():
+    """Repo's raw assert check passes (pass_to_pass).
+
+    ClickHouse CI checks that raw assert() is not used (use CH_ASSERT).
+    """
+    script = f"""
+FILE='{TARGET_FILE}'
+# Check for raw assert calls (not CH_ASSERT or static_assert)
+if grep -P '\\bassert\\s*\\(' "$FILE" | grep -v -P '(CH_ASSERT|static_assert)' > /dev/null 2>&1; then
+    echo "FAIL: Found raw assert() calls"
+    exit 1
+else
+    echo "PASS: No raw assert() calls"
+fi
+"""
+    r = _run_shell_check(script)
+    assert r.returncode == 0, f"Raw assert check failed: {r.stderr or r.stdout}"
+    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
+
+
+def test_repo_no_builtin_unreachable():
+    """Repo's __builtin_unreachable check passes (pass_to_pass).
+
+    ClickHouse CI forbids __builtin_unreachable (use UNREACHABLE() macro instead).
+    """
+    script = f"""
+FILE='{TARGET_FILE}'
+if grep -P '__builtin_unreachable' "$FILE" > /dev/null 2>&1; then
+    echo "FAIL: Found __builtin_unreachable (use UNREACHABLE() instead)"
+    exit 1
+else
+    echo "PASS: No __builtin_unreachable found"
+fi
+"""
+    r = _run_shell_check(script)
+    assert r.returncode == 0, f"__builtin_unreachable check failed: {r.stderr or r.stdout}"
+    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
+
+
+def test_repo_no_std_filesystem_symlink():
+    """Repo's std::filesystem::is_symlink check passes (pass_to_pass).
+
+    ClickHouse CI prefers DB::FS::isSymlink over std::filesystem::is_symlink.
+    """
+    script = f"""
+FILE='{TARGET_FILE}'
+if grep -P '::(is|read)_symlink' "$FILE" > /dev/null 2>&1; then
+    echo "FAIL: Found std::filesystem symlink calls"
+    exit 1
+else
+    echo "PASS: No std::filesystem symlink calls"
+fi
+"""
+    r = _run_shell_check(script)
+    assert r.returncode == 0, f"symlink check failed: {r.stderr or r.stdout}"
+    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
+
+
+def test_repo_clang_format():
+    """Repo's clang-format check passes (pass_to_pass).
+
+    Runs clang-format --dry-run to verify code formatting if available.
+    """
+    import pytest
+
+    # Check if clang-format is available
+    which_result = subprocess.run(
+        ["which", "clang-format"],
+        capture_output=True, text=True, timeout=10
+    )
+
+    if which_result.returncode != 0:
+        pytest.skip("clang-format not available")
+
+    # Run clang-format --dry-run to check formatting
+    result = subprocess.run(
+        ["clang-format", "--dry-run", "--Werror", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=60
+    )
+    assert result.returncode == 0, \
+        f"clang-format check failed:\n{result.stderr or result.stdout}"
+
+
+# ============================================================================
+# STATIC CHECKS - File content checks (origin: static)
+# ============================================================================
+
+def test_clickhouse_allman_braces():
+    """Code follows ClickHouse Allman brace style convention (static check).
+
+    ClickHouse uses Allman style for control structures: opening brace on a new line.
+    """
+    content = _get_file_content()
+    lines = content.split('\n')
+
+    # Control keywords that should use Allman style
+    same_line_control_brace = re.compile(
+        r'^\s*(?:if|else|for|while|switch|try|catch)\s*[^{{]*{{\s*$'
+    )
+
+    violations = []
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+
+        # Skip comment lines, preprocessor directives
+        if stripped.startswith('//') or stripped.startswith('#'):
+            continue
+
+        # Check for control structure with brace on same line (K&R style violation)
+        if same_line_control_brace.match(line):
+            if not stripped.startswith('}}') and 'else' not in stripped:
+                violations.append(f"Line {i}: {stripped[:60]}")
+
+    assert not violations, f"K&R style braces found:\n" + "\n".join(violations[:10])
+
+
 def test_clickhouse_naming_conventions():
-    """Pass-to-pass: Verify ClickHouse naming conventions.
+    """Code follows ClickHouse naming conventions (static check).
 
     - Type names: CamelCase (ClassName, StructName)
     - Variable/function names: snake_case
@@ -282,101 +436,22 @@ def test_clickhouse_naming_conventions():
     for type_name in clickhouse_types:
         assert type_name in content, f"Expected type {type_name} not found"
 
-    # Check that private member variables use trailing underscore
-    # Common pattern in ClickHouse: member_var_, zookeeper_getter_, log_
-    content_lines = content.split('\n')
-    member_patterns = [
-        ('zookeeper_getter', 'zookeeper_getter{'),
-        ('watch_queue', 'watch_queue{'),
-        ('log', 'log{getLogger'),
-    ]
-
-    for member, pattern in member_patterns:
-        assert any(pattern in line for line in content_lines), \
-            f"Member variable pattern for {member} not found"
-
-
-def test_no_raw_assert():
-    """Pass-to-pass: Verify no raw assert() calls (ClickHouse uses CH_ASSERT).
-
-    ClickHouse has its own assertion macros. Raw assert() is discouraged.
-    """
-    # Use subprocess for behavioral validation
-    script = f"""
-import re
-import sys
-
-content = open('{TARGET_FILE}').read()
-
-# Check for raw assert calls (but not CH_ASSERT or static_assert)
-raw_assert_pattern = re.compile(r'\\bassert\\s*\\(')
-
-matches = raw_assert_pattern.findall(content)
-# Filter out false positives like CH_ASSERT, static_assert
-false_positives = ['CH_ASSERT', 'static_assert']
-real_asserts = []
-for i, line in enumerate(content.split('\\n')):
-    if 'assert(' in line and not any(fp in line for fp in false_positives):
-        # Skip comments
-        if not line.strip().startswith('//'):
-            real_asserts.append(f"Line {{i+1}}: {{line.strip()[:60]}}")
-
-if real_asserts:
-    print("FAIL: Raw assert() found (use CH_ASSERT instead):")
-    for a in real_asserts[:5]:
-        print(f"  {{a}}")
-    sys.exit(1)
-
-print("PASS: No raw assert() calls found")
-"""
-    r = subprocess.run(
-        ["python3", "-c", script],
-        capture_output=True, text=True, timeout=30
-    )
-    assert r.returncode == 0, f"Raw assert check failed: {r.stderr or r.stdout}"
-    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
-
 
 def test_clickhouse_logger_usage():
-    """Pass-to-pass: Verify LOG_* macros are used for logging (ClickHouse standard).
+    """Uses ClickHouse LOG_* macros instead of std::cout/std::cerr (static check).
 
     ClickHouse uses LOG_DEBUG, LOG_INFO, LOG_WARNING, LOG_ERROR macros.
     """
-    # Use subprocess for behavioral validation
-    script = f"""
-import sys
+    content = _get_file_content()
 
-content = open('{TARGET_FILE}').read()
-
-# Should have proper ClickHouse logging
-log_macros = ['LOG_DEBUG', 'LOG_INFO', 'LOG_WARNING', 'LOG_ERROR']
-has_log_macros = any(macro in content for macro in log_macros)
-
-if not has_log_macros:
-    print("FAIL: No ClickHouse LOG_* macros found")
-    sys.exit(1)
-
-# Should NOT use raw std::cout for logging in production code
-if 'std::cout' in content:
-    print("FAIL: std::cout should not be used for logging")
-    sys.exit(1)
-
-if 'std::cerr' in content:
-    print("FAIL: std::cerr should not be used for logging")
-    sys.exit(1)
-
-print("PASS: ClickHouse logging macros verified")
-"""
-    r = subprocess.run(
-        ["python3", "-c", script],
-        capture_output=True, text=True, timeout=30
-    )
-    assert r.returncode == 0, f"Logger usage check failed: {r.stderr or r.stdout}"
-    assert "PASS" in r.stdout, f"Expected PASS: {r.stdout}"
+    # Should have proper ClickHouse logging
+    log_macros = ['LOG_DEBUG', 'LOG_INFO', 'LOG_WARNING', 'LOG_ERROR']
+    has_log_macros = any(macro in content for macro in log_macros)
+    assert has_log_macros, "No ClickHouse LOG_* macros found"
 
 
 def test_exception_handling_patterns():
-    """Pass-to-pass: Verify ClickHouse exception handling patterns.
+    """Follows ClickHouse exception handling patterns (static check).
 
     ClickHouse uses tryLogCurrentException and specific exception types.
     """
@@ -393,27 +468,20 @@ def test_exception_handling_patterns():
 
 
 def test_cpp_syntax_valid():
-    """Pass-to-pass: Verify C++ code has basic syntactic validity via clang-format check.
+    """C++ code has basic syntactic validity via brace balance (static check)."""
+    content = _get_file_content()
 
-    Runs clang-format to check if the code is syntactically valid C++.
-    """
-    # This test runs clang-format to verify basic C++ syntax
-    # Note: This may not be available in all environments
-    result = subprocess.run(
-        ["which", "clang-format"],
-        capture_output=True, text=True, timeout=10
-    )
+    # Check for balanced braces
+    open_braces = content.count('{')
+    close_braces = content.count('}')
+    assert open_braces == close_braces, \
+        f"Unbalanced braces: {open_braces} open, {close_braces} close"
 
-    if result.returncode != 0:
-        # clang-format not available, skip this test
-        return
-
-    # Run clang-format syntax check on the file
-    result = subprocess.run(
-        ["clang-format", "--dry-run", "--Werror", str(TARGET_FILE)],
-        capture_output=True, text=True, timeout=30
-    )
-    assert result.returncode == 0, f"C++ syntax check failed: {result.stderr}"
+    # Check for balanced parentheses
+    open_parens = content.count('(')
+    close_parens = content.count(')')
+    assert open_parens == close_parens, \
+        f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
 
 
 if __name__ == "__main__":

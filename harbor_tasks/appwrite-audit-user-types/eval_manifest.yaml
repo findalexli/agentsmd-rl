@@ -91,7 +91,42 @@ checks:
     description: "Modified directories pass PHPStan static analysis"
     origin: "repo_tests"
 
-rubric: []
+  - id: "test_repo_composer_validate"
+    name: "Repo composer.json validation"
+    type: "pass_to_pass"
+    description: "composer.json passes schema validation with composer validate --strict"
+    origin: "repo_tests"
+
+  - id: "test_repo_composer_audit"
+    name: "Repo composer security audit"
+    type: "pass_to_pass"
+    description: "Production dependencies pass security audit with composer audit --no-dev"
+    origin: "repo_tests"
+
+rubric:
+  - rule: "When updating documents, pass only changed attributes as a sparse Document. Do not pass full documents."
+    source:
+      path: "AGENTS.md"
+      lines: "90-99"
+      commit: "bb078086618f85634763943b9bee5fb8e8453cbd"
+
+  - rule: "resourceType values must always be plural (e.g., 'functions', 'sites', 'deployments')."
+    source:
+      path: "AGENTS.md"
+      lines: "88"
+      commit: "bb078086618f85634763943b9bee5fb8e8453cbd"
+
+  - rule: "Follow the Action pattern for HTTP endpoints with proper constructor setup and dependency injection."
+    source:
+      path: "AGENTS.md"
+      lines: "103-126"
+      commit: "bb078086618f85634763943b9bee5fb8e8453cbd"
+
+  - rule: "HTTP endpoint files must be named Get.php, Create.php, Update.php, Delete.php, or XList.php only."
+    source:
+      path: "src/Appwrite/Platform/AGENTS.md"
+      lines: "32"
+      commit: "bb078086618f85634763943b9bee5fb8e8453cbd"
 
 agent_config:
   - source_file: "CLAUDE.md"

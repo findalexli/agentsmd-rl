@@ -35,8 +35,8 @@ RUN git clone https://github.com/appwrite/appwrite.git && \
 # Set working directory to the repo
 WORKDIR /workspace/appwrite
 
-# Install composer dependencies (with --ignore-platform-req to handle missing extensions)
-RUN composer install --no-interaction --optimize-autoloader --ignore-platform-req=ext-swoole --ignore-platform-req=ext-mongodb --ignore-platform-req=ext-redis --ignore-platform-req=ext-pdo_mysql --ignore-platform-req=ext-pdo_pgsql --ignore-platform-req=ext-curl --ignore-platform-req=ext-imagick 2>/dev/null || true
+# Install composer dependencies (with --ignore-platform-reqs to handle all missing extensions)
+RUN composer install --no-interaction --optimize-autoloader --ignore-platform-reqs
 
 # Set working directory back to /workspace for test execution
 WORKDIR /workspace

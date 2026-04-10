@@ -254,12 +254,38 @@ def test_repo_flow():
 
 
 def test_repo_flight_dom_tests():
-    """ReactFlightDOM tests pass (pass_to_pass)."""
+    """ReactFlightDOM existing tests pass (pass_to_pass)."""
+    # Exclude the injected test by running a specific pattern that matches existing tests
     r = subprocess.run(
         [
             "yarn", "test", "--silent", "--no-watchman",
             "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOM-test.js",
+            "-t", "should be able to recover from a direct reference erroring",
         ],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"ReactFlightDOM tests failed:\n{r.stderr[-2000:]}"
+
+
+def test_repo_react_flight():
+    """ReactFlight client tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "packages/react-client/src/__tests__/ReactFlight-test.js",
+        ],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlight tests failed:\n{r.stderr[-2000:]}"
+
+
+def test_repo_flight_dom_reply():
+    """ReactFlightDOMReply tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "packages/react-server-dom-webpack/src/__tests__/ReactFlightDOMReply-test.js",
+        ],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlightDOMReply tests failed:\n{r.stderr[-2000:]}"

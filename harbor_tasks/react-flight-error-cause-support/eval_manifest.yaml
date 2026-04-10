@@ -37,4 +37,48 @@ checks:
     origin: repo_tests
     description: "Pre-existing ReactFlight cyclic-object transport test still passes"
 
-rubric: []
+  - id: test_flight_error_objects
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactFlight Error object transport test passes (no regression in Error serialization)"
+
+  - id: test_flight_replays_logs_cyclic
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactFlight cyclic object logging test passes (no regression)"
+
+  - id: test_flight_formdata
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactFlight FormData transport test passes (no regression)"
+
+rubric:
+  - rule: "Run yarn prettier to fix formatting before committing changes."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
+      commit: "38cd020c1fb8a1e88b7852160796f411926a6fac"
+
+  - rule: "Run yarn linc to check for lint issues that will fail CI."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "11"
+      commit: "38cd020c1fb8a1e88b7852160796f411926a6fac"
+
+  - rule: "Use --silent flag when running tests to limit output to only failures."
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "40"
+      commit: "38cd020c1fb8a1e88b7852160796f411926a6fac"
+
+  - rule: "Use --no-watchman flag when running tests to avoid sandboxing failures."
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "41"
+      commit: "38cd020c1fb8a1e88b7852160796f411926a6fac"
+
+  - rule: "Run yarn flow dom-node to type check changes (default renderer for most changes)."
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "22"
+      commit: "38cd020c1fb8a1e88b7852160796f411926a6fac"

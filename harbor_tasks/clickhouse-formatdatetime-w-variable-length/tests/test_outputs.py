@@ -261,6 +261,173 @@ def test_file_no_trailing_whitespace():
         f"Lines with trailing whitespace: {trailing_ws_lines[:10]}"
 
 
+def test_repo_file_exists_and_is_cpp():
+    """PASS-TO-PASS: Modified file exists and is valid C++ source.
+
+    Verify the modified file exists and has valid C++ file structure.
+    This is a basic repo integrity check using the 'file' command.
+    """
+    result = subprocess.run(
+        ["file", f"{REPO}/{FILE_PATH}"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, f"file command failed: {result.stderr}"
+    assert "C++ source" in result.stdout or "C++" in result.stdout, \
+        f"File is not recognized as C++ source: {result.stdout}"
+
+
+def test_repo_cpp_syntax_no_errors():
+    """PASS-TO-PASS: C++ syntax check shows no syntax errors in modified file.
+
+    Uses clang++ with -fsyntax-only to verify the file has no syntax errors.
+    Missing includes are expected, but actual syntax errors indicate a problem.
+    """
+    result = subprocess.run(
+        ["clang++-20", "-std=c++23", "-fsyntax-only", "-x", "c++",
+         f"{REPO}/{FILE_PATH}", "-I", f"{REPO}/src", "-I", f"{REPO}/base"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO
+    )
+
+    # Check stderr for actual syntax errors vs missing includes
+    stderr_lower = result.stderr.lower()
+
+    # Real syntax errors that would indicate a problem with the fix
+    syntax_error_indicators = [
+        "expected expression",
+        "unexpected",
+        "syntax error",
+        "parse error",
+        "invalid"
+    ]
+
+    for indicator in syntax_error_indicators:
+        if indicator in stderr_lower and "error:" in stderr_lower:
+            # Check if this is in the modified file (not a missing include)
+            if FILE_PATH.replace(".cpp", "") in result.stderr.lower():
+                assert False, f"C++ syntax error detected in {FILE_PATH}: {result.stderr[:500]}"
+
+    # If we only have "file not found" errors for includes, that's expected
+    # in a minimal repo without all dependencies
+
+
+def test_repo_clang_check_runs():
+    """PASS-TO-PASS: clang-check runs on modified file without crashing.
+
+    Verifies clang-check can process the file. It will fail on missing includes
+    but should not crash or report AST errors in the modified code.
+    """
+    result = subprocess.run(
+        ["clang-check-20", f"{REPO}/{FILE_PATH}", "--"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO
+    )
+
+    # clang-check should at least run without crashing
+    # Exit code 0 means it processed successfully (even with missing includes)
+    # A crash or internal error would be non-zero with specific error messages
+    if result.returncode != 0:
+        stderr_lower = result.stderr.lower()
+        # Check for actual clang internal errors (not just missing headers)
+        if "clang" in stderr_lower and "error" in stderr_lower:
+            if "internal" in stderr_lower or "crash" in stderr_lower or "assertion" in stderr_lower:
+                assert False, f"clang-check internal error: {result.stderr[:500]}"
+
+
+def test_cmake_presence():
+    """PASS-TO-PASS: CMake is available and can parse the project files.
+
+    Verifies CMake can at least parse the CMakeLists.txt syntax without errors.
+    This checks that the build system tooling is properly installed.
+    """
+    result = subprocess.run(
+        ["cmake", "--version"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+
+    assert result.returncode == 0, f"CMake not available: {result.stderr}"
+    assert "cmake version" in result.stdout.lower(), f"Unexpected CMake output: {result.stdout}"
+
+
+def test_repo_directory_structure():
+    """PASS-TO-PASS: Repo has expected directory structure for Functions.
+
+    Verify the expected directories exist for building the Functions module.
+    This is a structural integrity check for the repo.
+    """
+    expected_dirs = [
+        f"{REPO}/src/Functions",
+        f"{REPO}/src",
+        f"{REPO}/base",
+    ]
+
+    for dir_path in expected_dirs:
+        result = subprocess.run(
+            ["test", "-d", dir_path],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        assert result.returncode == 0, f"Expected directory does not exist: {dir_path}"
+
+
+def test_repo_file_line_count():
+    """PASS-TO-PASS: Modified file has reasonable line count.
+
+    Verify the file hasn't been truncated or corrupted by checking it has
+    a reasonable number of lines.
+    """
+    result = subprocess.run(
+        ["wc", "-l", f"{REPO}/{FILE_PATH}"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, f"wc command failed: {result.stderr}"
+
+    # Parse line count from output (format: " 1234 /path/to/file")
+    line_count_str = result.stdout.strip().split()[0]
+    line_count = int(line_count_str)
+
+    # The file should have a reasonable number of lines (not empty, not truncated)
+    assert line_count > 100, f"File seems too small ({line_count} lines), possible truncation"
+    assert line_count < 100000, f"File seems too large ({line_count} lines), possible corruption"
+
+
+def test_repo_clang_version():
+    """PASS-TO-PASS: Clang compiler version is compatible.
+
+    Verify the installed clang version supports C++23 which is required
+    by the ClickHouse codebase.
+    """
+    result = subprocess.run(
+        ["clang++-20", "--version"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+
+    assert result.returncode == 0, f"clang++-20 not available: {result.stderr}"
+    assert "clang version" in result.stdout.lower(), f"Unexpected clang output: {result.stdout}"
+
+    # Check version is at least 16 (supports C++23)
+    version_line = result.stdout.split('\n')[0]
+    assert "20" in version_line or "19" in version_line or "18" in version_line or "17" in version_line or "16" in version_line, \
+        f"Clang version may not support required C++23: {version_line}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

@@ -52,6 +52,16 @@ checks:
     origin: repo_tests
     description: "Repo's black-jupyter formatting passes via pre-commit"
 
+  - id: test_repo_precommit_check_workflow_jobs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's workflow job names check passes via pre-commit"
+
+  - id: test_repo_precommit_sort_ci_permissions
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CI permissions sort check passes via pre-commit"
+
   - id: reasoning_tokens_kit_exists
     type: fail_to_pass
     origin: pr_diff
@@ -107,4 +117,21 @@ checks:
     origin: pr_diff
     description: "TestQwen35FP4MTP setUpClass must call init_reasoning_token_verifier"
 
-rubric: []
+rubric:
+  - rule: "Always use CustomTestCase — never raw unittest.TestCase. CustomTestCase ensures tearDownClass runs even when setUpClass fails, preventing resource leaks in CI."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "10-12"
+      commit: "bb9e058f5b9d4754ac2965bb36864fee1cd978e8"
+
+  - rule: "tearDownClass must be defensive — use hasattr/null checks before accessing resources (e.g., cls.process) that setUpClass may not have finished allocating."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "13-14"
+      commit: "bb9e058f5b9d4754ac2965bb36864fee1cd978e8"
+
+  - rule: "Test kits and mixins should be placed in python/sglang/test/kits/ directory, following the existing pattern of eval_accuracy_kit.py and other kit files."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "369-396,400-413"
+      commit: "bb9e058f5b9d4754ac2965bb36864fee1cd978e8"

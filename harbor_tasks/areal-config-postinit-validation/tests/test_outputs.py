@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
+import subprocess
 import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -63,6 +64,54 @@ def test_syntax_check():
     for fname in ["areal/api/cli_args.py", "areal/utils/data.py"]:
         src = Path(f"{REPO}/{fname}").read_text()
         compile(src, fname, "exec")
+
+
+# [repo_ci] pass_to_pass - from format-check.yml
+def test_repo_ruff_format():
+    """Repo's Python files must be formatted correctly (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["ruff", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["python3", "-m", "pip", "install", "-q", "ruff==0.14.9"], check=True)
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/areal/api/cli_args.py", f"{REPO}/areal/utils/data.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_ci] pass_to_pass - from format-check.yml
+def test_repo_ruff_check():
+    """Repo's Python files must pass linting (pass_to_pass)."""
+    # Install ruff if not available
+    try:
+        subprocess.run(["ruff", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(["python3", "-m", "pip", "install", "-q", "ruff==0.14.9"], check=True)
+
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/areal/api/cli_args.py", f"{REPO}/areal/utils/data.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_ci] pass_to_pass - static analysis
+def test_repo_python_syntax():
+    """Modified Python files must parse as valid AST (pass_to_pass)."""
+    files = [f"{REPO}/areal/api/cli_args.py", f"{REPO}/areal/utils/data.py"]
+    for f in files:
+        src = Path(f).read_text()
+        try:
+            ast.parse(src)
+        except SyntaxError as e:
+            raise AssertionError(f"Syntax error in {f}: {e}")
 
 
 # ---------------------------------------------------------------------------

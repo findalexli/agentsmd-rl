@@ -26,10 +26,16 @@ RUN pip3 install pytest --break-system-packages
 WORKDIR /workspace/ClickHouse
 RUN mkdir -p /logs/verifier
 
-# Clone ClickHouse repo at base commit (shallow clone for speed)
+# Clone ClickHouse repo with minimal history and sparse checkout
 # Base commit: ac01e7e5223a05f2a77ba74cdd949232d9648918
-RUN git clone --filter=blob:none --depth=100 https://github.com/ClickHouse/ClickHouse.git /workspace/ClickHouse \
-    && git checkout ac01e7e5223a05f2a77ba74cdd949232d9648918
+# We only need the specific file we're testing
+RUN git init /workspace/ClickHouse && \
+    cd /workspace/ClickHouse && \
+    git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
+    git config core.sparseCheckout true && \
+    echo "src/Processors/QueryPlan/Optimizations/" > .git/info/sparse-checkout && \
+    git fetch --depth=1 origin ac01e7e5223a05f2a77ba74cdd949232d9648918 && \
+    git checkout ac01e7e5223a05f2a77ba74cdd949232d9648918
 
 # The repo will be at the base commit (buggy state)
 # Tests will verify the fix is applied correctly

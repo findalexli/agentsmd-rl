@@ -228,31 +228,91 @@ def test_no_work_process_comments():
 # [repo_tests] pass_to_pass
 def test_repo_syntax_all():
     """All Python files in the repo must have valid syntax (pass_to_pass)."""
-    import py_compile
-    import os
+    r = subprocess.run(
+        ["python3", "-c", """
+import ast
+import os
+from pathlib import Path
 
-    src_dir = Path(f"{REPO}/src")
-    errors = []
+src_dir = Path("src")
+errors = []
 
-    for root, _, files in os.walk(src_dir):
-        for file in files:
-            if file.endswith(".py"):
-                path = Path(root) / file
-                try:
-                    py_compile.compile(str(path), doraise=True)
-                except py_compile.PyCompileError as e:
-                    errors.append(f"{path.relative_to(src_dir)}: {e}")
+for root, _, files in os.walk(src_dir):
+    for file in files:
+        if file.endswith(".py"):
+            path = Path(root) / file
+            try:
+                ast.parse(path.read_text())
+            except SyntaxError as e:
+                errors.append(f"{path}: {e}")
 
-    assert len(errors) == 0, f"Syntax errors found:\n" + "\n".join(errors[:10])
+if errors:
+    print("Syntax errors found:")
+    for e in errors[:10]:
+        print(f"  {e}")
+    exit(1)
+else:
+    print("All Python files have valid syntax")
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_config_module_loads():
     """Config module can be imported and executed without errors (pass_to_pass)."""
-    src = CONFIG_PY.read_text()
-    tree = ast.parse(src)
-    compile(tree, str(CONFIG_PY), "exec")
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, "src")
+from prime_rl.utils.config import none_to_none_str
 
-    # Verify the expected functions are defined
-    func_names = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
-    assert "none_to_none_str" in func_names, "none_to_none_str function not found in config.py"
+# Test basic functionality
+result = none_to_none_str({"a": None, "b": "hello"})
+assert result == {"a": "None", "b": "hello"}, f"Basic test failed: {result}"
+
+# Test nested dict
+result = none_to_none_str({"outer": {"inner": None}})
+assert result == {"outer": {"inner": "None"}}, f"Nested dict test failed: {result}"
+
+# Test non-None values pass through unchanged
+result = none_to_none_str({"a": 1, "b": [1, 2], "c": {"d": True}})
+assert result == {"a": 1, "b": [1, 2], "c": {"d": True}}, f"Pass-through test failed: {result}"
+
+print("Config module tests passed!")
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config module test failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff linter passes on the modified config.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # pip install may show warnings but should still work
+
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/utils/config.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff format check passes on the modified config.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/utils/config.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}\n{r.stdout}"

@@ -43,12 +43,6 @@ def test_duplicate_field_error_message_includes_field_names():
     )
 
 
-def test_json_test_compiles_and_runs():
-    """Basic sanity check that the test suite compiles and runs."""
-    result = run_bazel_test("//java/test/org/openqa/selenium/json:JsonTest")
-    assert result.returncode == 0, "JsonTest should compile and run successfully"
-
-
 def test_error_message_contains_fieldwriter_info():
     """Verify the error message format includes class and field names.
 
@@ -56,8 +50,8 @@ def test_error_message_contains_fieldwriter_info():
     "Duplicate JSON field name detected while collecting field writers"
     to:
     "Duplicate JSON field name detected while collecting field writers:
-     FieldWriter(org.openqa.selenium.json.JsonTest$ChildFieldBean.value) vs
-     FieldWriter(org.openqa.selenium.json.JsonTest$ParentFieldBean.value)"
+     FieldWriter(org.openqa.selenium.json.JsonTest\$ChildFieldBean.value) vs
+     FieldWriter(org.openqa.selenium.json.JsonTest\$ParentFieldBean.value)"
     """
     result = run_bazel_test("//java/test/org/openqa/selenium/json:JsonTest")
 
@@ -191,3 +185,72 @@ def test_bazel_build_java_src():
         f"Bazel build of java/src/org/openqa/selenium/json should succeed.\n"
         f"STDERR: {result.stderr[-1000:]}"
     )
+
+
+def test_bazel_build_json_tests():
+    """Pass-to-pass test: bazel build of json test targets should succeed."""
+    result = subprocess.run(
+        ["bazel", "build", "//java/test/org/openqa/selenium/json:all"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, (
+        f"Bazel build of json tests should succeed.\n"
+        f"STDERR: {result.stderr[-1000:]}"
+    )
+
+
+def test_bazel_json_input_test():
+    """Pass-to-pass test: JsonInputTest should pass (unit tests for JSON parsing)."""
+    result = subprocess.run(
+        ["bazel", "test", "//java/test/org/openqa/selenium/json:JsonInputTest",
+         "--test_size_filters=small", "--test_output=errors"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, (
+        f"JsonInputTest should pass.\n"
+        f"STDERR: {result.stderr[-1000:]}"
+    )
+
+
+def test_bazel_json_output_test():
+    """Pass-to-pass test: JsonOutputTest should pass (unit tests for JSON serialization)."""
+    result = subprocess.run(
+        ["bazel", "test", "//java/test/org/openqa/selenium/json:JsonOutputTest",
+         "--test_size_filters=small", "--test_output=errors"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, (
+        f"JsonOutputTest should pass.\n"
+        f"STDERR: {result.stderr[-1000:]}"
+    )
+
+
+def test_bazel_query_json_targets():
+    """Pass-to-pass test: bazel query for json targets should work."""
+    result = subprocess.run(
+        ["bazel", "query", "//java/test/org/openqa/selenium/json:all"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, (
+        f"Bazel query for json test targets should work.\n"
+        f"STDERR: {result.stderr[-500:]}"
+    )
+    assert "JsonTest" in result.stdout, "Query should include JsonTest target"
+    assert "JsonInputTest" in result.stdout, "Query should include JsonInputTest target"
+    assert "JsonOutputTest" in result.stdout, "Query should include JsonOutputTest target"

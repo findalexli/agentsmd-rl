@@ -47,6 +47,31 @@ checks:
     origin: repo_tests
     description: "Repo's license check passes on base commit"
 
+  - id: test_repo_flags_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's feature flags check passes on base commit"
+
+  - id: test_repo_full_deferred_value_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Full ReactDeferredValue test suite passes on base commit"
+
+  - id: test_repo_hooks_useDeferredValue
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactHooksWithNoopRenderer useDeferredValue tests pass on base commit"
+
+  - id: test_repo_transition_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactTransition basic tests pass on base commit"
+
+  - id: test_repo_suspense_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactSuspenseWithNoopRenderer basic tests pass on base commit"
+
   - id: prettier_formatting
     type: pass_to_pass
     origin: agent_config
@@ -56,4 +81,27 @@ checks:
       lines: "10"
       commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
 
-rubric: []
+rubric:
+  - rule: "Run yarn prettier to format code before submitting changes."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
+      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
+
+  - rule: "Run yarn linc to check for lint issues and fix them before committing."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "11"
+      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
+
+  - rule: "When running tests, use --silent flag to limit output to failures only."
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "40"
+      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
+
+  - rule: "When running tests, use --no-watchman flag to avoid sandboxing issues."
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "41"
+      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"

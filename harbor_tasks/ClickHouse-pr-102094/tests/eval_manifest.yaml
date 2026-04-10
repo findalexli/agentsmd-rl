@@ -123,6 +123,79 @@ checks:
       file: "pyproject.toml"
       note: "Repository Python configuration should be valid"
 
+  # ==================== Pass-to-Pass: New CI/CD Enrichment Tests ====================
+  - id: "sql_test_file_exists"
+    test: "test_sql_test_file_exists"
+    description: "SQL test file for modified component exists"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source:
+      file: "tests/queries/0_stateless/03403_function_tokens.sql"
+      note: "ClickHouse CI requires test files for modified components (PR adds tests to this file)"
+
+  - id: "sql_test_file_valid_syntax"
+    test: "test_sql_test_file_valid_syntax"
+    description: "SQL test file uses valid ClickHouse test syntax"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source:
+      file: "tests/queries/0_stateless/03403_function_tokens.sql"
+      note: "CI validates SQL test file syntax and error markers"
+
+  - id: "no_dos_line_endings"
+    test: "test_no_dos_line_endings_in_source"
+    description: "Source file has no DOS/Windows line endings (CRLF)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source:
+      file: "ci/jobs/scripts/check_style/various_checks.sh"
+      note: "CI checks for DOS line endings in source files"
+
+  - id: "no_utf8_bom"
+    test: "test_no_utf8_bom_in_source"
+    description: "Source file does not have UTF-8 BOM marker"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source:
+      file: "ci/jobs/scripts/check_style/various_checks.sh"
+      note: "CI forbids UTF-8 BOM markers in source files"
+
+  - id: "pragma_once_in_headers"
+    test: "test_pragma_once_in_local_headers"
+    description: "Local header files have #pragma once"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source:
+      file: "ci/jobs/scripts/check_style/check_cpp.sh"
+      note: "CI requires #pragma once in all header files"
+
+  - id: "cmake_lists_exists"
+    test: "test_cmake_lists_exists"
+    description: "CMakeLists.txt exists and is non-empty"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source:
+      file: "CMakeLists.txt"
+      note: "Build system configuration must be intact"
+
+  - id: "no_exec_bits_on_source"
+    test: "test_no_exec_bits_on_source"
+    description: "Source files don't have executable permissions"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source:
+      file: "ci/jobs/scripts/check_style/various_checks.sh"
+      note: "CI checks that .cpp and .h files are not executable"
+
+  - id: "clang_format_config_exists"
+    test: "test_clang_format_config_exists"
+    description: ".clang-format configuration file exists"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source:
+      file: ".clang-format"
+      note: "ClickHouse uses clang-format for code formatting"
+
 rubric:
   - id: "clear_error_messages"
     description: "Error messages are clear and descriptive"

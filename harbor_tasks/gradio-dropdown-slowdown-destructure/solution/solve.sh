@@ -72,3 +72,6 @@ index 1a0bef8676..05349551d6 100644
  			onload={() => (initialized = true)}
 
 PATCH
+
+git add js/dropdown/shared/Dropdown.svelte
+git commit -m "Apply fix for dropdown slowdown destructure issue"

@@ -3,18 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T10:53:50.224492",
-  "total_time": 6117.26,
-  "sandbox_id": "i6elpv4lks38ec2qzrgin",
-  "backend": "fireworks",
+  "validated_at": "2026-04-10T04:33:35.185355",
+  "total_time": 11419.19,
+  "sandbox_id": "i0sn29wy5lasfgtkxmazl",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 815.85,
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1071.23,
       "notes": ""
     },
     "p2p_enrich": {
@@ -26,8 +26,8 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
+      "model": "opus",
+      "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
     },
@@ -35,18 +35,25 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "Fixed test_ancestors_does_not_hang to build Hugo binary before running test. All 4 checks pass: Docker build OK, NOP test reward=0 (2 F2P tests fail on buggy code), Gold test reward=1 (all 8 tests pass), Rubric ICR=1.0",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 535.58
+      "attempts": 2,
+      "notes": "Fixed the test to properly evaluate the gold patch. The solve.sh was updated to include the AGENTS.md and disableKinds_test.go patch from the original PR. The eval_manifest.yaml rubric was corrected to evaluate the AGENTS.md rule change from the PR instead of unrelated base rules.",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1815.87
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1.33,
+      "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "rate_limited",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
-      "notes": "ICR=1.00"
+      "time": 38.9,
+      "notes": ""
     }
   },
   "history": [
@@ -55,16 +62,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 6116.99,
-      "at": "2026-04-09T10:53:50.048164"
+      "time": 655.28,
+      "at": "2026-04-09T14:39:06.458902"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 6117.26,
-      "at": "2026-04-09T10:53:50.224492"
+      "time": 655.54,
+      "at": "2026-04-09T14:39:06.628316"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 193.73,
+      "at": "2026-04-09T15:01:05.205501"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 11418.93,
+      "at": "2026-04-10T04:33:35.018742"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 11419.19,
+      "at": "2026-04-10T04:33:35.185355"
     }
   ]
 }

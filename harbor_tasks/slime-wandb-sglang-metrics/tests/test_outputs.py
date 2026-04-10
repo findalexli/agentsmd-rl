@@ -451,3 +451,58 @@ def test_secondary_still_functional():
     assert len(body) >= 3, (
         f"init_wandb_secondary body too small ({len(body)} stmts)"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI commands that run on the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Ruff linting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", "slime/utils/wandb_utils.py", "slime/utils/logging_utils.py",
+         "slime/ray/rollout.py", "train.py", "train_async.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black():
+    """Black formatting check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr}"
+
+    r = subprocess.run(
+        ["black", "--check", "slime/utils/wandb_utils.py", "slime/utils/logging_utils.py",
+         "slime/ray/rollout.py", "train.py", "train_async.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """isort formatting check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr}"
+
+    r = subprocess.run(
+        ["isort", "--check", "slime/utils/wandb_utils.py", "slime/utils/logging_utils.py",
+         "slime/ray/rollout.py", "train.py", "train_async.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort failed:\n{r.stdout}\n{r.stderr}"

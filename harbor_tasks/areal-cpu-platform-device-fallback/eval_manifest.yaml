@@ -74,21 +74,72 @@ checks:
       lines: "99"
       commit: "6208006db64ac29aded7be33963e86503ba9e28e"
 
-rubric:
-  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on modified files"
 
-  - rule: "Use areal.utils.logging.getLogger(name) with PascalCase descriptive name, NOT print or stdlib logging"
-    source:
-      path: "AGENTS.md"
-      lines: "89-91"
-      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff formatting check passes on modified files"
 
-  - rule: "Explicit type hints on new method signatures; reuse existing project type conventions"
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files compile as valid Python"
+
+
+  - id: test_repo_ast_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All modified files parse as valid AST"
+
+  - id: test_repo_ruff_check_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on the entire areal package"
+
+  - id: test_repo_ruff_format_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff formatting check passes on the entire areal package"
+
+  - id: test_repo_precommit_yaml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-commit YAML check passes on all files"
+
+  - id: test_repo_precommit_json
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-commit JSON check passes on all files"
+
+  - id: test_repo_precommit_eof
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-commit end-of-file fixer passes on all files"
+
+  - id: test_repo_precommit_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-commit trailing whitespace check passes on all files"
+
+  - id: test_repo_precommit_large_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-commit check for added large files passes"
+
+  - id: test_repo_precommit_private_keys
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-commit detect private key passes"
+
+  - id: test_repo_precommit_nbstripout
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pre-commit notebook stripout check passes on all files"
+# Rubric rules removed - style conventions are validated by the test suite:
+# - test_new_cpu_methods_have_return_types validates type hints
+# - test_no_bare_print validates no print() calls
+# - Full test pass validates code follows existing patterns

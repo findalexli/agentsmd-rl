@@ -7,6 +7,7 @@ source_pr:
 
 # Checks for programmatic verification
 checks:
+  # Existing fail_to_pass tests
   - id: "operator_has_parent_job_param"
     name: "Operator has openlineage_inject_parent_job_info parameter"
     type: "pytest"
@@ -107,6 +108,54 @@ checks:
     name: "Input configuration is not mutated"
     type: "pytest"
     test_function: "test_outputs.TestInputImmutability.test_inject_parent_job_info_does_not_mutate_input"
+    weight: 1
+
+  # Pass-to-pass tests (repo CI/CD tests)
+  - id: "repo_emr_serverless_hook_tests_pass"
+    name: "Repo EMR Serverless hook tests pass"
+    type: "pass_to_pass"
+    test_function: "test_outputs.TestRepoEmrTestsPass.test_repo_emr_serverless_hook_tests"
+    origin: "repo_tests"
+    description: "Repo's EMR Serverless hook unit tests pass"
+    weight: 1
+
+  - id: "repo_amazon_ruff_check_pass"
+    name: "Repo Amazon provider ruff check passes"
+    type: "pass_to_pass"
+    test_function: "test_outputs.TestRepoCodeQuality.test_repo_amazon_ruff_check"
+    origin: "repo_tests"
+    description: "Repo's Amazon provider code passes ruff linting"
+    weight: 1
+
+  - id: "repo_openlineage_ruff_check_pass"
+    name: "Repo OpenLineage provider ruff check passes"
+    type: "pass_to_pass"
+    test_function: "test_outputs.TestRepoCodeQuality.test_repo_openlineage_ruff_check"
+    origin: "repo_tests"
+    description: "Repo's OpenLineage provider code passes ruff linting"
+    weight: 1
+  - id: "repo_emr_serverless_tests_pass"
+    name: "Repo EMR Serverless operator tests pass"
+    type: "pass_to_pass"
+    test_function: "test_outputs.TestRepoEmrTestsPass.test_repo_emr_serverless_operator_tests"
+    origin: "repo_tests"
+    description: "Repo's EMR Serverless operator unit tests pass"
+    weight: 1
+
+  - id: "repo_openlineage_spark_tests_pass"
+    name: "Repo OpenLineage spark utils tests pass"
+    type: "pass_to_pass"
+    test_function: "test_outputs.TestRepoOpenlineageTestsPass.test_repo_openlineage_spark_utils_tests"
+    origin: "repo_tests"
+    description: "Repo's OpenLineage spark utils unit tests pass"
+    weight: 1
+
+  - id: "repo_common_compat_tests_pass"
+    name: "Repo common compat openlineage tests pass"
+    type: "pass_to_pass"
+    test_function: "test_outputs.TestRepoCompatTestsPass.test_repo_common_compat_openlineage_tests"
+    origin: "repo_tests"
+    description: "Repo's common compat openlineage tests pass"
     weight: 1
 
 # Agent config rules for programmatic verification

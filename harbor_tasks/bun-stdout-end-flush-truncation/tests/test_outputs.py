@@ -20,7 +20,7 @@ TARGET = f"{REPO}/src/js/builtins/ProcessObjectInternals.ts"
 # ---------------------------------------------------------------------------
 
 # Node.js helper module: extracts _final from the TS source file, polyfills
-# bun-specific globals ($isPromise etc.), and exposes the function for testing.
+# bun-specific globals ($ intrinsics etc.), and exposes the function for testing.
 # Cannot run ProcessObjectInternals.ts directly because it requires bun's
 # TypeScript preprocessor ($ intrinsics, internal require paths).
 _HELPER_JS = r"""
@@ -228,6 +228,45 @@ def test_repo_prettier():
         f"prettier format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+# [repo_ci] pass_to_pass — oxlint on builtins directory (CI checks all builtins)
+def test_repo_oxlint_builtins():
+    """Repo's oxlint passes on src/js/builtins directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint", f"{REPO}/src/js/builtins"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert "0 errors" in r.stdout or r.returncode == 0, \
+        f"oxlint found errors in builtins:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — prettier check on builtins directory
+def test_repo_prettier_builtins():
+    """Repo's prettier format check passes on src/js/builtins directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/src/js/builtins"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"prettier format check failed on builtins:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — syntax check target file with node
+def test_repo_node_syntax():
+    """Target TypeScript file is syntactically parseable (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const content = fs.readFileSync('{TARGET}', 'utf8');
+// Basic validation: file should be non-empty and contain expected exports
+if (content.length < 100) {{ console.log('File too small'); process.exit(1); }}
+if (!content.includes('export function getStdioWriteStream')) {{ console.log('Missing key export'); process.exit(1); }}
+console.log('Syntax check passed');
+"""],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Node syntax check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_ci) — structural CI checks
 # ---------------------------------------------------------------------------
@@ -272,7 +311,7 @@ def test_stream_properties():
 
 # [agent_config] fail_to_pass — src/js/CLAUDE.md:56 @ ba05a72939569c1a371a513c3bd64a2cab6a60ee
 def test_no_dot_call_apply():
-    """_final must use .$call/.$apply, never .call/.apply (src/js/CLAUDE.md:56)."""
+    """_final must use .\$call/.\$apply, never .call/.apply (src/js/CLAUDE.md:56)."""
     # Structural check because: bun TS preprocessor converts $-prefixed calls at build time
     body = _get_final_body()
     assert body is not None, "_final hook not found in ProcessObjectInternals.ts"
@@ -280,9 +319,9 @@ def test_no_dot_call_apply():
     lines = [l for l in body.split("\n") if not l.strip().startswith("//")]
     code = "\n".join(lines)
     assert not re.search(r'(?<!\$)\.call\s*\(', code), \
-        "Uses .call() instead of .$call() — violates src/js/CLAUDE.md:56"
+        "Uses .call() instead of .\$call() — violates src/js/CLAUDE.md:56"
     assert not re.search(r'(?<!\$)\.apply\s*\(', code), \
-        "Uses .apply() instead of .$apply() — violates src/js/CLAUDE.md:56"
+        "Uses .apply() instead of .\$apply() — violates src/js/CLAUDE.md:56"
 
 
 # [agent_config] pass_to_pass — src/js/CLAUDE.md:103 @ ba05a72939569c1a371a513c3bd64a2cab6a60ee

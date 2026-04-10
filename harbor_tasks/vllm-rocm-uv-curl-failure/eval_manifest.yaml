@@ -42,6 +42,36 @@ checks:
     origin: static
     description: "The UV install command must have real download + execute logic"
 
-rubric: []
-# No applicable soft rules — AGENTS.md rules are process-oriented or Python-specific,
-# not applicable to Dockerfile shell syntax fixes.
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python linting passes (ruff check on docker/)"
+
+  - id: test_repo_dockerfile_validate
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's dockerfile validation passes (validate-docker-versions)"
+
+  - id: test_repo_dockerfile_rocm_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Dockerfile.rocm has valid syntax and required directives"
+
+rubric:
+  - rule: "Implement fail-closed behavior: if an operation fails, it must not proceed silently or mask errors."
+    source:
+      path: "AGENTS.md"
+      lines: "34-36"
+      commit: "b2bc736b1247a76e6ab1cfbe38ae39c3c307de40"
+
+  - rule: "Use the project's standard tooling (uv) for installations, not bare system commands."
+    source:
+      path: "AGENTS.md"
+      lines: "42,48-56"
+      commit: "b2bc736b1247a76e6ab1cfbe38ae39c3c307de40"
+
+  - rule: "Follow existing code style and error handling patterns in the same file."
+    source:
+      path: "AGENTS.md"
+      lines: "119-127"
+      commit: "b2bc736b1247a76e6ab1cfbe38ae39c3c307de40"

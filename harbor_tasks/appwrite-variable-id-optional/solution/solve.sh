@@ -3,8 +3,8 @@ set -e
 
 cd /workspace/appwrite
 
-# Check if already patched (idempotency)
-if grep -q "variableId.*'unique()'" src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php; then
+# Check if already patched (idempotency) - look for unique() in the param() default value specifically
+if grep -q "param('variableId', 'unique()'" src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php; then
     echo "Already patched"
     exit 0
 fi

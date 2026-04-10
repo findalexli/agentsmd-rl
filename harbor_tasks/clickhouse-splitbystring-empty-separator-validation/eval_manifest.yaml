@@ -20,11 +20,21 @@ checks:
   - id: test_clickhouse_style_checks
     type: pass_to_pass
     origin: repo_tests
-    description: "Modified file passes ClickHouse style checks (whitespace, tabs, etc.)"
+    description: "Modified file passes ClickHouse style checks via repo's check_cpp.sh script"
+
+  - id: test_no_tabs_in_source
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No tab characters in source file (via grep check)"
+
+  - id: test_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace in source file (via grep check)"
 
   - id: test_no_multiple_empty_lines
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Code has no more than two consecutive empty lines (ClickHouse style check)"
 
   - id: test_allman_brace_style
@@ -36,7 +46,58 @@ checks:
   - id: test_no_curly_brace_on_same_line
     type: pass_to_pass
     origin: repo_tests
-    description: "Opening braces are on new lines, not same line as control statements (ClickHouse style check)"
+    description: "Opening braces are on new lines via grep - same line check"
 
-# Soft rules (subjective / style guidelines)
-rubric: []
+  - id: test_indentation_multiple_of_four
+    type: pass_to_pass
+    origin: static
+    description: "Indentation uses multiples of 4 spaces (ClickHouse style check)"
+
+  - id: test_whitespace_after_control_before_paren
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Control statements have whitespace before opening paren via grep check"
+
+  - id: test_no_duplicate_includes
+    type: pass_to_pass
+    origin: static
+    description: "No duplicate #include directives (ClickHouse style check)"
+
+  - id: test_no_unnecessary_namespace_comments
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No unnecessary // namespace comments via grep check"
+
+  # Enriched p2p tests using actual CI commands
+  - id: test_repo_style_cpp_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ClickHouse C++ style check via check_cpp.sh script"
+
+  - id: test_repo_no_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No Git conflict markers in source files via grep"
+
+  - id: test_repo_no_dos_newlines
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No DOS/Windows newlines (CRLF) in source files via grep"
+
+  - id: test_repo_no_utf8_bom
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No UTF-8 BOM (Byte Order Mark) in source files via grep"
+
+  - id: test_repo_no_trailing_whitespace_crlf
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No CRLF line endings detected via file command"
+
+  - id: test_repo_clang_syntax_only
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C++ syntax check using clang-15 -fsyntax-only"
+
+# No rubric rules - this is a pure C++ code fix task with no config/documentation changes
+# The error message quality is already verified by the pytest tests

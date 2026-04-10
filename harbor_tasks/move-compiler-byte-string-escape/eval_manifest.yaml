@@ -60,6 +60,18 @@ checks:
     description: "Move code follows Rust formatting standards (cargo fmt --check)"
     points: 1
 
+  - id: test_repo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's custom linter passes (cargo xlint)"
+    points: 1
+
+  - id: test_repo_git_checks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's git checks pass (scripts/git-checks.sh)"
+    points: 1
+
 agent_config:
   - source_file: CLAUDE.md
     rules_applied:
@@ -71,4 +83,14 @@ agent_config:
       - "NEVER use #[allow(dead_code)] or linting suppressions - fix underlying issues"
       - "Do NOT comment the obvious - only non-obvious algorithms, temporary exclusions, complex calculations, subtle race conditions"
 
-rubric: []
+rubric:
+  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead"
+    source:
+      path: "CLAUDE.md"
+      lines: "113"
+      commit: "92bc40908e2cd3a35255295fcde7d897f6e45910"
+  - rule: "Do NOT comment the obvious - comments should not simply repeat what the code does."
+    source:
+      path: "CLAUDE.md"
+      lines: "118"
+      commit: "92bc40908e2cd3a35255295fcde7d897f6e45910"

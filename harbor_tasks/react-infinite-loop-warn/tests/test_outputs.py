@@ -81,6 +81,51 @@ def test_repo_tests_relevant():
     assert r.returncode == 0, f"ReactUpdates tests failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_reconciler_infinite():
+    """Reconciler tests for infinite loop handling must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        return
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactIncrementalErrorHandling", "--testNamePattern=infinite"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Reconciler infinite loop tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_flags():
+    """Feature flags check must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        return
+    r = subprocess.run(
+        ["yarn", "flags"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flags check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_version():
+    """Version check must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile", "--silent"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        return
+    r = subprocess.run(
+        ["yarn", "version-check"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

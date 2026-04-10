@@ -21,7 +21,7 @@ TEST_FILE = (
 
 def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute JavaScript code via Node in the repo directory."""
-    script = Path(REPO) / "_eval_tmp.mjs"
+    script = Path(REPO) / "_eval_tmp.cjs"
     script.write_text(code)
     try:
         return subprocess.run(
@@ -37,7 +37,7 @@ def _read_test_file() -> str:
 
 
 def _extract_function(src: str, name: str) -> str:
-    """Extract body of `async function <name>(...)` (top-level in describe)."""
+    """Extract body of async function <name>(...) (top-level in describe)."""
     pattern = rf"async function {name}\b[^{{]*\{{(.*?)\n  \}}"
     m = re.search(pattern, src, re.DOTALL)
     return m.group(1) if m else ""
@@ -56,7 +56,7 @@ const fs = require('fs');
 const src = fs.readFileSync('{TEST_FILE}', 'utf8');
 
 // Extract clickStartClientNav function body
-const regex = /async function clickStartClientNav\\b[^{{]*\\{{([\\s\\S]*?)\\n  \\}}/;
+const regex = /async function clickStartClientNav\\b[^{{]*\\{{([\\s\\S]*?)\\n  \}}/;
 const m = regex.exec(src);
 if (!m) {{
     console.error('clickStartClientNav function not found');
@@ -83,7 +83,7 @@ const fs = require('fs');
 const src = fs.readFileSync('{TEST_FILE}', 'utf8');
 
 // Extract clickStartClientNav function body
-const regex = /async function clickStartClientNav\\b[^{{]*\\{{([\\s\\S]*?)\\n  \\}}/;
+const regex = /async function clickStartClientNav\\b[^{{]*\\{{([\\s\\S]*?)\\n  \}}/;
 const m = regex.exec(src);
 if (!m) {{
     console.error('clickStartClientNav function not found');
@@ -161,6 +161,7 @@ def test_file_structure_intact():
     """File must retain describe block and at least 3 it() test cases."""
     src = _read_test_file()
     assert "describe(" in src, "Missing describe block"
+    # Match it( with word boundary
     it_count = len(re.findall(r"\bit\(", src))
     assert it_count >= 3, f"Expected >= 3 test cases, found {it_count}"
 
@@ -191,3 +192,57 @@ def test_no_settimeout_for_waiting():
         "clickStartClientNav uses setTimeout for waiting — "
         "use retry() from next-test-utils instead per AGENTS.md:180"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass) — verify fix doesn't break existing functionality
+# ---------------------------------------------------------------------------
+
+
+def _run_pnpm_install():
+    """Install pnpm and dependencies if needed."""
+    # Check if pnpm is available
+    r = subprocess.run(["which", "pnpm"], capture_output=True, text=True)
+    if r.returncode != 0:
+        # Install pnpm
+        subprocess.run(
+            ["npm", "install", "-g", "pnpm@9.6.0"],
+            capture_output=True, text=True, timeout=120
+        )
+    # Check if node_modules exists
+    if not Path(f"{REPO}/node_modules").exists():
+        subprocess.run(
+            ["pnpm", "install"],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=REPO,
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Repo's Prettier formatting check passes on the test file (pass_to_pass)."""
+    _run_pnpm_install()
+    r = subprocess.run(
+        ["pnpm", "prettier", "--check", TEST_FILE],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint check passes on the test file (pass_to_pass)."""
+    _run_pnpm_install()
+    r = subprocess.run(
+        ["pnpm", "lint-eslint", TEST_FILE],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

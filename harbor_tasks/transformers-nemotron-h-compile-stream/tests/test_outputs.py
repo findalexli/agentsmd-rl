@@ -301,3 +301,71 @@ def test_modular_structure():
         "Modeling file missing 'Do NOT edit' warning"
     assert "modular_nemotron_h.py" in modeling_src, \
         "Modeling file should reference its modular source"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD derived tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo CI: make style enforces import sorting
+def test_repo_nemotron_h_import_sort():
+    """Ruff import sorting check on modified files (pass_to_pass).
+
+    The transformers repo CI runs 'ruff check --select I' for import sorting.
+    This test ensures imports in the modified files are properly sorted.
+    """
+    r = subprocess.run(
+        ["ruff", "check", "--select", "I001", MODELING, MODULAR],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Import sort errors:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: validate Python syntax
+def test_repo_nemotron_h_py_syntax():
+    """Python syntax validation using py_compile on modified files (pass_to_pass).
+
+    Basic Python syntax validation that doesn't require importing the modules.
+    This catches syntax errors that would break the CI before any tests run.
+    """
+    import py_compile
+    import tempfile
+
+    for path in [MODELING, MODULAR]:
+        # Use py_compile to check syntax without importing
+        with tempfile.NamedTemporaryFile(suffix=".pyc", delete=True) as tmp:
+            try:
+                py_compile.compile(path, cfile=tmp.name, doraise=True)
+            except py_compile.PyCompileError as e:
+                raise AssertionError(f"Syntax error in {path}: {e}")
+
+
+# [repo_tests] pass_to_pass — Repo CI: check modeling file naming conventions
+def test_repo_nemotron_h_modeling_conventions():
+    """Modeling file follows transformers naming conventions (pass_to_pass).
+
+    Checks that the modeling file contains expected class definitions
+    and follows the standard transformers model structure.
+    """
+    tree = ast.parse(Path(MODELING).read_text())
+
+    # Check for expected class names following HF naming conventions
+    # Note: NemotronHConfig is defined in configuration_nemotron_h.py, not modeling file
+    expected_classes = [
+        "NemotronHPreTrainedModel",
+        "NemotronHForCausalLM",
+    ]
+    found_classes = {node.name for node in ast.walk(tree)
+                     if isinstance(node, ast.ClassDef)}
+
+    for cls in expected_classes:
+        assert cls in found_classes, f"Modeling file missing required class: {cls}"
+
+    # Verify NemotronHBlock has expected methods
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "NemotronHBlock":
+            methods = {n.name for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+            assert "forward" in methods, "NemotronHBlock missing forward method"
+            break
+    else:
+        raise AssertionError("NemotronHBlock class not found in modeling file")

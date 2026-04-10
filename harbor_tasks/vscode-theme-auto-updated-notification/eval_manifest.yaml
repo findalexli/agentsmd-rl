@@ -3,7 +3,33 @@ source:
   repo: microsoft/vscode
   base_commit: 9d3144bf84f54ab1e886fca20608dd3ddc296f64
 
+rubric:
+  - rule: "All user-facing messages must be localized using the nls.localize() method. Use double quotes for strings that need localization."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "93-96,132-133"
+      commit: "9d3144bf84f54ab1e886fca20608dd3ddc296f64"
+
+  - rule: "Use JSDoc style comments for functions, classes, and methods to document their purpose and behavior."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "89-90"
+      commit: "9d3144bf84f54ab1e886fca20608dd3ddc296f64"
+
+  - rule: "Use arrow functions (=>) over anonymous function expressions. Only surround arrow function parameters when necessary."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "104-111"
+      commit: "9d3144bf84f54ab1e886fca20608dd3ddc296f64"
+
+  - rule: "Use tabs for indentation, not spaces."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72-73"
+      commit: "9d3144bf84f54ab1e886fca20608dd3ddc296f64"
+
 checks:
+  # --- fail_to_pass tests (from PR diff) ---
   - id: test_method_defined
     type: fail_to_pass
     origin: pr_diff
@@ -29,6 +55,7 @@ checks:
     origin: pr_diff
     description: On close, stores both THEME_AUTO_UPDATED and NEW_THEME notification keys
 
+  # --- pass_to_pass tests (static) ---
   - id: test_target_file_exists
     type: pass_to_pass
     origin: static
@@ -39,52 +66,28 @@ checks:
     origin: pr_diff
     description: showNewDefaultThemeNotification remains unchanged
 
-  - id: test_target_file_valid_typescript
+  # --- pass_to_pass tests (repo CI commands via subprocess) ---
+  - id: test_repo_typescript_syntax_valid
     type: pass_to_pass
     origin: repo_tests
-    description: Target file has valid TypeScript structure with balanced braces
+    description: Repo CI - TypeScript file has valid syntax with balanced braces
 
-  - id: test_no_duplicate_method_definitions
+  - id: test_repo_class_structure_valid
     type: pass_to_pass
     origin: repo_tests
-    description: No duplicate definitions of showThemeAutoUpdatedNotification
+    description: Repo CI - WorkbenchThemeService class structure is valid
 
-  - id: test_initialize_method_exists
+  - id: test_repo_imports_complete
     type: pass_to_pass
     origin: repo_tests
-    description: Theme service initialize method exists and is accessible
+    description: Repo CI - Required imports are present
 
-  - id: test_workbench_theme_service_class_valid
+  - id: test_repo_no_duplicate_definitions
     type: pass_to_pass
     origin: repo_tests
-    description: WorkbenchThemeService class is well-formed with proper declaration and constructor
+    description: Repo CI - No duplicate method definitions
 
-  - id: test_existing_notification_method_intact
+  - id: test_repo_theme_service_integration
     type: pass_to_pass
     origin: repo_tests
-    description: Existing showNewDefaultThemeNotification method is preserved with its key constant
-
-  - id: test_required_imports_present
-    type: pass_to_pass
-    origin: repo_tests
-    description: Required imports for notifications (Severity, INotificationService, ICommandService, nls.localize) are present
-
-  - id: test_initialize_method_calls_notification
-    type: pass_to_pass
-    origin: repo_tests
-    description: Initialize method calls showNewDefaultThemeNotification (verifies hook point exists)
-
-  - id: test_repo_no_syntax_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo target file has no obvious syntax errors (balanced braces, valid structure)
-
-  - id: test_repo_types_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: Basic TypeScript structure validation passes (class exists, methods defined)
-
-  - id: test_repo_imports_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: All required imports for workbench theme service are present and valid
+    description: Repo CI - Theme service integrates with notification system

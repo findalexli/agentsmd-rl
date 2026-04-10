@@ -254,3 +254,45 @@ def test_repo_check_copies():
     assert r.returncode == 0, (
         f"check_copies failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
     )
+
+
+# [repo_tests] pass_to_pass — check_dummies validates dummy model generation
+def test_repo_check_dummies():
+    """Repo's check_dummies passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "utils/check_dummies.py"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"check_dummies failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — sort_auto_mappings validates auto mappings are sorted
+def test_repo_sort_auto_mappings():
+    """Repo's sort_auto_mappings passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "utils/sort_auto_mappings.py", "--check_only"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"sort_auto_mappings failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — custom_init_isort validates __init__ imports are sorted
+def test_repo_custom_init_isort():
+    """Repo's custom_init_isort passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "utils/custom_init_isort.py", "--check_only"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"custom_init_isort failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )

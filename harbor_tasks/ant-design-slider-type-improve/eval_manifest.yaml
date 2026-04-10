@@ -2,7 +2,7 @@ source:
   pr: "https://github.com/ant-design/ant-design/pull/57488"
   title: "type: improve slider"
   description: "Improve TypeScript types in Slider component by removing 'as any' cast and replacing @ts-ignore with proper type assertions"
-  base_commit: "447392669e4d1ccfe51dafde2b707c8c26a83949"
+  base_commit: "5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7"
   merge_commit: "61877c831805779958bf78bc300d166f4340dee5"
 
 checks:
@@ -64,4 +64,35 @@ checks:
     type: "pass_to_pass"
     origin: "repo_tests"
 
-rubric: []
+  - id: "repo_biome_check_slider"
+    name: "Repo Biome check on slider passes"
+    description: "The repository's Biome check (format + lint) on the slider component passes"
+    test_func: "test_repo_biome_check_slider"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "repo_tsc_slider"
+    name: "Repo TypeScript compilation passes"
+    description: "The repository's TypeScript compilation passes without slider-related errors"
+    test_func: "test_repo_tsc_slider"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+rubric:
+  - rule: "Never use `any` type - define precise types instead. Use proper type assertions that maintain type safety."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "378-386"
+      commit: "5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7"
+
+  - rule: "Always use TypeScript with strict type checking. Prefer interfaces (not type aliases) for object structures."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "378-386"
+      commit: "5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7"
+
+  - rule: "Remove @ts-ignore comments when fixing type issues - use proper type assertions instead of suppressing errors."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "380"
+      commit: "5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7"

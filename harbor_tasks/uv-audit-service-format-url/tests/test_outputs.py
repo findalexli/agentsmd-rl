@@ -250,6 +250,54 @@ def test_repo_cargo_test_uv_audit():
     assert r.returncode == 0, f"cargo test -p uv-audit failed:\n{r.stderr}"
 
 
+def test_repo_cargo_test_uv_cli():
+    """uv-cli tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "uv-cli"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"cargo test -p uv-cli failed:\n{r.stderr}"
+
+
+def test_repo_cargo_clippy_uv_audit():
+    """uv-audit crate passes clippy linting (pass_to_pass)."""
+    # Install clippy if not already installed
+    subprocess.run(
+        ["rustup", "component", "add", "clippy"],
+        capture_output=True,
+        cwd=str(REPO),
+    )
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "uv-audit", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"cargo clippy -p uv-audit failed:\n{r.stderr}"
+
+
+def test_repo_cargo_clippy_uv_cli():
+    """uv-cli crate passes clippy linting (pass_to_pass)."""
+    # Install clippy if not already installed
+    subprocess.run(
+        ["rustup", "component", "add", "clippy"],
+        capture_output=True,
+        cwd=str(REPO),
+    )
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "uv-cli", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"cargo clippy -p uv-cli failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md
 # ---------------------------------------------------------------------------

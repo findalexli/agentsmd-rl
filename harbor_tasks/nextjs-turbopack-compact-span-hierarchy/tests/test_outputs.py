@@ -86,7 +86,7 @@ def test_compact_span_removed_from_db():
     r = _run_node(
         """
 import { readFileSync } from 'fs';
-const src = readFileSync(process.argv[1], 'utf8').replace(/\\/\\/[^\\n]*/g, '');
+const src = readFileSync(process.argv[2], 'utf8').replace(/\\/\\/[^\\n]*/g, '');
 const lines = src.split('\\n');
 let inFn = false, depth = 0, body = [];
 for (const line of lines) {
@@ -159,7 +159,7 @@ def test_sync_span_not_info_level():
     r = _run_node(
         """
 import { readFileSync } from 'fs';
-const src = readFileSync(process.argv[1], 'utf8');
+const src = readFileSync(process.argv[2], 'utf8');
 if (!src.includes('"sync new files"')) { console.log('PASS'); process.exit(0); }
 const lines = src.split('\\n');
 for (let i = 0; i < lines.length; i++) {
@@ -245,63 +245,141 @@ REPO = Path("/workspace/next.js")
 # [repo_tests] pass_to_pass
 def test_repo_cargo_check_turbo_persistence():
     """Cargo check passes for turbo-persistence crate (pass_to_pass)."""
+    install_rust = """
+    if ! command -v cargo &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+        . "$HOME/.cargo/env"
+    fi
+    cargo check -p turbo-persistence
+    """
     r = subprocess.run(
-        ["cargo", "check", "-p", "turbo-persistence"],
+        ["bash", "-c", install_rust],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"cargo check turbo-persistence failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"cargo check turbo-persistence failed: {r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_cargo_check_turbo_tasks_backend():
     """Cargo check passes for turbo-tasks-backend crate (pass_to_pass)."""
+    install_rust = """
+    if ! command -v cargo &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+        . "$HOME/.cargo/env"
+    fi
+    cargo check -p turbo-tasks-backend
+    """
     r = subprocess.run(
-        ["cargo", "check", "-p", "turbo-tasks-backend"],
+        ["bash", "-c", install_rust],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"cargo check turbo-tasks-backend failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"cargo check turbo-tasks-backend failed: {r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_cargo_fmt_check():
     """Cargo fmt check passes for workspace (pass_to_pass)."""
+    install_rust = """
+    if ! command -v cargo &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+        . "$HOME/.cargo/env"
+        rustup component add rustfmt
+    fi
+    cargo fmt -- --check
+    """
     r = subprocess.run(
-        ["cargo", "fmt", "--", "--check"],
+        ["bash", "-c", install_rust],
         capture_output=True,
         text=True,
-        timeout=60,
+        timeout=180,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"cargo fmt --check failed: {r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_cargo_clippy_turbo_persistence():
     """Cargo clippy passes for turbo-persistence crate (pass_to_pass)."""
+    install_rust = """
+    if ! command -v cargo &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+        . "$HOME/.cargo/env"
+        rustup component add clippy
+    fi
+    cargo clippy -p turbo-persistence -- -D warnings
+    """
     r = subprocess.run(
-        ["cargo", "clippy", "-p", "turbo-persistence", "--", "-D", "warnings"],
+        ["bash", "-c", install_rust],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"cargo clippy turbo-persistence failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"cargo clippy turbo-persistence failed: {r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_cargo_clippy_turbo_tasks_backend():
     """Cargo clippy passes for turbo-tasks-backend crate (pass_to_pass)."""
+    install_rust = """
+    if ! command -v cargo &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+        . "$HOME/.cargo/env"
+        rustup component add clippy
+    fi
+    cargo clippy -p turbo-tasks-backend -- -D warnings
+    """
     r = subprocess.run(
-        ["cargo", "clippy", "-p", "turbo-tasks-backend", "--", "-D", "warnings"],
+        ["bash", "-c", install_rust],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"cargo clippy turbo-tasks-backend failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"cargo clippy turbo-tasks-backend failed: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_turbo_persistence():
+    """Cargo tests pass for turbo-persistence crate (pass_to_pass)."""
+    install_rust = """
+    if ! command -v cargo &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+        . "$HOME/.cargo/env"
+    fi
+    cargo test -p turbo-persistence --lib
+    """
+    r = subprocess.run(
+        ["bash", "-c", install_rust],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test turbo-persistence failed: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_turbo_tasks_backend():
+    """Cargo tests pass for turbo-tasks-backend crate (pass_to_pass)."""
+    install_rust = """
+    if ! command -v cargo &>/dev/null; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+        . "$HOME/.cargo/env"
+    fi
+    cargo test -p turbo-tasks-backend
+    """
+    r = subprocess.run(
+        ["bash", "-c", install_rust],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test turbo-tasks-backend failed: {r.stderr[-500:]}"

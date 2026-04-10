@@ -195,7 +195,7 @@ def test_eventual_read_test_expects_panic():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
+# Pass-to-pass (static) — anti-stub and repo structure
 # ---------------------------------------------------------------------------
 
 
@@ -206,3 +206,142 @@ def test_manager_not_stub():
     assert line_count > 1000, (
         f"manager.rs has only {line_count} lines — expected >1000"
     )
+
+
+# [static] pass_to_pass
+def test_manager_readable():
+    """manager.rs is readable and contains expected function definitions (pass_to_pass)."""
+    src = MANAGER.read_text()
+    # Verify file is valid Rust source with expected functions
+    assert "fn try_read_task_cell" in src, (
+        "try_read_task_cell function not found in manager.rs"
+    )
+    assert "fn try_read_task_output" in src, (
+        "try_read_task_output function not found in manager.rs"
+    )
+    assert "impl<B: Backend + 'static> TurboTasksApi for TurboTasks<B>" in src, (
+        "TurboTasksApi impl not found in manager.rs"
+    )
+
+
+# [static] pass_to_pass
+def test_backend_test_file_readable():
+    """top_level_task_consistency.rs test file is readable and has tests (pass_to_pass)."""
+    src = TEST_FILE.read_text()
+    # Verify file has the expected test functions
+    assert "async fn test_eventual_read_in_top_level_task_fails" in src, (
+        "test_eventual_read_in_top_level_task_fails not found"
+    )
+    assert "async fn test_cell_read_in_top_level_task_fails" in src or \
+           "async fn test_cell_read_in_top_level_task_succeeds" in src, (
+        "test_cell_read test not found"
+    )
+
+
+# [static] pass_to_pass
+def test_turbo_tasks_backend_crates_exist():
+    """Required turbo-tasks backend crates exist and have content (pass_to_pass)."""
+    backend_dir = Path(REPO) / "turbopack/crates/turbo-tasks-backend"
+    tests_dir = backend_dir / "tests"
+    src_dir = backend_dir / "src"
+
+    assert backend_dir.is_dir(), "turbo-tasks-backend crate directory missing"
+    assert tests_dir.is_dir(), "turbo-tasks-backend/tests directory missing"
+    assert src_dir.is_dir(), "turbo-tasks-backend/src directory missing"
+
+    # Verify there are test files
+    test_files = list(tests_dir.glob("*.rs"))
+    assert len(test_files) > 5, f"Expected >5 test files, found {len(test_files)}"
+
+
+# [static] pass_to_pass
+def test_repo_git_state_valid():
+    """Repo has valid git state with expected base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"Git HEAD not valid: {r.stderr}"
+    commit = r.stdout.strip()
+    assert len(commit) == 40, f"Invalid commit hash: {commit}"
+
+
+# [static] pass_to_pass
+def test_debug_assert_function_exists():
+    """debug_assert_not_in_top_level_task function exists in manager.rs (pass_to_pass)."""
+    src = MANAGER.read_text()
+    # The function should exist (it's used by the asserts)
+    assert "fn debug_assert_not_in_top_level_task" in src or \
+           "debug_assert_not_in_top_level_task" in src, (
+        "debug_assert_not_in_top_level_task not found in manager.rs"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_info():
+    """Repo's git-info script runs successfully (pass_to_pass).
+
+    Validates that the git-info Node.js script executes without errors.
+    This script extracts git metadata used by CI pipelines.
+    """
+    r = subprocess.run(
+        ["node", "scripts/git-info.mjs"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git-info script failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_run_for_change():
+    """Repo's run-for-change script runs successfully (pass_to_pass).
+
+    Validates that the change detection script executes without errors.
+    This script is used by CI to determine which tests to run based on changed files.
+    """
+    r = subprocess.run(
+        ["node", "scripts/run-for-change.mjs", "--not", "--type", "docs", "--exec", "echo", "test"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"run-for-change script failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_scripts_executable():
+    """Repo's Node.js CI scripts are present and executable (pass_to_pass).
+
+    Verifies that key Node.js scripts used in CI pipelines exist and are runnable.
+    Uses subprocess to check file existence and git tracking status.
+    """
+    scripts = [
+        "scripts/git-info.mjs",
+        "scripts/run-for-change.mjs",
+        "scripts/check-is-release.js",
+        "scripts/check-unused-turbo-tasks.mjs",
+        "scripts/git-configure.mjs",
+    ]
+
+    for script in scripts:
+        script_path = Path(REPO) / script
+        assert script_path.exists(), f"Script {script} must exist"
+        assert script_path.stat().st_size > 0, f"Script {script} must not be empty"
+
+    # Verify using git ls-files that the files are tracked
+    r = subprocess.run(
+        ["git", "ls-files", "--error-unmatch"] + scripts,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Scripts must be tracked by git: {r.stderr}"

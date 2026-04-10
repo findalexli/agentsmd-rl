@@ -188,7 +188,7 @@ def test_not_stub():
 
 # [repo_tests] pass_to_pass
 def test_repo_syntax_py_compile():
-    """Repo's Python files compile without syntax errors (pass_to_pass)."""
+    """Target file compiles without syntax errors (pass_to_pass)."""
     r = subprocess.run(
         ["python3", "-m", "py_compile", TARGET_FILE],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -238,3 +238,56 @@ def test_repo_python_sglang_syntax():
             failed.append(f"{rel_path}: {r.stderr[:200]}")
 
     assert not failed, f"Syntax errors found:\n" + "\n".join(failed)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_related_eagle_tests_syntax():
+    """Related EAGLE test files compile (pass_to_pass)."""
+    # These files are related to the target and should all compile
+    related_files = [
+        "test/registered/spec/eagle/test_eagle3_basic.py",
+        "test/registered/spec/eagle/test_eagle_infer_a.py",
+        "test/registered/spec/eagle/test_eagle_infer_b.py",
+        "test/registered/spec/eagle/test_eagle_constrained_decoding.py",
+        "test/registered/spec/eagle/test_eagle_dp_attention.py",
+    ]
+
+    failed = []
+    for rel_path in related_files:
+        full_path = Path(REPO) / rel_path
+        if not full_path.exists():
+            continue
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(full_path)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        if r.returncode != 0:
+            failed.append(f"{rel_path}: {r.stderr[:200]}")
+
+    assert not failed, f"Syntax errors found:\n" + "\n".join(failed)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_utils_syntax():
+    """Test utilities module compiles (pass_to_pass)."""
+    # The target file imports from test_utils, so this is a key dependency
+    test_utils = Path(REPO) / "python" / "sglang" / "test" / "test_utils.py"
+    if test_utils.exists():
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(test_utils)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"test_utils.py syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_target_file_ast_parse():
+    """Target file can be parsed for AST analysis (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            f"import ast; ast.parse(open('{TARGET_FILE}').read())"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed:\n{r.stderr}"

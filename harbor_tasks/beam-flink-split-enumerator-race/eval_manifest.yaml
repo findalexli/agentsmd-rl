@@ -47,4 +47,46 @@ checks:
     origin: pr_diff
     description: "Standalone Java program validates concurrency fix pattern (concurrent import, volatile, blocking wait, interrupt handling)"
 
-rubric: []
+  - id: test_repo_apache_license_header
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target Java file has Apache License 2.0 header using subprocess grep"
+
+  - id: test_repo_git_status_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is clean with no uncommitted changes"
+
+  - id: test_repo_target_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file exists at expected path"
+
+  - id: test_repo_java_package_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Java package declaration matches directory structure"
+
+  - id: test_repo_file_has_class_declaration
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file contains valid public class declaration"
+
+rubric:
+  - rule: "Every source file must include the Apache license header at the top"
+    source:
+      path: ".agent/skills/contributing/SKILL.md"
+      lines: "66"
+      commit: "28a0cb14ebd018e3550637ded153569d49e66f66"
+
+  - rule: "Add unit tests for your changes. Unit test files must follow the naming convention *Test.java"
+    source:
+      path: ".agent/skills/contributing/SKILL.md"
+      lines: "68"
+      commit: "28a0cb14ebd018e3550637ded153569d49e66f66"
+
+  - rule: "Unit tests must follow the naming convention *Test.java (not *Tests.java or other variants)"
+    source:
+      path: ".agent/skills/java-development/SKILL.md"
+      lines: "74"
+      commit: "28a0cb14ebd018e3550637ded153569d49e66f66"

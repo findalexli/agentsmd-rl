@@ -198,3 +198,86 @@ def test_valkey_dockerfile_valid():
     # Should reference the certificate files
     assert "server.crt" in content, "Dockerfile should reference server.crt"
     assert "server.key" in content, "Dockerfile should reference server.key"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD checks for TLS certificate validity
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_cert_tls_version_compatible():
+    """Certificate must use TLS version compatible with modern clients (pass_to_pass)."""
+    stdout, _, _ = _openssl("x509", "-in", CERT, "-noout", "-text")
+    # Check for RSA key which is compatible with all TLS versions
+    assert "RSA Public-Key" in stdout or "Public-Key: (2048 bit)" in stdout or "Public-Key: (4096 bit)" in stdout, (
+        "Certificate should use RSA key for broad TLS compatibility"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cert_valid_for_tls_server():
+    """Certificate must be a valid X.509 v3 certificate for TLS server use (pass_to_pass)."""
+    stdout, _, _ = _openssl("x509", "-in", CERT, "-noout", "-text")
+    # Check for X509v3 version (required for TLS extensions)
+    assert "Version: 3" in stdout or "Version: 3 (0x2)" in stdout, (
+        "Certificate should be X.509 v3 for TLS compatibility"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cert_and_key_pair_valid():
+    """Certificate and key must form a valid cryptographic pair for TLS (pass_to_pass)."""
+    # Verify the private key matches the certificate's public key
+    r = subprocess.run(
+        ["openssl", "pkey", "-in", KEY, "-pubout"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Private key is not valid: {r.stderr}"
+
+    r2 = subprocess.run(
+        ["openssl", "x509", "-in", CERT, "-pubkey", "-noout"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r2.returncode == 0, f"Certificate has no public key: {r2.stderr}"
+
+    # The public keys derived from cert and private key should match
+    cert_pubkey = r2.stdout.strip()
+    key_pubkey = r.stdout.strip()
+    assert cert_pubkey == key_pubkey, "Certificate public key does not match private key pair"
+
+
+# [repo_tests] pass_to_pass
+def test_redis_tls_config_syntax():
+    """Redis TLS configuration must have valid syntax (pass_to_pass)."""
+    redis_conf = Path(f"{REPO}/test/js/valkey/docker-unified/redis.conf")
+    assert redis_conf.exists(), "redis.conf should exist"
+    content = redis_conf.read_text()
+
+    # Check that all TLS-related settings are present and valid
+    assert "tls-port" in content, "redis.conf should have tls-port setting"
+    assert "tls-cert-file" in content, "redis.conf should have tls-cert-file setting"
+    assert "tls-key-file" in content, "redis.conf should have tls-key-file setting"
+
+    # Verify tls-ca-cert-file points to the self-signed cert (since it's self-signed)
+    assert "tls-ca-cert-file" in content, "redis.conf should have tls-ca-cert-file for self-signed cert"
+
+
+# [repo_tests] pass_to_pass
+def test_cert_no_weak_algorithms():
+    """Certificate must not use weak/insecure algorithms (pass_to_pass)."""
+    stdout, _, _ = _openssl("x509", "-in", CERT, "-noout", "-text")
+
+    # Check for weak signature algorithms
+    weak_algorithms = ["sha1", "md5", "md4", "md2", "dsa"]
+    for alg in weak_algorithms:
+        assert alg.lower() not in stdout.lower(), f"Certificate uses weak algorithm: {alg}"
+
+
+# [repo_tests] pass_to_pass
+def test_cert_chain_depth():
+    """Self-signed certificate must have chain depth of 0 (pass_to_pass)."""
+    stdout, _, _ = _openssl("x509", "-in", CERT, "-noout", "-text")
+    # For self-signed certs, issuer == subject (format is CN=localhost without spaces)
+    assert "CN=localhost" in stdout, (
+        "Certificate should have localhost as issuer/subject"
+    )

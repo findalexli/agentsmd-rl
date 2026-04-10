@@ -218,7 +218,7 @@ def test_repo_format_check():
 
 # [repo_tests] pass_to_pass
 def test_repo_unit_tests():
-    """Repo's unit test suite passes (pass_to_pass)."""
+    """Repo's unit test suite passes (pass_to_pass) - 479 tests."""
     # First build the client (required for tests)
     r = subprocess.run(
         ["pnpm", "--filter", "@gradio/client", "build"],
@@ -232,3 +232,13 @@ def test_repo_unit_tests():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_tests():
+    """Repo's client test suite passes (pass_to_pass) - 141 tests."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "test"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client tests failed: {r.stderr[-500:]} {r.stdout[-1000:]}"

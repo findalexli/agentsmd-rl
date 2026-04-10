@@ -175,3 +175,43 @@ def test_repo_tests_shared():
         cwd=REPO, capture_output=True, text=True, timeout=120, env=env,
     )
     assert r.returncode == 0, f"Shared package tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_version_check():
+    """Repo's version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_license_check():
+    """Repo's license check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_extract_errors():
+    """Repo's error code extraction passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/error-codes/extract-errors.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Extract errors failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_dom_node():
+    """Repo's Flow type checking for dom-node passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/flow-ci.js", "dom-node"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

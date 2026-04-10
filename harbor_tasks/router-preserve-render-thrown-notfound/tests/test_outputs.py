@@ -222,6 +222,94 @@ def test_vue_router_all_notfound_tests():
     assert r.returncode == 0, f"Vue Router all not-found tests failed:\n{r.stdout[-2000:]}"
 
 
+# =============================================================================
+# Additional Pass-to-Pass Tests: CI quality checks (ESLint + build validation)
+# =============================================================================
+
+def test_react_router_eslint():
+    """React Router ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:eslint",
+         "--outputStyle=stream", "--skipRemoteCache"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+    assert r.returncode == 0, f"React Router ESLint failed:\n{r.stderr[-1000:]}"
+
+
+def test_solid_router_eslint():
+    """Solid Router ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/solid-router:test:eslint",
+         "--outputStyle=stream", "--skipRemoteCache"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+    assert r.returncode == 0, f"Solid Router ESLint failed:\n{r.stderr[-1000:]}"
+
+
+def test_vue_router_eslint():
+    """Vue Router ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/vue-router:test:eslint",
+         "--outputStyle=stream", "--skipRemoteCache"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+    assert r.returncode == 0, f"Vue Router ESLint failed:\n{r.stderr[-1000:]}"
+
+
+def test_react_router_build_validation():
+    """React Router build validation passes (publint + attw) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:build",
+         "--outputStyle=stream", "--skipRemoteCache"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+    assert r.returncode == 0, f"React Router build validation failed:\n{r.stderr[-1000:]}"
+
+
+def test_solid_router_build_validation():
+    """Solid Router build validation passes (publint + attw) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/solid-router:test:build",
+         "--outputStyle=stream", "--skipRemoteCache"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+    assert r.returncode == 0, f"Solid Router build validation failed:\n{r.stderr[-1000:]}"
+
+
+def test_vue_router_build_validation():
+    """Vue Router build validation passes (publint + attw) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/vue-router:test:build",
+         "--outputStyle=stream", "--skipRemoteCache"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+    assert r.returncode == 0, f"Vue Router build validation failed:\n{r.stderr[-1000:]}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

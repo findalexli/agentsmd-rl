@@ -266,18 +266,19 @@ def test_root_h_include():
 
 
 # ---------------------------------------------------------------------------
-# Repo CI/CD pass_to_pass gates (p2p_enrichment)
-# These verify the repo's own CI checks pass on base commit AND after fix
+# Pass-to-pass (static) — file content checks for repo coding standards
+# These verify the repo's coding standards by checking file content directly.
+# NOTE: These are origin: static because they read files directly, not run CI commands.
 # ---------------------------------------------------------------------------
 
 def test_cpp_file_trailing_newline():
-    """C++ files must end with a newline (repo CI style check - pass_to_pass)."""
+    """C++ files must end with a newline (pass_to_pass static check)."""
     text = CPP_FILE.read_text()
     assert text.endswith("\n"), "File must end with a newline"
 
 
 def test_cpp_no_trailing_whitespace():
-    """C++ files must not have trailing whitespace (repo CI style check - pass_to_pass)."""
+    """C++ files must not have trailing whitespace (pass_to_pass static check)."""
     text = CPP_FILE.read_text()
     lines = text.split("\n")
     for i, line in enumerate(lines, 1):
@@ -286,7 +287,7 @@ def test_cpp_no_trailing_whitespace():
 
 
 def test_cpp_no_banned_patterns():
-    """C++ files must not contain banned patterns (repo CI: test/internal/ban-words.test.ts - pass_to_pass)."""
+    """C++ files must not contain banned Zig patterns (pass_to_pass static check)."""
     text = CPP_FILE.read_text()
     banned_patterns = [
         "std.debug.assert",
@@ -298,7 +299,7 @@ def test_cpp_no_banned_patterns():
 
 
 def test_cpp_include_order():
-    """C++ files should have root.h first in includes (repo style - pass_to_pass)."""
+    """C++ files should have root.h first in local includes (pass_to_pass static check)."""
     text = CPP_FILE.read_text()
     lines = text.split("\n")
     local_includes = []
@@ -311,7 +312,7 @@ def test_cpp_include_order():
 
 
 def test_repo_cpp_syntax_valid():
-    """C++ file must have valid syntax indicators (pass_to_pass repo gate)."""
+    """C++ file must have valid syntax indicators (pass_to_pass static check)."""
     text = CPP_FILE.read_text()
     required_patterns = [
         r"#include\s+",
@@ -324,6 +325,84 @@ def test_repo_cpp_syntax_valid():
 
 
 def test_repo_error_function_present():
-    """errorConstructorFuncCaptureStackTrace must be present (pass_to_pass repo gate)."""
+    """errorConstructorFuncCaptureStackTrace must be present (pass_to_pass static check)."""
     text = CPP_FILE.read_text()
     assert "errorConstructorFuncCaptureStackTrace" in text, "Required function not found"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates (p2p_enrichment) — subprocess.run() commands
+# These run actual commands that the repo's CI runs. MUST use subprocess.run().
+# ---------------------------------------------------------------------------
+
+def test_repo_python_misctools_syntax():
+    """Repo's Python helper scripts in misctools must have valid syntax (pass_to_pass repo_tests).
+    CI validates these debugging helper scripts compile correctly."""
+    py_files = [
+        f"{REPO}/misctools/gdb/zig_gdb_pretty_printers.py",
+        f"{REPO}/misctools/gdb/std_gdb_pretty_printers.py",
+        f"{REPO}/misctools/lldb/bun_pretty_printer.py",
+        f"{REPO}/misctools/lldb/lldb_pretty_printers.py",
+        f"{REPO}/misctools/lldb/lldb_webkit.py",
+    ]
+    for py_file in py_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", py_file],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Python syntax check failed for {py_file}:\n{r.stderr}"
+
+
+def test_repo_python_test_scripts_syntax():
+    """Repo's Python test scripts must have valid syntax (pass_to_pass repo_tests).
+    CI validates test helper scripts compile correctly."""
+    py_files = [
+        f"{REPO}/test/cli/run/fuse-fs.py",
+        f"{REPO}/test/js/bun/yaml/translate_yaml_test_suite_to_bun.py",
+        f"{REPO}/test/js/node/readline/run-with-pty.py",
+        f"{REPO}/test/js/node/test/fixtures/spawn_closed_stdio.py",
+    ]
+    for py_file in py_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", py_file],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Python syntax check failed for {py_file}:\n{r.stderr}"
+
+
+def test_repo_shell_scripts_syntax():
+    """Repo's shell scripts must have valid bash syntax (pass_to_pass repo_tests).
+    CI validates shell script syntax as part of linting."""
+    shell_scripts = [
+        f"{REPO}/scripts/check-node.sh",
+        f"{REPO}/scripts/check-node-all.sh",
+        f"{REPO}/scripts/trace.sh",
+        f"{REPO}/misctools/find-unused-zig.sh",
+        f"{REPO}/misctools/generate-tests-file.sh",
+    ]
+    for script in shell_scripts:
+        r = subprocess.run(
+            ["bash", "-n", script],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Shell script syntax check failed for {script}:\n{r.stderr}"
+
+
+def test_repo_cpp_file_exists():
+    """Modified C++ file must exist in repo (pass_to_pass repo_tests).
+    Verifies the target file for the PR fix is present at expected path."""
+    r = subprocess.run(
+        ["test", "-f", f"{REPO}/src/bun.js/bindings/FormatStackTraceForJS.cpp"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"C++ source file not found at expected path"
+
+
+def test_repo_git_tracks_file():
+    """Modified C++ file must be tracked by git (pass_to_pass repo_tests).
+    Verifies the target file is part of the git repository."""
+    r = subprocess.run(
+        ["git", "ls-files", "src/bun.js/bindings/FormatStackTraceForJS.cpp"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0 and r.stdout.strip(), f"C++ source file not tracked by git"

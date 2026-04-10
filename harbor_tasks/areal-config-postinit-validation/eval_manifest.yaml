@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "Modified files (cli_args.py, data.py) must parse without errors"
 
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python files must be formatted correctly (from format-check.yml)"
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python files must pass ruff linting (from format-check.yml)"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files must parse as valid AST"
+
   - id: normconfig_rejects_invalid_mean_level
     type: fail_to_pass
     origin: pr_diff

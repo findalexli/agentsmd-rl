@@ -51,7 +51,7 @@ buggy = re.search(
 print(json.dumps({"has_buggy_destructure": buggy is not None}))
 """)
     assert not result["has_buggy_destructure"], (
-        "Array destructuring from $derived.by for input_text/selected_index still present"
+        r"Array destructuring from $derived.by for input_text/selected_index still present"
     )
 
 
@@ -73,7 +73,7 @@ has_standalone = bool(
 print(json.dumps({"is_standalone_state": has_standalone}))
 """)
     assert result["is_standalone_state"], (
-        "input_text must be declared as a standalone $state variable"
+        r"input_text must be declared as a standalone $state variable"
     )
 
 
@@ -95,7 +95,7 @@ has_standalone = bool(
 print(json.dumps({"is_standalone_state": has_standalone}))
 """)
     assert result["is_standalone_state"], (
-        "selected_index must be declared as a standalone $state variable"
+        r"selected_index must be declared as a standalone $state variable"
     )
 
 
@@ -155,10 +155,10 @@ print(json.dumps({
     assert result["handles_in_choices"], "$effect does not handle value-in-choices case"
     assert result["handles_custom"], "$effect does not handle allow_custom_value case"
     assert result["assigns_input_count"] >= 3, (
-        f"$effect assigns input_text only {result[assigns_input_count]} times (need >= 3 branches)"
+        f"$effect assigns input_text only {result['assigns_input_count']} times (need >= 3 branches)"
     )
     assert result["assigns_selected_count"] >= 3, (
-        f"$effect assigns selected_index only {result[assigns_selected_count]} times (need >= 3 branches)"
+        f"$effect assigns selected_index only {result['assigns_selected_count']} times (need >= 3 branches)"
     )
 
 
@@ -178,7 +178,7 @@ has_derived = bool(re.search(r"let\s+selected_indices\s*=\s*\$derived", script))
 print(json.dumps({"is_derived": has_derived}))
 """)
     assert result["is_derived"], (
-        "selected_indices must be declared as a $derived variable"
+        r"selected_indices must be declared as a $derived variable"
     )
 
 
@@ -201,7 +201,7 @@ inline = bool(re.search(
 print(json.dumps({"has_inline_ternary": inline}))
 """)
     assert not result["has_inline_ternary"], (
-        "Template still has inline selected_indices ternary — must use $derived variable"
+        r"Template still has inline selected_indices ternary — must use $derived variable"
     )
 
 
@@ -247,7 +247,11 @@ def test_not_stub():
     assert reactive_refs >= 3, f"Too few reactive declarations ({reactive_refs})"
 
 
-# [repo_tests] pass_to_pass
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — component structure checks
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
 def test_component_exports_intact():
     """Dropdown component must maintain its public API exports (Index.svelte
     and Example.svelte) — pass_to_pass to ensure fix does not break exports."""
@@ -263,7 +267,7 @@ def test_component_exports_intact():
     )
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_dropdown_utils_intact():
     """Dropdown utility functions must be present — pass_to_pass to ensure
     the fix does not remove shared utility code."""
@@ -277,7 +281,7 @@ def test_dropdown_utils_intact():
     assert "handle_shared_keys" in utils_content, "Missing handle_shared_keys function in utils.ts"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_dropdown_options_component_intact():
     """DropdownOptions component must be present — pass_to_pass to ensure
     the fix does not remove the options sub-component."""
@@ -288,7 +292,7 @@ def test_dropdown_options_component_intact():
     assert len(options_content) > 500, "DropdownOptions.svelte seems too small/truncated"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_unit_tests_file_intact():
     """The unit test file (dropdown.test.ts) must exist and have tests —
     pass_to_pass to ensure the fix does not remove or break tests."""
@@ -310,7 +314,7 @@ def test_unit_tests_file_intact():
     assert "Dropdown" in test_content, "Test file does not reference Dropdown component"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_multiselect_intact():
     """Multiselect component (related dropdown variant) must be present —
     pass_to_pass to ensure the fix does not affect the multiselect variant."""
@@ -326,4 +330,150 @@ def test_multiselect_intact():
     # Should reference multiselect-specific concepts
     assert "multiselect" in multiselect_content.lower() or "selected" in multiselect_content.lower(), (
         "Multiselect content does not reference expected functionality"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — file content checks
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_dropdown_types_valid():
+    """Dropdown types.ts must have valid TypeScript interface definitions."""
+    types_path = Path("/workspace/gradio/js/dropdown/types.ts")
+    assert types_path.exists(), "types.ts file missing"
+
+    content = types_path.read_text()
+
+    # Should export key types
+    assert "export" in content, "types.ts should export type definitions"
+    assert "interface" in content or "type" in content, "types.ts should define types/interfaces"
+
+    # Should define expected dropdown types
+    assert "DropdownProps" in content, "Missing DropdownProps type definition"
+    assert "DropdownEvents" in content or "Item" in content, "Missing event or item type definitions"
+
+
+# [static] pass_to_pass
+def test_dropdown_stories_intact():
+    """Dropdown Storybook stories must be present and intact."""
+    stories_path = Path("/workspace/gradio/js/dropdown/Dropdown.stories.svelte")
+    assert stories_path.exists(), "Dropdown.stories.svelte file missing"
+
+    content = stories_path.read_text()
+
+    # Should be valid Svelte Storybook syntax
+    assert "<script" in content, "stories file missing script tag"
+    assert "import" in content, "stories file missing imports"
+
+    # Should reference the component being tested
+    assert "Dropdown" in content, "stories file does not reference Dropdown component"
+
+
+# [static] pass_to_pass
+def test_multiselect_stories_intact():
+    """Multiselect Storybook stories must be present."""
+    stories_path = Path("/workspace/gradio/js/dropdown/Multiselect.stories.svelte")
+    assert stories_path.exists(), "Multiselect.stories.svelte file missing"
+
+    content = stories_path.read_text()
+
+    # Should reference multiselect
+    assert "Multiselect" in content, "stories file does not reference Multiselect"
+
+
+# [static] pass_to_pass
+def test_dropdown_package_json_valid():
+    """Dropdown package.json must be valid JSON with expected exports."""
+    pkg_path = Path("/workspace/gradio/js/dropdown/package.json")
+    assert pkg_path.exists(), "package.json file missing"
+
+    result = _run_analysis(r"""
+import json
+from pathlib import Path
+
+content = Path("/workspace/gradio/js/dropdown/package.json").read_text()
+try:
+    pkg = json.loads(content)
+    print(json.dumps({
+        "valid_json": True,
+        "has_name": "name" in pkg,
+        "has_exports": "exports" in pkg,
+        "name": pkg.get("name", ""),
+        "has_dropdown_export": "." in pkg.get("exports", {}),
+    }))
+except json.JSONDecodeError as e:
+    print(json.dumps({"valid_json": False, "error": str(e)}))
+""")
+
+    assert result["valid_json"], "package.json is not valid JSON"
+    assert result["has_name"], "package.json missing name field"
+    assert result["has_exports"], "package.json missing exports field"
+    assert result["has_dropdown_export"], "package.json missing default export"
+
+
+# [static] pass_to_pass
+def test_no_obvious_svelte_syntax_errors():
+    """Dropdown.svelte must have valid Svelte component structure."""
+    content = TARGET.read_text()
+
+    # Basic Svelte structure checks
+    assert "<script" in content, "Dropdown.svelte missing script tag"
+    assert "</script>" in content, "Dropdown.svelte missing closing script tag"
+
+    # Check script section is parseable
+    script_match = re.search(r"<script[^>]*>(.*?)</script>", content, re.DOTALL)
+    assert script_match is not None, "Could not extract script section"
+
+    script_content = script_match.group(1)
+
+    # Check for basic syntax issues (unbalanced parentheses in function definitions)
+    open_parens = script_content.count("(")
+    close_parens = script_content.count(")")
+    assert open_parens == close_parens, (
+        f"Script has unbalanced parentheses: {open_parens} open, {close_parens} close"
+    )
+
+    # Check for unbalanced braces in the template (outside script)
+    template = re.sub(r"<script[^>]*>.*?</script>", "", content, flags=re.DOTALL)
+    template_exprs = re.findall(r"\{[^{}]*\}", template)
+    remaining = re.sub(r"\{[^{}]*\}", "", template)
+    standalone_open = remaining.count("{") - remaining.count("{{")
+    standalone_close = remaining.count("}") - remaining.count("}}")
+    # Allow some tolerance for Svelte syntax like {#if} blocks
+    assert abs(standalone_open - standalone_close) <= 3, (
+        "Template may have unbalanced braces"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD verification using subprocess.run
+# These tests execute actual CI commands from the repo's CI configuration.
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_git_status_clean():
+    """Git repo status is clean (CI: git status check).
+    Verifies the repo has no uncommitted changes after checkout."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # Should be empty (no uncommitted changes)
+    assert r.returncode == 0, f"git status failed: {r.stderr[-500:]}"
+    assert r.stdout.strip() == "", f"Repo has uncommitted changes:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_git_log_has_commit():
+    """Git repo has the expected base commit in its history (CI: git log check).
+    Verifies the repo contains the expected base commit (may have new commits on top)."""
+    expected = "e5ba4fa992c0ac389c6af2d143c9ad4c33eea360"
+    # Check that the base commit is in the repo history
+    r = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", expected, "HEAD"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Expected commit {expected[:12]} not found in repo history"
     )

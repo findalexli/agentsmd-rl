@@ -89,6 +89,26 @@ checks:
     origin: repo_tests
     description: "Import paths in msteams extension are well-formed and don't escape package"
 
+  - id: test_repo_no_private_keys
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No private keys committed to the repo (detect-secrets baseline check)"
+
+  - id: test_repo_typescript_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript files in msteams extension have valid syntax (parseable)"
+
+  - id: test_repo_no_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo has no unresolved merge conflict markers (CI check-merge-conflict)"
+
+  - id: test_repo_target_typescript_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target reply-stream-controller.ts is valid TypeScript (Node.js --experimental-strip-types)"
+
 rubric:
   - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid `any`."
     source:
@@ -106,4 +126,22 @@ rubric:
     source:
       path: "CLAUDE.md"
       lines: "118"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+
+  - rule: "Dynamic import guardrail: do not mix `await import('x')` and static `import ... from 'x'` for the same module in production code paths."
+    source:
+      path: "CLAUDE.md"
+      lines: "106"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+
+  - rule: "Never share class behavior via prototype mutation. Use explicit inheritance/composition or helper composition so TypeScript can typecheck."
+    source:
+      path: "CLAUDE.md"
+      lines: "111"
+      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+
+  - rule: "Keep files concise; extract helpers instead of 'V2' copies. Aim to keep files under ~700 LOC."
+    source:
+      path: "CLAUDE.md"
+      lines: "115-116"
       commit: "4752aca926624efdeb62f2f43b606f5090be8903"

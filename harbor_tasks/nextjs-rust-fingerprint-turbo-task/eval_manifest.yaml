@@ -10,23 +10,28 @@ checks:
   # Pass-to-pass gates (existing repo CI checks)
   - id: turbo_json_valid_syntax
     type: pass_to_pass
-    origin: static
-    description: "turbo.json must parse as valid JSON"
+    origin: repo_tests
+    description: "turbo.json must parse as valid JSON via Python json.tool"
 
   - id: turbo_jsonc_valid_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: "packages/next-swc/turbo.jsonc must parse as valid JSONC"
+    description: "packages/next-swc/turbo.jsonc must parse as valid JSONC via node"
 
   - id: next_swc_package_json_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "packages/next-swc/package.json must be valid JSON with required scripts"
+    description: "packages/next-swc/package.json must be valid JSON with required scripts via node"
 
-  - id: repo_structure
+  - id: root_package_json_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo must have required directories and files"
+    description: "package.json must be valid JSON with required scripts"
+
+  - id: rust_fingerprint_script_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "scripts/rust-fingerprint.js must have valid Node.js syntax"
 
   # Fail-to-pass gates (PR-specific behavioral tests)
   - id: rust_fingerprint_writes_stamp
@@ -69,4 +74,21 @@ checks:
     origin: pr_diff
     description: "packages/next-swc/package.json defines rust-fingerprint script"
 
-rubric: []
+rubric:
+  - rule: "When adding new scripts to the scripts/ directory, include a descriptive comment header explaining the script's purpose and any environment variables it uses."
+    source:
+      path: "CLAUDE.md"
+      lines: "302-309"
+      commit: "8a241bb504bf167d191b96e914b7785156510038"
+
+  - rule: "For changes to build configuration (turbo.json, turbo.jsonc, package.json scripts), verify the changes work with the actual build system (e.g., turbo tasks must have proper inputs/outputs defined)."
+    source:
+      path: "CLAUDE.md"
+      lines: "353-358"
+      commit: "8a241bb504bf167d191b96e914b7785156510038"
+
+  - rule: "When modifying package.json files (especially in packages/next-swc/), ensure scripts are properly named and follow the existing naming convention (e.g., rust-* prefix for Rust-related scripts)."
+    source:
+      path: "CLAUDE.md"
+      lines: "55-69"
+      commit: "8a241bb504bf167d191b96e914b7785156510038"

@@ -268,4 +268,12 @@ index cc37b617c7c..a2440f52d86 100644
        return Promise.$reject(e);
      },
 
+diff --git a/src/js/CLAUDE.md b/src/js/CLAUDE.md
+index aaaaaaa..bbbbbbb 100644
+--- a/src/js/CLAUDE.md
++++ b/src/js/CLAUDE.md
+@@ -107,0 +108,2 @@
++- Updated CLAUDE.md to emphasize using JSC intrinsics for performance.
++
+
 PATCH

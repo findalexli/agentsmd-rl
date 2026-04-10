@@ -1,0 +1,158 @@
+version: "2.0"
+
+source:
+  repo: "anomalyco/opencode"
+  pr: 19487
+  base_commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+  merge_commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "bash.ts and bash.txt must exist, be non-empty, and be readable"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "bash.txt must be a substantial tool description (20+ lines, 100+ words, 5+ concepts)"
+
+  - id: no_directory_placeholder_in_template
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bash.txt must not contain ${directory} placeholder"
+
+  - id: template_static_after_substitutions
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After replacing maxLines/maxBytes, no ${...} placeholders should remain"
+
+  - id: ts_no_directory_injection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "bash.ts must not substitute directory into the tool description"
+
+  - id: describes_directory_behavior
+    type: pass_to_pass
+    origin: pr_diff
+    description: "bash.txt must still describe default working directory behavior"
+
+  - id: retains_global_placeholders
+    type: pass_to_pass
+    origin: pr_diff
+    description: "bash.txt must still contain ${maxLines} and ${maxBytes} placeholders"
+
+  - id: preserves_guidance_sections
+    type: pass_to_pass
+    origin: pr_diff
+    description: "bash.txt must retain key guidance sections (quoting, tool preference, timeout)"
+
+  - id: no_any_type
+    type: pass_to_pass
+    origin: agent_config
+    description: "bash.ts must not use the `any` type annotation"
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - id: bashtool_export_preserved
+    type: pass_to_pass
+    origin: static
+    description: "BashTool must still be exported from bash.ts"
+
+  # Repo CI pass_to_pass gates - enriched with actual CI commands and static checks
+  - id: repo_bash_tool_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's bash tool has valid structure with balanced syntax"
+
+  - id: repo_prettier_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript files must pass prettier formatting check"
+
+  - id: repo_bash_txt_placeholders
+    type: pass_to_pass
+    origin: static
+    description: "Bash.txt must contain required template placeholders"
+
+  - id: repo_ts_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Bash.ts must have valid TypeScript syntax structure"
+
+  - id: repo_bash_txt_valid
+    type: pass_to_pass
+    origin: static
+    description: "Bash.txt must exist and be readable"
+
+  - id: repo_node_can_parse_ts
+    type: pass_to_pass
+    origin: static
+    description: "Node.js must be able to read and parse the TypeScript source file"
+
+  - id: repo_bash_tool_description_pattern
+    type: pass_to_pass
+    origin: static
+    description: "Bash.ts must follow the tool description pattern with DESCRIPTION constant"
+
+  - id: repo_bash_txt_sections
+    type: pass_to_pass
+    origin: static
+    description: "Bash.txt must contain required tool description sections"
+
+rubric:
+  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
+    source:
+      path: "AGENTS.md"
+      lines: "16"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - rule: "Reduce total variable count by inlining when a value is only used once."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
+    source:
+      path: "AGENTS.md"
+      lines: "57"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - rule: "Avoid `else` statements. Prefer early returns."
+    source:
+      path: "AGENTS.md"
+      lines: "84"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - rule: "Keep things in one function unless composable or reusable."
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - rule: "Avoid `try`/`catch` where possible."
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
+
+  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops; use type guards on filter to maintain type inference downstream."
+    source:
+      path: "AGENTS.md"
+      lines: "17"
+      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"

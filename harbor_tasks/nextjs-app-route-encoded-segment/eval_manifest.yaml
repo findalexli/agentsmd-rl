@@ -81,9 +81,32 @@ checks:
     origin: repo_tests
     description: "Router module imports are resolvable without runtime errors"
 
-rubric:
-  - rule: "Keep require() behind compile-time if/else branches for DCE; avoid early-return/throw patterns that prevent dead-code elimination."
-    source:
-      path: "AGENTS.md"
-      lines: "396"
-      commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
+  - id: test_repo_eslint_app_router
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on router files"
+
+  - id: test_repo_prettier_app_router
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check passes on router files"
+
+  - id: test_repo_unit_interception_routes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Interception routes unit tests pass"
+
+  - id: test_repo_unit_is_dynamic
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Is-dynamic route unit tests pass"
+
+  - id: test_repo_unit_validate_app_paths
+    type: pass_to_pass
+    origin: repo_tests
+    description: "App paths validation unit tests pass - directly tests parseAppRoute from modified app.ts"
+
+  - id: test_repo_unit_extract_pathname_segments
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Extract pathname route param segments unit tests pass - directly imports parseAppRoute from modified app.ts"

@@ -120,6 +120,38 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_pathing_unit_tests():
+    """Repo's pathing unit tests pass (pass_to_pass).
+
+    These tests verify output directory validation logic used by checkpointing.
+    We copy the test to a temp location to bypass conftest.py which requires
+    additional dependencies not available in the test environment.
+    """
+    import tempfile
+    import shutil
+
+    # Ensure loguru is installed (required by pathing module)
+    subprocess.run(
+        ["pip", "install", "-q", "loguru"],
+        capture_output=True, timeout=60,
+    )
+
+    # Create temp directory and copy test file there to bypass conftest.py
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_src = f"{REPO}/tests/unit/utils/test_pathing.py"
+        test_dst = f"{tmpdir}/test_pathing.py"
+        shutil.copy(test_src, test_dst)
+
+        # Run the test from temp directory (avoids conftest.py in tests/)
+        r = subprocess.run(
+            ["python", "-m", "pytest", test_dst, "-v", "--tb=short"],
+            capture_output=True, text=True, timeout=120, cwd=tmpdir,
+            env={**subprocess.os.environ, "PYTHONPATH": f"{REPO}/src"},
+        )
+        assert r.returncode == 0, f"Pathing unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------

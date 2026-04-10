@@ -148,13 +148,13 @@ def test_eventinterface_structure_preserved():
 
 # [repo_tests] pass_to_pass
 def test_repo_lint():
-    """Repo's ESLint checks pass on react-native-renderer package (pass_to_pass)."""
-    # Run lint only on the modified package to keep it fast
+    """Repo's ESLint checks pass (pass_to_pass)."""
+    # Run the repo's lint task (checks all files but is fast enough)
     r = subprocess.run(
-        ["yarn", "lint", "packages/react-native-renderer"],
+        ["node", "./scripts/tasks/eslint"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -177,3 +177,14 @@ def test_repo_unit_tests():
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Repo's Prettier formatting check passes on modified file (pass_to_pass)."""
+    # Run prettier check only on the modified file to keep it fast
+    r = subprocess.run(
+        ["npx", "prettier", "--check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

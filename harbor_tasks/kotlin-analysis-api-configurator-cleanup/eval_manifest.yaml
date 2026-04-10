@@ -72,7 +72,12 @@ checks:
   - id: test_gradle_build_files_parse
     type: pass_to_pass
     origin: agent_tests
-    description: Gradle build files parse correctly (verified by kotlinc -script)
+    description: Gradle build files parse correctly (verified by kotlinc -script and structural checks)
+
+  - id: test_repo_imports_consistency
+    type: pass_to_pass
+    origin: agent_tests
+    description: Cross-module imports and references are consistent (verified by kotlinc structural validation)
 
 # Agent config rules from repo documentation
 agent_config:
@@ -92,4 +97,7 @@ agent_config:
     description: "Use ./gradlew manageTestDataGlobally instead of standard test commands when modifying test data files"
 
 # Rubric for soft/subjective rules (LLM-judge only)
+# Note: Rubric rules removed for this task as they don't apply:
+# - The task modifies test infrastructure code which doesn't use Ka prefix convention
+# - The task doesn't involve test data files or Gradle test tasks
 rubric: []

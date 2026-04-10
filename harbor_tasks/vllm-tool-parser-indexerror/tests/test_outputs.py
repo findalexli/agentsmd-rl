@@ -124,6 +124,26 @@ def test_syntax_check():
     ast.parse(src)
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on serving.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "vllm/entrypoints/openai/chat_completion/serving.py"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Python files in the modified module have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "vllm/entrypoints/openai/chat_completion/serving.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------

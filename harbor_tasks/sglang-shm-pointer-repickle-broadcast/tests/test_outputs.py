@@ -101,10 +101,30 @@ def _get_tensor(obj):
 
 def _ensure_tool(tool_name):
     """Ensure a CLI tool is available, installing if necessary."""
+    # Map tool names to package names
+    package_map = {
+        "pyyaml": "pyyaml",
+    }
+    package = package_map.get(tool_name, tool_name)
+
+    # For pyyaml, check if the module can be imported
+    if tool_name == "pyyaml":
+        result = subprocess.run(
+            [sys.executable, "-c", "import yaml"],
+            capture_output=True,
+        )
+        if result.returncode != 0:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-q", package],
+                capture_output=True,
+                check=False,
+            )
+        return
+
     result = subprocess.run(["which", tool_name], capture_output=True)
     if result.returncode != 0:
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-q", tool_name],
+            [sys.executable, "-m", "pip", "install", "-q", package],
             capture_output=True,
             check=False,
         )
@@ -156,6 +176,33 @@ def test_repo_black():
         timeout=60,
     )
     assert r.returncode == 0, f"black check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell():
+    """Repo's spell checking passes on modified files (pass_to_pass)."""
+    _ensure_tool("codespell")
+    r = subprocess.run(
+        ["codespell", "--config", f"{REPO}/.codespellrc", MM_UTILS, SCHEDULER],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_valid():
+    """Repo's pre-commit config YAML is valid (pass_to_pass)."""
+    _ensure_tool("pyyaml")
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import yaml; yaml.safe_load(open('{REPO}/.pre-commit-config.yaml'))"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr[-500:]}"
 
 
 # [pr_diff] fail_to_pass

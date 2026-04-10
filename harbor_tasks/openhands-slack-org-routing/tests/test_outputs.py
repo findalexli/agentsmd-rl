@@ -19,11 +19,10 @@ import pytest
 REPO = Path("/workspace/openhands")
 SLACK_VIEW_PATH = REPO / "enterprise/integrations/slack/slack_view.py"
 
-# CI discovered commands from the repo:
-# - make lint (via pre-commit/ruff)
-# - poetry check (validate pyproject.toml)
-# - pytest tests/unit (unit tests)
-# - pytest tests/test_fileops.py (basic file tests)
+
+# ============================================================
+# BEHAVIORAL TESTS - Verify the fix is implemented correctly
+# ============================================================
 
 
 def test_slack_view_imports_resolve_org_for_repo():
@@ -224,6 +223,18 @@ def test_repo_poetry_check():
             assert False, f"Poetry check failed with errors:\n{r.stderr}\n{r.stdout}"
 
 
+def test_repo_enterprise_poetry_check():
+    """Enterprise poetry configuration is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["poetry", "check"],
+        capture_output=True, text=True, cwd=REPO / "enterprise", timeout=60
+    )
+    # Poetry check returns warnings but should have returncode 0
+    if r.returncode != 0:
+        if "Error:" in r.stderr or "Error:" in r.stdout:
+            assert False, f"Poetry check failed with errors:\n{r.stderr}\n{r.stdout}"
+
+
 def test_repo_syntax_valid():
     """Key Python files have valid syntax (pass_to_pass)."""
     key_files = [
@@ -235,25 +246,25 @@ def test_repo_syntax_valid():
     for filepath in key_files:
         if not filepath.exists():
             continue
-        code = filepath.read_text()
-        try:
-            ast.parse(code)
-        except SyntaxError as e:
-            assert False, f"Syntax error in {filepath}: {e}"
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(filepath)],
+            capture_output=True, text=True, timeout=30
+        )
+        assert r.returncode == 0, f"Syntax error in {filepath}: {r.stderr}"
 
 
 def test_repo_imports_resolve():
     """Key imports can be resolved after package installation (pass_to_pass)."""
     # Install the package in editable mode
     r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-e", ".", "-q"],
-        capture_output=True, text=True, cwd=REPO, timeout=180
+        [sys.executable, "-m", "pip", "install", "-e", str(REPO), "-q"],
+        capture_output=True, text=True, timeout=180
     )
     assert r.returncode == 0, f"pip install failed: {r.stderr[-500:]}"
 
     # Test that key imports work
     test_imports = [
-        "from openhands.server.services.conversation_service import start_conversation",
+        "from openhands.server.services.conversation_service import create_new_conversation",
         "from openhands.storage.data_models.conversation_metadata import ConversationMetadata",
         "from openhands.utils.conversation_summary import get_default_conversation_title",
     ]
@@ -266,29 +277,58 @@ def test_repo_imports_resolve():
         assert r.returncode == 0, f"Import failed: {import_stmt}\n{r.stderr}"
 
 
-def test_repo_unit_tests_basic():
-    """Basic unit tests pass (pass_to_pass)."""
-    # Install the package and pytest
+def test_repo_unit_tests_utils():
+    """Utils unit tests pass (pass_to_pass)."""
+    # Install the package
     r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-e", ".", "-q"],
-        capture_output=True, text=True, cwd=REPO, timeout=180
+        [sys.executable, "-m", "pip", "install", "-e", str(REPO), "-q"],
+        capture_output=True, text=True, timeout=180
     )
     if r.returncode != 0:
         pytest.skip(f"Could not install package: {r.stderr}")
 
+    # Run utils tests
     r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "pytest", "pytest-asyncio", "-q"],
-        capture_output=True, text=True, timeout=60
+        [sys.executable, "-m", "pytest", "tests/unit/utils", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=300
+    )
+    assert r.returncode == 0, f"Utils tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_agent_server():
+    """Agent server unit tests pass (pass_to_pass)."""
+    # Install the package
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-e", str(REPO), "-q"],
+        capture_output=True, text=True, timeout=180
     )
     if r.returncode != 0:
-        pytest.skip("Could not install pytest")
+        pytest.skip(f"Could not install package: {r.stderr}")
 
-    # Run a simple test file that should always pass
+    # Run agent_server tests
     r = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/test_fileops.py", "-v", "--tb=short"],
-        capture_output=True, text=True, cwd=REPO, timeout=120
+        [sys.executable, "-m", "pytest", "tests/unit/app_server/test_agent_server_env_override.py", "-v", "--tb=short"],
+        capture_output=True, text=True, cwd=REPO, timeout=300
     )
-    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Agent server tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_enterprise_syntax_valid():
+    """Enterprise key Python files have valid syntax (pass_to_pass)."""
+    key_files = [
+        REPO / "enterprise/integrations/slack/slack_view.py",
+        REPO / "enterprise/integrations/resolver_org_router.py",
+        REPO / "enterprise/storage/saas_conversation_store.py",
+    ]
+
+    for filepath in key_files:
+        if not filepath.exists():
+            continue
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(filepath)],
+            capture_output=True, text=True, timeout=30
+        )
+        assert r.returncode == 0, f"Syntax error in {filepath}: {r.stderr}"
 
 
 if __name__ == "__main__":

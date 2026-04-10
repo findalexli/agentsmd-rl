@@ -32,6 +32,26 @@ checks:
     origin: repo_tests
     description: "Gradio imports correctly (basic smoke test)"
 
+  - id: test_repo_external_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's external utils tests pass (no external deps)"
+
+  - id: test_repo_reload
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's reload tests pass (tests config/reloading)"
+
+  - id: test_repo_ruff_check_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass ruff linting (repo CI standard)"
+
+  - id: test_repo_client_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's client utils tests pass (78 tests, no external deps)"
+
   - id: default_debug_false
     type: fail_to_pass
     origin: pr_diff
@@ -62,5 +82,3 @@ checks:
     origin: pr_diff
     description: "App class is still a FastAPI subclass with auth_dependency param"
 
-# No rubric rules - the ruff_check test already validates code formatting
-# and the gold solution is minimal/correct by design

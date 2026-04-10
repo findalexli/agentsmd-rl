@@ -363,5 +363,93 @@ def test_values_yaml_is_valid_yaml():
     assert "workers" in values, "values.yaml should have workers key"
 
 
+def test_repo_helm_tests_scheduler_affinity():
+    """Repo's scheduler affinity tests pass (pass_to_pass).
+
+    Validates that scheduler affinity, tolerations, and node selector
+    configurations work correctly.
+    """
+    test_file = HELM_TESTS_DIR / "tests/helm_tests/airflow_core/test_scheduler.py"
+
+    if not test_file.exists():
+        pytest.skip("Helm test file not found")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", str(test_file), "-k", "affinity", "-v", "--tb=short"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "PYTHONPATH": str(HELM_TESTS_DIR)}
+    )
+    assert result.returncode == 0, f"Helm scheduler affinity tests failed:\n{result.stderr[-1000:]}"
+
+
+def test_repo_helm_tests_triggerer_affinity():
+    """Repo's triggerer affinity tests pass (pass_to_pass).
+
+    Validates that triggerer affinity, tolerations, and node selector
+    configurations work correctly.
+    """
+    test_file = HELM_TESTS_DIR / "tests/helm_tests/airflow_core/test_triggerer.py"
+
+    if not test_file.exists():
+        pytest.skip("Helm test file not found")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", str(test_file), "-k", "affinity", "-v", "--tb=short"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "PYTHONPATH": str(HELM_TESTS_DIR)}
+    )
+    assert result.returncode == 0, f"Helm triggerer affinity tests failed:\n{result.stderr[-1000:]}"
+
+
+def test_repo_helm_tests_dag_processor_affinity():
+    """Repo's DAG processor affinity tests pass (pass_to_pass).
+
+    Validates that DAG processor affinity, tolerations, and node selector
+    configurations work correctly.
+    """
+    test_file = HELM_TESTS_DIR / "tests/helm_tests/airflow_core/test_dag_processor.py"
+
+    if not test_file.exists():
+        pytest.skip("Helm test file not found")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", str(test_file), "-k", "affinity", "-v", "--tb=short"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "PYTHONPATH": str(HELM_TESTS_DIR)}
+    )
+    assert result.returncode == 0, f"Helm DAG processor affinity tests failed:\n{result.stderr[-1000:]}"
+
+
+def test_repo_helm_tests_celery_kubernetes_executor():
+    """Repo's CeleryKubernetes executor tests pass (pass_to_pass).
+
+    Validates that the CeleryKubernetes executor configuration works correctly,
+    including worker deployment generation.
+    """
+    test_file = HELM_TESTS_DIR / "tests/helm_tests/airflow_aux/test_celery_kubernetes_executor.py"
+
+    if not test_file.exists():
+        pytest.skip("Helm test file not found")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", str(test_file), "-v", "--tb=short"],
+        cwd=str(REPO),
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "PYTHONPATH": str(HELM_TESTS_DIR)}
+    )
+    assert result.returncode == 0, f"Helm CeleryKubernetes executor tests failed:\n{result.stderr[-1000:]}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

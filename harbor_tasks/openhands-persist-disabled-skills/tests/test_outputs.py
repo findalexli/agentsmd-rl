@@ -207,8 +207,8 @@ print("PASS: Migration upgrade adds column to user table")
 
 
 # =============================================================================
-# PASS-TO-PASS TESTS (Repo CI/CD - must pass on both base and fix)
-# These verify the repo's quality checks still pass
+# PASS-TO-PASS TESTS (Static checks - file reads, AST parsing)
+# These use origin: static in eval_manifest.yaml
 # =============================================================================
 
 
@@ -258,7 +258,8 @@ def test_repo_python_syntax():
         except SyntaxError as e:
             errors.append(f"{py_file.name}: {e}")
 
-    assert not errors, f"Syntax errors found:\n" + "\n".join(errors)
+    error_msg = "Syntax errors found:" + "\n" + "\n".join(errors)
+    assert not errors, error_msg
 
 
 def test_repo_migration_syntax():
@@ -272,7 +273,8 @@ def test_repo_migration_syntax():
         except SyntaxError as e:
             errors.append(f"{py_file.name}: {e}")
 
-    assert not errors, f"Migration syntax errors:\n" + "\n".join(errors)
+    error_msg = "Migration syntax errors:" + "\n" + "\n".join(errors)
+    assert not errors, error_msg
 
 
 def test_repo_alembic_latest_migration():
@@ -367,7 +369,8 @@ def test_repo_migration_conventions():
         if not found_downgrade:
             errors.append(f"{py_file.name}: missing downgrade() function")
 
-    assert not errors, f"Migration convention errors:\n" + "\n".join(errors)
+    error_msg = "Migration convention errors:" + "\n" + "\n".join(errors)
+    assert not errors, error_msg
 
 
 def test_storage_user_column_order():
@@ -383,5 +386,183 @@ def test_storage_user_column_order():
     assert git_user_email_pos != -1, "git_user_email column not found"
 
     # sandbox_grouping_strategy should come after git_user_email
-    assert sandbox_pos > git_user_email_pos, \
+    assert sandbox_pos > git_user_email_pos, (
         "Column ordering convention violated"
+    )
+
+
+# =============================================================================
+# NEW PASS-TO-PASS TESTS (Repo CI/CD - actual subprocess.run() commands)
+# These tests MUST use subprocess.run() with real CI commands
+# origin: repo_tests in eval_manifest.yaml
+# =============================================================================
+
+
+def test_repo_py_compile_enterprise_storage():
+    """Repo CI: All enterprise/storage Python files compile without errors (pass_to_pass)."""
+    # Use subprocess to run py_compile as a real CI command
+    py_files = list(ENTERPRISE_DIR.glob("storage/*.py"))
+    assert len(py_files) > 0, "No Python files found in enterprise/storage"
+
+    for py_file in py_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(py_file)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"py_compile failed for {py_file.name}: {r.stderr}"
+
+
+def test_repo_ruff_check_enterprise_storage():
+    """Repo CI: Ruff linting passes on enterprise/storage files (pass_to_pass)."""
+    # Install ruff if not available
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff check on enterprise/storage files (syntax errors only)
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82,F", "--target-version=py312", "enterprise/storage/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_check_migrations():
+    """Repo CI: Ruff linting passes on migration files (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff check on migration files (syntax errors only)
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82,F", "--target-version=py312", "enterprise/migrations/versions/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed on migrations:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_py_compile_migrations():
+    """Repo CI: All migration files compile without errors (pass_to_pass)."""
+    migrations_dir = ENTERPRISE_DIR / "migrations" / "versions"
+    py_files = list(migrations_dir.glob("*.py"))
+    assert len(py_files) > 0, "No migration files found"
+
+    for py_file in py_files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", str(py_file)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"py_compile failed for {py_file.name}: {r.stderr}"
+
+
+def test_repo_ruff_check_user_py():
+    """Repo CI: Ruff linting passes on user.py (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff check specifically on user.py
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82,F", "--target-version=py312", "enterprise/storage/user.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed on user.py:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_migration_chain_integrity():
+    """Repo CI: Alembic migration chain has consecutive numbering (pass_to_pass)."""
+    migrations_dir = ENTERPRISE_DIR / "migrations" / "versions"
+    migrations = list(migrations_dir.glob("[0-9][0-9][0-9]_*.py"))
+
+    revs = []
+    for m in migrations:
+        try:
+            rev = int(m.name[:3])
+            revs.append((rev, m.name))
+        except ValueError:
+            continue
+
+    revs.sort()
+    assert len(revs) > 0, "No migrations found"
+
+    # Check for consecutive numbering
+    gaps = []
+    for i in range(1, len(revs)):
+        expected = revs[i-1][0] + 1
+        if revs[i][0] != expected:
+            gaps.append(f"Gap between {revs[i-1][1]} and {revs[i][1]}")
+
+    error_msg = "Migration chain gaps found:" + "\n" + "\n".join(gaps[:5])
+    assert not gaps, error_msg
+
+
+def test_repo_enterprise_imports_consistency():
+    """Repo CI: Enterprise storage modules have consistent SQLAlchemy imports (pass_to_pass)."""
+    storage_dir = ENTERPRISE_DIR / "storage"
+    errors = []
+
+    for py_file in storage_dir.glob("*.py"):
+        content = py_file.read_text()
+        try:
+            tree = ast.parse(content)
+        except SyntaxError:
+            continue  # Skip files with syntax errors (tested elsewhere)
+
+        # Check for SQLAlchemy import
+        found_sqlalchemy = False
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                if node.module == "sqlalchemy":
+                    found_sqlalchemy = True
+                    break
+
+        if not found_sqlalchemy:
+            continue  # Skip non-SQLAlchemy files
+
+        # Check for __tablename__ in model files (indicates a table model)
+        found_tablename = False
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name) and target.id == "__tablename__":
+                        found_tablename = True
+                        break
+
+        if found_tablename:
+            # Verify Column is imported for model files
+            found_column = False
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.module == "sqlalchemy":
+                    for alias in node.names:
+                        if alias.name == "Column":
+                            found_column = True
+                            break
+
+            if not found_column:
+                errors.append(f"{py_file.name}: model file missing Column import")
+
+    error_msg = "Import consistency errors:" + "\n" + "\n".join(errors)
+    assert not errors, error_msg
+
+
+def test_repo_no_bare_excepts_in_migrations():
+    """Repo CI: Migrations don't use bare except clauses (pass_to_pass)."""
+    migrations_dir = ENTERPRISE_DIR / "migrations" / "versions"
+    errors = []
+
+    for py_file in migrations_dir.glob("*.py"):
+        content = py_file.read_text()
+        try:
+            tree = ast.parse(content)
+        except SyntaxError:
+            continue
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ExceptHandler):
+                if node.type is None:
+                    errors.append(f"{py_file.name}: bare except clause found")
+
+    error_msg = "Bare except errors:" + "\n" + "\n".join(errors[:10])
+    assert not errors, error_msg

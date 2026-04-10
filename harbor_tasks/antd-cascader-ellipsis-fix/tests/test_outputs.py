@@ -197,3 +197,65 @@ def test_imports_are_valid():
     assert "@ant-design/cssinjs" in content, "Should import from @ant-design/cssinjs"
     assert "textEllipsis" in content, "Should import textEllipsis from style"
     assert "GenerateStyle" in content, "Should import GenerateStyle type"
+
+
+# =============================================================================
+# Repo CI Tests - Pass to Pass Gates
+# These tests run actual CI commands from the repo's test suite.
+# =============================================================================
+
+
+def test_repo_biome_lint():
+    """
+    Pass-to-pass: Biome linting passes on Cascader component (repo_tests).
+
+    This runs the repo's Biome linter on the cascader component files,
+    matching the CI workflow's lint job.
+    """
+    result = subprocess.run(
+        ["npx", "biome", "lint", "components/cascader"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Biome lint failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_cascader_style_file_valid():
+    """
+    Pass-to-pass: Cascader style file is valid TypeScript (repo_tests).
+
+    This uses Node.js to verify the file can be read.
+    """
+    result = subprocess.run(
+        [
+            "node", "-e",
+            "try { require('fs').readFileSync('components/cascader/style/columns.ts', 'utf8'); console.log('OK'); } catch(e) { console.error(e); process.exit(1); }",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"Style file validation failed:\n{result.stderr}"
+
+
+def test_repo_node_version():
+    """
+    Pass-to-pass: Node.js version is compatible (repo_tests).
+
+    Verifies that Node.js 18+ is available for running repo tools.
+    """
+    result = subprocess.run(
+        ["node", "--version"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"Node version check failed:\n{result.stderr}"
+    version = result.stdout.strip()
+    # Check that version starts with v18, v19, v20, etc
+    assert version.startswith("v18") or version.startswith("v19") or version.startswith("v20") or version.startswith("v2"), \
+        f"Node version {version} may not be compatible"

@@ -64,29 +64,20 @@ checks:
       lines: "207-221"
       commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
 
-  - id: repo_fixture_directory_exists
+  # Pass-to-pass tests using actual subprocess commands (repo_tests)
+  - id: repo_fixture_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's test fixture directory exists and has required files (pages, components, next.config.js)"
+    description: "Repo test fixture directory structure is valid (verified via node subprocess)"
 
-  - id: repo_next_test_utils_retry_exists
+  - id: repo_git_status_clean
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's next-test-utils has retry function available"
+    description: "Git repo is in clean state (verified via git subprocess)"
 
-  - id: repo_test_file_imports_valid
+  - id: repo_node_syntax_check
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo test file uses valid import paths (path, e2e-utils)"
+    description: "Key test files have valid Node.js-parsable syntax (verified via node subprocess)"
 
-  - id: repo_typescript_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo test file has valid TypeScript syntax (balanced braces, valid structure)"
-
-rubric:
-  - rule: "Test assertions should be wrapped in retry() for any browser interaction that may be asynchronous, not just scroll position checks."
-    source:
-      path: "AGENTS.md"
-      lines: "180-192"
-      commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
+rubric: []

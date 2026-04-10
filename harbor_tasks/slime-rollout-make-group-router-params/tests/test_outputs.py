@@ -283,6 +283,41 @@ def test_repo_slime_importable():
     assert r.returncode == 0, f"Failed to import slime: {r.stderr}"
 
 
+def test_repo_flake8_rollout():
+    """Repo's flake8 linter passes on rollout.py (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "flake8", "slime/ray/rollout.py", "--max-line-length=320", "--extend-ignore=E203"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"flake8 failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_pyproject_toml_valid():
+    """Repo's pyproject.toml must be valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml is invalid:\n{r.stderr}"
+
+
+def test_repo_setup_py_valid():
+    """Repo's setup.py must be valid Python and loadable (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "wheel", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        [sys.executable, "-c", "import ast; ast.parse(open('setup.py').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"setup.py is invalid:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass — regression checks
 # ---------------------------------------------------------------------------

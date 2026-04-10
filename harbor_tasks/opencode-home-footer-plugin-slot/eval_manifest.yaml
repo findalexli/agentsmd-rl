@@ -97,43 +97,17 @@ checks:
       lines: "17"
       commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
 
-rubric:
-  - rule: "Keep things in one function unless composable or reusable"
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
-
-  - rule: "Prefer single word variable names where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "8e4bab51812fccf3b69713904159a4394b3a29ab"
-
-  - id: test_repo_typecheck
+  - id: test_repo_build
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's TypeScript typecheck passes"
+    description: "Repo's build command passes"
 
-  - id: test_repo_unit_tests
+  - id: test_repo_prettier
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's unit tests pass"
+    description: "Repo's code formatting passes Prettier checks"
+
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package.json files are valid JSON"

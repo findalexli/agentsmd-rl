@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "train.py must be valid Python"
 
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's train.py passes Python syntax check via py_compile"
+
+  - id: test_repo_imports_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's train.py imports are syntactically valid (AST parse check)"
+
+  - id: test_repo_config_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's config files have valid TOML syntax"
+
   - id: model_assigned_before_hybrid_cp
     type: fail_to_pass
     origin: pr_diff

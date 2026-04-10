@@ -19,6 +19,16 @@ checks:
     type: "pass_to_pass"
     origin: "repo_tests"
 
+  - id: "test_repo_cargo_clippy_sui_types"
+    description: "cargo clippy -p sui-types passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "test_repo_cargo_xlint"
+    description: "cargo xlint (license check) passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
   # Fail-to-Pass tests (the actual task verification)
   - id: "test_sui_types_testing_feature_defined"
     description: "sui-types has testing feature defined in Cargo.toml"
@@ -73,4 +83,25 @@ checks:
     description: "test_adapter.rs must not panic for gasless tokens in release mode"
     type: "programmatic"
 
-rubric: []
+rubric:
+  - rule: "Use #[cfg(feature = \"testing\")] for test-only code that must be callable cross-crate. Define testing = [] in the crate's Cargo.toml, and callers must propagate it via features = [\"testing\"] in their dependency declaration."
+    source:
+      path: "CLAUDE.md"
+      lines: "104-105"
+      commit: "715582d4e58d46aa7d7a5e7b153b0e9c99978f9e"
+    reference: |
+      ### Test-Only Code
+
+      Use `#[cfg(test)]` for test-only code used within the same crate. Use `#[cfg(feature = "testing")]` for test-only code that must be callable cross-crate. For the `testing` feature: define `testing = []` in the crate's `Cargo.toml`, and callers must propagate it via `features = ["testing"]` in their dependency declaration.
+
+  - rule: "Do NOT comment the obvious. Comments should explain non-obvious algorithms, temporary exclusions/timeouts with reasoning, complex calculations where the 'why' isn't clear, subtle race conditions, or assumptions about external state. Do not comment simple assignments, standard library usage, self-descriptive functions, or basic control flow."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-130"
+      commit: "715582d4e58d46aa7d7a5e7b153b0e9c99978f9e"
+
+  - rule: "All new files must start with the Mysten Labs Apache-2.0 license header."
+    source:
+      path: "CLAUDE.md"
+      lines: "15-20"
+      commit: "715582d4e58d46aa7d7a5e7b153b0e9c99978f9e"

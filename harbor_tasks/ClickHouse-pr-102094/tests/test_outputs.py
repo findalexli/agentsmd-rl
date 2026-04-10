@@ -299,3 +299,126 @@ def test_repo_pyproject_toml_valid():
             tomllib.load(f)
         except Exception as e:
             assert False, f"Invalid pyproject.toml: {e}"
+
+
+def test_sql_test_file_exists():
+    """
+    Pass-to-pass: Verify that the related SQL test file exists.
+    ClickHouse CI requires test files to exist for modified components.
+    """
+    sql_test_path = os.path.join(REPO, "tests/queries/0_stateless/03403_function_tokens.sql")
+    assert os.path.exists(sql_test_path), \
+        f"SQL test file not found: {sql_test_path}"
+
+
+def test_sql_test_file_valid_syntax():
+    """
+    Pass-to-pass: Verify that the SQL test file uses valid ClickHouse test syntax.
+    Checks for proper error markers like "-- { serverError BAD_ARGUMENTS }"
+    """
+    sql_test_path = os.path.join(REPO, "tests/queries/0_stateless/03403_function_tokens.sql")
+    with open(sql_test_path, 'r') as f:
+        content = f.read()
+
+    # Check that file is not empty
+    assert len(content.strip()) > 0, "SQL test file is empty"
+
+    # Check for proper line endings (no DOS newlines)
+    assert '\r\n' not in content, "SQL test file has DOS line endings (CRLF)"
+
+    # Check for proper error markers if present
+    error_markers = re.findall(r'--\s*\{\s*serverError\s+\w+\s*\}', content)
+    for marker in error_markers:
+        # Verify marker format is correct
+        assert re.match(r'--\s*\{\s*serverError\s+\w+\s*\}', marker), \
+            f"Malformed error marker: {marker}"
+
+
+def test_no_dos_line_endings_in_source():
+    """
+    Pass-to-pass: Verify that the modified source file has no DOS line endings.
+    This is a standard CI check in ClickHouse.
+    """
+    with open(TARGET_FILE, 'rb') as f:
+        content = f.read()
+
+    assert b'\r\n' not in content, \
+        "Source file has DOS/Windows line endings (CRLF) - should use Unix (LF)"
+
+
+def test_no_utf8_bom_in_source():
+    """
+    Pass-to-pass: Verify that the source file does not have a UTF-8 BOM.
+    ClickHouse CI forbids UTF-8 BOM markers in source files.
+    """
+    with open(TARGET_FILE, 'rb') as f:
+        content = f.read()
+
+    # UTF-8 BOM is EF BB BF
+    assert not content.startswith(b'\xef\xbb\xbf'), \
+        "Source file has UTF-8 BOM marker - should be removed"
+
+
+def test_pragma_once_in_local_headers():
+    """
+    Pass-to-pass: Verify that local header files have #pragma once.
+    ClickHouse CI requires #pragma once in all header files.
+    """
+    # Check the header file for TokenizerFactory
+    header_path = os.path.join(REPO, "src/Interpreters/TokenizerFactory.h")
+    if os.path.exists(header_path):
+        with open(header_path, 'r') as f:
+            lines = f.readlines()
+        if lines:
+            first_line = lines[0].strip()
+            assert first_line == '#pragma once', \
+                f"Header file missing #pragma once as first line: {first_line}"
+
+
+def test_cmake_lists_exists():
+    """
+    Pass-to-pass: Verify that CMakeLists.txt exists and is non-empty.
+    Basic check that the build system configuration is intact.
+    """
+    cmake_path = os.path.join(REPO, "CMakeLists.txt")
+    assert os.path.exists(cmake_path), "CMakeLists.txt not found"
+
+    with open(cmake_path, 'r') as f:
+        content = f.read()
+    assert len(content.strip()) > 0, "CMakeLists.txt is empty"
+
+
+def test_no_exec_bits_on_source():
+    """
+    Pass-to-pass: Verify that source files don't have executable permissions.
+    ClickHouse CI checks that .cpp and .h files are not executable.
+    """
+    import stat
+
+    # Check the target file
+    file_stat = os.stat(TARGET_FILE)
+    file_mode = stat.S_IMODE(file_stat.st_mode)
+
+    # Check if any execute bit is set
+    is_executable = bool(file_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
+    assert not is_executable, \
+        f"Source file {TARGET_FILE} has executable permissions (mode: {oct(file_mode)})"
+
+
+def test_clang_format_config_exists():
+    """
+    Pass-to-pass: Verify that .clang-format config file exists.
+    ClickHouse uses clang-format for code formatting.
+    """
+    clang_format_path = os.path.join(REPO, ".clang-format")
+    assert os.path.exists(clang_format_path), \
+        ".clang-format configuration file not found"
+
+    # Verify it's valid YAML by checking it starts with valid content
+    with open(clang_format_path, 'r') as f:
+        first_line = f.readline().strip()
+    # Allow empty lines and comments at the start
+    valid_starts = ['BasedOnStyle:', 'Language:', '---', 'Align', 'Break', 'ColumnLimit']
+    is_valid = any(first_line.startswith(v) for v in valid_starts) or first_line == ''
+    assert is_valid, \
+        f".clang-format file doesn't appear to be valid: starts with '{first_line}'"

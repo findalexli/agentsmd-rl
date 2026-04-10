@@ -106,7 +106,7 @@ def test_fstring_backslash_fix_complete():
 # [pr_diff] fail_to_pass
 def test_varied_fstring_e502_detection():
     """E502 detects violation after a multiline f-string with single-quoted triple."""
-    code = "data = (\n    f'''\n    hello\n    ''' + \\\n    \"end\"\n)\n"
+    code = 'data = (\n    f\'\'\'\n    hello\n    \'\'\' + \\\n    "end"\n)\n'
     output = _run_e502_check(code)
     assert output.count("E502") >= 1, (
         f"Expected E502 violation after multiline f-string, got:\n{output}"
@@ -125,6 +125,49 @@ def test_regular_string_e502_works():
     assert output.count("E502") >= 1, (
         f"Expected E502 for regular string backslash, got:\n{output}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_python_index_unit_tests():
+    """Unit tests for ruff_python_index crate pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ruff_python_index", "--lib", "--", "--test-threads=1"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt_check():
+    """Code formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_ruff_python_index():
+    """Clippy lints pass for ruff_python_index crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ruff_python_index", "--all-targets", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_e502_fixture_file_check():
+    """E502 rule correctly detects violations in the fixture file (pass_to_pass)."""
+    _ensure_ruff()
+    fixture_path = os.path.join(REPO, "crates", "ruff_linter", "resources", "test", "fixtures", "pycodestyle", "E502.py")
+    r = subprocess.run(
+        [RUFF_BIN, "check", "--preview", "--select", "E502", fixture_path],
+        capture_output=True, text=True, timeout=60,
+    )
+    # The fixture file should have E502 violations
+    assert "E502" in r.stdout, f"Expected E502 violations in fixture file:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

@@ -49,4 +49,43 @@ checks:
     test_type: pass_to_pass
     weight: 1
 
-rubric: []
+  # Repo CI/CD tests (pass_to_pass gates)
+  - id: test_repo_lint
+    name: Repo PSR-12 lint passes
+    description: Repo's PHP linting (Pint) passes on the codebase
+    type: pytest
+    test_type: pass_to_pass
+    weight: 1
+
+  - id: test_repo_check
+    name: Repo static analysis passes
+    description: Repo's PHP static analysis (PHPStan) passes on the codebase
+    type: pytest
+    test_type: pass_to_pass
+    weight: 1
+
+  - id: test_repo_validate
+    name: Repo composer files are valid
+    description: Repo's composer.json and composer.lock pass validation
+    type: pytest
+    test_type: pass_to_pass
+    weight: 1
+
+rubric:
+  - rule: "Follow PSR-12 formatting standards enforced by Pint. All PHP code must comply with PSR-12."
+    source:
+      path: "AGENTS.md"
+      lines: "55"
+      commit: "a5b0378138a6097e256a8d9553a18b892b6ba9ea"
+
+  - rule: "HTTP endpoint file names can only be Get.php, Update.php, Create.php, Delete.php, or XList.php. Never use other file names in Http directories."
+    source:
+      path: "src/Appwrite/Platform/AGENTS.md"
+      lines: "28-30"
+      commit: "a5b0378138a6097e256a8d9553a18b892b6ba9ea"
+
+  - rule: "Use sparse Document objects when updating documents - pass only changed attributes, not full documents."
+    source:
+      path: "AGENTS.md"
+      lines: "56-64"
+      commit: "a5b0378138a6097e256a8d9553a18b892b6ba9ea"

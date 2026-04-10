@@ -166,6 +166,53 @@ def test_php_syntax_valid():
                 f"PHP syntax error in {file}: {result.stderr}"
 
 
+def test_repo_composer_validate():
+    """Repo's composer.json is valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["composer", "validate"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"composer validate failed:\n{result.stderr}"
+
+
+def test_repo_php_syntax_modified_files():
+    """All modified PHP files have valid syntax via php -l (pass_to_pass)."""
+    modified_files = [
+        "app/init/resources.php",
+        "app/controllers/general.php",
+        "app/controllers/api/account.php",
+        "src/Appwrite/Platform/Modules/Teams/Http/Memberships/Status/Update.php",
+    ]
+
+    for file in modified_files:
+        path = REPO / file
+        result = subprocess.run(
+            ["php", "-l", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"PHP syntax error in {file}:\n{result.stderr}"
+
+
+def test_repo_composer_audit():
+    """Repo's composer audit passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["composer", "audit"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Exit 0 is success, but exit code can be non-zero if no packages to audit
+    # Composer audit returns 0 on success or when skipping due to no packages
+    assert result.returncode == 0 or "No packages - skipping audit" in result.stdout, \
+        f"composer audit failed:\n{result.stderr}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v"]))

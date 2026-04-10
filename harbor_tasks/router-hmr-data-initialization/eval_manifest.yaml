@@ -56,10 +56,37 @@ checks:
     description: Router plugin package build validation passes
     file: test_outputs.py
 
+  - id: test_add_hmr_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Add HMR specific unit tests pass
+    file: test_outputs.py
+
+  - id: test_code_splitter_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code splitter unit tests pass
+    file: test_outputs.py
+
 # No agent_config checks - the AGENTS.md and SKILL.md don't have specific
 # programmatic rules that apply to this fix
 agent_config:
   files: []
   rules: []
 
-rubric: []
+rubric:
+  - rule: "Use TypeScript strict mode with extensive type safety"
+    source:
+      path: "AGENTS.md"
+      lines: "18-23"
+      commit: "30835cb8e935b740c92fa95909a073e644dde530"
+  - rule: "Add or update tests for any code changes"
+    source:
+      path: "AGENTS.md"
+      lines: "74"
+      commit: "30835cb8e935b740c92fa95909a073e644dde530"
+  - rule: "Always run unit and type tests during development - do not proceed if they fail"
+    source:
+      path: "AGENTS.md"
+      lines: "53"
+      commit: "30835cb8e935b740c92fa95909a073e644dde530"

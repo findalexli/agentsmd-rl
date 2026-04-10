@@ -84,6 +84,49 @@ def test_repo_enterprise_service_routes_lint():
     assert r.returncode == 0, f"Ruff linting failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+def test_repo_enterprise_service_routes_format():
+    """Enterprise service routes pass ruff format check (pass_to_pass)."""
+    # Install poetry if not already installed
+    install_cmd = ['pip', 'install', 'poetry', '-q']
+    subprocess.run(install_cmd, capture_output=True, timeout=300)
+
+    # Install enterprise dependencies
+    install_deps_cmd = ['poetry', 'install', '--with', 'dev,test', '-q']
+    subprocess.run(
+        install_deps_cmd,
+        capture_output=True,
+        timeout=300,
+        cwd=os.path.join(REPO, 'enterprise')
+    )
+
+    # Run ruff format check on service.py
+    format_cmd = [
+        'poetry', 'run', '--project=enterprise',
+        'ruff', 'format', '--check', 'enterprise/server/routes/service.py',
+        '--config', 'enterprise/dev_config/python/ruff.toml'
+    ]
+    r = subprocess.run(
+        format_cmd,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_service_py_syntax():
+    """service.py has valid Python syntax (pass_to_pass)."""
+    import py_compile
+    try:
+        py_compile.compile(
+            os.path.join(REPO, 'enterprise/server/routes/service.py'),
+            doraise=True
+        )
+    except py_compile.PyCompileError as e:
+        assert False, f"Syntax error in service.py: {e}"
+
+
 def test_env_variable_name_in_code():
     """Verify the code uses AUTOMATIONS_SERVICE_KEY, not AUTOMATIONS_SERVICE_API_KEY."""
     with open(SERVICE_PATH, 'r') as f:

@@ -42,4 +42,33 @@ checks:
     origin: repo_tests
     command: "pnpm nx run @tanstack/react-router:build"
 
-rubric: []
+  - id: test_p2p_react_router_test_build
+    description: "Repo's build validation passes (publint + attw)"
+    type: pass_to_pass
+    origin: repo_tests
+    command: "pnpm nx run @tanstack/react-router:test:build"
+
+rubric:
+  - rule: "Use TypeScript strict mode with extensive type safety"
+    source:
+      path: "AGENTS.md"
+      lines: "20"
+      commit: "d5622bb413a2d1ac99c546c5336be949dfb351d9"
+
+  - rule: "Framework-agnostic core logic should be separated from React/Solid bindings"
+    source:
+      path: "AGENTS.md"
+      lines: "21-22"
+      commit: "d5622bb413a2d1ac99c546c5336be949dfb351d9"
+
+  - rule: "Always run unit and type tests during development - do not proceed if they fail"
+    source:
+      path: "AGENTS.md"
+      lines: "53"
+      commit: "d5622bb413a2d1ac99c546c5336be949dfb351d9"
+
+  - rule: "Run pnpm test:eslint, pnpm test:types, and pnpm test:unit before committing"
+    source:
+      path: "AGENTS.md"
+      lines: "71"
+      commit: "d5622bb413a2d1ac99c546c5336be949dfb351d9"

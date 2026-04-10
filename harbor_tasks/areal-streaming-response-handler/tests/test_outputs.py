@@ -355,3 +355,91 @@ def test_repo_ruff_format():
         timeout=60,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mdformat():
+    """Repo's markdown files pass mdformat check (pass_to_pass)."""
+    # Install mdformat with dependencies matching pre-commit config
+    r = subprocess.run(
+        ["pip", "install", "mdformat==0.7.17", "mdformat-gfm", "mdformat-tables", "mdformat-frontmatter", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Check markdown files in the repo (excluding docs/algorithms per pre-commit config)
+    md_files = list(Path(REPO).rglob("*.md"))
+    check_files = [
+        str(f) for f in md_files
+        if not any(part in str(f) for part in ["docs/en/algorithms", "docs/zh/algorithms", "docs/en/best_practices/algo_perf.md", "docs/zh/best_practices/algo_perf.md"])
+    ][:10]  # Check up to 10 markdown files
+    if check_files:
+        r = subprocess.run(
+            ["mdformat", "--check"] + check_files,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert r.returncode == 0, f"mdformat check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_check():
+    """Repo's YAML files pass basic syntax check (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    import yaml
+    yaml_files = list(Path(REPO).rglob("*.yml")) + list(Path(REPO).rglob("*.yaml"))
+    # Exclude workflow files that might have GitHub-specific syntax
+    check_files = [f for f in yaml_files if ".github/workflows" not in str(f)][:15]
+    errors = []
+    for f in check_files:
+        try:
+            yaml.safe_load(f.read_text())
+        except yaml.YAMLError as e:
+            errors.append(f"{f}: {e}")
+    assert not errors, f"YAML syntax errors:\n" + "\n".join(errors)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_json_check():
+    """Repo's JSON files pass syntax check (pass_to_pass)."""
+    json_files = list(Path(REPO).rglob("*.json"))
+    errors = []
+    for f in json_files[:15]:
+        try:
+            json.loads(f.read_text())
+        except json.JSONDecodeError as e:
+            errors.append(f"{f}: {e}")
+    assert not errors, f"JSON syntax errors:\n" + "\n".join(errors)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_trailing_whitespace():
+    """Repo's Python files have no trailing whitespace (pass_to_pass)."""
+    py_files = list(Path(REPO).rglob("*.py"))[:20]
+    errors = []
+    for f in py_files:
+        content = f.read_text()
+        lines = content.splitlines()
+        for i, line in enumerate(lines, 1):
+            if line != line.rstrip():
+                errors.append(f"{f}:{i}")
+                break
+    assert not errors, f"Trailing whitespace found in:\n" + "\n".join(errors[:5])
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eof_newline():
+    """Repo's Python files end with newline (pass_to_pass)."""
+    py_files = list(Path(REPO).rglob("*.py"))[:20]
+    errors = []
+    for f in py_files:
+        content = f.read_text()
+        if content and not content.endswith("\n"):
+            errors.append(str(f))
+    assert not errors, f"Missing EOF newline in:\n" + "\n".join(errors[:5])

@@ -7,54 +7,73 @@ source:
   merge_commit: "7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba"
 
 checks:
-  - id: file_exists_with_apptree
-    type: pass_to_pass
-    origin: static
-    description: "init.svelte.ts must exist and contain the AppTree class"
-
-  - id: spread_replace_bug_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Spread-replace pattern removed from update_state !_set_data branch"
-
-  - id: deferred_state_stored
-    type: fail_to_pass
-    origin: pr_diff
-    description: "update_state stores deferred state on class instance for unmounted components"
-
-  - id: register_component_applies_deferred
-    type: fail_to_pass
-    origin: pr_diff
-    description: "register_component applies deferred state when component mounts"
-
-  - id: no_full_tree_traversal_in_render
-    type: fail_to_pass
-    origin: pr_diff
-    description: "render_previously_invisible_children avoids full tree traversal with root reassignment"
-
-  - id: core_methods_present
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All core AppTree methods still present"
-
-  - id: helper_functions_intact
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Standalone helper functions and tab/accordion handling intact"
-
-  - id: repo_format_check
+  # CI-derived pass_to_pass tests - format check (fastest)
+  - id: test_repo_format_check
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's Prettier format check passes"
     command: "pnpm format:check"
 
-  - id: repo_unit_tests
+  # CI-derived pass_to_pass tests - build client
+  - id: test_repo_client_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's client package builds successfully"
+    command: "pnpm --filter @gradio/client build"
+
+  # CI-derived pass_to_pass tests - client tests
+  - id: test_repo_client_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's client package tests pass"
+    command: "pnpm --filter @gradio/client test"
+
+  # CI-derived pass_to_pass tests - unit tests
+  - id: test_repo_unit_tests
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's unit tests pass"
     command: "pnpm test:run"
 
-  - id: consistent_indentation
+  # Static file checks
+  - id: test_file_exists_with_apptree
+    type: pass_to_pass
+    origin: static
+    description: "init.svelte.ts must exist and contain the AppTree class"
+
+  - id: test_core_methods_present
+    type: pass_to_pass
+    origin: static
+    description: "All core AppTree methods still present"
+
+  - id: test_helper_functions_intact
+    type: pass_to_pass
+    origin: static
+    description: "Standalone helper functions and tab/accordion handling intact"
+
+  # Fail-to-pass tests (PR diff derived)
+  - id: test_spread_replace_bug_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Spread-replace pattern removed from update_state !_set_data branch"
+
+  - id: test_deferred_state_stored
+    type: fail_to_pass
+    origin: pr_diff
+    description: "update_state stores deferred state on class instance for unmounted components"
+
+  - id: test_register_component_applies_deferred
+    type: fail_to_pass
+    origin: pr_diff
+    description: "register_component applies deferred state when component mounts"
+
+  - id: test_no_full_tree_traversal_in_render
+    type: fail_to_pass
+    origin: pr_diff
+    description: "render_previously_invisible_children avoids full tree traversal with root reassignment"
+
+  # Agent config derived checks
+  - id: test_consistent_indentation
     type: pass_to_pass
     origin: agent_config
     description: "File uses tabs consistent with surrounding code style"
@@ -63,7 +82,7 @@ checks:
       lines: "45"
       commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
 
-  - id: no_debug_artifacts
+  - id: test_no_debug_artifacts
     type: pass_to_pass
     origin: agent_config
     description: "No debug logging artifacts in AppTree; no excessive trailing whitespace"
@@ -72,7 +91,7 @@ checks:
       lines: "65"
       commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
 
-  - id: typescript_quality
+  - id: test_typescript_quality
     type: pass_to_pass
     origin: agent_config
     description: "No excessive @ts-ignore or any types"

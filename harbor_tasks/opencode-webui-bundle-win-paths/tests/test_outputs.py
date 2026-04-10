@@ -293,3 +293,47 @@ def test_repo_bun_lockfile_valid():
     assert "error:" not in r.stderr.lower() or "cannot find module" in r.stderr.lower() or r.returncode == 0, (
         f"bun.lock appears invalid or corrupted: {r.stderr[-300:]}"
     )
+
+
+# [repo_tests] pass_to_pass — validates code formatting with prettier
+def test_repo_prettier_check():
+    """Repo's code must be formatted with prettier (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "x", "prettier", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for {TARGET}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — validates bun can parse TypeScript syntax
+def test_repo_bun_parse_build_ts():
+    """Bun must be able to parse the build.ts file syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--external=*", "--no-bundle", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bun parse failed for {TARGET}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — validates import syntax in build.ts
+def test_repo_import_syntax_valid():
+    """All imports in build.ts must use valid syntax (pass_to_pass)."""
+    # Verify that the file can be parsed and its imports resolved
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--external=*", "--no-bundle", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # Check for common import errors
+    stderr_lower = r.stderr.lower()
+    assert "error:" not in stderr_lower or "import" not in stderr_lower, (
+        f"Import syntax error in {TARGET}:\n{r.stderr[-500:]}"
+    )

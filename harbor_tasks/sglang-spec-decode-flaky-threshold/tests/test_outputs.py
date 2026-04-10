@@ -98,25 +98,22 @@ class MockMetricsTest(unittest.TestCase):
     accuracy_threshold = 0.69
 
     def test_score_at_boundary(self):
-        \"\"\"Score exactly at threshold should pass.\"\"\"
         score = 0.69
         self.assertGreaterEqual(score, self.accuracy_threshold)
         return True
 
     def test_score_above_boundary(self):
-        \"\"\"Score above threshold should pass.\"\"\"
         score = 0.70
         self.assertGreaterEqual(score, self.accuracy_threshold)
         return True
 
     def test_score_below_boundary(self):
-        \"\"\"Score below threshold should fail.\"\"\"
         score = 0.68
         try:
             self.assertGreaterEqual(score, self.accuracy_threshold)
-            return False  # Should have raised
+            return False
         except AssertionError:
-            return True  # Expected failure
+            return True
 
 t = MockMetricsTest()
 t.test_score_at_boundary()
@@ -148,7 +145,6 @@ class OldBehaviorTest(unittest.TestCase):
     accuracy_threshold = 0.7
 
     def old_assertion(self):
-        \"\"\"Old code using assertGreater - this fails when score == 0.7\"\"\"
         score = 0.7
         self.assertGreater(score, self.accuracy_threshold)
 
@@ -165,7 +161,6 @@ except AssertionError:
         text=True,
         timeout=30,
     )
-    # This should demonstrate the old behavior failing
     assert "EXPECTED_FAILURE" in r.stdout or r.returncode != 0, \
         f"Old behavior should fail at exact threshold: {r.stdout} {r.stderr}"
 
@@ -243,7 +238,6 @@ def test_gsm8k_uses_greater_equal_v2():
 def test_repo_python_syntax():
     """Modified test file must have valid Python syntax (pass_to_pass)."""
     source = Path(TEST_FILE).read_text()
-    # Must parse without errors
     tree = ast.parse(source)
     assert tree is not None, "Failed to parse test file"
 
@@ -255,7 +249,6 @@ def test_repo_ruff_lint():
         ["pip", "install", "ruff", "-q"],
         capture_output=True, text=True, timeout=60,
     )
-    # Ruff check for unused imports (F401) and undefined names (F821)
     r = subprocess.run(
         ["ruff", "check", "--select=F401,F821", TEST_FILE],
         capture_output=True, text=True, timeout=60,
@@ -270,7 +263,6 @@ def test_repo_black_format():
         ["pip", "install", "black", "-q"],
         capture_output=True, text=True, timeout=60,
     )
-    # Check formatting (do not fix, just check)
     r = subprocess.run(
         ["black", "--check", "--diff", TEST_FILE],
         capture_output=True, text=True, timeout=60,
@@ -285,12 +277,65 @@ def test_repo_codespell():
         ["pip", "install", "codespell", "-q"],
         capture_output=True, text=True, timeout=60,
     )
-    # Run codespell with config
     r = subprocess.run(
         ["codespell", "--config", "/workspace/sglang/.codespellrc", TEST_FILE],
         capture_output=True, text=True, timeout=60, cwd="/workspace/sglang",
     )
     assert r.returncode == 0, f"Codespell check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — isort check (import sorting)
+def test_repo_isort():
+    """Modified test file must have correctly sorted imports (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["isort", "--check-only", "--profile", "black", TEST_FILE],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — YAML validation for CI workflows
+def test_repo_yaml_valid():
+    """CI workflow YAML files must be valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    code = "import yaml; yaml.safe_load(open('/workspace/sglang/.github/workflows/lint.yml')); print('YAML_VALID')"
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr}"
+    assert "YAML_VALID" in r.stdout, f"Expected marker not found: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass — CI workflow job names check
+def test_repo_workflow_job_names():
+    """CI workflow job names must be unique (repo CI check) (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "/workspace/sglang/scripts/ci/check_workflow_job_names.py"],
+        capture_output=True, text=True, timeout=60, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"Workflow job names check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI permissions sorted check
+def test_repo_ci_permissions_sorted():
+    """CI permissions file must be sorted (repo CI check) (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "/workspace/sglang/.github/update_ci_permission.py", "--sort-only"],
+        capture_output=True, text=True, timeout=60, cwd="/workspace/sglang",
+    )
+    assert r.returncode == 0, f"CI permissions sorted check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

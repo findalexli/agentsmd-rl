@@ -40,7 +40,7 @@ checks:
   - id: html_basic_construction
     type: pass_to_pass
     origin: pr_diff
-    description: "HTML component can be constructed and produces valid config"
+    description: "HTML component component can be constructed and produces valid config"
 
   - id: ruff_lint
     type: pass_to_pass
@@ -66,6 +66,27 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: "Gradio package imports correctly (basic smoke test)"
+
+  - id: repo_lint_backend
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Backend lint script passes on modified file (repo CI test-python.yml)"
+
+  # New p2p enrichment tests - from repo CI/CD
+  - id: repo_events_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Event system unit tests pass (repo CI) — tests event listener infrastructure"
+
+  - id: repo_blocks_config_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Blocks event wiring config tests pass (repo CI)"
+
+  - id: repo_gradio_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Gradio version can be retrieved (repo CI smoke test)"
 
 rubric:
   - rule: "Be consistent with the style of the surrounding code."

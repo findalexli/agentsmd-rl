@@ -240,3 +240,65 @@ def test_continuous_batching_modules_import():
         importlib.import_module(mod)
 
 
+# [repo_tests] pass_to_pass — repo CI: attention mask tests
+def test_repo_attention_mask():
+    """Continuous batching attention mask tests pass (repo CI pass_to_pass)."""
+    # Install required packages
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest-xdist", "parameterized"], check=False)
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_attention_mask_0",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_attention_mask_1",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_attention_mask_2",
+            "-v", "--no-header",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Attention mask tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo CI: layer grouping tests
+def test_repo_group_layers():
+    """Continuous batching layer grouping tests pass (repo CI pass_to_pass)."""
+    # Install required packages
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest-xdist", "parameterized"], check=False)
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_group_layers_0",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_group_layers_1",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_group_layers_2_f",
+            "-v", "--no-header",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Group layers tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo CI: cache allocator tests
+def test_repo_cache_allocator():
+    """Continuous batching cache allocator read/write indices tests pass (repo CI pass_to_pass)."""
+    # Install required packages
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest-xdist", "parameterized"], check=False)
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_full_attention_get_read_indices_0",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_full_attention_get_write_indices_00",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_full_attention_get_read_indices_1",
+            "tests/generation/test_continuous_batching.py::ContinuousBatchingNoAcceleratorTest::test_full_attention_get_write_indices_01",
+            "-v", "--no-header",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cache allocator tests failed:\n{r.stderr[-500:]}"

@@ -168,3 +168,23 @@ def test_repo_fiber_tests():
     )
     combined = r.stdout + r.stderr
     assert r.returncode == 0, f"ReactFiber tests failed:\n{combined[-500:]}"
+
+
+def test_repo_suspense_fallback():
+    """Repo ReactSuspenseFallback tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern", "ReactSuspenseFallback", "--silent"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"ReactSuspenseFallback tests failed:\n{combined[-500:]}"
+
+
+def test_repo_context_propagation():
+    """Repo ReactContextPropagation tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern", "ReactContextPropagation", "--silent"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    assert r.returncode == 0, f"ReactContextPropagation tests failed:\n{combined[-500:]}"

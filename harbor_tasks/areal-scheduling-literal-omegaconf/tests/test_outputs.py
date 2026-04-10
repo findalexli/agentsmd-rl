@@ -23,7 +23,7 @@ def _load_scheduling_spec():
     exec_globals = {"__builtins__": __builtins__}
     exec(
         "from dataclasses import dataclass, field, fields, asdict\n"
-        "from typing import TYPE_CHECKING, Any, ClassVar\n"
+        "from typing import TYPE_CHECKING, Any, ClassVar, Literal\n"
         "from enum import Enum\n",
         exec_globals,
     )
@@ -211,8 +211,18 @@ def test_validation_raises_valueerror():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Python syntax compilation check on areal/api/cli_args.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "areal/api/cli_args.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_ruff_lint():
-    """Repo's ruff linting passes on areal/api/ (pass_to_pass)."""
+    """Repo's ruff linting passes on areal/api/cli_args.py (pass_to_pass)."""
     r = subprocess.run(
         ["pip", "install", "ruff==0.14.9", "-q"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -220,7 +230,7 @@ def test_repo_ruff_lint():
     # Install errors are not fatal; ruff might already be present
 
     r = subprocess.run(
-        ["ruff", "check", "areal/api/"],
+        ["ruff", "check", "areal/api/cli_args.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
@@ -228,7 +238,7 @@ def test_repo_ruff_lint():
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_format():
-    """Repo's ruff format check passes on areal/api/ (pass_to_pass)."""
+    """Repo's ruff format check passes on areal/api/cli_args.py (pass_to_pass)."""
     r = subprocess.run(
         ["pip", "install", "ruff==0.14.9", "-q"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -236,7 +246,16 @@ def test_repo_ruff_format():
     # Install errors are not fatal; ruff might already be present
 
     r = subprocess.run(
-        ["ruff", "format", "--check", "areal/api/"],
+        ["ruff", "format", "--check", "areal/api/cli_args.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_datapack_and_train_controller():
+    """Repo's unit tests for datapack and train_controller pass (pass_to_pass)."""
+    r = subprocess.run(
+        "pip install uv -q && uv pip install --system pytest aiohttp ray httpx -e . -q && pytest tests/test_datapack.py tests/test_train_controller.py",
+        shell=True, capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

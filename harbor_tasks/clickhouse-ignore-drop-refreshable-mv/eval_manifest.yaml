@@ -54,4 +54,42 @@ checks:
     origin: repo_tests
     description: Repo target file is readable and valid
 
-rubric: []
+  - id: test_repo_no_duplicate_includes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo C++ files have no duplicate includes
+
+  - id: test_repo_yaml_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo YAML files have valid syntax
+
+  - id: test_repo_python_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Python files have valid syntax
+
+rubric:
+  - rule: "Use Allman-style braces (opening brace on a new line) in C++ code"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "71"
+      commit: "32310ea30010c92c101d7e93c535c6bd17057dcf"
+
+  - rule: "When writing comments, wrap literal names from ClickHouse SQL language, classes and functions in inline code blocks using backticks"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "41-43"
+      commit: "32310ea30010c92c101d7e93c535c6bd17057dcf"
+
+  - rule: "When mentioning logical errors, use 'exception' instead of 'crash' because they don't crash the server in release build"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "49-50"
+      commit: "32310ea30010c92c101d7e93c535c6bd17057dcf"
+
+  - rule: "Comments should explain invariants and why the code works, not narrate what the code does"
+    source:
+      path: ".claude/skills/review/SKILL.md"
+      lines: "1-300"
+      commit: "32310ea30010c92c101d7e93c535c6bd17057dcf"

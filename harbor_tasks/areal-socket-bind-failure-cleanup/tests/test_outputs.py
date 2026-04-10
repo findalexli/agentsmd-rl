@@ -497,3 +497,80 @@ def test_repo_ruff_format():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_network_functions():
+    """Network module functions work correctly (pass_to_pass)."""
+    code = """
+import sys
+import importlib.util
+spec = importlib.util.spec_from_file_location("network", "REPO_PLACEHOLDER/areal/utils/network.py")
+net = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(net)
+
+# Test is_port_free returns bool
+result = net.is_port_free(9999)
+assert isinstance(result, bool), "is_port_free should return bool, got " + str(type(result))
+
+# Test find_free_ports returns correct length
+ports = net.find_free_ports(3, port_range=(30000, 30100))
+assert len(ports) == 3, "Expected 3 ports, got " + str(len(ports))
+assert all(isinstance(p, int) for p in ports), "All ports should be integers"
+
+# Test gethostname returns string
+host = net.gethostname()
+assert isinstance(host, str), "gethostname should return str, got " + str(type(host))
+
+print("Network functions work correctly")
+""".replace("REPO_PLACEHOLDER", REPO)
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Network functions test failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_trainer_structure():
+    """Trainer files have valid class structure with __exit__ methods (pass_to_pass)."""
+    code = """
+import ast
+from pathlib import Path
+
+files = {
+    "rl_trainer": "REPO_PLACEHOLDER/areal/trainer/rl_trainer.py",
+    "sft_trainer": "REPO_PLACEHOLDER/areal/trainer/sft_trainer.py",
+}
+
+for name, path in files.items():
+    src = Path(path).read_text()
+    tree = ast.parse(src)
+
+    # Find classes with __exit__
+    exit_found = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "__exit__":
+                    exit_found = True
+                    break
+        if exit_found:
+            break
+
+    assert exit_found, name + ": no __exit__ method found in any class"
+    print(name + ": __exit__ found")
+
+print("Trainer structure validation passed")
+""".replace("REPO_PLACEHOLDER", REPO)
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trainer structure test failed:\n{r.stderr}"

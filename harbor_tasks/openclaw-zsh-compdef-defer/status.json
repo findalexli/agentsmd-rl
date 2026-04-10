@@ -3,37 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T04:50:10.145704",
-  "total_time": 8594.94,
-  "sandbox_id": "i97e0y6y673iovws4z6tf",
+  "validated_at": "2026-04-09T21:24:31.272110",
+  "total_time": 3962.9,
+  "sandbox_id": "idfxgmf6a93t20i15w3gy",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T09:30:00",
-      "status": "completed_verified",
-      "ci_commands_discovered": [
-        "pnpm exec oxlint - lint check with 117 rules on 5657 files",
-        "oxfmt --check src/cli/completion-cli.ts - format check",
-        "npx vitest run --config vitest.unit.config.ts src/cli/ - unit tests for CLI module (986 tests in 113 files)"
-      ],
-      "p2p_tests_added": [
-        "test_repo_lint - Repo oxlint passes",
-        "test_repo_format - Repo oxfmt format check passes on CLI files",
-        "test_repo_cli_unit_tests - Repo unit tests for CLI module pass"
-      ],
-      "ci_commands_skipped": [
-        "tsc --noEmit - Out of memory on large codebase (requires >4GB)",
-        "pnpm run build - Complex multi-step build requiring canvas/ui build",
-        "pnpm run check - Requires full typecheck (OOM)",
-        "knip dead code check - Not installed in base image"
-      ],
-      "verification": {
-        "base_commit_passes": "7 p2p tests pass (4 original + 3 new)",
-        "gold_solution_passes": "All 12 tests pass (7 p2p + 5 f2p)",
-        "timing": "108s with dependency install, 62s for CLI tests only"
-      }
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 48.16,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -44,8 +26,8 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
+      "model": "opus",
+      "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
     },
@@ -54,35 +36,57 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build successful. NOP test shows 5 f2p tests failing as expected (reward=0). Gold test shows all 12 tests passing (reward=1). Rubric judge returned 0.5 due to missing ANTHROPIC_API_KEY (infrastructure limitation, not task issue).",
+      "notes": "All validation checks passed. Docker build successful. NOP test shows 5 f2p tests failing as expected (reward=0). Gold test shows all 12 tests passing (reward=1). Rubric judge requires ANTHROPIC_API_KEY (infrastructure limitation, not task issue) - returns default 0.5 without key.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 299.8
+      "time": 169.64
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.68,
-      "notes": "ICR=1.00"
+      "time": 1.24,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
       "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "nop": 0,
+      "gold": 1,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T04:50:09.965523"
+      "time": 797,
+      "at": "2026-04-09T14:41:28.175636"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "at": "2026-04-09T14:41:28.505225"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1,
+      "gold": -1,
+      "backend": "fireworks",
+      "time": 226.89,
+      "at": "2026-04-09T15:01:38.358457"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 8594.94,
-      "at": "2026-04-09T04:50:10.145704"
+      "time": 3962.61,
+      "at": "2026-04-09T21:24:31.083973"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3962.9,
+      "at": "2026-04-09T21:24:31.272110"
     }
   ]
 }

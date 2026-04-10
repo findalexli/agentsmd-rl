@@ -13,9 +13,6 @@ from pathlib import Path
 
 REPO = "/workspace/react"
 
-# JS test file that exercises the context-propagation-into-Suspense-fallback bug.
-# Uses React's internal test infrastructure (ReactNoop, act, assertLog).
-# Gated on enableLegacyCache (available in the experimental channel).
 _JS_TEST_CONTENT = r"""'use strict';
 
 let React;
@@ -145,7 +142,6 @@ describe('SuspenseFallbackContextPropagation', () => {
       return <Text text="Loaded" />;
     }
 
-    // Initial render — primary suspends, fallback shown with context 'A'
     await act(() => {
       root.render(<App />);
     });
@@ -153,12 +149,10 @@ describe('SuspenseFallbackContextPropagation', () => {
       'Suspend! [data]',
       'Fallback: A',
       'A',
-      // pre-warming
       'Suspend! [data]',
     ]);
     expect(root).toMatchRenderedOutput('Fallback: AA');
 
-    // Update context while still suspended — fallback must show 'B'
     await act(() => {
       setContext('B');
     });
@@ -206,7 +200,6 @@ describe('SuspenseFallbackContextPropagation', () => {
       return <Text text="Done" />;
     }
 
-    // Initial render
     await act(() => {
       root.render(<App />);
     });
@@ -218,7 +211,6 @@ describe('SuspenseFallbackContextPropagation', () => {
     ]);
     expect(root).toMatchRenderedOutput('Loading: xx');
 
-    // First update
     await act(() => {
       setContext('y');
     });
@@ -230,7 +222,6 @@ describe('SuspenseFallbackContextPropagation', () => {
     ]);
     expect(root).toMatchRenderedOutput('Loading: yy');
 
-    // Second update
     await act(() => {
       setContext('z');
     });
@@ -252,13 +243,11 @@ _JS_TEST_PATH = os.path.join(
 
 
 def _ensure_js_test_file():
-    """Write the JS test file to the repo (idempotent)."""
     if not os.path.exists(_JS_TEST_PATH):
         Path(_JS_TEST_PATH).write_text(_JS_TEST_CONTENT)
 
 
 def _run_jest(test_name_pattern, file_pattern="SuspenseFallbackContext", timeout=180):
-    """Run a single Jest test by name pattern in the experimental channel."""
     _ensure_js_test_file()
     r = subprocess.run(
         [
@@ -277,37 +266,24 @@ def _run_jest(test_name_pattern, file_pattern="SuspenseFallbackContext", timeout
     return r
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
-
 # [pr_diff] fail_to_pass
 def test_context_propagation_to_suspense_fallback():
-    """Context change above a suspended Suspense must propagate to fallback consumers."""
     r = _run_jest("context change propagates to Suspense fallback consumer")
     assert r.returncode == 0, (
-        f"Jest test failed (context not propagating to fallback):\n"
-        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+        f"Jest test failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_sequential_context_updates_in_fallback():
-    """Multiple sequential context updates must all propagate to Suspense fallback."""
     r = _run_jest("sequential context updates propagate to Suspense fallback")
     assert r.returncode == 0, (
-        f"Jest test failed (sequential updates not propagating):\n"
-        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+        f"Jest test failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression
-# ---------------------------------------------------------------------------
-
 # [repo_tests] pass_to_pass
 def test_existing_context_propagation():
-    """Existing context propagation tests must still pass."""
     r = subprocess.run(
         [
             "yarn", "test",
@@ -329,7 +305,6 @@ def test_existing_context_propagation():
 
 # [repo_tests] pass_to_pass - CI: yarn flow dom-node
 def test_repo_flow_typecheck():
-    """Repo's Flow type checking (dom-node) must pass."""
     r = subprocess.run(
         ["yarn", "flow", "dom-node"],
         cwd=REPO,
@@ -345,7 +320,6 @@ def test_repo_flow_typecheck():
 
 # [repo_tests] pass_to_pass - CI: yarn linc
 def test_repo_lint_changed():
-    """Repo's ESLint check on changed files (yarn linc) must pass."""
     r = subprocess.run(
         ["yarn", "linc"],
         cwd=REPO,
@@ -359,13 +333,95 @@ def test_repo_lint_changed():
     )
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from .claude/skills/fix/SKILL.md
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass - CI: yarn lint (full lint check)
+def test_repo_lint_full():
+    r = subprocess.run(
+        ["yarn", "lint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"ESLint (full) failed:\n"
+        f"{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
 
-# [agent_config] pass_to_pass — .claude/skills/fix/SKILL.md:10
+
+# [repo_tests] pass_to_pass - CI: yarn flags (feature flags check)
+def test_repo_flags():
+    r = subprocess.run(
+        ["yarn", "flags"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Feature flags check failed:\n"
+        f"{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass - CI: yarn version-check
+def test_repo_version_check():
+    r = subprocess.run(
+        ["yarn", "version-check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"Version check failed:\n"
+        f"{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass - unit tests for ReactNewContext
+def test_repo_react_new_context():
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "-r=experimental",
+            "--silent",
+            "--no-watchman",
+            "ReactNewContext",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"ReactNewContext tests failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass - DOM server integration tests for NewContext
+def test_repo_dom_server_new_context():
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "-r=experimental",
+            "--silent",
+            "--no-watchman",
+            "ReactDOMServerIntegrationNewContext",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"ReactDOMServerIntegrationNewContext tests failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [agent_config] pass_to_pass
 def test_prettier_formatting():
-    """Changed file must pass prettier formatting."""
     target = "packages/react-reconciler/src/ReactFiberNewContext.js"
     r = subprocess.run(
         ["npx", "prettier", "--check", target],

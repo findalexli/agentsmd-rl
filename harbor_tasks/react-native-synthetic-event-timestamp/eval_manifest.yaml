@@ -20,7 +20,7 @@ checks:
   - id: performance_now_fallback_used
     type: fail_to_pass
     origin: pr_diff
-    description: "Fallback must use performance.now() for a monotonic clock when available"
+    description: "Fallback must use performance.now() for monotonic clock when available"
 
   - id: performance_availability_checked
     type: fail_to_pass
@@ -35,7 +35,7 @@ checks:
   - id: test_repo_lint
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's ESLint checks pass on react-native-renderer package"
+    description: "Repo's ESLint checks pass"
 
   - id: test_repo_flow
     type: pass_to_pass
@@ -47,6 +47,32 @@ checks:
     origin: repo_tests
     description: "Repo's unit tests for react-native-renderer pass"
 
-rubric: []
-# Note: The React repo CLAUDE.md contains only high-level monorepo structure info;
-# no code-style rules apply to this React Native event system fix.
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Prettier formatting check passes on modified file"
+
+rubric:
+  - rule: "Run the test suite for the relevant package to verify changes. Use `yarn test packages/react-native-renderer` for React Native renderer changes."
+    source:
+      path: ".github/PULL_REQUEST_TEMPLATE.md"
+      lines: "9-11"
+      commit: "074d96b9dd57ea748f2e869959a436695bbc88bf"
+
+  - rule: "Run Flow type checks for React Native code using `yarn flow native`."
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "17,22"
+      commit: "074d96b9dd57ea748f2e869959a436695bbc88bf"
+
+  - rule: "Format code with prettier using `yarn prettier` and ensure lint passes with `yarn linc` before committing."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10-12"
+      commit: "074d96b9dd57ea748f2e869959a436695bbc88bf"
+
+  - rule: "Follow existing code style in the file being modified. Check neighboring functions and existing patterns for consistent naming, spacing, and structure."
+    source:
+      path: ".github/PULL_REQUEST_TEMPLATE.md"
+      lines: "13-15"
+      commit: "074d96b9dd57ea748f2e869959a436695bbc88bf"

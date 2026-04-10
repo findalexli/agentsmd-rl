@@ -3,46 +3,26 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T01:52:45.381943",
-  "total_time": 927.97,
-  "sandbox_id": "idocovzrpbjd46dcrm8rt",
-  "backend": "fireworks",
+  "validated_at": "2026-04-10T02:52:20.842538",
+  "total_time": 5344.41,
+  "sandbox_id": "iun9h57ikuyuia5qw73u5",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "improve": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 259.89,
-      "notes": "no subprocess.run (grep-only tests)"
+      "status": "skipped",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 0,
+      "notes": "tests look good"
     },
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T08:30:00",
-      "status": "completed",
-      "ci_commands_found": [
-        "package.json scripts: zig:check, zig:check-all, lint, typecheck, banned",
-        "build.zig steps: check (semantic analysis), test",
-        ".github/workflows/lint.yml: oxlint, prettier",
-        ".github/workflows/format.yml: zig fmt, clang-format",
-        "test/internal/ban-words.test.ts: banned words validation (std.debug.assert, usingnamespace, etc.)"
-      ],
-      "ci_commands_tested": [
-        "bun CLI not available in node:22-slim container - cannot run full CI",
-        "Python-based replication of ban-words.test.ts checks added",
-        "All 3 new banned words tests pass on base commit"
-      ],
-      "tests_added": [
-        "test_repo_zig_syntax_valid - brace balance validation",
-        "test_repo_modified_files_readable - file integrity check",
-        "test_repo_required_fields_exist - required field presence",
-        "test_repo_bun_allocator_used - memory allocator patterns",
-        "test_repo_no_std_allocator_usage - forbidden std.heap/Allocator",
-        "test_repo_no_banned_words - 42 patterns from ban-words.test.ts",
-        "test_repo_no_autofix_comments - autofix comment check",
-        "test_repo_no_enum_tagname - std.enums.tagName check"
-      ],
-      "notes": "Discovered and replicated bun repo's banned words CI check (test/internal/ban-words.test.ts) which validates 42 forbidden patterns like std.debug.assert, usingnamespace, std.unicode, etc. Since bun CLI is unavailable in container, implemented Python-based checks that validate the same patterns. All 19 pass-to-pass tests now pass on base commit."
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 27.75,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -56,51 +36,59 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed test_individual_params_still_freed regex which was too strict about whitespace. Tests now correctly verify the gold fix for MySQL per-query memory leak (PR #28633). All 18 tests pass after fix.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 100.01
+      "notes": "All core tests pass.",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1411.35
     },
     "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.72,
-      "notes": "ICR=1.00"
+      "status": "fail",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 3.84,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:30:37.202962"
+      "time": 102.13,
+      "at": "2026-04-09T14:59:33.613163"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 1070.87,
-      "at": "2026-04-09T01:30:37.394436"
+      "time": 1010.52,
+      "at": "2026-04-09T20:35:19.193946"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:52:45.220219"
+      "time": 1010.79,
+      "at": "2026-04-09T20:35:19.368983"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 927.97,
-      "at": "2026-04-09T01:52:45.381943"
+      "backend": "gemini",
+      "time": 5344.16,
+      "at": "2026-04-10T02:52:20.679310"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 5344.41,
+      "at": "2026-04-10T02:52:20.842538"
     }
   ]
 }

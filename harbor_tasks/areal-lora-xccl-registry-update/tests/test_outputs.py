@@ -353,3 +353,44 @@ def test_repo_ruff_linting():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass - Ruff format check (matches repo's pre-commit v0.14.9)
+def test_repo_ruff_format():
+    """Repo CI: Modified files pass ruff format check (matching .pre-commit-config.yaml)."""
+    # Install ruff if not present
+    r = subprocess.run(["pip", "show", "ruff"], capture_output=True, text=True)
+    if r.returncode != 0:
+        r = subprocess.run(
+            ["pip", "install", "ruff==0.14.9", "-q"],
+            capture_output=True, text=True, timeout=60
+        )
+        if r.returncode != 0:
+            pytest.skip(f"Could not install ruff: {r.stderr}")
+
+    # Run ruff format check on modified files
+    r = subprocess.run(
+        ["ruff", "format", "--check", SERVER_FILE, REMOTE_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass - Trailing whitespace check (matches repo's pre-commit)
+def test_repo_trailing_whitespace():
+    """Repo CI: Modified files have no trailing whitespace (matching .pre-commit-config.yaml)."""
+    for filepath in [SERVER_FILE, REMOTE_FILE]:
+        src = Path(filepath).read_text()
+        lines = src.split('\n')
+        for i, line in enumerate(lines, 1):
+            if line.rstrip() != line:
+                raise AssertionError(f"Trailing whitespace found in {filepath} at line {i}")
+
+
+# [repo_ci] pass_to_pass - End of file newline check (matches repo's pre-commit)
+def test_repo_end_of_file_newline():
+    """Repo CI: Modified files end with a newline (matching .pre-commit-config.yaml)."""
+    for filepath in [SERVER_FILE, REMOTE_FILE]:
+        src = Path(filepath).read_text()
+        if src and not src.endswith('\n'):
+            raise AssertionError(f"File {filepath} does not end with a newline")

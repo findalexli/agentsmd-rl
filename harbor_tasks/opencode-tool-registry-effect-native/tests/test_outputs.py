@@ -345,3 +345,47 @@ bun turbo typecheck --filter opencode 2>&1
         cwd=REPO,
     )
     assert r.returncode == 0, f"Opencode typecheck failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_effect_tests():
+    """Effect-related tests pass (bun test test/effect/)."""
+    script = """export PATH="$HOME/.bun/bin:$PATH"
+if ! command -v bun &>/dev/null; then
+  apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
+  curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
+fi
+export PATH="$HOME/.bun/bin:$PATH"
+cd /workspace/opencode && bun install 2>&1 | tail -5
+cd packages/opencode && bun test --timeout 30000 test/effect/ 2>&1
+"""
+    r = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Effect tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_tests():
+    """Plugin tests pass (bun test test/plugin/)."""
+    script = """export PATH="$HOME/.bun/bin:$PATH"
+if ! command -v bun &>/dev/null; then
+  apt-get update -qq && apt-get install -y -qq unzip curl 2>/dev/null
+  curl -fsSL https://bun.sh/install | bash -s 'bun-v1.3.11' 2>/dev/null
+fi
+export PATH="$HOME/.bun/bin:$PATH"
+cd /workspace/opencode && bun install 2>&1 | tail -5
+cd packages/opencode && bun test --timeout 30000 test/plugin/ 2>&1
+"""
+    r = subprocess.run(
+        ["bash", "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

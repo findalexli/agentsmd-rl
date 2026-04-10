@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:01:02.618563",
-  "total_time": 6176.73,
-  "sandbox_id": "idt3nzzrt2juwgrcwfn0r",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T00:58:43.762649",
+  "total_time": 10776.01,
+  "sandbox_id": "iqo2m7h6vgmrk1dc295bg",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -18,11 +18,49 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 216.44,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 312.72,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 100.96
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "judge_icr": 0.5,
+      "judge_note": "Judge returned 0.5 due to HTTP 401 (auth error) - not a rubric compliance issue",
+      "attempts": 1,
+      "notes": "All checks passed: Docker build succeeded, NOP test returned reward=0 (fail-to-pass tests correctly fail on buggy base code), Gold test returned reward=1 (all 11 tests pass after applying solve.sh patch). The rubric judge has an auth error which is an infrastructure issue, not a code quality issue.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 138.83
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.42,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -33,6 +71,38 @@
       "backend": "glm",
       "time": 6176.73,
       "at": "2026-04-09T07:01:02.618563"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1582.22,
+      "at": "2026-04-09T14:54:33.328861"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1582.48,
+      "at": "2026-04-09T14:54:33.493762"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10775.74,
+      "at": "2026-04-10T00:58:43.598402"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 10776.01,
+      "at": "2026-04-10T00:58:43.762649"
     }
   ]
 }

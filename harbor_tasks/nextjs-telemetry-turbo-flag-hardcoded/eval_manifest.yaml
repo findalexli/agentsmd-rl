@@ -7,6 +7,7 @@ source:
   merge_commit: "e3b81e05b28c0e888534092717be2074a1aa24c9"
 
 checks:
+  # Fail-to-pass tests (core behavioral tests from PR diff)
   - id: build_turbo_flag_not_hardcoded
     type: fail_to_pass
     origin: pr_diff
@@ -32,6 +33,7 @@ checks:
     origin: pr_diff
     description: "export/index.ts must import Bundler to resolve the enum for turboFlag"
 
+  # Pass-to-pass tests (static) - regression guards
   - id: bundler_enum_exists
     type: pass_to_pass
     origin: static
@@ -42,34 +44,52 @@ checks:
     origin: static
     description: "Build and export files must still contain turboFlag telemetry field"
 
-  - id: repo_build_file_exists
+  # Pass-to-pass tests (repo_tests) - REAL CI COMMANDS using subprocess.run()
+  - id: repo_bundler_enum_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "Build index.ts must exist and be readable"
+    description: "Bundler enum must have valid TypeScript syntax with required members"
 
-  - id: repo_export_file_exists
+  - id: repo_export_types_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "Export index.ts must exist and be readable"
+    description: "ExportAppOptions interface must be valid TypeScript with required fields"
 
-  - id: repo_types_file_exists
+  - id: repo_build_file_structure
     type: pass_to_pass
     origin: repo_tests
-    description: "Export types.ts must exist and be readable"
+    description: "Build index.ts must be a valid TypeScript module with proper structure"
 
-  - id: repo_bundler_file_exists
+  - id: repo_export_file_structure
     type: pass_to_pass
     origin: repo_tests
-    description: "Bundler enum file must exist and be valid"
+    description: "Export index.ts must be a valid TypeScript module with proper structure"
 
-  - id: repo_build_imports_resolvable
+  - id: repo_imports_resolvable
     type: pass_to_pass
     origin: repo_tests
-    description: "Build index.ts relative imports must be resolvable"
+    description: "Relative imports in modified files must resolve to existing files"
 
-  - id: repo_export_imports_resolvable
+  - id: repo_git_status_clean
     type: pass_to_pass
     origin: repo_tests
-    description: "Export index.ts relative imports must be resolvable"
+    description: "Git repo must be clean with no uncommitted changes"
 
-rubric: []
+rubric:
+  - rule: "When reading large files (>500 lines), grep first to find relevant line numbers, then read targeted ranges. Never re-read the same section of a file without code changes in between."
+    source:
+      path: "AGENTS.md"
+      lines: "323-329"
+      commit: "a215ea60a2d0012a9c52f96a97fcaf9af1f5d453"
+
+  - rule: "Split work into smaller, individually verifiable tasks. Verify each task before moving on to the next using appropriate verification (tests, type checking, linting, or building)."
+    source:
+      path: "AGENTS.md"
+      lines: "353-358"
+      commit: "a215ea60a2d0012a9c52f96a97fcaf9af1f5d453"
+
+  - rule: "For telemetry changes involving feature flags, ensure proper type safety and bundler compatibility. Changes to flag behavior should be verified through type checking and relevant tests."
+    source:
+      path: "AGENTS.md"
+      lines: "302-309,376-398"
+      commit: "a215ea60a2d0012a9c52f96a97fcaf9af1f5d453"

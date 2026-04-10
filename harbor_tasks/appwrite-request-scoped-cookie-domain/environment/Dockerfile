@@ -1,4 +1,4 @@
-FROM php:8.3-cli-slim
+FROM php:8.3-cli
 
 # Install git, python3, and dependencies for composer
 RUN apt-get update && apt-get install -y \

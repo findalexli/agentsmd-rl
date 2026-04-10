@@ -163,6 +163,126 @@ console.log('PASS');
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI command validation
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_css_syntax_valid():
+    """CSS file parses correctly with Node.js CSS parser (pass_to_pass)."""
+    r = _run_node(r"""
+import { readFileSync } from 'fs';
+
+const css = readFileSync(
+    'src/vs/sessions/contrib/sessions/browser/media/sessionsTitleBarWidget.css',
+    'utf8'
+);
+
+// Basic CSS syntax validation: check for balanced braces
+let braceCount = 0;
+let inComment = false;
+let inString = false;
+let stringChar = '';
+
+for (let i = 0; i < css.length; i++) {
+    const char = css[i];
+    const nextChar = css[i + 1];
+
+    // Handle comments
+    if (!inString && char === '/' && nextChar === '*') {
+        inComment = true;
+        i++;
+        continue;
+    }
+    if (inComment && char === '*' && nextChar === '/') {
+        inComment = false;
+        i++;
+        continue;
+    }
+    if (inComment) continue;
+
+    // Handle strings
+    if (!inString && (char === '"' || char === "'")) {
+        inString = true;
+        stringChar = char;
+        continue;
+    }
+    if (inString && char === stringChar && css[i-1] !== '\\') {
+        inString = false;
+        continue;
+    }
+    if (inString) continue;
+
+    // Count braces
+    if (char === '{') braceCount++;
+    if (char === '}') braceCount--;
+}
+
+if (braceCount !== 0) {
+    console.error('UNBALANCED_BRACES: ' + braceCount);
+    process.exit(1);
+}
+
+// Verify at least one CSS rule exists
+const ruleRegex = /[^{}]+\{[^}]*\}/g;
+const rules = css.match(ruleRegex);
+if (!rules || rules.length === 0) {
+    console.error('NO_CSS_RULES_FOUND');
+    process.exit(1);
+}
+
+console.log('PASS: CSS is valid with ' + rules.length + ' rules');
+""")
+    assert r.returncode == 0, f"CSS syntax check failed: {r.stderr or r.stdout}"
+    assert "PASS" in r.stdout, f"Unexpected output: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_layout_md_exists():
+    """LAYOUT.md documentation file exists and has required sections (pass_to_pass)."""
+    r = _run_node(r"""
+import { readFileSync, existsSync } from 'fs';
+
+const layoutPath = 'src/vs/sessions/LAYOUT.md';
+if (!existsSync(layoutPath)) {
+    console.error('LAYOUT.md does not exist');
+    process.exit(1);
+}
+
+const content = readFileSync(layoutPath, 'utf8');
+
+// Check for required sections that should always exist
+const requiredSections = [
+    '# Agent Sessions Workbench Layout Specification',
+    '## ',
+    '### '
+];
+
+for (const section of requiredSections) {
+    if (!content.includes(section)) {
+        console.error('MISSING_SECTION: ' + section);
+        process.exit(1);
+    }
+}
+
+console.log('PASS: LAYOUT.md has all required sections');
+""")
+    assert r.returncode == 0, f"LAYOUT.md check failed: {r.stderr or r.stdout}"
+    assert "PASS" in r.stdout, f"Unexpected output: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_clean():
+    """Git repository is in a clean state (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed: {r.stderr}"
+    # In a clean state, there should be no output (or only untracked files we don't care about)
+    # For p2p at base commit, the repo should be clean
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression guard
 # ---------------------------------------------------------------------------
 

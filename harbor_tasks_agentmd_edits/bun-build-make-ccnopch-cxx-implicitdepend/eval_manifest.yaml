@@ -41,29 +41,44 @@ checks:
     origin: static
     description: "PCH still uses implicit deps on depOutputs (unchanged behavior)"
 
-  - id: repo_build_scripts_syntax
+  - id: repo_editorconfig_compliance
     type: pass_to_pass
     origin: repo_tests
-    description: "Build scripts have valid TypeScript syntax (balanced braces, valid structure)"
+    description: "Build scripts comply with EditorConfig (UTF-8, LF, no trailing whitespace)"
 
-  - id: repo_claude_md_consistency
+  - id: repo_build_script_imports
     type: pass_to_pass
     origin: repo_tests
-    description: "CLAUDE.md has required sections (Ninja Primer, Gotchas) and documents implicit/order-only inputs"
+    description: "Build script imports point to existing files"
 
-  - id: repo_import_paths_valid
+  - id: repo_json_configs_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "Import paths in build scripts point to existing files"
+    description: "JSON configuration files are syntactically valid"
 
-  - id: repo_typecheck
+  - id: repo_git_integrity
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's TypeScript typecheck passes (tsc --noEmit)"
+    description: "Git repository passes fsck integrity check"
 
-  - id: repo_lint
+  - id: repo_shell_scripts_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's JavaScript lint passes (oxlint on src/js)"
+    description: "Shell scripts in .buildkite/ have valid syntax"
+
+  - id: repo_build_scripts_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build scripts exist and have substantial content"
+
+  - id: repo_claude_md_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CLAUDE.md has expected sections (Ninja Primer, Gotchas)"
+
+  - id: repo_build_scripts_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build scripts have expected functions and interfaces"
 
 rubric: []

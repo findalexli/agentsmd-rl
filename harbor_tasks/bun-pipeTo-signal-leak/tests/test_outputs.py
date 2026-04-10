@@ -252,7 +252,7 @@ def test_includes_proper_headers():
 # Pass-to-pass (repo_tests) — CI/CD consistency checks
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_no_trailing_whitespace():
     """Modified C++ files must not have trailing whitespace (editorconfig convention)."""
     files = [
@@ -269,7 +269,7 @@ def test_no_trailing_whitespace():
             assert not line.endswith((" ", "\t")), f"{f}:{i}: Trailing whitespace found"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_no_tabs_for_indentation():
     """Modified C++ files must use spaces for indentation (editorconfig convention)."""
     files = [
@@ -289,7 +289,7 @@ def test_no_tabs_for_indentation():
                 assert False, f"{f}:{i}: Tab character found for indentation"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_include_guards_or_pragma_once():
     """Header files must have include guards or pragma once."""
     headers = [
@@ -302,7 +302,7 @@ def test_include_guards_or_pragma_once():
             f"{h}: Missing include guards or #pragma once"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_refcounted_pattern_for_gc_classes():
     """GC-managed classes must use RefCounted pattern consistently."""
     src = Path(f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h").read_text()
@@ -310,7 +310,7 @@ def test_refcounted_pattern_for_gc_classes():
     assert "RefCounted<AbortSignal>" in src, "AbortSignal must use RefCounted pattern"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_proper_inheritance_chain():
     """JSAbortAlgorithm must inherit from AbortAlgorithm."""
     src = Path(f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.h").read_text()
@@ -318,7 +318,7 @@ def test_proper_inheritance_chain():
         "JSAbortAlgorithm must inherit from AbortAlgorithm"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_local_includes_use_quotes():
     """Local headers must use quoted includes, not angle brackets."""
     src = Path(f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h").read_text()
@@ -331,3 +331,162 @@ def test_local_includes_use_quotes():
     for header in local_headers:
         if header in src:
             assert f'#include "{header}"' in src, f"Local header {header} should use #include \"...\""
+
+
+# [static] pass_to_pass
+def test_editorconfig_final_newline():
+    """Modified C++ files must end with a newline (editorconfig insert_final_newline)."""
+    files = [
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp",
+    ]
+    for f in files:
+        with open(f, "rb") as fp:
+            content = fp.read()
+            assert content.endswith(b"\n"), f"{f}: Missing final newline (editorconfig)"
+
+
+# [static] pass_to_pass
+# [static] pass_to_pass
+def test_copyright_headers_present():
+    """Modified C++ files must have copyright headers (Apple BSD or WebKit LGPL)."""
+    files = [
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp",
+    ]
+    for f in files:
+        src = Path(f).read_text()
+        # Check for Apple BSD-style or WebKit LGPL-style copyright
+        has_apple = "Copyright (C)" in src and ("Apple Inc." in src or "Apple" in src)
+        has_webkit = "WebKit" in src and "GNU Library General Public License" in src
+        assert has_apple or has_webkit, f"{f}: Missing copyright header (expected Apple BSD or WebKit LGPL)"
+
+
+def test_no_merge_conflict_markers():
+    """Modified C++ files must not contain merge conflict markers."""
+    files = [
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp",
+    ]
+    for f in files:
+        src = Path(f).read_text()
+        assert "<<<<<<<" not in src, f"{f}: Contains merge conflict marker <<<<<<<"
+        assert "=======" not in src, f"{f}: Contains merge conflict marker ======="
+        assert ">>>>>>>" not in src, f"{f}: Contains merge conflict marker >>>>>>>"
+
+
+# [static] pass_to_pass
+def test_config_h_first_include():
+    """C++ implementation files must include config.h as first include (WebKit convention)."""
+    files = [
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp",
+    ]
+    for f in files:
+        src = Path(f).read_text()
+        # Find first #include after removing comments and license header
+        lines = src.split("\n")
+        include_lines = [l for l in lines if l.strip().startswith("#include")]
+        if include_lines:
+            first_include = include_lines[0]
+            assert ("#include" in first_include and "config.h" in first_include), \
+                f"{f}: First include must be config.h, found: {first_include}"
+
+
+# [static] pass_to_pass
+def test_namespace_webcore_used():
+    """Modified WebCore files must use WebCore namespace (repo architecture)."""
+    files = [
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h",
+    ]
+    for f in files:
+        src = Path(f).read_text()
+        assert "namespace WebCore" in src, f"{f}: Must use WebCore namespace"
+        assert src.count("namespace WebCore") >= 1, f"{f}: WebCore namespace declaration missing"
+
+
+# [static] pass_to_pass
+def test_wtf_helpers_for_gc_marking():
+    """GC-managed classes must use WTF helpers for memory allocation (TZone, FastMalloc)."""
+    src = Path(f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h").read_text()
+    # AbortSignal uses WTF_MAKE_TZONE_ALLOCATED or similar
+    assert ("WTF_MAKE_TZONE_ALLOCATED" in src or
+            "WTF_MAKE_FAST_ALLOCATED" in src or
+            "FastMalloc" in src), \
+        "AbortSignal must use WTF memory allocation helpers"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Actual CI Commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_clang_format():
+    """Modified C++ files pass clang-format (repo CI check)."""
+    import subprocess
+    subprocess.run(["apt-get", "update", "-qq"], check=True)
+    subprocess.run(["apt-get", "install", "-y", "-qq", "clang-format-19"], check=True)
+    
+    REPO = "/workspace/bun"
+    files = [
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp",
+    ]
+    r = subprocess.run(
+        ["clang-format-19", "--dry-run", "-Werror"] + files,
+        capture_output=True, text=True, cwd=REPO
+    )
+    assert r.returncode == 0, f"clang-format failed:\n{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_cpp_syntax_check():
+    """Modified C++ files compile successfully (clang syntax check)."""
+    import subprocess
+    from pathlib import Path
+    REPO = "/workspace/bun"
+    files = [
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/AbortSignal.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortAlgorithm.h",
+        f"{REPO}/src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp",
+    ]
+    
+    include_paths = [
+        f"{REPO}/src/bun.js/bindings/webcore",
+        f"{REPO}/src/bun.js/bindings",
+        f"{REPO}/src/js/builtins",
+    ]
+    
+    webkit_paths = [
+        f"{REPO}/vendor/WebKit/Source",
+        f"{REPO}/vendor/webkit/Source",
+    ]
+    for wp in webkit_paths:
+        if Path(wp).exists():
+            include_paths.append(wp)
+            break
+            
+    include_args = []
+    for p in include_paths:
+        include_args.extend(["-I", p])
+        
+    for f in files:
+        r = subprocess.run(
+            ["clang", "-fsyntax-only", "-std=c++20", "-xc++"] + include_args + [f],
+            capture_output=True, text=True, timeout=30
+        )
+        syntax_errors = [line for line in r.stderr.split("\n") if "error:" in line and "syntax" in line.lower()]
+        assert len(syntax_errors) == 0, f"Syntax errors in {f}: {syntax_errors}"

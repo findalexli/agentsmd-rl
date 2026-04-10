@@ -72,4 +72,34 @@ checks:
     origin: repo_tests
     description: "Repo's shared package tests pass"
 
-rubric: []
+  - id: test_repo_version_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's version check passes"
+
+  - id: test_repo_license_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's license check passes"
+
+  - id: test_repo_extract_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's error code extraction passes"
+
+  - id: test_repo_flow_dom_node
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Flow type checking for dom-node passes"
+
+rubric:
+  - rule: "When enabling a feature flag that exists in dynamic (VARIANT) form, remove it from the dynamic file and add it as a static export in the main www file."
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "48-52"
+      commit: "e33071c6142ae5212483a63b87d5d962860e535a"
+  - rule: "Feature flags must be consistent across all fork files - update all ReactFeatureFlags.*.js fork files when changing a flag value."
+    source:
+      path: ".claude/skills/feature-flags/SKILL.md"
+      lines: "74-79"
+      commit: "e33071c6142ae5212483a63b87d5d962860e535a"

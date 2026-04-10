@@ -137,3 +137,12 @@ def test_repo_tag_tests_pass():
         }
     )
     assert r.returncode == 0, f"Tag tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_biome_lint_passes():
+    """Repo's Biome lint checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint:biome"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"Biome lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

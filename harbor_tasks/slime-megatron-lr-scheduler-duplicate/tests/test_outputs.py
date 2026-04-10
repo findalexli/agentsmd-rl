@@ -253,3 +253,65 @@ def test_return_tuple_has_four_elements():
                 break
 
     assert found_good_return, "Function must return a tuple with at least 4 elements"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff linter passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr}"
+
+    r = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_check():
+    """Black format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install black:\n{r.stderr}"
+
+    r = subprocess.run(
+        ["black", "--check", TARGET],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_imports():
+    """Slime package imports successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "packaging", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # packaging is optional for the test
+
+    r = subprocess.run(
+        ["python3", "-c", "import slime"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Slime package import failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_model_file_imports():
+    """Model module parses and loads as valid Python (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{TARGET}').read())"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Model file syntax check failed:\n{r.stderr[-500:]}"

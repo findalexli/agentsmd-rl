@@ -1,27 +1,27 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T06:55:25.045799",
-  "total_time": 6505.66,
-  "sandbox_id": "ihmnhol5sni9drkmp4lkw",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T00:16:37.283128",
+  "total_time": 8249.34,
+  "sandbox_id": "i5s4rk8kh90vhmh0on0dl",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 517.38,
-      "notes": "Added 3 new pass_to_pass tests from repo CI/CD: test_registered_files_syntax (py_compile all registered tests), test_ci_register_ruff (ruff --select=F401,F821 on ci_register.py), test_ci_register_black (black --check on ci_register.py). All 10 p2p tests pass on base commit. 2 f2p tests correctly fail on base (files not yet moved)."
+      "notes": "Added 5 new pass_to_pass tests from repo CI/CD: test_ci_register_isort (isort check), test_ci_register_codespell (spell check), test_workflow_yaml_valid (YAML validation), test_pyproject_toml_valid (TOML validation), test_registered_dir_isort (isort on all registered files). Total: 14 p2p tests, 2 f2p tests. All pass with gold patch."
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 360.84,
+      "time": 988.31,
       "notes": ""
     },
     "improve": {
@@ -30,6 +30,35 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        ".claude/skills/write-sglang-test/SKILL.md",
+        ".claude/skills/ci-workflow-guide/SKILL.md"
+      ],
+      "rules_added": 2,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 53.35
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build: OK. NOP test: reward=0 (2/16 tests failed as expected - files not moved). Gold test: reward=1 (16/16 tests passed). Rubric judge: API authentication error (returns 0.5), but manual verification confirms files are correctly placed in test/manual/ without CI registration, matching rubric rules from SKILL.md.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 287.45
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.33,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -38,8 +67,40 @@
       "nop": -1.0,
       "gold": -1.0,
       "backend": "fireworks",
-      "time": 6505.66,
-      "at": "2026-04-09T06:55:25.045799"
+      "time": 1205.47,
+      "at": "2026-04-09T14:48:16.517131"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 420.83,
+      "at": "2026-04-09T15:04:52.386930"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 421.1,
+      "at": "2026-04-09T15:04:52.558724"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8249.07,
+      "at": "2026-04-10T00:16:37.106819"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8249.34,
+      "at": "2026-04-10T00:16:37.283128"
     }
   ]
 }

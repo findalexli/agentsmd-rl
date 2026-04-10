@@ -5,6 +5,7 @@ merge_commit: aea67c8f98c28861102af48e40a1234b356c4f4f
 target_file: libraries/tools/kotlin-maven-plugin/src/main/java/org/jetbrains/kotlin/maven/K2JVMCompileMojo.java
 
 checks:
+  # Fail-to-pass tests (require the fix)
   - id: test_toolchain_manager_field_exists
     type: fail_to_pass
     origin: agent_config
@@ -41,4 +42,89 @@ checks:
     description: Required Toolchain and ToolchainManager imports exist
     source: CLAUDE.md - Use JetBrains MCP tools for file operations
 
-rubric: []
+  # Pass-to-pass tests - Static checks (file reads, not subprocess)
+  - id: test_repo_file_exists
+    type: pass_to_pass
+    origin: static
+    description: Target Java file exists and is readable
+
+  - id: test_repo_pom_exists
+    type: pass_to_pass
+    origin: static
+    description: Maven pom.xml exists and is valid XML
+
+  - id: test_repo_directory_structure
+    type: pass_to_pass
+    origin: static
+    description: Maven plugin directory has expected structure
+
+  - id: test_repo_java_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: Target file has valid Java syntax structure
+
+  # Pass-to-pass tests - Repo CI commands (subprocess.run)
+  - id: test_maven_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: Maven is installed and functional
+
+  - id: test_java_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: Java is installed and functional
+
+  - id: test_pom_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Maven can validate the pom.xml
+
+  - id: test_maven_validate
+    type: pass_to_pass
+    origin: repo_tests
+    description: Maven validate passes for the plugin
+
+  - id: test_maven_help_effective_pom
+    type: pass_to_pass
+    origin: repo_tests
+    description: Maven can generate effective POM
+
+  - id: test_maven_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: Maven clean works on the plugin
+
+  - id: test_maven_dependency_tree
+    type: pass_to_pass
+    origin: repo_tests
+    description: Maven can show dependency tree
+
+  - id: test_maven_plugin_descriptor
+    type: pass_to_pass
+    origin: repo_tests
+    description: Maven plugin descriptor generation works
+
+rubric:
+  - rule: "Use JetBrains annotations (@NotNull, @Nullable) for null-safety documentation on public/protected methods and parameters."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "1-50"
+      commit: "18c87a604b930e8d6bcf50f2e182f5f9ceac09ab"
+
+  - rule: "Follow existing field naming conventions: use protected visibility and descriptive names for @Parameter and @Component fields."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "1-50"
+      commit: "18c87a604b930e8d6bcf50f2e182f5f9ceac09ab"
+
+  - rule: "When parameters can conflict, log appropriate warnings explaining which value takes precedence."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "1-50"
+      commit: "18c87a604b930e8d6bcf50f2e182f5f9ceac09ab"
+
+  - rule: "Verify files with get_file_problems after writing code and fix any warnings related to the changes."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "77-82"
+      commit: "18c87a604b930e8d6bcf50f2e182f5f9ceac09ab"

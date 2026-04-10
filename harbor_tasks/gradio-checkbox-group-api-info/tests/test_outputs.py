@@ -40,9 +40,9 @@ def test_repo_component_imports():
     assert r.returncode == 0, f"ColoredCheckboxGroup import failed:\n{r.stderr}"
 
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_checkbox_group_tests():
-    """Repo checkbox group component tests pass (pass_to_pass)."""
+    """Repo's checkbox group component tests pass (pass_to_pass)."""
     r = subprocess.run(
         ["python3", "-m", "pytest", "test/components/test_checkbox_group.py", "-v", "--tb=short", "-x"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -58,6 +58,45 @@ def test_syntax_check():
         capture_output=True, timeout=15,
     )
     assert r.returncode == 0, f"Syntax error:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_module_compilation():
+    """Modified file can be imported as a Python module (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "from gradio.components.custom_html_components import colored_checkbox_group; "
+         "print('Module imported successfully')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Module import failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_gr_checkbox_group_functionality():
+    """Repo's core CheckboxGroup component functionality works (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import gradio as gr; "
+         "cb = gr.CheckboxGroup(['a', 'b', 'c']); "
+         "result = cb.preprocess(['a', 'c']); "
+         "assert result == ['a', 'c'], f'preprocess failed: {result}'; "
+         "print('CheckboxGroup functionality OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CheckboxGroup functionality failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_custom_html_components_import():
+    """Custom HTML components package imports successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "from gradio.components import custom_html_components; "
+         "print('Custom HTML components package imported')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Custom HTML components import failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

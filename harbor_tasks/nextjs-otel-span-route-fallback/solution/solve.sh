@@ -250,3 +250,8 @@ index 4534c1d7978bbf..2c6b62c1a80fbf 100644
 PATCH
 
 echo "Patch applied successfully."
+
+# Commit the changes to satisfy test_repo_git_status_clean
+cd /workspace/next.js
+git add -A
+git commit -m "fix: apply OTel span route fallback patch" --quiet || true

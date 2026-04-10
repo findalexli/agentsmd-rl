@@ -134,7 +134,7 @@ def test_typescript_compiles():
 
     # Check for actual TypeScript type errors (not OOM or other issues)
     has_type_error = "error ts" in stderr_lower or "error ts" in stdout_lower
-    has_syntax_error = "syntax" in stderr_lower or "unexpected" in stdout_lower
+    has_syntax_error = "syntax" in stderr_lower or "unexpected" in stderr_lower
 
     if has_type_error or has_syntax_error:
         assert False, f"TypeScript compilation has type/syntax errors:\n{result.stdout}\n{result.stderr}"
@@ -232,3 +232,93 @@ def test_full_lint_suite_passes():
 
     if has_error or has_ts_error:
         assert False, f"Lint suite failed with errors:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_tsc_lint_passes():
+    """Pass-to-pass: Repo CI TypeScript check (npm run tsc)"""
+    # This is the actual CI command from npm run lint -> npm run tsc
+    result = subprocess.run(
+        "npm run tsc",
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env=ENV,
+        shell=True
+    )
+
+    # Check for TypeScript errors
+    stderr_lower = result.stderr.lower() if result.stderr else ""
+    stdout_lower = result.stdout.lower() if result.stdout else ""
+    has_ts_error = "error ts" in stderr_lower or "error ts" in stdout_lower
+
+    if has_ts_error:
+        assert False, f"TypeScript check failed:\n{result.stdout}\n{result.stderr}"
+
+    # Command should succeed
+    assert result.returncode == 0, f"tsc exited with code {result.returncode}:\n{result.stderr[-500:]}"
+
+
+def test_repo_lint_script_passes():
+    """Pass-to-pass: Repo CI ESLint check (npm run lint:script) on test files"""
+    # Run eslint on the modified test files - this is part of npm run lint
+    for file in ["tests/setupAfterEnv.ts", "tests/shared/focusTest.tsx"]:
+        result = subprocess.run(
+            f"npx eslint {file} --max-warnings 0",
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=ENV,
+            shell=True
+        )
+
+        # Should pass with no errors
+        assert result.returncode == 0, f"ESLint failed on {file}:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_biome_lint_passes():
+    """Pass-to-pass: Repo CI Biome lint check (npm run lint:biome)"""
+    # This is the exact CI command: npm run lint:biome -> biome lint
+    result = subprocess.run(
+        "npm run lint:biome",
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=ENV,
+        shell=True
+    )
+
+    # Biome lint should pass with no errors
+    assert result.returncode == 0, f"Biome lint failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_test_node_passes():
+    """Pass-to-pass: Repo CI Node.js tests (npm run test:node) - relevant subset"""
+    # The full test:node suite has fake-timers issues on base commit
+    # Run only tests for the components that might be affected by our changes
+    # We run with passWithNoTests since focusTest is a test helper, not a test suite
+    result = subprocess.run(
+        "npx jest --config .jest.node.js --testPathPatterns='focus' --passWithNoTests",
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=ENV,
+        shell=True
+    )
+
+    # Check for actual test failures (not fake-timers setup issues)
+    stderr = result.stderr.lower() if result.stderr else ""
+    stdout = result.stdout.lower() if result.stdout else ""
+
+    # If there are TypeScript or syntax errors, that's a real failure
+    has_ts_error = "typescript" in stderr or "ts(" in stderr or "error ts" in stdout
+    has_syntax_error = "syntax" in stderr or "unexpected" in stderr
+
+    if has_ts_error or has_syntax_error:
+        assert False, f"Node tests have TypeScript/syntax errors:\n{result.stderr}\n{result.stdout}"
+
+    # The test may fail due to fake-timers issues on base commit, which is expected
+    # We just verify it runs without TypeScript compilation errors

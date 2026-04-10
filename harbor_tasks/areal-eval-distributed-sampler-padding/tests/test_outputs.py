@@ -205,6 +205,33 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """dataloader.py compiles as valid Python bytecode (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", str(FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compile failed:\n{r.stderr}"
+
+
+# [static] pass_to_pass
+def test_no_trailing_whitespace():
+    """dataloader.py has no trailing whitespace (pass_to_pass)."""
+    source = FILE.read_text()
+    lines = source.split('\n')
+    for i, line in enumerate(lines, 1):
+        if line != line.rstrip():
+            assert False, f"Trailing whitespace found at line {i}"
+
+
+# [static] pass_to_pass
+def test_eof_newline():
+    """dataloader.py ends with a newline (pass_to_pass)."""
+    source = FILE.read_text()
+    assert source.endswith('\n'), "File must end with a newline"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------

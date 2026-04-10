@@ -39,9 +39,9 @@ def test_tsc_no_errors():
 
 
 def test_eslint_no_errors():
-    """ESLint passes without errors (pass_to_pass)."""
+    """ESLint passes without errors on the table directory (pass_to_pass)."""
     r = subprocess.run(
-        ["npm", "run", "lint:script", "--", "components/table/hooks/useSelection.tsx"],
+        ["npm", "run", "lint:script", "--", "components/table/"],
         cwd=REPO,
         capture_output=True,
         text=True,
@@ -84,6 +84,38 @@ def test_node_tests():
         timeout=120,
     )
     assert r.returncode == 0, f"Node tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_table_rowSelection_unit():
+    """Table rowSelection unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "npm", "test", "--",
+            "--testPathPatterns=Table.rowSelection",
+            "--no-coverage",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, f"Table rowSelection tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_table_all_unit():
+    """All Table component unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "npm", "test", "--",
+            "--testPathPatterns=Table\\.",
+            "--no-coverage",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Table tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
 def test_useSelection_file_exists():

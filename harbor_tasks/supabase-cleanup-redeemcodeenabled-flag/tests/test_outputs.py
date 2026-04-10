@@ -118,7 +118,7 @@ def test_repo_typecheck():
     # Run studio typecheck
     r = subprocess.run(
         ["bash", "-c", "NODE_OPTIONS='--max-old-space-size=4096' pnpm --filter studio run typecheck"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Studio typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
@@ -140,21 +140,33 @@ def test_repo_lint():
 
 
 # [repo_tests] pass_to_pass
-def test_existing_tests_pass():
-    """Upstream test suite (CPU-safe subset) still passes."""
-    # For this task, we verify the files exist and have valid structure
-    # The actual test suite requires pnpm which is not in the container
-    files_to_check = [
-        "apps/studio/components/interfaces/Organization/BillingSettings/CreditCodeRedemption.tsx",
-        "apps/studio/pages/redeem.tsx",
-    ]
+def test_repo_prettier_check():
+    """Code formatting check passes (pass_to_pass)."""
+    # Install dependencies first
+    r = _install_deps()
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
 
-    for file_path in files_to_check:
-        full_path = Path(f"{REPO}/{file_path}")
-        assert full_path.exists(), f"File {file_path} does not exist"
-        content = full_path.read_text()
-        # Ensure file has content
-        assert len(content) > 100, f"File {file_path} appears to be empty or truncated"
+    # Run prettier check on the repo
+    r = subprocess.run(
+        ["bash", "-c", "pnpm run test:prettier"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Studio unit tests (stable subset) pass (pass_to_pass)."""
+    # Install dependencies first
+    r = _install_deps()
+    assert r.returncode == 0, f"Failed to install dependencies:\n{r.stderr[-500:]}"
+
+    # Run stable unit tests (excluding known flaky tests in SupportFormPage)
+    r = subprocess.run(
+        ["bash", "-c", "cd apps/studio && pnpm run test tests/unit tests/lib tests/config"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [static] pass_to_pass

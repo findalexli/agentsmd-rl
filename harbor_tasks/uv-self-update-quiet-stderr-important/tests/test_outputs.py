@@ -211,6 +211,15 @@ def test_repo_clippy():
     assert r.returncode == 0, f"Clippy check failed:\n{r.stderr[-1000:]}"
 
 
+def test_repo_cargo_check_lib():
+    """Repo uv library compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--package", "uv", "--lib"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check --lib failed:\n{r.stderr[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — wiring
 # ---------------------------------------------------------------------------

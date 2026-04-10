@@ -3,49 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0,
   "gold_reward": 1,
-  "validated_at": "2026-04-09T05:13:59.288547",
-  "total_time": 0.0,
-  "sandbox_id": "ipbz6bjf3mtdd51h4f3y3",
+  "validated_at": "2026-04-09T14:49:41.000970",
+  "total_time": 1289.96,
+  "sandbox_id": "ixp75d89nvsoy9lwot0ay",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "timestamp": "2026-04-09",
-      "ci_commands_discovered": [
-        "cargo xclippy - project-wide clippy lints (from .cargo/config.toml)",
-        "cargo xlint - license and lint checks (from .cargo/config.toml)",
-        "cargo fmt --all -- --check - formatting check",
-        "cargo nextest run - test runner used in CI (not installed in env)",
-        "cargo deny check - security advisories and license checks (not installed)",
-        "cargo test --doc - doc tests (requires full build)",
-        "cargo doc --workspace --no-deps - doc generation (requires full build)"
-      ],
-      "ci_commands_working": [
-        "cargo check -p sui-keys - 1m 33s",
-        "cargo clippy -p sui-keys --all-targets -- -D warnings - 1m 40s",
-        "cargo test -p sui-keys --lib - 24 tests passed",
-        "cargo fmt --all -- --check - instant"
-      ],
-      "ci_commands_not_working": [
-        "cargo check -p sui - fails due to librocksdb-sys requiring libclang",
-        "cargo xclippy -p sui-keys - xclippy doesn't support -p flag",
-        "cargo xlint - requires building 'x' package which takes too long",
-        "cargo deny - cargo-deny not installed"
-      ],
-      "p2p_tests_added": [
-        "test_repo_sui_keys_compiles - cargo check -p sui-keys",
-        "test_repo_sui_keys_clippy - cargo clippy -p sui-keys",
-        "test_repo_sui_keys_tests - cargo test -p sui-keys --lib",
-        "test_repo_sui_keys_formatting - cargo fmt --all -- --check"
-      ],
-      "notes": [
-        "sui-keys was selected as the relevant package since the fix modifies external.rs in sui-keys",
-        "sui package requires libclang for rocksdb which isn't available in the container",
-        "All 4 p2p tests pass on the base commit",
-        "Existing f2p tests fail as expected since the gold patch isn't applied"
-      ]
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 14.38,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -69,14 +39,21 @@
       "notes": "All 4 validations passed: (1) Docker build successful, (2) NOP test: 6 F2P tests fail on buggy code (9 P2P pass), (3) Gold test: all 15 tests pass after fix applied, (4) Rubric judge: ICR=1.0 >= 0.8. Fixed test_sui_commands_compiles to use rustfmt syntax check instead of cargo check since sui crate requires libclang which isn't available in the container.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1601.29
+      "time": 1.67
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.68,
+      "time": 0.16,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 5.76,
+      "notes": ""
     }
   },
   "history": [
@@ -87,6 +64,22 @@
       "backend": "fireworks",
       "time": 0.0,
       "at": "2026-04-09T05:13:59.288547"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 1289.7,
+      "at": "2026-04-09T14:49:40.838514"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 1289.96,
+      "at": "2026-04-09T14:49:41.000970"
     }
   ]
 }

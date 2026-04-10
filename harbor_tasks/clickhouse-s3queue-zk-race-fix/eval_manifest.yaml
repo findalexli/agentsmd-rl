@@ -7,24 +7,60 @@ source_pr:
   base_commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
 
 checks:
-  # Pass-to-pass checks: repo CI/CD tests
-  - id: "test_repo_cpp_style"
-    description: "Repo C++ style check passes (pass_to_pass)"
-    origin: repo_tests
-    file: "test_outputs.py"
-
-  - id: "test_repo_various_checks"
-    description: "Repo various checks pass (pass_to_pass)"
-    origin: repo_tests
-    file: "test_outputs.py"
-
+  # Pass-to-pass checks: Static code checks
   - id: "test_target_file_pragma_once"
     description: "Target header file has #pragma once (pass_to_pass)"
-    origin: repo_tests
+    origin: static
     file: "test_outputs.py"
 
   - id: "test_target_files_exist"
     description: "Target source files exist and are readable (pass_to_pass)"
+    origin: static
+    file: "test_outputs.py"
+
+  - id: "test_target_cpp_syntax_valid"
+    description: "Target C++ file has valid syntax - balanced braces/parens (pass_to_pass)"
+    origin: static
+    file: "test_outputs.py"
+
+  - id: "test_no_trailing_whitespace_in_target"
+    description: "Target files have no trailing whitespace (pass_to_pass)"
+    origin: static
+    file: "test_outputs.py"
+
+  - id: "test_no_tabs_in_target"
+    description: "Target files use spaces not tabs (pass_to_pass)"
+    origin: static
+    file: "test_outputs.py"
+
+  - id: "test_include_guards_for_target_dir"
+    description: "Header files in target dir have include guards (pass_to_pass)"
+    origin: static
+    file: "test_outputs.py"
+
+  - id: "test_file_size_reasonable"
+    description: "Target file size is reasonable (pass_to_pass)"
+    origin: static
+    file: "test_outputs.py"
+
+  - id: "test_no_conflict_markers_in_target"
+    description: "Target files have no git conflict markers (pass_to_pass)"
+    origin: static
+    file: "test_outputs.py"
+
+  - id: "test_no_dos_newlines_in_target"
+    description: "Target files use Unix newlines not DOS (pass_to_pass)"
+    origin: static
+    file: "test_outputs.py"
+
+  # Pass-to-pass checks: Actual repo CI/CD tests
+  - id: "test_repo_typos"
+    description: "Repo typos check passes using codespell (pass_to_pass)"
+    origin: repo_tests
+    file: "test_outputs.py"
+
+  - id: "test_repo_git_status"
+    description: "Repo has clean git status at base commit (pass_to_pass)"
     origin: repo_tests
     file: "test_outputs.py"
 
@@ -64,4 +100,21 @@ checks:
     origin: behavior
     file: "test_outputs.py"
 
-rubric: []
+rubric:
+  - rule: "Log all ZooKeeper/Keeper entry deletions at an appropriate log level"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "119-120"
+      commit: "c71831a6b0df9e6b69eaba0e4cf83801c1fb3832"
+
+  - rule: "Handle ZBADVERSION errors gracefully for race condition safety in ZooKeeper operations"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "103-104"
+      commit: "c71831a6b0df9e6b69eaba0e4cf83801c1fb3832"
+
+  - rule: "When mentioning logical errors in comments or logs, use 'exception' instead of 'crash'"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "6"
+      commit: "c71831a6b0df9e6b69eaba0e4cf83801c1fb3832"

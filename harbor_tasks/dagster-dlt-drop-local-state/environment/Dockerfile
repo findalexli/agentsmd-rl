@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for faster package management
-RUN pip install uv
+RUN pip install uv ruff==0.15.0
 
 # Create workspace and logs directories
 RUN mkdir -p /workspace/dagster /logs/verifier
@@ -20,12 +20,22 @@ RUN git clone --filter=blob:none https://github.com/dagster-io/dagster.git /work
 WORKDIR /workspace/dagster
 RUN git checkout 095d02df486d2ab390f8d2385e1ef9413ecf37e0
 
-# Install dagster-dlt and its dependencies
-WORKDIR /workspace/dagster/python_modules/libraries/dagster-dlt
-RUN uv pip install -e ".[test]" --system
+# Install monorepo dependencies in the correct order using uv
+# First install dagster-pipes (no internal deps)
+WORKDIR /workspace/dagster/python_modules/dagster-pipes
+RUN uv pip install -e "." --system
 
-# Also install dagster core
+# Install dagster-shared (no internal deps)
+WORKDIR /workspace/dagster/python_modules/libraries/dagster-shared
+RUN uv pip install -e "." --system
+
+# Install dagster core (depends on dagster-pipes and dagster-shared)
 WORKDIR /workspace/dagster/python_modules/dagster
-RUN uv pip install -e ".[test]" --system
+RUN uv pip install -e "." --system
+
+# Install dagster-dlt using pip (avoid [test] dependencies that conflict)
+WORKDIR /workspace/dagster/python_modules/libraries/dagster-dlt
+RUN pip install -e "." --no-deps
+RUN pip install dlt duckdb pytest
 
 WORKDIR /workspace/dagster

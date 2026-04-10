@@ -13,6 +13,7 @@ import os
 REPO = "/workspace/continue"
 TARGET_FILE = f"{REPO}/core/tools/systemMessageTools/toolCodeblocks/index.ts"
 
+
 def test_typescript_compilation():
     """Verify the TypeScript file compiles without errors."""
     result = subprocess.run(
@@ -22,7 +23,8 @@ def test_typescript_compilation():
         text=True,
         timeout=60
     )
-    assert result.returncode == 0, f"TypeScript compilation failed:\n{result.stderr}"
+    # Accept returncode 0 as success - the file has valid TypeScript syntax
+    assert result.returncode == 0, f"TypeScript compilation failed:\n{result.stdout}\n{result.stderr}"
 
 
 def test_system_message_prefix_no_inline_backticks():
@@ -30,10 +32,9 @@ def test_system_message_prefix_no_inline_backticks():
     with open(TARGET_FILE, 'r') as f:
         content = f.read()
 
-    # Find the systemMessagePrefix assignment
-    # Match from the backtick after = until the final backtick before the semicolon
+    # Find the systemMessagePrefix assignment - use a pattern that allows backticks inside
     match = re.search(
-        r'systemMessagePrefix\s*=\s*`([^`]*?)`;',
+        r'systemMessagePrefix\s*=\s*`((?:[^`]|\\`)*?)`;',
         content,
         re.DOTALL
     )
@@ -41,9 +42,9 @@ def test_system_message_prefix_no_inline_backticks():
 
     prefix_content = match.group(1)
 
-    # The prose should NOT contain literal triple backticks
-    # The base commit has: "a tool code block (```tool)"
-    assert '```tool' not in prefix_content, \
+    # The prose should NOT contain literal triple backticks (even if escaped)
+    # The base commit has: "a tool code block (\`\`\`tool)"
+    assert '\\`\\`\\`tool' not in prefix_content and '```tool' not in prefix_content, \
         "systemMessagePrefix contains inline triple backticks - this causes fence nesting ambiguity"
 
     # The corrected text should be present
@@ -58,7 +59,7 @@ def test_system_message_suffix_no_inline_backticks():
 
     # Find the systemMessageSuffix assignment
     match = re.search(
-        r'systemMessageSuffix\s*=\s*`([^`]*?)`;',
+        r'systemMessageSuffix\s*=\s*`((?:[^`]|\\`)*?)`;',
         content,
         re.DOTALL
     )
@@ -67,20 +68,10 @@ def test_system_message_suffix_no_inline_backticks():
     suffix_content = match.group(1)
 
     # The prose should NOT contain literal triple backticks in rule descriptions
-    # Rule 1 in base: "output a ```tool code block"
+    # Rule 1 in base: "output a \`\`\`tool code block"
     # Should be: "output a tool code block"
-    assert '```tool' not in suffix_content, \
+    assert '\\`\\`\\`tool' not in suffix_content and '```tool' not in suffix_content, \
         "Rule 1 contains inline triple backticks - should be 'tool code block' not '```tool code block'"
-
-    # Rule 4 in base: "closing ```"
-    # Should be: "closing fence"
-    # Look for isolated triple backticks (not part of example fences)
-    lines = suffix_content.split('\n')
-    for line in lines:
-        # Check if line contains ``` that's not part of a known good pattern
-        if '```' in line and '```tool_definition' not in line and '```tool' not in line:
-            # This shouldn't happen in the prose text
-            pass  # We already checked for ```tool above
 
 
 def test_system_message_suffix_has_expected_content():
@@ -90,7 +81,7 @@ def test_system_message_suffix_has_expected_content():
 
     # Match template literal
     match = re.search(
-        r'systemMessageSuffix\s*=\s*`([^`]*?)`;',
+        r'systemMessageSuffix\s*=\s*`((?:[^`]|\\`)*?)`;',
         content,
         re.DOTALL
     )
@@ -112,10 +103,10 @@ def test_class_properties_are_strings():
         content = f.read()
 
     # Both should be defined with template literals (backticks)
-    # Check for pattern: propertyName = `...`;
-    assert re.search(r'systemMessagePrefix\s*=\s*`[^`]*`;', content, re.DOTALL), \
+    # Use pattern that allows escaped backticks inside
+    assert re.search(r'systemMessagePrefix\s*=\s*`(?:[^`]|\\`)*`;', content, re.DOTALL), \
         "systemMessagePrefix should be a template literal"
-    assert re.search(r'systemMessageSuffix\s*=\s*`[^`]*`;', content, re.DOTALL), \
+    assert re.search(r'systemMessageSuffix\s*=\s*`(?:[^`]|\\`)*`;', content, re.DOTALL), \
         "systemMessageSuffix should be a template literal"
 
 
@@ -125,7 +116,8 @@ def test_example_fences_remain_unchanged():
         content = f.read()
 
     # The example tool definitions should still have proper triple backticks
-    assert "```tool_definition" in content, \
+    # Check for escaped backticks in the source
+    assert "\\`\\`\\`tool_definition" in content or "```tool_definition" in content, \
         "Example tool definition fences should remain intact"
     assert "exampleDynamicToolDefinition" in content, \
         "exampleDynamicToolDefinition should be present"
@@ -141,3 +133,29 @@ def test_accepted_tool_call_starts_unaffected():
     # These patterns should still have the actual backticks for parsing
     assert '["```tool\\n", "```tool\\n"]' in content, \
         "acceptedToolCallStarts should still contain actual backtick patterns"
+
+
+def test_repo_prettier_check():
+    """Repo's Prettier formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "core/tools/systemMessageTools/**/*.ts",
+         "--ignore-path", ".gitignore"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tsc_core():
+    """Core TypeScript compilation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "--skipLibCheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/core",
+    )
+    # tsc returns 0 for success, 2 for errors
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stdout[-500:]}"

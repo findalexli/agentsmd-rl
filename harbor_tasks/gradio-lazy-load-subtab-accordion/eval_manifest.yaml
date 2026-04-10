@@ -47,4 +47,23 @@ checks:
     origin: repo_tests
     description: "Repo's client package builds successfully"
 
-rubric: []
+  - id: repo_vitest_i18n
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's i18n unit tests pass"
+
+rubric:
+  - rule: "The make_visible_if_not_rendered function must have the is_target_node parameter to control recursion behavior."
+    source:
+      path: "js/core/src/init.svelte.ts"
+      commit: "ccff8b8cacffe36a270fcea9fc8ba29b78c31c8d"
+
+  - rule: "The Tabs component handling must check child.type === 'tabitem' and only recurse into the selected tab's children."
+    source:
+      path: "js/core/src/init.svelte.ts"
+      commit: "ccff8b8cacffe36a270fcea9fc8ba29b78c31c8d"
+
+  - rule: "The Accordion component handling must check for open === false and skip recursion when not the target node."
+    source:
+      path: "js/core/src/init.svelte.ts"
+      commit: "ccff8b8cacffe36a270fcea9fc8ba29b78c31c8d"

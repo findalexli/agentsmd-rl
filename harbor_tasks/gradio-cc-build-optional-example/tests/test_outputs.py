@@ -186,3 +186,49 @@ def test_repo_preview_build():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Preview package build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_build():
+    """Repo's @gradio/client package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # pnpm install
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # client package build
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client package build failed:\n{r.stderr[-500:]}"
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_install_frozen_lockfile():
+    """Repo's pnpm lockfile is valid and installable (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install --frozen-lockfile failed:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_check():
+    """Modified build.ts has valid Node.js syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", BUILD_TS],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js syntax check failed:\\n{r.stderr[-500:]}"

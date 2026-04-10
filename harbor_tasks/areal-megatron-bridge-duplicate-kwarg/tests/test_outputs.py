@@ -52,7 +52,7 @@ for node in ast.walk(tree):
         names = [kw.arg for kw in node.keywords if kw.arg is not None]
         seen = set()
         for k in names:
-            assert k not in seen, 'Duplicate keyword argument at line ' + str(node.lineno)
+            assert k not in seen, "Duplicate keyword argument at line " + str(node.lineno)
             seen.add(k)
 """
     )
@@ -68,11 +68,11 @@ import ast
 tree = ast.parse(open(FILE).read())
 found = False
 for node in ast.walk(tree):
-    if isinstance(node, ast.Call) and hasattr(node.func, 'attr') and node.func.attr == 'from_hf_pretrained':
+    if isinstance(node, ast.Call) and hasattr(node.func, "attr") and node.func.attr == "from_hf_pretrained":
         found = True
-        count = sum(1 for kw in node.keywords if kw.arg == 'trust_remote_code')
-        assert count == 1, 'Expected trust_remote_code exactly once, found ' + str(count)
-assert found, 'from_hf_pretrained call not found'
+        count = sum(1 for kw in node.keywords if kw.arg == "trust_remote_code")
+        assert count == 1, "Expected trust_remote_code exactly once, found " + str(count)
+assert found, "from_hf_pretrained call not found"
 """
     )
     assert r.returncode == 0, f"Check failed: {r.stderr}"
@@ -87,11 +87,11 @@ import ast
 tree = ast.parse(open(FILE).read())
 found = False
 for node in ast.walk(tree):
-    if isinstance(node, ast.Call) and hasattr(node.func, 'attr') and node.func.attr == 'from_hf_pretrained':
+    if isinstance(node, ast.Call) and hasattr(node.func, "attr") and node.func.attr == "from_hf_pretrained":
         found = True
-        has_dtype = any(kw.arg == 'dtype' for kw in node.keywords)
-        assert has_dtype, 'from_hf_pretrained missing dtype argument'
-assert found, 'from_hf_pretrained call not found'
+        has_dtype = any(kw.arg == "dtype" for kw in node.keywords)
+        assert has_dtype, "from_hf_pretrained missing dtype argument"
+assert found, "from_hf_pretrained call not found"
 """
     )
     assert r.returncode == 0, f"Check failed: {r.stderr}"
@@ -121,9 +121,9 @@ def test_mbridge_path_has_trust_remote_code():
 
 # [pr_diff] pass_to_pass
 def test_megatron_bridge_path_exists():
-    """The 'megatron-bridge' code path is still present in the file."""
+    """The megatron-bridge code path is still present in the file."""
     source = FILE.read_text()
-    assert '"megatron-bridge"' in source or "'megatron-bridge'" in source, (
+    assert "\"megatron-bridge\"" in source or "megatron-bridge" in source, (
         "megatron-bridge code path was deleted instead of fixed"
     )
 
@@ -206,7 +206,7 @@ def test_no_bare_print_in_method():
 
 
 # -----------------------------------------------------------------------------
-# Repo CI/CD pass-to-pass gates (ensure fix doesn't break existing functionality)
+# Repo CI/CD pass-to-pass gates (ensure fix does not break existing functionality)
 # -----------------------------------------------------------------------------
 
 
@@ -216,9 +216,9 @@ def test_repo_pyproject_toml_valid():
     r = _run_python(
         """\
 import tomllib
-with open(REPO / 'pyproject.toml', 'rb') as f:
+with open(REPO / "pyproject.toml", "rb") as f:
     tomllib.load(f)
-print('pyproject.toml is valid TOML')
+print("pyproject.toml is valid TOML")
 """
     )
     assert r.returncode == 0, f"pyproject.toml TOML validation failed:\n{r.stderr}"
@@ -271,22 +271,22 @@ def test_repo_engine_syntax_valid():
         """\
 import py_compile
 import os
-engine_dir = REPO / 'areal/engine'
+engine_dir = REPO / "areal/engine"
 errors = []
 for root, dirs, files in os.walk(engine_dir):
     for file in files:
-        if file.endswith('.py'):
+        if file.endswith(".py"):
             filepath = os.path.join(root, file)
             try:
                 py_compile.compile(filepath, doraise=True)
             except py_compile.PyCompileError as e:
-                errors.append(f'{filepath}: {e}')
+                errors.append(f"{filepath}: {e}")
 if errors:
-    print('Syntax errors found:')
+    print("Syntax errors found:")
     for e in errors:
         print(e)
     exit(1)
-print('All engine files have valid syntax')
+print("All engine files have valid syntax")
 """
     )
     assert r.returncode == 0, f"Engine syntax check failed:\n{r.stderr[-500:]}"
@@ -307,11 +307,171 @@ def test_repo_file_ends_with_newline():
     content = FILE.read_bytes()
     if not content:
         assert False, "File is empty"
-    if not content.endswith(b'\n'):
+    if not content.endswith(b"\n"):
         assert False, "File does not end with newline"
     # Check for multiple trailing newlines (more than 1)
-    if content.endswith(b'\n\n'):
+    if content.endswith(b"\n\n"):
         assert False, "File has multiple trailing newlines"
+
+
+# [repo_ci] pass_to_pass — YAML syntax validation for all YAML files
+def test_repo_yaml_valid():
+    """All YAML files in the repo have valid syntax (pass_to_pass)."""
+    # Install pyyaml first
+    subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    r = _run_python(
+        """\
+import yaml
+import os
+repo = REPO
+errors = []
+for root, dirs, files in os.walk(repo):
+    dirs[:] = [d for d in dirs if not d.startswith(".") and d not in [".git", "node_modules"]]
+    for file in files:
+        if file.endswith((".yaml", ".yml")):
+            filepath = os.path.join(root, file)
+            try:
+                with open(filepath) as f:
+                    yaml.safe_load(f)
+            except Exception as e:
+                errors.append(f"{filepath}: {e}")
+if errors:
+    print("YAML errors:")
+    for e in errors[:10]:
+        print(e)
+    exit(1)
+print("All YAML files are valid")
+"""
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — JSON syntax validation for all JSON files
+def test_repo_json_valid():
+    """All JSON files in the repo have valid syntax (pass_to_pass)."""
+    r = _run_python(
+        """\
+import json
+import os
+repo = REPO
+errors = []
+for root, dirs, files in os.walk(repo):
+    dirs[:] = [d for d in dirs if not d.startswith(".") and d not in [".git", "node_modules"]]
+    for file in files:
+        if file.endswith(".json"):
+            filepath = os.path.join(root, file)
+            try:
+                with open(filepath) as f:
+                    json.load(f)
+            except Exception as e:
+                errors.append(f"{filepath}: {e}")
+if errors:
+    print("JSON errors:")
+    for e in errors[:10]:
+        print(e)
+    exit(1)
+print("All JSON files are valid")
+"""
+    )
+    assert r.returncode == 0, f"JSON validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — detect private keys in repo files
+def test_repo_no_private_keys():
+    """No private keys detected in repo files (pass_to_pass)."""
+    r = _run_python(
+        """\
+import os
+import re
+repo = REPO
+key_patterns = [
+    r"BEGIN OPENSSH PRIVATE KEY",
+    r"BEGIN RSA PRIVATE KEY",
+    r"BEGIN DSA PRIVATE KEY",
+    r"BEGIN EC PRIVATE KEY",
+    r"BEGIN PGP PRIVATE KEY",
+    r"BEGIN PRIVATE KEY",
+]
+found = []
+for root, dirs, files in os.walk(repo):
+    dirs[:] = [d for d in dirs if not d.startswith(".") and d not in [".git", "node_modules"]]
+    for file in files:
+        if file.endswith((".py", ".yaml", ".yml", ".json", ".sh", ".md")):
+            filepath = os.path.join(root, file)
+            try:
+                with open(filepath) as f:
+                    content = f.read()
+                    for pattern in key_patterns:
+                        if re.search(pattern, content):
+                            found.append(f"{filepath}: {pattern}")
+                            break
+            except:
+                pass
+if found:
+    print("Private keys detected:")
+    for f in found[:10]:
+        print(f)
+    exit(1)
+print("No private keys detected")
+"""
+    )
+    assert r.returncode == 0, f"Private key check failed:\n{r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass — verify package metadata in pyproject.toml matches expected
+def test_repo_package_name_valid():
+    """Package name in pyproject.toml is 'areal' (pass_to_pass)."""
+    r = _run_python(
+        """\
+import tomllib
+with open(REPO / "pyproject.toml", "rb") as f:
+    config = tomllib.load(f)
+    name = config.get("project", {}).get("name")
+    assert name == "areal", f"Expected package name 'areal', got '{name}'"
+    print(f"Package name verified: {name}")
+"""
+    )
+    assert r.returncode == 0, f"Package name check failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — verify AST can be parsed for areal/__init__.py
+def test_repo_areal_init_ast_valid():
+    """areal/__init__.py has valid AST structure (pass_to_pass)."""
+    r = _run_python(
+        """\
+import ast
+with open(REPO / "areal/__init__.py") as f:
+    source = f.read()
+try:
+    ast.parse(source)
+    print("areal/__init__.py has valid AST")
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    exit(1)
+"""
+    )
+    assert r.returncode == 0, f"AST check failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — verify required project URLs present
+def test_repo_project_urls_valid():
+    """pyproject.toml has required project URLs (pass_to_pass)."""
+    r = _run_python(
+        """\
+import tomllib
+with open(REPO / "pyproject.toml", "rb") as f:
+    config = tomllib.load(f)
+    urls = config.get("project", {}).get("urls", {})
+    assert "Homepage" in urls, "Missing Homepage URL"
+    assert "Repository" in urls, "Missing Repository URL"
+    print(f"Project URLs verified: {list(urls.keys())}")
+"""
+    )
+    assert r.returncode == 0, f"Project URLs check failed:\n{r.stderr}"
 
 
 import pytest

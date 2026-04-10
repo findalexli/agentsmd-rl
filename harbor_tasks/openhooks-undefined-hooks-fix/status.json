@@ -3,96 +3,50 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T08:11:39.450990",
-  "total_time": 0.0,
-  "sandbox_id": "inzcxkcca0q0f2qx2qh5u",
+  "validated_at": "2026-04-09T23:58:55.885166",
+  "total_time": 7187.87,
+  "sandbox_id": "i88k8bid3ltkuaaxfyq5u",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "ci_commands_discovered": [
-        {
-          "command": "npm run build",
-          "source": "fe-unit-tests.yml workflow",
-          "status": "added_as_p2p"
-        },
-        {
-          "command": "npx eslint src --ext .ts,.tsx,.js",
-          "source": "lint.yml workflow",
-          "status": "added_as_p2p"
-        },
-        {
-          "command": "npx prettier --check src/**/*.{ts,tsx}",
-          "source": "lint.yml workflow",
-          "status": "added_as_p2p"
-        },
-        {
-          "command": "npm run check-translation-completeness",
-          "source": "lint.yml workflow",
-          "status": "added_as_p2p"
-        },
-        {
-          "command": "npm run test -- __tests__/components/features/conversation-panel/",
-          "source": "repo test suite - focused on affected components",
-          "status": "added_as_p2p"
-        }
-      ],
-      "tests_added": [
-        "test_eslint_passes",
-        "test_prettier_passes",
-        "test_repo_builds",
-        "test_translation_completeness",
-        "test_conversation_panel_tests"
-      ],
-      "commands_skipped": [
-        {
-          "command": "npm run test:coverage",
-          "reason": "Full test suite - use targeted test instead for speed"
-        },
-        {
-          "command": "playwright test",
-          "reason": "E2E tests - not in container scope"
-        },
-        {
-          "command": "pre-commit run",
-          "reason": "Python linting - not relevant to frontend fix"
-        }
-      ],
-      "verified_on_base_commit": true,
-      "timestamp": "2026-04-09T14:40:00Z"
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 33.9,
+      "notes": ""
     },
     "p2p_enrich": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 785.46,
-      "notes": ""
+      "status": "ok"
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0,
       "notes": "tests look good"
     },
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed test.sh to use --break-system-packages for pip and correct test path (/tests instead of /workspace/task/tests). Fixed test_typescript_compiles to handle pre-existing TypeScript errors in repository that are unrelated to the fix. All 4 validation checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "attempts": 1,
+      "notes": "All 4 validation checks pass: Docker build, NOP test (reward=0 - 3 fail-to-pass tests correctly fail), Gold test (reward=1 - all 14 tests pass), Rubric judge (ICR=1.00). Gold solution correctly applies optional hooks type and nullish coalescing operators.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1723.49
+      "time": 804.31
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.7,
+      "time": 1.15,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 3
     }
   },
   "history": [
@@ -100,9 +54,23 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
+      "at": "2026-04-10T06:58:00"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T08:11:39.450990"
+      "time": 7187.6,
+      "at": "2026-04-09T23:58:55.720911"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 7187.87,
+      "at": "2026-04-09T23:58:55.885166"
     }
   ]
 }

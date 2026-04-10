@@ -424,6 +424,39 @@ def test_no_truncated_functions():
 
 
 # [repo_tests] pass_to_pass
+def test_c_code_grep_patterns():
+    """C code has expected structure when checked with grep (pass_to_pass)."""
+    # Use grep to verify expected patterns exist (CI-style pattern check)
+    c_file = f"{REPO}/packages/bun-usockets/src/eventing/epoll_kqueue.c"
+
+    # Check for key functions using grep
+    r = subprocess.run(
+        ["grep", "-c", "us_loop_run", c_file],
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0 and int(r.stdout.decode().strip()) > 0, \
+        "us_loop_run not found in C file via grep"
+
+    # Check for epoll/kqueue system calls
+    r = subprocess.run(
+        ["grep", "-E", "bun_epoll_pwait2|kevent64", c_file],
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, "Neither epoll nor kqueue calls found via grep"
+
+    # Check for dispatch function
+    r = subprocess.run(
+        ["grep", "-c", "us_internal_dispatch_ready_polls", c_file],
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0 and int(r.stdout.decode().strip()) > 0, \
+        "dispatch function not found via grep"
+
+
+# [repo_tests] pass_to_pass
 def test_critical_macros_defined():
     """Critical compiler macros are used appropriately (pass_to_pass)."""
     src = _read_source()
@@ -435,6 +468,191 @@ def test_critical_macros_defined():
     # Check for platform detection
     assert "#ifdef" in src, "No conditional compilation found"
     assert "#ifndef" in src, "No #ifndef guards found"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD verification using available tools
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_modified_c_file_valid():
+    """Modified C file exists and is valid C source (pass_to_pass)."""
+    # Use git to verify the file is tracked and has content
+    r = subprocess.run(
+        ["git", "show", "HEAD:packages/bun-usockets/src/eventing/epoll_kqueue.c"],
+        capture_output=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to read C file from git: {r.stderr.decode()[-500:]}"
+    content = r.stdout.decode()
+    assert len(content) > 10000, f"C file too small ({len(content)} bytes)"
+
+    # Verify balanced braces using Python subprocess
+    brace_check = subprocess.run(
+        ["python3", "-c",
+         "import sys; src=sys.stdin.read(); " +
+         "open_braces=src.count('{'); close_braces=src.count('}'); " +
+         "sys.exit(0 if open_braces == close_braces else 1)"],
+        input=r.stdout,
+        capture_output=True,
+        timeout=30,
+    )
+    assert brace_check.returncode == 0, "C file has unbalanced braces"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_valid():
+    """Repository git status is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed: {r.stderr}"
+    # Check for merge conflicts or other broken states
+    for line in r.stdout.splitlines():
+        # Status codes:
+        # U = updated but unmerged (conflict)
+        # DD/AA/AU/UA/DU/UD = various conflict states
+        status_code = line[:2] if len(line) >= 2 else ""
+        # Fail on any conflict markers
+        if 'U' in status_code or status_code in ['DD', 'AA', 'AU', 'UA', 'DU', 'UD']:
+            assert False, f"Git conflict detected: {line}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_permissions_valid():
+    """Source files have valid permissions (pass_to_pass)."""
+    import os
+    import stat
+
+    # Check the modified C file
+    mode = os.stat(C_FILE).st_mode
+    # Should be regular file, readable
+    assert stat.S_ISREG(mode), f"{C_FILE} is not a regular file"
+    assert os.access(C_FILE, os.R_OK), f"{C_FILE} is not readable"
+
+    # Check the header file
+    header_mode = os.stat(HEADER_FILE).st_mode
+    assert stat.S_ISREG(header_mode), f"{HEADER_FILE} is not a regular file"
+    assert os.access(HEADER_FILE, os.R_OK), f"{HEADER_FILE} is not readable"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_directory_structure_valid():
+    """Required directories exist with expected structure (pass_to_pass)."""
+    import os
+
+    required_dirs = [
+        f"{REPO}/packages/bun-usockets/src",
+        f"{REPO}/packages/bun-usockets/src/eventing",
+        f"{REPO}/packages/bun-usockets/src/internal",
+    ]
+
+    for dir_path in required_dirs:
+        assert os.path.isdir(dir_path), f"Required directory missing: {dir_path}"
+        assert os.access(dir_path, os.R_OK), f"Directory not readable: {dir_path}"
+
+
+# [repo_tests] pass_to_pass
+def test_c_code_no_syntax_errors_basic():
+    """C code has basic structural validity (pass_to_pass)."""
+    src = _read_source()
+
+    # Check for basic syntax issues that would prevent parsing
+    # 1. No unclosed block comments (/* without */)
+    comment_opens = src.count('/*')
+    comment_closes = src.count('*/')
+    assert comment_opens == comment_closes, (
+        f"Unbalanced block comments: {comment_opens} opens, {comment_closes} closes"
+    )
+
+    # 2. No unclosed string literals in common cases
+    # Check for odd number of unescaped quotes on any line
+    lines = src.splitlines()
+    for i, line in enumerate(lines, 1):
+        # Skip comment-only lines
+        if '//' in line:
+            line = line[:line.index('//')]
+        # Count unescaped quotes
+        quotes = 0
+        escaped = False
+        for char in line:
+            if char == '\\' and not escaped:
+                escaped = True
+            elif char == '"' and not escaped:
+                quotes += 1
+                escaped = False
+            else:
+                escaped = False
+        # Odd quotes on a line might indicate issue (but can be valid in macros)
+        # Just check for obviously broken patterns like unclosed string at EOF
+
+    # 3. Check for balanced braces in the file overall
+    open_braces = src.count('{')
+    close_braces = src.count('}')
+    assert open_braces == close_braces, (
+        f"Unbalanced braces: {open_braces} open, {close_braces} close"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_c_header_file_valid():
+    """C header file has valid structure (pass_to_pass)."""
+    header_src = _read_header()
+
+    # Check braces balanced
+    open_braces = header_src.count('{')
+    close_braces = header_src.count('}')
+    assert open_braces == close_braces, (
+        f"Header unbalanced braces: {open_braces} open, {close_braces} close"
+    )
+
+    # Check header guards present
+    assert "#ifndef" in header_src, "Header missing #ifndef guard"
+    assert "#define" in header_src, "Header missing #define guard"
+
+    # No unclosed block comments
+    comment_opens = header_src.count('/*')
+    comment_closes = header_src.count('*/')
+    assert comment_opens == comment_closes, (
+        f"Header unbalanced block comments: {comment_opens} opens, {comment_closes} closes"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_header_file_grep_patterns():
+    """Header file has expected patterns when checked with grep (pass_to_pass)."""
+    header_file = f"{REPO}/packages/bun-usockets/src/internal/internal.h"
+
+    # Check LIBUS_MAX_READY_POLLS is defined using grep
+    r = subprocess.run(
+        ["grep", "LIBUS_MAX_READY_POLLS", header_file],
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, "LIBUS_MAX_READY_POLLS not found in header via grep"
+
+    # Check for header guards
+    r = subprocess.run(
+        ["grep", "-E", "#ifndef|#define|#endif", header_file],
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, "Header guards not found via grep"
+
+    # Use git to verify header file is tracked
+    r = subprocess.run(
+        ["git", "ls-files", "packages/bun-usockets/src/internal/internal.h"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0 and r.stdout.strip() != "", "Header file not tracked in git"
 
 
 # -----------------------------------------------------------------------------

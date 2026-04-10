@@ -71,6 +71,32 @@ checks:
     origin: repo_tests
     description: "Repo's unit tests for opencode package pass"
 
+  # Additional repo CI/CD tests for modified modules
+  - id: test_repo_worktree_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Worktree tests pass — covers worktree routing logic"
+
+  - id: test_repo_server_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Server tests pass — covers server routing and session handling"
+
+  - id: test_repo_control_plane_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Control-plane tests pass — covers workspace adaptors and SSE"
+
+  - id: test_repo_instance_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Instance/project tests pass — covers Instance.provide and bootstrap"
+
+  - id: test_repo_build_opencode
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Opencode package builds successfully"
+
   # Config-derived — AGENTS.md rules
   - id: no_any_type_in_router
     type: fail_to_pass

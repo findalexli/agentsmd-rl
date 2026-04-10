@@ -7,10 +7,18 @@ source:
   merge_commit: "494bb86169669f8dece646873b7c33904d8ddf6e"
 
 checks:
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass gates (origin: repo_tests) — CI lint/format checks
+  # ---------------------------------------------------------------------------
   - id: syntax_check
     type: pass_to_pass
     origin: static
     description: "Modified files must parse without errors"
+
+  - id: test_check_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files have valid AST"
 
   - id: test_ruff_check
     type: pass_to_pass
@@ -42,6 +50,19 @@ checks:
     origin: repo_tests
     description: "Repo's codespell spelling check passes on modified files"
 
+  - id: test_no_trailing_whitespace
+    type: pass_to_pass
+    origin: static
+    description: "Modified files have no trailing whitespace (pre-commit check)"
+
+  - id: test_end_of_file_fixer
+    type: pass_to_pass
+    origin: static
+    description: "Modified files end with single newline (pre-commit check)"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass gates (origin: pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
   - id: generate_req_caching_implemented
     type: fail_to_pass
     origin: pr_diff
@@ -57,9 +78,23 @@ checks:
     origin: pr_diff
     description: "tokenizer_manager._resolve_lora_path propagates lora_id to cached sub-objects"
 
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass gates (origin: static) — anti-stub checks
+  # ---------------------------------------------------------------------------
   - id: not_stub
     type: pass_to_pass
     origin: static
     description: "Modified __getitem__ methods have real caching logic, not just return statements"
 
-rubric: []
+rubric:
+  - rule: "Use comments to explain invariants and rationale, not narrate code. Comments should describe WHY something is done, not WHAT the code does."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "30"
+      commit: "ef2d4013d77cf1267e032d7a7a745dc3a6f74880"
+
+  - rule: "Follow existing code patterns when modifying dataclass __getitem__ methods. Use instance caching with _sub_obj_cache dictionary to ensure repeated obj[i] calls return the same instance."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "24-25"
+      commit: "ef2d4013d77cf1267e032d7a7a745dc3a6f74880"

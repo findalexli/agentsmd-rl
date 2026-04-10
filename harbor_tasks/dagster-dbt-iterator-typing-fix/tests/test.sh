@@ -9,7 +9,7 @@ if ! command -v pytest &> /dev/null; then
 fi
 
 # Run the tests and capture output
-pytest /workspace/task/tests/test_outputs.py -v 2>&1 | tee /logs/verifier/test_output.log
+pytest /tests/test_outputs.py -v 2>&1 | tee /logs/verifier/test_output.log
 
 # Write binary reward file
 if [ ${PIPESTATUS[0]} -eq 0 ]; then

@@ -70,4 +70,32 @@ checks:
     origin: static
     description: "orchestrator.py uses rollout['is_truncated'] directly instead of get_is_truncated()"
 
-rubric: []
+  # P2P Enrichment - CI/CD checks from the repo
+  - id: repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linter passes on modified orchestrator files"
+
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check passes on modified orchestrator files"
+
+rubric:
+  - rule: "When handling errors in trajectory processing, zero out the completion_mask to prevent logprob computation issues"
+    source:
+      path: "docs/trajectories.md"
+      lines: "17-20"
+      commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"
+
+  - rule: "Follow existing code style and match patterns in neighboring files. Use type annotations with Union syntax (X | Y) for return types that can be None"
+    source:
+      path: "pyproject.toml"
+      lines: "92-97"
+      commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"
+
+  - rule: "When adding or modifying configuration files (like configs/math_python/), update CHANGELOG.md to document the changes"
+    source:
+      path: ".cursor/BUGBOT.md"
+      lines: "3-11"
+      commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"

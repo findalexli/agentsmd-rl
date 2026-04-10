@@ -112,6 +112,36 @@ def test_syntax_check():
         src = Path(path).read_text()
         ast.parse(src)
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    # Install ruff if needed
+    subprocess.run(["pip", "install", "ruff==0.14.9", "-q"], capture_output=True, timeout=120)
+    r = subprocess.run(
+        ["ruff", "check", SERVER, RTENSOR],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    # Install ruff if needed
+    subprocess.run(["pip", "install", "ruff==0.14.9", "-q"], capture_output=True, timeout=120)
+    r = subprocess.run(
+        ["ruff", "format", "--check", SERVER, RTENSOR],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — server: /data/batch endpoint
@@ -452,7 +482,7 @@ def test_no_hardcoded_endpoints():
     # i.e., the hostname is a literal (not {something}).
     hardcoded_url_re = re.compile(r'"https?://[^{"\s][^"\s]*"')
     # Matches dotted-quad IP address literals like "192.168.1.1" or "127.0.0.1"
-    ip_literal_re = re.compile(r'"\d{1,3}(?:\.\d{1,3}){3}"')
+    ip_literal_re = re.compile(r"(?:(?!0\\.0\\.0\\.0\\b)\\d{1,3}(?:\\.\\d{1,3}){3})")
     for path in [SERVER, RTENSOR]:
         src = Path(path).read_text()
         url_matches = hardcoded_url_re.findall(src)

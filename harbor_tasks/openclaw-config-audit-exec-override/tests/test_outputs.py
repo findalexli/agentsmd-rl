@@ -143,6 +143,28 @@ def test_repo_security_audit_tests():
     assert r.returncode == 0, f"Security audit tests failed:\n{out[-1000:]}"
 
 
+# [repo_tests] pass_to_pass — CI/CD comprehensive check
+def test_repo_check():
+    """Repo's comprehensive check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    out = r.stdout + r.stderr
+    assert r.returncode == 0, f"Check failed:\n{out[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD strict build smoke test
+def test_repo_build_strict_smoke():
+    """Repo's strict build smoke test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "build:strict-smoke"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    out = r.stdout + r.stderr
+    assert r.returncode == 0, f"Build strict smoke failed:\n{out[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

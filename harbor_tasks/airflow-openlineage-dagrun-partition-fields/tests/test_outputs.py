@@ -211,3 +211,17 @@ def test_no_duplicate_partition_fields():
     # Note: They might appear in tests too, but in the source file should be once
     assert partition_key_count >= 1, "partition_key not found in file"
     assert partition_date_count >= 1, "partition_date not found in file"
+
+
+def test_repo_openlineage_mypy():
+    """
+    Pass-to-pass: OpenLineage utils passes mypy type checking (pass_to_pass).
+    """
+    r = subprocess.run(
+        ["uv", "run", "--group", "dev", "mypy", "src/airflow/providers/openlineage/utils/utils.py", "--ignore-missing-imports"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"MyPy type check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

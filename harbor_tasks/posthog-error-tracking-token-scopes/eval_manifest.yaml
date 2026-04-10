@@ -22,10 +22,30 @@ checks:
     origin: repo_tests
     description: "Target module can be imported without ImportError"
 
+  - id: test_repo_error_tracking_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Error tracking test file has valid syntax"
+
+  - id: test_repo_ruff_check_error_tracking
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Error tracking code passes ruff linting"
+
+  - id: test_repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Error tracking code is properly formatted"
+
+  - id: test_repo_viewset_schema_annotations
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ErrorTrackingIssueViewSet has schema annotations on custom actions per AGENTS.md"
+
   - id: read_actions_includes_values
     type: fail_to_pass
     origin: pr_diff
-    description: "scope_object_read_actions includes \"values\" so API tokens with error_tracking:read can access the values endpoint"
+    description: 'scope_object_read_actions includes "values" so API tokens with error_tracking:read can access the values endpoint'
 
   - id: write_actions_includes_custom_actions
     type: fail_to_pass
@@ -45,7 +65,7 @@ checks:
   - id: scope_object_still_error_tracking
     type: pass_to_pass
     origin: static
-    description: "scope_object remains \"error_tracking\" for correct resource type mapping"
+    description: 'scope_object remains "error_tracking" for correct resource type mapping'
 
   - id: viewset_class_has_substance
     type: pass_to_pass
@@ -53,7 +73,7 @@ checks:
     description: "ErrorTrackingIssueViewSet has substantial body (not a stub)"
 
 rubric:
-  - rule: "When touching a viewset or serializer, ensure schema annotations are present (@extend_schema or @validated_request on viewset methods, help_text on serializer fields)"
+  - rule: "When adding or modifying viewset methods or serializer fields, ensure schema annotations are present (@extend_schema or @validated_request on viewset methods, help_text on serializer fields). Adding class-level permission attributes like scope_object_read_actions does not require schema annotations."
     source:
       path: "AGENTS.md"
       lines: "85"

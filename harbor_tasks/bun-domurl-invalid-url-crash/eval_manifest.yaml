@@ -7,6 +7,9 @@ source:
   merge_commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
 
 checks:
+  # -----------------------------------------------------------------------------
+  # fail_to_pass - pr_diff
+  # -----------------------------------------------------------------------------
   - id: fix_adds_return_if_exception
     type: fail_to_pass
     origin: pr_diff
@@ -15,23 +18,80 @@ checks:
   - id: fix_is_minimal
     type: fail_to_pass
     origin: pr_diff
-    description: "Fix must be a pure insertion — no deletions of existing code in BunString.cpp"
+    description: "Fix must be a pure insertion - no deletions of existing code in BunString.cpp"
 
   - id: guard_prevents_null_deref_on_error
     type: fail_to_pass
     origin: pr_diff
     description: "Guard must divert control flow (return/branch) so jsCast is skipped on error"
 
+  # -----------------------------------------------------------------------------
+  # pass_to_pass - pr_diff
+  # -----------------------------------------------------------------------------
   - id: success_path_preserved
     type: pass_to_pass
     origin: pr_diff
     description: "jsCast, reportExtraMemoryAllocated, RELEASE_AND_RETURN still present in order"
 
+  # -----------------------------------------------------------------------------
+  # pass_to_pass - static (file content checks)
+  # -----------------------------------------------------------------------------
   - id: file_not_gutted
     type: pass_to_pass
     origin: static
     description: "BunString.cpp retains substantial content (>400 lines)"
 
+  - id: repo_package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's package.json is valid JSON"
+
+  - id: repo_typos_toml_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's .typos.toml is valid TOML"
+
+  - id: repo_build_zig_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's build.zig exists and has structural integrity"
+
+  - id: repo_editorconfig_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's .editorconfig is valid and has required sections"
+
+  - id: repo_claude_md_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's CLAUDE.md exists and has substantial content"
+
+  # -----------------------------------------------------------------------------
+  # pass_to_pass - repo_tests (CI/CD commands that use subprocess.run())
+  # -----------------------------------------------------------------------------
+  - id: repo_prettier_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript scripts are properly formatted (prettier --check)"
+
+  - id: repo_prettier_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's packages TypeScript files have no parse errors (prettier --check)"
+
+  - id: repo_shell_scripts_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's shell scripts have valid syntax (bash -n)"
+
+  - id: repo_git_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's git repository is intact and has expected commit"
+
+  # -----------------------------------------------------------------------------
+  # agent_config
+  # -----------------------------------------------------------------------------
   - id: uses_return_if_exception_macro
     type: fail_to_pass
     origin: agent_config
@@ -50,37 +110,6 @@ checks:
       lines: "184"
       commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
 
-  # Repo CI/CD checks (pass_to_pass gates)
-  - id: repo_oxlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JavaScript linting passes with oxlint"
-
-  - id: repo_prettier_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript scripts are properly formatted"
-
-  - id: repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's package.json is valid JSON"
-
-  - id: repo_typos_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's .typos.toml is valid TOML"
-
-  - id: repo_git_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's git repository is intact"
-
-  - id: repo_shell_scripts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's shell scripts have valid syntax"
-
 rubric:
   - rule: "Return early with `return {};` (empty encoded JS value) when error conditions are detected in binding functions, rather than continuing with potentially null pointers."
     source:
@@ -92,29 +121,3 @@ rubric:
       path: "CLAUDE.md"
       lines: "109-110"
       commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
-
-  # Additional repo_tests pass_to_pass gates
-  - id: repo_oxlint_no_config_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JavaScript passes basic oxlint correctness checks (no config)"
-
-  - id: repo_build_zig_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's build.zig exists and has basic structural integrity"
-
-  - id: repo_editorconfig_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's .editorconfig is valid and has required sections"
-
-  - id: repo_prettier_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's packages TypeScript files have no parse errors in prettier"
-
-  - id: repo_claude_md_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's CLAUDE.md exists and has substantial content"

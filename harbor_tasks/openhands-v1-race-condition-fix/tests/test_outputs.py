@@ -223,3 +223,12 @@ def test_use_create_conversation_structure():
     # Look for the pattern where catch block assigns DEFAULT_SETTINGS
     assert "settings = DEFAULT_SETTINGS" in content, \
         "Catch block must set settings = DEFAULT_SETTINGS as fallback"
+
+
+def test_repo_translation_completeness():
+    """Translation completeness check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-translation-completeness"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Translation completeness check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

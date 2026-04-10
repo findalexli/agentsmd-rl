@@ -281,6 +281,31 @@ class TestRepoPassToPass:
         )
         assert r.returncode == 0, f"Helm lint failed:\n{r.stderr}"
 
+    def test_repo_helm_lint_with_deps(self):
+        """Repo's Helm chart linting with dependencies passes (pass_to_pass)."""
+        # Add bitnami repo and build dependencies first
+        subprocess.run(
+            ["helm", "repo", "add", "bitnami", "https://charts.bitnami.com/bitnami"],
+            capture_output=True, text=True, timeout=30,
+        )
+        subprocess.run(
+            ["helm", "repo", "update"],
+            capture_output=True, text=True, timeout=30,
+        )
+        subprocess.run(
+            ["helm", "dependency", "build", "."],
+            cwd=CHART,
+            capture_output=True, text=True, timeout=120,
+        )
+        r = subprocess.run(
+            ["helm", "lint", "."],
+            cwd=CHART,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert r.returncode == 0, f"Helm lint with deps failed:\n{r.stderr}"
+
     def test_repo_helm_template_default(self):
         """Repo's Helm chart templates with default values (pass_to_pass)."""
         r = subprocess.run(
@@ -291,6 +316,50 @@ class TestRepoPassToPass:
             timeout=60,
         )
         assert r.returncode == 0, f"Helm template failed:\n{r.stderr[-500:]}"
+
+    def test_repo_helm_template_celery(self):
+        """Repo's Helm chart templates with CeleryExecutor (pass_to_pass)."""
+        r = subprocess.run(
+            [
+                "helm", "template", "test", ".",
+                "--set", "executor=CeleryExecutor",
+                "--set", "workers.celery.persistence.enabled=true",
+            ],
+            cwd=CHART,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert r.returncode == 0, f"Helm template with CeleryExecutor failed:\n{r.stderr[-500:]}"
+
+    def test_repo_helm_tests_worker_volumeclaim(self):
+        """Repo's helm-tests for worker volume claims pass (pass_to_pass)."""
+        import sys
+        HELM_TESTS = REPO / "helm-tests"
+        # Install required dependencies
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "kubernetes", "-q"],
+            capture_output=True, text=True, timeout=60,
+        )
+        # Install helm-tests package
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-e", str(HELM_TESTS), "-q"],
+            capture_output=True, text=True, timeout=120,
+        )
+        # Run worker volume claim tests
+        r = subprocess.run(
+            [
+                sys.executable, "-m", "pytest",
+                str(HELM_TESTS / "tests" / "helm_tests" / "airflow_core" / "test_worker.py"),
+                "-k", "volume_claim",
+                "-v", "--tb=short",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=str(HELM_TESTS),
+        )
+        assert r.returncode == 0, f"Helm worker volume claim tests failed:\n{r.stderr[-1000:]}"
 
     def test_repo_values_schema_valid_json(self):
         """Repo's values.schema.json is valid JSON (pass_to_pass)."""
@@ -310,3 +379,15 @@ class TestRepoPassToPass:
         assert isinstance(values, dict)
         # Verify workers section exists
         assert "workers" in values, "workers section not in values"
+
+    def test_repo_chart_yaml_valid(self):
+        """Repo's Chart.yaml is valid YAML with required fields (pass_to_pass)."""
+        chart_yaml = CHART / "Chart.yaml"
+        with open(chart_yaml) as f:
+            chart = yaml.safe_load(f)
+        assert chart is not None
+        assert isinstance(chart, dict)
+        assert "apiVersion" in chart, "apiVersion missing from Chart.yaml"
+        assert "name" in chart, "name missing from Chart.yaml"
+        assert "version" in chart, "version missing from Chart.yaml"
+        assert chart.get("name") == "airflow", "Chart name should be 'airflow'"

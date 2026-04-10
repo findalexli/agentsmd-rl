@@ -298,3 +298,17 @@ def test_repo_python_syntax():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_bandit():
+    """Security linting (bandit) passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "bandit", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install bandit: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["bandit", POST_GRAD, "-ll", "-ii", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bandit found security issues:\n{r.stdout[-500:]}{r.stderr[-500:]}"

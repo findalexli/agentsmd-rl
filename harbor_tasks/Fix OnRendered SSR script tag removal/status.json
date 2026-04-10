@@ -1,31 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T08:14:32.467448",
-  "total_time": 0.0,
-  "sandbox_id": "ifv7ew70k14tiqknmidqy",
-  "backend": "fireworks",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-10T02:31:26.024523",
+  "total_time": 4089.51,
+  "sandbox_id": "izmypnog4ippr1lylfvvb",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
-      "completed": true,
-      "timestamp": "2026-04-09",
-      "ci_commands_found": [
-        "pnpm nx run @tanstack/react-router:test:eslint",
-        "pnpm nx run @tanstack/react-router:test:types",
-        "pnpm nx run @tanstack/react-router:test:unit",
-        "pnpm nx run @tanstack/react-router:test:build"
-      ],
-      "p2p_tests_added": [
-        "test_p2p_repo_eslint",
-        "test_p2p_repo_typescript",
-        "test_p2p_repo_unit_tests_ssr",
-        "test_p2p_repo_build"
-      ],
-      "notes": "Discovered CI commands from package.json and .github/workflows/pr.yml. All 4 p2p tests pass on base commit. The test:unit command runs Scripts.test.tsx subset (16 tests, ~2s) which is most relevant to the SSR fix."
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 455.01,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -45,18 +35,25 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 3,
-      "notes": "Fixed: (1) Dockerfile - added pytest with --break-system-packages; (2) test.sh - removed 'set -e' to ensure reward file is always written; (3) test_outputs.py - fixed test_ssr_output_no_sentinel_script to properly detect sentinel script across multiple lines; (4) solve.sh - rewrote using Python to reliably update Match.tsx, Scripts.test.tsx, and solid-router Match.tsx. All 4 f2p tests now correctly fail on base commit and pass after gold fix. All 4 p2p tests pass on both. Rubric ICR=1.0.",
+      "attempts": 1,
+      "notes": "All validation checks passed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 879.45
+      "time": 195.47
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
-      "notes": "ICR=1.00"
+      "time": 1.21,
+      "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 38.29,
+      "notes": ""
     }
   },
   "history": [
@@ -65,8 +62,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T08:14:32.467448"
+      "time": 323.8,
+      "at": "2026-04-09T14:33:34.886499"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 57.89,
+      "at": "2026-04-09T14:58:49.347924"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 670.98,
+      "at": "2026-04-09T20:29:39.652612"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 671.24,
+      "at": "2026-04-09T20:29:39.820664"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "gemini",
+      "time": 4089.51,
+      "at": "2026-04-10T02:31:26.024523"
     }
   ]
 }

@@ -4,136 +4,174 @@ source_pr:
   number: 64756
   merge_commit: 8ad491d0de3ed3753a1bf3135084dc37e108faf0
   base_commit: b5dae4e72df868004b53006bb995256ef88d9c0b
-  title: "Harden GitHook SSH command building and URL construction"
-
+  title: Harden GitHook SSH command building and URL construction
 checks:
-  - id: ssh_quotes_key_path_spaces
-    type: pytest
-    file: test_outputs.py
-    test: test_ssh_command_quotes_key_path_with_spaces
-    description: "SSH command properly quotes key_path containing spaces"
-    origin: behavioral
-    fail_to_pass: true
-
-  - id: ssh_quotes_key_path_shell_chars
-    type: pytest
-    file: test_outputs.py
-    test: test_ssh_command_quotes_key_path_with_shell_chars
-    description: "SSH command properly quotes key_path containing shell metacharacters"
-    origin: behavioral
-    fail_to_pass: true
-
-  - id: ssh_quotes_known_hosts
-    type: pytest
-    file: test_outputs.py
-    test: test_ssh_command_quotes_known_hosts_file
-    description: "SSH command properly quotes known_hosts_file path"
-    origin: behavioral
-    fail_to_pass: true
-
-  - id: ssh_quotes_ssh_config
-    type: pytest
-    file: test_outputs.py
-    test: test_ssh_command_quotes_ssh_config_file
-    description: "SSH command properly quotes ssh_config_file path"
-    origin: behavioral
-    fail_to_pass: true
-
-  - id: ssh_quotes_proxy_cmd
-    type: pytest
-    file: test_outputs.py
-    test: test_ssh_command_quotes_proxy_command
-    description: "SSH command properly quotes host_proxy_cmd"
-    origin: behavioral
-    fail_to_pass: true
-
-  - id: strict_host_check_validation
-    type: pytest
-    file: test_outputs.py
-    test: test_strict_host_key_checking_validation_rejects_invalid
-    description: "Invalid strict_host_key_checking values raise ValueError"
-    origin: behavioral
-    fail_to_pass: true
-
-  - id: strict_host_check_accepts_yes
-    type: pytest
-    file: test_outputs.py
-    test: test_strict_host_key_checking_accepts_valid_yes
-    description: "Valid 'yes' strict_host_key_checking is accepted"
-    origin: behavioral
-    fail_to_pass: false
-
-  - id: strict_host_check_accepts_no
-    type: pytest
-    file: test_outputs.py
-    test: test_strict_host_key_checking_accepts_valid_no
-    description: "Valid 'no' strict_host_key_checking is accepted"
-    origin: behavioral
-    fail_to_pass: false
-
-  - id: strict_host_check_accepts_accept_new
-    type: pytest
-    file: test_outputs.py
-    test: test_strict_host_key_checking_accepts_valid_accept_new
-    description: "Valid 'accept-new' strict_host_key_checking is accepted"
-    origin: behavioral
-    fail_to_pass: false
-
-  - id: url_encoding_https
-    type: pytest
-    file: test_outputs.py
-    test: test_url_encoding_of_username_and_token_https
-    description: "Username and token are URL-encoded in https URLs"
-    origin: behavioral
-    fail_to_pass: true
-
-  - id: url_encoding_http
-    type: pytest
-    file: test_outputs.py
-    test: test_url_encoding_of_username_and_token_http
-    description: "Username and token are URL-encoded in http URLs"
-    origin: behavioral
-    fail_to_pass: true
-
-  - id: replace_first_occurrence
-    type: pytest
-    file: test_outputs.py
-    test: test_url_replace_only_first_occurrence
-    description: "str.replace only replaces first occurrence of protocol"
-    origin: behavioral
-    fail_to_pass: false
-
-  - id: local_path_expanded
-    type: pytest
-    file: test_outputs.py
-    test: test_local_path_expanded
-    description: "Local paths are expanded through os.path.expanduser"
-    origin: behavioral
-    fail_to_pass: false
-
-  - id: tilde_in_middle_unchanged
-    type: pytest
-    file: test_outputs.py
-    test: test_url_with_tilde_in_middle_unchanged
-    description: "URLs with tilde in middle are not mangled"
-    origin: behavioral
-    fail_to_pass: false
-
-  - id: proxy_command_format
-    type: pytest
-    file: test_outputs.py
-    test: test_proxy_command_formatting
-    description: "Proxy command uses correct quoting format"
-    origin: behavioral
-    fail_to_pass: true
-
+- id: repo_git_hook_syntax
+  type: pytest
+  file: test_outputs.py
+  test: test_repo_git_hook_syntax
+  description: Git hook Python file has valid syntax
+  origin: repo_tests
+  pass_to_pass: true
+- id: repo_ruff_check
+  type: pytest
+  file: test_outputs.py
+  test: test_repo_ruff_check
+  description: Git hook passes ruff linting
+  origin: repo_tests
+  pass_to_pass: true
+- id: repo_ruff_format
+  type: pytest
+  file: test_outputs.py
+  test: test_repo_ruff_format
+  description: Git hook passes ruff format check
+  origin: repo_tests
+  pass_to_pass: true
+- id: repo_git_hook_imports
+  type: pytest
+  file: test_outputs.py
+  test: test_repo_git_hook_imports
+  description: Git hook module can be imported without errors
+  origin: repo_tests
+  pass_to_pass: true
+- id: repo_git_hook_imports_work
+  type: pytest
+  file: test_outputs.py
+  test: test_repo_git_hook_imports_work
+  description: Git hook can be imported
+  origin: repo_tests
+  pass_to_pass: true
+- id: repo_git_hook_has_ast_structure
+  type: pytest
+  file: test_outputs.py
+  test: test_repo_git_hook_has_ast_structure
+  description: Git hook AST has expected structure
+  origin: repo_tests
+  pass_to_pass: true
+- id: repo_git_hook_has_expected_strings
+  type: pytest
+  file: test_outputs.py
+  test: test_repo_git_hook_has_expected_strings
+  description: Git hook source has expected strings
+  origin: repo_tests
+  pass_to_pass: true
+- id: ssh_quotes_key_path_spaces
+  type: pytest
+  file: test_outputs.py
+  test: test_ssh_command_quotes_key_path_with_spaces
+  description: SSH command properly quotes key_path containing spaces
+  origin: behavioral
+  fail_to_pass: true
+- id: ssh_quotes_key_path_shell_chars
+  type: pytest
+  file: test_outputs.py
+  test: test_ssh_command_quotes_key_path_with_shell_chars
+  description: SSH command properly quotes key_path containing shell metacharacters
+  origin: behavioral
+  fail_to_pass: true
+- id: ssh_quotes_known_hosts
+  type: pytest
+  file: test_outputs.py
+  test: test_ssh_command_quotes_known_hosts_file
+  description: SSH command properly quotes known_hosts_file path
+  origin: behavioral
+  fail_to_pass: true
+- id: ssh_quotes_ssh_config
+  type: pytest
+  file: test_outputs.py
+  test: test_ssh_command_quotes_ssh_config_file
+  description: SSH command properly quotes ssh_config_file path
+  origin: behavioral
+  fail_to_pass: true
+- id: ssh_quotes_proxy_cmd
+  type: pytest
+  file: test_outputs.py
+  test: test_ssh_command_quotes_proxy_command
+  description: SSH command properly quotes host_proxy_cmd
+  origin: behavioral
+  fail_to_pass: true
+- id: strict_host_check_validation
+  type: pytest
+  file: test_outputs.py
+  test: test_strict_host_key_checking_validation_rejects_invalid
+  description: Invalid strict_host_key_checking values raise ValueError
+  origin: behavioral
+  fail_to_pass: true
+- id: strict_host_check_accepts_yes
+  type: pytest
+  file: test_outputs.py
+  test: test_strict_host_key_checking_accepts_valid_yes
+  description: Valid 'yes' strict_host_key_checking is accepted
+  origin: behavioral
+  fail_to_pass: false
+- id: strict_host_check_accepts_no
+  type: pytest
+  file: test_outputs.py
+  test: test_strict_host_key_checking_accepts_valid_no
+  description: Valid 'no' strict_host_key_checking is accepted
+  origin: behavioral
+  fail_to_pass: false
+- id: strict_host_check_accepts_accept_new
+  type: pytest
+  file: test_outputs.py
+  test: test_strict_host_key_checking_accepts_valid_accept_new
+  description: Valid 'accept-new' strict_host_key_checking is accepted
+  origin: behavioral
+  fail_to_pass: false
+- id: url_encoding_https
+  type: pytest
+  file: test_outputs.py
+  test: test_url_encoding_of_username_and_token_https
+  description: Username and token are URL-encoded in https URLs
+  origin: behavioral
+  fail_to_pass: true
+- id: url_encoding_http
+  type: pytest
+  file: test_outputs.py
+  test: test_url_encoding_of_username_and_token_http
+  description: Username and token are URL-encoded in http URLs
+  origin: behavioral
+  fail_to_pass: true
+- id: replace_first_occurrence
+  type: pytest
+  file: test_outputs.py
+  test: test_url_replace_only_first_occurrence
+  description: str.replace only replaces first occurrence of protocol
+  origin: behavioral
+  fail_to_pass: false
+- id: local_path_expanded
+  type: pytest
+  file: test_outputs.py
+  test: test_local_path_expanded
+  description: Local paths are expanded through os.path.expanduser
+  origin: behavioral
+  fail_to_pass: false
+- id: tilde_in_middle_unchanged
+  type: pytest
+  file: test_outputs.py
+  test: test_url_with_tilde_in_middle_unchanged
+  description: URLs with tilde in middle are not mangled
+  origin: behavioral
+  fail_to_pass: false
+- id: proxy_command_format
+  type: pytest
+  file: test_outputs.py
+  test: test_proxy_command_formatting
+  description: Proxy command uses correct quoting format
+  origin: behavioral
+  fail_to_pass: true
 rubric:
-  - id: use_valueerror_not_airflowexception
-    description: "Use ValueError instead of AirflowException for invalid strict_host_key_checking"
-    origin: agent_config
-    source: CLAUDE.md
+- id: use_valueerror_not_airflowexception
+  description: Use ValueError instead of AirflowException for invalid strict_host_key_checking
+  origin: agent_config
+  source: CLAUDE.md
+  reference: '- Use ValueError instead of AirflowException for invalid strict_host_key_checking
 
-  - id: imports_at_top
-    description: "urllib.parse import should be at top of file"
-    origin: agent_config
-    source: CLAUDE.md
+    '
+- id: imports_at_top
+  description: urllib.parse import should be at top of file
+  origin: agent_config
+  source: CLAUDE.md
+  reference: '- urllib.parse import should be at top of file
+
+    '

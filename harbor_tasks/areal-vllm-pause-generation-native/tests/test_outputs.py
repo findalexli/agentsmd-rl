@@ -414,6 +414,51 @@ def test_repo_python_syntax():
     assert r.returncode == 0, f"Python syntax error:\n{r.stderr[-500:]}"
 
 
+def test_repo_trailing_whitespace():
+    """Modified file has no trailing whitespace (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"grep -q '[[:space:]]$' '{FILE}' && exit 1 || exit 0"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trailing whitespace found in {FILE}"
+
+
+def test_repo_eof_newline():
+    """Modified file ends with a newline (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"[ -z \"$(tail -c1 '{FILE}')\" ] && exit 0 || exit 1"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"File {FILE} does not end with newline"
+
+
+def test_repo_yaml_valid():
+    """CI workflow YAML files are syntactically valid (pass_to_pass)."""
+    import yaml
+    workflows_dir = Path(REPO) / ".github" / "workflows"
+    if not workflows_dir.exists():
+        pytest.skip("No .github/workflows directory")
+    for yaml_file in workflows_dir.glob("*.yml"):
+        try:
+            yaml.safe_load(yaml_file.read_text())
+        except yaml.YAMLError as e:
+            pytest.fail(f"Invalid YAML in {yaml_file}: {e}")
+
+
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml is syntactically valid (pass_to_pass)."""
+    try:
+        import tomllib
+        tomllib.load((Path(REPO) / "pyproject.toml").open("rb"))
+    except Exception:
+        # Fallback for Python < 3.11
+        try:
+            import tomli
+            tomli.load((Path(REPO) / "pyproject.toml").open("rb"))
+        except Exception as e:
+            pytest.skip(f"Cannot validate pyproject.toml: {e}")
+
+
 def test_no_wildcard_imports():
     """No wildcard imports (from x import *)."""
     source = Path(FILE).read_text()

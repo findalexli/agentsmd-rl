@@ -103,6 +103,20 @@ def test_repo_typecheck():
     assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_package_json_lint():
+    """Repo's package.json lint check passes (pass_to_pass).
+
+    Validates that test package.json files use exact dependency versions.
+    From test/package-json-lint.test.ts CI check.
+    """
+    r = subprocess.run(
+        ["bun", "test", "test/package-json-lint.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Package JSON lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------

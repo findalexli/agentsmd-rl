@@ -212,3 +212,54 @@ def test_repo_jest_dates():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Jest tests for dates.ts failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_css():
+    """Repo's CSS/SCSS linting passes (pass_to_pass)."""
+    # Install dependencies
+    setup = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert setup.returncode == 0, f"Setup for CSS linting failed:\n{setup.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && pnpm run lint:css"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CSS linting (stylelint) failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_markdown_lint():
+    """Repo's markdown linting passes (pass_to_pass)."""
+    # Install dependencies
+    setup = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert setup.returncode == 0, f"Setup for markdown linting failed:\n{setup.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && pnpm exec markdownlint-cli2 --config .config/.markdownlint-cli2.jsonc '**/*.{md,mdx}'"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Markdown linting failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_products():
+    """Repo's frontend product build passes (pass_to_pass)."""
+    # Install dependencies
+    setup = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && corepack enable && corepack prepare pnpm@10.29.3 --activate && pnpm install --frozen-lockfile >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert setup.returncode == 0, f"Setup for product build failed:\n{setup.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/posthog && pnpm --filter=@posthog/frontend build:products"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Product build failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

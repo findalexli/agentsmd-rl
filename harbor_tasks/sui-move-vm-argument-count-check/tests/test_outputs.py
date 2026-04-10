@@ -271,3 +271,68 @@ def test_repo_cargo_fmt():
     """
     result = run_cargo_fmt_check_repo()
     assert result.returncode == 0, f"cargo fmt --check failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def run_cargo_test_module(module: str, timeout: int = 300) -> subprocess.CompletedProcess:
+    """Run cargo test for a specific module in move-vm-runtime."""
+    return subprocess.run(
+        ["cargo", "test", "--lib", module, "--", "--nocapture"],
+        cwd=CRATE_DIR,
+        capture_output=True,
+        text=True,
+        timeout=timeout
+    )
+
+
+def test_repo_value_tests():
+    """PASS-TO-PASS: Repo CI value_tests module passes.
+
+    Runs the value_tests module to verify VM value operations work correctly.
+    This tests basic VM value functionality that should not be affected by
+    the argument count validation fix.
+    """
+    result = run_cargo_test_module("value_tests")
+    assert result.returncode == 0, f"value_tests failed:\n{result.stderr[-2000:]}"
+    assert "test result: ok" in (result.stdout + result.stderr), \
+        f"Expected 'test result: ok' in output:\n{result.stdout[-1000:]}"
+
+
+def test_repo_return_value_tests():
+    """PASS-TO-PASS: Repo CI return_value_tests module passes.
+
+    Runs the return_value_tests module to verify VM function return values
+    work correctly. This tests the VM's return value handling which should
+    not be affected by the argument count validation fix.
+    """
+    result = run_cargo_test_module("return_value_tests")
+    assert result.returncode == 0, f"return_value_tests failed:\n{result.stderr[-2000:]}"
+    assert "test result: ok" in (result.stdout + result.stderr), \
+        f"Expected 'test result: ok' in output:\n{result.stdout[-1000:]}"
+
+
+def test_repo_loader_tests():
+    """PASS-TO-PASS: Repo CI loader_tests module passes.
+
+    Runs the loader_tests module to verify the VM module loader works correctly.
+    This tests the Move VM's module loading and linking functionality.
+    """
+    result = run_cargo_test_module("loader_tests")
+    assert result.returncode == 0, f"loader_tests failed:\n{result.stderr[-2000:]}"
+    assert "test result: ok" in (result.stdout + result.stderr), \
+        f"Expected 'test result: ok' in output:\n{result.stdout[-1000:]}"
+
+
+def test_repo_move_clippy():
+    """PASS-TO-PASS: Repo CI cargo move-clippy passes on external-crates/move.
+
+    Ensures the external Move crates pass linting per the repo's CI standards.
+    Mirrors the check done in .github/workflows/external.yml.
+    """
+    result = subprocess.run(
+        ["cargo", "move-clippy", "-D", "warnings"],
+        cwd=f"{REPO}/external-crates/move",
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, f"cargo move-clippy failed:\n{result.stderr[-2000:]}"

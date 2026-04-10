@@ -46,6 +46,58 @@ def test_syntax_check():
         ast.parse(src)
 
 
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_spdx_headers():
+    """Modified files have SPDX license headers (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_spdx_header.py"] + MODIFIED_FILES,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stderr}"
+
+
+def test_repo_forbidden_imports():
+    """Modified files have no forbidden imports (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_forbidden_imports.py", PIXTRAL_PROC, VOXTRAL_PROC],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stderr}"
+
+
 def test_get_hf_processor_preserved():
     """get_hf_processor must exist in both pixtral and voxtral model files."""
     for path in [PIXTRAL_MODEL, VOXTRAL_MODEL]:
@@ -62,11 +114,11 @@ def test_not_stub():
     """Modified files must not be trivially small (>= 50 lines each)."""
     for path in MODIFIED_FILES:
         lines = len(Path(path).read_text().splitlines())
-        assert lines >= 50, f"{path} too short ({lines} lines) — likely a stub"
+        assert lines >= 50, f"{path} too short ({lines} lines) -- likely a stub"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral subprocess tests
+# Fail-to-pass (pr_diff) -- behavioral subprocess tests
 #
 # These verify actual code behavior via AST extraction + exec in a mock
 # environment, run as subprocess. The modules import heavy deps (torch,

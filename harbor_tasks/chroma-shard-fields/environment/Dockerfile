@@ -27,7 +27,6 @@ WORKDIR /workspace/chroma/rust
 RUN cargo fetch
 
 # Copy test files
-COPY tests/test_outputs.py /workspace/
-COPY solution/solve.sh /workspace/
+RUN ln -s /tests/test_outputs.py /workspace/test_outputs.py
 
 WORKDIR /workspace

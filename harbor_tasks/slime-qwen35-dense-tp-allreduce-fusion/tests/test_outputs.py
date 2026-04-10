@@ -412,3 +412,50 @@ def test_changes_contained():
     assert len(changed) <= 3, (
         f"Too many files changed ({len(changed)}): {changed[:10]}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI tests (origin: repo_tests)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on slime/ and slime_plugins/ (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "slime/", "slime_plugins/"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Repo's import sorting passes on slime/ and slime_plugins/ (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["isort", "--check", "slime/", "slime_plugins/"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_valid():
+    """pyproject.toml must exist and be parseable (pass_to_pass)."""
+    import tomllib
+
+    pyproject_path = Path(f"{REPO}/pyproject.toml")
+    assert pyproject_path.exists(), "pyproject.toml not found"
+
+    content = pyproject_path.read_text()
+    try:
+        tomllib.loads(content)
+    except Exception as e:
+        assert False, f"pyproject.toml is not valid TOML: {e}"

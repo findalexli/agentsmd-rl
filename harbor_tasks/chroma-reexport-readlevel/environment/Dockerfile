@@ -5,13 +5,14 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     git \
+    protobuf-compiler \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pytest
 RUN pip3 install pytest --break-system-packages
 
 # Clone chroma repo at base commit (shallow clone for speed)
-ARG BASE_COMMIT
+ARG BASE_COMMIT="5221b7fe03361916adff5efde364cd6899afef7e"
 RUN git clone --filter=blob:none https://github.com/chroma-core/chroma.git /workspace/chroma \
     && cd /workspace/chroma \
     && git checkout ${BASE_COMMIT}

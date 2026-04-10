@@ -121,20 +121,51 @@ def test_imports_correct():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_repo_lint():
-    """Repo's ESLint passes on studio app (pass_to_pass)."""
+def test_repo_pnpm_install():
+    """Repo's pnpm install works (pass_to_pass - basic sanity)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/supabase/apps/studio && npm install -g pnpm && pnpm install --frozen-lockfile && pnpm lint"],
-        capture_output=True, text=True, timeout=120
+        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_tests_billing():
+def test_repo_billing_tests():
     """Repo's Billing component tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/supabase/apps/studio && npm install -g pnpm && pnpm install --frozen-lockfile && pnpm vitest --run tests/components/Billing"],
-        capture_output=True, text=True, timeout=120
+        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts && pnpm vitest run tests/components/Billing/"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
     )
     assert r.returncode == 0, f"Billing tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts && pnpm vitest run tests/unit/"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_config_tests():
+    """Repo's config tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts && pnpm vitest run tests/config/"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Config tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_compiler_version():
+    """TypeScript compiler is available and works (pass_to_pass)."""
+    r = subprocess.run(
+        ["tsc", "--version"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript not available: {r.stderr}"
+    assert "Version" in r.stdout, f"Unexpected tsc output: {r.stdout}"

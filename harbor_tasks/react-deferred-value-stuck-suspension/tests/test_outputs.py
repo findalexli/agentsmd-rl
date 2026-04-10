@@ -347,6 +347,109 @@ def test_repo_license_check():
     )
 
 
+# [repo_tests] pass_to_pass — CI/CD feature flags check
+def test_repo_flags_check():
+    """Repo's feature flags check passes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flags"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Feature flags check failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — Full ReactDeferredValue test suite
+def test_repo_full_deferred_value_tests():
+    """Full ReactDeferredValue test suite passes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "--silent",
+            "--no-watchman",
+            "--testPathPattern", "ReactDeferredValue-test",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"Full ReactDeferredValue tests failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — ReactHooksWithNoopRenderer useDeferredValue tests
+def test_repo_hooks_useDeferredValue():
+    """ReactHooksWithNoopRenderer useDeferredValue tests pass on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "--silent",
+            "--no-watchman",
+            "--testPathPattern", "ReactHooksWithNoopRenderer-test",
+            "--testNamePattern", "useDeferredValue",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"ReactHooksWithNoopRenderer useDeferredValue tests failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — ReactTransition basic tests
+def test_repo_transition_basic():
+    """ReactTransition basic tests pass on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "--silent",
+            "--no-watchman",
+            "--testPathPattern", "ReactTransition-test",
+            "--testNamePattern", "basic",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"ReactTransition basic tests failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — ReactSuspenseWithNoopRenderer basic tests
+def test_repo_suspense_basic():
+    """ReactSuspenseWithNoopRenderer basic tests pass on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "--silent",
+            "--no-watchman",
+            "--testPathPattern", "ReactSuspenseWithNoopRenderer-test",
+            "--testNamePattern", "basic",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"ReactSuspenseWithNoopRenderer basic tests failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — .claude/skills/fix/SKILL.md
 # ---------------------------------------------------------------------------

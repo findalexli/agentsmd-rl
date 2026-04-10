@@ -381,3 +381,20 @@ def test_repo_header_file_exists():
     content = TARGET.read_text()
     assert len(content) > 0, "Target file is empty"
     assert "FakeProcessGroup" in content, "File does not contain FakeProcessGroup class"
+
+
+def test_repo_test_fake_pg_ast_valid():
+    """test_fake_pg.py must have valid Python AST (pass_to_pass).
+
+    This test parses the test file's AST to ensure it is structurally
+    valid Python code that could be executed (deps notwithstanding).
+    """
+    import ast
+    test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
+    assert test_file.exists(), f"Test file not found: {test_file}"
+
+    content = test_file.read_text()
+    try:
+        ast.parse(content)
+    except SyntaxError as e:
+        raise AssertionError(f"Python AST parsing failed for test_fake_pg.py: {e}")

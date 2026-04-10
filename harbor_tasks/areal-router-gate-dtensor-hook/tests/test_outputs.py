@@ -22,6 +22,7 @@ import os
 import subprocess
 from unittest.mock import patch
 
+import pytest
 import torch
 
 TARGET = "/workspace/AReaL/areal/experimental/models/archon/moe/router.py"
@@ -385,3 +386,97 @@ def test_no_module_level_process_group():
                         f"Module-level process group creation at line {subnode.lineno} — "
                         "must be inside a function or class (AGENTS.md:173)"
                     )
+
+
+# [repo_tests] pass_to_pass -- Repo CI: yamllint for workflows
+def test_repo_yaml_lint():
+    """Repo's GitHub workflow YAML files have valid syntax (pass_to_pass)."""
+    # Install PyYAML for validation
+    subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True, timeout=60,
+    )
+    import yaml
+    import os
+
+    workflows_dir = os.path.join(REPO, ".github", "workflows")
+    errors = []
+    for f in os.listdir(workflows_dir):
+        if f.endswith((".yml", ".yaml")):
+            path = os.path.join(workflows_dir, f)
+            try:
+                with open(path) as fp:
+                    yaml.safe_load(fp)
+            except yaml.YAMLError as e:
+                errors.append(f"{f}: {e}")
+    assert not errors, f"YAML syntax errors:\n" + "\n".join(errors)
+
+
+# [repo_tests] pass_to_pass -- Repo CI: JSON validation
+def test_repo_json_valid():
+    """Repo's JSON files have valid syntax (pass_to_pass)."""
+    import json
+    import os
+
+    json_files = [
+        os.path.join(REPO, "skills-lock.json"),
+    ]
+    errors = []
+    for path in json_files:
+        if os.path.exists(path):
+            try:
+                with open(path) as fp:
+                    json.load(fp)
+            except json.JSONDecodeError as e:
+                errors.append(f"{path}: {e}")
+    assert not errors, f"JSON syntax errors:\n" + "\n".join(errors)
+
+
+# [repo_tests] pass_to_pass -- Repo CI: mdformat
+def test_repo_mdformat():
+    """Repo's main markdown files pass mdformat check (pass_to_pass)."""
+    # Install mdformat if not present (matches pre-commit config version)
+    subprocess.run(
+        ["pip", "install", "mdformat==0.7.17", "mdformat-gfm", "mdformat-tables", "mdformat-frontmatter", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["mdformat", "--check", "--wrap=88", "README.md"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"mdformat check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass -- Repo CI: pre-commit trailing whitespace
+def test_repo_trailing_whitespace():
+    """Repo's Python files have no trailing whitespace (pass_to_pass)."""
+    errors = []
+    for root, dirs, files in os.walk(os.path.join(REPO, "areal", "experimental")):
+        for f in files:
+            if f.endswith(".py"):
+                path = os.path.join(root, f)
+                with open(path, "r", encoding="utf-8", errors="ignore") as fp:
+                    for i, line in enumerate(fp, 1):
+                        if line.rstrip() != line.rstrip("\n").rstrip():
+                            errors.append(f"{path}:{i}: trailing whitespace")
+                            break  # Just report first occurrence per file
+    assert not errors, f"Trailing whitespace found:\n" + "\n".join(errors[:10])
+
+
+# [repo_tests] pass_to_pass -- Repo CI: end of file fixer
+def test_repo_end_of_file():
+    """Repo's Python files end with exactly one newline (pass_to_pass)."""
+    errors = []
+    for root, dirs, files in os.walk(os.path.join(REPO, "areal", "experimental")):
+        for f in files:
+            if f.endswith(".py"):
+                path = os.path.join(root, f)
+                with open(path, "rb") as fp:
+                    content = fp.read()
+                if not content:
+                    continue
+                if not content.endswith(b"\n"):
+                    errors.append(f"{path}: missing final newline")
+                elif content.endswith(b"\n\n"):
+                    errors.append(f"{path}: multiple trailing newlines")
+    assert not errors, f"End-of-file issues:\n" + "\n".join(errors[:10])

@@ -412,20 +412,26 @@ console.log(JSON.stringify(result));
 # Pass-to-pass (repo_tests) — repo's CI/CD checks
 # -----------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — oxlint type-aware linting
+# [repo_tests] pass_to_pass — full check suite (typecheck + lint + architecture checks)
 def test_repo_lint():
-    """Repo's oxlint must pass (pass_to_pass)."""
+    """Repo's full check suite must pass (pass_to_pass).
+
+    Runs pnpm check which includes:
+    - TypeScript type checking (tsgo)
+    - oxlint type-aware linting
+    - Architecture/boundary checks (no-conflict-markers, host-env-policy, etc.)
+    """
     r = subprocess.run(
         ["pnpm", "install", "--frozen-lockfile"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
 
     r = subprocess.run(
-        ["pnpm", "lint"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["pnpm", "check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"Lint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Check failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass — repo's build must succeed
@@ -433,13 +439,13 @@ def test_repo_build():
     """Repo's build must succeed (pass_to_pass)."""
     r = subprocess.run(
         ["pnpm", "install", "--frozen-lockfile"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
 
     r = subprocess.run(
         ["pnpm", "build"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
@@ -449,14 +455,14 @@ def test_repo_gateway_tests():
     """Repo's gateway tests for openai-http must pass (pass_to_pass)."""
     r = subprocess.run(
         ["pnpm", "install", "--frozen-lockfile"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
 
     r = subprocess.run(
         ["pnpm", "vitest", "run", "src/gateway/openai-http.test.ts",
          "--testNamePattern", "handles request validation"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
+        capture_output=True, text=True, timeout=240, cwd=REPO,
     )
     assert r.returncode == 0, (
         f"Gateway tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"

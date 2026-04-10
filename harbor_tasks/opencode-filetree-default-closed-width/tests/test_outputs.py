@@ -143,7 +143,7 @@ def test_filetree_defaults_closed():
 
     // Find the fileTree object within createStore
     const afterCreate = src.substring(csIdx);
-    const ftMatch = afterCreate.match(/fileTree:\\s*\\{[^}]*opened:\\s*(true|false)/);
+    const ftMatch = afterCreate.match(/fileTree:\s*\{[^}]*opened:\s*(true|false)/);
     if (!ftMatch) {
         console.log(JSON.stringify({passed: false, error: 'fileTree.opened not found'}));
         process.exit(0);
@@ -173,7 +173,7 @@ def test_filetree_width_less_than_sidebar():
 
     // Extract all top-level numeric constants
     const constants = {};
-    const cre = /(?:const|let|var)\\s+(\\w+)\\s*(?::\\s*\\w+)?\\s*=\\s*(\\d+)/g;
+    const cre = /(?:const|let|var)\s+(\w+)\s*(?::\s*\w+)?\s*=\s*(\d+)/g;
     let cm;
     while ((cm = cre.exec(src)) !== null) constants[cm[1]] = parseInt(cm[2]);
 
@@ -182,11 +182,11 @@ def test_filetree_width_less_than_sidebar():
     const afterCreate = src.substring(csIdx);
 
     // Get sidebar width
-    const sbMatch = afterCreate.match(/sidebar:\\s*\\{[^}]*width:\\s*(\\d+|\\w+)/);
+    const sbMatch = afterCreate.match(/sidebar:\s*\{[^}]*width:\s*(\d+|\w+)/);
     const sbWidth = sbMatch ? (parseInt(sbMatch[1]) || constants[sbMatch[1]] || null) : null;
 
     // Get fileTree width
-    const ftMatch = afterCreate.match(/fileTree:\\s*\\{[^}]*width:\\s*(\\d+|\\w+)/);
+    const ftMatch = afterCreate.match(/fileTree:\s*\{[^}]*width:\s*(\d+|\w+)/);
     const ftWidth = ftMatch ? (parseInt(ftMatch[1]) || constants[ftMatch[1]] || null) : null;
 
     console.log(JSON.stringify({
@@ -242,7 +242,7 @@ def test_helper_methods_use_filetree_width():
     """))
     widths = result["widths"]
     sb_width = result["sbWidth"]
-    assert len(widths) > 0, "No setStore('fileTree', {{width:...}}) calls found"
+    assert len(widths) > 0, "No setStore('fileTree', {width:...}) calls found"
     assert sb_width is not None, "Could not determine sidebar width"
     for w in widths:
         assert isinstance(w, (int, float)), f"Unresolved width: {w}"
@@ -350,3 +350,26 @@ def test_no_for_loops_in_diff():
     for_loops = [l for l in added if re.search(r'\bfor\s*\(', l)]
     assert not for_loops, \
         f"Added for loops (prefer flatMap/filter/map):\n" + "\n".join(for_loops)
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates — verify repo tests/lint pass on base and fix
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass - Prettier formatting
+def test_repo_prettier_layout():
+    """layout.tsx matches repo prettier config (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "--yes", "-p", "prettier", "prettier", "--check", "packages/app/src/context/layout.tsx"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+# [repo_ci] pass_to_pass - Prettier formatting
+def test_repo_prettier_session():
+    """session.tsx matches repo prettier config (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "--yes", "-p", "prettier", "prettier", "--check", "packages/app/src/pages/session.tsx"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

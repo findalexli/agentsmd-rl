@@ -164,6 +164,70 @@ def test_repo_file_exists_and_readable():
     assert len(content) > 0, "Target file is empty"
 
 
+def test_repo_git_ls_files():
+    """Git can list source files - CI file indexing (pass_to_pass - repo_tests)."""
+    r = subprocess.run(
+        ["git", "ls-files", "--", "src/Functions/UserDefined/*.cpp", "src/Functions/UserDefined/*.h"],
+        capture_output=True, text=True, cwd=REPO, timeout=60
+    )
+    assert r.returncode == 0, f"Git ls-files failed: {r.stderr}"
+    # Should find the target file
+    assert "UserDefinedSQLObjectsZooKeeperStorage.cpp" in r.stdout, \
+        "Target file not found in git ls-files output"
+
+
+def test_repo_git_show_file():
+    """Git can show file content - CI content validation (pass_to_pass - repo_tests)."""
+    r = subprocess.run(
+        ["git", "show", "HEAD:src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"],
+        capture_output=True, text=True, cwd=REPO, timeout=60
+    )
+    assert r.returncode == 0, f"Git show failed: {r.stderr}"
+    # Should contain expected content
+    assert "UserDefinedSQLObjectsZooKeeperStorage" in r.stdout, \
+        "Expected content not found in git show output"
+
+
+def test_repo_git_log_file():
+    """Git log for target file works - CI history check (pass_to_pass - repo_tests)."""
+    r = subprocess.run(
+        ["git", "log", "-3", "--format=%H", "--", "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"],
+        capture_output=True, text=True, cwd=REPO, timeout=60
+    )
+    assert r.returncode == 0, f"Git log failed: {r.stderr}"
+    # Should produce commit hashes (40 character hex strings)
+    commits = [line.strip() for line in r.stdout.strip().split('\n') if line.strip()]
+    assert len(commits) > 0, "No commit history found for target file"
+    for commit in commits:
+        assert len(commit) == 40, f"Invalid commit hash format: {commit}"
+
+
+def test_repo_git_grep_includes():
+    """Git grep finds ZooKeeper includes - CI dependency check (pass_to_pass - repo_tests)."""
+    r = subprocess.run(
+        ["git", "grep", "-l", "ZooKeeperRetries", "--", "src/Common/ZooKeeper/*.h"],
+        capture_output=True, text=True, cwd=REPO, timeout=60
+    )
+    assert r.returncode == 0 or r.returncode == 1, f"Git grep failed: {r.stderr}"
+    # Should find ZooKeeperRetries.h
+    if r.returncode == 0:
+        assert "ZooKeeperRetries.h" in r.stdout, \
+            "ZooKeeperRetries.h not found in git grep output"
+
+
+def test_repo_grep_keeper_exception():
+    """grep finds KeeperException usage in target file - CI code analysis (pass_to_pass - repo_tests)."""
+    r = subprocess.run(
+        ["grep", "-n", "KeeperException", TARGET_FILE],
+        capture_output=True, text=True, timeout=60
+    )
+    # grep returns 0 if matches found, 1 if no matches
+    assert r.returncode in [0, 1], f"grep command failed: {r.stderr}"
+    if r.returncode == 0:
+        assert "#include" in r.stdout or "throw" in r.stdout or "catch" in r.stdout, \
+            "KeeperException usage not as expected"
+
+
 def test_repo_cpp_syntax_valid():
     """Basic C++ syntax validation - balanced braces/parens (pass_to_pass)."""
     with open(TARGET_FILE, 'r') as f:
@@ -226,6 +290,84 @@ def test_repo_no_trailing_whitespace():
         # Allow empty lines, but no trailing whitespace on content lines
         if line.rstrip() != line.rstrip('\n').rstrip():
             assert False, f"Trailing whitespace on line {i}"
+
+
+def test_repo_no_merge_conflict_markers():
+    """Source files have no merge conflict markers (pass_to_pass - Repo CI/CD)."""
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    # Check for conflict markers
+    assert '<<<<<<< ' not in content, "Found merge conflict marker '<<<<<<<'"
+    assert '=======\n' not in content, "Found merge conflict marker '======='"
+    assert '>>>>>>> ' not in content, "Found merge conflict marker '>>>>>>>'"
+
+
+def test_repo_no_crlf_line_endings():
+    """Source files use LF line endings, not CRLF (pass_to_pass - Repo CI/CD)."""
+    with open(TARGET_FILE, 'rb') as f:
+        content = f.read()
+
+    # Check for CRLF line endings
+    assert b'\r\n' not in content, "Found CRLF (Windows) line endings - should use LF only"
+
+
+def test_repo_line_length_reasonable():
+    """Source file lines are within reasonable length (pass_to_pass - Repo CI/CD).
+
+    ClickHouse .clang-format specifies ColumnLimit: 140.
+    We allow a small tolerance for edge cases (160 chars).
+    """
+    with open(TARGET_FILE, 'r') as f:
+        lines = f.readlines()
+
+    max_allowed = 160  # 140 from .clang-format + tolerance
+    long_lines = []
+
+    for i, line in enumerate(lines, 1):
+        if len(line.rstrip('\n')) > max_allowed:
+            long_lines.append((i, len(line.rstrip('\n'))))
+
+    # Fail if more than 5 lines exceed the limit (allows some tolerance)
+    assert len(long_lines) <= 5, f"Too many lines exceed {max_allowed} chars: {long_lines[:5]}"
+
+
+def test_repo_include_style_valid():
+    """Include statements follow project conventions (pass_to_pass - Repo CI/CD)."""
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    # Check includes use angle brackets for system/project headers
+    includes = re.findall(r'^#include\s+(["<][^">]+[">])', content, re.MULTILINE)
+    assert len(includes) > 0, "No includes found"
+
+    for inc in includes:
+        # Must start with < or " and end with matching > or "
+        if inc.startswith('<'):
+            assert inc.endswith('>'), f"Malformed include: {inc}"
+        elif inc.startswith('"'):
+            assert inc.endswith('"'), f"Malformed include: {inc}"
+        else:
+            assert False, f"Include must use angle brackets or quotes: {inc}"
+
+
+def test_repo_no_duplicate_includes():
+    """No duplicate includes in the same file (pass_to_pass - Repo CI/CD)."""
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    # Find all includes
+    includes = re.findall(r'^#include\s+[<"][^>"]+[>"]', content, re.MULTILINE)
+
+    # Check for duplicates
+    seen = set()
+    duplicates = []
+    for inc in includes:
+        if inc in seen:
+            duplicates.append(inc)
+        seen.add(inc)
+
+    assert len(duplicates) == 0, f"Found duplicate includes: {duplicates}"
 
 
 if __name__ == "__main__":

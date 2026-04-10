@@ -7,6 +7,26 @@ source:
   merge_commit: "6ae8bbd0c2fa5b057f0c3066bc6519792f7048af"
 
 checks:
+  - id: test_repo_ruff_check_envs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on envs.py"
+
+  - id: test_repo_ruff_check_xpu
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on xpu.py"
+
+  - id: test_repo_py_compile_envs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax check passes on envs.py"
+
+  - id: test_repo_py_compile_xpu
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax check passes on xpu.py"
+
   - id: syntax_check
     type: pass_to_pass
     origin: static
@@ -29,7 +49,7 @@ checks:
 
   - id: existing_env_vars_preserved
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Existing env vars and XPUPlatform class still present"
 
   - id: xpu_check_and_update_config_uses_env_var

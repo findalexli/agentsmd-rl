@@ -319,6 +319,22 @@ def test_repo_no_conflict_markers():
     assert r.returncode == 0, f"No conflict markers check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - tools.optional.test.ts (resolvePluginTools)
+def test_repo_tools_optional():
+    """Repo's tools.optional tests pass (pass_to_pass) - tests resolvePluginTools.
+
+    These tests directly exercise the resolvePluginTools function which is
+    the core of the PR fix. They verify optional tool resolution, active
+    registry reuse, and gateway subagent binding.
+    """
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
+         "src/plugins/tools.optional.test.ts", "--reporter=verbose", "--no-color"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tools optional tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / src/plugins/CLAUDE.md
 # ---------------------------------------------------------------------------

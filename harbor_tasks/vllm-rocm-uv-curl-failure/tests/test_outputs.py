@@ -211,3 +211,68 @@ def test_command_not_stub():
     )
     assert has_download, "UV install command has no download step (curl/wget)"
     assert has_execute, "UV install command has no execute step (sh/bash)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI tests
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_check():
+    """Repo's Python linting passes (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # ruff check passes on docker/ directory (no Python files but validates syntax)
+    r = subprocess.run(
+        ["ruff", "check", "docker/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_dockerfile_validate():
+    """Repo's dockerfile validation passes (pass_to_pass)."""
+    # Install dockerfile-parse if not available
+    subprocess.run(
+        ["pip", "install", "-q", "dockerfile-parse"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "tools/generate_versions_json.py", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dockerfile validation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_dockerfile_rocm_syntax():
+    """Dockerfile.rocm has valid syntax and required directives (pass_to_pass)."""
+    content = TARGET.read_text()
+    # Check for basic Dockerfile requirements
+    assert content.strip().startswith("#") or content.strip().startswith("FROM") or "ARG" in content, \
+        "Dockerfile.rocm missing standard Dockerfile directives"
+    # Verify there's a FROM statement
+    assert "FROM" in content, "Dockerfile.rocm missing FROM directive"
+    # Check for proper line continuation usage (backslashes should have content after)
+    lines = content.split("\n")
+    for i, line in enumerate(lines, 1):
+        if line.rstrip().endswith("\\"):
+            # Next non-empty line should exist and have content
+            found_next = False
+            for next_line in lines[i:]:
+                if next_line.strip():
+                    found_next = True
+                    break
+            assert found_next, f"Line {i} has continuation but no following content"

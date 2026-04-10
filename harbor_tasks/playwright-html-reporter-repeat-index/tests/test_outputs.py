@@ -38,6 +38,26 @@ def test_repo_lint_packages():
     assert r.returncode == 0, f"Lint-packages failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_check_deps():
+    """Repo's DEPS check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-deps failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_tests():
+    """Repo's test lint (forbid-only) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/lint_tests.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint_tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------

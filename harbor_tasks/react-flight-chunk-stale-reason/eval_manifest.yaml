@@ -37,4 +37,37 @@ checks:
     origin: repo_tests
     description: "ReactFlightDOM tests pass"
 
-rubric: []
+  - id: test_repo_react_flight
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactFlight client tests pass"
+
+  - id: test_repo_flight_dom_reply
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactFlightDOMReply tests pass"
+
+rubric:
+  - rule: "Run yarn prettier to fix formatting before committing"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
+      commit: "1e3152365df2f7a23a5ad947e83f40914413be16"
+
+  - rule: "Run yarn linc to check for lint issues and fix them before committing"
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "11"
+      commit: "1e3152365df2f7a23a5ad947e83f40914413be16"
+
+  - rule: "Run yarn flow dom-node to check for Flow type errors"
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "22"
+      commit: "1e3152365df2f7a23a5ad947e83f40914413be16"
+
+  - rule: "When writing tests, use --silent flag to limit output and --no-watchman to avoid sandbox issues"
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "40-42"
+      commit: "1e3152365df2f7a23a5ad947e83f40914413be16"

@@ -1,18 +1,63 @@
 {
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T22:04:42.475796",
+  "total_time": 333.98,
+  "sandbox_id": "ibohd7n5okecpm8lvk8oy",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 core validation checks pass: (1) Docker build succeeds, (2) NOP test reward=0 (3 failed f2p tests as expected), (3) Gold test reward=1 (9 tests pass), (4) Rubric judge returns 0.0 - expected during validation.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 77.56,
-      "notes": ""
+      "time": 77.42
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.19,
+      "notes": "ICR=0.50"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 293.04,
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 2087.4,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 0,
+      "notes": "tests look good"
     }
-  }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 333.71,
+      "at": "2026-04-09T22:04:42.309041"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 333.98,
+      "at": "2026-04-09T22:04:42.475796"
+    }
+  ]
 }

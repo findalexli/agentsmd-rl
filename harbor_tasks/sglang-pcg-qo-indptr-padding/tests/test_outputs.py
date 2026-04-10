@@ -61,7 +61,7 @@ def _run_ctx_mgr_test(code: str, timeout: int = 30) -> subprocess.CompletedProce
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 
@@ -84,9 +84,9 @@ def test_repo_python_ast():
         assert r.returncode == 0, f"AST check failed for {path}: {r.stderr}"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_repo_no_trailing_whitespace():
-    """Repo CI: Modified files have no trailing whitespace (trailing-whitespace)."""
+    """Modified files have no trailing whitespace (static check)."""
     for path in [CTX_MGR, FLASH_BE, PCG_RUN]:
         content = Path(path).read_text()
         lines = content.splitlines()
@@ -95,9 +95,9 @@ def test_repo_no_trailing_whitespace():
             assert not line.endswith("\t"), f"{path}:{i} has trailing tabs"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_repo_no_debug_statements():
-    """Repo CI: Modified files have no debug statements (debug-statements)."""
+    """Modified files have no debug statements (static check)."""
     debug_patterns = ["import pdb", "from pdb import", "breakpoint()", "pdb.set_trace"]
     for path in [CTX_MGR, FLASH_BE, PCG_RUN]:
         content = Path(path).read_text()
@@ -105,8 +105,53 @@ def test_repo_no_debug_statements():
             assert pattern not in content, f"{path} contains debug statement: {pattern}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Repo CI: Ruff linter passes on modified files (F401, F821)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+    r = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", CTX_MGR, FLASH_BE, PCG_RUN],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo CI: Import sorting check passes on modified files."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr}"
+    r = subprocess.run(
+        ["isort", "--check-only", CTX_MGR, FLASH_BE, PCG_RUN],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black():
+    """Repo CI: Black formatting check passes on modified files."""
+    r = subprocess.run(
+        ["pip", "install", "black", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr}"
+    r = subprocess.run(
+        ["black", "--check", CTX_MGR, FLASH_BE, PCG_RUN],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 
@@ -164,7 +209,7 @@ def test_num_tokens_propagation():
 # [pr_diff] fail_to_pass
 def test_replay_num_tokens_and_ordering():
     # AST-only: piecewise_cuda_graph_runner.py imports torch, bisect,
-    # CUDA graph APIs, ModelRunner, ForwardBatch — cannot be imported without GPU.
+    # CUDA graph APIs, ModelRunner, ForwardBatch -- cannot be imported without GPU.
     """replay() passes num_tokens to set_forward_context and calls
     init_forward_metadata inside the context block (ordering fix)."""
     source = Path(PCG_RUN).read_text()
@@ -223,7 +268,7 @@ def test_replay_num_tokens_and_ordering():
 # [pr_diff] fail_to_pass
 def test_call_begin_forward_pcg_padding():
     # AST-only: flashinfer_backend.py imports torch, flashinfer C++ bindings,
-    # ModelRunner, and dozens of sglang internals — cannot be imported without GPU.
+    # ModelRunner, and dozens of sglang internals -- cannot be imported without GPU.
     """call_begin_forward extends qo_indptr/kv_indptr for PCG padding tokens."""
     source = Path(FLASH_BE).read_text()
     tree = ast.parse(source)
@@ -274,7 +319,7 @@ def test_call_begin_forward_pcg_padding():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — regression + anti-stub
+# Pass-to-pass -- regression + anti-stub
 # ---------------------------------------------------------------------------
 
 

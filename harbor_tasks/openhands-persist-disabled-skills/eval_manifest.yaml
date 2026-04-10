@@ -40,45 +40,93 @@ checks:
     origin: pr_diff
     description: Migration upgrade function must add disabled_skills column to user table via op.add_column
 
-  - id: test_storage_user_column_order
-    type: pass_to_pass
-    origin: repo_tests
-    description: User model column ordering follows enterprise conventions (passes on both base and fix)
+  # =============================================================================
+  # PASS-TO-PASS: Static checks (file reads, AST parsing) - origin: static
+  # =============================================================================
 
   - id: test_repo_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Enterprise storage directory structure is correct
 
   - id: test_user_model_basic_columns
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: User model has expected basic columns (id, email, current_org_id, sandbox_grouping_strategy)
 
   - id: test_repo_python_syntax
     type: pass_to_pass
-    origin: repo_tests
-    description: All enterprise/storage Python files have valid syntax
+    origin: static
+    description: All enterprise/storage Python files have valid syntax (AST parsing)
 
   - id: test_repo_migration_syntax
     type: pass_to_pass
-    origin: repo_tests
-    description: All Alembic migration files have valid Python syntax
+    origin: static
+    description: All Alembic migration files have valid Python syntax (AST parsing)
 
   - id: test_repo_alembic_latest_migration
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Latest Alembic migration is properly formatted with revision and down_revision
 
   - id: test_repo_sqlalchemy_model_conventions
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: SQLAlchemy models follow enterprise conventions (__tablename__ attribute present)
 
   - id: test_repo_migration_conventions
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Migration files follow naming and structure conventions (upgrade/downgrade functions)
+
+  - id: test_storage_user_column_order
+    type: pass_to_pass
+    origin: static
+    description: User model column ordering follows enterprise conventions
+
+  - id: test_repo_migration_chain_integrity
+    type: pass_to_pass
+    origin: static
+    description: Alembic migration chain has consecutive numbering without gaps
+
+  - id: test_repo_enterprise_imports_consistency
+    type: pass_to_pass
+    origin: static
+    description: Enterprise storage SQLAlchemy models have consistent imports (Column present)
+
+  - id: test_repo_no_bare_excepts_in_migrations
+    type: pass_to_pass
+    origin: static
+    description: Migration files do not use bare except clauses (AST parsing)
+
+  # =============================================================================
+  # PASS-TO-PASS: Repo CI/CD commands (subprocess.run) - origin: repo_tests
+  # =============================================================================
+
+  - id: test_repo_py_compile_enterprise_storage
+    type: pass_to_pass
+    origin: repo_tests
+    description: All enterprise/storage Python files compile without errors (py_compile)
+
+  - id: test_repo_ruff_check_enterprise_storage
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linting passes on enterprise/storage files (CI linter)
+
+  - id: test_repo_ruff_check_migrations
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linting passes on migration files (CI linter)
+
+  - id: test_repo_py_compile_migrations
+    type: pass_to_pass
+    origin: repo_tests
+    description: All migration files compile without errors (py_compile)
+
+  - id: test_repo_ruff_check_user_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linting passes on user.py (CI linter)
 
 rubric:
   - rule: "Add disabled_skills column to User model with JSON type"

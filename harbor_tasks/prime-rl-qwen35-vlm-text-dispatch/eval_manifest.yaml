@@ -96,19 +96,43 @@ checks:
     origin: repo_ci
     description: "Repo README exists and is readable"
 
+
+  # Additional repo CI pass_to_pass gates
+  - id: test_repo_git_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo has valid git structure and commit history"
+
+  - id: test_repo_vlm_registry_import
+    type: pass_to_pass
+    origin: repo_ci
+    description: "VLM module imports correctly with all registry entries"
+
+  - id: test_repo_model_py_parses
+    type: pass_to_pass
+    origin: repo_ci
+    description: "model.py parses as valid Python AST"
+
+  - id: test_repo_vlm_py_parses
+    type: pass_to_pass
+    origin: repo_ci
+    description: "vlm.py parses as valid Python AST"
+
 rubric:
-  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
+  - rule: "Do not add unnecessary comments. Use targeted comments sparingly to explain ambiguous code, not to explain code changes or narrate the implementation."
     source:
       path: "AGENTS.md"
       lines: "7"
       commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"
-  - rule: "Explicit is better than implicit."
+
+  - rule: "Simple is better than complex. Prefer clean, straightforward solutions over clever or convoluted ones."
     source:
       path: "AGENTS.md"
-      lines: "15"
+      lines: "17"
       commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"
-  - rule: "Simple is better than complex."
+
+  - rule: "Flat is better than nested. Avoid deeply nested conditionals and structures when possible."
     source:
       path: "AGENTS.md"
-      lines: "16"
+      lines: "18"
       commit: "ecd080928014e20d1927a4f8b0b01d399151fdba"

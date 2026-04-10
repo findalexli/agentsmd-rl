@@ -1,17 +1,14 @@
 {
-  "abandoned": false,
-  "reason": null,
-  "completed": true,
-  "task_name": "airflow-helm-extra-containers",
-  "files_created": [
-    "environment/Dockerfile",
-    "solution/solve.sh",
-    "tests/test_outputs.py",
-    "tests/test.sh",
-    "task.toml",
-    "eval_manifest.yaml",
-    "instruction.md"
-  ],
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-09T22:10:25.507985",
+  "total_time": 677.04,
+  "sandbox_id": "ilowcj7d1xl49v5zy4c9l",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -21,11 +18,90 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 206.93,
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 2930.55,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 35.78,
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        "registry/CLAUDE.md"
+      ],
+      "rules_added": 2,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed solve.sh to use external patch.diff. Updated tests to properly extract pod template from ConfigMap. All 13 tests pass with gold fix, 7 fail on base commit (reward=0 as expected).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 277.49
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.28,
+      "notes": "ICR=0.50"
     }
-  }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 54.16,
+      "at": "2026-04-09T14:59:07.623497"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1139.1,
+      "at": "2026-04-09T20:37:27.750289"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1139.37,
+      "at": "2026-04-09T20:37:27.918610"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 676.78,
+      "at": "2026-04-09T22:10:25.346651"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 677.04,
+      "at": "2026-04-09T22:10:25.507985"
+    }
+  ]
 }

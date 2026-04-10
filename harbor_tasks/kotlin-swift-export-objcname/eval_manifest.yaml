@@ -104,6 +104,37 @@ checks:
     origin: repo_tests
     description: Extension functions on KaDeclarationSymbol have valid receiver types
 
+  # Pass-to-pass tests (repo CI/CD - package and structure validation)
+  - id: test_modified_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: All modified Kotlin source files exist and are non-empty
+
+  - id: test_package_declarations_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin files have package declarations matching directory structure
+
+  - id: test_no_stray_todo_fixme
+    type: pass_to_pass
+    origin: repo_tests
+    description: No stray TODO/FIXME markers in modified files
+
+  - id: test_class_declarations_well_formed
+    type: pass_to_pass
+    origin: repo_tests
+    description: Class/object declarations have valid syntax and structure
+
+  - id: test_properties_have_valid_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: Property declarations have valid type annotations
+
+  - id: test_cross_file_references_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cross-file references (imports) are valid and consistent
+
 # LLM-judged rubric (subjective quality criteria)
 rubric: []
 

@@ -8,7 +8,6 @@ is temporarily disconnected.
 
 import subprocess
 import os
-import tempfile
 import re
 
 REPO = "/workspace/OpenHands"
@@ -19,14 +18,10 @@ TEST_TS = os.path.join(FRONTEND, "__tests__", "utils", "status.test.ts")
 
 def get_status_code_function(content):
     """Extract the getStatusCode function from the file content."""
-    # Find the start of getStatusCode function
     match = re.search(r'export function getStatusCode\(', content)
     if not match:
         return None
     start = match.start()
-
-    # Find the end by looking for the next export function or end of file
-    # This is a simple extraction - find the closing brace at function level
     brace_count = 0
     in_function = False
     i = start
@@ -45,86 +40,46 @@ def get_status_code_function(content):
 def test_conversation_starting_priority_with_disconnected_websocket():
     """
     FAIL-TO-PASS: When conversation status is STARTING and WebSocket is DISCONNECTED,
-    should return COMMON$STARTING, not DISCONNECTED.
-
-    This was the original bug - during resume, the WebSocket disconnects temporarily
-    but the server reports STARTING. The fix ensures STARTING takes priority.
+    should return COMMON\$STARTING, not DISCONNECTED.
     """
     with open(STATUS_TS, 'r') as f:
         content = f.read()
-
-    # Extract only the getStatusCode function
     status_code_func = get_status_code_function(content)
     if status_code_func is None:
         assert False, "Could not find getStatusCode function"
-
-    # Look for the STARTING check and DISCONNECTED check in getStatusCode only
     starting_check_found = 'conversationStatus === "STARTING"' in status_code_func
     disconnected_line_idx = status_code_func.find('webSocketStatus === "DISCONNECTED"')
-
     if not starting_check_found:
         assert False, "conversationStatus === 'STARTING' check not found in getStatusCode"
-
     if disconnected_line_idx == -1:
         assert False, "WebSocket DISCONNECTED check not found in getStatusCode"
-
-    # Check that STARTING check comes before DISCONNECTED check
     starting_line_idx = status_code_func.find('conversationStatus === "STARTING"')
-
     assert starting_line_idx < disconnected_line_idx, \
-        f"STARTING check should come before DISCONNECTED check in getStatusCode. " \
-        f"STARTING at offset {starting_line_idx}, DISCONNECTED at offset {disconnected_line_idx}"
+        f"STARTING check should come before DISCONNECTED check in getStatusCode."
 
 
 def test_conversation_starting_priority_with_connected_websocket():
     """
     FAIL-TO-PASS: When conversation status is STARTING with CONNECTED WebSocket and null agent state,
-    should return COMMON$STARTING, not runtime status.
-
-    This tests that STARTING takes priority over runtime status checks.
+    should return COMMON\$STARTING, not runtime status.
     """
     with open(STATUS_TS, 'r') as f:
         content = f.read()
-
-    # Extract only the getStatusCode function
     status_code_func = get_status_code_function(content)
     if status_code_func is None:
         assert False, "Could not find getStatusCode function"
-
-    # Check if the fix is present
     if 'conversationStatus === "STARTING"' not in status_code_func:
         assert False, "conversationStatus === 'STARTING' check not found in getStatusCode"
-
-    # The fix should be placed after STOPPED check but before agent state/runtime checks
     stopped_idx = status_code_func.find('conversationStatus === "STOPPED"')
     starting_idx = status_code_func.find('conversationStatus === "STARTING"')
     agent_is_ready_idx = status_code_func.find('const agentIsReady')
-
     assert starting_idx != -1, "STARTING check not found in getStatusCode"
-
-    # STARTING check should be after STOPPED check (if STOPPED exists in getStatusCode)
     if stopped_idx != -1:
         assert starting_idx > stopped_idx, \
             "STARTING check should come after STOPPED check in getStatusCode"
-
-    # STARTING check should be before agent state checks (runtime status logic)
     if agent_is_ready_idx != -1:
         assert starting_idx < agent_is_ready_idx, \
             "STARTING check should come before agent state/runtime checks in getStatusCode"
-
-
-def test_status_utility_file_exists():
-    """
-    PASS-TO-PASS: The status.ts utility file should exist.
-    """
-    assert os.path.exists(STATUS_TS), f"status.ts file not found at {STATUS_TS}"
-
-
-def test_test_file_exists():
-    """
-    PASS-TO-PASS: The status.test.ts test file should exist.
-    """
-    assert os.path.exists(TEST_TS), f"status.test.ts file not found at {TEST_TS}"
 
 
 def test_conversation_starting_check_in_code():
@@ -133,13 +88,9 @@ def test_conversation_starting_check_in_code():
     """
     with open(STATUS_TS, 'r') as f:
         content = f.read()
-
-    # Extract only the getStatusCode function
     status_code_func = get_status_code_function(content)
     if status_code_func is None:
         assert False, "Could not find getStatusCode function"
-
-    # Check for the new priority check added in the fix
     assert 'conversationStatus === "STARTING"' in status_code_func, \
         "Missing the conversationStatus === 'STARTING' check in getStatusCode function"
 
@@ -150,30 +101,11 @@ def test_priority_comment_in_code():
     """
     with open(STATUS_TS, 'r') as f:
         content = f.read()
-
-    # Extract only the getStatusCode function
     status_code_func = get_status_code_function(content)
     if status_code_func is None:
         assert False, "Could not find getStatusCode function"
-
-    # Check for the distinctive comment from the fix
     assert "PRIORITY 2.5: Handle conversation starting state" in status_code_func, \
         "Missing the PRIORITY 2.5 comment in getStatusCode function"
-
-
-def test_status_test_file_passes():
-    """
-    PASS-TO-PASS: All status utility tests should pass (repo's own test suite).
-    """
-    result = subprocess.run(
-        ["npm", "test", "--", "status.test.ts", "--no-coverage"],
-        cwd=FRONTEND,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-
-    assert result.returncode == 0, f"Status tests failed:\n{result.stdout}\n{result.stderr}"
 
 
 def test_new_test_case_added():
@@ -182,8 +114,6 @@ def test_new_test_case_added():
     """
     with open(TEST_TS, 'r') as f:
         content = f.read()
-
-    # Check for the new test case name
     assert "show Starting when conversation status is STARTING even with disconnected websocket" in content, \
         "Missing the new test case for STARTING with disconnected websocket"
 
@@ -194,9 +124,23 @@ def test_new_test_case_added():
 # =============================================================================
 
 
+def test_status_utility_file_exists():
+    """
+    PASS-TO-PASS: The status.ts utility file exists (origin: static).
+    """
+    assert os.path.exists(STATUS_TS), f"status.ts file not found at {STATUS_TS}"
+
+
+def test_test_file_exists():
+    """
+    PASS-TO-PASS: The status.test.ts test file exists (origin: static).
+    """
+    assert os.path.exists(TEST_TS), f"status.test.ts file not found at {TEST_TS}"
+
+
 def test_repo_typecheck():
     """
-    PASS-TO-PASS: Repo TypeScript typecheck passes.
+    PASS-TO-PASS: Repo TypeScript typecheck passes (repo CI command).
     Ensures the fix doesn't introduce type errors.
     """
     result = subprocess.run(
@@ -209,9 +153,37 @@ def test_repo_typecheck():
     assert result.returncode == 0, f"TypeScript typecheck failed:\n{result.stdout}\n{result.stderr}"
 
 
+def test_repo_unit_tests():
+    """
+    PASS-TO-PASS: Repo unit tests pass (repo CI command).
+    Runs the frontend test suite with vitest. Some flaky tests may fail
+    but the overall test suite should complete with majority passing.
+    """
+    result = subprocess.run(
+        ["npm", "test", "--", "--run"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    # Check that tests actually ran (not a crash)
+    output = result.stdout + result.stderr
+    assert "Test Files" in output, f"Tests did not run properly:\n{output[-500:]}"
+    # Check majority passed (at least 95% of test files should pass)
+    passed_match = re.search(r'(\d+) passed', output)
+    failed_match = re.search(r'(\d+) failed', output)
+    if passed_match and failed_match:
+        passed = int(passed_match.group(1))
+        failed = int(failed_match.group(1))
+        total = passed + failed
+        if total > 0:
+            pass_rate = passed / total
+            assert pass_rate >= 0.95, f"Pass rate {pass_rate:.1%} too low: {passed}/{total}"
+
+
 def test_repo_build():
     """
-    PASS-TO-PASS: Repo frontend build passes.
+    PASS-TO-PASS: Repo frontend build passes (repo CI command).
     Ensures the fix doesn't break the production build.
     """
     result = subprocess.run(
@@ -221,34 +193,50 @@ def test_repo_build():
         text=True,
         timeout=180,
     )
-    assert result.returncode == 0, f"Build failed:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"Build failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
 
 
 def test_repo_lint():
     """
-    PASS-TO-PASS: Repo lint checks pass.
+    PASS-TO-PASS: Repo lint checks pass (repo CI command).
     Ensures the fix follows code style and quality standards.
+    Runs eslint, typecheck, and prettier checks.
     """
     result = subprocess.run(
         ["npm", "run", "lint"],
         cwd=FRONTEND,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=180,
     )
-    assert result.returncode == 0, f"Lint failed:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"Lint failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
 
 
 def test_repo_status_tests():
     """
-    PASS-TO-PASS: Status utility-specific tests pass.
+    PASS-TO-PASS: Status utility-specific tests pass (repo CI command).
     Ensures the fix doesn't break existing status utility tests.
     """
     result = subprocess.run(
-        ["npm", "run", "test", "--", "status.test.ts", "--no-coverage"],
+        ["npm", "test", "--", "--run", "status.test.ts"],
         cwd=FRONTEND,
         capture_output=True,
         text=True,
         timeout=120,
     )
-    assert result.returncode == 0, f"Status tests failed:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"Status tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_translation_completeness():
+    """
+    PASS-TO-PASS: Translation completeness check passes (repo CI command).
+    Ensures all translation keys have complete language coverage.
+    """
+    result = subprocess.run(
+        ["npm", "run", "check-translation-completeness"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"Translation check failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"

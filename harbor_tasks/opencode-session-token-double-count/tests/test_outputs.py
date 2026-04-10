@@ -398,3 +398,33 @@ def test_repo_session_tests():
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
     )
     assert r.returncode == 0, f"Session LLM/provider transform tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_session_core_tests():
+    """Repo session core tests (session.test.ts) pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/session/session.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Session core tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_provider_bedrock_tests():
+    """Repo Amazon Bedrock provider tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/provider/amazon-bedrock.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Amazon Bedrock provider tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_session_system_tests():
+    """Repo session system tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/session/system.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Session system tests failed:\n{r.stderr[-500:]}"

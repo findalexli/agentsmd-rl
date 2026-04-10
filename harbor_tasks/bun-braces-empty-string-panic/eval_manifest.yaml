@@ -7,6 +7,7 @@ source:
   merge_commit: "3ca678c93ee1d620873f7896af45486f9954553a"
 
 checks:
+  # Fail-to-pass: Core behavioral tests (must fail before fix, pass after)
   - id: flatten_tokens_has_empty_guard
     type: fail_to_pass
     origin: pr_diff
@@ -17,24 +18,69 @@ checks:
     origin: pr_diff
     description: "Parser.advance must guard prev() to prevent usize underflow"
 
+  # Pass-to-pass: Static syntax/compilation checks
   - id: braces_zig_compiles
     type: pass_to_pass
     origin: static
     description: "src/shell/braces.zig must have valid Zig syntax"
+
+  - id: braces_zig_ast_check
+    type: pass_to_pass
+    origin: static
+    description: "src/shell/braces.zig must pass Zig AST check"
 
   - id: no_regression_in_brace_parsing
     type: pass_to_pass
     origin: static
     description: "Normal brace expansion patterns should still be parseable"
 
+  # Pass-to-pass: PR regression test
   - id: regression_test_added
     type: pass_to_pass
     origin: pr_diff
     description: "The gold patch should add regression test for empty string"
+
+  # Pass-to-pass: Repo CI/CD checks (mirrors actual repo CI)
+  - id: repo_zig_fmt_braces
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: zig fmt --check must pass on braces.zig"
 
   - id: repo_zig_ast_check_braces
     type: pass_to_pass
     origin: repo_tests
     description: "Repo CI: zig ast-check must pass on braces.zig"
 
-rubric: []
+  - id: repo_zig_ast_check_related_shell_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: zig ast-check must pass on related shell files"
+
+  - id: repo_zig_fmt_all_shell_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: zig fmt --check must pass on all shell/*.zig files"
+
+  - id: repo_brace_test_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: brace.test.ts must exist and contain valid tests"
+
+rubric:
+  - rule: "Code changes must pass zig fmt formatting check"
+    source:
+      path: "tests/test_outputs.py"
+      lines: "104-117"
+      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
+
+  - rule: "Code changes must pass zig ast-check validation"
+    source:
+      path: "tests/test_outputs.py"
+      lines: "120-133"
+      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
+
+  - rule: "Bug fixes must include regression tests"
+    source:
+      path: "tests/test_outputs.py"
+      lines: "217-230"
+      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"

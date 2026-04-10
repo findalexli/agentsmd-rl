@@ -222,3 +222,68 @@ def test_repo_ruff():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def _ensure_isort():
+    """Install isort if not already available."""
+    try:
+        import isort  # noqa: F401
+    except ImportError:
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "isort", "-q"],
+            capture_output=True,
+            timeout=60,
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo's isort import sorting check passes (pass_to_pass)."""
+    _ensure_isort()
+    r = subprocess.run(
+        [sys.executable, "-m", "isort", "--check-only", "--profile=black", "slime", "slime_plugins"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """All Python files in the repo compile without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c",
+         "import py_compile; import sys; import os; \n"
+         "errors = []\n"
+         "for root, dirs, files in os.walk('slime'):\n"
+         "    for f in files:\n"
+         "        if f.endswith('.py'):\n"
+         "            path = os.path.join(root, f)\n"
+         "            try:\n"
+         "                py_compile.compile(path, doraise=True)\n"
+         "            except Exception as e:\n"
+         "                errors.append(f'{path}: {e}')\n"
+         "if errors:\n"
+         "    print('\\n'.join(errors))\n"
+         "    sys.exit(1)\n"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_imports():
+    """The slime package can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", "import slime; print('slime imported successfully')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Package import failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

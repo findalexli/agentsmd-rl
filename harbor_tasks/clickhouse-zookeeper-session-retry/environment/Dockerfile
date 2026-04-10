@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+# Create clang-15 symlink for test compatibility
+RUN ln -s /usr/bin/clang-18 /usr/bin/clang-15
+
 # Clone ClickHouse repo at base commit
 ARG BASE_COMMIT=6f01023e78a9e84c588068560fda778a7c11a665
 RUN git clone --filter=blob:none https://github.com/ClickHouse/ClickHouse.git /workspace/ClickHouse \

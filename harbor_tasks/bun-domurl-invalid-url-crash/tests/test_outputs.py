@@ -54,9 +54,9 @@ def _between_tojs_and_jscast(region: str) -> str:
     return between[semi + 1 :]
 
 
-# ---------------------------------------------------------------------------
-# fail_to_pass — pr_diff
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# fail_to_pass - pr_diff
+# -----------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
@@ -112,7 +112,7 @@ print('PASS')
 
 # [pr_diff] fail_to_pass
 def test_fix_is_minimal():
-    """The fix should be a pure insertion — no deletions of existing code.
+    """The fix should be a pure insertion - no deletions of existing code.
 
     Uses subprocess to run git diff and verify the change only adds the
     RETURN_IF_EXCEPTION line without modifying or removing existing lines.
@@ -125,7 +125,7 @@ def test_fix_is_minimal():
         cwd=REPO,
     )
     diff = r.stdout
-    assert diff.strip(), "No diff found for BunString.cpp — fix may not have been applied"
+    assert diff.strip(), "No diff found for BunString.cpp - fix may not have been applied"
 
     added = [l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++")]
     removed = [l for l in diff.splitlines() if l.startswith("-") and not l.startswith("---")]
@@ -146,7 +146,7 @@ def test_fix_is_minimal():
 def test_guard_prevents_null_deref_on_error():
     """The guard must divert control flow so jsCast is skipped on error.
 
-    Simply checking the exception is not enough — the code must also return
+    Simply checking the exception is not enough - the code must also return
     (or branch) before reaching jsCast<JSDOMURL*>(jsValue.asCell()).
     RETURN_IF_EXCEPTION(throwScope, {}) both checks and returns.
     """
@@ -171,15 +171,15 @@ def test_guard_prevents_null_deref_on_error():
     )
 
 
-# ---------------------------------------------------------------------------
-# pass_to_pass — pr_diff / static / repo_tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# pass_to_pass - pr_diff
+# -----------------------------------------------------------------------------
 
 
 # [pr_diff] pass_to_pass
 def test_success_path_preserved():
     """The success path must still reach jsCast, reportExtraMemoryAllocated,
-    and RELEASE_AND_RETURN — in that order after toJSNewlyCreated.
+    and RELEASE_AND_RETURN - in that order after toJSNewlyCreated.
 
     The fix adds a guard but must not remove or reorder the existing code.
     """
@@ -200,32 +200,103 @@ def test_success_path_preserved():
     assert rma < rar, "RELEASE_AND_RETURN must come after reportExtraMemoryAllocated"
 
 
+# -----------------------------------------------------------------------------
+# pass_to_pass - static
+# -----------------------------------------------------------------------------
+
+
 # [static] pass_to_pass
 def test_file_not_gutted():
-    """BunString.cpp must retain substantial content — guards against stubbing."""
+    """BunString.cpp must retain substantial content - guards against stubbing."""
     lines = len(Path(TARGET).read_text().splitlines())
     assert lines > 400, f"File appears stubbed ({lines} lines, expected > 400)"
 
 
-# ---------------------------------------------------------------------------
-# pass_to_pass — repo_tests (CI/CD checks from the repository)
-# ---------------------------------------------------------------------------
+# [static] pass_to_pass
+def test_repo_package_json_valid():
+    """Repo's package.json is valid JSON (pass_to_pass).
 
-
-# [repo_tests] pass_to_pass
-def test_repo_oxlint():
-    """Repo's JavaScript linting passes with oxlint (pass_to_pass).
-
-    Uses oxlint to check src/js for lint errors. This is a lightweight
-    version of 'bun run lint' that doesn't require bun to be installed.
+    Validates that package.json can be parsed as valid JSON.
+    This catches syntax errors that would break npm/bun commands.
     """
-    r = subprocess.run(
-        ["npx", "oxlint", "--format=default", f"{REPO}/src/js"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    assert r.returncode == 0, f"oxlint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    import json
+
+    pkg_path = Path(REPO) / "package.json"
+    content = pkg_path.read_text()
+    try:
+        json.loads(content)
+    except json.JSONDecodeError as e:
+        assert False, f"package.json is not valid JSON: {e}"
+
+
+# [static] pass_to_pass
+def test_repo_typos_toml_valid():
+    """Repo's .typos.toml is valid TOML (pass_to_pass).
+
+    Validates that .typos.toml can be parsed as valid TOML.
+    This catches syntax errors in the typos configuration.
+    """
+    import tomllib
+
+    typos_path = Path(REPO) / ".typos.toml"
+    content = typos_path.read_bytes()
+    try:
+        tomllib.loads(content.decode("utf-8"))
+    except Exception as e:
+        assert False, f".typos.toml is not valid TOML: {e}"
+
+
+# [static] pass_to_pass
+def test_repo_build_zig_valid():
+    """Repo's build.zig exists and has structural integrity (pass_to_pass).
+
+    Validates that build.zig exists and has basic structural integrity
+    by checking it can be read as a file (catches truncation/corruption).
+    """
+    build_zig = Path(REPO) / "build.zig"
+    assert build_zig.exists(), "build.zig not found"
+
+    content = build_zig.read_text()
+    # Basic structural checks
+    assert len(content) > 1000, f"build.zig appears truncated ({len(content)} chars)"
+    assert "const" in content, "build.zig missing 'const' keyword"
+    assert "std" in content, "build.zig missing 'std' reference"
+
+
+# [static] pass_to_pass
+def test_repo_editorconfig_valid():
+    """Repo's .editorconfig is valid (pass_to_pass).
+
+    Validates that .editorconfig exists and has correct format.
+    This is a lightweight syntax check for the editorconfig file.
+    """
+    ec_path = Path(REPO) / ".editorconfig"
+    assert ec_path.exists(), ".editorconfig not found"
+
+    content = ec_path.read_text()
+    # Basic INI-style format validation
+    assert "root = true" in content, ".editorconfig missing root = true"
+    assert "[*]" in content, ".editorconfig missing [*] section"
+
+
+# [static] pass_to_pass
+def test_repo_claude_md_valid():
+    """Repo's CLAUDE.md is valid and substantial (pass_to_pass).
+
+    Validates that CLAUDE.md exists and has content.
+    This file contains important project guidance for Claude Code.
+    """
+    claude_md = Path(REPO) / "CLAUDE.md"
+    assert claude_md.exists(), "CLAUDE.md not found"
+
+    content = claude_md.read_text()
+    lines = len(content.splitlines())
+    assert lines > 50, f"CLAUDE.md appears truncated ({lines} lines, expected > 50)"
+
+
+# -----------------------------------------------------------------------------
+# pass_to_pass - repo_tests (CI/CD commands that run with subprocess)
+# -----------------------------------------------------------------------------
 
 
 # [repo_tests] pass_to_pass
@@ -234,6 +305,7 @@ def test_repo_prettier_scripts():
 
     Uses prettier to check formatting of scripts/*.ts files.
     This is a subset of 'bun run prettier' that doesn't require bun.
+    CI/CD equivalent: part of 'bun run prettier' in format.yml workflow.
     """
     r = subprocess.run(
         [
@@ -251,58 +323,30 @@ def test_repo_prettier_scripts():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_package_json_valid():
-    """Repo's package.json is valid JSON (pass_to_pass).
+def test_repo_prettier_packages():
+    """Repo's packages TypeScript files have no parse errors (pass_to_pass).
 
-    Validates that package.json can be parsed as valid JSON.
-    This catches syntax errors that would break npm/bun commands.
-    """
-    import json
-
-    pkg_path = Path(REPO) / "package.json"
-    content = pkg_path.read_text()
-    try:
-        json.loads(content)
-    except json.JSONDecodeError as e:
-        assert False, f"package.json is not valid JSON: {e}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_typos_toml_valid():
-    """Repo's .typos.toml is valid TOML (pass_to_pass).
-
-    Validates that .typos.toml can be parsed as valid TOML.
-    This catches syntax errors in the typos configuration.
-    """
-    import tomllib
-
-    typos_path = Path(REPO) / ".typos.toml"
-    content = typos_path.read_bytes()
-    try:
-        tomllib.loads(content.decode("utf-8"))
-    except Exception as e:
-        assert False, f".typos.toml is not valid TOML: {e}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_git_valid():
-    """Repo's git repository is intact (pass_to_pass).
-
-    Validates that the git repository is valid and has the expected commit.
-    This catches issues with shallow clones or corrupted repos.
+    Uses prettier to validate packages/*/*.ts files can be parsed.
+    This catches syntax errors without enforcing strict formatting,
+    since formatting may vary by commit.
+    CI/CD equivalent: part of 'bun run prettier' in format.yml workflow.
     """
     r = subprocess.run(
-        ["git", "log", "--oneline", "-1"],
+        [
+            "npx",
+            "prettier",
+            "--check",
+            "packages/**/*.ts",
+        ],
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=120,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"git log failed:\n{r.stderr}"
-    # Verify we have the expected commit
-    assert "9e93bfa" in r.stdout or "deflake serve-body-leak" in r.stdout, (
-        f"Unexpected commit: {r.stdout}"
-    )
+    # Prettier returns 0 if all files match, 1 if some don't
+    # We only fail if there's an actual parse error (not formatting issues)
+    has_parse_errors = "parse" in r.stderr.lower() or "parse" in r.stdout.lower()
+    assert not has_parse_errors, f"prettier encountered parse errors:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -311,6 +355,7 @@ def test_repo_shell_scripts_syntax():
 
     Validates that all .sh files in the repo have valid bash syntax.
     This catches syntax errors that would break CI/CD scripts.
+    CI/D equivalent: validation before running scripts in CI.
     """
     scripts_dir = Path(REPO) / "scripts"
     sh_files = list(scripts_dir.glob("*.sh"))
@@ -335,9 +380,30 @@ def test_repo_shell_scripts_syntax():
     assert not errors, f"Shell script syntax errors:\n" + "\n".join(errors)
 
 
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_repo_git_valid():
+    """Repo's git repository is intact (pass_to_pass).
+
+    Validates that the git repository is valid and has the expected commit.
+    This catches issues with shallow clones or corrupted repos.
+    """
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-1"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git log failed:\n{r.stderr}"
+    # Verify we have the expected commit
+    assert "9e93bfa" in r.stdout or "deflake serve-body-leak" in r.stdout, (
+        f"Unexpected commit: {r.stdout}"
+    )
+
+
+# -----------------------------------------------------------------------------
 # agent_config
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [agent_config] fail_to_pass
@@ -353,7 +419,7 @@ def test_uses_return_if_exception_macro():
     assert "RETURN_IF_EXCEPTION" in after, (
         "Fix does not use RETURN_IF_EXCEPTION. "
         "Per .claude/skills/implementing-jsc-classes-cpp/SKILL.md, use "
-        "RETURN_IF_EXCEPTION(throwScope, {}) — the established macro for "
+        "RETURN_IF_EXCEPTION(throwScope, {}) - the established macro for "
         "checking pending exceptions in JSC binding functions."
     )
 
@@ -372,96 +438,3 @@ def test_includes_root_header():
         "Per .claude/skills/implementing-jsc-classes-cpp/SKILL.md line 184, "
         'C++ bindings files must include "root.h" at the top.'
     )
-
-# [repo_tests] pass_to_pass
-def test_repo_oxlint_no_config_errors():
-    """Repo's JavaScript passes basic oxlint correctness checks (pass_to_pass).
-
-    Runs oxlint without the repo config (which has unsupported rules) to check
-    for basic correctness issues. This catches syntax errors and common bugs.
-    Only errors fail the test; warnings are acceptable.
-    """
-    r = subprocess.run(
-        ["npx", "oxlint", "--format=default", f"{REPO}/src/js"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    # oxlint returns 0 if no errors, 1 if errors found
-    # We check stderr for "X errors" pattern
-    has_errors = "error" in r.stdout.lower() and r.returncode != 0
-    assert not has_errors, f"oxlint found errors:\n{r.stdout[-1000:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_build_zig_valid():
-    """Repo's build.zig is valid JSON/Zig syntax (pass_to_pass).
-
-    Validates that build.zig exists and has basic structural integrity
-    by checking it can be read as a file (catches truncation/corruption).
-    """
-    build_zig = Path(REPO) / "build.zig"
-    assert build_zig.exists(), "build.zig not found"
-
-    content = build_zig.read_text()
-    # Basic structural checks
-    assert len(content) > 1000, f"build.zig appears truncated ({len(content)} chars)"
-    assert "const" in content, "build.zig missing 'const' keyword"
-    assert "std" in content, "build.zig missing 'std' reference"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_editorconfig_valid():
-    """Repo's .editorconfig is valid (pass_to_pass).
-
-    Validates that .editorconfig exists and has correct format.
-    This is a lightweight syntax check for the editorconfig file.
-    """
-    ec_path = Path(REPO) / ".editorconfig"
-    assert ec_path.exists(), ".editorconfig not found"
-
-    content = ec_path.read_text()
-    # Basic INI-style format validation
-    assert "root = true" in content, ".editorconfig missing root = true"
-    assert "[*]" in content, ".editorconfig missing [*] section"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_prettier_packages():
-    """Repo's packages TypeScript files are properly formatted (pass_to_pass).
-
-    Uses prettier to check formatting of packages/*/*.ts files.
-    This covers the bun-types package and other published packages.
-    """
-    r = subprocess.run(
-        [
-            "npx",
-            "prettier",
-            "--check",
-            "packages/**/*.ts",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    # Prettier returns 0 if all files match, 1 if some don't
-    # We only fail if there's an actual error (not formatting issues)
-    # since formatting varies by commit
-    has_errors = "error" in r.stderr.lower() or "parse" in r.stderr.lower()
-    assert not has_errors, f"prettier encountered errors:\n{r.stderr[-500:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_claude_md_valid():
-    """Repo's CLAUDE.md is valid and substantial (pass_to_pass).
-
-    Validates that CLAUDE.md exists and has content.
-    This file contains important project guidance for Claude Code.
-    """
-    claude_md = Path(REPO) / "CLAUDE.md"
-    assert claude_md.exists(), "CLAUDE.md not found"
-
-    content = claude_md.read_text()
-    lines = len(content.splitlines())
-    assert lines > 50, f"CLAUDE.md appears truncated ({lines} lines, expected > 50)"

@@ -7,7 +7,7 @@ FILE="areal/engine/vllm_ext/areal_vllm_server.py"
 # Idempotent: skip if already applied
 grep -q '_register_runtime_lora_name' "$FILE" && exit 0
 
-git apply - <<'PATCH'
+git apply - <<'INNERPATCH'
 diff --git a/areal/engine/vllm_ext/areal_vllm_server.py b/areal/engine/vllm_ext/areal_vllm_server.py
 index ba0228126..1cd949c16 100644
 --- a/areal/engine/vllm_ext/areal_vllm_server.py
@@ -22,8 +22,8 @@ index ba0228126..1cd949c16 100644
  from vllm.utils.argparse_utils import FlexibleArgumentParser
 @@ -114,6 +115,61 @@ def build_response(ret_list):
      return to_json_response(success, message)
-
-
+ 
+ 
 +def _infer_runtime_lora_path(serving_models, lora_name: str, lora_int_id: int) -> str:
 +    existing = serving_models.lora_requests.get(lora_name)
 +    if existing is not None and getattr(existing, "lora_path", ""):
@@ -112,5 +112,10 @@ index ba0228126..1cd949c16 100644
 +            base_model_name=request.base_model_name,
          )
      return build_response(ret_list)
+ 
+INNERPATCH
 
-PATCH
+# Apply ruff formatting to satisfy repo CI gates
+pip install ruff -q 2>/dev/null || true
+ruff check --fix "$FILE" 2>/dev/null || true
+ruff format "$FILE" 2>/dev/null || true

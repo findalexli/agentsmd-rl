@@ -179,7 +179,7 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_dtype_cast_int32_to_int64():
     """Non-long input_ids must be cast to int64/long to prevent dtype mismatch."""
-    r = _run_python("""
+    r = _run_python('''
 import json
 results = []
 for dt in [INT32, FLOAT16, BFLOAT16]:
@@ -189,7 +189,7 @@ for dt in [INT32, FLOAT16, BFLOAT16]:
         "is_new": res["is_new_tensor"],
     })
 print(json.dumps(results))
-""")
+''')
     assert r.returncode == 0, f"Script failed: {r.stderr}"
     results = json.loads(r.stdout.strip())
     for item in results:
@@ -205,14 +205,14 @@ print(json.dumps(results))
 # [pr_diff] fail_to_pass
 def test_dict_updated_with_cast_tensor():
     """The cast tensor must be written back to the input_ dict (not just local var)."""
-    r = _run_python("""
+    r = _run_python('''
 import json
 res = _exec_branch(INT32)
 print(json.dumps({
     "final_dtype": res["final_dtype"],
     "is_new": res["is_new_tensor"],
 }))
-""")
+''')
     assert r.returncode == 0, f"Script failed: {r.stderr}"
     data = json.loads(r.stdout.strip())
     assert data["is_new"], (
@@ -227,11 +227,11 @@ print(json.dumps({
 # [pr_diff] fail_to_pass
 def test_keyword_args_in_get_rope_index():
     """get_rope_index must use keyword args to avoid positional binding ambiguity."""
-    r = _run_python("""
+    r = _run_python('''
 import json
 res = _exec_branch(INT32)
 print(json.dumps(res["calls"]))
-""")
+''')
     assert r.returncode == 0, f"Script failed: {r.stderr}"
     calls = json.loads(r.stdout.strip())
     assert calls, "get_rope_index was never called"
@@ -248,14 +248,14 @@ print(json.dumps(res["calls"]))
 # [pr_diff] fail_to_pass
 def test_keyword_args_with_int64_input():
     """get_rope_index uses keyword args even when input_ids is already int64."""
-    r = _run_python("""
+    r = _run_python('''
 import json
 results = []
 for dt in [INT64, LONG]:
     res = _exec_branch(dt)
     results.append(res["calls"])
 print(json.dumps(results))
-""")
+''')
     assert r.returncode == 0, f"Script failed: {r.stderr}"
     all_calls = json.loads(r.stdout.strip())
     for calls in all_calls:
@@ -276,11 +276,11 @@ print(json.dumps(results))
 # [pr_diff] pass_to_pass
 def test_noop_int64_input():
     """When input_ids is already int64, code must not crash or change dtype."""
-    r = _run_python("""
+    r = _run_python('''
 import json
 res = _exec_branch(INT64)
 print(json.dumps({"final_dtype": res["final_dtype"]}))
-""")
+''')
     assert r.returncode == 0, f"Script failed: {r.stderr}"
     data = json.loads(r.stdout.strip())
     assert "long" in data["final_dtype"] or "int64" in data["final_dtype"], (
@@ -291,11 +291,11 @@ print(json.dumps({"final_dtype": res["final_dtype"]}))
 # [pr_diff] pass_to_pass
 def test_noop_long_input():
     """When input_ids is already torch.long, code must not crash or change dtype."""
-    r = _run_python("""
+    r = _run_python('''
 import json
 res = _exec_branch(LONG)
 print(json.dumps({"final_dtype": res["final_dtype"]}))
-""")
+''')
     assert r.returncode == 0, f"Script failed: {r.stderr}"
     data = json.loads(r.stdout.strip())
     assert "long" in data["final_dtype"] or "int64" in data["final_dtype"], (
@@ -378,78 +378,69 @@ REPO = "/repo"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_all_python_syntax():
-    """All Python files in areal/ must have valid syntax (pass_to_pass)."""
+def test_repo_ruff_lint():
+    """Engine files must pass ruff linting (E, W, I rules) (pass_to_pass)."""
+    import subprocess
+    import sys
     import os
 
-    areal_dir = os.path.join(REPO, "areal")
-    errors = []
-
-    for root, dirs, files in os.walk(areal_dir):
-        for file in files:
-            if file.endswith(".py"):
-                path = os.path.join(root, file)
-                try:
-                    with open(path) as f:
-                        source = f.read()
-                    ast.parse(source)
-                except SyntaxError as e:
-                    rel_path = path.replace(REPO, "")
-                    errors.append(f"{rel_path}: {e}")
-
-    if errors:
-        raise AssertionError(
-            f"Syntax errors in {len(errors)} files:\n" + "\n".join(errors[:10])
-        )
-
-
-# [repo_tests] pass_to_pass
-def test_repo_no_bare_excepts():
-    """No bare except: clauses in areal/engine/ (pass_to_pass)."""
-    import os
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ruff==0.14.9"], capture_output=True)
 
     engine_dir = os.path.join(REPO, "areal/engine")
-    errors = []
-
-    for root, dirs, files in os.walk(engine_dir):
-        for file in files:
-            if file.endswith(".py"):
-                path = os.path.join(root, file)
-                with open(path) as f:
-                    source = f.read()
-                try:
-                    tree = ast.parse(source)
-                except SyntaxError:
-                    continue
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.ExceptHandler) and node.type is None:
-                        errors.append(f"{path.replace(REPO, '')}:{node.lineno}")
-
-    if errors:
-        raise AssertionError(
-            f"Bare except: found in {len(errors)} locations:\n" + "\n".join(errors[:10])
-        )
-
+    r = subprocess.run(
+        ["ruff", "check", "--select=E,W,I", "--ignore=E501", engine_dir],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff linting failed:
+{r.stdout}
+{r.stderr}"
 
 # [repo_tests] pass_to_pass
-def test_repo_import_structure():
-    """Engine module imports must be syntactically valid (pass_to_pass)."""
+def test_repo_ruff_format():
+    """Engine files must be formatted according to ruff standards (pass_to_pass)."""
+    import subprocess
+    import sys
     import os
 
-    fsdp_engine = os.path.join(REPO, "areal/engine/fsdp_engine.py")
-    with open(fsdp_engine) as f:
-        source = f.read()
-    tree = ast.parse(source)
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "ruff==0.14.9"], capture_output=True)
 
-    # Check for relative imports (which should be minimal in engine files)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom):
-            # Ensure imports are absolute (from areal.xxx or third-party)
-            if node.module and node.level > 0:
-                # This is a relative import - note it but don't fail
-                # (relative imports are sometimes used intentionally)
-                pass
+    engine_dir = os.path.join(REPO, "areal/engine")
+    r = subprocess.run(
+        ["ruff", "format", "--check", engine_dir],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff formatting failed:
+{r.stdout}
+{r.stderr}"
 
-    # Just verifying the file parses with valid import statements
-    # If we got here, the imports are syntactically valid
-    assert True
+# [repo_tests] pass_to_pass
+def test_repo_yaml_valid():
+    """All YAML workflow files must have valid syntax (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pre-commit"], capture_output=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:
+{r.stdout}
+{r.stderr}"
+
+# [repo_tests] pass_to_pass
+def test_repo_json_valid():
+    """All JSON files in repo must have valid syntax (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pre-commit"], capture_output=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-json", "--all-files"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"JSON validation failed:
+{r.stdout}
+{r.stderr}"

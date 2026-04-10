@@ -314,3 +314,52 @@ def test_repo_flow_passes():
         timeout=300,
     )
     assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flags():
+    """Repo's feature flags check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/flags/flags.js"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Flags check failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_suspense_tests_pass():
+    """ReactSuspense tests pass (pass_to_pass) — related to Suspense/fallback behavior."""
+    cmd = [
+        "node", "scripts/jest/jest-cli.js",
+        "--release-channel=experimental",
+        "--no-watchman",
+        "ReactSuspense",
+    ]
+    r = subprocess.run(cmd, cwd=REPO, capture_output=True, timeout=300)
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
+    assert r.returncode == 0, (
+        f"ReactSuspense tests failed (exit {r.returncode}):\n"
+        f"STDOUT:\n{stdout[-2000:]}\nSTDERR:\n{stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_lazy_tests_pass():
+    """ReactLazy tests pass (pass_to_pass) — tests lazy loading with Suspense."""
+    cmd = [
+        "node", "scripts/jest/jest-cli.js",
+        "--release-channel=experimental",
+        "--no-watchman",
+        "ReactLazy",
+    ]
+    r = subprocess.run(cmd, cwd=REPO, capture_output=True, timeout=300)
+    stdout = r.stdout.decode(errors="replace")
+    stderr = r.stderr.decode(errors="replace")
+    assert r.returncode == 0, (
+        f"ReactLazy tests failed (exit {r.returncode}):\n"
+        f"STDOUT:\n{stdout[-2000:]}\nSTDERR:\n{stderr[-2000:]}"
+    )

@@ -45,6 +45,64 @@ def test_repo_ruff_linting():
     assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - Black syntax validation check
+def test_repo_black_syntax():
+    """Repo's files pass black syntax validation (pass_to_pass).
+
+    Note: This validates Python syntax is correct (black exits 0 with --check
+    only if syntax is valid, even if formatting would change).
+    """
+    r = subprocess.run(
+        ["pip", "install", "black", "--quiet"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Run black with --check --diff to get better output but still validate
+    # We only care about syntax errors (exit 123), not formatting differences (exit 1)
+    r = subprocess.run(
+        ["black", "--check", "--diff", f"{REPO}/slime/"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Exit code 123 = syntax error, Exit code 1 = would reformat, Exit 0 = all good
+    # We only fail on syntax errors (123), not on formatting differences (1)
+    assert r.returncode != 123, f"Black found syntax errors:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - isort import ordering check
+def test_repo_isort_imports():
+    """Repo's isort import ordering check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "--quiet"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["isort", "--check", f"{REPO}/slime/", "--profile", "black"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Chunked GAE tests (CPU-compatible)
+def test_repo_chunked_gae():
+    """Repo's chunked GAE tests pass (pass_to_pass - CPU compatible)."""
+    # Install required dependencies for the test
+    r = subprocess.run(
+        ["pip", "install", "pytest", "numpy", "packaging", "pyyaml", "torch",
+         "--index-url", "https://download.pytorch.org/whl/cpu", "--quiet"],
+        capture_output=True, text=True, timeout=300,
+    )
+    # Install repo in editable mode
+    r = subprocess.run(
+        ["pip", "install", "-e", REPO, "--no-deps", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Run the chunked GAE tests
+    r = subprocess.run(
+        ["python", "-m", "pytest", f"{REPO}/tests/test_chunked_gae.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Chunked GAE tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
 # [repo_tests] pass_to_pass - Plugin contracts tests
 def test_repo_plugin_contracts():
     """Plugin contracts tests pass (pass_to_pass)."""

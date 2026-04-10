@@ -335,6 +335,34 @@ def test_repo_dotnet_restore_tests():
     assert r.returncode == 0, f"dotnet restore failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_dotnet_restore_support():
+    """Support project can restore NuGet packages (pass_to_pass)."""
+    support_proj = REPO / "dotnet/src/support/Selenium.WebDriver.Support.csproj"
+    r = subprocess.run(
+        ["dotnet", "restore", str(support_proj)],
+        capture_output=True, text=True, timeout=600, cwd=REPO / "dotnet/src/support",
+    )
+    assert r.returncode == 0, f"dotnet restore failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_dotnet_format_bidi_input():
+    """BiDi Input files pass dotnet format --severity error (pass_to_pass).
+
+    Verifies the BiDi Input module code has no formatting errors or
+    syntax issues that would fail dotnet format validation.
+    """
+    webdriver_proj = REPO / "dotnet/src/webdriver/Selenium.WebDriver.csproj"
+    r = subprocess.run(
+        [
+            "dotnet", "format", str(webdriver_proj),
+            "--include", "src/webdriver/BiDi/Input/*.cs",
+            "--severity", "error", "--verify-no-changes"
+        ],
+        capture_output=True, text=True, timeout=600, cwd=REPO / "dotnet",
+    )
+    assert r.returncode == 0, f"dotnet format found errors in BiDi Input files:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
 def test_bidi_input_files_exist():
     """BiDi Input module files exist and are readable (pass_to_pass)."""
     source_actions = INPUT_DIR / "SourceActions.cs"

@@ -202,6 +202,32 @@ def test_repo_typescript():
     assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass — Repo CI: Error codes check
+def test_repo_error_codes():
+    """Error codes check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check-error-codes"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Error codes check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: Language lint (alex)
+def test_repo_lint_language():
+    """Language lint (alex) passes on documentation (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint-language"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Language lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------

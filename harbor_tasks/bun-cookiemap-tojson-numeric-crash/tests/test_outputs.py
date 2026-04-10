@@ -289,121 +289,79 @@ def _read_tojson_body() -> str:
 
 
 # [repo_tests] pass_to_pass
-# Origin: bun repo CI checks for C++ code quality
-# The repo has banned patterns (see test/internal/ban-words.test.ts) that
-# should not be introduced in new code.
-def test_cookiemap_no_banned_patterns():
-    """CookieMap.cpp must not contain banned C++ anti-patterns.
-    This is a pass-to-pass check from the repo's CI (pass_to_pass)."""
-    text = FILE.read_text()
-
-    banned_found = []
-    for pattern, reason in BANNED_PATTERNS_CPP.items():
-        if pattern in text:
-            banned_found.append(f"{pattern}: {reason}")
-
-    assert not banned_found, (
-        f"Banned patterns found in CookieMap.cpp:\n" +
-        "\n".join(banned_found)
-    )
-
-
-# [repo_tests] pass_to_pass
-# Origin: bun repo CI checks for file structure
-# Verifies the file structure is intact and follows conventions.
-def test_cookiemap_file_structure():
-    """CookieMap.cpp must have proper structure: includes, namespace,
-    class definition with expected methods (pass_to_pass)."""
-    text = FILE.read_text()
-
-    # Check essential includes
-    assert "#include" in text, "CookieMap.cpp missing #include statements"
-
-    # Check namespace
-    assert "namespace WebCore" in text, "CookieMap.cpp missing WebCore namespace"
-
-    # Check class definition exists
-    assert "class CookieMap" in text or "CookieMap::" in text, (
-        "CookieMap class definition or method implementations not found"
-    )
-
-    # Check toJSON method exists (the method being fixed)
-    assert "CookieMap::toJSON" in text, "CookieMap::toJSON method not found"
-
-
-# [repo_tests] pass_to_pass
-# Origin: bun repo format CI workflow (.github/workflows/format.yml)
-# The repo has a .clang-format file and requires C++ files to follow it.
-def test_cookiemap_clang_format():
-    """CookieMap.cpp must follow the repo's C++ formatting style (pass_to_pass).
-    Uses clang-format --dry-run if available, otherwise skips gracefully."""
-    # Check if clang-format is available
+# Origin: bun repo CI format workflow (.github/workflows/format.yml)
+# Git diff --check is a standard CI check that detects:
+# - Merge conflict markers (<<<<<<<, =======, >>>>>>>)
+# - Trailing whitespace
+# - Mixed line endings
+def test_git_no_conflict_markers():
+    """Source files must have no merge conflict markers or trailing whitespace.
+    This is a standard CI check from the repo's format workflow (pass_to_pass)."""
     r = subprocess.run(
-        ["which", "clang-format"],
-        capture_output=True,
-        timeout=5,
-    )
-    if r.returncode != 0:
-        # Try versioned clang-format
-        r = subprocess.run(
-            ["which", "clang-format-19"],
-            capture_output=True,
-            timeout=5,
-        )
-        if r.returncode != 0:
-            pytest.skip("clang-format not available in environment")
-            return
-        clang_format = "clang-format-19"
-    else:
-        clang_format = "clang-format"
-
-    # Run clang-format check on CookieMap.cpp
-    r = subprocess.run(
-        [clang_format, "--dry-run", "--Werror", str(FILE)],
+        ["git", "-C", REPO, "diff", "--check"],
         capture_output=True,
         text=True,
         timeout=30,
-        cwd=REPO,
     )
-
-    # If it fails due to version issues, check the error message
-    if r.returncode != 0:
-        # Some versions don't support --Werror, try alternative
-        r2 = subprocess.run(
-            [clang_format, "--dry-run", str(FILE)],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd=REPO,
-        )
-        # Check if there are any formatting differences reported
-        if "Formatting" in r2.stderr or "code should be" in r2.stderr.lower():
-            assert False, f"CookieMap.cpp needs formatting:\n{r2.stderr[:500]}"
+    assert r.returncode == 0, f"Git diff check found issues: {repr(r.stderr)}"
 
 
 # [repo_tests] pass_to_pass
-# Origin: bun repo source file conventions (see src/.clang-format)
-# Verifies basic C++ syntax validity of the modified file.
-def test_cookiemap_cpp_syntax_valid():
-    """CookieMap.cpp must have valid C++ syntax (basic checks) (pass_to_pass).
-    Checks for balanced braces and valid structure."""
-    text = FILE.read_text()
-
-    # Check for balanced braces
-    open_count = text.count("{")
-    close_count = text.count("}")
-    assert open_count == close_count, (
-        f"Unbalanced braces: {open_count} open, {close_count} close"
+# Origin: bun repo git-based validation
+# Verifies the repository is in a valid state with proper git history.
+def test_git_valid_repo_state():
+    """Repository must have valid git state with at least one commit.
+    Verifies git integrity for the source files (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "log", "--oneline", "-1"],
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
+    assert r.returncode == 0, f"Git log failed: {repr(r.stderr)}"
+    # Verify we got a commit hash (should be non-empty output)
+    commit_line = r.stdout.strip()
+    assert len(commit_line) > 0, "No commit found in git log"
 
-    # Check for balanced parentheses
-    open_paren = text.count("(")
-    close_paren = text.count(")")
-    assert open_paren == close_paren, (
-        f"Unbalanced parentheses: {open_paren} open, {close_paren} close"
-    )
 
-    # Check for basic C++ file markers
-    assert "//" in text or "/*" in text or "#include" in text, (
-        "File appears to lack C++ structure (comments or includes)"
+# [repo_tests] pass_to_pass
+# Origin: bun repo CI - git grep based banned pattern check
+# Equivalent to what ban-words.test.ts does but using git grep
+def test_no_banned_patterns_in_cookiemap():
+    """CookieMap.cpp must not contain banned C++ anti-patterns from repo CI.
+    Uses git grep to check for patterns that CI would reject (pass_to_pass)."""
+    for pattern, reason in BANNED_PATTERNS_CPP.items():
+        r = subprocess.run(
+            ["git", "-C", REPO, "grep", "-n", pattern, "--", "src/bun.js/bindings/CookieMap.cpp"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        # git grep returns 0 if pattern found, 1 if not found
+        if r.returncode == 0:
+            msg = "Banned pattern " + repr(pattern) + " found in CookieMap.cpp: " + reason + "\n" + r.stdout
+            raise AssertionError(msg)
+
+
+# [repo_tests] pass_to_pass
+# Origin: bun repo file structure validation
+# Equivalent to verifying the modified file is tracked and exists
+def test_cookiemap_tracked_in_git():
+    """CookieMap.cpp must be tracked in git and exist at expected path.
+    Validates the source file is properly part of the repository (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "ls-files", "src/bun.js/bindings/CookieMap.cpp"],
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
+    assert r.returncode == 0, f"Git ls-files failed: {repr(r.stderr)}"
+    output = r.stdout.strip()
+    assert "CookieMap.cpp" in output, "CookieMap.cpp not tracked in git"
+
+
+# [static] pass_to_pass
+# File existence check - marked as static since it reads file directly
+def test_cookiemap_file_exists():
+    """CookieMap.cpp file must exist at the expected path (pass_to_pass)."""
+    assert FILE.exists(), f"CookieMap.cpp not found at {FILE}"

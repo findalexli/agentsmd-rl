@@ -385,3 +385,42 @@ def test_repo_ruff_format():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_precommit_yaml():
+    """Repo's YAML files pass pre-commit check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "check-yaml", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit YAML check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_precommit_eof():
+    """Repo's files pass end-of-file-fixer pre-commit check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "end-of-file-fixer", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit EOF check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_precommit_whitespace():
+    """Repo's files pass trailing-whitespace pre-commit check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pre-commit", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["pre-commit", "run", "trailing-whitespace", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pre-commit whitespace check failed:\n{r.stdout}\n{r.stderr}"

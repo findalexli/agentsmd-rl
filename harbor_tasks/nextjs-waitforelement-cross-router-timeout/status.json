@@ -3,31 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T02:10:54.848168",
-  "total_time": 2017.52,
-  "sandbox_id": "ibt14q5lzwlznzpfbvrak",
-  "backend": "fireworks",
+  "validated_at": "2026-04-10T05:15:41.674824",
+  "total_time": 13945.86,
+  "sandbox_id": "iefihoj1sfv5w878ote7z",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T09:00:00Z",
-      "status": "completed",
-      "ci_commands_discovered": [
-        "prettier --check <file> (works without dependencies)",
-        "npm install -g prettier && prettier --check test/e2e/app-dir/interoperability-with-pages/navigation.test.ts"
-      ],
-      "ci_commands_skipped": [
-        "tsc --noEmit (requires node_modules dependencies)",
-        "eslint (requires complex setup with @typescript-eslint)",
-        "pnpm test-* (requires network and full build)",
-        "jest (requires network and full build)"
-      ],
-      "p2p_tests_added": [
-        "test_repo_prettier_formatting - verifies prettier formatting passes",
-        "test_repo_typescript_syntax - basic syntax validation via brace/paren balance"
-      ],
-      "notes": "Added repo CI-derived pass_to_pass gates. Prettier check works in isolated container without node_modules. TypeScript typecheck requires dependencies not present in base image."
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 524.37,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -38,8 +26,8 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
+      "model": "opus",
+      "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
     },
@@ -48,35 +36,70 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All 4 validation checks passed: Docker build succeeded, NOP test returned 0 (3 fail-to-pass tests correctly failed on base commit), Gold test returned 1 (all 13 tests passed after patch), Rubric judge ICR=1.0 (empty rubric).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 56.83
+      "notes": "All 4 validation checks passed: Docker build succeeded, NOP test returned 0 (3 fail-to-pass tests correctly failed), Gold test returned 1 (all 15 tests passed). Rubric judge ICR=0.5 - expected since gold solution only modifies test code.",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1363.32
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 5.23,
+      "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md (CLAUDE.md symlink)"
+      ],
+      "rules_added": 3,
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.67,
-      "notes": "ICR=1.00"
+      "time": 85.63
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T02:10:54.677970"
+      "time": 3440.88,
+      "at": "2026-04-09T21:15:49.284997"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 2017.52,
-      "at": "2026-04-09T02:10:54.848168"
+      "time": 3796.07,
+      "at": "2026-04-09T23:02:24.424465"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3796.33,
+      "at": "2026-04-09T23:02:24.592519"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 13945.58,
+      "at": "2026-04-10T05:15:41.496760"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 13945.86,
+      "at": "2026-04-10T05:15:41.674824"
     }
   ]
 }

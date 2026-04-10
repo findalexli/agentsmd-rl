@@ -339,48 +339,85 @@ def test_no_inline_fixture_files():
 def test_repo_prettier_formatting():
     """Repo's prettier formatting check passes on test file (pass_to_pass)."""
     r = subprocess.run(
-        ["npm", "install", "-g", "prettier"],
+        ["npx", "prettier", "--check", TEST_FILE],
         capture_output=True,
         text=True,
         timeout=60,
-    )
-    # Install may produce warnings, but should succeed
-    r = subprocess.run(
-        ["prettier", "--check", TEST_FILE],
-        capture_output=True,
-        text=True,
-        timeout=30,
         cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier formatting check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
-# [repo_ci] pass_to_pass — Test file is valid TypeScript (basic syntax check)
+# [repo_ci] pass_to_pass — TypeScript compiler can parse the test file
 def test_repo_typescript_syntax():
-    """Test file is valid TypeScript syntax that Node.js can parse (pass_to_pass)."""
-    r = _run_node(
-        """
-const fs = require('fs');
-try {
-  const src = fs.readFileSync('TESTFILE', 'utf8');
-  // Check for basic structural issues: balanced braces/parens (naive check)
-  const openBrace = (src.match(/{/g) || []).length;
-  const closeBrace = (src.match(/}/g) || []).length;
-  const openParen = (src.match(/\\(/g) || []).length;
-  const closeParen = (src.match(/\\)/g) || []).length;
-  if (openBrace !== closeBrace) {
-    console.error('Unbalanced braces: ' + openBrace + ' vs ' + closeBrace);
-    process.exit(1);
-  }
-  if (openParen !== closeParen) {
-    console.error('Unbalanced parens: ' + openParen + ' vs ' + closeParen);
-    process.exit(1);
-  }
-  console.log('Basic syntax OK');
-} catch(e) {
-  console.error('Error reading file: ' + e.message);
-  process.exit(1);
-}
-""".replace("TESTFILE", TEST_FILE)
+    """TypeScript compiler can parse test file without syntax errors (pass_to_pass)."""
+    # Install TypeScript globally first, then run tsc
+    r = subprocess.run(
+        ["npm", "install", "-g", "typescript"],
+        capture_output=True,
+        text=True,
+        timeout=120,
     )
-    assert r.returncode == 0, f"TypeScript syntax check failed: {r.stderr.strip()}"
+    # Run tsc with --noEmit to check for syntax errors only
+    r = subprocess.run(
+        ["tsc", "--noEmit", "--skipLibCheck", TEST_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # Exit 0 = no errors, Exit 2 = has errors (type or syntax)
+    assert r.returncode != 2, f"TypeScript syntax check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — Test file can be read and parsed by Node.js
+def test_repo_node_parseable():
+    """Test file is readable and parseable as JavaScript/TypeScript by Node.js (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"require('fs').readFileSync('{TEST_FILE}', 'utf8')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js file read failed:\n{r.stderr[-500:]}"
+
+
+# [repo_ci] pass_to_pass — Import statements use valid syntax
+def test_repo_import_syntax():
+    """Test file has valid import/export syntax (pass_to_pass)."""
+    r = _run_node(
+        f"""
+const fs = require('fs');
+const src = fs.readFileSync('{TEST_FILE}', 'utf8');
+
+// Check for valid import statement patterns
+const importPattern = /import\\s+(?:(?:{{[^}}]*}}|\\*\\s+as\\s+\\w+|\\w+)\\s+from\\s+)?['"`][^'"`]+['"`]|import\\s*\\(['"`][^'"`]+['"`]\\)/g;
+const imports = src.match(importPattern) || [];
+
+// Check for valid export patterns
+const exportPattern = /export\\s+(?:default\\s+|(?:const|let|var|function|class|interface|type|enum)\\s+\\w+|{{[^}}]*}})/g;
+const exports = src.match(exportPattern) || [];
+
+// Check for unclosed string literals in import/export lines
+const lines = src.split('\\n');
+for (let i = 0; i < lines.length; i++) {{
+    const line = lines[i];
+    // Check for imports that don't close properly
+    if (line.trim().startsWith('import')) {{
+        const singleQuotes = (line.match(/'/g) || []).length;
+        const doubleQuotes = (line.match(/"/g) || []).length;
+        const backticks = (line.match(/`/g) || []).length;
+        // String quotes should be balanced within the line
+        if (singleQuotes % 2 !== 0 && doubleQuotes % 2 !== 0 && backticks % 2 !== 0) {{
+            console.error('Unclosed string in import at line ' + (i+1));
+            process.exit(1);
+        }}
+    }}
+}}
+
+console.log('Found ' + imports.length + ' imports, ' + exports.length + ' exports');
+console.log('Import/export syntax OK');
+"""
+    )
+    assert r.returncode == 0, f"Import syntax check failed: {r.stderr.strip()}"

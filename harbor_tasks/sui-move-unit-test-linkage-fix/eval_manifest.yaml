@@ -65,5 +65,22 @@ agent_config_rules:
     lines: "Critical Development Notes"
     rule: "ALWAYS run cargo xclippy after finishing development"
 
-# Soft/rubric rules for LLM evaluation (none needed for this task - all rules are programmatic)
-rubric: []
+# Soft/rubric rules for LLM evaluation
+rubric:
+  - rule: "Comments should explain the 'why' not the 'what'. Explain non-obvious algorithms, temporary exclusions, complex calculations, subtle race conditions, and assumptions - not simple variable assignments or standard library usage."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-131"
+      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+
+  - rule: "Always run tests before submitting changes. Do not disable or ignore tests - all tests must pass and be enabled."
+    source:
+      path: "CLAUDE.md"
+      lines: "105-107,112"
+      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+
+  - rule: "Never use #[allow(dead_code)], #[allow(unused)], or other linting suppressions. Fix the underlying issues instead."
+    source:
+      path: "CLAUDE.md"
+      lines: "113"
+      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"

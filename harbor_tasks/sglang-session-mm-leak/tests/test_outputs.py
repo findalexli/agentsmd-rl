@@ -370,3 +370,48 @@ def test_py_compile_all_modified():
             cwd=REPO,
         )
         assert result.returncode == 0, f"py_compile failed for {filepath}: {result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_lint_modified():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    # Install ruff if not already present
+    subprocess.run(["pip", "install", "ruff", "-q"], check=True, capture_output=True)
+    result = subprocess.run(
+        ["ruff", "check", "--select=F401,F821"] + ALL_FILES,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Ruff lint failed:\n{result.stderr or result.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_black_format_modified():
+    """Repo's black formatter passes on modified files (pass_to_pass)."""
+    # Install black if not already present
+    subprocess.run(["pip", "install", "black", "-q"], check=True, capture_output=True)
+    result = subprocess.run(
+        ["black", "--check"] + ALL_FILES,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Black format check failed:\n{result.stderr or result.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_isort_imports_modified():
+    """Repo's isort import ordering passes on modified files (pass_to_pass)."""
+    # Install isort if not already present
+    subprocess.run(["pip", "install", "isort", "-q"], check=True, capture_output=True)
+    result = subprocess.run(
+        ["isort", "--check"] + ALL_FILES,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"isort check failed:\n{result.stderr or result.stdout}"

@@ -136,6 +136,58 @@ def test_repo_ruff_checks():
     assert r.returncode == 0, f"Ruff checks failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Repo's isort import ordering check passes on modified file."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install isort --quiet 2>/dev/null && isort --check-only python/sglang/srt/managers/tokenizer_communicator_mixin.py"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_check():
+    """Repo's black formatting check passes on modified file."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install black --quiet 2>/dev/null && black --check python/sglang/srt/managers/tokenizer_communicator_mixin.py"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"black check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_codespell_check():
+    """Repo's codespell check passes on modified file."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install codespell --quiet 2>/dev/null && codespell --config /workspace/sglang/.codespellrc python/sglang/srt/managers/tokenizer_communicator_mixin.py"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_ast():
+    """Repo's pre-commit check-ast hook passes on modified file."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install pre-commit --quiet 2>/dev/null && cd /workspace/sglang && pre-commit run check-ast --files python/sglang/srt/managers/tokenizer_communicator_mixin.py"
+        ],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pre-commit check-ast failed:\n{r.stderr}"
+
+
 # [static] pass_to_pass
 def test_not_stub():
     """Modified function has real logic, not just pass/return."""

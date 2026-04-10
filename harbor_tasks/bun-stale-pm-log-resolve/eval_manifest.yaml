@@ -83,7 +83,7 @@ checks:
       commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
 
   # --- Pass-to-pass: repo CI tests ---
-  - id: no_banned_words_in_diff
+  - id: test_no_banned_words_in_diff
     type: pass_to_pass
     origin: repo_tests
     description: "No banned words/patterns in changed lines (CI banned words check)"
@@ -106,6 +106,55 @@ checks:
     source:
       path: "package.json"
       equivalent: "bun run lint"
+
+  # --- Pass-to-pass: additional repo CI tests ---
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "package.json is valid JSON with required CI scripts"
+    source:
+      path: "package.json"
+      equivalent: "npm validate"
+
+  - id: test_repo_claude_md_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CLAUDE.md documentation exists and has content"
+    source:
+      path: "src/CLAUDE.md"
+      equivalent: "file existence check"
+
+  - id: test_repo_zig_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "VirtualMachine.zig exists and contains target function"
+    source:
+      path: "src/bun.js/VirtualMachine.zig"
+      equivalent: "file structure check"
+
+  - id: test_repo_oxlint_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "oxlint configuration file exists and is valid JSON"
+    source:
+      path: "oxlint.json"
+      equivalent: "config validation"
+
+  - id: test_repo_prettier_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier configuration file exists"
+    source:
+      path: ".prettierrc"
+      equivalent: "config existence check"
+
+  - id: test_repo_git_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is valid and functional"
+    source:
+      path: ".git"
+      equivalent: "git status"
 
 rubric:
   - rule: "Never use @import() inline inside of functions. Always put them at the bottom of the file or containing struct."

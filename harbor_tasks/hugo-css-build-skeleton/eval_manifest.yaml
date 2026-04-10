@@ -128,66 +128,82 @@ checks:
     test: "test_theme_files_copied_correctly"
     required: true
 
-  # Repo CI/CD checks (pass-to-pass)
+  # Repo CI/CD checks (pass-to-pass) - origin: repo_tests (actual CI commands)
   - id: "p2p.gofmt"
     description: "Repo's Go code passes gofmt check"
     type: "pass_to_pass"
+    origin: "repo_tests"
     test: "test_repo_gofmt"
     required: true
 
   - id: "p2p.go_vet"
     description: "Repo's Go code passes go vet"
     type: "pass_to_pass"
+    origin: "repo_tests"
     test: "test_repo_go_vet"
     required: true
 
   - id: "p2p.build"
     description: "Repo compiles successfully"
     type: "pass_to_pass"
+    origin: "repo_tests"
     test: "test_repo_build"
     required: true
 
   - id: "p2p.unit_tests_create"
     description: "Repo's create package tests pass"
     type: "pass_to_pass"
+    origin: "repo_tests"
     test: "test_repo_unit_tests_create"
     required: true
 
   - id: "p2p.go_mod_verify"
     description: "Repo's go.mod and go.sum are valid"
     type: "pass_to_pass"
+    origin: "repo_tests"
     test: "test_repo_go_mod_verify"
     required: true
 
+  # Repo integrity checks (pass-to-pass) - origin: static (file existence checks)
   - id: "p2p.skeleton_css_template"
     description: "Theme skeleton css.html template exists"
     type: "pass_to_pass"
+    origin: "static"
     test: "test_skeleton_css_template_exists"
     required: true
 
   - id: "p2p.skeleton_js_template"
     description: "Theme skeleton js.html template exists"
     type: "pass_to_pass"
+    origin: "static"
     test: "test_skeleton_js_template_exists"
     required: true
 
   - id: "p2p.skeleton_main_css"
     description: "Theme skeleton main.css exists"
     type: "pass_to_pass"
+    origin: "static"
     test: "test_skeleton_main_css_exists"
     required: true
 
   - id: "p2p.skeleton_main_js"
     description: "Theme skeleton main.js exists"
-    type: "pass_to_pass"
+    type: "per:rubic"
     test: "test_skeleton_main_js_exists"
     required: true
 
   - id: "p2p.skeleton_layouts"
     description: "Theme skeleton layout files exist"
     type: "pass_to_pass"
+    origin: "static"
     test: "test_skeleton_layouts_exist"
     required: true
 
 # Rubric for LLM judge evaluation (soft/subjective criteria)
-rubric: []
+# These rules evaluate code quality, not file modifications
+rubric:
+  - rule: "The solution demonstrates brevity - CSS component files are concise with only necessary rules, and template code is clean without redundant comments."
+
+  - rule: "The js.html template follows the same pattern as css.html for consistency - both use cond expressions with hugo.IsDevelopment for conditional options."
+
+  - rule: "Variable and option names are self-explanatory. The $opts dictionary uses clear keys (minify, sourceMap) and intuitive values using cond for conditional logic."

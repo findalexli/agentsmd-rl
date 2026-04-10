@@ -46,14 +46,21 @@ checks:
     origin: repo_tests
     description: "Repo's Jest tests for dates.ts module pass on base commit"
 
+  - id: test_repo_lint_css
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's CSS/SCSS linting (stylelint) passes on base commit"
+
+  - id: test_repo_markdown_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's markdown linting (markdownlint-cli2) passes on base commit"
+
+  - id: test_repo_build_products
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's frontend product build passes on base commit"
+
 rubric:
-  - rule: "Comments: explain _why_, not _what_ — if the reason isn't important, skip the comment"
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "314b93aa807030d5ef1c9bb17d44cb3609f10cb3"
-  - rule: "Write TypeScript with proper typing for all new code"
-    source:
-      path: ".cursor/rules/react-typescript.mdc"
-      lines: "20"
-      commit: "314b93aa807030d5ef1c9bb17d44cb3609f10cb3"
+  - rule: "Code changes must follow existing codebase patterns and pass all functional tests"
+    description: "Gold solution passes all 10 tests - fail-to-pass and pass-to-pass"

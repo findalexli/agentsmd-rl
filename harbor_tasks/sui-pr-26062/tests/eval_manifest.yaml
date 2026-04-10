@@ -1,58 +1,67 @@
-source:
-  repo: MystenLabs/sui
-  pr_number: 26062
-  base_commit: 2a6083bafec7a791806866cea60f03fd2e1beb65
-  merge_commit: eb78ba29e6d62ee836f79de93b5c8346a9cd3d1a
-  task_name: sui-display-implicit-json-transform
-
-# Programmatic checks (pytest functions)
 checks:
-  # Fail-to-pass: Core behavior changes
+  # Fail-to-pass checks (tests that verify the fix works)
   - id: test_transform_enum_no_default
     type: fail_to_pass
-    origin: pr_diff
+    origin: gold_patch
     description: Transform enum no longer has #[default] on Str variant
 
   - id: test_strand_value_has_optional_transform
     type: fail_to_pass
-    origin: pr_diff
-    description: Strand::Value uses Option<Transform> instead of Transform
+    origin: gold_patch
+    description: Strand::Value has Option<Transform> instead of Transform
 
   - id: test_writer_handles_none_transform
     type: fail_to_pass
-    origin: pr_diff
-    description: Writer handles None transform with pattern match on None | Some(Transform::Json)
+    origin: gold_patch
+    description: Writer handles None transform by checking if atom can be formatted as str
 
   - id: test_interpreter_passes_transform_directly
     type: fail_to_pass
-    origin: pr_diff
-    description: Interpreter passes transform directly without unwrap_or_default()
+    origin: gold_patch
+    description: Interpreter passes transform directly without unwrapping
 
   - id: test_format_as_str_is_pub_crate
     type: fail_to_pass
-    origin: pr_diff
-    description: format_as_str is pub(crate) for writer access
+    origin: gold_patch
+    description: format_as_str method is pub(crate) for use by writer
 
   - id: test_unit_test_exists
     type: fail_to_pass
-    origin: pr_diff
-    description: Unit test for bare expression JSON fallback exists
+    origin: gold_patch
+    description: Unit test for implicit JSON formatting exists
 
   - id: test_bare_struct_formatting
     type: fail_to_pass
-    origin: pr_diff
-    description: Bare struct expression JSON formatting works correctly
+    origin: gold_patch
+    description: Bare struct expression implicitly uses JSON formatting (behavioral)
 
-  # Pass-to-pass: Repo standards
+  # Pass-to-pass checks (repo CI/CD tests that should pass on both base and fixed)
   - id: test_cargo_check
     type: pass_to_pass
     origin: repo_tests
-    description: Cargo check passes on sui-display crate
+    description: sui-display crate compiles without errors
+
+  - id: test_cargo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-display crate passes clippy lints
+
+  - id: test_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-display crate code is properly formatted
+
+  - id: test_cargo_doc
+    type: pass_to_pass
+    origin: repo_tests
+    description: Documentation builds without errors
+
+  - id: test_cargo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: License headers are present on all source files
 
   - id: test_display_tests_pass
     type: pass_to_pass
     origin: repo_tests
     description: All sui-display library tests pass
-
-# Rubric for soft/subjective rules (LLM-judge only)
-rubric: []

@@ -91,28 +91,28 @@ checks:
 
   - id: test_repo_precommit_trailing_whitespace
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "No trailing whitespace in app.py"
 
   - id: test_repo_precommit_end_of_file
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "app.py ends with exactly one newline"
 
 rubric:
-  - rule: "Composition over inheritance — keep hierarchies <= 2 levels; prefer delegation"
+  - rule: "Code change demonstrates composition over inheritance — POST /data/batch uses flat async function, no class hierarchies introduced"
     source:
       path: "AGENTS.md"
       lines: "81"
       commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
 
-  - rule: "Follow existing code patterns in the same module (e.g. error handling style, response types, decorator patterns in app.py)"
+  - rule: "Code change follows existing patterns — handler uses same error handling style, JSONResponse format, and decorator patterns as other routes in app.py"
     source:
       path: "AGENTS.md"
       lines: "40"
       commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
 
-  - rule: "Async code must stay non-blocking — use await and aiofiles, no sync I/O in async handlers"
+  - rule: "Code change uses async/await correctly — POST /data/batch handler awaits request.json() and stays non-blocking"
     source:
       path: "AGENTS.md"
       lines: "103-104"

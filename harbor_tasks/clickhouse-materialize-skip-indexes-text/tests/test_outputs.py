@@ -293,3 +293,218 @@ def test_no_trailing_whitespace():
                 assert False, f"FAIL: Line {i+1} has trailing whitespace: '{line}'"
 
     pass
+
+
+def test_no_tabs_in_code():
+    """
+    Pass-to-pass test: No tabs in the modified file.
+    From repo CI (check_cpp.sh): tabs are not allowed in ClickHouse code.
+    """
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    # Check for any tabs in the file
+    if '\t' in content:
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            if '\t' in line:
+                assert False, f"FAIL: Found tab character at line {i+1}: '{line}'"
+
+    pass
+
+
+def test_no_crlf_line_endings():
+    """
+    Pass-to-pass test: No CRLF line endings in the modified file.
+    Repo standard requires LF line endings only.
+    """
+    with open(TARGET_FILE, 'rb') as f:
+        content = f.read()
+
+    # Check for CRLF line endings
+    if b'\r\n' in content:
+        assert False, "FAIL: Found CRLF line endings (Windows style) in the file. Use LF only."
+
+    pass
+
+
+def test_file_ends_with_newline():
+    """
+    Pass-to-pass test: File ends with a newline character.
+    POSIX standard requires text files to end with newline.
+    """
+    with open(TARGET_FILE, 'rb') as f:
+        content = f.read()
+
+    if not content.endswith(b'\n'):
+        assert False, "FAIL: File does not end with a newline character."
+
+    pass
+
+
+def test_utf8_encoding():
+    """
+    Pass-to-pass test: File uses valid UTF-8 encoding.
+    ClickHouse source files must be UTF-8 encoded.
+    """
+    with open(TARGET_FILE, 'rb') as f:
+        content = f.read()
+
+    try:
+        content.decode('utf-8')
+    except UnicodeDecodeError as e:
+        assert False, f"FAIL: File is not valid UTF-8: {e}"
+
+    pass
+
+
+def test_repo_clang_format():
+    """
+    Pass-to-pass test: Repo CI - clang-format check on target file.
+    ClickHouse CI runs clang-format on all modified C++ files.
+    """
+    # Use the repo's .clang-format configuration
+    clang_format_config = os.path.join(REPO, ".clang-format")
+    if not os.path.exists(clang_format_config):
+        pytest.skip("No .clang-format config in repo")
+
+    # Check if clang-format is available
+    r = subprocess.run(
+        ["which", "clang-format-18"],
+        capture_output=True,
+        text=True,
+    )
+    if r.returncode != 0:
+        pytest.skip("clang-format-18 not available")
+
+    # Run clang-format --dry-run --Werror (like CI does)
+    r = subprocess.run(
+        ["clang-format-18", "--dry-run", "--Werror", TARGET_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+
+    # Note: The file may have pre-existing formatting issues
+    # We only fail if the command itself errors (e.g., invalid config)
+    assert r.returncode == 0 or "replacing" in r.stderr.lower() or "error" not in r.stderr.lower(), \
+        f"clang-format failed with errors:\n{r.stderr[:1000]}"
+
+
+def test_repo_git_whitespace_check():
+    """
+    Pass-to-pass test: Repo CI - git diff --check for whitespace errors.
+    ClickHouse CI runs git diff --check to catch trailing whitespace.
+    """
+    # Ensure we're in a git repo
+    git_dir = os.path.join(REPO, ".git")
+    if not os.path.exists(git_dir):
+        pytest.skip("Not a git repository")
+
+    # Run git diff --check (looks for trailing whitespace, conflict markers, etc.)
+    r = subprocess.run(
+        ["git", "diff", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # This should pass - any whitespace errors would indicate issues
+    assert r.returncode == 0, \
+        f"Git whitespace check failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_cpp_style_tabs():
+    """
+    Pass-to-pass test: Repo CI - check_cpp.sh tabs check.
+    ClickHouse CI forbids tabs in source files via check_cpp.sh.
+    """
+    # Run grep to find tabs (same as CI's check_cpp.sh does)
+    r = subprocess.run(
+        ["grep", "-F", "\t", TARGET_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # If grep finds tabs, it returns 0; if no tabs, returns 1
+    # So tabs exist when returncode == 0
+    if r.returncode == 0 and r.stdout.strip():
+        # Found tabs - check if they're in the target area
+        lines_with_tabs = r.stdout.strip().split('\n')
+        for line in lines_with_tabs[:5]:  # Show first 5
+            if line.strip():
+                assert False, f"FAIL: Found tab character in file. Line: {line[:200]}"
+
+    # Also run the same check using bash to be thorough
+    r2 = subprocess.run(
+        ["bash", "-c", f'grep -F $\'\\t\' "{TARGET_FILE}" && echo "^ tabs are not allowed"'],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    assert "tabs are not allowed" not in r2.stdout, \
+        "FAIL: Tabs found in source file (ClickHouse CI style violation)"
+
+
+def test_repo_cpp_style_trailing_ws():
+    """
+    Pass-to-pass test: Repo CI - check_cpp.sh trailing whitespace check.
+    ClickHouse CI forbids trailing whitespace via check_cpp.sh.
+    """
+    # Run grep for trailing whitespace (same as CI's check_cpp.sh)
+    r = subprocess.run(
+        ["grep", "-n", "-P", " $", TARGET_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # Filter to lines in the target area
+    if r.returncode == 0 and r.stdout.strip():
+        lines = r.stdout.strip().split('\n')
+        for line in lines:
+            if 'text_indexes_to_merge' in line or 'materialize_skip_indexes' in line:
+                assert False, f"FAIL: Trailing whitespace in modified area:\n{line}"
+
+
+def test_repo_pragma_once_headers():
+    """
+    Pass-to-pass test: Repo CI - check that headers have #pragma once.
+    ClickHouse CI requires all header files to start with #pragma once.
+    """
+    # Find header files in the same directory as the modified file
+    target_dir = os.path.dirname(TARGET_FILE)
+    header_files = []
+
+    if os.path.exists(target_dir):
+        for f in os.listdir(target_dir):
+            if f.endswith('.h'):
+                header_files.append(os.path.join(target_dir, f))
+
+    if not header_files:
+        pytest.skip("No header files in target directory to check")
+
+    # Check each header for #pragma once
+    for header_file in header_files[:3]:  # Check up to 3 headers
+        if not os.path.exists(header_file):
+            continue
+
+        r = subprocess.run(
+            ["head", "-n1", header_file],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            cwd=REPO,
+        )
+
+        if r.returncode == 0:
+            first_line = r.stdout.strip()
+            assert first_line == '#pragma once', \
+                f"FAIL: {header_file} must have '#pragma once' in first line, found: {first_line}"

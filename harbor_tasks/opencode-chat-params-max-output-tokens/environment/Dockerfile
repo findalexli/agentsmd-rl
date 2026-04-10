@@ -1,7 +1,7 @@
 FROM node:22-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux python3 \
+    git curl ca-certificates build-essential tmux python3 unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the fix)

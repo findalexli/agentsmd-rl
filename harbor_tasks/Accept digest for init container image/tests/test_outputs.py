@@ -388,3 +388,44 @@ def test_deployment_template_uses_helper():
         "Should iterate over initContainers with range"
 
 
+
+
+def test_repo_schema_tests():
+    """
+    Run the repo's own schema tests for user deployments.
+    P2P: These tests verify the Dagster Helm chart schema and templates work correctly.
+    Origin: helm/dagster/schema/schema_tests/test_user_deployments.py
+    """
+    # Install required dependencies
+    r = subprocess.run(
+        ["pip", "install", "-e", f"{REPO_ROOT}/python_modules/libraries/dagster-k8s", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_ROOT
+    )
+    assert r.returncode == 0, f"Failed to install dagster-k8s: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pip", "install", "kubernetes", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO_ROOT
+    )
+    assert r.returncode == 0, f"Failed to install kubernetes: {r.stderr[-500:]}"
+
+    # Run the repo's schema tests
+    schema_path = f"{REPO_ROOT}/helm/dagster/schema"
+    r = subprocess.run(
+        ["pytest", "schema_tests/test_user_deployments.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=600, cwd=schema_path
+    )
+    assert r.returncode == 0, f"Repo schema tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_helm_lint():
+    """
+    Run helm lint on the dagster-user-deployments chart.
+    P2P: This verifies the Helm chart passes linting.
+    Origin: CI workflow helm chart validation
+    """
+    r = subprocess.run(
+        ["helm", "lint", "."],
+        capture_output=True, text=True, timeout=30, cwd=HELM_CHART_PATH
+    )
+    assert r.returncode == 0, f"Helm lint failed:\n{r.stdout}\n{r.stderr}"

@@ -36,7 +36,7 @@ checks:
     origin: pr_diff
     description: AsVoid removed from TODO list in AsOptionalWrapper since it now has proper handling (executes validation code)
 
-  # Pass-to-pass tests
+  # Pass-to-pass tests - Original (repo structure and syntax validation)
   - id: test_type_bridging_file_structure
     type: pass_to_pass
     origin: repo_tests
@@ -67,7 +67,41 @@ checks:
     origin: repo_tests
     description: Swift export integration tests have proper directory structure
 
-rubric: []
+  # Pass-to-pass tests - CI/CD enrichment (new)
+  - id: test_nullable_type_golden_results_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Nullable type golden results exist with main.kt, main.swift, main.h files
+
+  - id: test_nullable_type_test_data_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Nullable type test data file exists with valid KIND/MODULE markers and content
+
+  - id: test_sir_providers_source_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: Sir providers module source files exist (TypeBridging.kt, SirBridgeProviderImpl.kt, Types.kt)
+
+  - id: test_sir_module_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: SIR module has expected source files (SirElementBase.kt, SirType.kt, SirNominalType.kt, SirBridge.kt)
+
+  - id: test_swift_export_standalone_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift export standalone module has valid structure with build.gradle.kts
+
+  - id: test_repo_gradle_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository has valid Gradle build structure with build.gradle.kts, settings.gradle, and executable gradlew
+
+rubric:
+  - rule: "Code changes should be focused and minimal - only modify files necessary for the fix."
+  - rule: "Bridge implementation must include proper type conversions for both Kotlin and Swift sources."
+  - rule: "Error messages should be descriptive and guide developers to correct usage."
 
 agent_config_rules:
   - source: AGENTS.md

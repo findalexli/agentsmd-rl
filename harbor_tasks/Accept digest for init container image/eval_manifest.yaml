@@ -79,7 +79,41 @@ checks:
     category: "pass_to_pass"
     points: 1
 
-rubric: []
+  # Pass-to-pass tests from repo CI (added by p2p_enrichment)
+  - id: "p2p_repo_schema_tests"
+    name: "Repo's schema tests pass"
+    description: "Run the repo's own schema_tests/test_user_deployments.py tests (65 tests)"
+    test_function: "test_repo_schema_tests"
+    category: "pass_to_pass"
+    points: 1
+    origin: "repo_ci"
+
+  - id: "p2p_repo_helm_lint"
+    name: "Helm chart passes linting"
+    description: "Run helm lint on dagster-user-deployments chart"
+    test_function: "test_repo_helm_lint"
+    category: "pass_to_pass"
+    points: 1
+    origin: "repo_ci"
+
+rubric:
+  - rule: "Use @record instead of @dataclass for data structures. Import from dagster_shared.record."
+    source:
+      path: ".claude/coding_conventions.md"
+      lines: "83-95"
+      commit: "f0c823c061cb859c0f6ab8fe1944a2f48e182eb3"
+
+  - rule: "Use built-in generic types for annotations: list[str], dict[str, Any] instead of typing.List, typing.Dict"
+    source:
+      path: ".claude/coding_conventions.md"
+      lines: "55-61"
+      commit: "f0c823c061cb859c0f6ab8fe1944a2f48e182eb3"
+
+  - rule: "Type hints required for all Python code. All code must pass pyright type checking."
+    source:
+      path: ".claude/coding_conventions.md"
+      lines: "53-61"
+      commit: "f0c823c061cb859c0f6ab8fe1944a2f48e182eb3"
 
 # Agent config rules to check (from CLAUDE.md)
 agent_config:
@@ -88,5 +122,5 @@ agent_config:
     applicable: false  # Not applicable for this Helm-focused PR
 
 scoring:
-  max_points: 15
-  passing_threshold: 10
+  max_points: 17
+  passing_threshold: 12

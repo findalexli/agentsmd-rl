@@ -338,3 +338,56 @@ def test_repo_config_valid_syntax():
     # Check for basic TypeScript keywords
     keywords = ["import", "export", "const", "function", "class", "interface"]
     assert any(kw in content for kw in keywords), "Missing basic TypeScript keywords"
+
+
+# [repo_tests] pass_to_pass — no merge conflict markers
+def test_repo_no_merge_conflicts():
+    '''Config file must not contain merge conflict markers (pass_to_pass).'''
+    content = FILE.read_text()
+    assert '<<<<<<<' not in content, "Found merge conflict marker '<<<<<<<'"
+    assert '=======' not in content, "Found merge conflict marker '======='"
+    assert '>>>>>>>' not in content, "Found merge conflict marker '>>>>>>>'"
+
+
+# [repo_tests] pass_to_pass — import/export statement validity
+def test_repo_config_imports_exports_valid():
+    '''Config file must have balanced import/export statements (pass_to_pass).'''
+    content = FILE.read_text()
+    # Count import statements (excluding dynamic imports)
+    import_lines = len([l for l in content.splitlines() if re.match(r'^\s*import\s+', l)])
+    # Check for import from statements
+    import_from_pattern = r'import\s+.*?\s+from\s+["\']'
+    imports_with_from = len(re.findall(import_from_pattern, content))
+    # Verify we have imports from effect and other modules
+    effect_imports = len(re.findall(r'from\s+["\']effect["\']', content))
+    assert effect_imports > 0, "No imports from 'effect' found - config.ts should import Effect"
+    assert import_lines > 10, f'Too few import statements ({import_lines}) - config.ts likely corrupted'
+
+
+# [repo_tests] pass_to_pass — no obvious formatting issues
+def test_repo_config_no_obvious_formatting_issues():
+    '''Config file should not have obvious formatting issues like tabs or carriage returns (pass_to_pass).'''
+    content = FILE.read_text()
+    # No carriage returns (Windows line endings)
+    assert '\r' not in content, 'Found carriage return characters - use LF line endings'
+    # No tabs in indentation (spaces only)
+    for i, line in enumerate(content.splitlines(), 1):
+        stripped = line.lstrip()
+        if stripped and not stripped.startswith('//'):
+            indent = line[:len(line) - len(stripped)]
+            if '\t' in indent:
+                assert False, f'Found tab character in indentation at line {i}'
+
+
+# [repo_tests] pass_to_pass — Effect namespace structure preserved
+def test_repo_effect_namespace_intact():
+    '''Effect namespace structure must be preserved in config.ts (pass_to_pass).'''
+    content = FILE.read_text()
+    # Check for namespace Config declaration
+    assert 'export namespace Config' in content or 'namespace Config' in content, (
+        'Config namespace not found'
+    )
+    # Check that we have the expected Config namespace methods
+    methods = ['loadGlobal', 'getGlobal', 'invalidate', 'loadFile']
+    for method in methods:
+        assert method in content, f'Config namespace missing method: {method}'

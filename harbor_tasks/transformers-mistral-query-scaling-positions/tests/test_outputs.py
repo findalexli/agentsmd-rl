@@ -93,6 +93,92 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
+# [repo_tests] pass_to_pass - CI-style imports check for all affected modules
+def test_repo_ci_imports():
+    """CI-style import check: verify all affected modeling modules can be imported (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         f"import sys; sys.path.insert(0, '{REPO}/src'); "
+         "from transformers.models.ministral3.modeling_ministral3 import get_llama_4_attn_scale; "
+         "from transformers.models.ministral3.modular_ministral3 import get_llama_4_attn_scale as _; "
+         "from transformers.models.mistral4.modeling_mistral4 import get_llama_4_attn_scale as __; "
+         "from transformers.models.mistral4.modular_mistral4 import get_llama_4_attn_scale as ___; "
+         "print('IMPORTS_OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CI import check failed: {r.stderr}"
+    assert "IMPORTS_OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass - AST verification that function exists in all files
+def test_repo_function_existence():
+    """AST check: get_llama_4_attn_scale exists in all expected files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         f"""
+import ast
+import sys
+from pathlib import Path
+
+files = [
+    "{REPO}/src/transformers/models/ministral3/modeling_ministral3.py",
+    "{REPO}/src/transformers/models/ministral3/modular_ministral3.py",
+    "{REPO}/src/transformers/models/mistral4/modeling_mistral4.py",
+]
+
+missing = []
+for f in files:
+    src = Path(f).read_text()
+    tree = ast.parse(src)
+    found = any(node.name == "get_llama_4_attn_scale" for node in ast.walk(tree) if isinstance(node, ast.FunctionDef))
+    if not found:
+        missing.append(f)
+
+if missing:
+    print(f"MISSING: {{missing}}")
+    sys.exit(1)
+print("ALL_FUNCTIONS_FOUND")
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Function existence check failed: {r.stderr}"
+    assert "ALL_FUNCTIONS_FOUND" in r.stdout
+
+
+# [repo_tests] pass_to_pass - Modular file imports the function correctly
+def test_repo_mistral4_modular_import():
+    """Verify modular_mistral4.py correctly imports get_llama_4_attn_scale from ministral3 (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         f"""
+import ast
+from pathlib import Path
+
+src = Path("{REPO}/src/transformers/models/mistral4/modular_mistral4.py").read_text()
+tree = ast.parse(src)
+
+# Check for 'from ..ministral3.modeling_ministral3 import get_llama_4_attn_scale'
+# AST stores this as module='ministral3.modeling_ministral3'
+found_import = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.ImportFrom):
+        if node.module and "modeling_ministral3" in node.module:
+            for alias in node.names:
+                if alias.name == "get_llama_4_attn_scale":
+                    found_import = True
+                    break
+
+if not found_import:
+    print("IMPORT_NOT_FOUND")
+else:
+    print("IMPORT_OK")
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Modular import check failed: {r.stderr}"
+    assert "IMPORT_OK" in r.stdout
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # -----------------------------------------------------------------------------

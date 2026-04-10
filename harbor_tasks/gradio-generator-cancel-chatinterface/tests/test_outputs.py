@@ -297,7 +297,7 @@ def test_aclosing_imported():
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_check_modified():
-    """Modified Python files pass ruff linting (pass_to_pass)."""
+    """Modified Python files (utils.py, chat_interface.py) pass ruff linting."""
     r = subprocess.run(
         ["pip", "install", "-q", "ruff"],
         capture_output=True, timeout=60,
@@ -314,7 +314,7 @@ def test_repo_ruff_check_modified():
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_format_modified():
-    """Modified Python files pass ruff format check (pass_to_pass)."""
+    """Modified Python files (utils.py, chat_interface.py) pass ruff format check."""
     r = subprocess.run(
         ["pip", "install", "-q", "ruff"],
         capture_output=True, timeout=60,
@@ -341,12 +341,99 @@ def test_repo_imports():
 
 # [repo_tests] pass_to_pass
 def test_repo_import_modified_modules():
-    """Modified modules import successfully (pass_to_pass)."""
+    """Modified modules (utils, chat_interface) import successfully (pass_to_pass)."""
     r = subprocess.run(
         ["python", "-c", "from gradio import utils; from gradio import chat_interface"],
         cwd=REPO, capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"Module import failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_utils_sync_to_async():
+    """SyncToAsyncIterator class imports successfully from utils (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "from gradio.utils import SyncToAsyncIterator, safe_aclose_iterator"],
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"SyncToAsyncIterator import failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chat_interface_imports():
+    """ChatInterface class imports successfully from gradio (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "from gradio.chat_interface import ChatInterface"],
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"ChatInterface import failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_unit_tests():
+    """Selected utils unit tests pass (pass_to_pass)."""
+    # Install minimal test dependencies
+    r = subprocess.run(
+        ["pip", "install", "-q", "hypothesis", "pytest-asyncio"],
+        capture_output=True, timeout=60,
+    )
+    # Run only specific fast utils tests that don't require network/demos
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "test/test_utils.py::TestUtils::test_download_if_url_doesnt_crash_on_connection_error",
+            "test/test_utils.py::TestUtils::test_download_if_url_correct_parse",
+            "test/test_utils.py::TestUtils::test_is_hosted_notebook_false",
+            "test/test_utils.py::TestUtils::test_kaggle_check_true_when_run_type_set",
+            "-v", "--tb=short"
+        ],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Utils unit tests failed:\n{r.stdout.decode()[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chat_interface_unit_tests():
+    """Selected chat_interface unit tests pass (pass_to_pass)."""
+    # Install minimal test dependencies
+    r = subprocess.run(
+        ["pip", "install", "-q", "hypothesis", "pytest-asyncio"],
+        capture_output=True, timeout=60,
+    )
+    # Run only specific fast ChatInterface tests that don't require network/demos
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "test/test_chat_interface.py::TestInit::test_no_fn",
+            "test/test_chat_interface.py::TestInit::test_concurrency_limit",
+            "test/test_chat_interface.py::TestInit::test_custom_textbox",
+            "test/test_chat_interface.py::TestInit::test_events_attached",
+            "-v", "--tb=short"
+        ],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"ChatInterface unit tests failed:\n{r.stdout.decode()[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_path_validation_tests():
+    """Utils path validation tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "hypothesis"],
+        capture_output=True, timeout=60,
+    )
+    # Fast path validation tests
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "test/test_utils.py::test_is_in_or_equal",
+            "test/test_utils.py::TestAppendUniqueSuffix",
+            "-v", "--tb=short"
+        ],
+        cwd=REPO, capture_output=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Utils path validation tests failed:\n{r.stdout.decode()[-1000:]}"
+
 
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) -- rules from AGENTS.md

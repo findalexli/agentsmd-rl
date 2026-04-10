@@ -33,7 +33,7 @@ checks:
   # [P2P] Repo file validation - CLAUDE.md is referenced by AGENTS.md
   - id: claude_md_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "CLAUDE.md exists and is non-empty, AGENTS.md symlink valid"
     ci_source:
       path: "CLAUDE.md"
@@ -41,8 +41,44 @@ checks:
 
   - id: repo_structure_intact
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Repository structure is intact with required files and directories"
+
+  # [P2P] Repo CI gates - CodeRabbit configuration validation
+  - id: coderabbit_config_valid
+    type: pass_to_pass
+    origin: static
+    description: "CodeRabbit config (.coderabbit.yaml) exists and is valid YAML"
+    ci_source:
+      path: ".coderabbit.yaml"
+      note: "CodeRabbit AI code review configuration file"
+
+  # [P2P] Repo CI gates - AGENTS.md symlink validation
+  - id: agents_symlink_valid
+    type: pass_to_pass
+    origin: static
+    description: "AGENTS.md is a valid symlink pointing to CLAUDE.md"
+    ci_source:
+      path: "AGENTS.md"
+      note: "AGENTS.md must be a symlink to CLAUDE.md per repo conventions"
+
+  # [P2P] Repo CI gates - EditorConfig validation
+  - id: editorconfig_valid
+    type: pass_to_pass
+    origin: static
+    description: "EditorConfig file exists and contains expected settings"
+    ci_source:
+      path: ".editorconfig"
+      note: "EditorConfig specifies charset=utf-8, lf line endings, trim whitespace"
+
+  # [P2P] Repo CI gates - Internal ban-words test from format.yml
+  - id: test_ban_words_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Internal ban-words test passes (from format.yml CI)"
+    ci_source:
+      workflow: ".github/workflows/format.yml"
+      command: "bun ./test/internal/ban-words.test.ts"
 
   - id: statx_handles_eperm
     type: fail_to_pass
@@ -97,4 +133,24 @@ checks:
       lines: "64-66"
       commit: "159a285841539c8f166509116c12b11e15b47fdf"
 
-rubric: []
+rubric:
+  - rule: "Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform wrappers that preserve OS error info and never use unreachable."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "17-19"
+      commit: "159a285841539c8f166509116c12b11e15b47fdf"
+    reference: "bun.FileDescriptor, bun.span, lstat, fstat, Maybe(PosixStat)"
+
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "210"
+      commit: "159a285841539c8f166509116c12b11e15b47fdf"
+    reference: "statxFallback helper function, switch statement for errno handling, proper comments"
+
+  - rule: "Error handling follows bun.sys Maybe(T) switch pattern with .result and .err cases."
+    source:
+      path: ".claude/skills/zig-system-calls/SKILL.md"
+      lines: "64-66"
+      commit: "159a285841539c8f166509116c12b11e15b47fdf"
+    reference: "return switch (fallback) { .result => |s| .{ .result = PosixStat.init(&s) }, .err => |e| .{ .err = e } }"

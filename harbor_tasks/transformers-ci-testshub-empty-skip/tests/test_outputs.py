@@ -50,14 +50,43 @@ def test_syntax_check():
 # [repo_ci] pass_to_pass
 def test_repo_ruff_check():
     """Repo's ruff check passes on tests_fetcher.py (pass_to_pass)."""
-    # Only check for critical errors (E,W,F,I) not style issues like line length
+    # Use repo's pyproject.toml config which ignores E501 and E741
     r = subprocess.run(
-        ["ruff", "check", "utils/tests_fetcher.py", "--select=E,W,F,I", "--ignore=E501,E741"],
+        ["ruff", "check", "utils/tests_fetcher.py"],
         capture_output=True, text=True, cwd=REPO,
     )
-    # This passes on base commit as there are no critical errors
-    # (E501 line too long and E741 ambiguous variable name are ignored)
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on tests_fetcher.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "utils/tests_fetcher.py"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_tests_fetcher_import():
+    """Repo's tests_fetcher module can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "from utils import tests_fetcher; print('OK')"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_tests_fetcher_help():
+    """Repo's tests_fetcher.py --help works (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/tests_fetcher.py", "--help"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Help command failed:\n{r.stderr}"
+    assert "usage:" in r.stdout, "Expected usage message in help output"
 
 
 # [repo_ci] pass_to_pass

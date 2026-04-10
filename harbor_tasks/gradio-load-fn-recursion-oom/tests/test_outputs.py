@@ -260,3 +260,71 @@ def test_repo_ruff_format():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"ruff format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - repo's CI: ruff lint check on modified files
+def test_repo_ruff_lint():
+    """Modified files must pass ruff lint check (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--select", "E,W", "--ignore", "E501", "gradio/external.py", "gradio/external_utils.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff lint check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - repo's CI: external.py unit tests (subset that doesn't require network)
+def test_repo_external_tests():
+    """Repo's external.py unit tests pass (pass_to_pass)."""
+    # Run only tests that don't require network or special dependencies
+    r = subprocess.run(
+        [
+            sys.executable, "-m", "pytest", "test/test_external.py",
+            "-v", "--tb=short",
+            "-k", "not (audio_to_audio or question_answering or summarization or translation or text_classification or fill_mask or zero_shot or speech_recognition or image_classification or feature_extraction or sentence_similarity or text_to_speech or multiple_spaces or private_space or interface_load_cache or tabular or custom_component or inside_blocks or chat)",
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"external.py tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - repo's CI: gradio module import check
+def test_repo_gradio_imports():
+    """gradio module and key submodules remain importable (pass_to_pass)."""
+    import_code = """
+import sys
+sys.path.insert(0, '/repo')
+import gradio
+import gradio.external
+import gradio.external_utils
+from gradio.exceptions import Error
+from gradio.external_utils import handle_hf_error, TooManyRequestsError
+print('All imports successful')
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", import_code],
+        capture_output=True, text=True, timeout=30, cwd=REPO, env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"gradio imports failed:\n{r.stderr[-500:]}"
+    assert "All imports successful" in r.stdout, f"Unexpected output: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass - consolidated external tests
+def test_repo_external_consolidated():
+    """Repo's external.py and external_utils tests pass (consolidated network-independent subset)."""
+    # Install required dependencies for tests
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pytest", "httpx", "huggingface-hub", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run consolidated external tests (network-independent subset)
+    r = subprocess.run(
+        [
+            sys.executable, "-m", "pytest",
+            "test/test_external_utils.py", "test/test_external.py",
+            "-v", "--tb=short",
+            "-k", "not (audio_to_audio or question_answering or summarization or translation or text_classification or fill_mask or zero_shot or speech_recognition or image_classification or feature_extraction or sentence_similarity or text_to_speech or multiple_spaces or private_space or interface_load_cache or tabular or custom_component or inside_blocks or chat)",
+        ],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Consolidated external tests failed:\n{r.stdout[-1500:]}{r.stderr[-500:]}"
+

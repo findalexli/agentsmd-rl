@@ -66,4 +66,26 @@ checks:
     origin: repo_tests
     description: "Repo's node-file-trace test fixtures exist for create-require tests"
 
-rubric: []
+  - id: repo_check_error_codes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's check-error-codes script passes"
+
+rubric:
+  - rule: "Follow Rust formatting conventions. Run cargo fmt which uses ASCII order (uppercase before lowercase) for imports and enum variants."
+    source:
+      path: "AGENTS.md"
+      lines: "414"
+      commit: "b7f99c773ed73e8916bd14ebc9709f625220c838"
+
+  - rule: "Before editing files in any subdirectory, read all README.md files in the directory path from the repo root up to and including the target file's directory."
+    source:
+      path: "AGENTS.md"
+      lines: "46"
+      commit: "b7f99c773ed73e8916bd14ebc9709f625220c838"
+
+  - rule: "When editing Turbopack (Rust) code, verify with a full build (pnpm build-all) since changes may affect multiple packages."
+    source:
+      path: "AGENTS.md"
+      lines: "374"
+      commit: "b7f99c773ed73e8916bd14ebc9709f625220c838"

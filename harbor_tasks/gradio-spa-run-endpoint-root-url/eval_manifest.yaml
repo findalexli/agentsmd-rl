@@ -22,6 +22,63 @@ checks:
     origin: repo_tests
     description: "Ruff lint check passes on gradio/routes.py"
 
+  - id: test_routes_module_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check passes on gradio/routes.py"
+
+  - id: test_gradio_routes_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Gradio routes module imports successfully"
+
+  - id: test_route_utils_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Gradio route_utils module imports successfully"
+
+  # New p2p tests from repo CI
+  - id: test_repo_get_root_url
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's get_root_url unit tests pass (8 parametrized cases)"
+
+  - id: test_repo_get_root_url_headers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's get_root_url_headers unit tests pass (16 parametrized cases)"
+
+  - id: test_repo_get_api_call_path
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's get_api_call_path queue/join unit tests pass (9 parametrized cases)"
+
+  - id: test_repo_get_api_call_path_generic_call
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's get_api_call_path generic call tests pass (8 parametrized cases)"
+
+  - id: test_repo_get_request_origin
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's get_request_origin unit tests pass (4 parametrized cases)"
+
+  - id: test_repo_starts_with_protocol
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's starts_with_protocol unit tests pass (16 parametrized cases)"
+
+  - id: test_repo_compare_passwords_securely
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's compare_passwords_securely unit tests pass"
+
+  - id: test_repo_slugify
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's slugify unit tests pass"
+
+  # Fail-to-pass tests
   - id: predict_run_endpoint_passes_actual_path
     type: fail_to_pass
     origin: pr_diff
@@ -42,4 +99,9 @@ checks:
     origin: repo_tests
     description: "/gradio_api/api/ endpoint still produces correct root URL"
 
-rubric: []
+rubric:
+  - rule: "Code changes should be minimal and focused on the specific bug fix - only modify route_path in predict() function"
+    source:
+      path: "gradio/routes.py"
+      commit: "a8e6b7ba1e6af793b6a200d4cc6b07f3151f229e"
+    reference: "Changed route_path=f'{API_PREFIX}/api/{api_name}' to route_path=request.url.path"

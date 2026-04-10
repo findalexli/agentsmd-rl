@@ -95,4 +95,37 @@ checks:
     origin: repo_tests
     description: "Lint convention: No debug log statements in production code (from oxlint config)"
 
-rubric: []
+  # New Repo CI/CD pass_to_pass gates — ACTUAL CI COMMANDS
+  - id: test_repo_oxlint_assert
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: oxlint passes on assert.ts (from .github/workflows/lint.yml)"
+
+  - id: test_repo_prettier_assert
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: prettier formatting check passes on assert.ts (from .github/workflows/format.yml)"
+
+  - id: test_repo_no_loose_undefined_equality
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo convention: No loose equality with undefined (== undefined, != undefined) from ban-words.test.ts"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns when adding new prototype extractions."
+    source:
+      path: "CLAUDE.md"
+      lines: "117"
+      commit: "e59a147d615a0b95d446c75ba836717cf0dbc513"
+
+  - rule: "Extract prototype methods to constants at module level (e.g., const SafeMapPrototypeSet = SafeMap.prototype.set), not inline."
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "32-34"
+      commit: "e59a147d615a0b95d446c75ba836717cf0dbc513"
+
+  - rule: "Use $call/$apply for prototype method invocation to avoid user tampering. Direct method calls on user-controlled objects are unsafe."
+    source:
+      path: "src/js/CLAUDE.md"
+      lines: "56-65"
+      commit: "e59a147d615a0b95d446c75ba836717cf0dbc513"

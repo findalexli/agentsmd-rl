@@ -47,15 +47,30 @@ checks:
       commit: "0cbbbce8348cbb3254d4f93c48580151fe048daf"
 
   # Repo CI tests (pass_to_pass) - added via p2p_enrichment
-  - id: test_repo_ruff_check_gradio
+  - id: test_repo_ruff_check_queueing
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's ruff lint passes on gradio/ directory"
+    description: "Repo's ruff lint passes on modified file gradio/queueing.py"
 
-  - id: test_repo_py_compile_gradio
+  - id: test_repo_ruff_format_check_queueing
     type: pass_to_pass
     origin: repo_tests
-    description: "gradio/queueing.py compiles without syntax errors"
+    description: "Repo's ruff format check passes on modified file gradio/queueing.py"
+
+  - id: test_repo_py_compile_queueing
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file gradio/queueing.py compiles without syntax errors"
+
+  - id: test_repo_ruff_check_gradio_core
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint passes on core gradio/ directory"
+
+  - id: test_repo_block_function_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Related file gradio/block_function.py compiles without errors"
 
 rubric:
   - rule: "Be consistent with the style of the surrounding code."

@@ -32,6 +32,21 @@ checks:
     origin: repo_tests
     description: "Repo's codespell check passes"
 
+  - id: test_repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import sorting check passes"
+
+  - id: test_repo_toml_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TOML files are valid"
+
+  - id: test_repo_yaml_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's YAML files are valid"
+
   - id: transfer_engine_flag_hardcoded_false
     type: fail_to_pass
     origin: pr_diff
@@ -57,4 +72,21 @@ checks:
     origin: static
     description: "The fix hardcodes False for the parameter and removes conditional logic"
 
-rubric: []
+rubric:
+  - rule: "Always use CustomTestCase — never raw unittest.TestCase. It ensures tearDownClass runs even when setUpClass fails, preventing resource leaks in CI."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "12"
+      commit: "df9c831ab80c78495142b4dbcb1dfa537c9e1c73"
+
+  - rule: "tearDownClass must be defensive — use hasattr/null checks before accessing resources (e.g., cls.process) that setUpClass may not have finished allocating."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "13"
+      commit: "df9c831ab80c78495142b4dbcb1dfa537c9e1c73"
+
+  - rule: "Use comments to explain invariants, technical debt, or non-obvious behavior — not just to narrate what the code does."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "177"
+      commit: "df9c831ab80c78495142b4dbcb1dfa537c9e1c73"

@@ -48,6 +48,21 @@ def test_rustfmt_check():
     assert result.returncode == 0, f"rustfmt check failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
 
 
+def test_cargo_clippy():
+    """Verify the crate passes clippy lints (pass_to_pass).
+
+    This ensures the code follows the project's linting standards.
+    """
+    result = subprocess.run(
+        ["cargo", "clippy", "-p", "sui-indexer-alt-framework", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert result.returncode == 0, f"cargo clippy failed:\n{result.stderr[-1000:]}"
+
+
 def test_crate_structure():
     """Verify the crate has the expected module structure (pass_to_pass).
 
@@ -100,7 +115,7 @@ def test_checkpoint_stream_peekable_type():
         "CheckpointStream.stream should be Peekable<BoxStream<'static, Result<Checkpoint>>>"
 
     # Should NOT have the old Pin<Box<dyn Stream>> type
-    old_pattern = r"Pin<Box<dyn Stream<Item\s*=\s*Result<Checkpoint>>\s*\+\s*Send>>"
+    old_pattern = r"Pin<Box<dyn Stream<Item\s*=\s*Result<Checkpoint>>\s*+\s*Send>>"
     assert not re.search(old_pattern, content), \
         "CheckpointStream.stream should NOT use old Pin<Box<dyn Stream>> type"
 
@@ -163,7 +178,7 @@ def test_broadcaster_uses_peekable_stream():
         "Broadcaster should use Pin::new(&mut stream).peek() on the peekable stream"
 
     # Should NOT have the old pattern of wrapping with timeout locally
-    old_timeout_pattern = r"\.timeout\(config\.streaming_statement_timeout\(\)\)"
+    old_timeout_pattern = r"\.timeout\(config\.streaming_statement_timeout\(\)"
     assert not re.search(old_timeout_pattern, content), \
         "Broadcaster should NOT wrap stream with timeout locally (now done in client)"
 

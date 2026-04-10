@@ -26,3 +26,4 @@ RUN cd hugo && go mod download
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/hugo
+RUN mkdir -p /workspace/task && ln -s /tests /workspace/task/tests

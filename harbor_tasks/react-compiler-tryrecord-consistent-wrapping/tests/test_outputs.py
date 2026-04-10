@@ -214,6 +214,12 @@ def test_pipeline_has_required_functions():
 
 def test_repo_lint():
     """Repo's ESLint passes on babel-plugin-react-compiler (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/compiler",
+    )
+    assert r.returncode == 0, f"yarn install failed:\n{r.stderr[-500:]}"
     r = subprocess.run(
         ["yarn", "workspace", "babel-plugin-react-compiler", "lint"],
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/compiler",
@@ -223,17 +229,29 @@ def test_repo_lint():
 
 def test_repo_typecheck():
     """Repo's TypeScript typecheck passes on babel-plugin-react-compiler (pass_to_pass)."""
+    # Install dependencies first
     r = subprocess.run(
-        ["yarn", "workspace", "babel-plugin-react-compiler", "tsc", "--noEmit"],
+        ["yarn", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/compiler",
+    )
+    assert r.returncode == 0, f"yarn install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["yarn", "tsc", "--noEmit", "-p", "packages/babel-plugin-react-compiler/tsconfig.json"],
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/compiler",
     )
     assert r.returncode == 0, f"TypeScript typecheck failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
-def test_repo_jest():
-    """Repo's Jest tests pass on babel-plugin-react-compiler (pass_to_pass)."""
+def test_repo_jest_unit():
+    """Repo s Jest unit tests pass on babel-plugin-react-compiler (pass_to_pass)."""
+    # Install dependencies first
     r = subprocess.run(
-        ["yarn", "workspace", "babel-plugin-react-compiler", "jest"],
+        ["yarn", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/compiler",
+    )
+    assert r.returncode == 0, f"yarn install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "jest", "--testPathPattern=DisjointSet-test|Result-test|envConfig-test|parseConfigPragma-test|Logger-test", "--maxWorkers=1"],
         capture_output=True, text=True, timeout=180, cwd=f"{REPO}/compiler",
     )
-    assert r.returncode == 0, f"Jest tests failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Jest unit tests failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"

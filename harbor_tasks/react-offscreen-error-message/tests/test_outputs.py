@@ -103,3 +103,73 @@ def test_existing_error_logging_tests_pass():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_activity_error_handling():
+    """Activity error handling tests pass (pass_to_pass) - tests Offscreen component behavior."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "packages/react-reconciler/src/__tests__/ActivityErrorHandling-test.js",
+            "--no-watchman", "--silent",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"Activity error handling tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_activity_component():
+    """Activity component tests pass (pass_to_pass) - covers Offscreen/Activity behavior."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "packages/react-reconciler/src/__tests__/Activity-test.js",
+            "--no-watchman", "--silent",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"Activity tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_error_stacks():
+    """Error stacks tests pass (pass_to_pass) - tests component name reporting in errors."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "packages/react-reconciler/src/__tests__/ReactErrorStacks-test.js",
+            "--no-watchman", "--silent",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"Error stacks tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_incremental_error_handling():
+    """Incremental error handling tests pass (pass_to_pass) - tests error boundaries."""
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "packages/react-reconciler/src/__tests__/ReactIncrementalErrorHandling-test.internal.js",
+            "--no-watchman", "--silent",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"Incremental error handling tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )

@@ -238,3 +238,56 @@ def test_repo_chunked_gae():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"chunked_gae tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_contracts():
+    """Repo's plugin contract tests pass (pass_to_pass).
+
+    Runs the plugin contract tests which validate the plugin loading
+    and interface contracts. These are CPU-only tests run in CI.
+    """
+    r = subprocess.run(
+        ["pip", "install", "pytest", "torch", "packaging", "pyyaml", "omegaconf",
+         "tqdm", "httpx", "pybase64", "pylatexenc", "sympy", "aiohttp", "Pillow",
+         "protobuf", "--quiet"],
+        capture_output=True, text=True, timeout=180
+    )
+    assert r.returncode == 0, f"Failed to install test deps: {r.stderr}"
+
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "--no-deps", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install package: {r.stderr}"
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/plugin_contracts/", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin contract tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_py():
+    """All Python files in repo parse without syntax errors (pass_to_pass).
+
+    Validates that the codebase has no Python syntax errors.
+    """
+    import ast
+    import os
+
+    errors = []
+    for root, dirs, files in os.walk(REPO):
+        # Skip hidden directories and common non-source directories
+        dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['__pycache__', 'build', 'dist']]
+        for file in files:
+            if file.endswith('.py'):
+                filepath = os.path.join(root, file)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        ast.parse(f.read())
+                except SyntaxError as e:
+                    errors.append(f"{filepath}: {e}")
+
+    assert not errors, f"Syntax errors found:\n" + "\n".join(errors)

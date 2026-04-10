@@ -38,6 +38,16 @@ checks:
     description: "All format conversions (JSON/TOML/YAML) work with resource preservation"
     origin: pass_to_pass
 
+  - id: test_repo_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Go vet passes (go vet ./...)"
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo builds successfully (go build .)"
+
 agent_config:
   - description: "Use brevity - don't over-comment code"
     source: "AGENTS.md:1-3"
@@ -63,4 +73,21 @@ agent_config:
     source: "AGENTS.md:10"
     origin: agent_config
 
-rubric: []
+rubric:
+  - rule: "Be brief. Don't over-comment code or explain the obvious - assume Go expertise."
+    source:
+      path: "AGENTS.md"
+      lines: "1-4"
+      commit: "d88a29e002ebc31bf9b4e1e024f141cc0b39a657"
+
+  - rule: "Use short variable names when context is clear (e.g., 'p' for page, 'c' for config)."
+    source:
+      path: "AGENTS.md"
+      lines: "6"
+      commit: "d88a29e002ebc31bf9b4e1e024f141cc0b39a657"
+
+  - rule: "Never export symbols not needed outside the package - use unexported functions/methods."
+    source:
+      path: "AGENTS.md"
+      lines: "8"
+      commit: "d88a29e002ebc31bf9b4e1e024f141cc0b39a657"

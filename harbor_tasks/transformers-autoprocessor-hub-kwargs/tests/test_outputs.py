@@ -126,6 +126,34 @@ def test_py_compile():
     assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass — ruff check (CI/CD gate)
+def test_repo_ruff_check():
+    """Repo CI: processing_auto.py must pass ruff linting (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"ruff check failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass — ruff format check (CI/CD gate)
+def test_repo_ruff_format():
+    """Repo CI: processing_auto.py must be formatted correctly (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"ruff format check failed:\n{result.stdout}\n{result.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioural tests
 # ---------------------------------------------------------------------------

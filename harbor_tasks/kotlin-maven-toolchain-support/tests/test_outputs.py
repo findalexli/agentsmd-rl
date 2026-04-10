@@ -1,10 +1,12 @@
 """Tests for Maven Toolchain support in kotlin-maven-plugin."""
 
 import re
+import subprocess
 from pathlib import Path
 
 REPO = Path("/workspace/kotlin")
 TARGET_FILE = REPO / "libraries/tools/kotlin-maven-plugin/src/main/java/org/jetbrains/kotlin/maven/K2JVMCompileMojo.java"
+PLUGIN_DIR = REPO / "libraries/tools/kotlin-maven-plugin"
 
 
 def test_toolchain_manager_field_exists():
@@ -110,3 +112,150 @@ def test_toolchain_imports_exist():
     # Check for ToolchainManager import
     assert "import org.apache.maven.toolchain.ToolchainManager;" in content, \
         "ToolchainManager import missing"
+
+
+# =============================================================================
+# Pass-to-pass tests - verify repository health (work on base commit)
+# =============================================================================
+
+
+def test_repo_file_exists():
+    """Target Java file exists and is readable (pass_to_pass)."""
+    assert TARGET_FILE.exists(), f"Target file not found: {TARGET_FILE}"
+    assert TARGET_FILE.is_file(), f"Target is not a file: {TARGET_FILE}"
+    content = TARGET_FILE.read_text()
+    assert len(content) > 0, "Target file is empty"
+    assert "class K2JVMCompileMojo" in content, "K2JVMCompileMojo class not found"
+
+
+def test_repo_pom_exists():
+    """Maven pom.xml exists and is valid XML (pass_to_pass)."""
+    pom_file = PLUGIN_DIR / "pom.xml"
+    assert pom_file.exists(), f"pom.xml not found: {pom_file}"
+    content = pom_file.read_text()
+    assert "<project" in content, "Invalid pom.xml - missing <project> tag"
+    assert "<artifactId>kotlin-maven-plugin</artifactId>" in content, \
+        "pom.xml missing kotlin-maven-plugin artifactId"
+
+
+def test_repo_directory_structure():
+    """Maven plugin directory has expected structure (pass_to_pass)."""
+    assert PLUGIN_DIR.exists(), f"Plugin directory not found: {PLUGIN_DIR}"
+
+    # Check standard Maven directories
+    src_main = PLUGIN_DIR / "src/main/java"
+    src_test = PLUGIN_DIR / "src/test"
+    assert src_main.exists(), f"src/main/java not found"
+    assert src_test.exists(), f"src/test not found"
+
+    # Check package structure
+    pkg_dir = src_main / "org/jetbrains/kotlin/maven"
+    assert pkg_dir.exists(), f"Package directory not found: {pkg_dir}"
+
+
+def test_repo_java_syntax_valid():
+    """Target file has valid Java syntax structure (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # Check basic Java structure
+    assert content.count("{") > 0, "No opening braces found"
+    assert content.count("}") > 0, "No closing braces found"
+
+    # Check class declaration
+    assert "public class K2JVMCompileMojo" in content, \
+        "K2JVMCompileMojo class declaration not found"
+
+    # Check package declaration
+    assert "package org.jetbrains.kotlin.maven;" in content, \
+        "Package declaration not found"
+
+    # Check imports are present
+    assert content.count("import ") > 0, "No imports found"
+
+    # Check method declarations exist
+    assert "protected void configureSpecificCompilerArguments" in content, \
+        "configureSpecificCompilerArguments method not found"
+
+
+def test_maven_available():
+    """Maven is installed and functional (pass_to_pass)."""
+    r = subprocess.run(
+        ["mvn", "--version"],
+        capture_output=True, text=True, timeout=30
+    )
+    assert r.returncode == 0, f"Maven not available: {r.stderr}"
+    assert "Apache Maven" in r.stdout, "Unexpected Maven version output"
+
+
+def test_java_available():
+    """Java is installed and functional (pass_to_pass)."""
+    r = subprocess.run(
+        ["java", "-version"],
+        capture_output=True, text=True, timeout=30
+    )
+    assert r.returncode == 0, f"Java not available: {r.stderr}"
+    # Java outputs version to stderr
+    version_output = r.stderr + r.stdout
+    assert "openjdk" in version_output.lower() or "java" in version_output.lower(), \
+        "Unexpected Java version output"
+
+
+def test_pom_validation():
+    """Maven can validate the pom.xml (pass_to_pass)."""
+    r = subprocess.run(
+        ["mvn", "help:evaluate", "-Dexpression=project.artifactId", "-q", "-DforceStdout"],
+        capture_output=True, text=True, timeout=120, cwd=str(PLUGIN_DIR)
+    )
+    # This may fail due to missing SNAPSHOT deps, but should parse pom
+    # We accept non-zero returncode as long as it's not a parse error
+    error_msg = r.stderr.lower()
+    assert "parse" not in error_msg or "pom.xml" not in error_msg, \
+        f"POM parsing error: {r.stderr[:500]}"
+
+
+def test_maven_validate():
+    """Maven validate passes for the plugin (pass_to_pass)."""
+    r = subprocess.run(
+        ["mvn", "validate", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=str(PLUGIN_DIR)
+    )
+    assert r.returncode == 0, f"Maven validate failed:\n{r.stderr[-500:]}"
+
+
+def test_maven_help_effective_pom():
+    """Maven can generate effective POM (pass_to_pass)."""
+    r = subprocess.run(
+        ["mvn", "help:effective-pom", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=str(PLUGIN_DIR)
+    )
+    assert r.returncode == 0, f"Maven effective-pom failed:\n{r.stderr[-500:]}"
+
+
+def test_maven_clean():
+    """Maven clean works on the plugin (pass_to_pass)."""
+    r = subprocess.run(
+        ["mvn", "clean", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=str(PLUGIN_DIR)
+    )
+    assert r.returncode == 0, f"Maven clean failed:\n{r.stderr[-500:]}"
+
+
+def test_maven_dependency_tree():
+    """Maven can show dependency tree (pass_to_pass)."""
+    r = subprocess.run(
+        ["mvn", "dependency:tree", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=str(PLUGIN_DIR)
+    )
+    # Note: This may fail due to SNAPSHOT deps, but we check the command runs
+    # The return code may be non-zero, but should not be a Maven internal error
+    assert "internal error" not in r.stderr.lower(), \
+        f"Maven dependency:tree internal error:\n{r.stderr[-500:]}"
+
+
+def test_maven_plugin_descriptor():
+    """Maven plugin descriptor generation works (pass_to_pass)."""
+    r = subprocess.run(
+        ["mvn", "plugin:help", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=str(PLUGIN_DIR)
+    )
+    assert r.returncode == 0, f"Maven plugin:help failed:\n{r.stderr[-500:]}"

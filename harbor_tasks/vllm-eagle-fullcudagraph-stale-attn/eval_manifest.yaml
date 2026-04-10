@@ -51,4 +51,36 @@ checks:
     origin: static
     description: "No wildcard imports in modified file"
 
-rubric: []
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on modified file"
+
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file compiles without syntax errors"
+
+  - id: test_repo_ast_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file parses as valid Python AST"
+
+rubric:
+  - rule: "Use @torch.inference_mode() decorator for model inference methods that don't need gradients"
+    source:
+      path: "vllm/v1/worker/gpu/spec_decode/eagle/speculator.py"
+      lines: "144"
+      commit: "44a6528028ad79951de08b6a7928f6c05788d00d"
+
+  - rule: "Follow existing type hint patterns (use dict[str, Any] | None, torch.Tensor | None, etc.)"
+    source:
+      path: "vllm/v1/worker/gpu/spec_decode/eagle/speculator.py"
+      lines: "144-155"
+      commit: "44a6528028ad79951de08b6a7928f6c05788d00d"
+
+  - rule: "Code must pass ruff linter checks as configured in the repo's pre-commit hooks"
+    source:
+      path: "AGENTS.md"
+      lines: "76-78"
+      commit: "44a6528028ad79951de08b6a7928f6c05788d00d"

@@ -2,86 +2,116 @@ source_pr:
   owner: All-Hands-AI
   repo: OpenHands
   number: 13755
-  title: "feat(backend): route gitlab resolver conversations to claimed org workspaces"
+  title: 'feat(backend): route gitlab resolver conversations to claimed org workspaces'
   merge_commit: d058323a8725d45086e9d5a44a6ad55247c3a69d
   base_commit: 7d04cffe4ec3e723fee04d89a8ba0e19d910c049
-
-# No specific agent config rules apply to this PR - it's enterprise backend code
 agent_config: []
-
-rubric: []
-
+rubric:
+- rule: Use relative imports without 'enterprise.' prefix in enterprise code
+  source:
+    path: AGENTS.md
+    lines: 97-104
+    commit: 7d04cffe4ec3e723fee04d89a8ba0e19d910c049
+- rule: Run pre-commit hooks on Python backend changes before pushing
+  source:
+    path: AGENTS.md
+    lines: 25-30
+    commit: 7d04cffe4ec3e723fee04d89a8ba0e19d910c049
+- rule: Fix all lint errors (Ruff, Mypy) before pushing changes
+  source:
+    path: AGENTS.md
+    lines: 35-42
+    commit: 7d04cffe4ec3e723fee04d89a8ba0e19d910c049
 checks:
-  # V0 path: Org resolution and store creation
-  - id: resolve_org_for_repo_imported
-    description: resolve_org_for_repo is imported from resolver_org_router
-    type: fail_to_pass
-    test: test_resolve_org_for_repo_imported
-
-  - id: resolve_org_for_repo_called_in_initialize
-    description: resolve_org_for_repo is called in initialize_new_conversation
-    type: fail_to_pass
-    test: test_resolve_org_for_repo_called_in_initialize
-
-  - id: resolve_org_for_repo_called_with_correct_args
-    description: resolve_org_for_repo is called with provider='gitlab' and correct arguments
-    type: fail_to_pass
-    test: test_resolve_org_for_repo_called_with_correct_args
-
-  - id: saas_conversation_store_imported
-    description: SaasConversationStore is imported from storage.saas_conversation_store
-    type: fail_to_pass
-    test: test_saas_conversation_store_imported
-
-  - id: initialize_conversation_not_imported
-    description: initialize_conversation is NOT imported (replaced by direct store creation)
-    type: fail_to_pass
-    test: test_initialize_conversation_not_imported
-
-  - id: get_resolver_instance_called
-    description: SaasConversationStore.get_resolver_instance is called in initialize_new_conversation
-    type: fail_to_pass
-    test: test_get_resolver_instance_called
-
-  - id: get_resolver_instance_passes_resolver_org_id
-    description: get_resolver_instance receives self.resolved_org_id as third argument
-    type: fail_to_pass
-    test: test_get_resolver_instance_passes_resolver_org_id
-
-  - id: resolver_org_id_stored_on_self
-    description: resolved_org_id is stored on self (self.resolved_org_id = ...)
-    type: fail_to_pass
-    test: test_resolver_org_id_stored_on_self
-
-  # V1 path: User context
-  - id: resolver_user_context_receives_org_id
-    description: ResolverUserContext receives resolver_org_id parameter in V1 path
-    type: fail_to_pass
-    test: test_resolver_user_context_receives_org_id
-
-  # GitHub consistency: Parameter rename
-  - id: github_callback_uses_should_request_summary
-    description: GitHub callback processor uses should_request_summary parameter (renamed from send_summary_instruction)
-    type: fail_to_pass
-    test: test_github_callback_uses_should_request_summary
-
-  # Pass-to-pass: Implementation completeness
-  - id: get_default_conversation_title_imported
-    description: get_default_conversation_title is imported for manual metadata creation
-    type: pass_to_pass
-    test: test_get_default_conversation_title_imported
-
-  - id: manual_conversation_metadata_creation
-    description: ConversationMetadata is created manually with all required fields
-    type: pass_to_pass
-    test: test_manual_conversation_metadata_creation
-
-  - id: conversation_id_generated_via_uuid
-    description: conversation_id is generated via uuid4().hex
-    type: pass_to_pass
-    test: test_conversation_id_generated_via_uuid
-
-  - id: save_metadata_called
-    description: store.save_metadata is called with the created metadata
-    type: pass_to_pass
-    test: test_save_metadata_called
+- id: resolve_org_for_repo_imported
+  description: resolve_org_for_repo is imported from resolver_org_router
+  type: fail_to_pass
+  test: test_resolve_org_for_repo_imported
+- id: resolve_org_for_repo_called_in_initialize
+  description: resolve_org_for_repo is called in initialize_new_conversation
+  type: fail_to_pass
+  test: test_resolve_org_for_repo_called_in_initialize
+- id: resolve_org_for_repo_called_with_correct_args
+  description: resolve_org_for_repo is called with provider='gitlab' and correct arguments
+  type: fail_to_pass
+  test: test_resolve_org_for_repo_called_with_correct_args
+- id: saas_conversation_store_imported
+  description: SaasConversationStore is imported from storage.saas_conversation_store
+  type: fail_to_pass
+  test: test_saas_conversation_store_imported
+- id: initialize_conversation_not_imported
+  description: initialize_conversation is NOT imported (replaced by direct store creation)
+  type: fail_to_pass
+  test: test_initialize_conversation_not_imported
+- id: get_resolver_instance_called
+  description: SaasConversationStore.get_resolver_instance is called in initialize_new_conversation
+  type: fail_to_pass
+  test: test_get_resolver_instance_called
+- id: get_resolver_instance_passes_resolver_org_id
+  description: get_resolver_instance receives self.resolved_org_id as third argument
+  type: fail_to_pass
+  test: test_get_resolver_instance_passes_resolver_org_id
+- id: resolver_org_id_stored_on_self
+  description: resolved_org_id is stored on self (self.resolved_org_id = ...)
+  type: fail_to_pass
+  test: test_resolver_org_id_stored_on_self
+- id: resolver_user_context_receives_org_id
+  description: ResolverUserContext receives resolver_org_id parameter in V1 path
+  type: fail_to_pass
+  test: test_resolver_user_context_receives_org_id
+- id: github_callback_uses_should_request_summary
+  description: GitHub callback processor uses should_request_summary parameter (renamed
+    from send_summary_instruction)
+  type: fail_to_pass
+  test: test_github_callback_uses_should_request_summary
+- id: get_default_conversation_title_imported
+  description: get_default_conversation_title is imported for manual metadata creation
+  type: fail_to_pass
+  test: test_get_default_conversation_title_imported
+- id: manual_conversation_metadata_creation
+  description: ConversationMetadata is created manually with all required fields
+  type: pass_to_pass
+  test: test_manual_conversation_metadata_creation
+- id: conversation_id_generated_via_uuid
+  description: conversation_id is generated via uuid4().hex
+  type: pass_to_pass
+  test: test_conversation_id_generated_via_uuid
+- id: save_metadata_called
+  description: store.save_metadata is called with the created metadata
+  type: fail_to_pass
+  test: test_save_metadata_called
+- id: test_repo_pre_commit_lint
+  description: Repo's pre-commit hooks pass on modified files
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_pre_commit_lint
+- id: test_repo_enterprise_integration_tests
+  description: Enterprise integration unit tests pass
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_enterprise_integration_tests
+- id: gitlab_view_syntax_valid
+  description: GitLab view file has valid Python syntax
+  type: pass_to_pass
+  origin: static
+  test: test_gitlab_view_syntax_valid
+- id: github_view_syntax_valid
+  description: GitHub view file has valid Python syntax
+  type: pass_to_pass
+  origin: static
+  test: test_github_view_syntax_valid
+- id: enterprise_tests_exist
+  description: Enterprise tests directory exists with GitLab/GitHub tests
+  type: pass_to_pass
+  origin: static
+  test: test_enterprise_tests_exist
+- id: gitlab_view_imports_resolve
+  description: GitLab view imports are syntactically valid
+  type: pass_to_pass
+  origin: static
+  test: test_gitlab_view_imports_resolve
+- id: github_view_imports_resolve
+  description: GitHub view imports are syntactically valid
+  type: pass_to_pass
+  origin: static
+  test: test_github_view_imports_resolve

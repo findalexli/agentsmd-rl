@@ -305,3 +305,42 @@ def test_repo_format_check():
         cwd=REPO, env={**os.environ, "NODE_PATH": f"{SVELTE_TOOLS}/node_modules"},
     )
     assert r.returncode == 0, f"pnpm format:check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI workflow: .github/workflows/tests-js.yml
+# This test ensures the gradio client package builds successfully.
+def test_repo_client_build():
+    """Repo's @gradio/client package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm --filter @gradio/client build"],
+        capture_output=True, text=True, timeout=120,
+        cwd=REPO, env={**os.environ, "NODE_PATH": f"{SVELTE_TOOLS}/node_modules"},
+    )
+    assert r.returncode == 0, f"@gradio/client build failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI workflow: .github/workflows/tests-js.yml
+# This test ensures the frontend packages can be packaged successfully.
+def test_repo_package_build():
+    """Repo's frontend packages build for distribution (pnpm package) passes."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm --filter @gradio/client build >/dev/null 2>&1 && pnpm package"],
+        capture_output=True, text=True, timeout=180,
+        cwd=REPO, env={**os.environ, "NODE_PATH": f"{SVELTE_TOOLS}/node_modules"},
+    )
+    assert r.returncode == 0, f"pnpm package failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI workflow: .github/workflows/tests-js.yml
+# This test runs the @gradio/client unit tests (test:node only, skipping browser tests).
+def test_repo_client_unit_tests():
+    """Repo's @gradio/client unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm --filter @gradio/client test:node"],
+        capture_output=True, text=True, timeout=120,
+        cwd=REPO, env={**os.environ, "NODE_PATH": f"{SVELTE_TOOLS}/node_modules"},
+    )
+    assert r.returncode == 0, f"@gradio/client unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

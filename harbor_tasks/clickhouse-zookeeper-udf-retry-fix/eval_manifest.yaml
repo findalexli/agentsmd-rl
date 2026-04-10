@@ -52,6 +52,9 @@ test_strategy:
     is obtained and object names are re-fetched with the new session.
 
 checks:
+  # ============================================================================
+  # FAIL-TO-PASS TESTS (Structural verification of the fix)
+  # ============================================================================
   - id: "test_current_zookeeper_variable"
     test: "test_current_zookeeper_variable_exists"
     description: "current_zookeeper variable is declared and used instead of the parameter"
@@ -82,47 +85,73 @@ checks:
     description: "Key distinctive fix lines are present"
     type: "structural"
 
-  - id: "test_repo_submodules_check"
-    test: "test_repo_submodules_check"
-    description: "Repo submodules check passes"
+  # ============================================================================
+  # PASS-TO-PASS TESTS (Repo CI/CD checks using subprocess.run)
+  # These run actual ClickHouse CI style check commands
+  # ============================================================================
+  - id: "test_repo_cpp_style_no_tabs"
+    test: "test_repo_cpp_style_no_tabs"
+    description: "Repo C++ files have no tabs (ClickHouse CI style check)"
     type: "pass_to_pass"
-    origin: repo_tests
+    origin: "repo_tests"
 
-  - id: "test_repo_git_track_branch"
-    test: "test_repo_git_track_branch"
-    description: "Repo is on correct base commit"
+  - id: "test_repo_cpp_style_no_dos_newlines"
+    test: "test_repo_cpp_style_no_dos_newlines"
+    description: "Repo C++ files have no DOS newlines (ClickHouse CI style check)"
     type: "pass_to_pass"
-    origin: repo_tests
+    origin: "repo_tests"
+
+  - id: "test_repo_no_conflict_markers"
+    test: "test_repo_no_conflict_markers"
+    description: "Repo files have no git conflict markers (ClickHouse CI check)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "test_repo_no_utf8_bom"
+    test: "test_repo_no_utf8_bom"
+    description: "Repo files have no UTF-8 BOM (ClickHouse CI check)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "test_repo_no_trailing_whitespace"
+    test: "test_repo_no_trailing_whitespace"
+    description: "Repo C++ files have no trailing whitespace (ClickHouse CI style check)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
 
   - id: "test_repo_target_file_exists"
     test: "test_repo_target_file_exists"
     description: "Target file exists and is readable"
     type: "pass_to_pass"
-    origin: repo_tests
+    origin: "repo_tests"
 
-  - id: "test_repo_no_conflict_markers"
-    test: "test_repo_no_conflict_markers"
-    description: "Repo files have no git conflict markers"
+  - id: "test_repo_git_track_branch"
+    test: "test_repo_git_track_branch"
+    description: "Repo is on correct base commit"
     type: "pass_to_pass"
-    origin: repo_tests
+    origin: "repo_tests"
 
-  - id: "test_repo_no_dos_newlines"
-    test: "test_repo_no_dos_newlines"
-    description: "Repo C++ files have no DOS/Windows newlines"
+  - id: "test_repo_no_executable_source_files"
+    test: "test_repo_no_executable_source_files"
+    description: "Repo source files are not executable (ClickHouse CI check)"
     type: "pass_to_pass"
-    origin: repo_tests
+    origin: "repo_tests"
 
-  - id: "test_repo_no_tabs_in_source"
-    test: "test_repo_no_tabs_in_source"
-    description: "Repo C++ files have no tabs"
-    type: "pass_to_pass"
-    origin: repo_tests
+rubric:
+  - rule: "When writing text such as documentation, comments, or commit messages, write names of functions and methods as `f` instead of `f()` - we prefer it for mathematical purity when it refers a function itself rather than its application."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "5"
+      commit: "a3c77899d3f826cfdc879ce9c276dd5f019cb46d"
 
-  - id: "test_repo_git_working_tree_clean"
-    test: "test_repo_git_working_tree_clean"
-    description: "Repo working tree is clean (except target file)"
-    type: "pass_to_pass"
-    origin: repo_tests
+  - rule: "When mentioning logical errors, say 'exception' instead of 'crash', because they don't crash the server in the release build."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "7"
+      commit: "a3c77899d3f826cfdc879ce9c276dd5f019cb46d"
 
-rubric: []
-  # No soft/subjective rules for this task - all checks are structural
+  - rule: "Comments should explain invariants and complex logic, not narrate what the code does. Complex retry logic and session management should have clear comments that future maintainers must understand."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "148"
+      commit: "a3c77899d3f826cfdc879ce9c276dd5f019cb46d"

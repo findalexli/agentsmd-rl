@@ -4,14 +4,13 @@ set -e
 cd /workspace/chroma
 
 # Check if already applied
-if grep -q "shard_index = 0" rust/types/src/execution/operator.rs 2>/dev/null; then
+if grep -q "shard_index: value.shard_index" rust/types/src/execution/operator.rs 2>/dev/null; then
     echo "Patch already applied, skipping"
     exit 0
 fi
 
-# Apply the gold patch
-cat <<'PATCH' | git apply -
-diff --git a/idl/chromadb/proto/query_executor.proto b/idl/chromadb/proto/query_executor.proto
+# Apply the gold patch using git apply with the patch content
+PATCH_CONTENT='diff --git a/idl/chromadb/proto/query_executor.proto b/idl/chromadb/proto/query_executor.proto
 index f28e37f6e4c..9f4c9da58cc 100644
 --- a/idl/chromadb/proto/query_executor.proto
 +++ b/idl/chromadb/proto/query_executor.proto
@@ -161,8 +160,8 @@ index 6a95e220867..7111b527a78 100644
              scan: Scan {
                  collection_and_segments: collection_and_segments.clone(),
 +                shard_index: 0,
-+                num_shards: 1,
-+                log_upper_bound_offset: 0,
++                    num_shards: 1,
++                    log_upper_bound_offset: 0,
              },
              filter: Filter {
                  query_ids: None,
@@ -171,8 +170,8 @@ index 6a95e220867..7111b527a78 100644
              scan: Scan {
                  collection_and_segments: collection_and_segments.clone(),
 +                shard_index: 0,
-+                num_shards: 1,
-+                log_upper_bound_offset: 0,
++                    num_shards: 1,
++                    log_upper_bound_offset: 0,
              },
              filter: Filter {
                  query_ids: None,
@@ -181,8 +180,8 @@ index 6a95e220867..7111b527a78 100644
              scan: Scan {
                  collection_and_segments: collection_and_segments.clone(),
 +                shard_index: 0,
-+                num_shards: 1,
-+                log_upper_bound_offset: 0,
++                    num_shards: 1,
++                    log_upper_bound_offset: 0,
              },
              filter: Filter {
                  query_ids: None,
@@ -191,8 +190,8 @@ index 6a95e220867..7111b527a78 100644
              scan: Scan {
                  collection_and_segments: collection_and_segments.clone(),
 +                shard_index: 0,
-+                num_shards: 1,
-+                log_upper_bound_offset: 0,
++                    num_shards: 1,
++                    log_upper_bound_offset: 0,
              },
              filter: Filter {
                  query_ids: None,
@@ -201,8 +200,8 @@ index 6a95e220867..7111b527a78 100644
              scan: Scan {
                  collection_and_segments: collection_and_segments.clone(),
 +                shard_index: 0,
-+                num_shards: 1,
-+                log_upper_bound_offset: 0,
++                    num_shards: 1,
++                    log_upper_bound_offset: 0,
              },
              filter: Filter {
                  query_ids: None,
@@ -211,8 +210,8 @@ index 6a95e220867..7111b527a78 100644
              scan: Scan {
                  collection_and_segments: cas.clone(),
 +                shard_index: 0,
-+                num_shards: 1,
-+                log_upper_bound_offset: 0,
++                    num_shards: 1,
++                    log_upper_bound_offset: 0,
              },
              filter: Filter {
                  query_ids: None,
@@ -221,8 +220,8 @@ index 6a95e220867..7111b527a78 100644
              scan: Scan {
                  collection_and_segments: cas.clone(),
 +                shard_index: 0,
-+                num_shards: 1,
-+                log_upper_bound_offset: 0,
++                    num_shards: 1,
++                    log_upper_bound_offset: 0,
              },
              filter: Filter {
                  query_ids: None,
@@ -282,6 +281,7 @@ index d95b07ed85a..7d4b007c7be 100644
 +            log_upper_bound_offset: 0,
          }
      }
-PATCH
+'
 
+echo "$PATCH_CONTENT" | git apply -
 echo "Patch applied successfully"

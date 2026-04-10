@@ -37,6 +37,17 @@ checks:
     origin: repo_tests
     description: "Repo's cargo test on move-vm-runtime --lib passes"
 
+  # Additional pass-to-pass: CI checks that work with current Dockerfile
+  - id: test_repo_cargo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo xlint (license check) passes"
+
+  - id: test_repo_function_arg_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's function_arg_tests module passes"
+
   # Fail-to-pass: Value argument count mismatches
   - id: test_argument_count_mismatch_0_expected_1_got
     type: fail_to_pass
@@ -90,4 +101,27 @@ checks:
     origin: implementation
     description: "VM argument checking code is present in vm.rs"
 
-rubric: []
+rubric:
+  - rule: "All new files must start with the Mysten Labs Apache-2.0 license header"
+    source:
+      path: "CLAUDE.md"
+      lines: "16-21"
+      commit: "fbb6960c6225c2a4406cd336a0899b54e53e4787"
+
+  - rule: "Always run cargo xclippy after finishing development to ensure code passes all linting checks"
+    source:
+      path: "CLAUDE.md"
+      lines: "51-59,111"
+      commit: "fbb6960c6225c2a4406cd336a0899b54e53e4787"
+
+  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead"
+    source:
+      path: "CLAUDE.md"
+      lines: "113"
+      commit: "fbb6960c6225c2a4406cd336a0899b54e53e4787"
+
+  - rule: "Do NOT comment the obvious - comments should explain non-obvious algorithms, business logic, or invariants, not narrate simple code"
+    source:
+      path: "CLAUDE.md"
+      lines: "116-131"
+      commit: "fbb6960c6225c2a4406cd336a0899b54e53e4787"

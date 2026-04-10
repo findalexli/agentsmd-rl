@@ -237,51 +237,11 @@ def test_existing_features_preserved():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo CI/CD) — ensure repo's own checks pass on base and after fix
+# Pass-to-pass (static) — structural checks via file reading
 # ---------------------------------------------------------------------------
 
 
-# [repo_ci] pass_to_pass
-def test_repo_python_syntax():
-    """Repo's Python files have valid syntax (pass_to_pass)."""
-    r = subprocess.run(
-        ["python3", "-m", "py_compile", "gradio/components/html.py"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Python syntax error in html.py: {r.stderr}"
-
-
-# [repo_ci] pass_to_pass
-def test_repo_ruff_check():
-    """Repo's Python linting passes on html.py (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", """
-            apt-get update -qq 2>/dev/null || true
-            apt-get install -y -qq python3-pip 2>/dev/null || true
-            pip3 install --break-system-packages ruff 2>/dev/null || pip3 install ruff 2>/dev/null || true
-            ruff check gradio/components/html.py
-        """],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
-# [repo_ci] pass_to_pass
-def test_repo_ruff_format():
-    """Repo's Python formatting passes on html.py (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", """
-            apt-get update -qq 2>/dev/null || true
-            apt-get install -y -qq python3-pip 2>/dev/null || true
-            pip3 install --break-system-packages ruff 2>/dev/null || pip3 install ruff 2>/dev/null || true
-            ruff format --check gradio/components/html.py
-        """],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_svelte_syntax():
     """Svelte files are valid JS/HTML syntax (pass_to_pass)."""
     # Check that Svelte files parse as valid HTML-like content
@@ -297,7 +257,7 @@ def test_repo_svelte_syntax():
         assert content.count("{") >= content.count("}"), f"{path} may have unbalanced braces"
 
 
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_imports_parse():
     """Repo's Python imports parse correctly (pass_to_pass)."""
     # Check that imports in html.py are syntactically valid (AST parse only)
@@ -312,3 +272,153 @@ print('PASS')
 """)
     assert r.returncode == 0, f"Import parse failed:\n{r.stderr}"
     assert "PASS" in r.stdout
+
+
+# [static] pass_to_pass
+def test_repo_svelte_balanced_syntax():
+    """Svelte files have balanced braces and valid structure (pass_to_pass)."""
+    for path in [INDEX, SHARED]:
+        content = _strip_comments(path.read_text())
+        # Check for balanced curly braces (basic structural check)
+        open_curly = content.count("{")
+        close_curly = content.count("}")
+        assert abs(open_curly - close_curly) <= 5, f"{path} has unbalanced braces: {open_curly} open, {close_curly} close"
+        # Check for balanced parentheses
+        open_paren = content.count("(")
+        close_paren = content.count(")")
+        assert open_paren == close_paren, f"{path} has unbalanced parentheses: {open_paren} open, {close_paren} close"
+        # Check for balanced square brackets
+        open_square = content.count("[")
+        close_square = content.count("]")
+        assert open_square == close_square, f"{path} has unbalanced square brackets: {open_square} open, {close_square} close"
+
+
+# [static] pass_to_pass
+def test_repo_python_docstring_structure():
+    """Python docstrings in html.py have valid structure (pass_to_pass)."""
+    r = _run_py("""
+import ast
+source = open('gradio/components/html.py').read()
+tree = ast.parse(source)
+# Find the HTML class
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == 'HTML':
+        # Class should have a docstring
+        docstring = ast.get_docstring(node)
+        assert docstring is not None, "HTML class missing docstring"
+        assert len(docstring) > 50, "HTML class docstring too short"
+        # Check for __init__ method
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == '__init__':
+                init_docstring = ast.get_docstring(item)
+                if init_docstring:
+                    assert len(init_docstring) > 100, "__init__ docstring too short"
+                break
+        break
+else:
+    assert False, "HTML class not found"
+print('PASS')
+""")
+    assert r.returncode == 0, f"Docstring structure check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [static] pass_to_pass
+def test_repo_html_component_api():
+    """HTML component class has expected API structure (pass_to_pass)."""
+    r = _run_py("""
+import ast
+source = open('gradio/components/html.py').read()
+tree = ast.parse(source)
+# Find the HTML class and check its structure
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == 'HTML':
+        # Check for expected methods/attributes
+        members = [n.name for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        # Should have __init__ and other standard methods
+        assert '__init__' in members, "HTML class missing __init__"
+        # Check for _render method or similar rendering logic
+        render_methods = [m for m in members if 'render' in m.lower() or 'as' in m.lower()]
+        print(f'Found methods: {members}')
+        break
+else:
+    assert False, "HTML class not found"
+print('PASS')
+""")
+    assert r.returncode == 0, f"HTML component API check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo CI/CD) — actual CI commands via subprocess.run()
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Repo's Python files have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "gradio/components/html.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax error in html.py: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's Python linting passes on html.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            apt-get update -qq 2>/dev/null
+            apt-get install -y -qq python3-pip 2>/dev/null
+            pip3 install --break-system-packages ruff -q 2>/dev/null
+            python3 -m ruff check gradio/components/html.py
+        """],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python formatting passes on html.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            apt-get update -qq 2>/dev/null
+            apt-get install -y -qq python3-pip 2>/dev/null
+            pip3 install --break-system-packages ruff -q 2>/dev/null
+            python3 -m ruff format --check gradio/components/html.py
+        """],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_html_component_pytest():
+    """Repo's HTML component pytest tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            apt-get update -qq 2>/dev/null
+            apt-get install -y -qq python3-pip 2>/dev/null
+            pip3 install --break-system-packages pytest ruff gradio -q 2>/dev/null
+            python3 -m pytest test/components/test_html.py -v
+        """],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTML component pytest failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_html_api_pytest():
+    """Repo's HTML API tests (TestHTML class) pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            apt-get update -qq 2>/dev/null
+            apt-get install -y -qq python3-pip 2>/dev/null
+            pip3 install --break-system-packages pytest ruff gradio -q 2>/dev/null
+            python3 -m pytest test/components/test_html.py::TestHTML -v
+        """],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTML API pytest failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

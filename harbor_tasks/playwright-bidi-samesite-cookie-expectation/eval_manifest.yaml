@@ -37,19 +37,42 @@ checks:
     origin: repo_tests
     description: "Repo's build step completes successfully"
 
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes"
-
   - id: test_repo_eslint
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's ESLint linting passes"
+
+  - id: test_repo_tsc
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript type check passes"
 
   - id: test_repo_check_deps
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's dependency check passes"
 
-rubric: []
+  - id: test_repo_lint_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package linting passes"
+
+  - id: test_repo_test_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's test types check passes"
+
+rubric:
+  - rule: "Code changes must pass the repository's lint checks (eslint, tsc, check-deps, lint-packages, test-types) without errors."
+    source:
+      path: "CLAUDE.md"
+      lines: "52-58, 108"
+      commit: "5435c64f6d14293b2ce0dcdbfaa237b015bfd63e"
+    reference: "isBidi parameter added to test signature; (browserName === 'chromium' || isBidi) && value === 'None' condition added"
+
+  - rule: "Tests using browser/context/browserType fixtures must be placed in tests/library/ (not tests/page/)."
+    source:
+      path: "CLAUDE.md"
+      lines: "83-88"
+      commit: "5435c64f6d14293b2ce0dcdbfaa237b015bfd63e"
+    reference: "browsercontext-fetch.spec.ts in tests/library/ modified; expectation removed from tests/bidi/expectations/"

@@ -270,3 +270,117 @@ def test_repo_format():
         timeout=60,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_reload():
+    """Repo's reload module unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-r", f"{REPO}/requirements.txt", "pytest", "hypothesis", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", f"{REPO}/test/test_reload.py", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Reload tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_utils_delete_none():
+    """Repo's utils delete_none unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-r", f"{REPO}/requirements.txt", "pytest", "hypothesis", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", f"{REPO}/test/test_utils.py::TestDeleteNone", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils delete_none tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_utils_sanitize_csv():
+    """Repo's utils sanitize CSV unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-r", f"{REPO}/requirements.txt", "pytest", "hypothesis", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", f"{REPO}/test/test_utils.py::TestSanitizeForCSV", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils sanitize CSV tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_utils_format_ner():
+    """Repo's utils format NER unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-r", f"{REPO}/requirements.txt", "pytest", "hypothesis", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", f"{REPO}/test/test_utils.py::TestFormatNERList", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils format NER tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_utils_append_suffix():
+    """Repo's utils append unique suffix unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-r", f"{REPO}/requirements.txt", "pytest", "hypothesis", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", f"{REPO}/test/test_utils.py::TestAppendUniqueSuffix", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils append suffix tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_utils_function_params():
+    """Repo's utils function params unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-r", f"{REPO}/requirements.txt", "pytest", "hypothesis", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", f"{REPO}/test/test_utils.py::TestFunctionParams", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils function params tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

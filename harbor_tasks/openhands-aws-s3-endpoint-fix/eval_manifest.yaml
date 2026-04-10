@@ -99,6 +99,30 @@ checks:
     origin: "repo_tests"
     description: "Python syntax validation for modified file"
 
+  - id: "test_repo_ast_parses"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    test: "test_repo_ast_parses"
+    category: "p2p"
+    origin: "repo_tests"
+    description: "Python AST parsing for modified file"
+
+  - id: "test_repo_ruff_check"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    test: "test_repo_ruff_check"
+    category: "p2p"
+    origin: "repo_tests"
+    description: "Repo's ruff linter passes for modified file"
+
+  - id: "test_repo_ruff_format_check"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    test: "test_repo_ruff_format_check"
+    category: "p2p"
+    origin: "repo_tests"
+    description: "Repo's ruff format check passes for modified file"
+
   - id: "test_repo_mypy_typecheck"
     type: "pass_to_pass"
     file: "tests/test_outputs.py"
@@ -115,4 +139,18 @@ checks:
     origin: "repo_tests"
     description: "Primary modified file exists and is readable"
 
-rubric: []
+rubric:
+  - rule: "Add a helper function _get_default_aws_endpoint_url() that handles protocol prefixes (http/https) based on AWS_S3_SECURE environment variable."
+    source:
+      path: "openhands/app_server/event/aws_event_service.py"
+      pr: "All-Hands-AI/OpenHands#13579"
+
+  - rule: "Use Pydantic's Field with default_factory to populate endpoint_url from environment variables."
+    source:
+      path: "openhands/app_server/event/aws_event_service.py"
+      pr: "All-Hands-AI/OpenHands#13579"
+
+  - rule: "Update S3 client to use self.endpoint_url instead of direct os.getenv() call."
+    source:
+      path: "openhands/app_server/event/aws_event_service.py"
+      pr: "All-Hands-AI/OpenHands#13579"

@@ -17,10 +17,15 @@ checks:
     origin: pr_diff
     description: "String-backed $B reference must throw 'Referenced Blob is not a Blob.'"
 
-  - id: existing_blob_deserialization_works
+  - id: test_react_flight_reply_formdata
     type: pass_to_pass
     origin: repo_tests
-    description: "Valid Blob references still serialize and deserialize correctly"
+    description: "FormData with Blob serialization works"
+
+  - id: test_react_flight_reply_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All ReactFlightDOMReply tests pass"
 
   - id: error_code_registered
     type: fail_to_pass
@@ -41,4 +46,27 @@ checks:
     origin: repo_tests
     description: "Repo's Flow typecheck passes"
 
-rubric: []
+rubric:
+  - rule: "Run `yarn extract-errors` when adding new error messages or modifying error codes"
+    source:
+      path: ".claude/skills/extract-errors/SKILL.md"
+      lines: "10"
+      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
+
+  - rule: "Use `--silent` flag when running tests to limit output to only failures"
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "41"
+      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
+
+  - rule: "Use `--no-watchman` flag when running tests (common failure in sandboxing)"
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "42"
+      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
+
+  - rule: "Use comments to explain invariants and non-obvious behavior, not narrate code"
+    source:
+      path: "compiler/CLAUDE.md"
+      lines: "252"
+      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"

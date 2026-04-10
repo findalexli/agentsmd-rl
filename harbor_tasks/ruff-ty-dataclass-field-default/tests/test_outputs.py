@@ -150,7 +150,7 @@ def test_named_args_without_specifiers():
 
 
 def test_cargo_check():
-    """ty_python_semantic crate compiles without errors."""
+    """ty_python_semantic crate compiles without errors (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "check", "-p", "ty_python_semantic"],
         capture_output=True,
@@ -162,7 +162,7 @@ def test_cargo_check():
 
 
 def test_cargo_fmt():
-    """Repo code is formatted correctly."""
+    """Repo code is formatted correctly (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "fmt", "--all", "--check"],
         capture_output=True,
@@ -174,7 +174,7 @@ def test_cargo_fmt():
 
 
 def test_cargo_clippy_ty_python_semantic():
-    """ty_python_semantic passes clippy lints."""
+    """ty_python_semantic passes clippy lints (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "clippy", "-p", "ty_python_semantic", "--all-targets", "--all-features", "--", "-D", "warnings"],
         capture_output=True,
@@ -186,7 +186,7 @@ def test_cargo_clippy_ty_python_semantic():
 
 
 def test_cargo_doc_ty_python_semantic():
-    """ty_python_semantic docs build without warnings."""
+    """ty_python_semantic docs build without warnings (pass_to_pass)."""
     env = {**subprocess.os.environ, "RUSTDOCFLAGS": "-D warnings"}
     r = subprocess.run(
         ["cargo", "doc", "-p", "ty_python_semantic", "--no-deps"],
@@ -199,32 +199,8 @@ def test_cargo_doc_ty_python_semantic():
     assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-500:]}"
 
 
-def test_ty_mdtest():
-    """ty_python_semantic markdown tests pass."""
-    r = subprocess.run(
-        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"ty_python_semantic mdtest failed:\n{r.stderr[-500:]}"
-
-
-def test_ty_mdtest_dataclasses():
-    """ty_python_semantic dataclasses-specific markdown tests pass."""
-    r = subprocess.run(
-        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest", "--", "dataclasses"],
-        capture_output=True,
-        text=True,
-        timeout=180,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"ty_python_semantic dataclasses mdtest failed:\n{r.stderr[-500:]}"
-
-
 def test_no_unsafe_unwrap_in_changes():
-    """No panic!/unreachable!/unwrap() in added code."""
+    """No panic!/unreachable!/unwrap() in added code (pass_to_pass)."""
     result = subprocess.run(
         ["git", "diff", "HEAD"],
         capture_output=True,

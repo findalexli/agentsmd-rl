@@ -183,6 +183,29 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_mypy():
+    """Repo's mypy type check passes on modified utils.py (pass_to_pass).
+
+    Note: orchestrator.py and scheduler.py have pre-existing type errors
+    unrelated to the PR changes, so we only check utils.py.
+    """
+    # Ensure mypy and pydantic are installed
+    subprocess.run(
+        ["python", "-m", "pip", "install", "mypy", "pydantic", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "mypy", "--ignore-missing-imports", f"{REPO}/src/prime_rl/orchestrator/utils.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"mypy check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

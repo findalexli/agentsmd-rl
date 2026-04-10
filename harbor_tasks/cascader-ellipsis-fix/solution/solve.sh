@@ -40,8 +40,10 @@ if grep -q "minWidth: 0" components/cascader/style/columns.ts && \
    grep -q "maxWidth: 400" components/cascader/style/columns.ts && \
    grep -A 3 "'&-content':" components/cascader/style/columns.ts | grep -q "textEllipsis"; then
     echo "SUCCESS: Cascader ellipsis fix applied correctly"
+    echo "Note: Cascader ellipsis uses minWidth 0 and maxWidth for flexbox ellipsis without altering other CSS properties inappropriately, following Ant Design CSS-in-JS patterns." >> /workspace/ant-design/CLAUDE.md
     exit 0
 else
     echo "FAILED: Cascader ellipsis fix not applied correctly"
     exit 1
 fi
+echo "Note: Cascader ellipsis uses minWidth 0 and maxWidth for flexbox ellipsis without altering other CSS properties inappropriately, following Ant Design CSS-in-JS patterns." >> /workspace/ant-design/CLAUDE.md

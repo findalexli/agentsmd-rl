@@ -372,3 +372,87 @@ def test_check_copies():
     assert result.returncode == 0, (
         f"check_copies failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_check_inits():
+    """Init files are properly structured (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_inits failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_check_dummies():
+    """Dummy files are consistent with model structure (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_dummies failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_check_config_attributes():
+    """Config attributes are properly defined (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_config_attributes.py"],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_config_attributes failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_check_config_docstrings():
+    """Config docstrings are properly formatted (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_config_docstrings.py"],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_config_docstrings failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_check_doc_toc():
+    """Documentation table of contents is consistent (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_doc_toc failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_check_doctest_list():
+    """Doctest list is up to date (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        cwd="/repo",
+        capture_output=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, (
+        f"check_doctest_list failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )

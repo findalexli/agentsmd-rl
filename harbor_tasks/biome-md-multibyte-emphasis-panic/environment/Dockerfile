@@ -19,7 +19,7 @@ WORKDIR /workspace/biome
 
 # Pre-fetch and pre-compile deps for the markdown parser crate
 RUN cargo fetch
-RUN cargo test -p biome_markdown_parser --no-run 2>&1 || true
+
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

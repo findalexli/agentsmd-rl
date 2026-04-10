@@ -77,6 +77,26 @@ checks:
     origin: repo_tests
     description: "Modified file has valid Python syntax"
 
+  - id: test_repo_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file has no trailing whitespace"
+
+  - id: test_repo_eof_newline
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file ends with a newline"
+
+  - id: test_repo_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI workflow YAML files are syntactically valid"
+
+  - id: test_repo_pyproject_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pyproject.toml is syntactically valid"
+
   - id: no_wildcard_imports
     type: pass_to_pass
     origin: agent_config
@@ -96,14 +116,26 @@ checks:
       commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
 
 rubric:
-  - rule: "Use \`areal.utils.logging.getLogger(name)\` with PascalCase descriptive name, NOT print or stdlib logging"
+  - rule: "Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name, NOT print or stdlib logging"
     source:
       path: "AGENTS.md"
-      lines: "90-92"
+      lines: "88-92"
       commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
 
   - rule: "No hardcoded secrets, paths, or endpoints"
     source:
       path: "AGENTS.md"
-      lines: "31"
+      lines: "28-31"
+      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
+
+  - rule: "Follow existing code patterns in the same module when making changes"
+    source:
+      path: "CLAUDE.md"
+      lines: "40-42"
+      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
+
+  - rule: "Use try/finally blocks to ensure cleanup code (like resume_generation) runs even when exceptions occur"
+    source:
+      path: "AGENTS.md"
+      lines: "36-37"
       commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"

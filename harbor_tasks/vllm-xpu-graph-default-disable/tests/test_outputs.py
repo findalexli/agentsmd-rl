@@ -28,7 +28,47 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass (static)
+# pass_to_pass (repo_tests) — CI commands that should pass at base commit
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_check_envs():
+    """Repo's ruff linter passes on envs.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/vllm/envs.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed on envs.py:\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_check_xpu():
+    """Repo's ruff linter passes on xpu.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/vllm/platforms/xpu.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed on xpu.py:\n{r.stderr[-500:]}"
+
+
+def test_repo_py_compile_envs():
+    """Python syntax check passes on envs.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/vllm/envs.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax error in envs.py:\n{r.stderr[-500:]}"
+
+
+def test_repo_py_compile_xpu():
+    """Python syntax check passes on xpu.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/vllm/platforms/xpu.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax error in xpu.py:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# pass_to_pass (static) — file content checks
 # ---------------------------------------------------------------------------
 
 def test_syntax_check():
@@ -36,6 +76,18 @@ def test_syntax_check():
     for f in ["vllm/envs.py", "vllm/platforms/xpu.py"]:
         source = Path(f"{REPO}/{f}").read_text()
         ast.parse(source)
+
+
+def test_existing_env_vars_preserved():
+    """Existing env vars and XPU platform class still present after changes."""
+    envs_content = Path(f"{REPO}/vllm/envs.py").read_text()
+    for var in ["VLLM_HOST_IP", "VLLM_CONFIGURE_LOGGING", "VLLM_TARGET_DEVICE"]:
+        assert var in envs_content, f"Existing env var {var} missing from envs.py"
+    assert "environment_variables" in envs_content, "environment_variables dict missing"
+
+    xpu_content = Path(f"{REPO}/vllm/platforms/xpu.py").read_text()
+    assert "class XPUPlatform" in xpu_content, "XPUPlatform class missing"
+    assert "check_and_update_config" in xpu_content, "check_and_update_config missing"
 
 
 # ---------------------------------------------------------------------------
@@ -156,22 +208,6 @@ print('PASS')
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
-
-
-# ---------------------------------------------------------------------------
-# pass_to_pass (repo_tests)
-# ---------------------------------------------------------------------------
-
-def test_existing_env_vars_preserved():
-    """Existing env vars and XPU platform class still present after changes."""
-    envs_content = Path(f"{REPO}/vllm/envs.py").read_text()
-    for var in ["VLLM_HOST_IP", "VLLM_CONFIGURE_LOGGING", "VLLM_TARGET_DEVICE"]:
-        assert var in envs_content, f"Existing env var {var} missing from envs.py"
-    assert "environment_variables" in envs_content, "environment_variables dict missing"
-
-    xpu_content = Path(f"{REPO}/vllm/platforms/xpu.py").read_text()
-    assert "class XPUPlatform" in xpu_content, "XPUPlatform class missing"
-    assert "check_and_update_config" in xpu_content, "check_and_update_config missing"
 
 
 # ---------------------------------------------------------------------------

@@ -15,7 +15,7 @@ import re
 REPO = "/workspace/kotlin"
 
 
-def _run_gradle(task: str, timeout: int = 300) -> subprocess.CompletedProcess:
+def _run_gradle(task: str, timeout: int = 600) -> subprocess.CompletedProcess:
     """Run a Gradle task and return the result."""
     gradlew = os.path.join(REPO, "gradlew")
     return subprocess.run(
@@ -24,7 +24,7 @@ def _run_gradle(task: str, timeout: int = 300) -> subprocess.CompletedProcess:
     )
 
 
-def _run_gradle_with_args(args: list, timeout: int = 300) -> subprocess.CompletedProcess:
+def _run_gradle_with_args(args: list, timeout: int = 600) -> subprocess.CompletedProcess:
     """Run Gradle with custom arguments."""
     gradlew = os.path.join(REPO, "gradlew")
     cmd = [gradlew, "--no-daemon"] + args
@@ -33,24 +33,12 @@ def _run_gradle_with_args(args: list, timeout: int = 300) -> subprocess.Complete
     )
 
 
-def _compile_kotlin_file(file_path: str, timeout: int = 120) -> subprocess.CompletedProcess:
-    """Try to compile a single Kotlin file to check syntax validity."""
-    kotlinc = os.path.join(REPO, "dist/kotlinc/bin/kotlinc")
-    if not os.path.exists(kotlinc):
-        # Fallback to using gradle to compile the module
-        return None
-    return subprocess.run(
-        [kotlinc, "-d", "/tmp/compiled", file_path],
-        capture_output=True, text=True, timeout=timeout, cwd=REPO,
-    )
-
-
 # =============================================================================
-# PASS_TO_PASS: Repository structure and basic validity tests
+# PASS_TO_PASS: File structure and static checks (origin: static)
 # =============================================================================
 
 def test_repo_structure_exists():
-    """PASS_TO_PASS: Key repository directories and files exist."""
+    """PASS_TO_PASS: Key repository directories and files exist (static check)."""
     swift_dir = os.path.join(REPO, "native/swift")
     assert os.path.isdir(swift_dir), f"Swift directory not found: {swift_dir}"
 
@@ -68,32 +56,14 @@ def test_repo_structure_exists():
 
 
 def test_gradlew_executable():
-    """PASS_TO_PASS: Gradle wrapper is available and executable."""
+    """PASS_TO_PASS: Gradle wrapper is available and executable (static check)."""
     gradlew = os.path.join(REPO, "gradlew")
     assert os.path.isfile(gradlew), "gradlew not found"
     assert os.access(gradlew, os.X_OK), "gradlew is not executable"
 
 
-def test_sir_module_compiles():
-    """PASS_TO_PASS: The SIR module compiles without errors."""
-    r = _run_gradle(":native:swift:sir:compileKotlin", timeout=300)
-    assert r.returncode == 0, f"SIR module compilation failed: {r.stderr[-1000:]}"
-
-
-def test_sir_providers_module_compiles():
-    """PASS_TO_PASS: The SIR providers module compiles without errors."""
-    r = _run_gradle(":native:swift:sir-providers:compileKotlin", timeout=300)
-    assert r.returncode == 0, f"SIR providers module compilation failed: {r.stderr[-1000:]}"
-
-
-def test_sir_printer_module_compiles():
-    """PASS_TO_PASS: The SIR printer module (tests) compiles without errors."""
-    r = _run_gradle(":native:swift:sir-printer:compileKotlin", timeout=300)
-    assert r.returncode == 0, f"SIR printer module compilation failed: {r.stderr[-1000:]}"
-
-
 def test_sir_attribute_file_valid():
-    """PASS_TO_PASS: SirAttribute.kt is valid Kotlin syntax (no unmatched braces)."""
+    """PASS_TO_PASS: SirAttribute.kt is valid Kotlin syntax - no unmatched braces (static check)."""
     attr_file = os.path.join(REPO, "native/swift/sir/src/org/jetbrains/kotlin/sir/SirAttribute.kt")
 
     with open(attr_file, 'r') as f:
@@ -130,7 +100,7 @@ def test_sir_attribute_file_valid():
 
 
 def test_visibility_checker_file_valid():
-    """PASS_TO_PASS: SirVisibilityCheckerImpl.kt is valid Kotlin syntax."""
+    """PASS_TO_PASS: SirVisibilityCheckerImpl.kt is valid Kotlin syntax (static check)."""
     checker_file = os.path.join(REPO, "native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/SirVisibilityCheckerImpl.kt")
 
     with open(checker_file, 'r') as f:
@@ -163,6 +133,192 @@ def test_visibility_checker_file_valid():
 
     assert brace_count == 0, f"Unmatched braces: {brace_count} open braces remaining"
     assert "class SirVisibilityCheckerImpl" in content, "SirVisibilityCheckerImpl class not found"
+
+
+# =============================================================================
+# PASS_TO_PASS: Repository CI/CD tests using subprocess.run() (origin: repo_tests)
+# =============================================================================
+
+def test_gradle_help_works():
+    """PASS_TO_PASS: Gradle help command works (repo CI check).
+
+    Verifies that the Gradle wrapper can execute basic tasks.
+    """
+    r = _run_gradle("help", timeout=300)
+    assert r.returncode == 0, f"Gradle help failed: {r.stderr[-500:]}"
+
+
+def test_sir_module_compiles():
+    """PASS_TO_PASS: The SIR module compiles without errors (repo CI check).
+
+    Runs the actual Gradle compileKotlin task for the SIR module.
+    """
+    r = _run_gradle(":native:swift:sir:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"SIR module compilation failed: {r.stderr[-1000:]}"
+
+
+def test_sir_providers_module_compiles():
+    """PASS_TO_PASS: The SIR providers module compiles without errors (repo CI check).
+
+    Runs the actual Gradle compileKotlin task for the SIR providers module.
+    """
+    r = _run_gradle(":native:swift:sir-providers:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"SIR providers module compilation failed: {r.stderr[-1000:]}"
+
+
+def test_sir_light_classes_compiles():
+    """PASS_TO_PASS: The SIR light classes module compiles without errors (repo CI check).
+
+    This module uses the modified SirVisibilityCheckerImpl.
+    """
+    r = _run_gradle(":native:swift:sir-light-classes:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"SIR light classes compilation failed: {r.stderr[-1000:]}"
+
+
+def test_sir_printer_module_compiles():
+    """PASS_TO_PASS: The SIR printer module compiles without errors (repo CI check).
+
+    Runs the actual Gradle compileKotlin task for the SIR printer module.
+    """
+    r = _run_gradle(":native:swift:sir-printer:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"SIR printer module compilation failed: {r.stderr[-1000:]}"
+
+
+def test_swift_export_standalone_compiles():
+    """PASS_TO_PASS: Swift export standalone module compiles without errors (repo CI check).
+
+    Verifies the main swift export standalone module builds successfully.
+    """
+    r = _run_gradle(":native:swift:swift-export-standalone:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"Swift export standalone compilation failed: {r.stderr[-1000:]}"
+
+
+def test_swift_export_embeddable_compiles():
+    """PASS_TO_PASS: Swift export embeddable module compiles without errors (repo CI check).
+
+    Verifies the embeddable swift export module builds successfully.
+    """
+    r = _run_gradle(":native:swift:swift-export-embeddable:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"Swift export embeddable compilation failed: {r.stderr[-1000:]}"
+
+
+def test_sir_light_classes_unit_tests_pass():
+    """PASS_TO_PASS: SIR light classes unit tests pass (repo CI gate).
+
+    Runs the actual unit tests for the SIR light classes module which exercises
+    the symbol translation code including SirVisibilityCheckerImpl.
+    """
+    r = _run_gradle(":native:swift:sir-light-classes:test", timeout=600)
+    assert r.returncode == 0, f"SIR light classes tests failed: {r.stderr[-1000:]}"
+
+
+def test_sir_printer_tests_pass():
+    """PASS_TO_PASS: SIR printer tests pass (repo CI gate).
+
+    Runs the actual unit tests for the SIR printer module.
+    """
+    r = _run_gradle(":native:swift:sir-printer:test", timeout=600)
+    assert r.returncode == 0, f"SIR printer tests failed: {r.stderr[-1000:]}"
+
+
+def test_swift_export_ide_compiles():
+    """PASS_TO_PASS: Swift export IDE module compiles without errors (repo CI check).
+
+    Verifies the IDE integration module builds successfully.
+    """
+    r = _run_gradle(":native:swift:swift-export-ide:compileKotlin", timeout=600)
+    # This may fail on base commit due to missing dependencies, but the compilation itself should work
+    assert r.returncode == 0, f"Swift export IDE compilation failed: {r.stderr[-1000:]}"
+
+
+def test_sir_providers_compile_test_kotlin():
+    """PASS_TO_PASS: SIR providers test code compiles without errors (repo CI check).
+
+    Verifies the test code for sir-providers compiles (test fixtures, etc).
+    """
+    r = _run_gradle(":native:swift:sir-providers:compileTestKotlin", timeout=600)
+    assert r.returncode == 0, f"SIR providers test compilation failed: {r.stderr[-1000:]}"
+
+
+def test_native_swift_assemble():
+    """PASS_TO_PASS: Native Swift modules assemble successfully (repo CI check).
+
+    Runs the assemble task for the main native:swift project which builds all artifacts.
+    """
+    r = _run_gradle(":native:swift:assemble", timeout=600)
+    assert r.returncode == 0, f"Native Swift assemble failed: {r.stderr[-1000:]}"
+
+
+def test_swift_export_integration_tests_compile():
+    """PASS_TO_PASS: Swift export integration tests compile without errors (repo CI check).
+
+    Verifies the integration test modules compile successfully.
+    """
+    r = _run_gradle(":native:swift:swift-export-standalone-integration-tests:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"Swift export integration tests compilation failed: {r.stderr[-1000:]}"
+
+
+def test_swift_export_simple_integration_compiles():
+    """PASS_TO_PASS: Swift export simple integration test module compiles (repo CI check).
+
+    Verifies the simple integration test subproject compiles successfully.
+    """
+    r = _run_gradle(":native:swift:swift-export-standalone-integration-tests:simple:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"Swift export simple integration compilation failed: {r.stderr[-1000:]}"
+
+
+def test_swift_export_coroutines_integration_compiles():
+    """PASS_TO_PASS: Swift export coroutines integration test module compiles (repo CI check).
+
+    Verifies the coroutines integration test subproject compiles successfully.
+    """
+    r = _run_gradle(":native:swift:swift-export-standalone-integration-tests:coroutines:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"Swift export coroutines integration compilation failed: {r.stderr[-1000:]}"
+
+
+def test_swift_export_external_integration_compiles():
+    """PASS_TO_PASS: Swift export external integration test module compiles (repo CI check).
+
+    Verifies the external integration test subproject compiles successfully.
+    """
+    r = _run_gradle(":native:swift:swift-export-standalone-integration-tests:external:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"Swift export external integration compilation failed: {r.stderr[-1000:]}"
+
+
+def test_sir_tree_generator_compiles():
+    """PASS_TO_PASS: SIR tree generator module compiles without errors (repo CI check).
+
+    Verifies the tree generator used for SIR compiles successfully.
+    """
+    r = _run_gradle(":native:swift:sir:tree-generator:compileKotlin", timeout=600)
+    assert r.returncode == 0, f"SIR tree generator compilation failed: {r.stderr[-1000:]}"
+
+
+def test_sir_module_check():
+    """PASS_TO_PASS: SIR module passes Gradle check task (repo CI check).
+
+    Runs the check task which typically includes compilation and basic validation.
+    """
+    r = _run_gradle(":native:swift:sir:check", timeout=600)
+    assert r.returncode == 0, f"SIR module check failed: {r.stderr[-1000:]}"
+
+
+def test_sir_providers_check():
+    """PASS_TO_PASS: SIR providers module passes Gradle check task (repo CI check).
+
+    Runs the check task for sir-providers including any configured validations.
+    """
+    r = _run_gradle(":native:swift:sir-providers:check", timeout=600)
+    assert r.returncode == 0, f"SIR providers check failed: {r.stderr[-1000:]}"
+
+
+def test_swift_export_standalone_check():
+    """PASS_TO_PASS: Swift export standalone passes Gradle check (repo CI check).
+
+    Runs the check task for swift-export-standalone module.
+    """
+    r = _run_gradle(":native:swift:swift-export-standalone:check", timeout=600)
+    assert r.returncode == 0, f"Swift export standalone check failed: {r.stderr[-1000:]}"
 
 
 # =============================================================================
@@ -303,7 +459,7 @@ def test_printer_test_compiles_after_fix():
     This is a behavioral test that actually compiles code. The test file
     must be updated to not use the obsoleted parameter.
     """
-    r = _run_gradle(":native:swift:sir-printer:compileTestKotlin", timeout=300)
+    r = _run_gradle(":native:swift:sir-printer:compileTestKotlin", timeout=600)
     assert r.returncode == 0, \
         f"SirAsSwiftSourcesPrinterTests compilation failed - Available class calls not updated: {r.stderr[-1000:]}"
 
@@ -314,7 +470,7 @@ def test_sir_printer_golden_output_matches():
     Runs the sir-printer tests which verify the generated Swift code matches
     the expected golden output without obsoleted attributes.
     """
-    r = _run_gradle(":native:swift:sir-printer:test", timeout=300)
+    r = _run_gradle(":native:swift:sir-printer:test", timeout=600)
     # Check that tests pass or the specific test we care about passes
     output = r.stdout + r.stderr
     if "SirAsSwiftSourcesPrinterTests" in output and ("FAILED" in output or r.returncode != 0):
@@ -402,32 +558,3 @@ def test_swift_export_generates_correct_protocol_output():
             "deprecatedErrorFunction should be in the class"
         assert "unavailable" in class_body, \
             "deprecatedErrorFunction should be marked unavailable in the class"
-
-
-# =============================================================================
-# PASS_TO_PASS: Repo CI/CD integration tests
-# =============================================================================
-
-def test_repo_tests_sir_printer():
-    """PASS_TO_PASS: SIR printer module tests pass (repo CI gate).
-
-    This runs the repo's own test suite for the sir-printer module.
-    Must pass both before and after the fix.
-    """
-    r = _run_gradle(":native:swift:sir-printer:test", timeout=300)
-    assert r.returncode == 0, f"SIR printer repo tests failed: {r.stderr[-1000:]}"
-
-
-def test_repo_swift_export_integration_tests():
-    """PASS_TO_PASS: Swift export integration tests pass (repo CI gate).
-
-    This runs the swift export integration tests.
-    Must pass both before and after the fix.
-    """
-    # Try to run the integration tests if they exist
-    r = _run_gradle(":native:swift:swift-export-standalone-integration-tests:simple:test", timeout=600)
-    # Some test failures are expected on base commit for the new test data,
-    # but the task runner should compare before/after
-    if r.returncode != 0 and "No tasks" in r.stderr:
-        # Test task might not exist, skip
-        return

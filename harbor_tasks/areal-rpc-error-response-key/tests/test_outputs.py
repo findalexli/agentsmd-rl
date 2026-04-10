@@ -384,3 +384,69 @@ def test_repo_precommit_hooks():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Pre-commit hooks failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass — from .github/workflows/pre-commit.yml (check-yaml)
+def test_repo_yaml_syntax():
+    """Repo's YAML files have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "pyyaml"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pyyaml: {r.stderr}"
+
+    yaml_files = [
+        f"{REPO}/.github/workflows/pre-commit.yml",
+        f"{REPO}/.github/workflows/test-areal.yml",
+        f"{REPO}/.pre-commit-config.yaml",
+    ]
+
+    for f in yaml_files:
+        r = subprocess.run(
+            ["python3", "-c", f"import yaml; yaml.safe_load(open('{f}'))"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"YAML syntax error in {f}: {r.stderr}"
+
+
+# [repo_ci] pass_to_pass — from pre-commit-hooks (end-of-file-fixer)
+def test_repo_eof_newlines():
+    """Modified files end with exactly one newline (pass_to_pass)."""
+    for path in MODIFIED_FILES:
+        content = Path(path).read_bytes()
+        if content:
+            # File should end with exactly one newline
+            assert content.endswith(b"\n"), (
+                f"{path}: missing trailing newline"
+            )
+            # Should not have multiple trailing newlines (blank lines at EOF)
+            stripped = content.rstrip(b"\n")
+            trailing_newlines = len(content) - len(stripped)
+            assert trailing_newlines == 1, (
+                f"{path}: has {trailing_newlines} trailing newlines (expected 1)"
+            )
+
+
+# [repo_ci] pass_to_pass — from pre-commit-hooks (detect-private-key)
+def test_repo_no_private_keys():
+    """Modified files contain no private keys (pass_to_pass)."""
+    key_patterns = [
+        r"-----BEGIN (RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----",
+        r"-----BEGIN ENCRYPTED PRIVATE KEY-----",
+        r"PuTTY-User-Key-File-",
+    ]
+    for path in MODIFIED_FILES:
+        source = Path(path).read_text()
+        for pattern in key_patterns:
+            matches = re.findall(pattern, source)
+            assert len(matches) == 0, (
+                f"Potential private key found in {path}: {pattern}"
+            )
+
+
+# [repo_ci] pass_to_pass — core module imports work
+def test_repo_module_imports():
+    """Modified infrastructure modules compile without errors (pass_to_pass)."""
+    import py_compile
+    for path in MODIFIED_FILES:
+        py_compile.compile(path, doraise=True)

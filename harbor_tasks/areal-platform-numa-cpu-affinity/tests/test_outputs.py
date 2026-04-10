@@ -56,6 +56,36 @@ def test_syntax_check():
         ast.parse(src)  # raises SyntaxError on failure
 
 
+# [static] pass_to_pass
+def test_no_windows_line_endings():
+    """Modified files must use Unix line endings (LF), not Windows (CRLF)."""
+    files = [
+        "areal/infra/platforms/platform.py",
+        "areal/infra/platforms/cuda.py",
+        "areal/engine/fsdp_engine.py",
+        "areal/engine/megatron_engine.py",
+        "areal/experimental/engine/archon_engine.py",
+    ]
+    for f in files:
+        content = (Path(REPO) / f).read_bytes()
+        assert content.count(b"\r\n") == 0, f"Windows line endings (CRLF) found in {f}"
+
+
+# [static] pass_to_pass
+def test_trailing_newline():
+    """Modified files must end with a newline character."""
+    files = [
+        "areal/infra/platforms/platform.py",
+        "areal/infra/platforms/cuda.py",
+        "areal/engine/fsdp_engine.py",
+        "areal/engine/megatron_engine.py",
+        "areal/experimental/engine/archon_engine.py",
+    ]
+    for f in files:
+        content = (Path(REPO) / f).read_bytes()
+        assert content[-1:] == b"\n", f"Missing trailing newline in {f}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

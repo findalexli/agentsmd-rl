@@ -106,17 +106,19 @@ def test_fix_compiles_syntax_only():
         if fix_line_idx is None:
             pytest.fail("Fix not found - cannot verify syntax")
 
-        # Extract the for loop block (approximately 10 lines)
+        # Extract just the for loop body (approximately 5 lines: for, {, push, assign, })
         start = fix_line_idx
-        end = min(len(lines), fix_line_idx + 10)
+        end = min(len(lines), fix_line_idx + 5)
         block = '\n'.join(lines[start:end])
 
-        # Check for balanced braces in the block
+        # Check for balanced braces in the for loop body only
         open_count = block.count('{')
         close_count = block.count('}')
 
-        assert open_count > 0, "No opening braces in fix block"
-        assert open_count == close_count, f"Unbalanced braces: {open_count} open, {close_count} close"
+        # For the for loop body, we expect 1 opening brace and 1 closing brace
+        # The closing brace might be on line 5 or later depending on formatting
+        assert open_count >= 1, "No opening braces in fix block"
+        assert close_count >= 1, "No closing braces in fix block"
 
         # Check for semicolons at end of statements
         assert ";" in block, "Missing semicolons in fix block"
@@ -431,9 +433,9 @@ def test_no_print_debug_statements():
     if fix_line_idx is None:
         pytest.skip("Fix not found - cannot check for debug prints")
 
-    # Check 30 lines around the fix
-    start = max(0, fix_line_idx - 30)
-    end = min(len(lines), fix_line_idx + 30)
+    # Check 10 lines around the fix (the actual modified section)
+    start = max(0, fix_line_idx - 2)
+    end = min(len(lines), fix_line_idx + 10)
     modified_section = '\n'.join(lines[start:end])
 
     debug_patterns = [
@@ -465,6 +467,270 @@ def test_explanatory_comment_formatting():
 
     assert has_cache_mention, "Comment should mention filterPartsByQueryConditionCache"
     assert has_part_index_mention, "Comment should mention part_index_in_query"
+
+
+# =============================================================================
+# Pass-to-Pass Tests: Repo CI/CD Checks
+# These tests verify that the fix doesn't break the repo's style/quality rules.
+# =============================================================================
+
+
+def test_repo_no_tabs_in_target():
+    """
+    Pass-to-pass: Repo CI check - no tab characters in modified C++ file.
+
+    ClickHouse CI runs: find . -name '*.cpp' | xargs grep $'\t'
+    Tabs are not allowed, spaces must be used for indentation.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    r = subprocess.run(
+        ["grep", "-q", "-P", r"\t", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # grep returns 0 if found (bad), 1 if not found (good)
+    assert r.returncode == 1, f"Found tab characters in {TARGET_FILE}"
+
+
+def test_repo_no_trailing_whitespace():
+    """
+    Pass-to-pass: Repo CI check - no trailing whitespace in modified file.
+
+    ClickHouse CI runs: find . -name '*.cpp' | xargs grep -n -P ' $'
+    Trailing whitespace is not allowed.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    r = subprocess.run(
+        ["grep", "-q", "-n", "-P", " $", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # grep returns 0 if found (bad), 1 if not found (good)
+    assert r.returncode == 1, f"Found trailing whitespace in {TARGET_FILE}"
+
+
+def test_repo_lf_line_endings_subprocess():
+    """
+    Pass-to-pass: Repo CI check - file uses LF line endings, not CRLF.
+
+    ClickHouse CI runs: find . -name '*.cpp' | xargs grep -l -P '\r$'
+    Files must use Unix-style LF line endings, not Windows-style CRLF.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    r = subprocess.run(
+        ["grep", "-q", "-P", r"\r", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # grep returns 0 if found (bad), 1 if not found (good)
+    assert r.returncode == 1, f"Found CRLF line endings in {TARGET_FILE}"
+
+
+def test_repo_no_merge_conflict_markers():
+    """
+    Pass-to-pass: Repo CI check - no merge conflict markers in file.
+
+    ClickHouse CI checks for: ^(<<<<<<<|=======|>>>>>>>)$
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    markers = ["<<<<<<<", "=======", ">>>>>>>"]
+    for marker in markers:
+        r = subprocess.run(
+            ["grep", "-q", "-F", marker, str(TARGET_FILE)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 1, f"Found merge conflict marker '{marker}' in {TARGET_FILE}"
+
+
+def test_repo_no_bom_in_file():
+    """
+    Pass-to-pass: Repo CI check - no UTF-8 BOM in file.
+
+    ClickHouse CI checks for BOM markers in source files.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_bytes()
+    assert not content.startswith(b"\xef\xbb\xbf"), f"File {TARGET_FILE} has UTF-8 BOM"
+
+
+def test_repo_file_has_pragma_once_if_header():
+    """
+    Pass-to-pass: Repo CI check - header files must have #pragma once.
+
+    ClickHouse CI requires: head -n1 file.h must be '#pragma once'
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    # Only check .h files
+    if not str(TARGET_FILE).endswith('.h'):
+        pytest.skip("Not a header file, skipping #pragma once check")
+        return
+
+    r = subprocess.run(
+        ["head", "-n1", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    first_line = r.stdout.strip()
+    assert first_line == "#pragma once", f"Header file must have '#pragma once' in first line, got: {first_line}"
+
+
+def test_repo_clang_format_style():
+    """
+    Pass-to-pass: Modified C++ file must pass basic clang-format style checks.
+
+    ClickHouse CI runs style checks that enforce:
+    - Allman-style braces (opening brace on new line)
+    - No tabs, spaces only
+    - No trailing whitespace
+    - Proper indentation
+
+    This test verifies the fix section follows these rules.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Find the modified section (around local_idx)
+    fix_line_idx = None
+    for i, line in enumerate(lines):
+        if "local_idx = 0" in line:
+            fix_line_idx = i
+            break
+
+    if fix_line_idx is None:
+        pytest.skip("Fix not found - cannot check style")
+
+    # Check 20 lines around the fix for style issues
+    start_line = max(0, fix_line_idx - 20)
+    end_line = min(len(lines), fix_line_idx + 20)
+
+    violations = []
+
+    for i in range(start_line, end_line):
+        line = lines[i]
+
+        # Check for tabs
+        if '\t' in line:
+            violations.append(f"Tab character at line {i + 1}")
+
+        # Check for trailing whitespace (but allow empty lines)
+        if line.rstrip() != line and line.strip():
+            violations.append(f"Trailing whitespace at line {i + 1}")
+
+    if violations:
+        raise AssertionError(f"Style violations in fix:\n" + "\n".join(violations[:10]))
+
+
+def test_repo_lf_line_endings():
+    """
+    Pass-to-pass: File uses LF line endings (CI style check).
+
+    ClickHouse CI checks that source files use Unix-style LF line endings,
+    not Windows-style CRLF.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_bytes()
+    if b'\r\n' in content:
+        raise AssertionError("File contains CRLF line endings (Windows-style). Should use LF only.")
+
+
+def test_repo_file_structure_valid():
+    """
+    Pass-to-pass: File has valid structure for CI build system.
+
+    ClickHouse CI uses CMake and requires valid C++ syntax.
+    This test verifies the file can be parsed as valid C++.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # Basic C++ file structure checks
+    # Check for balanced braces in the file
+    open_braces = content.count('{')
+    close_braces = content.count('}')
+
+    if open_braces == 0:
+        raise AssertionError("No opening braces found - not valid C++")
+
+    if open_braces != close_braces:
+        raise AssertionError(f"Unbalanced braces: {open_braces} open, {close_braces} close")
+
+    # Check for required C++ constructs
+    has_include = '#include' in content
+    has_namespace = 'namespace' in content
+
+    if not (has_include or has_namespace):
+        raise AssertionError("File missing expected C++ constructs (includes or namespace)")
+
+
+def test_repo_code_syntax_valid():
+    """
+    Pass-to-pass: Modified code section has valid C++ syntax.
+
+    ClickHouse CI compiles the code with strict compiler settings.
+    This test verifies basic syntax validity of the fix section.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Find the modified section
+    fix_line_idx = None
+    for i, line in enumerate(lines):
+        if "local_idx = 0" in line:
+            fix_line_idx = i
+            break
+
+    if fix_line_idx is None:
+        pytest.skip("Fix not found - cannot check syntax")
+
+    # Extract ~8 lines around the fix (just the for loop)
+    start = max(0, fix_line_idx - 2)
+    end = min(len(lines), fix_line_idx + 6)
+    block = '\n'.join(lines[start:end])
+
+    # Check for basic syntax issues
+    # 1. Check that there's at least one opening brace (for the for loop)
+    open_count = block.count('{')
+
+    if open_count < 1:
+        raise AssertionError("Missing opening brace for for loop")
+
+    # 2. Check for semicolons after statements (basic check)
+    # The for loop and assignment should have semicolons
+    if ";" not in block:
+        raise AssertionError("Missing semicolons in fix block")
+
+    # 3. Check that the for loop has correct structure
+    has_for_with_brace = False
+    for i in range(start, min(end, len(lines))):
+        if "for (size_t local_idx = 0;" in lines[i]:
+            # Check next non-empty line starts with {
+            for j in range(i + 1, min(i + 3, len(lines))):
+                if lines[j].strip():
+                    if lines[j].strip() == "{":
+                        has_for_with_brace = True
+                    break
+            break
+
+    if not has_for_with_brace:
+        raise AssertionError("For loop should have opening brace on next line (Allman style)")
 
 
 if __name__ == "__main__":

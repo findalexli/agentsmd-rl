@@ -297,8 +297,147 @@ def test_helpers_yaml_valid():
 
 
 # =============================================================================
+# Pass-to-pass tests - CI/CD commands for modified templates
+# =============================================================================
+
+def test_repo_helm_lint_with_kubernetes_executor():
+    """PASS-TO-PASS: Helm lint passes with KubernetesExecutor (tests pod-template-file rendering)."""
+    import tempfile
+    # Test with KubernetesExecutor - this renders the pod-template-file which is modified by PR
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "kubernetes": {
+                "nodeSelector": {"diskType": "ssd"}
+            }
+        }
+    }
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        yaml.dump(values, f)
+        values_file = f.name
+    try:
+        result = subprocess.run(
+            ["helm", "lint", CHART_DIR, "--values", values_file],
+            capture_output=True, text=True, timeout=60
+        )
+        assert result.returncode == 0, f"Helm lint with KubernetesExecutor failed:\n{result.stdout}\n{result.stderr}"
+    finally:
+        os.unlink(values_file)
+
+
+def test_repo_helm_template_with_kubernetes_executor():
+    """PASS-TO-PASS: Helm template renders with KubernetesExecutor (tests pod-template-file)."""
+    import tempfile
+    # Test with KubernetesExecutor - tests pod-template-file.kubernetes-helm-yaml
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "kubernetes": {
+                "terminationGracePeriodSeconds": 60
+            }
+        }
+    }
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        yaml.dump(values, f)
+        values_file = f.name
+    try:
+        result = subprocess.run(
+            ["helm", "template", "test-release", CHART_DIR, "--values", values_file],
+            capture_output=True, text=True, timeout=120
+        )
+        assert result.returncode == 0, f"Helm template with KubernetesExecutor failed:\n{result.stderr}"
+        # Should contain pod-template-file configmap
+        assert "pod-template-file" in result.stdout or "ConfigMap" in result.stdout, \
+            "Pod template file configmap not found in output"
+    finally:
+        os.unlink(values_file)
+
+
+def test_repo_helm_template_with_celery_executor():
+    """PASS-TO-PASS: Helm template renders correctly with CeleryExecutor (worker-deployment.yaml)."""
+    import tempfile
+    # Test with CeleryExecutor - this renders worker-deployment.yaml which uses workers.celery
+    values = {
+        "executor": "CeleryExecutor",
+        "workers": {
+            "celery": {
+                "replicas": 2
+            }
+        }
+    }
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        yaml.dump(values, f)
+        values_file = f.name
+    try:
+        result = subprocess.run(
+            ["helm", "template", "test-release", CHART_DIR, "--values", values_file],
+            capture_output=True, text=True, timeout=120
+        )
+        assert result.returncode == 0, f"Helm template with CeleryExecutor failed:\n{result.stderr}"
+        # Should contain worker deployment
+        assert "worker" in result.stdout.lower(), "Worker not found in output"
+    finally:
+        os.unlink(values_file)
+
+
+def test_repo_helm_package():
+    """PASS-TO-PASS: Helm chart packages successfully (CI build test)."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = subprocess.run(
+            ["helm", "package", CHART_DIR, "--destination", tmpdir],
+            capture_output=True, text=True, timeout=60
+        )
+        assert result.returncode == 0, f"Helm package failed:\n{result.stderr}"
+        # Should create a .tgz file
+        result = subprocess.run(
+            ["ls", "-1", tmpdir],
+            capture_output=True, text=True
+        )
+        assert ".tgz" in result.stdout, "No .tgz package was created"
+
+
+def test_repo_helm_show_values():
+    """PASS-TO-PASS: Helm show values works (validates chart structure)."""
+    result = subprocess.run(
+        ["helm", "show", "values", CHART_DIR],
+        capture_output=True, text=True, timeout=60
+    )
+    assert result.returncode == 0, f"Helm show values failed:\n{result.stderr}"
+    # Should contain workers section
+    assert "workers:" in result.stdout, "values.yaml missing workers section"
+
+
+def test_repo_helm_template_with_deprecated_serviceaccount():
+    """PASS-TO-PASS: Helm template works with deprecated workers.serviceAccount (backward compat)."""
+    import tempfile
+    values = {
+        "executor": "KubernetesExecutor",
+        "workers": {
+            "serviceAccount": {
+                "create": True,
+                "name": "deprecated-sa"
+            }
+        }
+    }
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        yaml.dump(values, f)
+        values_file = f.name
+    try:
+        result = subprocess.run(
+            ["helm", "template", "test-release", CHART_DIR, "--values", values_file],
+            capture_output=True, text=True, timeout=120
+        )
+        assert result.returncode == 0, f"Helm template with deprecated SA failed:\n{result.stderr}"
+        assert "deprecated-sa" in result.stdout, "Deprecated service account name not used"
+    finally:
+        os.unlink(values_file)
+
+
+# =============================================================================
 # Functional behavior tests
 # =============================================================================
+
 
 def test_helm_render_with_kubernetes_executor_and_sa():
     """Test that KubernetesExecutor with custom service account renders correctly."""

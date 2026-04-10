@@ -165,7 +165,7 @@ def test_fence_detection():
     # Or a regex/string match specifically testing for triple-backtick/tilde fences
     if not has_fn:
         has_fn = bool(
-            re.search(r"(match|test|exec|search)\s*\(.*(`\{3|```|~\{3|~~~)", code)
+            re.search(r"(match|test|exec|search)\s*\(.*(\`\{3|```|~\{3|~~~)", code)
         )
     # Or explicit backtick counting logic
     if not has_fn:
@@ -289,6 +289,17 @@ def test_repo_unit_tests_app():
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/app",
     )
     assert r.returncode == 0, f"App unit tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests_ui():
+    """UI package unit tests pass (pass_to_pass)."""
+    _install_deps()
+    r = subprocess.run(
+        ["bun", "test"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/ui",
+    )
+    assert r.returncode == 0, f"UI unit tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

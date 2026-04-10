@@ -47,4 +47,31 @@ checks:
     origin: repo_tests
     description: "Repo's isort import sorting check passes on slime and slime_plugins directories"
 
-rubric: []
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in the repo compile without syntax errors"
+
+  - id: test_repo_package_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "The slime package can be imported without errors"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: ".claude/skills/add-tests-and-ci/SKILL.md"
+      lines: "22"
+      commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"
+
+  - rule: "Use defensive attribute checking (e.g., hasattr) when accessing optional attributes that may not exist on all object types."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "73-76"
+      commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"
+
+  - rule: "Follow repository import ordering conventions (isort compliance)."
+    source:
+      path: ".claude/skills/add-tests-and-ci/SKILL.md"
+      lines: "22-24"
+      commit: "6f70479966749e258ba0b20341e2c4b88ea094f1"

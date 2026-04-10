@@ -10,8 +10,24 @@ agent_config:
   files: []
   checks: []
 
-# Rubric is empty as this is a straightforward structural change
-rubric: []
+rubric:
+  - rule: "Document protobuf fields with comments explaining purpose, default behavior, and backward compatibility considerations."
+    source:
+      path: ".github/workflows/pr.yml"
+      lines: "131-134"
+      commit: "2c83ca50da86f4f71d2c8b9a8ae9f17ec0ae6c20"
+
+  - rule: "Follow Rust code formatting standards enforced by cargo fmt."
+    source:
+      path: ".github/workflows/pr.yml"
+      lines: "126"
+      commit: "2c83ca50da86f4f71d2c8b9a8ae9f17ec0ae6c20"
+
+  - rule: "Use defensive programming for backward compatibility - provide sensible defaults when converting from protobuf (e.g., num_shards should default to 1 if 0 in proto)."
+    source:
+      path: "rust/types/src/execution/operator.rs"
+      lines: "N/A - inferred from gold solution pattern"
+      commit: "2c83ca50da86f4f71d2c8b9a8ae9f17ec0ae6c20"
 
 checks:
   - id: "scan_struct_has_shard_fields"

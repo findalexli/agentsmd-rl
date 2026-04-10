@@ -12,6 +12,16 @@ checks:
     origin: static
     description: "All modified Python files must parse without errors"
 
+  - id: no_windows_line_endings
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must use Unix line endings (LF), not Windows (CRLF)"
+
+  - id: trailing_newline
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must end with a newline character"
+
   - id: platform_base_set_numa_affinity
     type: fail_to_pass
     origin: pr_diff
@@ -130,9 +140,11 @@ rubric:
       path: "AGENTS.md"
       lines: "81"
       commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
+    reference: "- **Composition over inheritance** -- keep hierarchies \\<= 2 levels; prefer delegation."
 
   - rule: "Logging calls in new code should use PascalCase logger names; per-rank log messages should follow the format [Component Rank N]"
     source:
       path: "AGENTS.md"
       lines: "90-91"
       commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
+    reference: "**Logging**: `areal.utils.logging.getLogger(name)` with **PascalCase** names -- never\n`print` or `logging.__name__`. Per-rank format: `[{Component} Rank {N}]`. Register new\nloggers with color in `areal/utils/logging.py`."

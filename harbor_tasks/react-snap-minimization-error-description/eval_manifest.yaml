@@ -22,6 +22,16 @@ checks:
     origin: repo_tests
     description: "Snap package must build successfully"
 
+  - id: babel_plugin_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "babel-plugin-react-compiler must pass lint checks"
+
+  - id: babel_plugin_jest
+    type: pass_to_pass
+    origin: repo_tests
+    description: "babel-plugin-react-compiler Jest tests must pass"
+
   - id: errorsMatch_rejects_different_descriptions
     type: fail_to_pass
     origin: pr_diff
@@ -47,4 +57,21 @@ checks:
     origin: pr_diff
     description: "All three new strategies must be registered in simplificationStrategies array"
 
-rubric: []
+rubric:
+  - rule: "Use CompilerError.throwTodo() for unsupported but known patterns (graceful bailout), not CompilerError.invariant() which indicates hard failures."
+    source:
+      path: "compiler/CLAUDE.md"
+      lines: "232-248"
+      commit: "f84ce5a45c47b1081a09c17eea58c16ef145c113"
+
+  - rule: "When modifying the compiler, read documentation in compiler/packages/babel-plugin-react-compiler/docs/passes/ to understand the role of that pass."
+    source:
+      path: "compiler/CLAUDE.md"
+      lines: "7"
+      commit: "f84ce5a45c47b1081a09c17eea58c16ef145c113"
+
+  - rule: "Run yarn prettier and yarn linc before committing to ensure CI passes."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "8-11"
+      commit: "f84ce5a45c47b1081a09c17eea58c16ef145c113"

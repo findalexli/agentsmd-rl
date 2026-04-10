@@ -24,6 +24,11 @@ checks:
     origin: repo_tests
     description: "Repo's TypeScript typecheck passes (tsc --noEmit)"
 
+  - id: repo_package_json_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package.json lint check passes (validates exact dependency versions in test package.json files)"
+
   # Core behavioral (fail-to-pass)
   - id: workitem_tracks_multiple_indices
     type: fail_to_pass
@@ -114,32 +119,9 @@ checks:
       commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
 
 rubric:
-  - rule: "Memory management — In Zig code, be careful with allocators and use defer for cleanup"
-    source:
-      path: "CLAUDE.md"
-      lines: "232"
-      commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
-
-  - rule: "Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform wrappers that preserve OS error info and never use unreachable."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "16"
-      commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
-
-  - rule: "Follow existing code style — check neighboring files for patterns"
+  - rule: "When adding new types or changing core data structures in complex algorithms, add doc comments explaining the purpose and behavior"
     source:
       path: "CLAUDE.md"
       lines: "228"
       commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
-
-  - rule: "Cross-platform — consider platform-specific behavior; bun.* wrappers exist precisely to handle OS differences"
-    source:
-      path: "CLAUDE.md"
-      lines: "233"
-      commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
-
-  - rule: "Prefer decl literals for struct initialization: `const x: Foo = .{ .field = val };`"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "6"
-      commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
+    reference: "+        /// Set of active component indices during traversal. At `**/X`\n+        /// boundaries the walker needs to both advance past X and keep the\n+        /// outer `**` alive; rather than visiting the directory twice, both\n+        /// states are tracked in one set and evaluated in a single readdir."

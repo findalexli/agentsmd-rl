@@ -242,3 +242,17 @@ def test_move_compiler_formatting():
 
     assert result.returncode == 0, \
         f"Formatting check failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
+
+def test_repo_xlint():
+    """Repo's custom linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "xlint"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+def test_repo_git_checks():
+    """Repo's git checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/git-checks.sh"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git checks failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

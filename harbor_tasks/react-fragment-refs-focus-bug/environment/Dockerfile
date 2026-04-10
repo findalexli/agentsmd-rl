@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /workspace
 
+# Configure git user globally first (needed for git commit)
+RUN git config --global user.email "agent@example.com" && git config --global user.name "Agent"
+
 # Clone React at the pre-fix commit (parent of merge commit)
 ENV BASE_COMMIT=8f4150605449efe909822d8b20fe529d85851afe
 RUN git clone --filter=blob:none --no-checkout https://github.com/facebook/react.git react \
@@ -27,9 +30,6 @@ WORKDIR /workspace/react
 # Install yarn via corepack and dependencies
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install
-
-# Configure git user for any potential git operations
-RUN git config user.email "agent@example.com" && git config user.name "Agent"
 
 # Set environment for Node
 ENV NODE_OPTIONS="--max-old-space-size=4096"

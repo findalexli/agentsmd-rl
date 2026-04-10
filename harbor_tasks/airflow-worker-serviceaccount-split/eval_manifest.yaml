@@ -94,6 +94,37 @@ checks:
     origin: repo_tests
     description: _helpers.yaml must exist and have required helpers
 
+  # Additional pass-to-pass checks for modified templates
+  - id: test_repo_helm_lint_with_kubernetes_executor
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm lint passes with KubernetesExecutor (tests pod-template-file rendering)
+
+  - id: test_repo_helm_template_with_kubernetes_executor
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm template renders with KubernetesExecutor (tests pod-template-file)
+
+  - id: test_repo_helm_template_with_celery_executor
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm template renders correctly with CeleryExecutor (worker-deployment.yaml)
+
+  - id: test_repo_helm_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm chart packages successfully (CI build test)
+
+  - id: test_repo_helm_show_values
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm show values works (validates chart structure)
+
+  - id: test_repo_helm_template_with_deprecated_serviceaccount
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm template works with deprecated workers.serviceAccount (backward compat)
+
   # Functional behavior tests
   - id: test_helm_render_with_kubernetes_executor_and_sa
     type: pass_to_pass

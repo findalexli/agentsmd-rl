@@ -60,19 +60,41 @@ checks:
       lines: "11"
       commit: "39094877abb3e74557d3975dd015ee677220eb35"
 
-  - id: test_repo_globwalker_zig_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "GlobWalker.zig has valid Zig syntax indicators (balanced delimiters, structure)"
-
-  - id: test_repo_no_banned_patterns
-    type: pass_to_pass
-    origin: repo_tests
-    description: "GlobWalker.zig contains no banned patterns (std.debug.*, usingnamespace, etc.)"
-
-rubric: []
-
   - id: test_repo_oxlint_js
     type: pass_to_pass
     origin: repo_tests
     description: "JavaScript/TypeScript linting passes with oxlint (mirrors 'bun lint' CI check)"
+
+  - id: test_repo_prettier_check_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Scripts directory formatting check passes with prettier (mirrors CI 'bun run prettier')"
+
+  - id: test_repo_git_status_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is in a clean state with no uncommitted source changes"
+
+  - id: test_repo_prettier_check_docs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Docs directory formatting check passes with prettier (mirrors CI 'bun run prettier')"
+
+  - id: test_repo_prettier_check_glob_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Glob-related test files formatting check passes with prettier (tests for GlobWalker code)"
+
+
+rubric:
+  - rule: "Never use @import() inline inside of functions. Always put imports at the bottom of the file or containing struct."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "10-11"
+      commit: "39094877abb3e74557d3975dd015ee677220eb35"
+
+  - rule: "Use comments to explain invariants and reasoning, not just narrate code. Explain WHY, not WHAT."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "10-11"
+      commit: "39094877abb3e74557d3975dd015ee677220eb35"

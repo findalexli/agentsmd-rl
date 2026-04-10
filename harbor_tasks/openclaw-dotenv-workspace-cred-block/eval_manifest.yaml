@@ -83,7 +83,7 @@ checks:
   - id: no_dynamic_imports
     type: pass_to_pass
     origin: agent_config
-    description: "No dynamic imports (await import()) in dotenv.ts — static imports only"
+    description: "No dynamic imports (await import()) in dotenv.ts - static imports only"
     source:
       path: "CLAUDE.md"
       lines: "155"
@@ -103,6 +103,26 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's unit tests for dotenv module pass"
+
+  - id: test_repo_host_env_policy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's host-env security policy check passes"
+
+  - id: test_repo_infra_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for infra module pass (281 test files)"
+
+  - id: test_repo_lint_auth_pairing_account_scope
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's auth pairing account scope lint passes"
+
+  - id: test_repo_lint_webhook_body_read
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's webhook no low-level body read lint passes"
 
 rubric:
   - rule: "Aim to keep files under ~700 LOC; guideline only (not a hard guardrail). Split/refactor when it improves clarity or testability."

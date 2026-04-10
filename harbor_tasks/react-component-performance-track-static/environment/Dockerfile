@@ -20,9 +20,9 @@ RUN git clone --depth=1 https://github.com/facebook/react.git && \
     git fetch --depth=1 origin ${BASE_COMMIT} && \
     git checkout ${BASE_COMMIT}
 
-# Install dependencies
+# Install dependencies using yarn (this repo uses yarn)
 WORKDIR /workspace/react
-RUN npm install --legacy-peer-deps 2>&1 || npm install --force 2>&1 || true
+RUN yarn install --frozen-lockfile
 
 # Sanitize the snapshot
 RUN rm -rf .git && \

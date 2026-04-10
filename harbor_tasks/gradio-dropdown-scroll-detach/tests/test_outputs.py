@@ -195,10 +195,12 @@ const code = result.js.code;
 //   Base commit (3): input_width, max_height, innerHeight
 //   After fix  (6): + distance_from_top, distance_from_bottom, input_height
 // Count reactive signal creations initialized to 0.
+// In Svelte 5 compiled output, $state(value) becomes $.state(value).
+// Note: In compiled JS, $ is a special runtime object, so we match $.state
 const patterns = [
-    /\\$\\.state\\(\\s*0\\s*\\)/g,
-    /\\$\\.source\\(\\s*0\\s*\\)/g,
-    /\\$\\.mutable_source\\(\\s*0\\s*\\)/g,
+    /\$\.state\(\s*0\s*\)/g,
+    /\$\.source\(\s*0\s*\)/g,
+    /\$\.mutable_source\(\s*0\s*\)/g,
 ];
 
 let count = 0;
@@ -208,7 +210,7 @@ for (const p of patterns) {{
 }}
 
 // Diagnostic: capture the runtime helpers actually used
-const helpers = [...new Set((code.match(/\\$\\.\\w+\\(/g) || []))].sort();
+const helpers = [...new Set((code.match(/\$\.\w+\(/g) || []))].sort();
 
 console.log(JSON.stringify({{ count, helpers }}));
 """)
@@ -294,7 +296,25 @@ def test_repo_format_check():
 def test_repo_dropdown_tests():
     """Dropdown component unit tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm exec vitest run --config .config/vitest.config.ts js/dropdown"],
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm --filter @gradio/client build && pnpm exec vitest run --config .config/vitest.config.ts js/dropdown"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Dropdown tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_client_tests():
+    """Gradio client package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm --filter @gradio/client test"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_vitest_run():
+    """Full vitest run passes (pass_to_pass) — subset excluding browser tests."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile && pnpm --filter @gradio/client build && pnpm exec vitest run --config .config/vitest.config.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Vitest run failed:\n{r.stderr[-500:]}"

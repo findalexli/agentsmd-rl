@@ -18,51 +18,51 @@ TARGET = Path(REPO) / "src/infra/clawhub.ts"
 # Shared node script that extracts safeDirName, finds the archivePath expression
 # in a given function, evaluates it with test inputs, and checks paths are flat.
 _EVAL_ARCHIVE_PATH_SCRIPT = r"""
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const src = fs.readFileSync('src/infra/clawhub.ts', 'utf8');
-const safeSrc = fs.readFileSync('src/infra/install-safe-path.ts', 'utf8');
+const src = fs.readFileSync("src/infra/clawhub.ts", "utf8");
+const safeSrc = fs.readFileSync("src/infra/install-safe-path.ts", "utf8");
 
 // Extract safeDirName from repo source so eval can use it
 const sdnMatch = safeSrc.match(/function\s+safeDirName\(input[^)]*\)[^{]*\{([\s\S]*?)\n\}/);
-if (!sdnMatch) { console.error('safeDirName not found in install-safe-path.ts'); process.exit(1); }
-const safeDirName = new Function('input', sdnMatch[1]);
+if (!sdnMatch) { console.error("safeDirName not found in install-safe-path.ts"); process.exit(1); }
+const safeDirName = new Function("input", sdnMatch[1]);
 
 const funcName = process.argv[1];
 const paramKey = process.argv[2];
 const testInputs = JSON.parse(process.argv[3]);
 
 // Find the target function
-const funcIdx = src.indexOf('function ' + funcName);
-if (funcIdx === -1) { console.error(funcName + ' not found'); process.exit(1); }
+const funcIdx = src.indexOf("function " + funcName);
+if (funcIdx === -1) { console.error(funcName + " not found"); process.exit(1); }
 
 // Find archivePath assignment within the function (search the next ~3000 chars)
 const afterFunc = src.slice(funcIdx, funcIdx + 3000);
 const archiveMatch = afterFunc.match(/(?:const|let|var)\s+archivePath\s*=\s*(.+?);/);
-if (!archiveMatch) { console.error('archivePath assignment not found in ' + funcName); process.exit(1); }
+if (!archiveMatch) { console.error("archivePath assignment not found in " + funcName); process.exit(1); }
 
 const expr = archiveMatch[1].trim();
-const tmpDir = '/tmp/test-archive';
+const tmpDir = "/tmp/test-archive";
 
 for (const input of testInputs) {
-    const params = { name: input, slug: input, version: '1.0.0' };
+    const params = { name: input, slug: input, version: "1.0.0" };
     let result;
     try {
         result = eval(expr);
     } catch (e) {
-        console.error('Eval error for "' + input + '": ' + e.message);
+        console.error("Eval error for \"" + input + "\": " + e.message);
         process.exit(1);
     }
 
     // The archive path must be directly under tmpDir (no nested subdirectories)
     const rel = path.relative(tmpDir, result);
-    if (rel.includes('/') || rel.includes('\\')) {
-        console.error('Nested path for "' + input + '": ' + result);
+    if (rel.includes("/") || rel.includes("\\")) {
+        console.error("Nested path for \"" + input + "\": " + result);
         process.exit(1);
     }
-    if (!rel.endsWith('.zip')) {
-        console.error('Missing .zip suffix for "' + input + '": ' + result);
+    if (!rel.endsWith(".zip")) {
+        console.error("Missing .zip suffix for \"" + input + "\": " + result);
         process.exit(1);
     }
 }
@@ -120,7 +120,7 @@ def test_skill_archive_flat_filename():
 
 # [repo_tests] pass_to_pass
 def test_repo_lint_clawhub():
-    """Repo's oxlint passes on target file (pass_to_pass)."""
+    """Repo oxlint passes on target file (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "oxlint", "src/infra/clawhub.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -130,12 +130,52 @@ def test_repo_lint_clawhub():
 
 # [repo_tests] pass_to_pass
 def test_repo_format_clawhub():
-    """Repo's oxfmt format check passes on target file (pass_to_pass)."""
+    """Repo oxfmt format check passes on target file (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "oxfmt", "--check", "src/infra/clawhub.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests_install_safe_path():
+    """Repo unit tests for install-safe-path module pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/infra/install-safe-path.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests_clawhub():
+    """Repo unit tests for clawhub module pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/infra/clawhub.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_check():
+    """Repo TypeScript type checking passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "tsgo"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_full():
+    """Repo full lint suite passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +189,7 @@ def test_functions_not_stub():
     for func_name in ["downloadClawHubPackageArchive", "downloadClawHubSkillArchive"]:
         idx = src.find(f"function {func_name}")
         assert idx != -1, f"{func_name} not found in clawhub.ts"
-        # Walk from first '{' counting braces to find the function body
+        # Walk from first "{" counting braces to find the function body
         after = src[idx:idx + 5000]
         brace_start = after.index("{")
         depth = 0
@@ -195,11 +235,11 @@ def test_no_prototype_mutation():
         "applyPrototypeMixins found in clawhub.ts — use explicit inheritance/composition instead"
     )
     # Check for Object.defineProperty on .prototype
-    assert not re.search(r'Object\.defineProperty\s*\(\s*\w+\.prototype', src), (
+    assert not re.search(r"Object\.defineProperty\s*\(\s*\w+\.prototype", src), (
         "Object.defineProperty on .prototype found in clawhub.ts"
     )
     # Check for direct .prototype. assignment
-    assert not re.search(r'\w+\.prototype\.\w+\s*=', src), (
+    assert not re.search(r"\w+\.prototype\.\w+\s*=?", src), (
         "Prototype mutation (.prototype.x =) found in clawhub.ts"
     )
 
@@ -209,9 +249,9 @@ def test_no_mixed_dynamic_static_imports():
     """Do not mix `await import("x")` and static `import ... from "x"` for the same module."""
     src = TARGET.read_text()
     # Collect statically imported module specifiers
-    static_imports = set(re.findall(r'import\s+.*?from\s+["\']([^"\']+)["\']', src))
+    static_imports = set(re.findall(r"import\s+.*?from\s+[\"\"]([^\"\"]+)[\"\"]", src))
     # Collect dynamically imported module specifiers
-    dynamic_imports = set(re.findall(r'await\s+import\s*\(\s*["\']([^"\']+)["\']\s*\)', src))
+    dynamic_imports = set(re.findall(r"await\s+import\s*\(\s*[\"\"]([^\"\"]+)[\"\"]\s*\)", src))
     overlap = static_imports & dynamic_imports
     assert not overlap, (
         f"Same module(s) imported both statically and dynamically: {overlap}"

@@ -275,3 +275,17 @@ def test_ruff_format_routes():
     assert r.returncode == 0, (
         f"routes.py is not ruff-formatted:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_queue_data_helper_function_exists():
+    """The queue_data_helper() function must still be defined in routes.py.
+
+    This is the parent function containing sse_stream. Verifying it exists
+    ensures the code structure is intact.
+    """
+    tree = _parse_routes()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "queue_data_helper":
+            return
+    raise AssertionError("queue_data_helper function not found in routes.py")

@@ -32,19 +32,43 @@ checks:
     origin: static
     description: "Handler retains core code paths and has substantial content"
 
-  - id: repo_handler_syntax
+  - id: test_repo_prettier_pages_handler
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo CI: pages-handler.ts has valid TypeScript syntax and structure"
+    description: "Repo CI: pages-handler.ts follows Prettier formatting"
 
-  - id: repo_send_payload_syntax
+  - id: test_repo_prettier_send_payload
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo CI: send-payload.ts structure is intact with required functions"
+    description: "Repo CI: send-payload.ts follows Prettier formatting"
 
-  - id: repo_render_result_mechanism
+  - id: test_repo_render_result_mechanism
     type: pass_to_pass
     origin: repo_tests
     description: "Repo CI: RenderResult isDynamic mechanism is preserved and functional"
 
-rubric: []
+  - id: test_repo_handler_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Handler file structure and exports are intact"
+
+  - id: test_repo_send_payload_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: send-payload.ts exports and logic are intact"
+
+  - id: test_repo_node_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Handler and send-payload have valid syntax structure"
+
+  - id: test_repo_package_json_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: package.json maintains required npm scripts for CI/CD"
+
+rubric:
+  - rule: "When passing data to RenderResult, prefer string payloads over Buffer.from() for static content to enable Content-Length and ETag headers."
+    source:
+      path: "CLAUDE.md"
+    reference: "When passing data to RenderResult, prefer string payloads over Buffer.from() for static content to enable Content-Length and ETag headers."

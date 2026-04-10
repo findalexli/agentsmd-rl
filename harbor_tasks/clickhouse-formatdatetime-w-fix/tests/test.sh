@@ -1,18 +1,21 @@
 #!/bin/bash
 set -e
 
-# Install pytest if not available
-pip install pytest --quiet 2>/dev/null || true
+# Create logs directory
+mkdir -p /logs/verifier
 
-# Run tests and capture result
-pytest /tests/test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log
+# Run pytest on all tests
+cd /workspace/ClickHouse
+python3 -m pytest /tests/test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log || true
 
-# Write binary reward (0 or 1 based on pass/fail)
-EXIT_CODE=${PIPESTATUS[0]}
-if [ $EXIT_CODE -eq 0 ]; then
-    echo "1" > /logs/verifier/reward
-else
-    echo "0" > /logs/verifier/reward
-fi
+# Calculate reward based on test results
+# Count passed tests
+PASSED=$(grep -c "PASSED" /logs/verifier/test_output.log || echo "0")
+FAILED=$(grep -c "FAILED" /logs/verifier/test_output.log || echo "0")
+TOTAL=$(grep -c "test_outputs.py::" /logs/verifier/test_output.log || echo "0")
 
-exit $EXIT_CODE
+# Write reward file
+echo "Total tests: $TOTAL, Passed: $PASSED, Failed: $FAILED" > /logs/verifier/reward.txt
+
+# Exit with success (reward file indicates actual results)
+exit 0

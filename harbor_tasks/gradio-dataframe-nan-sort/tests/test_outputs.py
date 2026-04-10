@@ -218,7 +218,6 @@ def test_repo_unit_tests():
     # Tests pass even with some skipped tests
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
-
 # [repo_tests] pass_to_pass
 def test_repo_dataframe_utils_tests():
     """Dataframe utils-specific tests pass (pass_to_pass)."""
@@ -231,7 +230,25 @@ def test_repo_dataframe_utils_tests():
     )
     r = subprocess.run(
         ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts",
-         "js/dataframe/test/table_utils.test.ts"],
+         "js/dataframe/test/"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Dataframe utils tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_dataframe_sort_tests():
+    """Dataframe sort utils tests pass (pass_to_pass)."""
+    _ensure_pnpm()
+    _install_deps()
+    # Build client first (required)
+    subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts",
+         "js/dataframe/test/sort_utils.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dataframe sort tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

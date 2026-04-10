@@ -68,4 +68,58 @@ checks:
     file: "test_outputs.py"
     description: "Modified file has expected classes and methods"
 
-rubric: []
+  - id: "test_repo_ruff_lint"
+    name: "Repo ruff linting passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Modified file passes ruff linter checks (CI lint parity)"
+
+  - id: "test_repo_enterprise_storage_syntax"
+    name: "Enterprise storage test syntax passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Related enterprise storage test file has valid syntax"
+
+  - id: "test_repo_import_structure"
+    name: "Repo import structure check passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Modified file has syntactically valid import statements"
+
+  # New pass-to-pass tests (enriched CI/CD checks)
+  - id: "test_repo_enterprise_ruff_check_target"
+    name: "Enterprise target file passes enterprise ruff check"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Modified file passes ruff linting with enterprise config (CI lint-enterprise-python parity)"
+
+  - id: "test_repo_enterprise_ruff_format"
+    name: "Enterprise target file passes ruff format check"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Modified file is properly formatted per enterprise ruff config"
+
+  - id: "test_repo_enterprise_pytest_unit"
+    name: "Enterprise unit tests pass for related storage module"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    file: "test_outputs.py"
+    description: "Enterprise pytest unit tests for storage module pass (CI test-enterprise parity)"
+
+rubric:
+  - rule: "Use relative imports from storage.* without 'enterprise.' prefix in enterprise code"
+    source:
+      path: "enterprise/server/utils/saas_app_conversation_info_injector.py"
+      lines: "1-30"
+      commit: "06cd53d752b022a7ae3676ab17c029f1f810c892"
+
+  - rule: "Modified enterprise code passes enterprise-specific ruff lint and format checks"
+    source:
+      path: "enterprise/server/utils/saas_app_conversation_info_injector.py"
+      lines: "1-50"
+      commit: "06cd53d752b022a7ae3676ab17c029f1f810c892"

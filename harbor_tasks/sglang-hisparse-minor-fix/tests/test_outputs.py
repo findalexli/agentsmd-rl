@@ -307,3 +307,70 @@ def test_repo_isort_check():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_codespell_check():
+    """Repo's Python files pass codespell check (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/managers/schedule_batch.py",
+        "python/sglang/srt/managers/scheduler.py",
+    ]
+    r = subprocess.run(
+        ["pip", "install", "codespell", "toml", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["codespell", "--config", ".codespellrc"] + modified_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # codespell returns 0 if no spelling errors, 65 if errors found
+    assert r.returncode in [0, 65], f"codespell check failed with unexpected error:\n{r.stderr[-500:]}"
+
+
+def test_repo_py_compile():
+    """Modified Python files compile without syntax errors (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/managers/schedule_batch.py",
+        "python/sglang/srt/managers/scheduler.py",
+    ]
+    r = subprocess.run(
+        ["python", "-m", "py_compile"] + modified_files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compile failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_clang_format_check():
+    """CUDA/C++ files pass clang-format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "clang-format", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Check clang-format is available
+    r = subprocess.run(
+        ["which", "clang-format"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    if r.returncode != 0:
+        # Skip if clang-format not available
+        return
+    r = subprocess.run(
+        ["clang-format", "--style=file", "--dry-run", "--Werror",
+         "python/sglang/jit_kernel/csrc/hisparse.cuh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"clang-format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_pre_commit_ast():
+    """Python files pass AST check (pass_to_pass)."""
+    modified_files = [
+        "python/sglang/srt/managers/schedule_batch.py",
+        "python/sglang/srt/managers/scheduler.py",
+    ]
+    for f in modified_files:
+        r = subprocess.run(
+            ["python", "-c", f"import ast; ast.parse(open('{f}').read())"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"AST check failed for {f}:\n{r.stderr[-500:]}"

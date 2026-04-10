@@ -52,45 +52,55 @@ checks:
     origin: static
     description: "references/mod.rs has substantial code in tracing handler section"
 
-  # Pass-to-pass repo_tests — CI/CD quality gates discovered from repo
-  - id: rustfmt_indentation_compliant
+  - id: test_repo_prettier_js_files
     type: pass_to_pass
     origin: repo_tests
-    description: "Modified Rust files use 4-space indentation per .rustfmt.toml hard_tabs=false, tab_spaces=4"
+    description: "Modified JS fixture files pass Prettier format check (npx prettier --check)"
 
-  - id: rust_line_length_compliant
+  - id: test_repo_node_syntax_js_files
     type: pass_to_pass
     origin: repo_tests
-    description: "Modified Rust files respect 100-character line limit per .rustfmt.toml max_width=100"
+    description: "Modified JS fixture files have valid Node.js syntax (node --check)"
 
-  - id: no_trailing_whitespace
+  - id: test_source_files_no_hard_tabs
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
+    description: "Source files use spaces not tabs per .rustfmt.toml hard_tabs=false"
+
+  - id: test_no_trailing_whitespace_on_modified_lines
+    type: pass_to_pass
+    origin: static
     description: "Source files have no trailing whitespace - standard CI lint check"
 
-  - id: unit_rs_valid_rstest_cases
+  - id: test_unit_rs_valid_rstest_syntax
     type: pass_to_pass
-    origin: repo_tests
-    description: "unit.rs has valid rstest case syntax with balanced parentheses - cargo test compilation"
+    origin: static
+    description: "unit.rs has valid rstest syntax structure with case attributes"
 
-  - id: fixture_files_valid_js_syntax
+  - id: test_fixture_files_valid_syntax
     type: pass_to_pass
-    origin: repo_tests
-    description: "NFT fixture input.js files have valid JavaScript syntax balanced braces/parens"
+    origin: static
+    description: "NFT fixture files have balanced braces/parens (basic syntax check)"
 
-  - id: well_known_rs_match_arm_structure
+  - id: test_cargo_toml_structure
     type: pass_to_pass
-    origin: repo_tests
-    description: "well_known.rs match arms have valid structure with => operator - cargo check"
+    origin: static
+    description: "Cargo.toml files have valid TOML structure with required sections"
 
-  - id: cargo_toml_valid_syntax
+  - id: test_well_known_rs_function_structure
     type: pass_to_pass
-    origin: repo_tests
-    description: "Cargo.toml files have valid TOML syntax with proper sections - cargo check"
+    origin: static
+    description: "well_known.rs has expected function structure with required functions"
+
+  - id: test_references_mod_structure
+    type: pass_to_pass
+    origin: static
+    description: "references/mod.rs has expected module structure (impl blocks, async fn, match)"
+
+  - id: test_mod_rs_enum_structure
+    type: pass_to_pass
+    origin: static
+    description: "mod.rs has expected enum definitions (WellKnownFunctionKind, JsValue)"
 
 rubric:
-  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt"
-    source:
-      path: "AGENTS.md"
-      lines: "414"
-      commit: "4582b5fa93dd65b6f9ed1dff7e66bdb93ddd653c"
+  - rule: "The FsReadDir enum variant in WellKnownFunctionKind MUST be placed in correct ASCII order relative to other variants (e.g. before PathToFileUrl)"

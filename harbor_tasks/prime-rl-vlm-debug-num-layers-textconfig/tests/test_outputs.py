@@ -348,6 +348,8 @@ def test_no_unnecessary_try_except():
 # [repo_tests] pass_to_pass — CI: ruff check from .github/workflows/style.yaml
 def test_repo_ruff_check():
     """Repo's ruff linting passes (pass_to_pass)."""
+    # Ensure ruff is installed (CI dependency)
+    subprocess.run(["pip", "install", "-q", "ruff>=0.13.0"], check=True, capture_output=True)
     r = subprocess.run(
         ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/trainer/model.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -358,6 +360,8 @@ def test_repo_ruff_check():
 # [repo_tests] pass_to_pass — CI: ruff format from .github/workflows/style.yaml
 def test_repo_ruff_format():
     """Repo's ruff format check passes (pass_to_pass)."""
+    # Ensure ruff is installed (CI dependency)
+    subprocess.run(["pip", "install", "-q", "ruff>=0.13.0"], check=True, capture_output=True)
     r = subprocess.run(
         ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/trainer/model.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,

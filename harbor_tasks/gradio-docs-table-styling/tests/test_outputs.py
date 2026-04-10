@@ -328,6 +328,111 @@ def test_nodejs_available():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — verified to work on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Client library build (CI: client build)
+def test_repo_client_build():
+    """Repo's client library builds successfully (pass_to_pass).
+
+    This mirrors the CI command: pnpm --filter @gradio/client build
+    Ensures the client library compiles without errors.
+    """
+    # First ensure pnpm is available (not installed by default in container)
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.17.0"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # pnpm install may already be present, continue regardless
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Unit tests (CI: test:run)
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass).
+
+    This mirrors the CI command: pnpm test:run
+    Ensures the existing test suite continues to pass.
+    """
+    # First ensure pnpm is available
+    subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.17.0"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    # Build client first (required for tests)
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "test:run"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo formatting with prettier (CI: format:check)
+def test_repo_format_check():
+    """Repo code formatting passes prettier check (pass_to_pass).
+
+    This mirrors the CI command: pnpm format:check
+    Ensures candidate solutions don't break existing formatting.
+    """
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CSS file specifically passes prettier check
+def test_repo_css_prettier():
+    """CSS file is properly formatted with prettier (pass_to_pass).
+
+    This verifies the specific CSS file being modified passes formatting checks.
+    """
+    style_path = str(STYLE_FILE)
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "--config", ".config/.prettierrc.json", style_path],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CSS prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — pnpm install works (basic CI env check)
+def test_repo_pnpm_install():
+    """pnpm install completes successfully (pass_to_pass).
+
+    Verifies the frontend dependencies can be installed (basic CI env health).
+    """
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — AGENTS.md line 45 @ e8dadd6
 # ---------------------------------------------------------------------------
 

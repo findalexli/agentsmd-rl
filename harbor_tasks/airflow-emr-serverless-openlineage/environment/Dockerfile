@@ -25,7 +25,7 @@ RUN uv sync --project providers/amazon && \
     uv sync --project providers/common/compat
 
 # Create logs directory for verifier
-RUN mkdir -p /logs/verifier
+RUN mkdir -p /logs/verifier \RUN mkdir -p /logs/verifier\RUN mkdir -p /logs/verifier echo "__version__ = \"3.2.0\"" >> /workspace/airflow/providers/amazon/src/airflow/__init__.py \RUN mkdir -p /logs/verifier\RUN mkdir -p /logs/verifier echo "__version__ = \"3.2.0\"" >> /workspace/airflow/providers/openlineage/src/airflow/__init__.py \RUN mkdir -p /logs/verifier\RUN mkdir -p /logs/verifier echo "__version__ = \"3.2.0\"" >> /workspace/airflow/providers/common/compat/src/airflow/__init__.py
 
 # Set working directory
 WORKDIR /workspace/airflow

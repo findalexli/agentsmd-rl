@@ -60,32 +60,54 @@ checks:
   # Pass-to-pass tests (repo baseline quality)
   - id: test_rust_update_task_defined
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: rust:update task is defined in rake file
 
   - id: test_version_task_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: version task exists in rust.rake
 
   - id: test_rake_file_valid_ruby_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: rust.rake has valid Ruby syntax
+    description: rust.rake has valid Ruby syntax (ruby -c)
 
   - id: test_rust_bazel_build
     type: pass_to_pass
     origin: repo_tests
-    description: Rust Bazel build passes
+    description: Rust Bazel build passes (bazel build //rust:selenium-manager)
 
-  - id: test_rust_unit_tests
+  - id: test_rust_unit_fmt
     type: pass_to_pass
     origin: repo_tests
-    description: Rust unit tests pass
+    description: Rust code formatting check passes (bazel test //rust:unit-fmt)
 
-  - id: test_rust_format
+  - id: test_bazel_query_rust_target
     type: pass_to_pass
     origin: repo_tests
-    description: Rust code formatting check passes
+    description: Bazel can query Rust target (bazel query)
 
-rubric: []
+  - id: test_rust_rake_file_has_cargo_toml_reference
+    type: pass_to_pass
+    origin: static
+    description: rust.rake references Cargo.toml for version updates
+
+rubric:
+  - rule: "Comments should explain why, not what. Prefer well-named methods over comments that narrate code."
+    source:
+      path: "AGENTS.md"
+      lines: "70"
+      commit: "2fed1c09849431329f3e414479c627d652424f4e"
+
+  - rule: "After making changes to high-risk areas (dependency updates, repin flows), call out the risk areas touched and note any cross-binding impact."
+    source:
+      path: "AGENTS.md"
+      lines: "76-79, 82-84"
+      commit: "2fed1c09849431329f3e414479c627d652424f4e"
+
+  - rule: "When modifying Rake tasks that invoke other tasks, use reenable before invoke to ensure idempotent execution within the same Ruby process."
+    source:
+      path: "AGENTS.md"
+      lines: "17-18, 76-79"
+      commit: "2fed1c09849431329f3e414479c627d652424f4e"

@@ -444,3 +444,52 @@ def test_repo_ast_valid():
         # Basic sanity checks
         assert isinstance(tree, ast.Module), f"{rel_path}: Expected ast.Module"
         assert len(tree.body) > 0, f"{rel_path}: Empty module body"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repository Python files pass ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/client/python/gradio_client"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_gradio_client_subprocess():
+    """gradio_client package imports via subprocess without errors (pass_to_pass)."""
+    code = """
+import sys
+sys.path.insert(0, '/workspace/gradio/client/python')
+
+from gradio_client.client import Client
+from gradio_client.utils import (
+    ServerMessage,
+    get_pred_from_sse_v1plus,
+    stream_sse_v1plus,
+    encode_url_or_file_to_base64,
+    decode_base64_to_binary,
+    is_valid_file,
+    get_mimetype,
+)
+from collections import deque
+
+# Verify all key imports work
+assert callable(stream_sse_v1plus)
+assert callable(get_pred_from_sse_v1plus)
+assert hasattr(Client, "predict")
+assert hasattr(encode_url_or_file_to_base64, '__call__') or callable(encode_url_or_file_to_base64)
+assert hasattr(decode_base64_to_binary, '__call__') or callable(decode_base64_to_binary)
+assert hasattr(is_valid_file, '__call__') or callable(is_valid_file)
+assert hasattr(get_mimetype, '__call__') or callable(get_mimetype)
+assert deque is not None  # deque is essential for the fix
+
+print("All gradio_client imports OK")
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import test failed:\n{r.stderr}\n{r.stdout}"
+    assert "All gradio_client imports OK" in r.stdout, f"Expected success message: {r.stdout}"

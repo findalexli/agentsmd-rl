@@ -98,3 +98,6 @@ PATCH
 grep -q "func (c \*convertCommand) copyContentDirsForOutput" commands/convert.go
 
 echo "Patch applied successfully"
+
+# Rebuild hugo binary with the applied patch
+go build -o /usr/local/bin/hugo .

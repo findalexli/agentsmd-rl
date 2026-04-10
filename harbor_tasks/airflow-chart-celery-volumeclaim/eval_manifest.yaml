@@ -79,13 +79,20 @@ checks:
     description: "New field has documentation comment"
     type: behavioral
 
-  # Pass-to-pass checks (repo CI tests)
+  # Pass-to-pass checks (repo CI tests using subprocess.run)
   - id: p2p_helm_lint
     test: test_outputs.TestRepoPassToPass.test_repo_helm_lint
     description: "Helm lint passes"
     type: pass_to_pass
     origin: repo_tests
     source: "Helm lint validation"
+
+  - id: p2p_helm_lint_with_deps
+    test: test_outputs.TestRepoPassToPass.test_repo_helm_lint_with_deps
+    description: "Helm lint with dependencies passes"
+    type: pass_to_pass
+    origin: repo_tests
+    source: "Helm lint with dependency build"
 
   - id: p2p_helm_template
     test: test_outputs.TestRepoPassToPass.test_repo_helm_template_default
@@ -94,19 +101,41 @@ checks:
     origin: repo_tests
     source: "Helm template validation"
 
+  - id: p2p_helm_template_celery
+    test: test_outputs.TestRepoPassToPass.test_repo_helm_template_celery
+    description: "Helm template with CeleryExecutor passes"
+    type: pass_to_pass
+    origin: repo_tests
+    source: "Helm template with Celery-specific settings"
+
+  - id: p2p_helm_tests_worker_volumeclaim
+    test: test_outputs.TestRepoPassToPass.test_repo_helm_tests_worker_volumeclaim
+    description: "Helm worker volume claim tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    source: "Repo's helm-tests for worker volume claims"
+
+  # Pass-to-pass checks (static file validation)
   - id: p2p_schema_valid_json
     test: test_outputs.TestRepoPassToPass.test_repo_values_schema_valid_json
     description: "values.schema.json is valid JSON with expected structure"
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     source: "Schema JSON validation"
 
   - id: p2p_values_yaml_valid
     test: test_outputs.TestRepoPassToPass.test_repo_values_yaml_valid
     description: "values.yaml is valid YAML with expected structure"
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     source: "Values YAML validation"
+
+  - id: p2p_chart_yaml_valid
+    test: test_outputs.TestRepoPassToPass.test_repo_chart_yaml_valid
+    description: "Chart.yaml is valid with required fields"
+    type: pass_to_pass
+    origin: static
+    source: "Chart.yaml validation"
 
 rubric:
   - rule: "Add deprecation warning in NOTES.txt"

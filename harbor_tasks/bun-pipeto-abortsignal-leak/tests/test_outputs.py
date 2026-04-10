@@ -106,7 +106,7 @@ def test_target_files_exist():
 
 
 # [repo_tests] pass_to_pass -- CI: validate header structure
-def test_repo_header_structure_valid():
+def test_static_header_structure_valid():
     """Header files have valid structure (pragma once or include guards) -- pass_to_pass."""
     header_files = [ALGO_H, SIGNAL_H]
     for f in header_files:
@@ -119,7 +119,7 @@ def test_repo_header_structure_valid():
 
 
 # [repo_tests] pass_to_pass -- CI: validate C++ syntax basic
-def test_repo_cpp_syntax_basic():
+def test_static_cpp_syntax_basic():
     """C++ source files have balanced braces and valid includes -- pass_to_pass."""
     cpp_files = [ALGO_CPP, SIGNAL_CPP, CUSTOM_CPP]
     for f in cpp_files:
@@ -139,7 +139,7 @@ def test_repo_cpp_syntax_basic():
 
 
 # [repo_tests] pass_to_pass -- CI: validate code style patterns
-def test_repo_code_patterns_consistent():
+def test_static_code_patterns_consistent():
     """C++ files follow repo code style (consistent indentation, no excessive tabs)."""
     for f in TARGET_FILES:
         p = Path(f"{REPO}/{f}")
@@ -148,6 +148,33 @@ def test_repo_code_patterns_consistent():
         # Check that files don't have excessive tabs (allow up to 5 lines)
         tab_lines = [i for i, line in enumerate(lines, 1) if "\t" in line]
         assert len(tab_lines) <= 5, f"{f} has {len(tab_lines)} lines with tabs (inconsistent indentation)"
+
+
+# [repo_tests] pass_to_pass -- CI: repo has consistent include patterns
+def test_static_include_patterns_valid():
+    """C++ files use valid include syntax (angle brackets or quotes) -- pass_to_pass."""
+    cpp_files = [ALGO_CPP, SIGNAL_CPP, CUSTOM_CPP]
+    for f in cpp_files:
+        p = Path(f"{REPO}/{f}")
+        content = p.read_text()
+        for line in content.split("\n"):
+            if line.strip().startswith("#include"):
+                # Check for valid include syntax: #include <...> or #include "..."
+                assert ("<" in line and ">" in line) or ('"' in line), \
+                    f"{f} has invalid include syntax: {line}"
+
+
+# [repo_tests] pass_to_pass -- CI: header files have valid C++ guards
+def test_static_header_guards_valid():
+    """Header files have valid include guards or pragma once -- pass_to_pass."""
+    header_files = [ALGO_H, SIGNAL_H]
+    for f in header_files:
+        p = Path(f"{REPO}/{f}")
+        content = p.read_text()
+        # Check for pragma once or include guards
+        has_pragma = "#pragma once" in content
+        has_guard = "#ifndef" in content and "#define" in content and "#endif" in content
+        assert has_pragma or has_guard, f"{f} missing pragma once or include guards"
 
 
 # ---------------------------------------------------------------------------

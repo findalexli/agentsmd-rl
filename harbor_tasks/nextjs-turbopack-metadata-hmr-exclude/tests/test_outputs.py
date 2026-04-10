@@ -199,3 +199,132 @@ def test_server_hmr_preserves_edge_exclusion():
         "usesServerHmr must still exclude edge runtime endpoints. "
         f"Found: {block}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI tests that should always pass
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax():
+    """TypeScript files have valid syntax (pass_to_pass)."""
+    # Check that the hot-reloader-turbopack.ts file has valid TypeScript syntax
+    # by parsing it with Node and checking for basic structural validity
+    r = subprocess.run(
+        [
+            "node",
+            "-e",
+            """
+const fs = require('fs');
+const path = 'packages/next/src/server/dev/hot-reloader-turbopack.ts';
+
+// Check file exists and is readable
+if (!fs.existsSync(path)) {
+    console.error('File not found:', path);
+    process.exit(1);
+}
+
+const src = fs.readFileSync(path, 'utf8');
+
+// Basic TypeScript syntax validation checks
+const checks = [
+    // Check for balanced braces
+    { name: 'balanced braces', test: () => {
+        let count = 0;
+        for (const char of src) {
+            if (char === '{') count++;
+            if (char === '}') count--;
+            if (count < 0) return false;
+        }
+        return count === 0;
+    }},
+    // Check for balanced parentheses
+    { name: 'balanced parentheses', test: () => {
+        let count = 0;
+        for (const char of src) {
+            if (char === '(') count++;
+            if (char === ')') count--;
+            if (count < 0) return false;
+        }
+        return count === 0;
+    }},
+    // Check for balanced brackets
+    { name: 'balanced brackets', test: () => {
+        let count = 0;
+        for (const char of src) {
+            if (char === '[') count++;
+            if (char === ']') count--;
+            if (count < 0) return false;
+        }
+        return count === 0;
+    }},
+];
+
+let allPassed = true;
+for (const check of checks) {
+    if (!check.test()) {
+        console.error('Syntax check failed:', check.name);
+        allPassed = false;
+    }
+}
+
+if (!allPassed) {
+    process.exit(1);
+}
+
+console.log('TypeScript syntax checks passed');
+""",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_is_metadata_route_importable():
+    """isMetadataRoute function exists and is importable (pass_to_pass)."""
+    # Verify the isMetadataRoute function exists in the metadata route module
+    r = subprocess.run(
+        [
+            "node",
+            "-e",
+            """
+const fs = require('fs');
+const path = 'packages/next/src/lib/metadata/is-metadata-route.ts';
+
+if (!fs.existsSync(path)) {
+    console.error('Metadata route file not found:', path);
+    process.exit(1);
+}
+
+const src = fs.readFileSync(path, 'utf8');
+
+// Check that isMetadataRoute function is exported
+const hasExport = src.includes('export') && src.includes('isMetadataRoute');
+const hasFunctionDefinition = src.includes('function isMetadataRoute') ||
+    /export const isMetadataRoute\\s*=/.test(src) ||
+    /export\\s+.*\\bisMetadataRoute\\b/.test(src);
+
+if (!hasExport) {
+    console.error('isMetadataRoute is not exported from is-metadata-route.ts');
+    process.exit(1);
+}
+
+if (!hasFunctionDefinition) {
+    console.error('isMetadataRoute function definition not found');
+    process.exit(1);
+}
+
+console.log('isMetadataRoute is properly exported and defined');
+""",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"isMetadataRoute import check failed:\n{r.stderr}"

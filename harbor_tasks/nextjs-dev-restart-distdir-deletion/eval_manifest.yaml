@@ -46,4 +46,56 @@ checks:
       lines: "300"
       commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
 
-rubric: []
+  - id: repo_start_server_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Repo's start-server.ts has balanced braces and valid syntax"
+
+  - id: repo_valid_imports_in_start_server
+    type: pass_to_pass
+    origin: static
+    description: "start-server.ts imports are well-formed"
+
+  - id: repo_no_debugger_in_start_server
+    type: pass_to_pass
+    origin: static
+    description: "start-server.ts has no debugger statements or console.log left behind"
+
+  - id: repo_node_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Node.js can parse start-server.ts without major syntax errors"
+
+  - id: repo_git_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository has clean status at base commit"
+
+  - id: repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "package.json is valid JSON"
+
+  - id: repo_critical_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Critical source files exist and are readable"
+
+rubric:
+  - rule: "File watching with directory deletion detection should be inside an isDev or __NEXT_DEV_SERVER guard (dev-server-only behavior)"
+    source:
+      path: "AGENTS.md"
+      lines: "265-270"
+      commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
+
+  - rule: "File watching code for config changes should be inside the if (isDev) guard and use process.exit(RESTART_EXIT_CODE) for restarts"
+    source:
+      path: "AGENTS.md"
+      lines: "428-432"
+      commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
+
+  - rule: "Use Log.warn() for config change warnings and Log.error() for directory deletion errors, not console.log"
+    source:
+      path: "packages/next/src/server/lib/start-server.ts"
+      lines: "73-86"
+      commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"

@@ -238,7 +238,7 @@ function testArraySubset(actual, expected) {
     // Phase 1: count expected items (like compareBranch does)
     for (const item of expected) {
         let found = false;
-        for (const [key, count] of Map.prototype[Symbol.iterator].call(counts)) {
+        for (const { 0: key, 1: count } of Map.prototype[Symbol.iterator].call(counts)) {
             if (JSON.stringify(key) === JSON.stringify(item)) {
                 Map.prototype.set.call(counts, key, count + 1);
                 found = true;
@@ -252,7 +252,7 @@ function testArraySubset(actual, expected) {
 
     // Phase 2: match actual items, decrement counts
     for (const item of actual) {
-        for (const [key, count] of Map.prototype[Symbol.iterator].call(counts)) {
+        for (const { 0: key, 1: count } of Map.prototype[Symbol.iterator].call(counts)) {
             if (JSON.stringify(key) === JSON.stringify(item)) {
                 if (count === 1) {
                     Map.prototype.delete.call(counts, key);
@@ -391,6 +391,7 @@ def test_no_es_module_imports():
         "src/js/ modules must use require(), not import (src/js/CLAUDE.md:15)"
     )
 
+
 # ---------------------------------------------------------------------------
 # Repo CI/CD pass_to_pass gates — verified working on base commit
 # These ensure the fix doesn't break existing repo conventions
@@ -448,7 +449,7 @@ def test_repo_ts_no_bare_intrinsics():
     src, stripped = _read_source()
     # Check that $-prefixed identifiers follow Bun conventions
     # They should only be property accesses (.$call, .$set, etc.), not standalone vars
-    bare_intrinsics = re.findall(r"\b\$[a-zA-Z_][a-zA-Z0-9_]*\b(?![\(\.])", stripped)
+    bare_intrinsics = re.findall(r"\b\$[a-zA-Z_][a-zA-Z0-9_]*\b(?!\[\(\.)", stripped)
     # Filter out property access contexts we already checked
     invalid = [m for m in bare_intrinsics if not re.search(rf"\.{re.escape(m)}\b", stripped)]
     assert len(invalid) == 0, (
@@ -477,3 +478,89 @@ def test_repo_no_debug_log_statements():
                 f"Found {len(matches)} {pattern} statements — "
                 "remove debug logging before committing (repo lint convention)"
             )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — ACTUAL CI COMMANDS (verified working)
+# These run real commands from the repo's CI pipeline
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass — from .github/workflows/lint.yml
+def test_repo_oxlint_assert():
+    """Repo's oxlint passes on assert.ts (pass_to_pass).
+
+    Runs actual oxlint CLI on src/js/node/assert.ts to verify no lint errors.
+    This is the same lint check used in the repo's CI pipeline.
+    """
+    r = subprocess.run(
+        ["npx", "oxlint", "--format=unix", str(ASSERT_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # oxlint returns 0 on success, non-zero if errors found
+    # Warnings don't cause non-zero exit by default, only errors
+    if r.returncode != 0:
+        err_output = r.stdout[-500:] if r.stdout else r.stderr[-500:] if r.stderr else "unknown error"
+        assert False, f"oxlint found errors in assert.ts:\n{err_output}"
+
+
+# [repo_ci] pass_to_pass — from .github/workflows/format.yml
+def test_repo_prettier_assert():
+    """Repo's prettier formatting check passes on assert.ts (pass_to_pass).
+
+    Runs prettier --check to verify the file follows repo formatting conventions.
+    This matches the format check from the repo's autofix.ci workflow.
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", str(ASSERT_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # prettier --check exits 0 if file is properly formatted
+    if r.returncode != 0:
+        err_output = r.stderr[-500:] if r.stderr else r.stdout[-500:] if r.stdout else "formatting error"
+        assert False, (
+            f"Prettier check failed for assert.ts — file does not match repo formatting conventions.\n"
+            f"Error: {err_output}\n"
+            f"Hint: Run 'npx prettier --write src/js/node/assert.ts' to fix."
+        )
+
+
+# [repo_ci] pass_to_pass — from .github/workflows/lint.yml (ban-words adapted)
+def test_repo_no_loose_undefined_equality():
+    """Repo convention: No loose equality comparisons with undefined (pass_to_pass).
+
+    Adapted from ban-words.test.ts: '== undefined' and '!= undefined' are banned
+    as they can lead to undefined behavior in Zig and bad practice in JS.
+    """
+    src, _ = _read_source()
+    # Check for the exact banned patterns from ban-words.test.ts
+    banned_patterns = [
+        (" == undefined", "'== undefined' — use '=== undefined'"),
+        (" == undefined", "'== undefined' — use '=== undefined'"),
+        ("undefined == ", "'undefined ==' — use 'undefined ==='"),
+        ("undefined == ", "'undefined ==' — use 'undefined ==='"),
+        (" != undefined", "'!= undefined' — use '!== undefined'"),
+        (" != undefined", "'!= undefined' — use '!== undefined'"),
+        ("undefined != ", "'undefined !=' — use 'undefined !=='"),
+        ("undefined != ", "'undefined !=' — use 'undefined !=='"),
+    ]
+    for pattern, description in banned_patterns:
+        if pattern in src:
+            # Double check it's not actually === or !== (stricter check)
+            stricter_pattern = pattern.replace(" == ", " === ").replace(" ==", " ===").replace("!= ", "!== ").replace("!=", "!==")
+            # Search for the exact loose pattern
+            idx = src.find(pattern)
+            if idx != -1:
+                # Get context
+                context_start = max(0, idx - 30)
+                context_end = min(len(src), idx + len(pattern) + 30)
+                context = src[context_start:context_end].replace("\n", " ")
+                assert False, (
+                    f"Found banned pattern {description} at position {idx}: ...{context}... "
+                    f"(from ban-words convention)"
+                )

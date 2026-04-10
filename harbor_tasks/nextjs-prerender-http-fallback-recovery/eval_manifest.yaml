@@ -22,6 +22,11 @@ checks:
     origin: repo_tests
     description: "Error codes must be valid"
 
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified TypeScript files must pass ESLint"
+
   - id: http_error_boundary_status_code_mapping
     type: fail_to_pass
     origin: pr_diff
@@ -68,13 +73,13 @@ checks:
     description: "create-component-tree.tsx must not be truncated (>15KB)"
 
 rubric:
-  - rule: "Before editing or creating files in any subdirectory, read all README.md files in the directory path from the repo root up to and including the target file's directory."
-    source:
-      path: "AGENTS.md"
-      lines: "46"
-      commit: "e464ca398c5992c4ec9fb23192fc60ef7b1b5f94"
-  - rule: "Split work into smaller, individually verifiable tasks. Verify each task before moving on to the next."
-    source:
-      path: "AGENTS.md"
-      lines: "355-356"
-      commit: "e464ca398c5992c4ec9fb23192fc60ef7b1b5f94"
+  - rule: "When modifying TypeScript source files, use consistent type annotations and export types that are consumed by other modules."
+    reference:
+      file: "packages/next/src/server/app-render/create-component-tree.tsx"
+      line: "227-230"
+      content: "export type PrerenderHTTPErrorState = { boundaryTree: LoaderTree; triggeredStatus: HTTPAccessErrorStatusCode }"
+  - rule: "HTTP error handling code should use proper status code types (404 | 403 | 401) and check for specific boundary slots in the loader tree."
+    reference:
+      file: "packages/next/src/server/app-render/app-render.tsx"
+      line: "534-551"
+      content: "function hasPrerenderHTTPErrorBoundary(loaderTree: LoaderTree, triggeredStatus: HTTPAccessErrorStatusCode, authInterrupts: boolean): boolean"

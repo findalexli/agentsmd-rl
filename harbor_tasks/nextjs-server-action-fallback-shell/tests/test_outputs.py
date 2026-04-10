@@ -270,3 +270,20 @@ def test_repo_prettier_check():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_ast_grep():
+    """Repo's ast-grep linting passes (pass_to_pass).
+
+    Verifies that the codebase passes ast-grep pattern matching for code quality.
+    """
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm exec ast-grep scan"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ast-grep scan failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+

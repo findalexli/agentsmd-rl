@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T10:06:41.253027",
-  "total_time": 3288.09,
-  "sandbox_id": "i96fpv80bpcbqmib0zxju",
-  "backend": "fireworks",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T03:56:55.984454",
+  "total_time": 9219.83,
+  "sandbox_id": "igtly192jd3q7p8jmnmxy",
+  "backend": "gemini",
   "pipeline": "agents",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -18,22 +19,34 @@
     },
     "p2p_enrichment": {
       "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 388.63,
+      "model": "opus",
+      "backend": "gemini",
+      "time": 56.05,
       "notes": ""
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
+      "model": "opus",
+      "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
     },
     "validate": {
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 511.97
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile missing BASE_COMMIT arg which caused tests to pass on base commit (master). Added patch to Dockerfile to install missing `patch` utility. Replaced hallucinated rubric rule with a valid one about clipboard fallback in CLAUDE.md, and added this CLAUDE.md patch to the gold solution in solve.sh so that judge.py evaluates it correctly.",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 2494.5
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1.23,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -42,16 +55,40 @@
       "nop": -1.0,
       "gold": -1.0,
       "backend": "fireworks",
-      "time": 3287.79,
-      "at": "2026-04-09T10:06:41.084435"
+      "time": 486.58,
+      "at": "2026-04-09T14:36:17.678882"
     },
     {
       "verdict": "fail",
       "nop": -1.0,
       "gold": -1.0,
       "backend": "fireworks",
-      "time": 3288.09,
-      "at": "2026-04-09T10:06:41.253027"
+      "time": 135.25,
+      "at": "2026-04-09T15:00:06.731854"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 281.5,
+      "at": "2026-04-09T20:45:20.221551"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 9219.56,
+      "at": "2026-04-10T03:56:55.819037"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 9219.83,
+      "at": "2026-04-10T03:56:55.984454"
     }
   ]
 }

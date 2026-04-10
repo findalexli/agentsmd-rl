@@ -49,7 +49,7 @@ checks:
     source:
       path: "AGENTS.md"
       lines: "25"
-      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+      commit: "6860e70"
 
   - id: unused_literal_cleaned
     type: pass_to_pass
@@ -58,7 +58,7 @@ checks:
     source:
       path: "AGENTS.md"
       lines: "94-95"
-      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+      commit: "6860e70"
 
   - id: no_print_statements
     type: pass_to_pass
@@ -67,7 +67,7 @@ checks:
     source:
       path: "AGENTS.md"
       lines: "84-86"
-      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+      commit: "6860e70"
 
   - id: validation_raises_valueerror
     type: fail_to_pass
@@ -76,14 +76,43 @@ checks:
     source:
       path: "AGENTS.md"
       lines: "156"
-      commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
+      commit: "6860e70"
+
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax compilation check on areal/api/cli_args.py"
 
   - id: test_repo_ruff_lint
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's ruff linting passes on areal/api/"
+    description: "Repo's ruff linting passes on areal/api/cli_args.py"
 
   - id: test_repo_ruff_format
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's ruff format check passes on areal/api/"
+    description: "Repo's ruff format check passes on areal/api/cli_args.py"
+
+  - id: test_repo_datapack_and_train_controller
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for datapack and train_controller pass"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module. Match style, naming, and structure of surrounding code."
+    source:
+      path: "AGENTS.md"
+      lines: "51-53"
+      commit: "6860e70"
+
+  - rule: "Field ordering in config dataclasses: required -> common optional -> rare optional -> internal (_ prefix)."
+    source:
+      path: "AGENTS.md"
+      lines: "156-160"
+      commit: "6860e70"
+
+  - rule: "Prefer __post_init__ validation for config dataclasses. Validation should raise ValueError with a clear, actionable error message."
+    source:
+      path: "AGENTS.md"
+      lines: "157-158"
+      commit: "6860e70"

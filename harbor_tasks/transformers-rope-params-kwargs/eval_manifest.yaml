@@ -55,13 +55,33 @@ checks:
       lines: "2"
       commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
 
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff check passes on the target file"
+
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file compiles without syntax errors via py_compile"
+
+  - id: test_repo_config_common_kwargs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ConfigTestUtils::test_config_common_kwargs_is_complete passes"
+
+  - id: test_repo_config_from_string
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ConfigTestUtils::test_config_from_string passes"
+
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
     source:
       path: ".github/copilot-instructions.md"
       lines: "15"
       commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
-  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
+  - rule: 'Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.'
     source:
       path: "CLAUDE.md"
       lines: "66"

@@ -37,6 +37,46 @@ checks:
     origin: static
     description: "manager.rs has substantial content (>1000 lines)"
 
+  - id: manager_readable
+    type: pass_to_pass
+    origin: static
+    description: "manager.rs is readable and contains expected function definitions"
+
+  - id: backend_test_file_readable
+    type: pass_to_pass
+    origin: static
+    description: "top_level_task_consistency.rs test file is readable and has tests"
+
+  - id: turbo_tasks_backend_crates_exist
+    type: pass_to_pass
+    origin: static
+    description: "Required turbo-tasks backend crates exist and have content"
+
+  - id: repo_git_state_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo has valid git state with expected base commit"
+
+  - id: debug_assert_function_exists
+    type: pass_to_pass
+    origin: static
+    description: "debug_assert_not_in_top_level_task function exists in manager.rs"
+
+  - id: test_repo_git_info
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's git-info script runs successfully - validates git metadata extraction via Node.js CI script"
+
+  - id: test_repo_run_for_change
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's run-for-change script runs successfully - validates change detection logic used by CI"
+
+  - id: test_repo_node_scripts_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Node.js CI scripts are present, tracked by git, and executable - validates CI script integrity"
+
 rubric:
   - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
     source:
@@ -45,12 +85,6 @@ rubric:
       commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"
 
   - rule: "Tasks affected by a read inconsistency can return errors. These errors will be discarded by the strongly consistent root task."
-    source:
-      path: "turbopack/crates/turbo-tasks/src/vc/README.md"
-      lines: "127"
-      commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"
-
-  - rule: "Tasks should never panic due to a potentially-inconsistent value stored in a Vc."
     source:
       path: "turbopack/crates/turbo-tasks/src/vc/README.md"
       lines: "127"

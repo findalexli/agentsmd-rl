@@ -37,14 +37,41 @@ checks:
     origin: static
     description: "Null content guard must still be present"
 
-  - id: test_repo_typescript
+  - id: test_repo_prettier_render
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's TypeScript typecheck (pnpm typescript) passes"
+    description: "Repo's Prettier formatting check on render.tsx passes"
 
-  - id: test_repo_unit_tests
+  - id: test_repo_eslint_render
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's unit tests (jest test/unit) pass"
+    description: "Repo's ESLint check on render.tsx passes"
 
-rubric: []
+  - id: test_repo_ast_grep
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ast-grep lint patterns pass"
+
+  - id: test_repo_language_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's inclusive language linting (alex) passes"
+
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "44-54"
+      commit: "98330e3faeff95a51d2c185fc98f1f40bd86726f"
+
+  - rule: "Respect lifecycle ordering: registry flush must happen before dependent reads"
+    source:
+      path: "AGENTS.md"
+      lines: "335-337"
+      commit: "98330e3faeff95a51d2c185fc98f1f40bd86726f"
+
+  - rule: "Avoid Promise.all for operations with data dependencies that create race conditions"
+    source:
+      path: "AGENTS.md"
+      lines: "361-365"
+      commit: "98330e3faeff95a51d2c185fc98f1f40bd86726f"

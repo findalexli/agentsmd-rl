@@ -57,4 +57,31 @@ checks:
     origin: repo_tests
     description: "Repo license check passes"
 
-rubric: []
+  - id: test_repo_version_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo version consistency check passes"
+
+  - id: test_repo_print_warnings
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo print warnings test passes"
+
+rubric:
+  - rule: "Run yarn prettier to fix formatting before committing code."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
+      commit: "95ffd6cd9c794842e5c8ab36150296afab1ae70c"
+
+  - rule: "Run yarn linc to check for lint issues before committing."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "11"
+      commit: "95ffd6cd9c794842e5c8ab36150296afab1ae70c"
+
+  - rule: "Run yarn flow with a renderer argument for type checking (dom-node is default)."
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "10,22"
+      commit: "95ffd6cd9c794842e5c8ab36150296afab1ae70c"

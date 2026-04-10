@@ -108,3 +108,54 @@ def test_existing_flight_cyclic_transport():
     )
     output = r.stdout.decode() + r.stderr.decode()
     assert r.returncode == 0, f"Regression in existing ReactFlight test:\n{output}"
+
+
+# [repo_tests] pass_to_pass
+def test_flight_error_objects():
+    """ReactFlight Error object transport test passes (no regression in Error serialization)."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "packages/react-client/src/__tests__/ReactFlight-test.js",
+            "-t", "can transport Error objects as values",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    output = r.stdout.decode() + r.stderr.decode()
+    assert r.returncode == 0, f"Error object transport test failed:\n{output}"
+
+
+# [repo_tests] pass_to_pass
+def test_flight_replays_logs_cyclic():
+    """ReactFlight cyclic object logging test passes (no regression)."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "packages/react-client/src/__tests__/ReactFlight-test.js",
+            "-t", "replays logs with cyclic objects",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    output = r.stdout.decode() + r.stderr.decode()
+    assert r.returncode == 0, f"Cyclic logs test failed:\n{output}"
+
+
+# [repo_tests] pass_to_pass
+def test_flight_formdata():
+    """ReactFlight FormData transport test passes (no regression)."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "packages/react-client/src/__tests__/ReactFlight-test.js",
+            "-t", "can transport FormData",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    output = r.stdout.decode() + r.stderr.decode()
+    assert r.returncode == 0, f"FormData transport test failed:\n{output}"

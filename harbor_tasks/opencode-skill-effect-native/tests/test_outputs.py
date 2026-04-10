@@ -247,46 +247,38 @@ def test_not_stub():
 # Pass-to-pass (repo_tests) — CI/CD regression checks
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — verify repo package.json is valid
-def test_repo_package_json_valid():
-    """Repo's root package.json must be valid JSON with expected structure."""
-    import json
-    pkg_file = Path(REPO) / "package.json"
-    assert pkg_file.exists(), "package.json not found"
-    content = pkg_file.read_text()
-    pkg = json.loads(content)
-    assert "name" in pkg, "package.json missing name field"
-    assert "workspaces" in pkg, "package.json missing workspaces"
+# [repo_tests] pass_to_pass
+def test_repo_syntax_skill_index():
+    """Syntax check skill/index.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "--experimental-strip-types", "packages/opencode/src/skill/index.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
 
+# [repo_tests] pass_to_pass
+def test_repo_syntax_discovery_test():
+    """Syntax check test/skill/discovery.test.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "--experimental-strip-types", "packages/opencode/test/skill/discovery.test.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
 
-# [repo_tests] pass_to_pass — verify modified file is valid TypeScript syntactically
-def test_repo_modified_file_syntax():
-    """Modified skill/index.ts must have valid TypeScript syntax (no unmatched braces)."""
-    code = FILE.read_text()
-    # Check for balanced braces
-    open_count = code.count("{")
-    close_count = code.count("}")
-    assert open_count == close_count, f"Unbalanced braces: {open_count} open, {close_count} close"
-    # Check for balanced parentheses
-    open_paren = code.count("(")
-    close_paren = code.count(")")
-    assert open_paren == close_paren, f"Unbalanced parentheses: {open_paren} open, {close_paren} close"
+# [repo_tests] pass_to_pass
+def test_repo_syntax_skill_test():
+    """Syntax check test/skill/skill.test.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "--experimental-strip-types", "packages/opencode/test/skill/skill.test.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
 
-
-# [repo_tests] pass_to_pass — verify file structure preserved
-def test_repo_skill_module_structure():
-    """Skill module must preserve expected exports and namespace structure."""
-    code = FILE.read_text()
-    # Key structures that should exist in the module
-    assert "export namespace Skill" in code, "Skill namespace export missing"
-    assert "export const defaultLayer" in code, "defaultLayer export missing"
-    assert "export const layer" in code, "layer export missing"
-
-
-# [repo_tests] pass_to_pass — verify no syntax errors in key patterns
-def test_repo_no_common_syntax_errors():
-    """Modified file must not contain common syntax errors."""
-    code = FILE.read_text()
-    # Check for common syntax issues
-    assert code.count('"') % 2 == 0, "Unbalanced double quotes"
-    assert code.count("'") % 2 == 0, "Unbalanced single quotes"
+# [repo_tests] pass_to_pass
+def test_repo_syntax_tool_skill_test():
+    """Syntax check test/tool/skill.test.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", "--experimental-strip-types", "packages/opencode/test/tool/skill.test.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"

@@ -34,44 +34,37 @@ def _run_node(script: str, timeout: int = 15) -> subprocess.CompletedProcess:
     )
 
 
-def _run_tsx_test(test_code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Run a TypeScript test using tsx.
+def _build_extraction_preamble() -> str:
+    """Build JS that extracts combineDebounceEntries + helpers from the TS source.
 
-    Creates a temp test file that imports the target module and runs the test code.
+    Uses Node 22's built-in stripTypeScriptTypes for reliable TS->JS conversion.
     """
-    # Create a test file that re-exports the internal function for testing
-    test_file = Path(REPO) / '.test_temp.ts'
+    return textwrap.dedent("""\
+        const fs = require('fs');
+        const { stripTypeScriptTypes } = require('node:module');
+        const src = fs.readFileSync('%s/%s', 'utf8');
 
-    # Read the original source
-    src = _read_target()
+        function extractFn(name) {
+            const re = new RegExp('(?:export\\\\s+)?function\\\\s+' + name + '\\\\s*(?:<[^>]*>)?\\\\s*\\\\(');
+            const idx = src.search(re);
+            if (idx === -1) return '';
+            let braces = 0, i = idx;
+            while (i < src.length) {
+                if (src[i] === '{') braces++;
+                if (src[i] === '}') { braces--; if (braces === 0) { i++; break; } }
+                i++;
+            }
+            return src.substring(idx, i);
+        }
 
-    # Make combineDebounceEntries exportable by replacing the function declaration
-    # with an exported version
-    src_modified = src.replace(
-        'function combineDebounceEntries',
-        'export function combineDebounceEntries'
-    )
+        const combineFn = extractFn('combineDebounceEntries');
+        const normalizeFn = extractFn('normalizeDebounceMessageText');
+        const sanitizeFn = extractFn('sanitizeDebounceEntry');
 
-    # Build the test file content
-    test_content = src_modified + '\n' + textwrap.dedent(f"""\
-        // Test code
-        {test_code}
-    """)
-
-    test_file.write_text(test_content)
-
-    try:
-        result = subprocess.run(
-            ['npx', 'tsx', str(test_file)],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    finally:
-        test_file.unlink(missing_ok=True)
-
-    return result
+        const tsCode = [normalizeFn, sanitizeFn, combineFn].join('\\\\n\\\\n');
+        const jsCode = stripTypeScriptTypes(tsCode, { mode: 'strip', sourceUrl: 'extracted.ts' });
+        eval(jsCode);
+    """) % (REPO, TARGET)
 
 
 def _ensure_deps_installed() -> None:
@@ -108,8 +101,11 @@ def test_null_text_no_crash():
 
     Uses multi-entry batches to trigger the combine path where .text.trim() is called.
     """
-    test_code = textwrap.dedent("""\
-        function mkEntry(text: any, id: string, ts: number) {
+    preamble = _build_extraction_preamble()
+
+    script = preamble + textwrap.dedent("""\
+
+        function mkEntry(text, id, ts) {
             return {
                 message: {
                     text: text, senderId: '+15551234567', senderIdExplicit: true,
@@ -129,27 +125,29 @@ def test_null_text_no_crash():
 
         for (const c of cases) {
             try {
-                const result = combineDebounceEntries(c.entries as any);
+                const result = combineDebounceEntries(c.entries);
                 if (typeof result.text !== 'string') {
                     console.error('FAIL ' + c.label + ': result.text is ' + typeof result.text);
                     process.exit(1);
                 }
-            } catch (e: any) {
+            } catch (e) {
                 console.error('CRASH on ' + c.label + ': ' + e.message);
                 process.exit(1);
             }
         }
         console.log('OK');
     """)
-    r = _run_tsx_test(test_code)
+    r = _run_node(script)
     assert r.returncode == 0, f"Crashed on null/undefined text entries: {r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_mixed_null_and_valid_entries():
     """Batch with null-text + valid-text entries combines without crash, valid text preserved."""
-    test_code = textwrap.dedent("""\
-        function mkEntry(text: any, id: string, ts: number) {
+    preamble = _build_extraction_preamble()
+    script = preamble + textwrap.dedent("""\
+
+        function mkEntry(text, id, ts) {
             return {
                 message: {
                     text: text, senderId: '+15551234567', senderIdExplicit: true,
@@ -164,7 +162,7 @@ def test_mixed_null_and_valid_entries():
         const r1 = combineDebounceEntries([
             mkEntry(null, 'msg-null', 1000),
             mkEntry('Hello world', 'msg-valid', 2000),
-        ] as any);
+        ]);
         if (!r1.text.includes('Hello world')) {
             console.error('FAIL case1: valid text lost, got: ' + r1.text);
             process.exit(1);
@@ -174,7 +172,7 @@ def test_mixed_null_and_valid_entries():
         const r2 = combineDebounceEntries([
             mkEntry('Goodbye', 'msg-v2', 3000),
             mkEntry(null, 'msg-null2', 4000),
-        ] as any);
+        ]);
         if (!r2.text.includes('Goodbye')) {
             console.error('FAIL case2: valid text lost, got: ' + r2.text);
             process.exit(1);
@@ -185,7 +183,7 @@ def test_mixed_null_and_valid_entries():
             mkEntry('Alpha', 'msg-a', 5000),
             mkEntry(null, 'msg-n', 6000),
             mkEntry('Bravo', 'msg-b', 7000),
-        ] as any);
+        ]);
         if (!r3.text.includes('Alpha') || !r3.text.includes('Bravo')) {
             console.error('FAIL case3: texts lost, got: ' + r3.text);
             process.exit(1);
@@ -193,15 +191,17 @@ def test_mixed_null_and_valid_entries():
 
         console.log('OK');
     """)
-    r = _run_tsx_test(test_code)
+    r = _run_node(script)
     assert r.returncode == 0, f"Crashed or lost valid text: {r.stderr}\n{r.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_all_null_entries_produce_empty_text():
     """When all entries have null text, combined text is empty string (not crash)."""
-    test_code = textwrap.dedent("""\
-        function mkNull(id: string, ts: number) {
+    preamble = _build_extraction_preamble()
+    script = preamble + textwrap.dedent("""\
+
+        function mkNull(id, ts) {
             return {
                 message: {
                     text: null, senderId: '+15551234567', senderIdExplicit: true,
@@ -213,7 +213,7 @@ def test_all_null_entries_produce_empty_text():
         }
 
         // Case 1: two null entries
-        const r1 = combineDebounceEntries([mkNull('a', 1000), mkNull('b', 2000)] as any);
+        const r1 = combineDebounceEntries([mkNull('a', 1000), mkNull('b', 2000)]);
         if (typeof r1.text !== 'string') {
             console.error('FAIL: text is not a string: ' + typeof r1.text);
             process.exit(1);
@@ -224,7 +224,7 @@ def test_all_null_entries_produce_empty_text():
         }
 
         // Case 2: three null entries
-        const r2 = combineDebounceEntries([mkNull('c', 3000), mkNull('d', 4000), mkNull('e', 5000)] as any);
+        const r2 = combineDebounceEntries([mkNull('c', 3000), mkNull('d', 4000), mkNull('e', 5000)]);
         if (typeof r2.text !== 'string') {
             console.error('FAIL: text is not a string: ' + typeof r2.text);
             process.exit(1);
@@ -236,7 +236,7 @@ def test_all_null_entries_produce_empty_text():
 
         console.log('OK');
     """)
-    r = _run_tsx_test(test_code)
+    r = _run_node(script)
     assert r.returncode == 0, f"Crashed on all-null entries: {r.stderr}\n{r.stdout}"
 
 
@@ -247,8 +247,10 @@ def test_all_null_entries_produce_empty_text():
 # [pr_diff] pass_to_pass
 def test_valid_entries_combine_text():
     """Multiple valid-text entries combine correctly (text joined, latest timestamp used)."""
-    test_code = textwrap.dedent("""\
-        function mkEntry(text: string, id: string, ts: number) {
+    preamble = _build_extraction_preamble()
+    script = preamble + textwrap.dedent("""\
+
+        function mkEntry(text, id, ts) {
             return {
                 message: {
                     text: text, senderId: '+15551234567', senderIdExplicit: true,
@@ -263,7 +265,7 @@ def test_valid_entries_combine_text():
         const r1 = combineDebounceEntries([
             mkEntry('Hello', 'msg-1', 1000),
             mkEntry('World', 'msg-2', 2000),
-        ] as any);
+        ]);
         if (!r1.text.includes('Hello') || !r1.text.includes('World')) {
             console.error('FAIL case1: text not combined: ' + JSON.stringify(r1.text));
             process.exit(1);
@@ -278,7 +280,7 @@ def test_valid_entries_combine_text():
             mkEntry('Alpha', 'msg-a', 500),
             mkEntry('Beta', 'msg-b', 1500),
             mkEntry('Gamma', 'msg-c', 3000),
-        ] as any);
+        ]);
         if (!r2.text.includes('Alpha') || !r2.text.includes('Beta') || !r2.text.includes('Gamma')) {
             console.error('FAIL case2: text not combined: ' + JSON.stringify(r2.text));
             process.exit(1);
@@ -290,15 +292,17 @@ def test_valid_entries_combine_text():
 
         console.log('OK');
     """)
-    r = _run_tsx_test(test_code)
+    r = _run_node(script)
     assert r.returncode == 0, f"Valid entry combination failed: {r.stderr}\n{r.stdout}"
 
 
 # [pr_diff] pass_to_pass
 def test_single_valid_entry_passthrough():
     """A single valid entry is returned as-is without mangling."""
-    test_code = textwrap.dedent("""\
-        function mkEntry(text: string, id: string, ts: number, sender: string, isGroup: boolean) {
+    preamble = _build_extraction_preamble()
+    script = preamble + textwrap.dedent("""\
+
+        function mkEntry(text, id, ts, sender, isGroup) {
             return {
                 message: {
                     text: text, senderId: sender, senderIdExplicit: true,
@@ -310,7 +314,7 @@ def test_single_valid_entry_passthrough():
         }
 
         // Case 1: basic message
-        const r1 = combineDebounceEntries([mkEntry('Test message', 'msg-solo', 5000, '+15559876543', true)] as any);
+        const r1 = combineDebounceEntries([mkEntry('Test message', 'msg-solo', 5000, '+15559876543', true)]);
         if (r1.text !== 'Test message') {
             console.error('FAIL case1: text mangled: ' + JSON.stringify(r1.text));
             process.exit(1);
@@ -321,14 +325,14 @@ def test_single_valid_entry_passthrough():
         }
 
         // Case 2: message with unicode
-        const r2 = combineDebounceEntries([mkEntry('Hey! \\u{1F44B} How are you?', 'msg-emoji', 9000, '+15550001111', false)] as any);
+        const r2 = combineDebounceEntries([mkEntry('Hey! \\u{1F44B} How are you?', 'msg-emoji', 9000, '+15550001111', false)]);
         if (r2.text !== 'Hey! \\u{1F44B} How are you?') {
             console.error('FAIL case2: text mangled: ' + JSON.stringify(r2.text));
             process.exit(1);
         }
 
         // Case 3: message with only whitespace
-        const r3 = combineDebounceEntries([mkEntry('   ', 'msg-ws', 100, '+15550002222', false)] as any);
+        const r3 = combineDebounceEntries([mkEntry('   ', 'msg-ws', 100, '+15550002222', false)]);
         if (typeof r3.text !== 'string') {
             console.error('FAIL case3: text not a string');
             process.exit(1);
@@ -336,7 +340,7 @@ def test_single_valid_entry_passthrough():
 
         console.log('OK');
     """)
-    r = _run_tsx_test(test_code)
+    r = _run_node(script)
     assert r.returncode == 0, f"Single entry passthrough failed: {r.stderr}\n{r.stdout}"
 
 
@@ -485,3 +489,18 @@ def test_repo_bluebubbles_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"BlueBubbles extension tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_lint():
+    """Repo's oxlint passes on target file (pass_to_pass).
+
+    Runs oxlint type-aware linting on the target file to ensure
+    the fix doesn't introduce lint errors.
+    """
+    _ensure_deps_installed()
+    r = subprocess.run(
+        ["./node_modules/.bin/oxlint", "--type-aware", f"{REPO}/{TARGET}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

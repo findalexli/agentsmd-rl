@@ -21,20 +21,20 @@ CHUNK_GROUP = REPO / "turbopack/crates/turbopack-core/src/module_graph/chunk_gro
 
 def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute a Node.js validation script in the repo directory."""
-    script = REPO / "_eval_tmp.mjs"
+    script = REPO / "_eval_tmp.cjs"
     script.write_text(code)
     try:
         return subprocess.run(
-            ["node", "--no-warnings", str(script)],
+            ["node", str(script)],
             capture_output=True, text=True, timeout=timeout, cwd=str(REPO),
         )
     finally:
         script.unlink(missing_ok=True)
 
 
-def _node_result(code: str) -> dict:
+def _node_result(code: str, timeout: int = 30) -> dict:
     """Run a Node.js script that outputs JSON and parse the result."""
-    r = _run_node(code)
+    r = _run_node(code, timeout=timeout)
     assert r.returncode == 0, f"Node.js failed: {r.stderr}"
     return json.loads(r.stdout.strip().split('\n')[-1])
 
@@ -310,3 +310,49 @@ def test_existing_transitions_preserved():
         r"(?:import|export)\s+.*entry-base.*with\s*\{[^}]*next-server-utility",
         src, re.DOTALL,
     ), "entry-base import/export lost its next-server-utility transition"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates from the repo's actual test suite
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_git_status():
+    """Repo is a valid git repository with expected commit checked out (pass_to_pass).
+
+    Validates the git repository structure and that we're at the expected commit.
+    """
+    # Check git status works
+    r = subprocess.run(
+        ["git", "status", "--short"],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+
+    # Check we're at the expected commit
+    r2 = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r2.returncode == 0, f"git rev-parse failed: {r2.stderr}"
+    commit = r2.stdout.strip()
+    expected_commit = "883d93c8935afb2b8124ab324a10fa36cbd7a88c"
+    assert commit == expected_commit, f"Expected commit {expected_commit}, got {commit}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_structure():
+    """Repo has expected file structure for the PR changes (pass_to_pass)."""
+    # Key directories must exist
+    assert (REPO / "packages/next/src/build/templates").is_dir(), (
+        "templates directory missing"
+    )
+    assert (REPO / "crates/next-core/src").is_dir(), (
+        "next-core/src directory missing"
+    )
+    assert (REPO / "crates/next-api/src").is_dir(), (
+        "next-api/src directory missing"
+    )
+    assert (REPO / "turbopack/crates/turbopack-core/src/module_graph").is_dir(), (
+        "turbopack module_graph directory missing"
+    )

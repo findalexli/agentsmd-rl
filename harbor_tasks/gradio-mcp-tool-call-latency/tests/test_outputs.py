@@ -321,3 +321,82 @@ def test_ruff_lint():
     assert r.returncode == 0, (
         f"ruff check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (repo_tests) — pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — Repo CI: backend lint
+def test_repo_ruff_lint_backend():
+    """Repo's ruff lint passes on gradio/mcp.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/mcp.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check on gradio/mcp.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: backend format check
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on gradio/mcp.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "gradio/mcp.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check on gradio/mcp.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — MCP module unit tests (synchronous tests)
+def test_repo_mcp_unit_tests():
+    """MCP module synchronous unit tests pass (pass_to_pass).
+
+    Runs only the synchronous MCP tests that don't require async support.
+    These tests verify the core MCP server functionality works correctly.
+    """
+    # Install required test dependencies first
+    r = subprocess.run(
+        ["pip", "install", "-q", "mcp", "pillow"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Run only the synchronous tests that passed in our testing
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "test/test_mcp.py::test_gradio_mcp_server_initialization",
+            "test/test_mcp.py::test_get_block_fn_from_tool_name",
+            "test/test_mcp.py::test_generate_tool_names_correctly_for_interfaces",
+            "test/test_mcp.py::test_convert_strings_to_filedata",
+            "test/test_mcp.py::test_postprocess_output_data",
+            "test/test_mcp.py::test_simplify_filedata_schema",
+            "test/test_mcp.py::test_tool_prefix_character_replacement",
+            "-v",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Python module import test
+def test_repo_gradio_imports():
+    """gradio module imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import gradio; print('gradio imported successfully')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"gradio import failed:\n{r.stderr[-500:]}"

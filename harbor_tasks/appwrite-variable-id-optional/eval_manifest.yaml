@@ -45,4 +45,52 @@ agent_config:
       file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
       points: 0.25
 
-rubric: []
+    # Pass-to-Pass tests (Repo CI/CD checks)
+    - id: test_repo_composer_validate
+      type: pass_to_pass
+      description: "Repo's composer.json passes validation"
+      origin: repo_tests
+      points: 0
+
+    - id: test_repo_php_syntax_all
+      type: pass_to_pass
+      description: "All PHP files in Variables module have valid syntax"
+      origin: repo_tests
+      points: 0
+
+    - id: test_repo_pint_lint
+      type: pass_to_pass
+      description: "Repo passes PSR-12 lint checks (Laravel Pint)"
+      origin: repo_tests
+      points: 0
+
+    - id: test_repo_phpstan_variables
+      type: pass_to_pass
+      description: "Modified file passes PHPStan level 3 static analysis"
+      origin: repo_tests
+      points: 0
+
+    - id: test_repo_unit_custom_id
+      type: pass_to_pass
+      description: "CustomId validator unit tests pass"
+      origin: repo_tests
+      points: 0
+
+rubric:
+  - rule: "Follow the Action pattern for HTTP endpoints. Param definitions should use ->param(name, default, validator, description, optional, injections) structure."
+    source:
+      path: "AGENTS.md"
+      lines: "79-96"
+      commit: "20f80ac067e0042ea05ac9566f0a9ff1624bf3b2"
+
+  - rule: "Optional parameters should have appropriate defaults. For ID fields that should be auto-generated, use 'unique()' as the default value."
+    source:
+      path: "AGENTS.md"
+      lines: "93-96"
+      commit: "20f80ac067e0042ea05ac9566f0a9ff1624bf3b2"
+
+  - rule: "HTTP endpoint files must follow strict naming: only Create.php, Get.php, Update.php, Delete.php, or XList.php allowed."
+    source:
+      path: "src/Appwrite/Platform/AGENTS.md"
+      lines: "29-33"
+      commit: "20f80ac067e0042ea05ac9566f0a9ff1624bf3b2"

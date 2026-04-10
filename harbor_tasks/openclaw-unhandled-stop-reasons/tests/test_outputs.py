@@ -66,7 +66,7 @@ def _build_extraction_preamble() -> str:
         }
 
         // Extract the regex constant
-        const reMatch = src.match(/const\\s+UNHANDLED_STOP_REASON_RE\\s*=\\s*\\/.*?\\/[gim]*;/);
+        const reMatch = src.match(/const\\s+UNHANDLED_STOP_REASON_RE\\s*=\\s*\\/.*?(?<!\\)\\/[gim]*;/);
         const reDecl = reMatch ? reMatch[0] : '';
 
         const formatFn = extractFn('formatUnhandledStopReasonErrorMessage');
@@ -423,44 +423,37 @@ def test_no_dynamic_import_mixing():
 # Pass-to-pass (repo_tests) — repo's CI/CD checks
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
-def test_repo_lint():
-    """Repo's lint check passes (pass_to_pass)."""
-    r = subprocess.run(
+def _setup_repo_deps():
+    """Install pnpm and dependencies."""
+    subprocess.run(
         ["npm", "install", "-g", "pnpm"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    # Install deps
     r = subprocess.run(
         ["pnpm", "install", "--frozen-lockfile"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
-    # Run lint
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's oxlint check passes with no errors (pass_to_pass)."""
+    _setup_repo_deps()
     r = subprocess.run(
         ["pnpm", "lint"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_build_strict_smoke():
-    """Repo's strict TypeScript build passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install", "-g", "pnpm"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    # Install deps
-    r = subprocess.run(
-        ["pnpm", "install", "--frozen-lockfile"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
-    )
-    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
-    # Run strict build
+    """Repo's strict TypeScript build smoke test passes (pass_to_pass)."""
+    _setup_repo_deps()
     r = subprocess.run(
         ["pnpm", "build:strict-smoke"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
@@ -468,19 +461,41 @@ def test_repo_build_strict_smoke():
 # [repo_tests] pass_to_pass
 def test_repo_attempt_unit_tests():
     """Repo's unit tests for attempt module pass (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install", "-g", "pnpm"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    # Install deps
-    r = subprocess.run(
-        ["pnpm", "install", "--frozen-lockfile"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
-    )
-    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
-    # Run attempt tests
+    _setup_repo_deps()
     r = subprocess.run(
         ["pnpm", "vitest", "run", "src/agents/pi-embedded-runner/run/attempt.test.ts"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Attempt tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_check():
+    """Repo's check passes with no errors (pass_to_pass)."""
+    _setup_repo_deps()
+    r = subprocess.run(
+        ["pnpm", "check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_attempt_spawn_cache_ttl():
+    """Repo's unit tests for attempt spawn cache ttl pass (pass_to_pass)."""
+    _setup_repo_deps()
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/agents/pi-embedded-runner/run/attempt.spawn-workspace.cache-ttl.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Attempt tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_attempt_spawn_context_engine():
+    """Repo's unit tests for attempt spawn context engine pass (pass_to_pass)."""
+    _setup_repo_deps()
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/agents/pi-embedded-runner/run/attempt.spawn-workspace.context-engine.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Attempt tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

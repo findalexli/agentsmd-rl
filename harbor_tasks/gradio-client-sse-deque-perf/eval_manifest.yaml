@@ -49,27 +49,27 @@ checks:
 
   - id: repo_no_syntax_errors
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Repository Python files have no syntax errors"
 
   - id: repo_imports_gradio_client
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "gradio_client package imports without errors"
 
   - id: repo_utils_api_intact
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Utils module public API is intact"
 
   - id: repo_type_annotations_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified files have valid Python type annotations"
 
   - id: repo_no_undefined_names
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "No undefined name references in modified files"
 
   - id: repo_ruff_syntax
@@ -79,8 +79,18 @@ checks:
 
   - id: repo_ast_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Modified files produce valid AST with no syntax errors"
+
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository Python files pass ruff format check"
+
+  - id: repo_imports_gradio_client_subprocess
+    type: pass_to_pass
+    origin: repo_tests
+    description: "gradio_client package imports via subprocess without errors"
 
 rubric:
   - rule: "Be consistent with the style of the surrounding code."

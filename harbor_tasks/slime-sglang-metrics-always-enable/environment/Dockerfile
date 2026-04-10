@@ -14,7 +14,9 @@ RUN git init /workspace/slime && \
     git fetch --depth=1 origin a9614431b35e9c54b88a42f9d565ef81075172a1 && \
     git checkout FETCH_HEAD
 
+# Install torch (cpu) and test dependencies
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir ruff pytest pyyaml pytest-json-ctrf
 
 RUN mkdir -p /logs/verifier
 

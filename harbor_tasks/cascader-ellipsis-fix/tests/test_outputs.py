@@ -199,7 +199,7 @@ def test_repo_typescript_check():
     env["NODE_OPTIONS"] = "--max-old-space-size=4096"
     r = subprocess.run(
         ["npx", "tsc", "--noEmit", "--skipLibCheck"],
-        capture_output=True, text=True, timeout=120, cwd=REPO_DIR, env=env
+        capture_output=True, text=True, timeout=600, cwd=REPO_DIR, env=env
     )
     assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
 
@@ -207,7 +207,7 @@ def test_repo_typescript_check():
 def test_repo_biome_lint():
     """Repo's Biome lint passes (pass_to_pass)."""
     r = subprocess.run(
-        ["npx", "biome", "lint"],
+        ["npm", "run", "lint:biome"],
         capture_output=True, text=True, timeout=120, cwd=REPO_DIR
     )
     assert r.returncode == 0, f"Biome lint failed:\n{r.stderr[-500:]}"
@@ -217,18 +217,36 @@ def test_repo_eslint():
     """Repo's ESLint passes (pass_to_pass)."""
     r = subprocess.run(
         ["npm", "run", "lint:script"],
-        capture_output=True, text=True, timeout=120, cwd=REPO_DIR
+        capture_output=True, text=True, timeout=180, cwd=REPO_DIR
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
 
 
-def test_repo_cascader_tests():
-    """Repo's Cascader component tests pass (pass_to_pass)."""
+def test_repo_cascader_index_tests():
+    """Repo's Cascader index component tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["npm", "test", "--", "--testPathPatterns=cascader", "--maxWorkers=2"],
-        capture_output=True, text=True, timeout=120, cwd=REPO_DIR
+        ["npm", "test", "--", "components/cascader/__tests__/index.test.tsx", "--maxWorkers=1", "--testTimeout=60000"],
+        capture_output=True, text=True, timeout=600, cwd=REPO_DIR
     )
-    assert r.returncode == 0, f"Cascader tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Cascader index tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cascader_demo_tests():
+    """Repo's Cascader demo tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "components/cascader/__tests__/demo.test.tsx", "--maxWorkers=1", "--testTimeout=60000"],
+        capture_output=True, text=True, timeout=600, cwd=REPO_DIR
+    )
+    assert r.returncode == 0, f"Cascader demo tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cascader_a11y_tests():
+    """Repo's Cascader a11y tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "test", "--", "components/cascader/__tests__/a11y.test.ts", "--maxWorkers=1", "--testTimeout=60000"],
+        capture_output=True, text=True, timeout=600, cwd=REPO_DIR
+    )
+    assert r.returncode == 0, f"Cascader a11y tests failed:\n{r.stderr[-500:]}"
 
 
 def calculate_reward():
@@ -243,7 +261,9 @@ def calculate_reward():
         test_repo_typescript_check,
         test_repo_biome_lint,
         test_repo_eslint,
-        test_repo_cascader_tests,
+        test_repo_cascader_index_tests,
+        test_repo_cascader_demo_tests,
+        test_repo_cascader_a11y_tests,
     ]
 
     passed = 0
@@ -262,7 +282,7 @@ def calculate_reward():
             print(f"ERROR: {test.__name__}: {e}")
 
     total = passed + failed
-    reward = passed / total if total > 0 else 0
+    reward = 1.0 if failed == 0 else 0.0
 
     print(f"\n{'='*50}")
     print(f"Tests passed: {passed}/{total}")

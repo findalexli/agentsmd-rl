@@ -71,6 +71,65 @@ def test_syntax_check():
         ast.parse(src)
 
 
+# [repo_tests] pass_to_pass - Repo syntax validation via subprocess
+def test_repo_ast_parsing_vllm_completion():
+    """vllm_text_completion.py parses as valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-c",
+            f"import ast; ast.parse(open('{VLLM_COMPLETION}').read())"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parsing failed for vllm_text_completion.py:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Repo syntax validation via subprocess
+def test_repo_ast_parsing_vllm_inference():
+    """vllm_inference.py parses as valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-c",
+            f"import ast; ast.parse(open('{VLLM_INFERENCE}').read())"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parsing failed for vllm_inference.py:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Git repo validation
+def test_repo_git_commit():
+    """Repo is at the expected base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git rev-parse failed:\n{r.stderr}"
+    commit = r.stdout.strip()
+    assert commit == "c8e45e79c699ef6df8847824833aeefab3b5767a", \
+        f"Expected base commit c8e45e79c699ef6df8847824833aeefab3b5767a, got {commit}"
+
+
+# [repo_tests] pass_to_pass - py_compile validation
+def test_repo_py_compile_vllm_completion():
+    """vllm_text_completion.py compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", VLLM_COMPLETION],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed for vllm_text_completion.py:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - py_compile validation
+def test_repo_py_compile_vllm_inference():
+    """vllm_inference.py compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", VLLM_INFERENCE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed for vllm_inference.py:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — vllm_text_completion: new CLI args + kwargs builder
 # ---------------------------------------------------------------------------
@@ -167,3 +226,12 @@ assert 'vllm_server_kwargs' in sig.parameters, \\
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_readme_documents_gpu_memory_settings():
+    """README.md documents GPU memory constraints and vLLM tuning flags."""
+    readme_content = Path(README).read_text()
+    assert "vllm_max_num_seqs" in readme_content, \
+        "README must document --vllm_max_num_seqs flag"
+    assert "vllm_gpu_memory_utilization" in readme_content, \
+        "README must document --vllm_gpu_memory_utilization flag"
+    assert "16GiB" in readme_content or "CUDA out of memory" in readme_content, \
+        "README must explain GPU memory constraints (16GiB or CUDA OOM)"

@@ -325,3 +325,67 @@ print("PASS")
 """)
     assert r.returncode == 0
     assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt():
+    """Rust code passes cargo fmt --check (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+set -e
+export PATH="$HOME/.cargo/bin:$PATH"
+# Install rustup if not present
+if ! command -v cargo &>/dev/null; then
+    apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates -qq 2>&1 >/dev/null
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2026-02-18 --component rustfmt 2>&1 | tail -3
+fi
+. "$HOME/.cargo/env"
+cd /workspace/next.js/turbopack/crates/turbo-tasks-backend
+exec cargo fmt -- --check
+"""],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check():
+    """Rust code passes cargo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+set -e
+export PATH="$HOME/.cargo/bin:$PATH"
+# Install rustup if not present
+if ! command -v cargo &>/dev/null; then
+    apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates -qq 2>&1 >/dev/null
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2026-02-18 2>&1 | tail -3
+fi
+. "$HOME/.cargo/env"
+cd /workspace/next.js/turbopack/crates/turbo-tasks-backend
+exec cargo check
+"""],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_unit():
+    """Rust unit tests for turbo-tasks-backend pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+set -e
+export PATH="$HOME/.cargo/bin:$PATH"
+# Install rustup if not present
+if ! command -v cargo &>/dev/null; then
+    apt-get update -qq && apt-get install -y --no-install-recommends curl ca-certificates -qq 2>&1 >/dev/null
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly-2026-02-18 2>&1 | tail -3
+fi
+. "$HOME/.cargo/env"
+cd /workspace/next.js/turbopack/crates/turbo-tasks-backend
+# Run only a quick subset of tests to verify the code works
+exec cargo test --lib -- --test-threads=2 test_basic
+"""],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"cargo test failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

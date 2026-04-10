@@ -60,6 +60,22 @@ checks:
     origin: repo_tests
     description: "m_owner field must not be deleted entirely"
 
+  # CI/CD pass-to-pass checks — repo structure verification
+  - id: nodevm_headers_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Related NodeVM header files must exist (NodeVM.h, NodeVMScript.h, NodeVMSourceTextModule.h)"
+
+  - id: header_guard_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "NodeVMScriptFetcher.h must have proper header guard"
+
+  - id: cpp_syntax_balanced_braces
+    type: pass_to_pass
+    origin: repo_tests
+    description: "NodeVMScriptFetcher.h must have balanced braces and parentheses"
+
 rubric:
   - rule: "Do not write flaky tests. Unless explicitly asked, never wait for time to pass in tests. Always wait for the condition to be met instead of waiting for an arbitrary amount of time."
     source:

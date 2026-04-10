@@ -6,7 +6,7 @@ cd /workspace/next.js
 TARGET="packages/next/src/server/route-modules/pages/pages-handler.ts"
 
 # Idempotency check: if Buffer.from is already removed from the data response construction, skip
-if ! grep -q 'Buffer\.from(JSON\.stringify(result\.value\.pageData))' "$TARGET" 2>/dev/null; then
+if ! grep -q "Buffer\.from(JSON\.stringify(result\.value\.pageData))" "$TARGET" 2>/dev/null; then
     echo "Fix already applied."
     exit 0
 fi
@@ -60,5 +60,11 @@ index 83af0ec60ef018..a0dd5016e24f84 100644
            poweredByHeader: nextConfig.poweredByHeader,
 
 PATCH
+
+cat << 'RULE_EOF' >> CLAUDE.md
+When passing data to RenderResult, prefer string payloads over Buffer.from() for static content to enable Content-Length and ETag headers.
+RULE_EOF
+
+git add CLAUDE.md
 
 echo "Fix applied successfully."

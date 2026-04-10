@@ -31,6 +31,11 @@ checks:
     origin: repo_tests
     description: "Repo's ruff format check passes on gradio/components directory"
 
+  - id: semgrep_browser_state
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's semgrep security scan passes on browser_state.py"
+
   - id: syntax_check
     type: pass_to_pass
     origin: static
@@ -62,8 +67,25 @@ checks:
     description: "BrowserState is instantiable and postprocess returns values correctly"
 
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
+  - rule: "Be consistent with the style of the surrounding code. Match patterns used in neighboring files."
     source:
       path: "AGENTS.md"
       lines: "45"
       commit: "77e7871176e50a894190ac98aa9de8fbdbf3620f"
+
+  - rule: "Add docstrings for new functions explaining what they do and why they exist."
+    source:
+      path: "AGENTS.md"
+      lines: "41-46"
+      commit: "77e7871176e50a894190ac98aa9de8fbdbf3620f"
+    reference: |
+      def _to_json_serializable(value: Any) -> Any:
+          """Convert a value to a JSON-serializable form.
+
+          Pydantic BaseModel instances are converted to dicts via model_dump(),
+          since they cannot be directly serialized by orjson and would otherwise
+          fall back to str() representation.
+          """
+          if isinstance(value, PydanticBaseModel):
+              return value.model_dump()
+          return value

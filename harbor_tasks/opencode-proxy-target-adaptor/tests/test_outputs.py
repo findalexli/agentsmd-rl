@@ -59,6 +59,45 @@ def test_repo_typecheck():
     assert r.returncode == 0, f"Repo typecheck failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — control-plane tests for modified module
+def test_control_plane_sse():
+    """Control-plane SSE tests pass (pass_to_pass for modified module)."""
+    r = subprocess.run(
+        ["bun", "test", "test/control-plane/sse.test.ts"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Control-plane SSE tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — server tests for modified module
+def test_server_tests():
+    """Server module tests pass (pass_to_pass for modified module)."""
+    r = subprocess.run(
+        ["bun", "test", "test/server/"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Server tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — opencode package typecheck
+def test_opencode_typecheck():
+    """Opencode package typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Opencode typecheck failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -42,16 +42,6 @@ checks:
     origin: repo_tests
     description: "Repo banned words check passes (CI/CD test)"
 
-  - id: test_repo_modified_shell_files_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified shell Zig files exist and are readable (CI/CD test)"
-
-  - id: test_repo_shell_zig_compiles_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Basic check that shell.zig has valid structure (CI/CD test)"
-
   - id: test_repo_shell_file_tests
     type: pass_to_pass
     origin: repo_tests
@@ -72,4 +62,53 @@ checks:
     origin: repo_tests
     description: "Repo's TypeScript typecheck passes (CI/CD test)"
 
-rubric: []
+  - id: test_repo_shell_default_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Bun shell default tests pass (CI/CD test)"
+
+  - id: test_repo_shell_throw_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Bun shell throw tests pass (CI/CD test)"
+
+  - id: test_repo_shell_output_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Bun shell output tests pass (CI/CD test)"
+
+rubric:
+  - rule: "shell.zig: Add jsobjs_len field to Lexer struct and jsobjs_len parameter to new() function for bounds checking"
+    source:
+      path: "src/shell/shell.zig"
+      lines: "2337-2377"
+      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
+    reference: "jsobjs_len: u32 = 0"
+
+  - rule: "shell.zig: Update validateJSObjRefIdx to check against jsobjs_len instead of maxInt(u32)"
+    source:
+      path: "src/shell/shell.zig"
+      lines: "3363-3370"
+      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
+    reference: "if (idx >= self.jsobjs_len)"
+
+  - rule: "interpreter.zig: Calculate jsobjs_len and pass to Lexer.new() calls"
+    source:
+      path: "src/shell/interpreter.zig"
+      lines: "792-805"
+      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
+    reference: "jsobjs_len: u32 = @intCast(jsobjs.len)"
+
+  - rule: "Builtin.zig: Add bounds check for JS object references before accessing interpreter.jsobjs"
+    source:
+      path: "src/shell/Builtin.zig"
+      lines: "510-525"
+      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
+    reference: "if (file.jsbuf.idx >= interpreter.jsobjs.len)"
+
+  - rule: "Cmd.zig: Add bounds check for JS object references before accessing this.base.interpreter.jsobjs"
+    source:
+      path: "src/shell/states/Cmd.zig"
+      lines: "1-50"
+      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
+    reference: "if (val.idx >= this.base.interpreter.jsobjs.len)"

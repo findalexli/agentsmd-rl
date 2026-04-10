@@ -454,3 +454,49 @@ def test_repo_ruff_format():
         timeout=60,
     )
     assert r.returncode == 0, f"ruff format check failed (files need formatting):\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_ruff_check_fix():
+    """Modified Python files have no auto-fixable lint issues (pass_to_pass).
+
+    Mirrors the repo's ruff pre-commit hook check with --fix flag.
+    """
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install might fail if already installed or network issues; ignore
+
+    r = subprocess.run(
+        ["ruff", "check", "--fix", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check --fix failed:\\n{r.stdout}\\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_import_sorting():
+    """Modified Python files follow isort conventions via ruff (pass_to_pass).
+
+    Mirrors the repo's ruff isort check (part of pre-commit I rules).
+    """
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install might fail if already installed or network issues; ignore
+
+    r = subprocess.run(
+        ["ruff", "check", "--select", "I", TYPES_PY, CLEVR_PY],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff import sorting check failed:\\n{r.stdout}\\n{r.stderr}"

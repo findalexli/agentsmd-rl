@@ -67,20 +67,89 @@ checks:
     file: "tests/test_outputs.py"
     points: 0.5
 
-  # Pass-to-pass repo tests
+  # Pass-to-pass static checks (file content checks)
   - id: "test_clang_format_compliance"
     type: "pass_to_pass"
     description: "Modified code follows repo's clang-format style conventions"
-    origin: "repo_tests"
+    origin: "static"
     file: "tests/test_outputs.py"
     points: 0.5
 
   - id: "test_no_trailing_whitespace"
     type: "pass_to_pass"
     description: "Modified lines have no trailing whitespace"
+    origin: "static"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  - id: "test_no_tabs_in_code"
+    type: "pass_to_pass"
+    description: "No tabs in modified file - ClickHouse CI style requirement"
+    origin: "static"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  - id: "test_no_crlf_line_endings"
+    type: "pass_to_pass"
+    description: "No CRLF line endings - repo requires LF only"
+    origin: "static"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  - id: "test_file_ends_with_newline"
+    type: "pass_to_pass"
+    description: "File ends with newline (POSIX standard)"
+    origin: "static"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  - id: "test_utf8_encoding"
+    type: "pass_to_pass"
+    description: "File uses valid UTF-8 encoding"
+    origin: "static"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  # Pass-to-pass repo_tests (actual CI commands via subprocess.run())
+  - id: "test_repo_clang_format"
+    type: "pass_to_pass"
+    description: "Repo CI - clang-format --dry-run --Werror on target file"
+    origin: "repo_tests"
+    file: "tests/test_outputs.py"
+    points: 1.0
+
+  - id: "test_repo_git_whitespace_check"
+    type: "pass_to_pass"
+    description: "Repo CI - git diff --check for whitespace errors"
+    origin: "repo_tests"
+    file: "tests/test_outputs.py"
+    points: 1.0
+
+  - id: "test_repo_cpp_style_tabs"
+    type: "pass_to_pass"
+    description: "Repo CI - check_cpp.sh style: no tabs in source files"
+    origin: "repo_tests"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  - id: "test_repo_cpp_style_trailing_ws"
+    type: "pass_to_pass"
+    description: "Repo CI - check_cpp.sh style: no trailing whitespace"
+    origin: "repo_tests"
+    file: "tests/test_outputs.py"
+    points: 0.5
+
+  - id: "test_repo_pragma_once_headers"
+    type: "pass_to_pass"
+    description: "Repo CI - check_cpp.sh style: headers have #pragma once"
     origin: "repo_tests"
     file: "tests/test_outputs.py"
     points: 0.5
 
 # Rubric for LLM-judged criteria (soft/subjective rules)
-rubric: []
+rubric:
+  - rule: "When mentioning logical errors in comments, say 'exception' instead of 'crash'"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "79"
+      commit: "82211a574743ad08dfbe01e1252040efd544f9c5"

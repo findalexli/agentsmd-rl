@@ -110,6 +110,21 @@ checks:
     origin: repo_tests
     description: "Source file ends with newline (POSIX standard)"
 
+  - id: test_git_repo_initialized
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is properly initialized for CI operations"
+
+  - id: test_cpp_file_compiles_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C++ syntax check passes basic compiler validation"
+
+  - id: test_shell_scripts_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shell scripts have valid syntax (bash -n)"
+
   # ============================================================================
   # AGENT_CONFIG TESTS (Compliance with project conventions from CLAUDE.md)
   # ============================================================================
@@ -130,4 +145,33 @@ checks:
       rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
     description: "Follows Allman brace style convention from project config"
 
-rubric: []
+rubric:
+  - rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line). This is enforced by the style check in CI."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "52"
+      commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+
+  - rule: "When writing messages, say ASan, not ASAN, and similar (because there are two words: Address Sanitizer)."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "54"
+      commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+
+  - rule: "Use C++14 digit separators (e.g., 1'000'000) for large numeric literals to improve readability."
+    source:
+      path: "AGENTS.md"
+      lines: "52"
+      commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+
+  - rule: "Use validateFunctionArguments helper with FunctionArgumentDescriptors instead of manual argument validation for cleaner, more maintainable code."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "52"
+      commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+
+  - rule: "For memory safety with PaddedPODArray, use insertFromItself instead of += for expanding container content to avoid heap-buffer-overflow."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "52"
+      commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"

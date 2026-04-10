@@ -1,44 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T01:44:12.271973",
-  "total_time": 414.83,
-  "sandbox_id": "iisax75gl3hek4cibdru4",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T20:45:24.866369",
+  "total_time": 1616.33,
+  "sandbox_id": "is13suxob278necqqs3uk",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09",
-      "status": "completed",
-      "ci_commands_discovered": [
-        "bun lint (oxlint --format=github src/js)",
-        "bunx prettier --check test/js/bun/net/socket.test.ts",
-        "bun ./test/internal/ban-words.test.ts"
-      ],
-      "tests_added": [
-        {
-          "id": "test_repo_lint",
-          "command": "bunx oxlint --format=github src/js",
-          "timeout": 120,
-          "source": ".github/workflows/lint.yml"
-        },
-        {
-          "id": "test_repo_prettier_socket_test",
-          "command": "bunx prettier --check test/js/bun/net/socket.test.ts",
-          "timeout": 60,
-          "source": ".github/workflows/format.yml"
-        },
-        {
-          "id": "test_repo_ban_words",
-          "command": "bun ./test/internal/ban-words.test.ts",
-          "timeout": 60,
-          "source": ".github/workflows/format.yml"
-        }
-      ],
-      "notes": "Added 3 pass_to_pass tests based on repo's own CI/CD. All pass on base commit. Skipped: typecheck (requires full build), full test suite (requires compiled bun binary), zig checks (requires zig toolchain)."
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 887.92,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -57,7 +34,7 @@
     "validate": {
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 76.25,
+      "time": 6.54,
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
@@ -65,11 +42,11 @@
       "notes": "All validation tests passed. Docker build succeeds. NOP test correctly returns reward=0 (3 fail-to-pass tests fail on buggy base). Gold test returns reward=1 (all 12 tests pass after fix). Rubric judge skipped due to missing taskforge module (infrastructure limitation, not a task issue)."
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
-      "notes": "ICR=1.00"
+      "time": 3.41,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -78,24 +55,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 120.0,
-      "at": "2026-04-09T08:45:00"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:44:12.107543"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
       "time": 414.83,
       "at": "2026-04-09T01:44:12.271973"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 410.72,
+      "at": "2026-04-09T14:35:01.928908"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 411.0,
+      "at": "2026-04-09T14:35:02.100981"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 101.18,
+      "at": "2026-04-09T14:59:32.663423"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1616.33,
+      "at": "2026-04-09T20:45:24.866369"
     }
   ]
 }

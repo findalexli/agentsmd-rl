@@ -42,4 +42,42 @@ checks:
     origin: static
     description: "Detection uses all three checks: platform, arch, AND CPU model"
 
-rubric: []
+  # Repo CI/CD pass_to_pass gates
+  - id: test_repo_prettier_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file follows repo's prettier formatting rules"
+
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "packages/next/package.json is valid JSON with correct structure"
+
+  - id: test_repo_git_tracks_changes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is properly initialized and tracks files"
+
+  - id: test_repo_next_ts_parsable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "packages/next/src/bin/next.ts is syntactically valid TypeScript"
+
+rubric:
+  - rule: "Gold solution adds os import: import os from 'os'"
+    source:
+      path: "packages/next/src/bin/next.ts"
+      lines: "1-5"
+    reference: "+import os from 'os'"
+
+  - rule: "Gold solution adds Rosetta detection with all three conditions"
+    source:
+      path: "packages/next/src/bin/next.ts"
+      lines: "90-100"
+    reference: "+process.platform === 'darwin' && process.arch === 'x64' && os.cpus().some"
+
+  - rule: "Gold solution adds warning about Rosetta 2 performance"
+    source:
+      path: "packages/next/src/bin/next.ts"
+      lines: "95-98"
+    reference: "+warn('You are running Next.js on an Apple Silicon Mac with Rosetta 2 translation'"

@@ -229,3 +229,23 @@ def test_repo_ruff_check():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Check that image_processing_utils.py has valid Python syntax
+def test_repo_python_syntax():
+    """Repo image_processing_utils.py has valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "src/transformers/image_processing_utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Check that image_utils can be imported and SizeDict works
+def test_repo_sizedict_import():
+    """Repo SizeDict can be imported from image_utils (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "from transformers.image_utils import SizeDict; print('SizeDict imported successfully')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SizeDict import failed:\n{r.stderr}"

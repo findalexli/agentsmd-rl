@@ -73,4 +73,81 @@ checks:
     origin: repo_tests
     description: All modified header files have proper include guards
 
-rubric: []
+  # Additional Pass-to-Pass tests (from ClickHouse CI)
+  - id: test_repo_clang_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: C++ code passes basic clang syntax check (clickhouse/ci/jobs/scripts/check_style/check_cpp.sh)
+
+  - id: test_repo_sql_test_balanced_parens
+    type: pass_to_pass
+    origin: repo_tests
+    description: SQL test file has balanced parentheses and quotes
+
+  - id: test_repo_no_trailing_whitespace_in_sql
+    type: pass_to_pass
+    origin: repo_tests
+    description: SQL test file has no trailing whitespace (ClickHouse style check)
+
+  - id: test_repo_no_tabs_in_sql
+    type: pass_to_pass
+    origin: repo_tests
+    description: SQL test file uses spaces, not tabs (ClickHouse style check)
+
+  - id: test_repo_sql_file_valid_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: SQL test file has valid statement structure
+
+  - id: test_repo_no_cyrillic_in_sql
+    type: pass_to_pass
+    origin: repo_tests
+    description: SQL test file has no cyrillic characters mixed with Latin
+
+  # NEW Pass-to-Pass tests (Actual CI Commands via subprocess.run)
+  - id: test_repo_style_no_trailing_whitespace_cpp
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check TokenizerFactory.cpp has no trailing whitespace (grep command)
+
+  - id: test_repo_style_no_tabs_cpp
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check TokenizerFactory.cpp uses spaces not tabs (grep -P command)
+
+  - id: test_repo_style_no_cyrillic_cpp
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check TokenizerFactory.cpp has no cyrillic characters (grep -P command)
+
+  - id: test_repo_style_no_trailing_whitespace_sql
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check SQL test file has no trailing whitespace (grep command)
+
+  - id: test_repo_style_no_tabs_sql
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check SQL test file uses spaces not tabs (grep -P command)
+
+  - id: test_repo_header_pragma_once
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check TokenizerFactory.h has #pragma once (head command)
+
+  - id: test_repo_file_type_cpp
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check TokenizerFactory.cpp is valid C++ source (file command)
+
+  - id: test_repo_file_type_sql
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check SQL test file is valid text (file command)
+
+  - id: test_repo_sql_no_cyrillic
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Check SQL test file has no cyrillic characters (grep -P command)
+
+rubric: []  # No rubric rules - this is a C++ code task, not agent config. Tests validate Allman braces and error messages.

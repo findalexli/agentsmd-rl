@@ -69,6 +69,76 @@ print('SizeDict basic operations OK')
     assert r.returncode == 0, f"SizeDict basic test failed:\n{r.stderr}\n{r.stdout}"
 
 
+# [repo_tests] pass_to_pass — AST parsing of image_utils.py
+def test_repo_image_utils_ast():
+    """image_utils.py parses without AST errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import ast; ast.parse(open('src/transformers/image_utils.py').read()); print('AST OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parsing failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — get_size_dict integration with SizeDict
+def test_repo_get_size_dict():
+    """get_size_dict works and returns compatible dict (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, 'src')
+from transformers.image_processing_utils import get_size_dict
+from transformers.image_utils import SizeDict
+
+# Test get_size_dict returns dict that works with SizeDict
+size_dict = get_size_dict((224, 224), default_to_square=True, param_name="size")
+sd = SizeDict(**size_dict)
+assert sd.height == 224
+assert sd.width == 224
+
+# Test get_size_dict with non-square
+size_dict2 = get_size_dict((128, 256), default_to_square=False, param_name="size")
+sd2 = SizeDict(**size_dict2)
+assert sd2.height == 128
+assert sd2.width == 256
+
+print('get_size_dict integration OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"get_size_dict test failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass — SizeDict attribute access
+def test_repo_sizedict_attributes():
+    """SizeDict attribute access works for all standard fields (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, 'src')
+from transformers.image_utils import SizeDict
+
+# Test all standard SizeDict fields
+sd = SizeDict(height=10, width=20, longest_edge=30, shortest_edge=5, max_height=100, max_width=200)
+assert sd.height == 10
+assert sd.width == 20
+assert sd.longest_edge == 30
+assert sd.shortest_edge == 5
+assert sd.max_height == 100
+assert sd.max_width == 200
+
+# Test setting attributes
+sd.height = 50
+assert sd.height == 50
+sd['width'] = 60
+assert sd.width == 60
+
+print('SizeDict attributes OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SizeDict attributes test failed:\n{r.stderr}\n{r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

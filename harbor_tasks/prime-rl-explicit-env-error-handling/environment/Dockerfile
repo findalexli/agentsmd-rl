@@ -17,10 +17,10 @@ RUN git clone --filter=blob:none https://github.com/PrimeIntellect-ai/prime-rl.g
 
 WORKDIR /workspace/prime-rl
 
-ENV PYTHONPATH="/workspace/prime-rl"
+ENV PYTHONPATH="/workspace/prime-rl/src"
 
 # Install minimal deps needed by test_outputs.py
-RUN pip install --no-cache-dir pytest
+RUN pip install --no-cache-dir pytest ruff
 
 # Verifier output directory
 RUN mkdir -p /logs/verifier

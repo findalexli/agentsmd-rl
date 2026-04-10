@@ -245,7 +245,7 @@ def test_cpp_file_no_cyrillic():
         content = f.read()
 
     # Check for cyrillic characters that might look like Latin
-    cyrillic_pattern = re.compile(r"[a-zA-Z][а-яА-ЯёЁ]|[а-яА-ЯёЁ][a-zA-Z]")
+    cyrillic_pattern = re.compile(r'[a-zA-Z][а-яА-ЯёЁ]|[а-яА-ЯёЁ][a-zA-Z]')
     matches = cyrillic_pattern.findall(content)
 
     assert not matches, f"Found cyrillic characters mixed with Latin: {matches[:5]}"
@@ -265,3 +265,252 @@ def test_cpp_file_pragma_once_in_headers():
         except FileNotFoundError:
             # Some headers might not exist
             pass
+
+
+# =============================================================================
+# Additional Pass-to-Pass Tests (Repo CI/CD checks)
+# =============================================================================
+# These tests mirror ClickHouse's actual CI checks from ci/jobs/scripts/check_style/
+
+
+def test_repo_clang_syntax_check():
+    """Verify C++ code passes basic clang syntax check (pass_to_pass)."""
+    # Run clang-18 syntax check on the modified file
+    # This checks for basic syntax errors without requiring full build
+    result = subprocess.run(
+        ["clang-18", "-fsyntax-only", "-std=c++23",
+         "-I", f"{REPO}/src", "-I", f"{REPO}/base",
+         "-I", f"{REPO}/contrib",
+         TOKENIZER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+
+    # Accept return code 0 (no issues) or non-zero only for missing includes
+    # (which are expected without full build environment)
+    if result.returncode != 0:
+        errors = result.stderr
+        # Filter out only actual syntax errors, not include errors
+        syntax_errors = [line for line in errors.split('\n')
+                        if 'error:' in line
+                        and 'no such file' not in line.lower()
+                        and 'not found' not in line.lower()
+                        and 'fatal error' not in line.lower()]
+        if syntax_errors:
+            raise AssertionError(
+                f"C++ syntax errors found:\n{chr(10).join(syntax_errors[:10])}"
+            )
+
+
+def test_repo_sql_test_balanced_parens():
+    """Verify SQL test file has balanced parentheses (pass_to_pass)."""
+    with open(SQL_TEST_FILE, "r") as f:
+        content = f.read()
+
+    # Remove SQL comments for analysis
+    lines = content.split('\n')
+    cleaned_lines = []
+    for line in lines:
+        # Remove inline comments (but not inside string literals)
+        if '--' in line:
+            line = line[:line.index('--')]
+        cleaned_lines.append(line)
+
+    cleaned_content = '\n'.join(cleaned_lines)
+
+    # Count parentheses - these must be balanced in valid SQL
+    open_parens = cleaned_content.count('(')
+    close_parens = cleaned_content.count(')')
+
+    assert open_parens == close_parens, \
+        f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
+
+    # Count square brackets (for arrays) - must be balanced
+    open_brackets = cleaned_content.count('[')
+    close_brackets = cleaned_content.count(']')
+
+    assert open_brackets == close_brackets, \
+        f"Unbalanced brackets: {open_brackets} open, {close_brackets} close"
+
+    # Note: Quote balancing is complex in ClickHouse SQL due to:
+    # - Escaped quotes (\')
+    # - Multi-line string literals
+    # - Error annotations with strings
+    # We skip quote balancing and rely on the other syntax checks.
+
+
+def test_repo_no_trailing_whitespace_in_sql():
+    """Verify SQL test file has no trailing whitespace (pass_to_pass)."""
+    with open(SQL_TEST_FILE, "r") as f:
+        lines = f.readlines()
+
+    issues = []
+    for i, line in enumerate(lines, 1):
+        # Check for trailing whitespace (excluding the newline)
+        stripped = line.rstrip("\n").rstrip("\r")
+        if stripped != stripped.rstrip():
+            issues.append(f"Line {i}")
+
+    assert not issues, f"Trailing whitespace in SQL file:\n{chr(10).join(issues[:10])}"
+
+
+def test_repo_no_tabs_in_sql():
+    """Verify SQL test file uses spaces, not tabs (pass_to_pass)."""
+    with open(SQL_TEST_FILE, "r") as f:
+        content = f.read()
+
+    tab_lines = []
+    for i, line in enumerate(content.split("\n"), 1):
+        if "\t" in line:
+            tab_lines.append(str(i))
+
+    assert not tab_lines, f"Tabs found in SQL file on lines: {', '.join(tab_lines[:10])}"
+
+
+def test_repo_sql_file_valid_statements():
+    """Verify SQL test file has valid statement structure (pass_to_pass)."""
+    with open(SQL_TEST_FILE, "r") as f:
+        content = f.read()
+
+    # Check for expected ClickHouse SQL test patterns
+    # Should have SELECT statements
+    assert "SELECT" in content.upper(), "SQL file missing SELECT statements"
+
+    # Should have semicolons at end of statements (basic check)
+    lines = content.split('\n')
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        # Skip comments and empty lines
+        if not stripped or stripped.startswith('--'):
+            continue
+        # Check that non-comment SQL lines that aren't continuations end with semicolon
+        # or are expected to continue (open parentheses)
+
+    # Check for common syntax issues
+    assert ";;" not in content, "Double semicolons found in SQL file"
+
+
+def test_repo_no_cyrillic_in_sql():
+    """Verify SQL test file has no cyrillic characters mixed with Latin (pass_to_pass)."""
+    with open(SQL_TEST_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Check for cyrillic characters that might look like Latin
+    cyrillic_pattern = re.compile(r'[a-zA-Z][а-яА-ЯёЁ]|[а-яА-ЯёЁ][a-zA-Z]')
+    matches = cyrillic_pattern.findall(content)
+
+    assert not matches, f"Found cyrillic characters mixed with Latin in SQL: {matches[:5]}"
+
+
+# =============================================================================
+# NEW Pass-to-Pass Tests (Actual CI Commands via subprocess.run)
+# =============================================================================
+# These tests run actual CI commands from ClickHouse's check_style scripts
+# using subprocess.run() as required for origin: repo_tests
+
+
+def test_repo_style_no_trailing_whitespace_cpp():
+    """CI: Check TokenizerFactory.cpp has no trailing whitespace (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "-n", " $", TOKENIZER_FILE],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 1, f"Found trailing whitespace in {TOKENIZER_FILE}:\n{result.stdout}"
+
+
+def test_repo_style_no_tabs_cpp():
+    """CI: Check TokenizerFactory.cpp uses spaces not tabs (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "-P", "\t", TOKENIZER_FILE],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 1, f"Found tabs in {TOKENIZER_FILE}:\n{result.stdout}"
+
+
+def test_repo_style_no_cyrillic_cpp():
+    """CI: Check TokenizerFactory.cpp has no cyrillic characters (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "-P", "[a-zA-Z][а-яА-ЯёЁ]|[а-яА-ЯёЁ][a-zA-Z]", TOKENIZER_FILE],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 1, f"Found cyrillic characters in {TOKENIZER_FILE}:\n{result.stdout}"
+
+
+def test_repo_style_no_trailing_whitespace_sql():
+    """CI: Check SQL test file has no trailing whitespace (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "-n", " $", SQL_TEST_FILE],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 1, f"Found trailing whitespace in {SQL_TEST_FILE}:\n{result.stdout}"
+
+
+def test_repo_style_no_tabs_sql():
+    """CI: Check SQL test file uses spaces not tabs (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "-P", "\t", SQL_TEST_FILE],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 1, f"Found tabs in {SQL_TEST_FILE}:\n{result.stdout}"
+
+
+def test_repo_header_pragma_once():
+    """CI: Check TokenizerFactory.h has #pragma once (pass_to_pass)."""
+    header_file = f"{REPO}/src/Interpreters/TokenizerFactory.h"
+    result = subprocess.run(
+        ["head", "-1", header_file],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 0, f"Failed to read header file: {header_file}"
+    assert result.stdout.strip() == "#pragma once", \
+        f"{header_file} missing #pragma once, got: {result.stdout.strip()}"
+
+
+def test_repo_file_type_cpp():
+    """CI: Check TokenizerFactory.cpp is valid C++ source (pass_to_pass)."""
+    result = subprocess.run(
+        ["file", TOKENIZER_FILE],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 0, "file command failed"
+    assert "C++ source" in result.stdout or "ASCII text" in result.stdout, \
+        f"TokenizerFactory.cpp is not valid C++ source: {result.stdout}"
+
+
+def test_repo_file_type_sql():
+    """CI: Check SQL test file is valid text (pass_to_pass)."""
+    result = subprocess.run(
+        ["file", SQL_TEST_FILE],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 0, "file command failed"
+    assert "text" in result.stdout.lower(), \
+        f"SQL test file is not valid text: {result.stdout}"
+
+
+def test_repo_sql_no_cyrillic():
+    """CI: Check SQL test file has no cyrillic characters (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "-P", "[a-zA-Z][а-яА-ЯёЁ]|[а-яА-ЯёЁ][a-zA-Z]", SQL_TEST_FILE],
+        capture_output=True,
+        text=True,
+        cwd=REPO
+    )
+    assert result.returncode == 1, f"Found cyrillic characters in SQL file:\n{result.stdout}"

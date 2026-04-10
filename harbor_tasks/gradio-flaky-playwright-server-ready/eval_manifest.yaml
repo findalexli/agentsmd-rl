@@ -52,14 +52,26 @@ checks:
     origin: repo_tests
     description: "Repository Python format check (ruff) passes on modified file"
 
+  - id: test_repo_pytest_http_server
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository HTTP server tests pass"
+
+  - id: test_repo_pytest_analytics
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository analytics tests pass"
+
   - id: test_repo_typecheck
     type: pass_to_pass
     origin: repo_tests
     description: "Repository Python typecheck (ty) passes on modified file"
 
+  - id: test_repo_ts_syntax
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript file exists and has expected structure"
+
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "a35f5896e43d2585d9206e8256b4d7e321fcd0fe"
+  - rule: "Code changes should follow repository style: use proper imports (http.client.HTTPConnection), float defaults for timeouts (15.0), triple-quoted docstrings with explanation, async/await in TypeScript, and JSDoc comments."
+    reference: "gradio/node_server.py: adds 'from http.client import HTTPConnection' with other imports, uses timeout=15.0 default, adds proper docstring. js/tootils/src/app-launcher.ts: adds http import, async waitForServerReady function with JSDoc explaining the fix."

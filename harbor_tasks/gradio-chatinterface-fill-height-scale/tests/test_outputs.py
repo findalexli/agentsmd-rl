@@ -400,3 +400,93 @@ def test_repo_generate_skill():
     assert r.returncode == 0, (
         f"Skill generation check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
     )
+
+
+# [repo_tests] pass_to_pass — from test-python.yml (lint check)
+def test_repo_ruff_lint_chat_interface():
+    """Repo's ruff lint check passes on modified file (pass_to_pass).
+
+    From test-python.yml: runs 'python -m ruff check gradio/chat_interface.py'
+    as part of the lint_backend.sh script.
+    """
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "gradio/chat_interface.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"ruff lint check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — from test-python.yml (chatbot component tests)
+def test_repo_chatbot_component_unit():
+    """Repo's Chatbot component unit tests pass (pass_to_pass).
+
+    From test-python.yml: runs pytest on test/components/test_chatbot.py
+    for basic component tests that don't require network access.
+    """
+    # Ensure pytest is installed
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "pytest-asyncio", "-q"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+
+    r = subprocess.run(
+        [
+            "python3",
+            "-m",
+            "pytest",
+            "test/components/test_chatbot.py::TestChatbot::test_component_functions",
+            "-v",
+            "--no-header",
+            "-q",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Chatbot component tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — from test-python.yml (avatar image tests)
+def test_repo_chatbot_avatar_tests():
+    """Repo's Chatbot avatar tests pass (pass_to_pass).
+
+    From test-python.yml: runs pytest on test/components/test_chatbot.py
+    for avatar image handling tests.
+    """
+    subprocess.run(
+        ["python3", "-m", "pip", "install", "pytest", "pytest-asyncio", "-q"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+
+    r = subprocess.run(
+        [
+            "python3",
+            "-m",
+            "pytest",
+            "test/components/test_chatbot.py",
+            "-k",
+            "avatar",
+            "-v",
+            "--no-header",
+            "-q",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Chatbot avatar tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )

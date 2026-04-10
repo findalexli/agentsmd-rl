@@ -59,4 +59,37 @@ checks:
     origin: repo_tests
     description: "Repo's formatting standards pass"
 
-rubric: []
+  - id: test_repo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's license headers pass"
+
+  - id: test_build_system_packages_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "The modified build-system-packages test compiles"
+
+rubric:
+  - rule: "Do NOT comment the obvious - comments should explain invariants, not narrate code. Comments are for non-obvious algorithms, temporary exclusions, complex calculations, subtle race conditions, and assumptions about external state."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-131"
+      commit: "2409c793c8f6092d665d28030cfc68967e5fc4dd"
+
+  - rule: "ALWAYS run `cargo xclippy` after finishing development to ensure code passes all linting checks. Fix underlying issues rather than suppressing them."
+    source:
+      path: "CLAUDE.md"
+      lines: "110-113"
+      commit: "2409c793c8f6092d665d28030cfc68967e5fc4dd"
+
+  - rule: "NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other linting suppressions - fix the underlying issues instead."
+    source:
+      path: "CLAUDE.md"
+      lines: "113"
+      commit: "2409c793c8f6092d665d28030cfc68967e5fc4dd"
+
+  - rule: "NEVER disable or ignore tests - all tests must pass and be enabled."
+    source:
+      path: "CLAUDE.md"
+      lines: "112"
+      commit: "2409c793c8f6092d665d28030cfc68967e5fc4dd"

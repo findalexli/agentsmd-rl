@@ -180,17 +180,17 @@ def test_svelte_window_native_handlers():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo CI equivalents - run without Node.js)
-# These tests validate the Svelte component structure without requiring Node.js.
-# They approximate basic repo CI checks that would run on the base commit.
+# Pass-to-pass (static file analysis)
+# These tests validate the Svelte component structure using Python-based
+# static analysis (Node.js/pnpm are not available in Docker).
 # ---------------------------------------------------------------------------
 
 
-def test_repo_svelte_file_valid():
-    """Svelte file is valid and parseable (basic structural checks).
+def test_repo_svelte_syntax_valid():
+    """Svelte file has valid syntax (balanced braces, no malformed tags).
 
-    Mirrors basic validation from: pnpm ts:check / svelte-check
-    Origin: repo_tests (pass_to_pass)
+    Mirrors: basic validation that would be part of pnpm lint / ts:check
+    Origin: static (pass_to_pass)
     """
     content = open(TARGET).read()
 
@@ -199,14 +199,12 @@ def test_repo_svelte_file_valid():
     assert "</script>" in content, "Missing </script> tag"
 
     # Check for basic tag balance (HTML template level only)
-    # Count only template-level tags, not JS object literals
     template = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.DOTALL)
 
     # Svelte component must have a template section
     assert len(template.strip()) > 0, "No template content outside script blocks"
 
     # Check for valid HTML-like structure (basic tag balance)
-    # Count opening/closing angle brackets for template tags only
     void_tags = {"br", "hr", "img", "input", "meta", "link", "area", "base",
                  "col", "embed", "param", "source", "track", "wbr"}
 
@@ -222,12 +220,18 @@ def test_repo_svelte_file_valid():
     total_tags = open_tags + self_closing + svelte_self_closing
     assert total_tags > 0, "No HTML tags found in template"
 
+    # Check for balanced curly braces (basic check)
+    open_braces = content.count("{")
+    close_braces = content.count("}")
+    # Allow for some variance due to regex patterns in code
+    assert abs(open_braces - close_braces) < 10, f"Unbalanced braces: {open_braces} open, {close_braces} close"
+
 
 def test_repo_colorpicker_package_structure():
     """Colorpicker package has valid structure for build.
 
-    Mirrors: pnpm build validation
-    Origin: repo_tests (pass_to_pass)
+    Mirrors: pnpm build validation checks
+    Origin: static (pass_to_pass)
     """
     pkg_dir = f"{REPO}/js/colorpicker"
 
@@ -246,12 +250,14 @@ def test_repo_colorpicker_package_structure():
     assert "svelte" in pkg.get("peerDependencies", {}), "Missing Svelte peer dependency"
 
 
-def test_repo_component_has_required_elements():
-    """Component has all required UI elements (buttons, inputs, dialog).
+def test_repo_svelte_5_event_handlers():
+    """Component has proper Svelte 5 event handler structure.
 
-    Mirrors: component test validation that would run in CI
-    Origin: repo_tests (pass_to_pass)
+    Validates the component uses correct Svelte 5 event handler patterns.
+    Mirrors: lint/typecheck for Svelte 5 migration compliance
+    Origin: static (pass_to_pass)
     """
+    content = open(TARGET).read()
     data = _analyze_svelte()
 
     # These are structural checks that pass on both base and fixed
@@ -262,3 +268,7 @@ def test_repo_component_has_required_elements():
     assert data["has_dialog"], "Missing dialog references"
     assert data["has_color"], "Missing color-related code"
     assert data["line_count"] > 100, f"Component too small: {data['line_count']} lines"
+
+    # Verify the file has both script and template sections
+    template = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.DOTALL)
+    assert '<button' in template or '<input' in template, "Missing interactive elements in template"

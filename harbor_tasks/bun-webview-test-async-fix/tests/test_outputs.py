@@ -500,15 +500,36 @@ def test_repo_prettier_webview():
     assert r.returncode == 0, f"Prettier check failed for webview.test.ts:\n{r.stderr[-500:]}"
 
 
-def test_repo_js_syntax_all():
-    """Repo CI: All modified JS/TS files have valid syntax (pass_to_pass)."""
-    files = [
-        "test/js/bun/webview/webview-chrome.test.ts",
-        "test/js/bun/webview/webview.test.ts",
-    ]
-    for f in files:
-        r = subprocess.run(
-            ["node", "--check", f"{REPO}/{f}"],
-            capture_output=True, text=True, timeout=30, cwd=REPO,
-        )
-        assert r.returncode == 0, f"Syntax check failed for {f}:\n{r.stderr[-500:]}"
+def test_repo_js_syntax_webview_chrome():
+    """Repo CI: webview-chrome.test.ts has valid Node.js syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", f"{REPO}/test/js/bun/webview/webview-chrome.test.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed for webview-chrome.test.ts:\n{r.stderr[-500:]}"
+
+
+def test_repo_js_syntax_webview():
+    """Repo CI: webview.test.ts has valid Node.js syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", f"{REPO}/test/js/bun/webview/webview.test.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed for webview.test.ts:\n{r.stderr[-500:]}"
+
+
+def test_repo_imports_valid():
+    """Repo CI: webview test files have valid imports and structure (pass_to_pass)."""
+    webview_content = _read_file("test/js/bun/webview/webview.test.ts")
+
+    # Check basic harness import exists
+    import_match = re.search(r'import\s*\{[^}]+\}\s*from\s*[\"\']harness[\"\']', webview_content)
+    assert import_match is not None, 'Could not find harness import line in webview.test.ts'
+
+    import_line = import_match.group(0)
+    assert 'isMacOS' in import_line, 'isMacOS not imported from harness'
+    assert 'isCI' in import_line, 'isCI not imported from harness'
+
+    # Verify the import line is syntactically valid
+    valid_import_pattern = r'import\s+\{[^}]+\}\s+from\s*[\"\']harness[\"\']'
+    assert re.search(valid_import_pattern, webview_content), 'Invalid import statement format for harness imports' 

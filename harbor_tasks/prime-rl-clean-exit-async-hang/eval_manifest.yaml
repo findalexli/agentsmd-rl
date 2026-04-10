@@ -76,17 +76,18 @@ checks:
     origin: repo_tests
     description: "Repo's ruff format check passes on utils.py"
 
-rubric: []
-  # Note: The gold solution for this task intentionally includes explanatory comments
-  # that reference the old behavior (raise vs sys.exit). These comments are necessary
-  # to explain WHY sys.exit is used instead of re-raising — the async context swallows
-  # exceptions causing the process to hang indefinitely. The rubric rules below are
-  # overridden for this specific fix as they conflict with the official merge commit.
-  #
-  # - rule: "Avoid try/except blocks unless it's really necessary..."
-  #   source: AGENTS.md:5
-  #
-  # - rule: "Do not add unnecessary comments..."
-  #   source: AGENTS.md:7
-  #
-  # "Errors should never pass silently" is checked programmatically via error_never_silent test.
+rubric:
+  - rule: "Avoid try/except blocks unless it's really necessary. It's fine that a program fails if something goes wrong. Add try/catch only for code that explicitly aims to be fault tolerant."
+    source:
+      path: "AGENTS.md"
+      lines: "5"
+      commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
+
+  - rule: "Do not add unnecessary comments. Do not explain code changes that reflect your work process. Prefer targeted comments sparingly to explain ambiguous code."
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
+
+# Note: "Errors should never pass silently" (AGENTS.md line 23) is checked programmatically
+# via the error_never_silent agent_config check.

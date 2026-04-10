@@ -219,3 +219,67 @@ def test_repo_python_syntax():
         assert r.returncode == 0, (
             f"Python syntax error in {py_file.name}:\n{r.stderr[-500:]}"
         )
+
+
+# [repo_tests] pass_to_pass — ruff lint check on scripts
+def test_repo_ruff_lint():
+    """Python scripts in scripts/ pass ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--break-system-packages"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/scripts/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ruff format check on scripts
+def test_repo_ruff_format():
+    """Python scripts in scripts/ pass ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--break-system-packages"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--diff", f"{REPO}/scripts/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format --diff failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo shear unused dependencies check
+def test_repo_cargo_shear():
+    """No unused dependencies found in workspace (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "install", "cargo-shear"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Failed to install cargo-shear:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["cargo", "shear", "--deny-warnings"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo shear found unused dependencies:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — cargo deny bans check on uv-build
+def test_repo_cargo_deny_uv_build():
+    """uv-build crate passes cargo deny bans check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "install", "cargo-deny"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Failed to install cargo-deny:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["cargo", "deny", "check", "bans"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/crates/uv-build",
+    )
+    assert r.returncode == 0, f"cargo deny check bans failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

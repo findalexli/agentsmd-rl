@@ -390,3 +390,37 @@ def test_repo_unit_tests():
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+def test_repo_core_init():
+    """Repo's core package init tests pass (pass_to_pass)."""
+    _install_deps()
+    # Build client first (required for tests)
+    build_r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert build_r.returncode == 0, f"Client build failed:\n{build_r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "vitest", "run", "js/core/src/init.test.ts", "--config", ".config/vitest.config.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Core init tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_client_init():
+    """Repo's client package init tests pass (pass_to_pass)."""
+    _install_deps()
+    # Build client first (required for tests)
+    build_r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert build_r.returncode == 0, f"Client build failed:\n{build_r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/test/init.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/client/js",
+    )
+    assert r.returncode == 0, f"Client init tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+

@@ -37,9 +37,31 @@ checks:
     origin: repo_tests
     description: "Repo's Python linting (ruff check) passes on modified files"
 
+  - id: test_repo_typos
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's spell check (typos) passes on modified files"
+
   - id: test_repo_python_syntax
     type: pass_to_pass
     origin: repo_tests
     description: "Python syntax is valid for all modified files"
 
-rubric: []
+rubric:
+  - rule: "All Python commands must go through `uv` and `.venv/bin/python`. Never use system `python3` or bare `pip`."
+    source:
+      path: "AGENTS.md"
+      lines: "34"
+      commit: "f53fa26e05c476a43f6db048a9e3b43bcb2b72fb"
+
+  - rule: "Run pre-commit linters (ruff, mypy) on modified files to ensure code quality."
+    source:
+      path: "AGENTS.md"
+      lines: "71-79"
+      commit: "f53fa26e05c476a43f6db048a9e3b43bcb2b72fb"
+
+  - rule: "When modifying imports, ensure all references are updated consistently across the codebase."
+    source:
+      path: "AGENTS.md"
+      lines: "15-19"
+      commit: "f53fa26e05c476a43f6db048a9e3b43bcb2b72fb"

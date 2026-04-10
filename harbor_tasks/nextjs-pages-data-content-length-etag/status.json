@@ -3,65 +3,56 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T02:14:47.410248",
-  "total_time": 2250.1,
-  "sandbox_id": "ik6djaswxyj5uaszh00st",
-  "backend": "fireworks",
+  "validated_at": "2026-04-10T05:01:40.383751",
+  "total_time": 13104.5,
+  "sandbox_id": "itk4hw3zf7hmwihgau266",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 78.2,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        ".eslintrc.json",
+        ".prettierrc.json",
+        "packages/next/src/server/send-payload.ts"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 75.54
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 0,
+      "notes": "tests look good"
+    },
     "validate": {
-      "timestamp": "2026-04-09T09:15:00Z",
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed: Docker build OK, NOP test returns 0 (2 fail-to-pass tests correctly fail on buggy code), Gold test returns 1 (8/8 tests pass after fix), rubric empty.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 86.6
-    },
-    "p2p_enrichment": {
-      "timestamp": "2026-04-09T08:57:00Z",
-      "status": "complete",
-      "ci_commands_discovered": [
-        "pnpm typescript (tsc --noEmit) - requires build/dist files",
-        "pnpm test-unit (jest) - requires build/dist files",
-        "pnpm lint - requires build/dist files",
-        "build_reusable.yml workflow - complex multi-step process"
-      ],
-      "ci_commands_added": [],
-      "notes": "Next.js repo at commit cfd5f533 has incomplete build artifacts (missing dist/ files). Full tsc/jest/lint require pre-build. Added AST-level p2p tests that verify TypeScript syntax and structure without requiring build.",
-      "p2p_tests_added": [
-        "test_repo_handler_syntax - validates balanced braces/parens, import/export patterns",
-        "test_repo_send_payload_syntax - validates required functions and header chain",
-        "test_repo_render_result_mechanism - behavioral test of isDynamic mechanism"
-      ],
-      "test_results": {
-        "base_commit": "6 passed (p2p), 2 failed (f2p - expected)",
-        "with_fix": "8 passed (all tests)"
-      }
-    },
-    "p2p_enrich": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1006.95,
-      "notes": ""
-    },
-    "improve": {
-      "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0,
-      "notes": "tests look good"
+      "notes": "All 4 validation checks passed: (1) Docker build succeeded, (2) NOP test reward=0 (2 fail_to_pass tests correctly fail on buggy code), (3) Gold test reward=1 (all 12 tests pass after fix applied), (4) Rubric rules are reasonable - gold solution follows all 3 rules (uses type imports correctly, follows prettier formatting, uses string payloads instead of Buffer.from). Judge requires ANTHROPIC_API_KEY for LLM evaluation which is unavailable in container.",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 2475.39
     },
     "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1.06,
-      "notes": "ICR=1.00"
+      "status": "fail",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1.23,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -70,16 +61,32 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T02:14:47.244854"
+      "time": 2082.08,
+      "at": "2026-04-09T20:53:10.672989"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 2250.1,
-      "at": "2026-04-09T02:14:47.410248"
+      "time": 2082.33,
+      "at": "2026-04-09T20:53:10.828792"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 13104.23,
+      "at": "2026-04-10T05:01:40.214358"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 13104.5,
+      "at": "2026-04-10T05:01:40.383751"
     }
   ]
 }

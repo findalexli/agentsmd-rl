@@ -65,8 +65,22 @@ checks:
     type: fail_to_pass
     description: "Old else clause for %W check removed"
 
-# No agent config rules found for this repository
-agent_config_rules: []
+agent_config_rules:
+  - source: "docs/en/development/style.md"
+    rule: "Follow existing code style. If you are editing code, follow the formatting of the existing code around it."
+  - source: "docs/en/development/style.md"
+    rule: "Be sure to add comments for all non-trivial parts of code. Writing the comment might help you realize that the code isn't necessary, or that it is designed wrong."
+  - source: "src/Functions/README.md"
+    rule: "When implementing functions, provide in-source documentation which is used by registerFunction, including description, syntax, arguments, and examples."
 
-# Rubric for evaluating task completion
-rubric: []
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "docs/en/development/style.md"
+      lines: "11-14"
+      commit: "61a4296fdce9d13cafb931cf73e4490b6d2bb315"
+  - rule: "Use comments to explain invariants, not narrate code. Add comments for all non-trivial parts of code."
+    source:
+      path: "docs/en/development/style.md"
+      lines: "253-261"
+      commit: "61a4296fdce9d13cafb931cf73e4490b6d2bb315"

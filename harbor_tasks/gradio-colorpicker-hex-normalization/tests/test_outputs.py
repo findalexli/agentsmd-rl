@@ -62,8 +62,81 @@ def test_utils_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) - regression
+# Pass-to-pass (static) - file structure checks
 # ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
+def test_colorpicker_utils_file_structure():
+    """utils.ts must have proper structure: tinycolor import and exported functions (pass_to_pass)."""
+    src = Path(UTILS_TS).read_text()
+
+    # Check for tinycolor import
+    assert "import tinycolor" in src, "utils.ts must import tinycolor"
+
+    # Check for required function exports
+    assert "export function hsva_to_rgba" in src, "utils.ts must export hsva_to_rgba function"
+    assert "export function format_color" in src, "utils.ts must export format_color function"
+
+    # Check for TypeScript types
+    assert "h: number" in src or "hsva:" in src, "utils.ts must use TypeScript types"
+
+
+# [static] pass_to_pass
+def test_colorpicker_svelte_file_structure():
+    """Colorpicker.svelte must have proper imports and structure (pass_to_pass)."""
+    src = Path(SVELTE).read_text()
+
+    # Check for Svelte imports
+    assert "import { BlockTitle }" in src or "@gradio/atoms" in src, "Colorpicker.svelte must import from @gradio/atoms"
+    assert "import { hsva_to_rgba" in src or "import" in src, "Colorpicker.svelte must have imports"
+
+    # Check for Svelte reactive syntax
+    assert "bind:value" in src or "onchange" in src or "bind:value=" in src, "Colorpicker.svelte must have input handling"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - runtime tests using subprocess.run()
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_tinycolor_runtime_available():
+    """tinycolor2 dependency must be available for runtime tests (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "console.log(require('/workspace/gradio/js/colorpicker/node_modules/tinycolor2')('red').toHexString())"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"tinycolor2 not available: {r.stderr}"
+    assert "#ff0000" in r.stdout, f"tinycolor2 did not return expected hex: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_node_typescript_parse_check():
+    """Modified TypeScript files must be parseable by Node.js (pass_to_pass)."""
+    # Test that we can read and strip TS types to make it runnable
+    script = r"""
+const fs = require('fs');
+const src = fs.readFileSync('/workspace/gradio/js/colorpicker/shared/utils.ts', 'utf8');
+// Basic sanity checks that the file is parseable
+if (!src.includes('export function hsva_to_rgba')) {
+    console.error('Cannot find hsva_to_rgba function');
+    process.exit(1);
+}
+if (!src.includes('export function format_color')) {
+    console.error('Cannot find format_color function');
+    process.exit(1);
+}
+console.log('utils.ts is parseable');
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"TypeScript file parse check failed: {r.stderr}"
+
 
 # [repo_tests] pass_to_pass
 def test_hsva_to_rgba_runs():
@@ -85,7 +158,7 @@ for (const input of tests) {
     const result = hsva_to_rgba(input);
     // Accept either rgba() or #hex format - both are valid color representations
     const isValidColor = typeof result === 'string' && (
-        result.startsWith('rgba(') || 
+        result.startsWith('rgba(') ||
         /^#[0-9a-f]{6}$/i.test(result)
     );
     results.push({ input, result, isValidColor });
@@ -99,37 +172,8 @@ console.log(JSON.stringify(results));
 
 
 # [repo_tests] pass_to_pass
-def test_colorpicker_utils_file_structure():
-    """utils.ts must have proper structure: tinycolor import and exported functions (pass_to_pass)."""
-    src = Path(UTILS_TS).read_text()
-
-    # Check for tinycolor import
-    assert "import tinycolor" in src, "utils.ts must import tinycolor"
-
-    # Check for required function exports
-    assert "export function hsva_to_rgba" in src, "utils.ts must export hsva_to_rgba function"
-    assert "export function format_color" in src, "utils.ts must export format_color function"
-
-    # Check for TypeScript types
-    assert "h: number" in src or "hsva:" in src, "utils.ts must use TypeScript types"
-
-
-# [repo_tests] pass_to_pass
-def test_colorpicker_svelte_file_structure():
-    """Colorpicker.svelte must have proper imports and structure (pass_to_pass)."""
-    src = Path(SVELTE).read_text()
-
-    # Check for Svelte imports
-    assert "import { BlockTitle }" in src or "@gradio/atoms" in src, "Colorpicker.svelte must import from @gradio/atoms"
-    assert "import { hsva_to_rgba" in src or "import" in src, "Colorpicker.svelte must have imports"
-
-    # Check for Svelte reactive syntax
-    assert "bind:value" in src or "onchange" in src or "bind:value=" in src, "Colorpicker.svelte must have input handling"
-
-
-# [repo_tests] pass_to_pass
 def test_format_color_regression():
-    """Existing format_color function must still produce correct output."""
+    """Existing format_color function must still produce correct output via Node.js runtime (pass_to_pass)."""
     script = EVAL_UTILS_JS + r"""
 const fn = new Function('tinycolor', js + '; return format_color;');
 const format_color = fn(tinycolor);

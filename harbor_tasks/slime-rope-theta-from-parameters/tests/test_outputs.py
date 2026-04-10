@@ -240,33 +240,57 @@ def test_class_members_preserved():
 # [repo_tests] pass_to_pass
 def test_repo_syntax_valid_mbridge():
     """Repo CI: slime_plugins/mbridge module files have valid Python syntax (pass_to_pass)."""
-    import py_compile
-
-    mbridge_dir = Path(f"{REPO}/slime_plugins/mbridge")
-    py_files = list(mbridge_dir.glob("*.py"))
-    assert py_files, f"No Python files found in {mbridge_dir}"
-
-    for f in py_files:
-        try:
-            py_compile.compile(str(f), doraise=True)
-        except py_compile.PyCompileError as e:
-            raise AssertionError(f"Syntax error in {f}: {e}")
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            "import py_compile, tempfile; files=['slime_plugins/__init__.py','slime_plugins/mbridge/__init__.py','slime_plugins/mbridge/deepseek_v32.py']; [py_compile.compile(f,cfile=tempfile.NamedTemporaryFile(suffix='.pyc',delete=True).name,doraise=True) for f in files]; print('All syntax OK')"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_import_structure():
-    """Repo CI: slime_plugins/mbridge package structure is valid (pass_to_pass)."""
-    # Check that __init__.py files exist (package structure is valid)
-    mbridge_init = Path(f"{REPO}/slime_plugins/mbridge/__init__.py")
-    plugins_init = Path(f"{REPO}/slime_plugins/__init__.py")
+def test_repo_ruff_check_mbridge():
+    """Repo CI: ruff linting passes on modified mbridge files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "ruff", "check",
+            "--cache-dir=/tmp/.ruff_cache",
+            "slime_plugins/mbridge/deepseek_v32.py"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
 
-    assert mbridge_init.exists(), "slime_plugins/mbridge/__init__.py missing"
-    assert plugins_init.exists(), "slime_plugins/__init__.py missing"
 
-    # Verify syntax of init files
-    import py_compile
-    for f in [mbridge_init, plugins_init]:
-        try:
-            py_compile.compile(str(f), doraise=True)
-        except py_compile.PyCompileError as e:
-            raise AssertionError(f"Syntax error in {f}: {e}")
+# [repo_tests] pass_to_pass
+def test_repo_black_format_mbridge():
+    """Repo CI: black format check passes on modified mbridge files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["black", "--check", "--quiet", "slime_plugins/mbridge/deepseek_v32.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check_mbridge():
+    """Repo CI: isort import order check passes on modified mbridge files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["isort", "--check", "--quiet", "slime_plugins/mbridge/deepseek_v32.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"

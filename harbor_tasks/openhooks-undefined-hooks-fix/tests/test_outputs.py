@@ -197,3 +197,29 @@ def test_conversation_panel_tests():
     )
     assert result.returncode == 0, \
         f"Conversation panel tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_hooks_modal_unit_tests():
+    """Repo's hooks-modal specific unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "run", "test", "--", "__tests__/components/features/conversation-panel/hooks-modal.test.tsx"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, \
+        f"Hooks-modal tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "run", "typecheck"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, \
+        f"Typecheck failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"

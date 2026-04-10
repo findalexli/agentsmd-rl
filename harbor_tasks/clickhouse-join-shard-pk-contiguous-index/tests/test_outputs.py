@@ -247,3 +247,23 @@ def test_no_duplicate_includes_in_target():
         seen.add(inc)
 
     assert not duplicates, f"Duplicate #include found: {duplicates}"
+
+def test_repo_ci_scripts_compile():
+    """
+    Pass-to-pass: Verify CI python scripts compile without syntax errors.
+    """
+    r = subprocess.run(
+        ['python3', '-m', 'py_compile'] + [str(p) for p in (REPO / 'tests' / 'ci').glob('*.py')],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO)
+    )
+    assert r.returncode == 0, f'Python CI scripts syntax check failed:\n{r.stderr[:500]}'
+
+def test_repo_shell_scripts_syntax():
+    """
+    Pass-to-pass: Verify repo shell scripts have valid syntax.
+    """
+    r = subprocess.run(
+        ['bash', '-n', 'utils/check-large-objects.sh'],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO)
+    )
+    assert r.returncode == 0, f'Bash syntax check failed:\n{r.stderr[:500]}'

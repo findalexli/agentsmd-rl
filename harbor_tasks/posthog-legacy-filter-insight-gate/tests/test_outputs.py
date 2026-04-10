@@ -77,6 +77,35 @@ def test_repo_ast_parse_insight_files():
         ast.parse(src)  # raises SyntaxError if invalid
 
 
+def test_repo_dependency_analysis():
+    """Repo: Python dependency analysis tests pass (pass_to_pass).
+
+    Runs bin/test/test_find_python_dependencies.py which validates the import
+    graph analysis tooling used by CI to detect dependency changes.
+    """
+    # Install required dependencies first
+    r = subprocess.run(
+        ["pip", "install", "grimp", "parameterized", "pytest", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run the dependency analysis tests
+    r = subprocess.run(
+        ["python", "-m", "pytest", "bin/test/test_find_python_dependencies.py",
+         "--override-ini=addopts=", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dependency analysis tests failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_repo_insight_py_compiles():
+    """Repo: posthog/api/insight.py compiles successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", f"{REPO}/posthog/api/insight.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"insight.py failed to compile:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

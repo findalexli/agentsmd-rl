@@ -269,6 +269,16 @@ def test_repo_modified_files_formatted():
         assert r.returncode == 0, f"File {f} is not correctly formatted:\n{r.stderr[-200:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript type check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "tsgo"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript type check failed:\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------

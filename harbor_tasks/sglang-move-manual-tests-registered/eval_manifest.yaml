@@ -42,11 +42,6 @@ checks:
     origin: pr_diff
     description: "Remaining files in test/registered/8-gpu-models/ have proper CI registration"
 
-  - id: test_repo_precommit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's pre-commit checks pass"
-
   - id: test_ci_register_module
     type: pass_to_pass
     origin: repo_tests
@@ -67,5 +62,40 @@ checks:
     origin: repo_tests
     description: "ci_register module passes black formatting check"
 
+  - id: test_ci_register_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ci_register module passes isort import sorting check"
+
+  - id: test_ci_register_codespell
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ci_register module passes codespell spelling check"
+
+  - id: test_workflow_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI workflow YAML files are valid"
+
+  - id: test_pyproject_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pyproject.toml is valid TOML"
+
+  - id: test_registered_dir_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Registered test files pass isort import sorting check"
+
 rubric:
-  []
+  - rule: "Files in test/registered/ must have a register_*_ci() call at module level. Files moved to test/manual/ must NOT have CI registration calls."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "308-338"
+      commit: "4e4b4ac153e7e313bdf26e37f00188acd45c00e0"
+
+  - rule: "test/registered/ is for CI-discovered tests; test/manual/ is for non-CI debugging and one-off manual verification."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "369-396"
+      commit: "4e4b4ac153e7e313bdf26e37f00188acd45c00e0"

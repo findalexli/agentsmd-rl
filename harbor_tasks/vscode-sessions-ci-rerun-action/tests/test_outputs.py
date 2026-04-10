@@ -275,6 +275,97 @@ def test_repo_fetcher_methods_valid():
     assert "constructor(" in fetcher_src, "Fetcher must have constructor"
 
 
+# [repo_tests] pass_to_pass - Repo CI: Modified TypeScript files exist and are readable
+def test_repo_modified_files_exist():
+    """All modified TypeScript files must exist and be readable (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node", "-e",
+            "const fs=require('fs');const files=['src/vs/sessions/contrib/github/browser/fetchers/githubPRCIFetcher.ts','src/vs/sessions/contrib/github/browser/models/githubPullRequestCIModel.ts','src/vs/sessions/contrib/changes/browser/ciStatusWidget.ts'];let ok=true;files.forEach(f=>{try{const s=fs.readFileSync(f,'utf8');if(!s||s.length===0){console.error('FAIL:'+f+' empty');ok=false;}}catch(e){console.error('FAIL:'+f+':'+e.message);ok=false;}});process.exit(ok?0:1);"
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Modified files check failed:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: getCheckRuns preserved in fetcher
+def test_repo_getcheckruns_preserved():
+    """GitHubPRCIFetcher must preserve getCheckRuns method (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node", "-e",
+            "const fs=require('fs');const s=fs.readFileSync('src/vs/sessions/contrib/github/browser/fetchers/githubPRCIFetcher.ts','utf8');if(!s.includes('getCheckRuns')){console.error('FAIL: getCheckRuns missing');process.exit(1);}console.log('OK: getCheckRuns preserved');"
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"getCheckRuns check failed:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: getCheckRunAnnotations preserved in model
+def test_repo_getcheckrunannotations_preserved():
+    """GitHubPullRequestCIModel must preserve getCheckRunAnnotations method (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node", "-e",
+            "const fs=require('fs');const s=fs.readFileSync('src/vs/sessions/contrib/github/browser/models/githubPullRequestCIModel.ts','utf8');if(!s.includes('getCheckRunAnnotations')){console.error('FAIL: getCheckRunAnnotations missing');process.exit(1);}console.log('OK: getCheckRunAnnotations preserved');"
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"getCheckRunAnnotations check failed:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: ci.openOnGitHub preserved in widget
+def test_repo_openongithub_preserved():
+    """ciStatusWidget must preserve ci.openOnGitHub action (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node", "-e",
+            "const fs=require('fs');const s=fs.readFileSync('src/vs/sessions/contrib/changes/browser/ciStatusWidget.ts','utf8');if(!s.includes('ci.openOnGitHub')){console.error('FAIL: ci.openOnGitHub missing');process.exit(1);}console.log('OK: ci.openOnGitHub preserved');"
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ci.openOnGitHub check failed:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: Modified files have valid TypeScript syntax
+def test_repo_typescript_syntax_check():
+    """Modified TypeScript files must have valid syntax - balanced braces, strings, comments (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node", "-e",
+            "const fs=require('fs');function check(src,f){let inStr=false,inTpl=false,inCmt=false;let strChar=null;for(let i=0;i<src.length;i++){const c=src[i],n=src[i+1]||'';if(!inStr&&!inCmt&&c=='\`'){inTpl=!inTpl;continue;}if(!inTpl){if(!inStr&&!inCmt&&(c=='\\\"'||c==\"'\")){inStr=true;strChar=c;continue;}if(inStr&&c===strChar&&src[i-1]!=='\\\\'){inStr=false;strChar=null;continue;}}if(!inStr&&!inTpl){if(!inCmt&&c=='/'&&n=='/'){while(i<src.length&&src[i]!='\\n')i++;continue;}if(!inCmt&&c=='/'&&n=='*'){inCmt=true;i++;continue;}if(inCmt&&c=='*'&&n=='/'){inCmt=false;i++;continue;}}}if(inStr)throw new Error('Unclosed string in '+f);if(inTpl)throw new Error('Unclosed template in '+f);if(inCmt)throw new Error('Unclosed comment in '+f);}const files=['src/vs/sessions/contrib/github/browser/fetchers/githubPRCIFetcher.ts','src/vs/sessions/contrib/github/browser/models/githubPullRequestCIModel.ts','src/vs/sessions/contrib/changes/browser/ciStatusWidget.ts'];let ok=true;files.forEach(f=>{try{check(fs.readFileSync(f,'utf8'),f);console.log('OK:'+f);}catch(e){console.error('FAIL:'+e.message);ok=false;}});process.exit(ok?0:1);"
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: Fetcher class structure valid
+def test_repo_fetcher_class_valid():
+    """GitHubPRCIFetcher must have valid class structure (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node", "-e",
+            "const fs=require('fs');const s=fs.readFileSync('src/vs/sessions/contrib/github/browser/fetchers/githubPRCIFetcher.ts','utf8');if(!s.includes('export class GitHubPRCIFetcher')){console.error('FAIL: export class GitHubPRCIFetcher missing');process.exit(1);}if(!s.includes('constructor(')){console.error('FAIL: constructor missing');process.exit(1);}console.log('OK: GitHubPRCIFetcher structure valid');"
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fetcher class check failed:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: Model class structure valid
+def test_repo_model_class_valid():
+    """GitHubPullRequestCIModel must have valid class structure (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node", "-e",
+            "const fs=require('fs');const s=fs.readFileSync('src/vs/sessions/contrib/github/browser/models/githubPullRequestCIModel.ts','utf8');if(!s.includes('export class GitHubPullRequestCIModel')){console.error('FAIL: export class GitHubPullRequestCIModel missing');process.exit(1);}if(!s.includes('extends Disposable')){console.error('FAIL: extends Disposable missing');process.exit(1);}console.log('OK: GitHubPullRequestCIModel structure valid');"
+        ],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Model class check failed:\n{r.stderr}{r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from .github/copilot-instructions.md
 # ---------------------------------------------------------------------------

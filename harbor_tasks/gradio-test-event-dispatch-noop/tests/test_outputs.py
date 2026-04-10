@@ -280,6 +280,18 @@ def test_repo_client_node_tests():
     )
     assert r.returncode == 0, f"Client node tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
+# [repo_tests] pass_to_pass
+def test_repo_client_build():
+    """Repo's @gradio/client build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/gradio && corepack enable && pnpm install >/dev/null 2>&1 && pnpm --filter @gradio/client build"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) — regressions

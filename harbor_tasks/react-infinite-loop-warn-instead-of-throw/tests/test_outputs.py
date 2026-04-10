@@ -142,3 +142,30 @@ def test_repo_reconciler_hooks():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Reconciler hooks tests failed:\n{r.stdout[-1500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_flags():
+    """Repo's feature flags check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flags"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flags check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_incremental_tests():
+    """Repo's ReactIncremental tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactIncremental", "-r=experimental", "--env=development", "--ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Incremental tests failed:\n{r.stdout[-1500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_use_sync_external_store():
+    """Repo's useSyncExternalStore tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=useSyncExternalStore", "-r=experimental", "--env=development", "--ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"useSyncExternalStore tests failed:\n{r.stdout[-1500:]}\n{r.stderr[-500:]}"

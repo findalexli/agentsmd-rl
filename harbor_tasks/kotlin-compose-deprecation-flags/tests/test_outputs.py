@@ -501,6 +501,179 @@ def test_compose_compiler_module_exists():
     assert SUBPLUGIN_FILE.exists(), "ComposeCompilerSubplugin.kt should exist"
 
 
+def test_repo_kotlin_compiler_available():
+    """Repo environment has Kotlin compiler available (pass_to_pass)."""
+    r = subprocess.run(
+        ["kotlinc", "-version"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"kotlinc should be available: {r.stderr}"
+    assert "Kotlin" in r.stderr or "kotlinc" in r.stderr, "kotlinc should report version"
+
+
+def test_repo_java_available():
+    """Repo environment has Java available (pass_to_pass)."""
+    r = subprocess.run(
+        ["java", "-version"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Java should be available: {r.stderr}"
+
+
+def test_repo_gradle_wrapper_exists():
+    """Repo Gradle wrapper scripts exist and are executable (pass_to_pass)."""
+    gradlew = REPO / "gradlew"
+    gradlew_bat = REPO / "gradlew.bat"
+    wrapper_jar = REPO / "gradle" / "wrapper" / "gradle-wrapper.jar"
+    wrapper_props = REPO / "gradle" / "wrapper" / "gradle-wrapper.properties"
+
+    assert gradlew.exists(), "gradlew should exist"
+    assert gradlew.stat().st_mode & 0o111, "gradlew should be executable"
+    assert wrapper_jar.exists(), "gradle-wrapper.jar should exist"
+    assert wrapper_props.exists(), "gradle-wrapper.properties should exist"
+
+    # Verify wrapper properties has valid content
+    props_content = wrapper_props.read_text()
+    assert "distributionUrl" in props_content, "gradle-wrapper.properties should have distributionUrl"
+    assert "gradle" in props_content.lower(), "distributionUrl should reference gradle"
+
+
+def test_repo_kotlin_syntax_valid():
+    """Repo Kotlin source files have valid syntax (pass_to_pass).
+
+    Uses kotlinc to verify that Kotlin files can be parsed without syntax errors.
+    Ignores unresolved reference errors which are expected in minimal environment.
+    """
+    # Check if kotlinc is available
+    kotlinc_check = subprocess.run(
+        ["which", "kotlinc"],
+        capture_output=True, text=True,
+    )
+    if kotlinc_check.returncode != 0:
+        import pytest
+        pytest.skip("kotlinc not available - skipping syntax test")
+
+    source_files = [
+        EXTENSION_FILE,
+        FEATURE_FLAGS_FILE,
+        SUBPLUGIN_FILE,
+    ]
+
+    for src_file in source_files:
+        # Use kotlinc to check the file - run with -d to avoid interactive mode
+        r = subprocess.run(
+            ["kotlinc", str(src_file), "-d", "/tmp/kotlin-syntax-check"],
+            capture_output=True, text=True,
+            timeout=60,
+        )
+
+        # Only fail on actual syntax errors, not missing dependency errors
+        # which are expected when compiling individual files
+        if r.returncode != 0:
+            stderr_lower = r.stderr.lower()
+            # Check for syntax-related errors only
+            syntax_error_terms = ["syntax error", "unexpected", "expecting", "premature end"]
+            if any(term in stderr_lower for term in syntax_error_terms):
+                assert False, (
+                    f"Kotlin syntax error in {src_file.name}:\n{r.stderr}"
+                )
+        # If no syntax errors, syntax is valid (even if compilation failed due to missing deps)
+
+
+def test_compose_compiler_build_gradle_valid():
+    """Compose compiler module build.gradle.kts is valid Kotlin script (pass_to_pass)."""
+    build_file = BUILD_GRADLE_FILE
+    assert build_file.exists(), "build.gradle.kts should exist"
+
+    content = build_file.read_text()
+
+    # Check for valid Kotlin DSL structure
+    assert "plugins {" in content, "build.gradle.kts should have plugins block"
+    assert "dependencies {" in content, "build.gradle.kts should have dependencies block"
+
+    # Basic brace balance check
+    open_braces = content.count("{")
+    close_braces = content.count("}")
+    assert open_braces == close_braces, "build.gradle.kts should have balanced braces"
+
+
+def test_compose_compiler_git_repo_valid():
+    """Compose compiler is in a valid git repository (pass_to_pass)."""
+    git_dir = REPO / ".git"
+    assert git_dir.exists(), "Should be a git repository"
+
+    # Check git can read the repo
+    r = subprocess.run(
+        ["git", "-C", str(REPO), "rev-parse", "--git-dir"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Git should be able to read repo: {r.stderr}"
+
+
+def test_repo_kotlin_all_files_syntax_valid():
+    """All modified Kotlin files have valid syntax via kotlinc (pass_to_pass).
+
+    This is a CI-based test that runs kotlinc on all Kotlin files modified by the PR.
+    Only fails on actual syntax errors, not missing dependencies.
+    """
+    # Check if kotlinc is available
+    kotlinc_check = subprocess.run(
+        ["which", "kotlinc"],
+        capture_output=True, text=True,
+    )
+    if kotlinc_check.returncode != 0:
+        import pytest
+        pytest.skip("kotlinc not available - skipping syntax test")
+
+    # All Kotlin files modified by this PR
+    modified_files = [
+        EXTENSION_FILE,
+        FEATURE_FLAGS_FILE,
+        SUBPLUGIN_FILE,
+        EXTENSION_TEST_FILE,
+        COMPOSE_IT_FILE,
+    ]
+
+    syntax_errors = []
+    for src_file in modified_files:
+        if not src_file.exists():
+            syntax_errors.append(f"File does not exist: {src_file}")
+            continue
+
+        # Use kotlinc to check the file syntax
+        r = subprocess.run(
+            ["kotlinc", str(src_file), "-d", "/tmp/kotlin-syntax-check"],
+            capture_output=True, text=True,
+            timeout=60,
+        )
+
+        # Only fail on actual syntax errors, not missing dependency errors
+        if r.returncode != 0:
+            stderr_lower = r.stderr.lower()
+            # Check for syntax-related errors only
+            syntax_error_terms = ["syntax error", "unexpected", "expecting", "premature end"]
+            if any(term in stderr_lower for term in syntax_error_terms):
+                syntax_errors.append(f"Syntax error in {src_file.name}:\n{r.stderr}")
+
+    assert not syntax_errors, "Kotlin syntax errors found:\n" + "\n---\n".join(syntax_errors)
+
+
+def test_compose_compiler_settings_gradle_includes_plugin():
+    """Settings.gradle includes the compose compiler plugin project (pass_to_pass)."""
+    settings_file = REPO / "settings.gradle"
+    assert settings_file.exists(), "settings.gradle should exist"
+
+    content = settings_file.read_text()
+
+    # Check for compose compiler plugin project
+    assert "compose-compiler-gradle-plugin" in content, \
+        "settings.gradle should include :compose-compiler-gradle-plugin"
+
+    # Check project path mapping exists
+    assert "project(':compose-compiler-gradle-plugin').projectDir" in content, \
+        "settings.gradle should have projectDir mapping for compose compiler"
+
+
 def test_compose_compiler_functional_test_exists():
     """Compose compiler functional test file exists (p2p)."""
     assert EXTENSION_TEST_FILE.exists(), "ExtensionConfigurationTest.kt should exist"

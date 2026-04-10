@@ -1,28 +1,37 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T13:02:26.304887",
-  "total_time": 13833.88,
-  "sandbox_id": "iwewisx5vycqtqli4y1cp",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-10T00:17:04.426566",
+  "total_time": 8276.49,
+  "sandbox_id": "iz5z9j1y7m6bt1940w7vz",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "completed",
-      "model": "claude-opus-4-6",
-      "backend": "anthropic",
-      "time": 228.56,
-      "notes": "Added 4 repo_tests pass_to_pass gates to test_outputs.py and eval_manifest.yaml. CI discovery: .github/workflows/pr-test.yml (GPU-heavy e2e tests), .github/workflows/pre-commit.yml (black, ruff, isort). Pre-existing lint failures on base commit (black formatting and ruff errors exist), so used synthetic p2p tests instead: (1) test_repo_python_syntax_valid - verifies all Python files compile, (2) test_repo_package_importable - verifies slime package imports successfully, (3) test_repo_patch_file_valid - verifies sglang.patch structure, (4) test_repo_pyproject_toml_valid - verifies pyproject.toml is valid TOML with pytest config."
-    },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 230.48,
+      "time": 361.55,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        ".claude/skills/add-dynamic-filter/SKILL.md",
+        ".claude/skills/add-eval-dataset-config/SKILL.md",
+        ".claude/skills/add-reward-function/SKILL.md",
+        ".claude/skills/add-rollout-function/SKILL.md",
+        ".claude/skills/add-tests-and-ci/SKILL.md",
+        "CONTRIBUTING.md",
+        "pyproject.toml"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 59.89
     },
     "improve": {
       "status": "skipped",
@@ -32,21 +41,9 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "Fixed test_outputs.py fail-to-pass tests. The UNCONDITIONAL_INIT_CHECK script was incorrectly passing on base commit because it found skip_topk inside the 'else' block (not is_nextn) and exited early. Fixed to require method-body level initialization (indent <= 8) which is truly unconditional. Docker build: pass, NOP test: pass (reward=0), Gold test: pass (reward=1), Rubric: pass (ICR=1.0)",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 169.77
-    },
-    "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.71,
-      "notes": "ICR=1.00"
+      "time": 165.4
     }
   },
   "history": [
@@ -54,25 +51,17 @@
       "verdict": "fail",
       "nop": -1.0,
       "gold": -1.0,
-      "backend": "glm",
-      "time": 6157.75,
-      "at": "2026-04-09T06:57:49.347552"
+      "backend": "fireworks",
+      "time": 8276.22,
+      "at": "2026-04-10T00:17:04.254517"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "fireworks",
-      "time": 13833.61,
-      "at": "2026-04-09T13:02:26.134771"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 13833.88,
-      "at": "2026-04-09T13:02:26.304887"
+      "time": 8276.49,
+      "at": "2026-04-10T00:17:04.426566"
     }
   ]
 }

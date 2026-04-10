@@ -17,6 +17,11 @@ checks:
     origin: static
     description: "gradio/cli/commands/skills.py must parse without syntax errors"
 
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rep's ruff lint check passes on modified files (utils.py, skills.py)"
+
   - id: watchfn_no_future_annotations_flag
     type: fail_to_pass
     origin: pr_diff
@@ -61,6 +66,21 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's main module imports without errors"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on modified files (utils.py, skills.py)"
+
+  - id: test_repo_utils_abspath
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utils abspath tests pass (test/test_utils.py::TestAbspath)"
+
+  - id: test_repo_utils_validate_url
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utils URL validation tests pass (test/test_utils.py::TestValidateURL)"
 
 rubric:
   - rule: "Be consistent with the style of the surrounding code."

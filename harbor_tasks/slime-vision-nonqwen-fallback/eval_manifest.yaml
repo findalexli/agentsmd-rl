@@ -11,6 +11,21 @@ checks:
     origin: static
     description: "All modified files must be valid Python"
 
+  - id: repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on modified files"
+
+  - id: repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import sorting passes on modified files"
+
+  - id: repo_plugin_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin contract tests pass"
+
   - id: vision_info_base64
     type: fail_to_pass
     origin: pr_diff
@@ -56,4 +71,21 @@ checks:
     origin: pr_diff
     description: "sglang_rollout.py must use safe access (.get) for multimodal_inputs images key"
 
-rubric: []
+rubric:
+  - rule: "Use safe dictionary access (.get()) when checking optional multimodal inputs to avoid KeyError."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "30-53"
+      commit: "a1ee76cfe1c0fbb4511d5bc2d2fc28622728121c"
+
+  - rule: "Handle numpy ndarray values in multimodal inputs by converting to tensor with torch.from_numpy().copy() before moving to device."
+    source:
+      path: ".claude/skills/add-dynamic-filter/SKILL.md"
+      lines: "66-71"
+      commit: "a1ee76cfe1c0fbb4511d5bc2d2fc28622728121c"
+
+  - rule: "Use torch.no_grad() context when running frozen vision encoders (requires_grad_(False) / eval() models) to avoid unnecessary gradient computation."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "74-80"
+      commit: "a1ee76cfe1c0fbb4511d5bc2d2fc28622728121c"

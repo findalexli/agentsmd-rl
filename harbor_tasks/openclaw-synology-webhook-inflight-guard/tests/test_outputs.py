@@ -316,7 +316,7 @@ process.exit(1);
     )
     assert handler_body, "No handler body found"
     guard_call = re.search(
-        r"(?:begin|guard|acquire)\w*\(\s*\{([\s\S]*?)\}\s*\)", handler_body.group()
+        r"(?:begin|guard|acquire)\w*(?:Pipeline|Request|Webhook)\w*(?:OrReject)?\s*\(", handler_body.group()
     )
     assert guard_call, "No guard call in handler"
     args = guard_call.group(1)
@@ -393,6 +393,56 @@ def test_repo_extension_no_plugin_sdk_internal():
         cwd=REPO, capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, f"Plugin-sdk-internal check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_webhook_auth_body_order():
+    """Webhook auth/body order check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/check-webhook-auth-body-order.mjs"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Webhook auth body order check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_extension_import_boundary():
+    """Plugin extension import boundary check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/check-plugin-extension-import-boundary.mjs"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Plugin extension import boundary check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_extension_src_imports():
+    """No extension src imports check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--import", "tsx", "scripts/check-no-extension-src-imports.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"No extension src imports check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_extension_test_core_imports():
+    """No extension test core imports check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--import", "tsx", "scripts/check-no-extension-test-core-imports.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"No extension test core imports check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_monolithic_plugin_sdk_entry_imports():
+    """No monolithic plugin-sdk entry imports check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--import", "tsx", "scripts/check-no-monolithic-plugin-sdk-entry-imports.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"No monolithic plugin-sdk entry imports check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -478,7 +528,7 @@ def test_no_any_types():
     """No `any` type annotations in webhook-handler.ts."""
     code = _handler_code()
     any_matches = re.findall(r":\s*any\b", code)
-    assert len(any_matches) == 0, f"Found {len(any_matches)} uses of `: any`"
+    assert len(any_matches) == 0, f"Found {len(any_matches)} uses of `: any"
 
 
 # [agent_config] pass_to_pass — AGENTS.md:158, extensions/AGENTS.md:31

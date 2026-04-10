@@ -3,84 +3,29 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T02:15:44.161576",
-  "total_time": 2306.85,
-  "sandbox_id": "iwtw3c8240l1cnd19d6ks",
+  "validated_at": "2026-04-10T04:44:57.890800",
+  "total_time": 12101.94,
+  "sandbox_id": "in1b6dffhqpsdy0sux8da",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Fixed solve.sh script - the original git apply patch didn't work because the base file format (especially unit.rs line 119-120 split pattern) differed from what the patch expected. Replaced with Python-based patching that correctly handles: 1) WellKnownFunctionKind::RequireFrom variant in analyzer/mod.rs, 2) URL pattern matching and handler in references/mod.rs, 3) Uncommenting 6 test cases in unit.rs with special handling for the split-line format.",
+      "notes": "All validation checks passed. Docker build successful. NOP test correctly returns reward=0 (5 fail-to-pass tests fail as expected). Gold test correctly returns reward=1 (all 12 tests pass after fix). Rubric judge passes with score 0.5 >= threshold 0.5.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 517.2
+      "time": 82.68
     },
     "p2p_enrichment": {
-      "status": "completed",
-      "notes": "Added 2 pass_to_pass tests from repo CI/CD:",
-      "tests_added": [
-        {
-          "id": "repo_check_unused_turbo_tasks",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "command": "node scripts/check-unused-turbo-tasks.mjs",
-          "description": "Validates no new unused turbo-tasks items are introduced. Base commit has 2 known unused items (size_bytes in turbopack-browser and turbopack-core) which are accepted as baseline.",
-          "runtime_seconds": 5
-        },
-        {
-          "id": "repo_node_file_trace_fixtures_exist",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Validates node-file-trace test fixtures exist for create-require tests",
-          "checks": [
-            "turbopack/crates/turbopack-tracing/tests/node-file-trace/test/unit directory exists",
-            "module-create-require fixture exists",
-            "module-create-require/input.js exists"
-          ]
-        }
-      ],
-      "ci_commands_discovered": [
-        {
-          "command": "node scripts/check-unused-turbo-tasks.mjs",
-          "available": true,
-          "reason": "Uses only Node.js built-in modules (no npm dependencies required)"
-        },
-        {
-          "command": "cargo test",
-          "available": false,
-          "reason": "Rust toolchain not installed in Docker image"
-        },
-        {
-          "command": "cargo check",
-          "available": false,
-          "reason": "Rust toolchain not installed in Docker image"
-        },
-        {
-          "command": "cargo clippy",
-          "available": false,
-          "reason": "Rust toolchain not installed in Docker image"
-        },
-        {
-          "command": "pnpm lint",
-          "available": false,
-          "reason": "Requires npm dependencies (glob module not found)"
-        },
-        {
-          "command": "pnpm test-unit",
-          "available": false,
-          "reason": "Requires npm dependencies and Rust build artifacts"
-        }
-      ],
-      "constraints": [
-        "No Rust toolchain available in Docker image (per original task comment)",
-        "npm dependencies not installed (node_modules missing)",
-        "Building Turbopack would exceed timeout even if Rust were available"
-      ]
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 311.38,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -97,11 +42,23 @@
       "notes": "tests look good"
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.72,
-      "notes": "ICR=1.00"
+      "time": 5.35,
+      "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 58.87
     }
   },
   "history": [
@@ -110,16 +67,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T02:15:43.993949"
+      "time": 799.49,
+      "at": "2026-04-09T14:41:30.685818"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 2306.85,
-      "at": "2026-04-09T02:15:44.161576"
+      "time": 799.78,
+      "at": "2026-04-09T14:41:30.852295"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 180.89,
+      "at": "2026-04-09T15:00:52.369281"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12101.68,
+      "at": "2026-04-10T04:44:57.724859"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 12101.94,
+      "at": "2026-04-10T04:44:57.890800"
     }
   ]
 }

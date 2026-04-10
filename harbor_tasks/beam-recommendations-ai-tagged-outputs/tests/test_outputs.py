@@ -166,7 +166,7 @@ def test_repo_unit_tests_relevant():
         capture_output=True, text=True, timeout=120,
         cwd=os.path.join(REPO, "sdks/python"),
     )
-    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Unit tests failed:{r.stdout[-1000:]}{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -185,7 +185,7 @@ def test_repo_pylint():
         capture_output=True, text=True, timeout=120,
         cwd=os.path.join(REPO, "sdks/python"),
     )
-    assert r.returncode == 0, f"Pylint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Pylint failed:{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -204,7 +204,72 @@ def test_repo_yapf():
         capture_output=True, text=True, timeout=120,
         cwd=os.path.join(REPO, "sdks/python"),
     )
-    assert r.returncode == 0, f"Yapf formatting check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Yapf formatting check failed:{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flake8():
+    """Repo's flake8 syntax check on modified file passes (pass_to_pass)."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "flake8"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [
+            sys.executable, "-m", "flake8",
+            "apache_beam/ml/gcp/recommendations_ai.py",
+            "--count",
+            "--select=E9,F821,F822,F823",
+            "--show-source",
+            "--statistics",
+        ],
+        capture_output=True, text=True, timeout=120,
+        cwd=os.path.join(REPO, "sdks/python"),
+    )
+    assert r.returncode == 0, f"Flake8 check failed:{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo's isort import ordering check on modified file passes (pass_to_pass)."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "isort==7.0.0"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [
+            sys.executable, "-m", "isort",
+            "apache_beam/ml/gcp/recommendations_ai.py",
+            "-p", "apache_beam",
+            "--line-width", "120",
+            "--check-only",
+            "--order-by-type",
+            "--combine-star",
+            "--force-single-line-imports",
+            "--diff",
+            "--magic-placement",
+        ],
+        capture_output=True, text=True, timeout=120,
+        cwd=os.path.join(REPO, "sdks/python"),
+    )
+    assert r.returncode == 0, f"Isort check failed:{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ml_gcp_unit_tests():
+    """All ml/gcp unit tests pass (pass_to_pass) - covers entire modified module."""
+    r = subprocess.run(
+        [
+            sys.executable, "-m", "pytest",
+            "apache_beam/ml/gcp/",
+            "-v", "--tb=short",
+            "--ignore-glob=*_it*",
+            "-x",
+        ],
+        capture_output=True, text=True, timeout=300,
+        cwd=os.path.join(REPO, "sdks/python"),
+    )
+    assert r.returncode == 0, f"ML/GCP unit tests failed:{r.stdout[-1000:]}{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

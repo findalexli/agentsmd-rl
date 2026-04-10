@@ -78,55 +78,70 @@ checks:
     type: "fail_to_pass"
     origin: "pr_diff"
 
-  # Pass-to-pass tests - verify repo CI/CD passes on base AND after fix
-  - id: "test_mcp_service_python_syntax"
-    name: "MCP service Python syntax valid"
-    description: "All MCP service Python files should have valid syntax"
-    test: "test_mcp_service_python_syntax"
+  # Pass-to-pass tests - subprocess-based repo CI checks (origin: repo_tests)
+  - id: "test_repo_mcp_database_syntax"
+    name: "MCP database files have valid Python syntax"
+    description: "Modified MCP database files should pass Python syntax check (py_compile)"
+    test: "test_repo_mcp_database_syntax"
     type: "pass_to_pass"
     origin: "repo_tests"
 
-  - id: "test_mcp_service_ast_parseable"
-    name: "MCP service files AST parseable"
-    description: "All MCP service Python files should be parseable by AST module"
-    test: "test_mcp_service_ast_parseable"
+  - id: "test_repo_mcp_database_unit_tests"
+    name: "MCP database tools unit tests pass"
+    description: "MCP database tools unit tests should pass via pytest"
+    test: "test_repo_mcp_database_unit_tests"
     type: "pass_to_pass"
     origin: "repo_tests"
 
-  - id: "test_modified_database_files_syntax"
-    name: "Modified database files have valid syntax"
-    description: "Modified database module files should have valid Python syntax"
-    test: "test_modified_database_files_syntax"
+  - id: "test_repo_mcp_schemas_import"
+    name: "MCP database schemas module imports successfully"
+    description: "MCP database schemas module should import without errors"
+    test: "test_repo_mcp_schemas_import"
     type: "pass_to_pass"
     origin: "repo_tests"
 
+  - id: "test_repo_mcp_common_schema_discovery"
+    name: "MCP schema_discovery module imports successfully"
+    description: "MCP common schema_discovery module should export DATABASE_DEFAULT_COLUMNS"
+    test: "test_repo_mcp_common_schema_discovery"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "test_repo_mcp_service_py_syntax"
+    name: "All MCP service files have valid Python syntax"
+    description: "All MCP service Python files should pass Python syntax check"
+    test: "test_repo_mcp_service_py_syntax"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  # Static analysis tests (origin: static - AST/content checks)
   - id: "test_database_schemas_has_database_filter_class"
     name: "DatabaseFilter class exists"
     description: "Database schemas module should contain DatabaseFilter class"
     test: "test_database_schemas_has_database_filter_class"
     type: "pass_to_pass"
-    origin: "repo_tests"
+    origin: "static"
 
   - id: "test_database_schemas_has_list_databases_request_class"
     name: "ListDatabasesRequest class exists"
     description: "Database schemas module should contain ListDatabasesRequest class"
     test: "test_database_schemas_has_list_databases_request_class"
     type: "pass_to_pass"
-    origin: "repo_tests"
+    origin: "static"
 
   - id: "test_list_databases_has_tool_function"
     name: "list_databases tool function exists"
     description: "list_databases.py should contain the list_databases tool function"
     test: "test_list_databases_has_tool_function"
     type: "pass_to_pass"
-    origin: "repo_tests"
+    origin: "static"
 
   - id: "test_app_py_has_documentation"
     name: "app.py contains documentation"
     description: "app.py should contain docstrings and reference MCP tools"
     test: "test_app_py_has_documentation"
     type: "pass_to_pass"
-    origin: "repo_tests"
+    origin: "static"
 
   # Agent config checks
   - id: "test_database_filter_description_updated"
@@ -137,4 +152,27 @@ checks:
     origin: "pr_diff"
 
 # Rubric for LLM-judge evaluation (soft/subjective criteria)
-rubric: []
+rubric:
+  - rule: "All Python files must include the Apache Software Foundation license header at the top."
+    source:
+      path: "superset/mcp_service/CLAUDE.md"
+      lines: "5-38"
+      commit: "81c4b126e9f7c3d0533dbc15a90b8d45db106a87"
+
+  - rule: "Use Python 3.10+ union syntax for type hints (T | None instead of Optional[T])."
+    source:
+      path: "superset/mcp_service/CLAUDE.md"
+      lines: "258-296"
+      commit: "81c4b126e9f7c3d0533dbc15a90b8d45db106a87"
+
+  - rule: "All tool inputs and outputs must use Pydantic models with field descriptions."
+    source:
+      path: "superset/mcp_service/CLAUDE.md"
+      lines: "221-242"
+      commit: "81c4b126e9f7c3d0533dbc15a90b8d45db106a87"
+
+  - rule: "Use field_validator from Pydantic for flexible input parsing (JSON string or object)."
+    source:
+      path: "superset/mcp_service/CLAUDE.md"
+      lines: "298-403"
+      commit: "81c4b126e9f7c3d0533dbc15a90b8d45db106a87"

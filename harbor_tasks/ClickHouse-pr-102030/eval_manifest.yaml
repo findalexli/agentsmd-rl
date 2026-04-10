@@ -53,33 +53,110 @@ checks:
 
   # ==========================================================================
   # Pass-to-Pass Tests (Repo CI/CD - ensure base commit is functional)
+  # These tests use subprocess.run() with real CI commands
+  # ==========================================================================
+  - id: test_repo_git_ls_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git can list source files - CI file indexing (CI/CD check)
+
+  - id: test_repo_git_show_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git can show file content - CI content validation (CI/CD check)
+
+  - id: test_repo_git_log_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git log for target file works - CI history check (CI/CD check)
+
+  - id: test_repo_git_grep_includes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git grep finds ZooKeeper includes - CI dependency check (CI/CD check)
+
+  - id: test_repo_grep_keeper_exception
+    type: pass_to_pass
+    origin: repo_tests
+    description: grep finds KeeperException usage - CI code analysis (CI/CD check)
+
+  # ==========================================================================
+  # Pass-to-Pass Tests (Static checks - file content validation)
+  # These tests validate file contents but don't run CI commands
   # ==========================================================================
   - id: test_repo_file_exists_and_readable
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Target source file exists and is readable
 
   - id: test_repo_cpp_syntax_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Basic C++ syntax validation - balanced braces/parens
 
   - id: test_repo_includes_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Include statements are valid and properly formatted
 
   - id: test_repo_git_clean
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Repository is in clean state with no uncommitted changes
 
   - id: test_repo_directory_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Repo directory structure is intact
 
   - id: test_repo_no_trailing_whitespace
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Source files have no trailing whitespace
+
+  - id: test_repo_no_merge_conflict_markers
+    type: pass_to_pass
+    origin: static
+    description: Source files have no merge conflict markers (CI/CD style check)
+
+  - id: test_repo_no_crlf_line_endings
+    type: pass_to_pass
+    origin: static
+    description: Source files use LF line endings, not CRLF (CI/CD style check)
+
+  - id: test_repo_line_length_reasonable
+    type: pass_to_pass
+    origin: static
+    description: Source file lines within reasonable length per .clang-format (CI/CD style check)
+
+  - id: test_repo_include_style_valid
+    type: pass_to_pass
+    origin: static
+    description: Include statements follow project conventions (CI/CD style check)
+
+  - id: test_repo_no_duplicate_includes
+    type: pass_to_pass
+    origin: static
+    description: No duplicate includes in source files (CI/CD style check)
+
+# ==========================================================================
+# Rubric Rules (from agent config files - AGENTS.md, CLAUDE.md)
+# ==========================================================================
+rubric:
+  - rule: "Use Allman-style braces (opening brace on a new line) in C++ code"
+    source:
+      path: "AGENTS.md"
+      lines: "60"
+      commit: "9893080d285656b1f90153260f95a675e002326b"
+
+  - rule: "Never use sleep in C++ code to fix race conditions - use proper synchronization"
+    source:
+      path: "AGENTS.md"
+      lines: "62"
+      commit: "9893080d285656b1f90153260f95a675e002326b"
+
+  - rule: "Wrap literal names from ClickHouse classes and functions in inline code blocks in comments"
+    source:
+      path: "AGENTS.md"
+      lines: "8-10"
+      commit: "9893080d285656b1f90153260f95a675e002326b"

@@ -28,7 +28,7 @@ ENTERPRISE = REPO / "enterprise"
 def test_repo_python_syntax_valid():
     """All Python files in the repo should have valid syntax (pass_to_pass)."""
     result = subprocess.run(
-        ["bash", "-c", f"cd {REPO} && find enterprise -name '*.py' -exec python -m py_compile {{}} +"],
+        ["bash", "-c", f"cd {REPO} && find enterprise -name '*.py' -exec python -m py_compile {} +"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -101,6 +101,75 @@ def test_repo_migrations_dir_structure():
             timeout=30,
         )
         assert result.returncode == 0, f"Migration {migration_file.name} has syntax errors"
+
+
+def test_repo_modified_files_syntax():
+    """Files modified by PR have valid Python syntax (pass_to_pass).\n    
+    This test runs py_compile on the specific files that the PR modifies:
+    - saas_settings_store.py
+    - org_member.py  
+    - org_models.py
+    """
+    modified_files = [
+        ENTERPRISE / "storage" / "saas_settings_store.py",
+        ENTERPRISE / "storage" / "org_member.py",
+        ENTERPRISE / "server" / "routes" / "org_models.py",
+    ]
+    
+    for py_file in modified_files:
+        if py_file.exists():
+            result = subprocess.run(
+                [sys.executable, "-m", "py_compile", str(py_file)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            assert result.returncode == 0, f"Syntax error in {py_file}: {result.stderr}"
+
+
+def test_repo_alembic_ini_exists():
+    """Alembic configuration file should exist for migrations (pass_to_pass)."""
+    alembic_ini = ENTERPRISE / "alembic.ini"
+    alembic_env = ENTERPRISE / "migrations" / "env.py"
+    
+    assert alembic_ini.exists() or (ENTERPRISE / "pyproject.toml").exists(), "Alembic config should exist"
+    assert alembic_env.exists(), "Alembic env.py should exist"
+    
+    # Check env.py has valid syntax
+    if alembic_env.exists():
+        result = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(alembic_env)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"Syntax error in alembic env.py: {result.stderr}"
+
+
+def test_repo_storage_init_syntax():
+    """Storage package init file should have valid syntax (pass_to_pass)."""
+    init_file = ENTERPRISE / "storage" / "__init__.py"
+    if init_file.exists():
+        result = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(init_file)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"Syntax error in storage/__init__.py: {result.stderr}"
+
+
+def test_repo_org_store_syntax():
+    """Org storage module should have valid Python syntax (pass_to_pass)."""
+    org_store = ENTERPRISE / "storage" / "org.py"
+    if org_store.exists():
+        result = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(org_store)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"Syntax error in org.py: {result.stderr}"
 
 
 def test_migration_file_exists():

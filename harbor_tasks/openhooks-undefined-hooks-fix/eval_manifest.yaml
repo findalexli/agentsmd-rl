@@ -81,4 +81,35 @@ checks:
     origin: repo_tests
     source: CI test path pattern for conversation-panel components
 
-rubric: []
+  - id: hooks_modal_unit_tests
+    name: Hooks modal unit tests
+    type: pass_to_pass
+    description: Repo's hooks-modal specific unit tests pass
+    origin: repo_tests
+    source: CI workflow fe-unit-tests.yml - "npm run test -- hooks-modal.test.tsx"
+
+  - id: typecheck
+    name: TypeScript typecheck
+    type: pass_to_pass
+    description: Repo's TypeScript typecheck passes
+    origin: repo_tests
+    source: CI workflow lint.yml - "npm run typecheck"
+
+rubric:
+  - rule: "Frontend changes must pass lint and build. Run: cd frontend && npm run lint:fix && npm run build"
+    source:
+      path: "AGENTS.md"
+      lines: "21"
+      commit: "3cd85a07b78a2d9d2e28b2904e1b42096d47a802"
+
+  - rule: "Pre-commit hooks MUST pass successfully before pushing any changes. Run: make install-pre-commit-hooks first."
+    source:
+      path: "AGENTS.md"
+      lines: "16,24"
+      commit: "3cd85a07b78a2d9d2e28b2904e1b42096d47a802"
+
+  - rule: "Follow existing code style and patterns. Check neighboring files for TypeScript/React conventions."
+    source:
+      path: "AGENTS.md"
+      lines: "26-31"
+      commit: "3cd85a07b78a2d9d2e28b2904e1b42096d47a802"

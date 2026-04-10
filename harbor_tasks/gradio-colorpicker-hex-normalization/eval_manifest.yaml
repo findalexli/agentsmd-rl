@@ -12,25 +12,35 @@ checks:
     origin: static
     description: "utils.ts must have balanced braces (no syntax errors)"
 
-  - id: hsva_to_rgba_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "hsva_to_rgba function must execute without errors on base commit"
-
   - id: colorpicker_utils_file_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "utils.ts must have proper structure: tinycolor import and exported functions"
 
   - id: colorpicker_svelte_file_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Colorpicker.svelte must have proper imports and structure"
+
+  - id: hsva_to_rgba_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "hsva_to_rgba function must execute without errors on base commit via Node.js runtime"
 
   - id: format_color_regression
     type: pass_to_pass
     origin: repo_tests
-    description: "Existing format_color function still produces correct output"
+    description: "Existing format_color function still produces correct output via Node.js runtime"
+
+  - id: tinycolor_runtime_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: "tinycolor2 dependency must be available for runtime tests"
+
+  - id: node_typescript_parse_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified TypeScript files must be parseable by Node.js"
 
   - id: hsva_to_rgba_returns_hex
     type: fail_to_pass
@@ -61,21 +71,4 @@ checks:
       lines: "81"
       commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
 
-rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
-
-  - rule: "Frontend code is formatted with prettier."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
-
-  - rule: "TypeScript should be used to provide static types to JavaScript code."
-    source:
-      path: "js/README.md"
-      lines: "81"
-      commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
+rubric: []

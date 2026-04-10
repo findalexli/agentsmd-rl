@@ -47,7 +47,15 @@ let _mockTranslate = (s) => s;
 const get = () => _mockTranslate;
 const _ = null;
 const I18N_MARKER = "__i18n__";
-const translate_i18n_marker = (s, t) => t(s);
+
+// Real implementation of translate_i18n_marker from @gradio/utils
+function translate_i18n_marker(label, translate) {
+    const re = /__i18n__\\{\\"key\\":\\"([^\\"]+)\\"\\}/g;
+    return label.replace(re, (match, key) => {
+        const translated = translate(key);
+        return translated !== key ? translated : match;
+    });
+}
 
 function setTranslate(fn) { _mockTranslate = fn; }
 
@@ -124,6 +132,74 @@ def test_repo_format_check():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_formatter_i18n_markers():
+    """Repo's formatter correctly translates i18n markers (pass_to_pass).
+
+    This test verifies the formatter function behavior that is tested
+    in the repo's js/core/src/i18n.test.ts. It ensures i18n marker
+    translation works correctly on the base commit.
+    """
+    _extract_function()
+    r = _run_node(textwrap.dedent(r"""
+        const { formatter, setTranslate } = require("/tmp/_formatter.js");
+
+        // Mock translate function that handles i18n keys
+        setTranslate((s) => {
+            const dict = {
+                "common.submit": "Submit",
+                "common.name": "Name",
+                "common.greeting": "Hello",
+                "common.submit_es": "Enviar"
+            };
+            return dict[s] !== undefined ? dict[s] : s;
+        });
+
+        // Test cases from i18n.test.ts (using String.raw for proper escaping)
+        const results = {
+            marker1: formatter(String.raw`__i18n__{"key":"common.submit"}`),
+            marker2: formatter(String.raw`Click: __i18n__{"key":"common.submit"}`),
+            marker3: formatter(String.raw`__i18n__{"key":"common.name"} field`),
+            marker4: formatter(String.raw`__i18n__{"key":"common.submit_es"}`)
+        };
+        console.log(JSON.stringify(results));
+    """))
+    assert r.returncode == 0, f"Node failed: {r.stderr.decode()}"
+    data = json.loads(r.stdout.decode().strip())
+    assert data["marker1"] == "Submit", f"Expected 'Submit', got '{data['marker1']}'"
+    assert data["marker2"] == "Click: Submit", f"Expected 'Click: Submit', got '{data['marker2']}'"
+    assert data["marker3"] == "Name field", f"Expected 'Name field', got '{data['marker3']}'"
+    assert data["marker4"] == "Enviar", f"Expected 'Enviar', got '{data['marker4']}'"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_formatter_malformed_markers():
+    """Repo's formatter handles malformed i18n markers gracefully (pass_to_pass).
+
+    Based on tests in js/core/src/i18n.test.ts - malformed markers should
+    return the original string rather than crash.
+    """
+    _extract_function()
+    r = _run_node(textwrap.dedent(r"""
+        const { formatter, setTranslate } = require("/tmp/_formatter.js");
+
+        setTranslate((s) => s);
+
+        const results = {
+            bare: formatter("__i18n__"),
+            unclosed: formatter(String.raw`__i18n__{"key":"test.key"`),
+            invalid: formatter("__i18n__{invalid}")
+        };
+        console.log(JSON.stringify(results));
+    """))
+    assert r.returncode == 0, f"Node failed: {r.stderr.decode()}"
+    data = json.loads(r.stdout.decode().strip())
+    # Malformed markers return the original string unchanged
+    assert data["bare"] == "__i18n__", f"Expected '__i18n__', got '{data['bare']}'"
+    assert data["unclosed"] == '__i18n__{"key":"test.key"', f"Expected unclosed marker, got '{data['unclosed']}'"
+    assert data["invalid"] == "__i18n__{invalid}", f"Expected invalid marker, got '{data['invalid']}'"
 
 
 # ---------------------------------------------------------------------------

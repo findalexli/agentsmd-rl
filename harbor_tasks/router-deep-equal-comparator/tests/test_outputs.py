@@ -54,7 +54,7 @@ def test_head_utils_use_store_comparators():
     content = HEAD_UTILS_FILE.read_text()
 
     # Count useStore calls that should have deepEqual
-    # The PR adds deepEqual to: routeMeta, links, preloadLinks, styles, and scripts (last one)
+    # The PR adds deepEqual to: routeMeta, links, preloadLinks, styles, and headScripts
 
     # Find useStore calls with 3 arguments (store, selector, comparator)
     usestore_3arg_pattern = r'useStore\(\s*\n?\s*router\.stores\.\w+\s*,\s*\n?\s*(?:\([^)]*\)|\w+)\s*,\s*\n?\s*(\w+)\s*\n?\s*\)'
@@ -65,8 +65,8 @@ def test_head_utils_use_store_comparators():
         assert comparator == "deepEqual", \
             f"useStore calls must use deepEqual as comparator, found: {comparator}"
 
-    # Verify at least 5 useStore calls have deepEqual (routeMeta, links, preloadLinks, styles, scripts)
-    deepequal_count = content.count("deepEqual,") + content.count("deepEqual,")
+    # Verify at least 5 useStore calls have deepEqual (routeMeta, links, preloadLinks, styles, headScripts)
+    deepequal_count = content.count("deepEqual,")
     assert deepequal_count >= 5, \
         f"Expected at least 5 useStore calls with deepEqual, found evidence of {deepequal_count}"
 
@@ -120,13 +120,43 @@ def test_scripts_deepequal_in_get_scripts():
         "getScripts useStore call must have deepEqual comparator"
 
 
+def _check_variable_has_deepequal(content, var_name):
+    """Helper to check that a variable's useStore call has deepEqual."""
+    # Find the position of the variable declaration
+    var_pos = content.find(f"const {var_name}")
+    if var_pos == -1:
+        raise AssertionError(f"Variable {var_name} not found")
+
+    # Look for useStore after this variable declaration
+    usestore_pos = content.find("useStore", var_pos)
+    if usestore_pos == -1:
+        raise AssertionError(f"useStore not found after {var_name} declaration")
+
+    # Find the end of this useStore call (closing paren followed by )
+    # Look for the pattern where deepEqual appears in the 3rd argument position
+    section = content[var_pos:usestore_pos + 2000]
+
+    # Check that deepEqual appears after the useStore call starts
+    assert "deepEqual" in section, \
+        f"{var_name} useStore call must have deepEqual comparator"
+
+
 def test_head_utils_route_meta_deepequal():
     """headContentUtils.tsx routeMeta useStore must use deepEqual."""
     content = HEAD_UTILS_FILE.read_text()
 
-    # Find the routeMeta useStore section
-    pattern = r'const routeMeta = useStore\(\s*\n?\s*router\.stores\.activeMatchesSnapshot[^}]+}\s*,\s*\n?\s*deepEqual\s*\n?\s*\)'
-    assert re.search(pattern, content, re.DOTALL), \
+    # Find the useTags function
+    usetags_pos = content.find("export const useTags")
+    assert usetags_pos != -1, "useTags function not found"
+
+    # Find routeMeta useStore within useTags (not the helper function)
+    route_meta_pos = content.find("const routeMeta = useStore", usetags_pos)
+    assert route_meta_pos != -1, "routeMeta useStore not found in useTags"
+
+    # Check that deepEqual appears in this useStore call
+    # Find the closing paren of this useStore call
+    section = content[route_meta_pos:route_meta_pos + 400]
+    assert "deepEqual" in section, \
         "routeMeta useStore call must use deepEqual comparator"
 
 
@@ -145,9 +175,14 @@ def test_head_utils_preload_links_deepequal():
     """headContentUtils.tsx preloadLinks useStore must use deepEqual."""
     content = HEAD_UTILS_FILE.read_text()
 
-    # Find preloadLinks useStore with deepEqual
-    pattern = r'const preloadLinks = useStore\([^)]+deepEqual\s*\)'
-    assert re.search(pattern, content, re.DOTALL), \
+    # Find preloadLinks useStore after useTags function
+    usetags_pos = content.find("export const useTags")
+    preload_pos = content.find("const preloadLinks = useStore", usetags_pos)
+    assert preload_pos != -1, "preloadLinks useStore not found in useTags"
+
+    # Check deepEqual in this section - need larger section for preloadLinks
+    section = content[preload_pos:preload_pos + 1200]
+    assert "deepEqual" in section, \
         "preloadLinks useStore call must use deepEqual comparator"
 
 
@@ -155,20 +190,30 @@ def test_head_utils_styles_deepequal():
     """headContentUtils.tsx styles useStore must use deepEqual."""
     content = HEAD_UTILS_FILE.read_text()
 
-    # Find styles useStore with deepEqual
-    pattern = r'const styles = useStore\([^)]+deepEqual\s*\)'
-    assert re.search(pattern, content, re.DOTALL), \
+    # Find styles useStore after useTags function
+    usetags_pos = content.find("export const useTags")
+    styles_pos = content.find("const styles = useStore", usetags_pos)
+    assert styles_pos != -1, "styles useStore not found in useTags"
+
+    # Check deepEqual in this section
+    section = content[styles_pos:styles_pos + 500]
+    assert "deepEqual" in section, \
         "styles useStore call must use deepEqual comparator"
 
 
 def test_head_utils_scripts_deepequal():
-    """headContentUtils.tsx scripts useStore must use deepEqual."""
+    """headContentUtils.tsx headScripts useStore must use deepEqual."""
     content = HEAD_UTILS_FILE.read_text()
 
-    # Find the last useStore (scripts) with deepEqual - it's near the end of useTags function
-    pattern = r'const scripts = useStore\([^)]+deepEqual\s*\)'
-    assert re.search(pattern, content, re.DOTALL), \
-        "scripts useStore call must use deepEqual comparator"
+    # Find headScripts useStore after useTags function (variable is headScripts, not scripts)
+    usetags_pos = content.find("export const useTags")
+    scripts_pos = content.find("const headScripts", usetags_pos)
+    assert scripts_pos != -1, "headScripts useStore not found in useTags"
+
+    # Check deepEqual in this section
+    section = content[scripts_pos:scripts_pos + 500]
+    assert "deepEqual" in section, \
+        "headScripts useStore call must use deepEqual comparator"
 
 
 def test_no_unused_deepequal():
@@ -180,8 +225,8 @@ def test_no_unused_deepequal():
     scripts_import_count = len(re.findall(r'import.*deepEqual.*from', scripts_content))
     head_utils_import_count = len(re.findall(r'import.*deepEqual.*from', head_utils_content))
 
-    scripts_usage_count = scripts_content.count("deepEqual,") + scripts_content.count("deepEqual\n")
-    head_utils_usage_count = head_utils_content.count("deepEqual,") + head_utils_content.count("deepEqual\n")
+    scripts_usage_count = scripts_content.count("deepEqual,")
+    head_utils_usage_count = head_utils_content.count("deepEqual,")
 
     # Should have imports
     assert scripts_import_count >= 1, "Scripts.tsx must import deepEqual"
@@ -192,3 +237,33 @@ def test_no_unused_deepequal():
         "Scripts.tsx must actually use deepEqual in useStore calls"
     assert head_utils_usage_count > head_utils_import_count, \
         "headContentUtils.tsx must actually use deepEqual in useStore calls"
+
+
+def test_repo_types_check():
+    """Repo's TypeScript type check for react-router passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:types"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**dict(subprocess.os.environ), "CI": "1", "NX_DAEMON": "false"}
+    )
+
+    assert result.returncode == 0, \
+        f"Type check failed:\nstdout: {result.stdout[-1000:]}\nstderr: {result.stderr[-500:]}"
+
+
+def test_repo_scripts_unit_tests():
+    """Repo's unit tests for Scripts.tsx pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:unit", "--", "tests/Scripts.test.tsx"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env={**dict(subprocess.os.environ), "CI": "1", "NX_DAEMON": "false"}
+    )
+
+    assert result.returncode == 0, \
+        f"Scripts unit tests failed:\nstdout: {result.stdout[-1000:]}\nstderr: {result.stderr[-500:]}"

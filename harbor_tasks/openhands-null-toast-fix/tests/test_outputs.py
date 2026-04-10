@@ -79,7 +79,7 @@ def test_displayErrorToast_accepts_null():
 
 
 def test_frontend_lint_passes():
-    """Frontend linting must pass (p2p - from AGENTS.md)."""
+    """Frontend linting passes (p2p - from CI lint workflow)."""
     result = subprocess.run(
         ["npm", "run", "lint"],
         cwd=FRONTEND,
@@ -87,17 +87,11 @@ def test_frontend_lint_passes():
         text=True,
         timeout=120
     )
-
-    if result.returncode != 0:
-        # Only fail on actual lint errors, not warnings
-        error_text = result.stdout + result.stderr
-        # Check for actual errors vs warnings
-        if "error" in error_text.lower():
-            assert False, f"Lint errors found:\n{error_text[-1000:]}"
+    assert result.returncode == 0, f"Lint failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
 
 
 def test_frontend_typecheck_passes():
-    """Frontend TypeScript type checking must pass (p2p)."""
+    """Frontend TypeScript type checking passes (p2p - from CI)."""
     result = subprocess.run(
         ["npm", "run", "typecheck"],
         cwd=FRONTEND,
@@ -105,52 +99,65 @@ def test_frontend_typecheck_passes():
         text=True,
         timeout=120
     )
-
     assert result.returncode == 0, \
-        f"TypeScript type checking failed:\n{result.stdout[-1000:]}{result.stderr[-1000:]}"
+        f"TypeScript type checking failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
 
 
 def test_frontend_build_passes():
-    """Frontend build must succeed (p2p - from AGENTS.md)."""
+    """Frontend build succeeds (p2p - from CI build pipeline)."""
     result = subprocess.run(
         ["npm", "run", "build"],
         cwd=FRONTEND,
         capture_output=True,
         text=True,
-        timeout=180
+        timeout=300
     )
-
     assert result.returncode == 0, \
-        f"Frontend build failed:\n{result.stderr[-1000:]}"
+        f"Frontend build failed:\n{result.stderr[-500:]}"
 
 
-def test_specific_unit_tests_pass():
-    """Unit tests for modified files must pass (p2p)."""
-    # Run only the tests for the files we modified (with test fixes in the patch)
+def test_repo_unit_tests_toast_duration():
+    """Repo unit tests for toast-duration pass (p2p - repo CI)."""
     result = subprocess.run(
-        ["npm", "run", "test", "--", "--run", "-t", "use-handle-plan-click|use-sandbox-recovery"],
+        ["npm", "test", "--", "--run", "toast-duration"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"toast-duration unit tests failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
+
+
+def test_repo_unit_tests_custom_toast_handlers():
+    """Repo unit tests for custom-toast-handlers pass (p2p - repo CI)."""
+    result = subprocess.run(
+        ["npm", "test", "--", "--run", "custom-toast-handlers"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"custom-toast-handlers unit tests failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
+
+
+def test_repo_unit_tests_modified_hooks():
+    """Repo unit tests for modified hooks pass (p2p - repo CI)."""
+    # Run both modified hook test files explicitly (from solve.sh patch)
+    result = subprocess.run(
+        ["npm", "test", "--", "__tests__/hooks/use-handle-plan-click.test.tsx", "__tests__/hooks/use-sandbox-recovery.test.tsx"],
         cwd=FRONTEND,
         capture_output=True,
         text=True,
         timeout=120
     )
-
-    output = result.stdout + result.stderr
-
-    # Check for actual test failures
-    failed_match = re.search(r'(\d+)\s+failed', output, re.IGNORECASE)
-    if failed_match:
-        failed_count = int(failed_match.group(1))
-        if failed_count > 0:
-            assert False, f"{failed_count} specific unit test(s) failed:\n{output[-1500:]}"
-
-    # Check return code
     assert result.returncode == 0, \
-        f"Specific unit tests failed with exit code {result.returncode}:\n{output[-1000:]}"
+        f"Modified hooks unit tests failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
 
 
 def test_translation_completeness_passes():
-    """Translation completeness check must pass (p2p - repo CI)."""
+    """Translation completeness check passes (p2p - from .github/workflows/lint.yml)."""
     result = subprocess.run(
         ["npm", "run", "check-translation-completeness"],
         cwd=FRONTEND,
@@ -158,13 +165,12 @@ def test_translation_completeness_passes():
         text=True,
         timeout=60
     )
-
     assert result.returncode == 0, \
         f"Translation completeness check failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
 
 
 def test_make_i18n_builds():
-    """i18n translation generation must succeed (p2p - repo CI build step)."""
+    """i18n translation generation succeeds (p2p - repo CI build step)."""
     result = subprocess.run(
         ["npm", "run", "make-i18n"],
         cwd=FRONTEND,
@@ -172,6 +178,5 @@ def test_make_i18n_builds():
         text=True,
         timeout=60
     )
-
     assert result.returncode == 0, \
         f"i18n generation failed:\n{result.stderr[-500:]}"

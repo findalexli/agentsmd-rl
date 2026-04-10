@@ -435,3 +435,155 @@ def test_zig_no_std_mutex():
                        ("freeaddrinfo", freeaddrinfo)]:
         matches = re.findall(r"std\.Thread\.Mutex", body)
         assert not matches, f"{name} uses std.Thread.Mutex (use bun.Mutex instead)"
+
+
+# CI check: ban-words.test.ts bans std.mem.indexOfAny and std.unicode
+def test_zig_no_std_strings():
+    """Modified Zig functions must use bun.strings instead of std.mem.indexOfAny or std.unicode."""
+    _, isexpired, get_fn, freeaddrinfo = _load_functions()
+    for name, body in [("isExpired", isexpired), ("get", get_fn),
+                       ("freeaddrinfo", freeaddrinfo)]:
+        matches = re.findall(r"std\.mem\.indexOfAny\(u8", body)
+        assert not matches, f"{name} uses std.mem.indexOfAny (use bun.strings.indexOfAny)"
+        matches = re.findall(r"std\.unicode", body)
+        assert not matches, f"{name} uses std.unicode (use bun.strings instead)"
+
+
+# CI check: ban-words.test.ts bans std.StringHashMap and variants
+def test_zig_no_std_hash_maps():
+    """Modified Zig functions must use bun.StringHashMap instead of std.StringHashMap variants."""
+    _, isexpired, get_fn, freeaddrinfo = _load_functions()
+    for name, body in [("isExpired", isexpired), ("get", get_fn),
+                       ("freeaddrinfo", freeaddrinfo)]:
+        banned = [
+            r"std\.StringArrayHashMapUnmanaged\(",
+            r"std\.StringArrayHashMap\(",
+            r"std\.StringHashMapUnmanaged\(",
+            r"std\.StringHashMap\(",
+        ]
+        for pattern in banned:
+            matches = re.findall(pattern, body)
+            assert not matches, f"{name} uses std StringHashMap variant (use bun equivalent)"
+
+
+# CI check: ban-words.test.ts bans @import("bun") inline
+def test_zig_no_bun_import_inline():
+    """Modified code must not use @import('bun') inline (only import bun once at top)."""
+    src, _, _, _ = _load_functions()
+    # Check in the full dns.zig module
+    matches = re.findall(r'@import\(["\'\']bun["\'\']\)', src)
+    # Filter out top-level imports (lines starting with 'const' or 'pub const')
+    lines = src.split("\n")
+    inline_imports = []
+    for i, line in enumerate(lines):
+        if '@import("bun")' in line or "@import('bun')" in line:
+            # Check if it's a top-level import
+            stripped = line.strip()
+            if not (stripped.startswith("const") or stripped.startswith("pub const")):
+                inline_imports.append((i + 1, line.strip()))
+    assert not inline_imports, f"Inline @import('bun') found (move to top-level import): {inline_imports}"
+
+
+# CI check: ban-words.test.ts bans .jsBoolean(true/false)
+def test_zig_no_jsboolean_true_false():
+    """Modified Zig functions must use .true/.false instead of .jsBoolean(true/false)."""
+    _, isexpired, get_fn, freeaddrinfo = _load_functions()
+    for name, body in [("isExpired", isexpired), ("get", get_fn),
+                       ("freeaddrinfo", freeaddrinfo)]:
+        matches = re.findall(r"\.jsBoolean\(true\)|JSValue\.true", body)
+        assert not matches, f"{name} uses .jsBoolean(true) (use .true instead)"
+        matches = re.findall(r"\.jsBoolean\(false\)|JSValue\.false", body)
+        assert not matches, f"{name} uses .jsBoolean(false) (use .false instead)"
+
+
+# CI check: ban-words.test.ts bans allocator.ptr comparisons
+def test_zig_no_allocator_ptr_compare():
+    """Modified Zig functions must not compare allocator.ptr (UB if undefined)."""
+    _, isexpired, get_fn, freeaddrinfo = _load_functions()
+    for name, body in [("isExpired", isexpired), ("get", get_fn),
+                       ("freeaddrinfo", freeaddrinfo)]:
+        # Check for allocator.ptr or alloc.ptr comparisons
+        matches = re.findall(r"allocator\.ptr\s*[!=]=|alloc\.ptr\s*[!=]=|[!=]=\s*allocator\.ptr|[!=]=\s*alloc\.ptr", body)
+        assert not matches, f"{name} compares allocator.ptr (UB if undefined)"
+
+
+# ---------------------------------------------------------------------------
+# Real CI subprocess tests (repo_tests) — actual CI commands that run in Docker
+# ---------------------------------------------------------------------------
+
+def test_repo_ban_words():
+    """Run the repo's ban-words CI check (pass_to_pass).
+
+    This executes the actual bun CI check that scans for banned patterns
+    in Zig source files (std.debug.print, undefined comparisons, etc.).
+    """
+    r = subprocess.run(
+        ["bun", "./test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ban-words check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_zig_syntax_valid():
+    """Verify dns.zig has valid Zig syntax (pass_to_pass).
+
+    Since we can't compile Zig in this container (no cmake/zig/JSC),
+    we verify the file is valid by checking balanced braces and
+    no obvious syntax errors that would prevent parsing.
+    """
+    raw = DNS_FILE.read_text()
+
+    # Check for balanced braces
+    open_count = raw.count("{")
+    close_count = raw.count("}")
+    assert open_count == close_count, (
+        f"dns.zig has unbalanced braces: {open_count} open, {close_count} close"
+    )
+
+    # Check for balanced parentheses
+    paren_open = raw.count("(")
+    paren_close = raw.count(")")
+    assert paren_open == paren_close, (
+        f"dns.zig has unbalanced parentheses: {paren_open} open, {paren_close} close"
+    )
+
+    # Check for basic structure indicators
+    assert "pub const" in raw or "pub fn" in raw, (
+        "dns.zig missing expected public declarations"
+    )
+
+
+def test_repo_zig_no_hard_tabs():
+    """Verify dns.zig doesn't use hard tabs (pass_to_pass).
+
+    Bun's coding style uses spaces, not tabs. This is a basic style check
+    that can be done without compiling Zig code.
+    """
+    r = subprocess.run(
+        ["grep", "-n", "$'\\t'", str(DNS_FILE)],
+        capture_output=True, text=True, timeout=30,
+    )
+    # grep returns 0 if matches found, 1 if no matches
+    if r.returncode == 0:
+        lines = r.stdout.strip().split("\n")[:5]
+        assert False, f"dns.zig contains hard tabs (use spaces): {lines}"
+
+
+def test_repo_dns_file_not_empty():
+    """Verify dns.zig is a non-trivial file (pass_to_pass).
+
+    Basic check to ensure the file has substantial content and
+    isn't truncated or replaced with a stub.
+    """
+    stat = DNS_FILE.stat()
+    assert stat.st_size > 1000, f"dns.zig is too small ({stat.st_size} bytes), possibly truncated"
+    
+    # Count lines and functions
+    content = DNS_FILE.read_text()
+    lines = content.split("\n")
+    non_empty = [l for l in lines if l.strip()]
+    assert len(non_empty) > 50, f"dns.zig has only {len(non_empty)} non-empty lines"
+    
+    # Count function definitions
+    fn_count = len(re.findall(r"^\s*(pub\s+)?fn\s+\w+", content, re.MULTILINE))
+    assert fn_count >= 3, f"dns.zig has only {fn_count} functions, expected at least 3"

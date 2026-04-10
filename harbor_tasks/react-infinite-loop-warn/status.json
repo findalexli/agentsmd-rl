@@ -3,19 +3,34 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T12:12:42.656589",
-  "total_time": 10850.01,
-  "sandbox_id": "il24mkq8qc4qwmxoetlph",
+  "validated_at": "2026-04-09T23:58:54.522518",
+  "total_time": 7186.5,
+  "sandbox_id": "i3u8wl1ouhjxqix3oulz9",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 229.52,
+      "time": 1111.67,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "compiler/CLAUDE.md",
+        ".claude/skills/fix/SKILL.md",
+        ".claude/skills/feature-flags/SKILL.md",
+        ".claude/skills/test/SKILL.md"
+      ],
+      "rules_added": 5,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 37.98
     },
     "improve": {
       "status": "skipped",
@@ -24,55 +39,40 @@
       "time": 0,
       "notes": "tests look good"
     },
-    "p2p_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 402.87,
-      "notes": ""
-    },
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed test_outputs.py: increased extraction window from 5000 to 15000 chars in test_else_resets_nested_update_state to capture the else branch in flushSpawnedWork function (which is ~11000 chars long)",
+      "notes": "All validations passed: Docker build succeeded, NOP test correctly returned reward=0 (fail-to-pass tests fail on base commit), Gold test correctly returned reward=1 (all 12 tests pass after gold fix). Rubric judge requires API key infrastructure which is not available in this environment, but gold solution follows rubric rules (uses __DEV__ checks, descriptive constants, proper test gating).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 731.2
+      "time": 396.7
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.73,
-      "notes": "ICR=1.00"
+      "time": 1.24,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 6106.64,
-      "at": "2026-04-09T07:01:42.046771"
+      "time": 7186.18,
+      "at": "2026-04-09T23:58:54.332298"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 10849.75,
-      "at": "2026-04-09T12:12:42.486417"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 10850.01,
-      "at": "2026-04-09T12:12:42.656589"
+      "time": 7186.5,
+      "at": "2026-04-09T23:58:54.522518"
     }
   ]
 }

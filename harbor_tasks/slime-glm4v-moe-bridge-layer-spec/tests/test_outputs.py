@@ -274,7 +274,7 @@ def test_repo_ruff_linting():
         capture_output=True, text=True, timeout=60
     )
     r = subprocess.run(
-        ["ruff", "check", str(FILE)],
+        ["python", "-m", "ruff", "check", str(FILE)],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
@@ -289,7 +289,7 @@ def test_repo_black_formatting():
         capture_output=True, text=True, timeout=60
     )
     r = subprocess.run(
-        ["black", "--check", str(FILE)],
+        ["python", "-m", "black", "--check", str(FILE)],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Black formatting check failed:\n{r.stderr}"
@@ -347,3 +347,42 @@ def test_file_not_stub():
     assert len(lines) >= 150, (
         f"File too short ({len(lines)} non-empty non-comment lines), likely stubbed"
     )
+
+
+# ---------------------------------------------------------------------------
+# Additional Pass-to-pass (repo_tests) — CI tooling verification
+# ---------------------------------------------------------------------------
+
+def test_repo_isort_check():
+    """Repo's isort check passes on target file (pass_to_pass)."""
+    import subprocess
+
+    subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    r = subprocess.run(
+        ["python", "-m", "isort", "--check-only", str(FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr}"
+
+
+def test_repo_pytest_syntax():
+    """pytest can collect tests without syntax errors (pass_to_pass)."""
+    import subprocess
+
+    subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    # Just verify pytest can load the test module without syntax errors
+    r = subprocess.run(
+        ["python", "-m", "pytest", "--collect-only", "-q", "tests/plugin_contracts/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # We expect this to potentially fail on imports (megatron not available),
+    # but not on syntax errors
+    if "SyntaxError" in r.stderr or "IndentationError" in r.stderr:
+        raise AssertionError(f"Syntax errors found:\n{r.stderr}")
+    # The test passes if we get here - syntax is valid

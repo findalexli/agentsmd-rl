@@ -23,14 +23,12 @@ RUN git clone --no-checkout --depth=1 https://github.com/facebook/react.git /wor
     git checkout ${BASE_COMMIT} && \
     rm -rf .git && \
     git init && \
+    git config user.email "agent@example.com" && \
+    git config user.name "Agent" && \
     git add -A && \
     git commit -m "snapshot"
 
 WORKDIR /workspace/react
-
-# Configure git (for the snapshot)
-RUN git config user.email "agent@example.com" && \
-    git config user.name "Agent"
 
 # Install yarn via corepack and dependencies
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate

@@ -39,6 +39,86 @@ def test_repo_ruff_check():
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        ['pip', 'install', 'ruff', '-q'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ['ruff', 'format', '--check', 'openhands/app_server/event/aws_event_service.py', '--config', 'dev_config/python/ruff.toml'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}"
+
+
+def test_repo_unit_test_file_valid():
+    """Repo's unit test file for aws_event_service has valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ['python', '-m', 'py_compile', 'tests/unit/app_server/test_aws_event_service.py'],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit test file syntax check failed:\n{r.stderr}"
+
+
+def test_repo_test_config_file_valid():
+    """Repo's event service config test file has valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ['python', '-m', 'py_compile', 'tests/unit/app_server/test_config_event_service_selection.py'],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config test file syntax check failed:\n{r.stderr}"
+
+
+def test_repo_file_is_git_tracked():
+    """Target file is tracked in git repo (pass_to_pass)."""
+    r = subprocess.run(
+        ['git', 'ls-files', '--error-unmatch', 'openhands/app_server/event/aws_event_service.py'],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Target file is not tracked in git:\n{r.stderr}"
+
+
+def test_repo_unit_tests_aws_event_service():
+    """Repo's unit tests for aws_event_service pass (pass_to_pass)."""
+    # Install dependencies
+    r = subprocess.run(
+        ['pip', 'install', 'boto3', 'botocore', 'pydantic', 'pytest-asyncio', '-q'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install package in editable mode
+    r = subprocess.run(
+        ['pip', 'install', '-e', '.', '-q'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run the unit tests
+    r = subprocess.run(
+        ['python', '-m', 'pytest', 'tests/unit/app_server/test_aws_event_service.py', '-v', '--tb=short'],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_config_event_service_selection():
+    """Repo's unit tests for event service config selection pass (pass_to_pass)."""
+    # Install dependencies
+    r = subprocess.run(
+        ['pip', 'install', 'boto3', 'botocore', 'pydantic', 'pytest-asyncio', '-q'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install package in editable mode
+    r = subprocess.run(
+        ['pip', 'install', '-e', '.', '-q'],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run the unit tests
+    r = subprocess.run(
+        ['python', '-m', 'pytest', 'tests/unit/app_server/test_config_event_service_selection.py', '-v', '--tb=short'],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-500:]}"
+
+
 def _load_source():
     """Load the source code of the target file."""
     with open(SOURCE_PATH) as f:

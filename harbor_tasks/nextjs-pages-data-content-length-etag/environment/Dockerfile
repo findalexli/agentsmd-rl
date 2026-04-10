@@ -4,6 +4,8 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
     git curl ca-certificates build-essential tmux python3 \
     && rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g prettier
+
 # Shallow-clone at exact commit to keep image size manageable
 RUN git init /workspace/next.js && \
     cd /workspace/next.js && \

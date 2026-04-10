@@ -25,22 +25,22 @@ checks:
   - id: test_repo_lint
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo JavaScript linting passes (oxlint on src/js)"
+    description: "Repo JavaScript linting passes via bunx oxlint on src/js (CI command: bun lint)"
 
   - id: test_repo_prettier
     type: pass_to_pass
     origin: repo_tests
-    description: "Modified file passes Prettier formatting check"
+    description: "Modified .buildkite/ci.mjs passes Prettier formatting check (CI command: npx prettier --check)"
 
   - id: test_repo_banned_words
     type: pass_to_pass
     origin: repo_tests
-    description: "Banned words check passes"
+    description: "Banned words check passes (CI command: bun run banned)"
 
   - id: test_repo_typecheck
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo TypeScript typecheck passes (tsc --noEmit)"
+    description: "Repo TypeScript typecheck passes via tsc --noEmit"
 
   - id: not_stub
     type: pass_to_pass
@@ -52,4 +52,9 @@ checks:
     origin: static
     description: "getBinarySizeStep returns properly structured step object with all required Buildkite step properties"
 
-rubric: []
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "119"
+      commit: "b6a45f9f50c71afe1102bb4396dd304ce1c57b30"

@@ -62,4 +62,34 @@ checks:
     origin: pr_diff
     description: "Key surrounding code patterns preserved (anti-gutting)"
 
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's TypeScript typecheck passes"
+
+  - id: test_repo_lint_typescript
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's package-level TypeScript checks pass"
+
+  - id: test_repo_lint_eslint
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's ESLint checks pass on modified files"
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's Prettier formatting check passes on modified files"
+
+  - id: test_repo_unit_tests_build
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's unit tests for the build module pass"
+
+# Note: Rubric rules from AGENTS.md are enforced behaviorally by the test suite:
+# - Dead code removal -> test_no_has_fallback_root_params_in_build_complete,
+#   test_no_should_skip_suffixes, test_no_dead_ternary_around_rsc_suffix
+# - Code style -> test_repo_prettier, test_repo_lint_eslint, test_repo_typecheck
+# These are repo-specific guidelines, not config-file edits for this task.
 rubric: []

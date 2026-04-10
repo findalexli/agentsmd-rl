@@ -31,26 +31,53 @@ checks:
   - id: test_repo_ruff_lint
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's Python code passes ruff linting"
+    description: "Repo Python code passes ruff linting"
 
   - id: test_repo_isort_check
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's Python imports are correctly sorted per black profile"
+    description: "Repo Python imports are correctly sorted per black profile"
 
   - id: test_repo_black_format
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's Python code is correctly formatted with black"
+    description: "Repo Python code is correctly formatted with black"
 
   - id: test_repo_plugin_contracts
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's plugin contract tests pass (33 passed, 1 pre-existing failure allowed)"
+    description: "Repo plugin contract tests pass, 33 passed with 1 pre-existing failure allowed"
 
   - id: test_repo_unit_trace_utils
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's trace_utils unit tests pass"
+    description: "Repo trace_utils unit tests pass"
 
-rubric: []
+  - id: test_repo_unit_loss_mask_type
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo loss_mask_type_qwen35 unit tests pass"
+
+  - id: test_repo_unit_sglang_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo sglang_config unit tests passing subset pass"
+
+rubric:
+  - rule: "Follow existing code patterns in memory_utils.py. When adding new host memory keys, use the same naming convention and _byte_to_gb() helper as existing GPU memory keys."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "70-79"
+      commit: "887fba113b512156098509c808b7bc93a8386b47"
+
+  - rule: "Maintain import ordering per repository conventions. Third-party imports (like psutil) should be grouped and ordered following the isort black profile defined in pyproject.toml."
+    source:
+      path: "pyproject.toml"
+      lines: "9-19"
+      commit: "887fba113b512156098509c808b7bc93a8386b47"
+
+  - rule: "Follow existing naming conventions for dictionary keys. New host memory metrics should use the same _GB suffix pattern as existing GPU memory keys (total_GB, free_GB, used_GB, etc.)."
+    source:
+      path: "slime/utils/memory_utils.py"
+      lines: "22-28"
+      commit: "887fba113b512156098509c808b7bc93a8386b47"

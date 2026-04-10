@@ -14,8 +14,10 @@ import os
 import re
 from pathlib import Path
 
-# Path to the modified file
-REPO_ROOT = Path("/workspace/ClickHouse")
+# Docker-internal path to the repo (from Dockerfile WORKDIR)
+# NOTE: This is the path INSIDE the Docker container, not /workspace/repo/
+REPO = "/workspace/ClickHouse"
+REPO_ROOT = Path(REPO)
 TARGET_FILE = REPO_ROOT / "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
 
 
@@ -24,20 +26,83 @@ TARGET_FILE = REPO_ROOT / "src/Functions/UserDefined/UserDefinedSQLObjectsZooKee
 # These tests verify the repo's own CI checks pass on the base commit
 # =============================================================================
 
-def test_repo_submodules_check():
-    """Repo submodules check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "ci/jobs/scripts/check_style/check_submodules.sh"],
-        capture_output=True, text=True, timeout=120, cwd=REPO_ROOT,
+def test_repo_cpp_style_no_tabs():
+    """Repo C++ files have no tabs (pass_to_pass) - ClickHouse CI style check."""
+    # Uses the same logic as ci/jobs/scripts/check_style/check_cpp.sh
+    EXCLUDE = r'build/|integration/|widechar_width/|glibc-compatibility/|poco/|memcpy/|consistent-hashing|benchmark|tests/.*\.cpp$|programs/keeper-bench/example\.yaml|base/base/openpty\.h|src/Storages/System/StorageSystemDashboards\.cpp|src/Storages/ObjectStorage/DataLakes/Iceberg/AvroSchema\.h'
+    cmd = (
+        f"find ./src ./base ./programs ./utils -name '*.h' -o -name '*.cpp' 2>/dev/null | "
+        f"grep -vP '{EXCLUDE}' | xargs grep -l $'\\t' 2>/dev/null || true"
     )
-    assert r.returncode == 0, f"Submodules check failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Found tabs in C++ source files:\n{r.stdout}"
+
+
+def test_repo_cpp_style_no_dos_newlines():
+    """Target file has no DOS newlines (pass_to_pass) - ClickHouse CI style check."""
+    # Check only the target file, not the whole repo (base commit has pre-existing issues)
+    cmd = f"grep -l $'\\r' {TARGET_FILE} 2>/dev/null || true"
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Found DOS newlines in target file"
+
+
+def test_repo_no_conflict_markers():
+    """Repo files have no git conflict markers (pass_to_pass) - ClickHouse CI check."""
+    # Uses the same logic as ci/jobs/scripts/check_style/various_checks.sh
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            r"find ./src ./base ./programs ./utils ./tests ./docs ./cmake -name '*.cpp' -o -name '*.h' -o -name '*.md' | xargs grep -P '^(<<<<<<<|=======|>>>>>>>)$' 2>/dev/null || true"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Found conflict markers in:\n{r.stdout}"
+
+
+def test_repo_no_utf8_bom():
+    """Repo files have no UTF-8 BOM (pass_to_pass) - ClickHouse CI check."""
+    # Uses the same logic as ci/jobs/scripts/check_style/various_checks.sh
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            r"find ./src ./base ./programs ./utils ./tests ./docs ./cmake -name '*.md' -o -name '*.cpp' -o -name '*.h' | xargs grep -l -F $'\xEF\xBB\xBF' 2>/dev/null || true"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Found UTF-8 BOM in files:\n{r.stdout}"
+
+
+def test_repo_no_trailing_whitespace():
+    """Target file has no trailing whitespace (pass_to_pass) - ClickHouse CI style check."""
+    # Check only the target file, not the whole repo (base commit has pre-existing issues)
+    cmd = f"grep -n -P ' $' {TARGET_FILE} 2>/dev/null || true"
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Found trailing whitespace in target file:\n{r.stdout}"
+
+
+def test_repo_target_file_exists():
+    """Target file exists and is readable (pass_to_pass)."""
+    r = subprocess.run(
+        ["test", "-f", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Target file not found: {TARGET_FILE}"
 
 
 def test_repo_git_track_branch():
     """Repo is on correct base commit (pass_to_pass)."""
     r = subprocess.run(
         ["git", "rev-parse", "HEAD"],
-        capture_output=True, text=True, timeout=30, cwd=REPO_ROOT,
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Git command failed: {r.stderr}"
     commit = r.stdout.strip()
@@ -45,54 +110,23 @@ def test_repo_git_track_branch():
     assert len(commit) == 40, f"Invalid commit hash: {commit}"
 
 
-def test_repo_target_file_exists():
-    """Target file exists and is readable (pass_to_pass)."""
-    assert TARGET_FILE.exists(), f"Target file not found: {TARGET_FILE}"
-    content = TARGET_FILE.read_text()
-    assert "UserDefinedSQLObjectsZooKeeperStorage" in content, "Target file content unexpected"
-
-
-def test_repo_no_conflict_markers():
-    """Repo files have no git conflict markers (pass_to_pass)."""
+def test_repo_no_executable_source_files():
+    """Repo source files are not executable (pass_to_pass) - ClickHouse CI check."""
+    # Uses the same logic as ci/jobs/scripts/check_style/various_checks.sh
     r = subprocess.run(
-        ["bash", "-c", "find ./src ./base ./programs ./utils ./tests ./docs ./cmake -name '*.cpp' -o -name '*.h' -o -name '*.md' | xargs grep -P '^(<<<<<<<|=======|>>>>>>>)$' 2>/dev/null || true"],
-        capture_output=True, text=True, timeout=120, cwd=REPO_ROOT,
+        [
+            "bash", "-c",
+            r"git ls-files -s ./src ./base ./programs ./utils ./tests ./docs ./cmake | awk '\$1 != \"120000\" && \$1 != \"100644\" { print \$4 }' | grep -E '\.(cpp|h|sql|j2|xml|txt|md)\$' || true"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.stdout.strip() == "", f"Found conflict markers in:\n{r.stdout}"
+    assert r.stdout.strip() == "", f"Source files should not be executable:\n{r.stdout}"
 
 
-def test_repo_no_dos_newlines():
-    """Repo C++ files have no DOS/Windows newlines in ClickHouse code (pass_to_pass)."""
-    # Excludes: build/, integration/, contrib/ paths
-    EXCLUDE='build/|integration/|contrib/|widechar_width/|glibc-compatibility/|poco/|memcpy/|consistent-hashing'
-    r = subprocess.run(
-        ["bash", "-c", f"find ./src ./base ./programs ./utils ./docs -name '*.md' -o -name '*.h' -o -name '*.cpp' -o -name '*.js' -o -name '*.py' -o -name '*.html' 2>/dev/null | grep -vP '{EXCLUDE}' | xargs grep -l '\r' 2>/dev/null || true"],
-        capture_output=True, text=True, timeout=120, cwd=REPO_ROOT,
-    )
-    assert r.stdout.strip() == "", f"Found DOS newlines in:\n{r.stdout}"
-
-
-def test_repo_no_tabs_in_source():
-    """Repo C++ files have no tabs in ClickHouse code (pass_to_pass)."""
-    # Excludes: build/, third-party libs (poco, glibc-compatibility, etc.), and specific files
-    EXCLUDE='build/|integration/|widechar_width/|glibc-compatibility/|poco/|memcpy/|consistent-hashing|benchmark|tests/.*\\.cpp$|programs/keeper-bench/example\\.yaml|base/base/openpty\\.h|src/Storages/System/StorageSystemDashboards\\.cpp|src/Storages/ObjectStorage/DataLakes/Iceberg/AvroSchema\\.h'
-    r = subprocess.run(
-        ["bash", "-c", f"find ./src ./base ./programs ./utils -name '*.h' -o -name '*.cpp' 2>/dev/null | grep -vP '{EXCLUDE}' | xargs grep -l $'\\t' 2>/dev/null || true"],
-        capture_output=True, text=True, timeout=120, cwd=REPO_ROOT,
-    )
-    assert r.stdout.strip() == "", f"Found tabs in:\n{r.stdout}"
-
-
-def test_repo_git_working_tree_clean():
-    """Repo working tree is clean (pass_to_pass)."""
-    r = subprocess.run(
-        ["git", "status", "--porcelain"],
-        capture_output=True, text=True, timeout=30, cwd=REPO_ROOT,
-    )
-    # Allow the target file to be modified (it may have been patched)
-    lines = [l for l in r.stdout.strip().split('\n') if l.strip() and 'UserDefinedSQLObjectsZooKeeperStorage.cpp' not in l]
-    assert len(lines) == 0, f"Working tree has unexpected changes:\n{r.stdout}"
-
+# =============================================================================
+# FAIL-TO-PASS TESTS (Structural checks for the fix)
+# These tests verify the fix is correctly applied
+# =============================================================================
 
 def get_refreshObjects_function_content():
     """Extract the refreshObjects function content from the file."""

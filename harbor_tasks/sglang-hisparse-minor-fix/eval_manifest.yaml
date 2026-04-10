@@ -52,4 +52,56 @@ checks:
     origin: static
     description: "transfer_item_warp in hisparse.cuh has real logic"
 
-rubric: []
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python files pass ruff linting (F401, F821)"
+
+  - id: test_repo_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python files pass black format check"
+
+  - id: test_repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python files pass isort check"
+
+  - id: test_repo_codespell_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python files pass codespell check"
+
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files compile without syntax errors"
+
+  - id: test_repo_clang_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CUDA/C++ files pass clang-format check"
+
+  - id: test_repo_pre_commit_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python files pass AST check"
+
+rubric:
+  - rule: "Add descriptive comments explaining the purpose of complex CUDA optimizations (e.g., 128-bit transfers, PTX assembly patterns)"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "294-302"
+      commit: "20ee59bcfc2956cb2aef2c1a4ae1e8bbda4ba52d"
+
+  - rule: "For every #include <sgl_kernel/...> line, add a short trailing comment explaining why that header is included"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "30-31"
+      commit: "20ee59bcfc2956cb2aef2c1a4ae1e8bbda4ba52d"
+
+  - rule: "Use project abstractions (TensorMatcher, LaunchKernel, RuntimeCheck) over raw CUDA primitives where applicable"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "28-29,38-40,55-59"
+      commit: "20ee59bcfc2956cb2aef2c1a4ae1e8bbda4ba52d"

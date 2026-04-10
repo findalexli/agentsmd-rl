@@ -2,11 +2,10 @@
 set -e
 
 # Install pytest if not available
-pip install pytest -q
+pip install pytest --break-system-packages -q
 
 # Run tests and capture output
-cd /workspace/task
-if pytest tests/test_outputs.py -v --tb=short 2>&1; then
+if pytest /tests/test_outputs.py -v --tb=short 2>&1; then
     echo "PASS" > /logs/verifier/result.txt
     echo 1 > /logs/verifier/reward.txt
 else

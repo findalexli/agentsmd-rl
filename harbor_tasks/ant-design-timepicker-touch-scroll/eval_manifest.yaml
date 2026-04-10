@@ -41,4 +41,36 @@ checks:
     type: "pytest"
     weight: 0.1
 
-rubric: []
+  # Pass-to-Pass checks (Repo CI/CD)
+  - id: "test_repo_biome_lint"
+    name: "Repo Biome lint passes"
+    type: "pass_to_pass"
+    weight: 0.0
+    origin: "repo_tests"
+    description: "Repository Biome lint check passes on both base and after fix"
+
+  - id: "test_repo_eslint"
+    name: "Repo ESLint passes"
+    type: "pass_to_pass"
+    weight: 0.0
+    origin: "repo_tests"
+    description: "Repository ESLint check passes on both base and after fix"
+
+rubric:
+  - rule: "Use @ant-design/cssinjs for all styling. Generate styles with functions named gen[ComponentName]Style and place in style/ directory."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "67-75"
+      commit: "14e3c384e9c7d5b6096ed60ae5de3db80b8a39c9"
+
+  - rule: "Use design tokens from the Ant Design token system. Never hardcode colors, sizes, or spacing values."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "72-73"
+      commit: "14e3c384e9c7d5b6096ed60ae5de3db80b8a39c9"
+
+  - rule: "Support both light and dark themes with any style changes. Use CSS logical properties for RTL support."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "74-76"
+      commit: "14e3c384e9c7d5b6096ed60ae5de3db80b8a39c9"

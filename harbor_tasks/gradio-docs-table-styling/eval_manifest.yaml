@@ -75,9 +75,35 @@ checks:
       lines: "45"
       commit: "e8dadd648483b6016913a9b7fa2580dbc08cb823"
 
-rubric:
-  - rule: "Frontend code is formatted with prettier — CSS should use consistent spacing, property formatting, and quote style matching the project's prettier configuration."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "e8dadd648483b6016913a9b7fa2580dbc08cb823"
+  # Repo CI/CD pass_to_pass gates — added during p2p enrichment
+  - id: test_repo_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo code formatting passes prettier check (mirrors CI: pnpm format:check)"
+
+  - id: test_repo_css_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CSS file passes prettier formatting check"
+
+  - id: test_repo_pnpm_install
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pnpm install completes successfully (CI env health check)"
+
+  - id: test_repo_client_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's client library builds successfully (mirrors CI: pnpm --filter @gradio/client build)"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests pass (mirrors CI: pnpm test:run)"
+
+# Rubric: No config file changes required for this task
+# The CSS styling changes are validated by the existing tests:
+# - test_repo_css_prettier: CSS file passes prettier formatting check
+# - test_tab_indentation: CSS uses tab indentation matching file convention
+# Judge-only evaluation (no rubric rules) - all tests must pass for reward=1
+rubric: []

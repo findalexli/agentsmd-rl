@@ -66,29 +66,49 @@ checks:
 
   # Repo CI/CD tests — p2p enrichment (verified 2026-04-09)
   # CI commands discovered from .github/workflows/lint.yml, .github/workflows/format.yml, package.json
-  # - bun lint -> adapted to: npx oxlint src/js (config incompatible, works without)
-  # - bun run typecheck -> skipped (requires bun runtime)
-  # - bun run zig:check -> skipped (requires zig toolchain)
-  # - bun ./test/internal/ban-words.test.ts -> skipped (requires bun runtime)
+  # Working commands:
+  # - npx oxlint src/js -> EXIT 0 (336 warnings, 0 errors) - adapted from "bun lint"
+  # Skipped commands (require bun/zig toolchain not in node:22-slim):
+  # - bun run typecheck -> requires bun runtime
+  # - bun run zig:check -> requires zig toolchain
+  # - bun ./test/internal/ban-words.test.ts -> requires bun runtime
+  # - zig fmt src/ -> requires zig toolchain
+  # - clang-format -> requires LLVM toolchain
   - id: repo_oxlint
     type: pass_to_pass
-    origin: repo_ci
+    origin: repo_tests
     description: "Repo's JavaScript linting passes (oxlint on src/js)"
     source:
       ci_workflow: ".github/workflows/lint.yml"
       package_script: "bun lint"
-      adapted_command: "npx oxlint src/js"
+      docker_command: "npx oxlint src/js"
       original_command: "bunx oxlint --config=oxlint.json --format=github src/js"
+      verification: "Tested in node:22-slim container, exits 0 with 336 warnings"
 
   - id: zig_syntax_valid
     type: pass_to_pass
-    origin: repo_ci
-    description: "Zig source files have valid syntax and structure"
+    origin: static
+    description: "Zig source files have valid syntax and structure via structural validation"
     source:
-      ci_workflow: ".github/workflows/format.yml"
-      package_script: "bun run zig:check"
-      adapted_validation: "Python-based structural validation (zig fmt requires zig toolchain)"
+      note: "Python-based validation since zig toolchain unavailable in Docker image"
       path: "src/fd.zig"
       validation: "brace_balance,syntax_elements,function_integrity"
 
-rubric: []
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "8f0fd0cf1da17fff23df7133e414cdd1f5ed917e"
+
+  - rule: "All changes must be tested. The fix should include or be accompanied by tests that verify the behavior."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "8f0fd0cf1da17fff23df7133e414cdd1f5ed917e"
+
+  - rule: "Prefer Bun APIs over std APIs. Use bun.* APIs instead of std.* for cross-platform wrappers with proper error handling."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "15-16"
+      commit: "8f0fd0cf1da17fff23df7133e414cdd1f5ed917e"

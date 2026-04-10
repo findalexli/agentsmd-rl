@@ -172,7 +172,7 @@ def test_imports_work():
     result = subprocess.run(
         [
             sys.executable, "-c",
-            "from openhands.app_server.event_callback.set_title_callback_processor import SetTitleCallbackProcessor, _poll_for_title, _POLL_DELAY_S, _NUM_POLL_ATTEMPTS"
+            "from openhands.app_server.event_callback.set_title_callback_processor import SetTitleCallbackProcessor"
         ],
         cwd=REPO,
         capture_output=True,
@@ -190,24 +190,24 @@ def test_imports_work():
 # and continue to pass after the fix is applied.
 # ============================================================================
 
-def test_repo_precommit_hooks():
-    """Repo's pre-commit hooks pass (pass_to_pass) - runs ruff, mypy, format checks."""
+def test_repo_ruff_linting_modified_file():
+    """Ruff linting passes on the modified set_title_callback_processor.py file (pass_to_pass)."""
     import subprocess
 
     result = subprocess.run(
         [
-            "pre-commit", "run", "--all-files",
-            "--show-diff-on-failure",
-            "--config", "./dev_config/python/.pre-commit-config.yaml"
+            "ruff", "check",
+            "--config", "dev_config/python/ruff.toml",
+            "openhands/app_server/event_callback/set_title_callback_processor.py"
         ],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=300
+        timeout=120
     )
 
     assert result.returncode == 0, \
-        f"Pre-commit hooks failed:\n{result.stdout}\n{result.stderr}"
+        f"Ruff linting on modified file failed:\n{result.stdout}\n{result.stderr}"
 
 
 def test_repo_ruff_linting():
@@ -230,6 +230,66 @@ def test_repo_ruff_linting():
         f"Ruff linting failed:\n{result.stdout}\n{result.stderr}"
 
 
+def test_repo_ruff_format_check():
+    """Ruff format check passes on the modified file (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        [
+            "ruff", "format",
+            "--config", "dev_config/python/ruff.toml",
+            "--check",
+            "openhands/app_server/event_callback/set_title_callback_processor.py"
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    assert result.returncode == 0, \
+        f"Ruff format check failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_python_syntax():
+    """Python syntax check passes on the modified file (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "py_compile",
+            "openhands/app_server/event_callback/set_title_callback_processor.py"
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+
+    assert result.returncode == 0, \
+        f"Python syntax check failed:\n{result.stderr}"
+
+
+def test_repo_unit_tests_modified_file():
+    """Unit tests for the modified SetTitleCallbackProcessor pass (pass_to_pass)."""
+    import subprocess
+
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "pytest",
+            "tests/unit/app_server/test_set_title_callback_processor.py",
+            "-v", "--tb=short"
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0, \
+        f"Unit tests for modified file failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
 def test_repo_app_server_unit_tests():
     """Repo's app_server unit tests pass (pass_to_pass)."""
     import subprocess
@@ -248,3 +308,23 @@ def test_repo_app_server_unit_tests():
 
     assert result.returncode == 0, \
         f"App server unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_precommit_hooks():
+    """Repo's pre-commit hooks pass (pass_to_pass) - runs ruff, mypy, format checks."""
+    import subprocess
+
+    result = subprocess.run(
+        [
+            "pre-commit", "run", "--all-files",
+            "--show-diff-on-failure",
+            "--config", "./dev_config/python/.pre-commit-config.yaml"
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0, \
+        f"Pre-commit hooks failed:\n{result.stdout}\n{result.stderr}"

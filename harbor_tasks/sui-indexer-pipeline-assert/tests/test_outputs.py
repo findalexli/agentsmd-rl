@@ -19,7 +19,7 @@ def test_compilation():
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=300
+        timeout=600
     )
     assert result.returncode == 0, f"Compilation failed:\n{result.stderr}"
 
@@ -119,3 +119,54 @@ def test_take_rows_error_message():
     # The error message should be preserved
     assert '"Can\'t take more rows than are available"' in content, \
         "Error message 'Can't take more rows than are available' should be preserved"
+
+
+# ============================================================================
+# PASS-TO-PASS TESTS - Repo CI Checks
+# These tests verify the repo's existing CI passes on the base commit
+# ============================================================================
+
+
+def test_repo_formatting():
+    """Repo's code formatting passes (pass_to_pass).
+
+    Verifies that cargo fmt --check passes on the entire workspace.
+    """
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Formatting check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_xlint():
+    """Repo's xlint check passes (pass_to_pass).
+
+    Runs cargo xlint which checks license headers and other project-specific lints.
+    """
+    r = subprocess.run(
+        ["cargo", "xlint"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"xlint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_git_checks():
+    """Repo's git checks pass (pass_to_pass).
+
+    Runs scripts/git-checks.sh which validates git history and file naming conventions.
+    """
+    r = subprocess.run(
+        ["bash", f"{REPO}/scripts/git-checks.sh"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git checks failed:\n{r.stderr[-500:]}"

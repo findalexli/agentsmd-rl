@@ -19,16 +19,27 @@ agent_config:
     check: "Tests use npm/jest/vitest appropriately for TypeScript testing"
 
 # Rubric for soft/subjective checks (LLM-judge only)
-rubric: []
+rubric:
+  - rule: "Consistent terminology — pick one term for a concept, use it everywhere."
+    source:
+      path: ".claude/skills/docs-style/SKILL.md"
+      lines: "15"
+      commit: "f7437593fdeb85fceb81d069835c6a3a90276c3a"
+
+  - rule: "Real examples over abstract explanations — show, do not describe. Code changes should include clear examples of the behavior."
+    source:
+      path: ".claude/skills/docs-style/SKILL.md"
+      lines: "6"
+      commit: "f7437593fdeb85fceb81d069835c6a3a90276c3a"
 
 # Checks that map 1:1 to test_outputs.py functions
 checks:
   - id: test_kimi_model_sets_reasoning_content_flag
-    description: "Kimi models (kimi-*) correctly set supportsReasoningContentField to true"
+    description: "Kimi models correctly set supportsReasoningContentField to true"
     points: 25
 
   - id: test_non_kimi_model_unsets_reasoning_content_flag
-    description: "Non-kimi models (moonshot-v1-*) have supportsReasoningContentField set to false"
+    description: "Non-kimi models have supportsReasoningContentField set to false"
     points: 25
 
   - id: test_moonshot_class_compiles
@@ -40,16 +51,36 @@ checks:
     points: 15
 
   - id: test_model_prefix_matching
-    description: "Only models starting with 'kimi' get reasoning_content support"
+    description: "Only models starting with kimi get reasoning_content support"
     points: 15
 
-  # Pass-to-pass tests (repo CI/CD checks - should pass on both base and fix)
+  # Pass-to-pass tests - CI commands from .github/workflows/cli-pr-checks.yml
   - id: test_repo_tsc_check
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's TypeScript typecheck passes in core/ directory"
+    description: "TypeScript typecheck passes in core directory - npm run tsc:check"
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core build passes - npm run build"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes in core directory - npm run lint"
+
+  - id: test_repo_jest_llm
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Jest tests for LLM module pass - npm run test -- --testPathPattern llm"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Unit tests for supportsFim pass - npm run test -- --testPathPattern supportsFim"
 
   - id: test_repo_vitest
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's vitest tests pass in core/ directory"
+    description: "Vitest tests pass - npm run vitest"

@@ -3,19 +3,37 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T09:24:27.478236",
-  "total_time": 754.14,
-  "sandbox_id": "i3p7l2a23u05uzlywfnfi",
+  "validated_at": "2026-04-10T05:05:15.754249",
+  "total_time": 434.2,
+  "sandbox_id": "isdkbhw4vaueq9nloxnau",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 63.09,
-      "notes": "Added 6 repo CI/CD pass-to-pass gates: test_repo_pyproject_toml_valid (TOML syntax validation), test_repo_ruff_lint (ruff 0.14.9 linter), test_repo_ruff_format (ruff 0.14.9 formatter), test_repo_engine_syntax_valid (all engine files syntax check), test_repo_no_trailing_whitespace (whitespace check), test_repo_file_ends_with_newline (EOF newline check). Discovered CI commands from .github/workflows/pre-commit.yml: ruff check, ruff format, and various pre-commit hooks. Pytest tests require torch/megatron dependencies not available in lightweight image. All 16 tests (4 f2p + 6 original p2p + 6 new p2p) pass after gold fix."
+      "time": 120.0,
+      "notes": "Added 12 repo CI/CD pass-to-pass gates (9 original + 3 new). New tests: test_repo_package_name_valid (TOML metadata), test_repo_areal_init_ast_valid (AST validation), test_repo_project_urls_valid (pyproject.toml URLs). Original 9 gates: test_repo_pyproject_toml_valid, test_repo_ruff_lint, test_repo_ruff_format, test_repo_engine_syntax_valid, test_repo_no_trailing_whitespace, test_repo_file_ends_with_newline, test_repo_yaml_valid, test_repo_json_valid, test_repo_no_private_keys. All CI commands discovered from .github/workflows/pre-commit.yml: ruff, trailing-whitespace, end-of-file-fixer, check-yaml, check-json, detect-private-key."
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build succeeds, NOP test reward=0 (4 f2p tests fail on buggy base), Gold test reward=1 (all 22 tests pass after fix).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 107.11
+    },
+    "p2p_enrichment": {
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 781.84,
+      "notes": ""
     },
     "improve": {
       "status": "skipped",
@@ -24,72 +42,30 @@
       "time": 0,
       "notes": "tests look good"
     },
-    "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "icr": 1.0,
-      "attempts": 1,
-      "notes": "All 4 validation checks passed: (1) Docker build succeeds, (2) NOP test reward=0 - 4 fail-to-pass tests correctly fail on buggy base code (SyntaxError: duplicate kwarg), (3) Gold test reward=1 - all 16 tests pass after fix applied, (4) Rubric judge ICR=1.0 - gold solution follows style rules (no config file changes needed for this bug fix).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 127.19
-    },
-    "p2p_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 390.2,
-      "notes": ""
-    },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
-      "notes": "ICR=1.00"
+      "time": 1.42,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 0.0,
-      "at": "2026-04-09T01:22:42.762408"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 596.38,
-      "at": "2026-04-09T01:22:42.936552"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 6541.93,
-      "at": "2026-04-09T06:09:31.664338"
+      "time": 433.93,
+      "at": "2026-04-09T20:25:42.650860"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 753.86,
-      "at": "2026-04-09T09:24:27.291859"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 754.14,
-      "at": "2026-04-09T09:24:27.478236"
+      "time": 434.2,
+      "at": "2026-04-10T05:05:15.754265"
     }
   ]
 }

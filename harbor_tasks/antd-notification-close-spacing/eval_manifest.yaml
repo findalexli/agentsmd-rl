@@ -1,6 +1,6 @@
 eval_manifest:
   version: "1.0"
-  
+
   source:
     pr: "https://github.com/ant-design/ant-design/pull/57590"
     title: "fix(Notification): reserve close button spacing for description-only notices"
@@ -11,31 +11,43 @@ eval_manifest:
       spacing for description content in closable notices.
 
   checks:
-    # Pass-to-pass tests (regression prevention)
-    - id: test_typescript_compilation
+    # Pass-to-pass tests (regression prevention - repo's CI/CD checks)
+    - id: test_repo_typescript_compilation
       type: pass_to_pass
       origin: repo_tests
-      description: TypeScript compilation passes
+      description: "Repo's TypeScript typecheck passes"
       weight: 1
 
-    - id: test_notification_unit_tests
+    - id: test_repo_notification_unit_tests
       type: pass_to_pass
       origin: repo_tests
-      description: Notification component tests pass
+      description: "Repo's notification component unit tests pass"
       weight: 1
 
-    - id: test_eslint_notification
+    - id: test_repo_eslint_notification
       type: pass_to_pass
       origin: repo_tests
-      description: ESLint passes on notification component
+      description: "Repo's ESLint passes on notification component"
       weight: 1
 
-    - id: test_biome_lint_notification
+    - id: test_repo_biome_lint_notification
       type: pass_to_pass
       origin: repo_tests
-      description: Biome lint passes on notification component
+      description: "Repo's Biome lint passes on notification component"
       weight: 1
-      
+
+    - id: test_repo_node_tests
+      type: pass_to_pass
+      origin: repo_tests
+      description: "Repo's Node.js tests pass"
+      weight: 1
+
+    - id: test_repo_markdown_lint
+      type: pass_to_pass
+      origin: repo_tests
+      description: "Repo's markdown linting passes"
+      weight: 1
+
     # Fail-to-pass tests (the actual fix verification)
     - id: test_purepanel_conditional_title_render
       type: fail_to_pass
@@ -50,7 +62,7 @@ eval_manifest:
       source:
         file: components/notification/PurePanel.tsx
         lines: "100-104"
-        
+
     - id: test_style_first_child_margin
       type: fail_to_pass
       origin: code_analysis
@@ -63,7 +75,7 @@ eval_manifest:
       source:
         file: components/notification/style/index.ts
         lines: "178-182"
-        
+
     - id: test_description_margin_value_is_token
       type: fail_to_pass
       origin: agent_config
@@ -79,34 +91,32 @@ eval_manifest:
 
   # Rubric for soft/subjective rules from agent configs
   rubric:
-    - id: use_design_tokens
-      category: code_quality
-      description: "Spacing values must use design tokens (token.marginSM), not hardcoded values"
-      reference:
-        source: CLAUDE.md
-        section: "Styling Approach"
-        excerpt: "Never hardcode colors, sizes, or spacing values"
-        
-    - id: css_logical_properties
-      category: code_quality
-      description: "Use CSS logical properties (marginInlineEnd) for RTL support"
-      reference:
-        source: CLAUDE.md
-        section: "Styling Approach"
-        excerpt: "Use CSS logical properties for RTL support (e.g., margin-inline-start instead of margin-left)"
-        
-    - id: conditional_rendering_pattern
-      category: code_style
-      description: "Use {condition && (jsx)} pattern for conditional rendering"
-      reference:
-        source: copilot-instructions.md
-        section: "React Component Guidelines"
-        excerpt: "Use early returns to improve readability"
-        
-    - id: test_import_paths
-      category: testing
-      description: "Test imports must use relative paths for internal modules"
-      reference:
-        source: CLAUDE.md
-        section: "Test 导入规范"
-        excerpt: "测试文件应优先从当前组件目录、相邻内部模块或共享测试工具目录通过相对路径引用"
+    - rule: "Spacing values must use design tokens (token.marginSM), not hardcoded values"
+      source:
+        path: "CLAUDE.md"
+        lines: "95-100"
+        commit: "501436e5f45e533679f797ee0ee58e2a391e566d"
+
+    - rule: "Use CSS logical properties (marginInlineEnd) for RTL support instead of directional properties"
+      source:
+        path: "CLAUDE.md"
+        lines: "101-103"
+        commit: "501436e5f45e533679f797ee0ee58e2a391e566d"
+
+    - rule: "Test imports must use relative paths for internal modules"
+      source:
+        path: "CLAUDE.md"
+        lines: "55-58"
+        commit: "501436e5f45e533679f797ee0ee58e2a391e566d"
+
+    - rule: "Use conditional rendering with {condition && (jsx)} pattern"
+      source:
+        path: ".github/copilot-instructions.md"
+        lines: "45"
+        commit: "501436e5f45e533679f797ee0ee58e2a391e566d"
+
+    - rule: "Component styles must use @ant-design/cssinjs with gen[ComponentName]Style naming"
+      source:
+        path: ".github/copilot-instructions.md"
+        lines: "68-71"
+        commit: "501436e5f45e533679f797ee0ee58e2a391e566d"

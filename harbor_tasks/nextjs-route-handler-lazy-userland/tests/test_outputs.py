@@ -127,7 +127,7 @@ if (!/async\\s+ensureUserland\\s*\\(/.test(content)) {{
 // Verify it handles _pendingUserland (not just an empty stub)
 if (!/this\\._pendingUserland|this\\.userland/.test(content.substring(
     content.indexOf('ensureUserland'),
-    content.indexOf('ensureUserland') + 500
+    content.indexOf('ensureUserland') + 1500
 ))) {{
     console.error('ensureUserland() appears to be a stub');
     process.exit(1);
@@ -152,9 +152,9 @@ def test_module_init_from_userland():
         "_initFromUserland() method not found in module.ts"
     )
     # Must call autoImplementMethods inside _initFromUserland (not in constructor directly)
-    init_idx = content.index("_initFromUserland()")
-    # Find the method body (next ~600 chars should contain autoImplementMethods)
-    method_region = content[init_idx:init_idx + 800]
+    init_idx = content.rindex("_initFromUserland()")
+    # Find the method body (next ~2000 chars to handle larger methods)
+    method_region = content[init_idx:init_idx + 2000]
     assert "autoImplementMethods" in method_region, (
         "_initFromUserland() does not call autoImplementMethods"
     )
@@ -270,3 +270,86 @@ def test_handle_calls_ensure_userland():
     assert "resolveHandler" in handle_body, (
         "handle() does not use resolveHandler() method"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI checks (pass_to_pass) — verify existing functionality not broken
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_eslint():
+    """ESLint passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "pnpm", "lint-eslint",
+            "packages/next/src/server/route-modules/app-route/module.ts",
+            "packages/next/src/build/templates/app-route.ts",
+            "packages/next/src/export/routes/app-route.ts",
+            "packages/next/src/server/route-modules/route-module.ts",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_ast_grep():
+    """ast-grep scan passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint-ast-grep"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ast-grep scan failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_language():
+    """Language lint (alex) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint-language"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Language lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Prettier formatting check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "pnpm",
+            "prettier",
+            "--check",
+            "packages/next/src/server/route-modules/app-route/module.ts",
+            "packages/next/src/build/templates/app-route.ts",
+            "packages/next/src/export/routes/app-route.ts",
+            "packages/next/src/server/route-modules/route-module.ts",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_error_codes():
+    """Error codes check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "packages/next/check-error-codes.js"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Error codes check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

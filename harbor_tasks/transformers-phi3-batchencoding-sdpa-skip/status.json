@@ -3,12 +3,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T07:04:50.231793",
-  "total_time": 6133.16,
-  "sandbox_id": "ib8sca92aum54wupkdf9m",
+  "validated_at": "2026-04-09T14:52:49.163627",
+  "total_time": 1478.14,
+  "sandbox_id": "ix3pt9yglfhneuzbdvu09",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during validate",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -18,56 +18,21 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "completed",
-      "date": "2026-04-09",
-      "ci_commands_found": [
-        "make style (ruff check/format - repo-wide, heavy)",
-        "make typing (ty type checker)",
-        "make check-code-quality (full linting)",
-        "make check-repository-consistency (imports, copies, docs)",
-        "python utils/checkers.py (modular checks)",
-        "pytest (full test suite - requires torch/GPU)"
-      ],
-      "p2p_tests_added": [
-        {
-          "id": "test_repo_syntax_check",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "All target files have valid Python syntax via py_compile",
-          "files_checked": [
-            "tests/models/phi3/test_modeling_phi3.py",
-            "tests/test_modeling_common.py"
-          ]
-        },
-        {
-          "id": "test_repo_ruff_check",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Target files pass ruff lint (E,W, ignoring E501)",
-          "files_checked": [
-            "tests/models/phi3/test_modeling_phi3.py",
-            "tests/test_modeling_common.py"
-          ]
-        },
-        {
-          "id": "test_repo_ast_parse",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Target files are valid Python (AST-parsable)",
-          "files_checked": [
-            "tests/models/phi3/test_modeling_phi3.py",
-            "tests/test_modeling_common.py"
-          ]
-        }
-      ],
-      "notes": "Skipped heavy CI commands (make style, make typing) due to pre-existing repo issues at base commit. Selected lightweight checks that verify code quality without requiring torch/GPU or full repo consistency."
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 125.3,
+      "notes": ""
     },
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All four checks passed: Docker build successful, NOP test reward=0 (tests detect bugs), Gold test reward=1 (12/12 tests pass), Rubric judge neutral 0.5 (no API key available)."
+      "notes": "All four checks passed: Docker build successful, NOP test reward=0 (tests detect bugs), Gold test reward=1 (12/12 tests pass), Rubric judge neutral 0.5 (no API key available).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.66
     },
     "improve": {
       "status": "skipped",
@@ -75,6 +40,13 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.41,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -85,6 +57,22 @@
       "backend": "fireworks",
       "time": 6133.16,
       "at": "2026-04-09T07:04:50.231793"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1477.88,
+      "at": "2026-04-09T14:52:49.001635"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1478.14,
+      "at": "2026-04-09T14:52:49.163627"
     }
   ]
 }

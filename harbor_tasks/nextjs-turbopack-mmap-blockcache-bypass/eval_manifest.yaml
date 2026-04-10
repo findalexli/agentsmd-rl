@@ -7,44 +7,66 @@ source:
   merge_commit: "d75f07b3518a69691d3190f055ca2d30d700c56c"
 
 checks:
-  - id: source_file_valid
+  - id: test_source_file_valid
     type: pass_to_pass
     origin: static
     description: "Source file exists with StaticSortedFile struct and core structure"
 
-  - id: verified_blocks_field
+  - id: test_verified_blocks_field
     type: fail_to_pass
     origin: pr_diff
-    description: "StaticSortedFile struct has verified_blocks: Box<[AtomicU64]> field for CRC bitmap"
+    description: "Behavioral check: StaticSortedFile struct has verified_blocks: Box<[AtomicU64]> field for CRC bitmap"
 
-  - id: arc_block_cache_reader_struct
+  - id: test_arc_block_cache_reader_struct
     type: fail_to_pass
     origin: pr_diff
-    description: "ArcBlockCacheReader struct bundles cache + verified_blocks bitmap, derives Clone, Copy"
+    description: "Behavioral check: ArcBlockCacheReader struct bundles cache + verified_blocks bitmap"
 
-  - id: get_or_cache_block_function
+  - id: test_get_or_cache_block_function
     type: fail_to_pass
     origin: pr_diff
-    description: "get_or_cache_block free function reads blocks, bypasses cache for uncompressed, uses bitmap for CRC"
+    description: "Behavioral check: get_or_cache_block free function is available"
 
-  - id: verify_checksum_once_function
+  - id: test_verify_checksum_once_function
     type: fail_to_pass
     origin: pr_diff
-    description: "verify_checksum_once uses AtomicU64 bitmap with Relaxed ordering for at-most-once CRC verification"
+    description: "Behavioral check: verify_checksum_once function is available"
 
-  - id: block_weighter_debug_assert
+  - id: test_block_weighter_debug_assert
     type: fail_to_pass
     origin: pr_diff
-    description: "BlockWeighter::weight has debug_assert against inserting mmap-backed blocks into cache"
+    description: "Behavioral check: BlockWeighter::weight has debug_assert"
 
-  - id: core_api_intact
+  - id: test_core_api_intact
     type: pass_to_pass
     origin: static
     description: "Core types and methods (StaticSortedFile, BlockCache, verify_checksum) still exist"
 
-  - id: imports_include_atomic
+  - id: test_imports_include_atomic
     type: pass_to_pass
     origin: static
     description: "Source file imports AtomicU64 from std::sync::atomic"
 
-rubric: []
+  - id: test_repo_rust_syntax_valid
+    type: pass_to_pass
+    origin: repo_ci
+    description: "Repo's Rust source files have valid syntax (balanced braces, valid structure)"
+
+rubric:
+  - rule: "Read all README.md files in the directory path from repo root up to and including the target file's directory before editing. This identifies local patterns and conventions."
+    source:
+      path: "CLAUDE.md"
+      lines: "46-47"
+      commit: "16dd58fa25abf87ae891628ce018114a4c333db6"
+
+  - rule: "Use comments to explain invariants, not narrate code. Comments should explain WHY, not WHAT the code does."
+    source:
+      path: "CLAUDE.md"
+      lines: "46-47"
+      commit: "16dd58fa25abf87ae891628ce018114a4c333db6"
+
+  - rule: "For Rust code in turbopack/crates/turbo-persistence, follow the block format conventions: uncompressed blocks (header=0) bypass cache, compressed blocks use cache with CRC verification via bitmap."
+    source:
+      path: "turbopack/crates/turbo-persistence/README.md"
+      lines: "1-50"
+      commit: "16dd58fa25abf87ae891628ce018114a4c333db6"

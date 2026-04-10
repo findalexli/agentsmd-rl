@@ -61,5 +61,64 @@ checks:
     description: "The file should import from java.util.concurrent package"
     type: "p2p"  # Pass-to-pass: already present in base commit (for other types)
 
-# No rubric rules - this is a straightforward refactoring task
-rubric: []
+  # Pass-to-Pass: Repo CI/CD Checks (using actual repo tooling)
+  - id: "test_repo_java_syntax_valid"
+    name: "Java syntax validation"
+    description: "Java file has no syntax errors (verified via javac)"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_file_encoding_utf8"
+    name: "UTF-8 encoding valid"
+    description: "Java file uses valid UTF-8 encoding"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_package_declaration_valid"
+    name: "Package declaration valid"
+    description: "Java file has correct package declaration"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_class_structure_valid"
+    name: "Class structure valid"
+    description: "CoreProgressManager class is properly declared"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_license_header_present"
+    name: "License header present"
+    description: "Java file contains JetBrains/Apache 2.0 license header"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_imports_structure_valid"
+    name: "Imports structure valid"
+    description: "Java file has properly structured imports"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_no_sun_misc_unsafe"
+    name: "No sun.misc.Unsafe imports"
+    description: "Java file does not directly import sun.misc.Unsafe"
+    type: "p2p"
+    origin: "repo_tests"
+
+rubric:
+  - rule: "Document the WHY not just WHAT. Comments and commit messages should explain reasoning behind changes, not just describe them."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "81"
+      commit: "65fee3c3cad8012a6aad5df7554a1dd20dfb8d22"
+
+  - rule: "Reference relevant YouTrack issues (IJ-XXXXX, KT-XXXXX) in code comments when addressing specific problems."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "78-79"
+      commit: "65fee3c3cad8012a6aad5df7554a1dd20dfb8d22"
+
+  - rule: "Follow existing code style and patterns in the file being modified. Check neighboring code for conventions."
+    source:
+      path: "compiler/AGENTS.md"
+      lines: "35-38"
+      commit: "65fee3c3cad8012a6aad5df7554a1dd20dfb8d22"

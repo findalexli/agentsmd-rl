@@ -290,6 +290,158 @@ print("PASS: No duplicate top-level declarations")
     assert "PASS" in r.stdout
 
 
+def test_analysis_module_structure():
+    """
+    Verify analysis module files are present and structurally valid (p2p).
+
+    Checks that all files in the analysis directory have:
+    1. Valid Kotlin file extension
+    2. Proper package declaration
+    3. No structural corruption
+    """
+    script = f'''
+import os
+import sys
+
+analysis_dir = "{REPO}/plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis"
+expected_files = [
+    "Stability.kt",
+    "StabilityConfigParser.kt",
+    "KnownStableConstructs.kt",
+    "StabilityExternalClassNameMatching.kt",
+    "ComposeWritableSlices.kt"
+]
+
+# Check all expected files exist
+for fname in expected_files:
+    fpath = os.path.join(analysis_dir, fname)
+    if not os.path.exists(fpath):
+        print(f"Missing required file: {{fname}}", file=sys.stderr)
+        sys.exit(1)
+
+    # Verify valid Kotlin file structure
+    with open(fpath, "r") as f:
+        content = f.read()
+
+    if not content.strip():
+        print(f"Empty file: {{fname}}", file=sys.stderr)
+        sys.exit(1)
+
+    if b"\\x00" in content.encode():
+        print(f"File contains null bytes: {{fname}}", file=sys.stderr)
+        sys.exit(1)
+
+print("PASS: Analysis module structure valid")
+'''
+    r = _run_python_analysis(script)
+    assert r.returncode == 0, f"Analysis module check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_kotlin_imports_valid():
+    """
+    Verify Kotlin import statements are syntactically valid (p2p).
+
+    Checks for well-formed import statements in the Stability.kt file.
+    """
+    script = f'''
+import re
+import sys
+
+with open("{FULL_PATH}", "r") as f:
+    content = f.read()
+
+lines = content.split("\\n")
+
+for i, line in enumerate(lines):
+    stripped = line.strip()
+    if stripped.startswith("import "):
+        # Valid import patterns:
+        # import org.jetbrains.kotlin.x
+        # import org.jetbrains.kotlin.x.*
+        # import org.jetbrains.kotlin.x as Y
+        import_pattern = r'^import\\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\\.\\*)?(?:\\s+as\\s+[a-zA-Z_][a-zA-Z0-9_]*)?)$'
+        if not re.match(import_pattern, stripped):
+            print(f"Invalid import at line {{i+1}}: {{stripped}}", file=sys.stderr)
+            sys.exit(1)
+
+print("PASS: All imports are syntactically valid")
+'''
+    r = _run_python_analysis(script)
+    assert r.returncode == 0, f"Import validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_compose_plugin_build_file_exists():
+    """
+    Verify essential build files for the Compose plugin exist (p2p).
+
+    Checks that the build structure is intact for building the plugin.
+    """
+    script = f'''
+import os
+import sys
+
+required_paths = [
+    "{REPO}/plugins/compose/build.gradle.kts",
+    "{REPO}/plugins/compose/compiler-hosted/build.gradle.kts",
+    "{REPO}/settings.gradle",
+    "{REPO}/build.gradle.kts",
+    "{REPO}/gradle.properties",
+]
+
+for path in required_paths:
+    if not os.path.exists(path):
+        print(f"Missing required build file: {{path}}", file=sys.stderr)
+        sys.exit(1)
+
+print("PASS: Essential build files exist")
+'''
+    r = _run_python_analysis(script)
+    assert r.returncode == 0, f"Build file check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_source_file_encoding():
+    """
+    Verify all source files have valid UTF-8 encoding (p2p).
+
+    This prevents encoding issues that could cause compilation failures.
+    """
+    script = f'''
+import os
+import sys
+
+analysis_dir = "{REPO}/plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis"
+
+for fname in os.listdir(analysis_dir):
+    if not fname.endswith(".kt"):
+        continue
+
+    fpath = os.path.join(analysis_dir, fname)
+    try:
+        with open(fpath, "rb") as f:
+            raw = f.read()
+            # Try decoding as UTF-8
+            raw.decode("utf-8")
+
+            # Check for invalid characters
+            if b"\\xff" in raw or b"\\xfe" in raw:
+                # Skip BOM at start
+                if raw[:2] not in (b"\\xef\\xbb\\xbf", b"\\xff\\xfe", b"\\xfe\\xff"):
+                    print(f"Invalid BOM in file: {{fname}}", file=sys.stderr)
+                    sys.exit(1)
+    except UnicodeDecodeError as e:
+        print(f"UTF-8 decode error in {{fname}}: {{e}}", file=sys.stderr)
+        sys.exit(1)
+
+print("PASS: All source files have valid encoding")
+'''
+    r = _run_python_analysis(script)
+    assert r.returncode == 0, f"Source file encoding check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
 # =============================================================================
 # FAIL-TO-PASS TESTS (behavioral - fail on base, pass after fix)
 # =============================================================================

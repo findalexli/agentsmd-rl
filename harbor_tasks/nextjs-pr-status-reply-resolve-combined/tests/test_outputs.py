@@ -114,9 +114,9 @@ def test_reply_to_thread_uses_rest_api():
 # Pass-to-pass (static) — regression tests
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass — node syntax check
 def test_syntax_check():
-    """scripts/pr-status.js must parse without syntax errors."""
+    """scripts/pr-status.js must parse without syntax errors (node --check)."""
     r = subprocess.run(
         ["node", "--check", "scripts/pr-status.js"],
         cwd=REPO,
@@ -128,7 +128,7 @@ def test_syntax_check():
     )
 
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass — existing reply-thread subcommand
 def test_reply_thread_usage_error():
     """Existing reply-thread subcommand still validates args correctly."""
     r = subprocess.run(
@@ -148,7 +148,7 @@ def test_reply_thread_usage_error():
     )
 
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass — existing resolve-thread subcommand
 def test_resolve_thread_usage_error():
     """Existing resolve-thread subcommand still validates args correctly."""
     r = subprocess.run(
@@ -189,6 +189,29 @@ def test_repo_prettier_pr_status():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ast-grep pattern check
+def test_repo_ast_grep_pr_status():
+    """Repo's ast-grep scan passes on scripts/pr-status.js (no pattern violations)."""
+    # Install pnpm and dependencies first
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pnpm:\n{r.stderr}"
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "ast-grep", "scan", "scripts/pr-status.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ast-grep scan failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

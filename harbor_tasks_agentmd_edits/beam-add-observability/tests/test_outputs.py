@@ -107,6 +107,40 @@ def test_repo_readme_exists():
     assert "#" in content, "README.md should have markdown headers"
 
 
+# [repo_tests] pass_to_pass — CI/CD gate: all source files have Apache License headers
+def test_repo_license_headers_present():
+    """All Terraform files have Apache License headers (pass_to_pass)."""
+    # Apache Beam requires Apache 2.0 license headers on all source files
+    r = subprocess.run(
+        ["bash", "-c", 'cd "{}" && for f in *.tf; do grep -q "Apache License" "$f" || {{ echo "$f missing license"; exit 1; }}; done'.format(TF_DIR)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"License header check failed: {r.stdout or r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI/CD gate: README has Apache License header
+def test_repo_readme_license_header():
+    """README.md has Apache License header in HTML comment (pass_to_pass)."""
+    readme_path = os.path.join(TF_DIR, "README.md")
+    assert os.path.isfile(readme_path), "README.md should exist"
+    content = Path(readme_path).read_text()
+    # README uses HTML-style license comment
+    assert "Licensed to the Apache Software Foundation" in content, "README.md must have Apache License header"
+    assert "http://www.apache.org/licenses/LICENSE-2.0" in content, "README.md must reference Apache License 2.0"
+
+
+# [repo_tests] pass_to_pass — CI/CD gate: git repo is clean (no staged changes)
+def test_repo_git_clean():
+    """Git repo has no uncommitted changes on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "diff", "--quiet", "HEAD"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # On the base commit, there should be no uncommitted changes
+    # This ensures the test environment is clean
+    assert r.returncode == 0, f"Git repo has uncommitted changes: {r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code behaviour
 # ---------------------------------------------------------------------------

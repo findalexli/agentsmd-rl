@@ -250,3 +250,36 @@ def test_repo_react_flight_dom_reply_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ReactFlightDOMReply tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_dom_reply_stable():
+    """ReactFlightDOMReply stable channel tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern", "ReactFlightDOMReply-test.js",
+         "--no-watchman", "--ci", "-r=stable", "--env=development"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlightDOMReply stable tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_dom_tests():
+    """ReactFlightDOM module tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern", "ReactFlightDOM-test.js",
+         "--no-watchman", "--ci", "-r=experimental", "--env=development"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlightDOM tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_flight_stable():
+    """ReactFlight module tests pass on stable channel (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern", "ReactFlight-test.js",
+         "--no-watchman", "--ci", "-r=stable", "--env=development"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ReactFlight stable tests failed:\n{r.stderr[-500:]}"

@@ -98,15 +98,83 @@ checks:
     origin: repo_tests
     description: "Added code must not contain obviously banned patterns"
 
-rubric:
-  - rule: "Memory management — In Zig code, be careful with allocators and use defer for cleanup"
-    source:
-      path: "CLAUDE.md"
-      lines: "232"
-      commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — REAL CI COMMANDS from repo CI/CD
+  # These tests run actual CI commands that pass on the base commit.
+  # ---------------------------------------------------------------------------
+  - id: banned_words
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Banned words check passes (bun test test/internal/ban-words.test.ts from format.yml)"
 
-  - rule: "Prefer decl literals (`.{ .field = value }`) over explicit struct type initialization in new Zig code where the type can be inferred"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "6"
-      commit: "047cedb2b3b05fb89b7081ab753d77a2f4df0135"
+  - id: typescript_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript typecheck passes (tsc --noEmit from package.json)"
+
+  - id: sort_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Zig import sorting check passes (scripts/sort-imports.ts from format.yml)"
+
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_ci_checks) — CI/CD pipeline checks from actual repo CI
+  # ---------------------------------------------------------------------------
+
+  - id: zig_syntax_valid
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Zig source files have valid syntax (basic brace/paren balancing)"
+
+  - id: ban_words_compliance
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Modified files comply with repo ban-words policy (mirrors test/internal/ban-words.test.ts)"
+
+  - id: no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Added code lines have no trailing whitespace (from format.yml)"
+
+  - id: tab_indentation
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Added code uses tab indentation consistently (from .editorconfig)"
+
+  - id: unix_line_endings
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Source files use Unix line endings (LF) not CRLF (from format.yml)"
+
+  - id: no_merge_conflict_markers
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Source files have no merge conflict markers"
+
+  - id: git_working_tree_clean
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Git working tree is clean at base commit"
+
+  - id: expected_files_modified_by_fix
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Gold patch modifies expected files (VirtualMachine.zig and Arguments.zig)"
+
+  - id: code_style_consistency
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Code style in added lines matches repo conventions"
+
+  - id: import_style_consistency
+    type: pass_to_pass
+    origin: repo_ci_checks
+    description: "Import statements follow repo conventions"
+
+rubric:
+  - rule: "Gold solution adds RuntimeTranspilerCache.is_disabled = true inside configureDebugger when inspector is enabled"
+    reference: "jsc.RuntimeTranspilerCache.is_disabled = true; inside if (this.isInspectorEnabled()) block in configureDebugger function"
+
+  - rule: "Gold solution removes duplicate cache disables from Arguments.zig and makes cache disable apply to all inspector modes"
+    reference: "Removes three instances of bun.jsc.RuntimeTranspilerCache.is_disabled = true from --inspect, --inspect-wait, --inspect-brk handlers in Arguments.zig parse function"

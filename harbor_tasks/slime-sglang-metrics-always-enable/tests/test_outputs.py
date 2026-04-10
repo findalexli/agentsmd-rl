@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/slime"
@@ -307,25 +308,66 @@ def test_rollout_train_eval_branches():
 def test_repo_ruff_check():
     """Repo linting with ruff passes (pass_to_pass)."""
     r = subprocess.run(
-        ['ruff', 'check', f'{REPO}/slime/', '--select=E,F'],
+        ["ruff", "check", f"{REPO}/slime/", "--select=E,F"],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    # ruff runs successfully (exit code 0 = no errors found)
-    # Note: repo has existing E402 issues, so we just check the tool ran
+    # The repo has some existing E402 issues; we check ruff runs without
+    # new E/F errors in the modified files (existing issues are baseline)
+    modified_files = [
+        "slime/backends/sglang_utils/sglang_engine.py",
+        "slime/ray/rollout.py",
+        "slime/rollout/sglang_rollout.py",
+        "slime/utils/wandb_utils.py",
+    ]
+    for line in r.stdout.splitlines():
+        if line.strip() and not line.startswith(" "):
+            for mf in modified_files:
+                if mf in line:
+                    assert False, f"Ruff error in modified file: {line}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_chunked_gae():
     """Repo GAE tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ['python', '-m', 'pytest', f'{REPO}/tests/test_chunked_gae.py', '-v'],
+        ["python", "-m", "pytest", f"{REPO}/tests/test_chunked_gae.py", "-v", "--tb=short"],
         capture_output=True,
         text=True,
         timeout=120,
         cwd=REPO,
     )
-    assert r.returncode == 0, f'GAE tests failed:
-{r.stdout[-500:]}
-{r.stderr[-500:]}'
+    assert r.returncode == 0, f"GAE tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Python syntax check passes for modified files (pass_to_pass)."""
+    modified_files = [
+        f"{REPO}/slime/backends/sglang_utils/sglang_engine.py",
+        f"{REPO}/slime/ray/rollout.py",
+        f"{REPO}/slime/rollout/sglang_rollout.py",
+        f"{REPO}/slime/utils/wandb_utils.py",
+    ]
+    for path in modified_files:
+        r = subprocess.run(
+            ["python", "-m", "py_compile", path],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"Syntax error in {path}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pytest_version():
+    """Pytest is available and working (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "--version"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"pytest not available:\n{r.stderr}"
+    assert "pytest" in r.stdout.lower(), "pytest version output unexpected"

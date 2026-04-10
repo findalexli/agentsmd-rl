@@ -338,3 +338,62 @@ def test_repo_readme_exists():
     assert readme.exists(), "README.md must exist"
     content = readme.read_text()
     assert len(content) > 100, "README.md should have substantial content"
+
+
+
+
+# [repo_ci] pass_to_pass
+def test_repo_git_valid():
+    """Repo has valid git structure and commit history (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "log", "--oneline", "-1"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Git log failed:\n{r.stderr}"
+    assert "ecd0809" in r.stdout, "Expected base commit not found"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_vlm_registry_import():
+    """VLM module imports correctly with all registry entries (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, "/repo/src")
+from prime_rl.utils.vlm import VLM_REGISTRY, VLMModelInfo
+
+# Verify registry has expected entries
+expected = ["qwen3_vl", "qwen3_5", "qwen3_5_moe"]
+for key in expected:
+    assert key in VLM_REGISTRY, f"{key} missing from registry"
+    info = VLM_REGISTRY[key]
+    assert isinstance(info, VLMModelInfo)
+    assert info.vision_encoder_attr == "model.visual"
+    assert info.language_model_attr == "model.language_model"
+
+print("VLM registry OK")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"VLM import test failed:\n{r.stderr}"
+    assert "VLM registry OK" in r.stdout
+
+
+# [repo_ci] pass_to_pass
+def test_repo_model_py_parses():
+    """model.py parses as valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{MODEL_PY}').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"model.py AST parse failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_vlm_py_parses():
+    """vlm.py parses as valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{VLM_PY}').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"vlm.py AST parse failed:\n{r.stderr}"

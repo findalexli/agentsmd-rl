@@ -44,8 +44,40 @@ def test_early_return_preserved():
     print("PASS: Early return preserved")
 
 
+def test_repo_rustfmt():
+    """Repo's rustfmt check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Rustfmt check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    print("PASS: Repo rustfmt check")
+
+
+def test_repo_xlint():
+    """Repo's xlint (license/workspace check) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "xlint"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Xlint check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    print("PASS: Repo xlint check")
+
+
 if __name__ == "__main__":
-    tests = [test_crash_assertion_removed, test_timings_trim_logic_exists, test_early_return_preserved]
+    tests = [
+        test_crash_assertion_removed,
+        test_timings_trim_logic_exists,
+        test_early_return_preserved,
+        test_repo_rustfmt,
+        test_repo_xlint,
+    ]
     passed = 0
     failed = 0
     for test in tests:
@@ -54,6 +86,9 @@ if __name__ == "__main__":
             passed += 1
         except AssertionError as e:
             print(f"FAIL: {test.__name__}: {e}")
+            failed += 1
+        except Exception as e:
+            print(f"ERROR: {test.__name__}: {e}")
             failed += 1
     print(f"\n{passed} passed, {failed} failed")
     sys.exit(0 if failed == 0 else 1)

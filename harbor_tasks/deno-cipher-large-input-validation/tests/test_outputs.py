@@ -639,3 +639,194 @@ def test_cipher_deno_lint_ignore_present():
     assert "deno-lint-ignore-file prefer-primordials no-explicit-any" in source, (
         "cipher.ts should have deno-lint ignore comment for Node polyfill compatibility"
     )
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD health checks for crypto polyfill code quality
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Code execution using subprocess
+def test_repo_file_sizes_reasonable():
+    """Repository crypto files should have reasonable sizes (pass_to_pass)."""
+    import os
+    cipher_path = Path(CIPHER_FILE)
+    size_bytes = cipher_path.stat().st_size
+    # cipher.ts should be between 10KB and 100KB (sanity check)
+    assert 10 * 1024 < size_bytes < 100 * 1024, (
+        f"cipher.ts size {size_bytes} bytes is outside expected range (10KB-100KB)"
+    )
+
+
+# [repo_tests] pass_to_pass — Code execution using subprocess
+def test_repo_git_config_valid():
+    """Repository git config should have user configured (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "config", "user.email"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0 and r.stdout.strip(), (
+        "Git user.email not configured in repository"
+    )
+
+    r = subprocess.run(
+        ["git", "config", "user.name"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0 and r.stdout.strip(), (
+        "Git user.name not configured in repository"
+    )
+
+
+
+# [repo_tests] pass_to_pass
+def test_cipher_utf8_encoding_valid():
+    """cipher.ts must be valid UTF-8 encoded (pass_to_pass)."""
+    raw_bytes = Path(CIPHER_FILE).read_bytes()
+
+    # Try to decode as UTF-8
+    try:
+        raw_bytes.decode('utf-8')
+    except UnicodeDecodeError as e:
+        assert False, f"cipher.ts is not valid UTF-8: {e}"
+
+
+# [repo_tests] pass_to_pass
+def test_cipher_no_merge_conflict_markers():
+    """cipher.ts must not contain git merge conflict markers (pass_to_pass)."""
+    source = _read_cipher_source()
+
+    # Check for merge conflict markers
+    assert "<<<<<<<" not in source, "cipher.ts contains git merge conflict markers (<<<<<<<)"
+    assert "=======" not in source, "cipher.ts contains git merge conflict markers (=======)"
+    assert ">>>>>>>" not in source, "cipher.ts contains git merge conflict markers (>>>>>>>)"
+
+
+# [repo_tests] pass_to_pass — Code execution using subprocess
+def test_repo_no_large_binaries():
+    """Repository should not have large binary files in crypto directory (pass_to_pass)."""
+    import os
+    crypto_dir = f"{REPO}/ext/node/polyfills/internal/crypto"
+
+    for root, dirs, files in os.walk(crypto_dir):
+        for filename in files:
+            if filename.endswith('.ts'):
+                continue  # TypeScript files are fine
+            filepath = os.path.join(root, filename)
+            size = os.path.getsize(filepath)
+            # Any non-TS file over 100KB is suspicious
+            assert size < 100 * 1024, (
+                f"Large non-source file found: {filepath} ({size} bytes)"
+            )
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI quality checks using subprocess (enriched)
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Line count validation (CI-style check)
+def test_cipher_file_line_count():
+    """Verify cipher.ts has reasonable line count via wc (CI check)."""
+    r = subprocess.run(
+        ["wc", "-l", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"wc command failed: {r.stderr}"
+
+    # Parse line count from output (format: "NNN /path/to/file")
+    output = r.stdout.strip()
+    try:
+        line_count = int(output.split()[0])
+    except (IndexError, ValueError) as e:
+        assert False, f"Could not parse line count from: {output} ({e})"
+
+    # cipher.ts should be between 500-1000 lines (sanity check)
+    assert 500 < line_count < 1000, (
+        f"cipher.ts line count {line_count} is outside expected range (500-1000)"
+    )
+
+
+# [repo_tests] pass_to_pass — Git hash object validation (CI check)
+def test_cipher_git_hash_object():
+    """Verify cipher.ts can be hashed by git hash-object (CI check)."""
+    r = subprocess.run(
+        ["git", "hash-object", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git hash-object failed: {r.stderr}"
+
+    # Verify hash format (40 hex characters)
+    hash_value = r.stdout.strip()
+    assert len(hash_value) == 40, f"Invalid git hash format: {hash_value}"
+    assert all(c in "0123456789abcdef" for c in hash_value), (
+        f"Hash contains non-hex characters: {hash_value}"
+    )
+
+
+# [repo_tests] pass_to_pass — Git ls-tree validation (CI check)
+def test_cipher_git_ls_tree():
+    """Verify cipher.ts is tracked in git tree (CI check)."""
+    r = subprocess.run(
+        ["git", "ls-tree", "HEAD", "ext/node/polyfills/internal/crypto/"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git ls-tree failed: {r.stderr}"
+
+    # Verify cipher.ts appears in the tree listing
+    assert "cipher.ts" in r.stdout, (
+        f"cipher.ts not found in git tree listing:\n{r.stdout}"
+    )
+
+
+# [repo_tests] pass_to_pass — Git file mode validation (CI check)
+def test_cipher_git_file_mode():
+    """Verify cipher.ts has correct git file mode (100644 - regular file) (CI check)."""
+    r = subprocess.run(
+        ["git", "ls-tree", "HEAD", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git ls-tree failed: {r.stderr}"
+
+    # Output format: <mode> <type> <sha> <tab> <filename>
+    # We expect 100644 blob for a regular file
+    assert "100644" in r.stdout, (
+        f"cipher.ts does not have expected file mode (100644):\n{r.stdout}"
+    )
+    assert "blob" in r.stdout, (
+        f"cipher.ts is not a blob in git:\n{r.stdout}"
+    )
+
+
+# [repo_tests] pass_to_pass — Git log file validation (CI check)
+def test_cipher_git_log_history():
+    """Verify cipher.ts has valid git history via git log (CI check)."""
+    r = subprocess.run(
+        ["git", "log", "--oneline", "--", CIPHER_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git log failed: {r.stderr}"
+
+    # Should have at least one commit in history
+    lines = [line for line in r.stdout.strip().split("\n") if line.strip()]
+    assert len(lines) > 0, (
+        f"cipher.ts has no git history (should have at least one commit)"
+    )

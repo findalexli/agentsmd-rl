@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import base64
 import io
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -18,6 +19,15 @@ from PIL import Image
 
 REPO = "/workspace/slime"
 sys.path.insert(0, REPO)
+
+
+# Files modified by this PR
+MODIFIED_FILES = [
+    "slime/utils/processing_utils.py",
+    "slime/backends/megatron_utils/actor.py",
+    "slime/rollout/sglang_rollout.py",
+    "slime_plugins/megatron_bridge/glm4v_moe.py",
+]
 
 
 def _make_b64_image(color, size):
@@ -46,17 +56,71 @@ def _mock_processor():
 # [static] pass_to_pass
 def test_syntax_check():
     """All modified files must be valid Python."""
-    files = [
-        "slime/utils/processing_utils.py",
-        "slime/backends/megatron_utils/actor.py",
-        "slime/rollout/sglang_rollout.py",
-        "slime_plugins/megatron_bridge/glm4v_moe.py",
-    ]
-    for f in files:
+    for f in MODIFIED_FILES:
         p = Path(REPO) / f
         if p.exists():
             source = p.read_text()
             ast.parse(source)  # raises SyntaxError on failure
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI linting and formatting checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install may return 0 even with warnings, continue to check
+    files = [f for f in MODIFIED_FILES if (Path(REPO) / f).exists()]
+    r = subprocess.run(
+        ["ruff", "check"] + files,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Repo's isort import sorting passes on modified files (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    files = [f for f in MODIFIED_FILES if (Path(REPO) / f).exists()]
+    r = subprocess.run(
+        ["isort", "--check-only"] + files,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Plugin contract tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_contracts():
+    """Repo's plugin contract tests pass (pass_to_pass)."""
+    # Install required dependencies for plugin contract tests
+    deps = ["pytest", "pybase64", "aiohttp", "pylatexenc", "torch"]
+    r = subprocess.run(
+        ["pip", "install"] + deps + ["-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Also install torch CPU version
+    subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin contract tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

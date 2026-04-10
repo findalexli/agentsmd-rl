@@ -72,6 +72,26 @@ def test_repo_media_tests():
     assert r.returncode == 0, f"Media tests failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - typescript type-checking of plugin sdk
+def test_repo_typecheck_plugin_sdk():
+    """Repo's plugin SDK typechecks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "build:plugin-sdk:dts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin SDK typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - check for conflict markers
+def test_repo_no_conflict_markers():
+    """Repo has no git conflict markers (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check:no-conflict-markers"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Conflict markers found:\n{r.stderr[-500:]}"
+
+
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified files must parse without TypeScript syntax errors."""

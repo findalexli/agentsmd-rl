@@ -1,0 +1,133 @@
+# Copyright 2022 Meta Platforms, Inc.and The HuggingFace Inc. team. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""MaskFormer model configuration"""
+
+from huggingface_hub.dataclasses import strict
+
+from ...backbone_utils import consolidate_backbone_kwargs_to_config
+from ...configuration_utils import PreTrainedConfig
+from ...utils import auto_docstring, logging
+from ..auto import CONFIG_MAPPING, AutoConfig
+from ..detr import DetrConfig
+
+
+logger = logging.get_logger(__name__)
+
+
+@auto_docstring(checkpoint="facebook/maskformer-swin-base-ade")
+@strict(accept_kwargs=True)
+class MaskFormerConfig(PreTrainedConfig):
+    r"""
+    cross_entropy_weight (`float`, *optional*, defaults to 1.0):
+        The weight for the cross entropy loss.
+    mask_feature_size (`int`, *optional*, defaults to 256):
+        The masks' features size, this value will also be used to specify the Feature Pyramid Network features'
+        size.
+    fpn_feature_size (`int`, *optional*, defaults to 256):
+        The Feature Pyramid Network's features size.
+    decoder_config (`Dict`, *optional*):
+        The configuration passed to the transformer decoder model, if unset the base config for `detr-resnet-50`
+        will be used.
+    output_auxiliary_logits (`bool`, *optional*):
+        Should the model output its `auxiliary_logits` or not.
+
+    Raises:
+        `ValueError`:
+            Raised if the backbone model type selected is not in `["swin"]` or the decoder model type selected is not
+            in `["detr"]`
+
+    Examples:
+
+    ```python
+    >>> from transformers import MaskFormerConfig, MaskFormerModel
+
+    >>> # Initializing a MaskFormer facebook/maskformer-swin-base-ade configuration
+    >>> configuration = MaskFormerConfig()
+
+    >>> # Initializing a model (with random weights) from the facebook/maskformer-swin-base-ade style configuration
+    >>> model = MaskFormerModel(configuration)
+
+    >>> # Accessing the model configuration
+    >>> configuration = model.config
+    ```
+
+    """
+
+    model_type = "maskformer"
+    sub_configs = {"backbone_config": AutoConfig, "decoder_config": AutoConfig}
+    attribute_map = {"hidden_size": "mask_feature_size"}
+    backbones_supported = ["resnet", "swin"]
+    decoders_supported = ["detr"]
+
+    fpn_feature_size: int = 256
+    mask_feature_size: int = 256
+    no_object_weight: float = 0.1
+    use_auxiliary_loss: bool = False
+    backbone_config: dict | PreTrainedConfig | None = None
+    decoder_config: dict | PreTrainedConfig | None = None
+    init_std: float = 0.02
+    init_xavier_std: float = 1.0
+    dice_weight: float = 1.0
+    cross_entropy_weight: float = 1.0
+    mask_weight: float = 20.0
+    output_auxiliary_logits: bool | None = None
+
+    def __post_init__(self, **kwargs):
+        self.backbone_config, kwargs = consolidate_backbone_kwargs_to_config(
+            backbone_config=self.backbone_config,
+            default_config_type="swin",
+            default_config_kwargs={
+                "depths": [2, 2, 18, 2],
+                "drop_path_rate": 0.3,
+                "image_size": 384,
+                "embed_dim": 128,
+                "num_heads": [4, 8, 16, 32],
+                "window_size": 12,
+                "out_features": ["stage1", "stage2", "stage3", "stage4"],
+            },
+            **kwargs,
+        )
+
+        # verify that the backbone is supported
+        if self.backbone_config is not None and self.backbone_config.model_type not in self.backbones_supported:
+            logger.warning_once(
+                f"Backbone {self.backbone_config.model_type} is not a supported model and may not be compatible with MaskFormer. "
+                f"Supported model types: {','.join(self.backbones_supported)}"
+            )
+
+        if self.decoder_config is None:
+            # fall back to https://huggingface.co/facebook/detr-resnet-50
+            self.decoder_config = DetrConfig()
+        else:
+            # verify that the decoder is supported
+            decoder_type = (
+                self.decoder_config.pop("model_type")
+                if isinstance(self.decoder_config, dict)
+                else self.decoder_config.model_type
+            )
+            if decoder_type not in self.decoders_supported:
+                raise ValueError(
+                    f"Transformer Decoder {decoder_type} not supported, please use one of"
+                    f" {','.join(self.decoders_supported)}"
+                )
+            if isinstance(self.decoder_config, dict):
+                config_class = CONFIG_MAPPING[decoder_type]
+                self.decoder_config = config_class.from_dict(self.decoder_config)
+
+        self.num_attention_heads = self.decoder_config.encoder_attention_heads
+        self.num_hidden_layers = self.decoder_config.num_hidden_layers
+        super().__post_init__(**kwargs)
+
+
+__all__ = ["MaskFormerConfig"]

@@ -57,4 +57,36 @@ checks:
     origin: repo_tests
     description: "Repo codespell passes on runners.py (no common typos)"
 
-rubric: []
+  - id: repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo isort check passes on runners.py (imports are sorted)"
+
+  - id: repo_pyflakes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo pyflakes check passes on runners.py (no undefined names)"
+
+  - id: repo_yamllint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo yamllint check passes on CI workflow files (valid YAML syntax)"
+
+rubric:
+  - rule: "Code must handle subprocess lifecycle properly. Check if processes are alive before blocking operations and report meaningful exit codes on failure."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "19,85-86"
+      commit: "5ef56682b800c3905973c86beeddf1318cedb2a9"
+
+  - rule: "Test infrastructure must use defensive patterns. Use timeouts on blocking operations and validate preconditions before accessing resources."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "19"
+      commit: "5ef56682b800c3905973c86beeddf1318cedb2a9"
+
+  - rule: "Error handling must include diagnostic information. Include exit codes, process status, and context when raising errors about subprocess failures."
+    source:
+      path: ".claude/skills/ci-workflow-guide/SKILL.md"
+      lines: "1-10"
+      commit: "5ef56682b800c3905973c86beeddf1318cedb2a9"

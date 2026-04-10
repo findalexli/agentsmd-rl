@@ -111,6 +111,57 @@ def test_repo_codespell_check():
     assert r.returncode == 0, f"Codespell check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Repo's isort import sorting check passes (pass_to_pass)."""
+    # Install isort if needed
+    install_r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert install_r.returncode == 0, f"Failed to install isort: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["isort", "--check", f"{REPO}/{TEST_FILE}"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_toml_check():
+    """Repo's TOML files are valid (pass_to_pass)."""
+    # Install tomli if needed (tomli is built-in for Python 3.11+, but install for safety)
+    install_r = subprocess.run(
+        ["pip", "install", "tomli", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert install_r.returncode == 0, f"Failed to install tomli: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["python3", "-c", "import tomli; tomli.load(open('.github/linters/lychee.toml', 'rb'))"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"TOML validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_check():
+    """Repo's YAML files are valid (pass_to_pass)."""
+    # Install PyYAML if needed
+    install_r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True, text=True, timeout=60
+    )
+    assert install_r.returncode == 0, f"Failed to install pyyaml: {install_r.stderr}"
+
+    r = subprocess.run(
+        ["python3", "-c", "import yaml; yaml.safe_load(open('.github/workflows/lint.yml'))"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr[-500:]}"
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # -----------------------------------------------------------------------------

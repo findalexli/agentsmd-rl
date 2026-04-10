@@ -75,4 +75,27 @@ checks:
     description: "Cargo doc builds without errors"
     origin: repo_tests
 
-rubric: []
+rubric:
+  - rule: "ALWAYS run `cargo xclippy` after finishing development to ensure code passes all linting checks"
+    source:
+      path: "CLAUDE.md"
+      lines: "111"
+      commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
+
+  - rule: "NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other linting suppressions - fix the underlying issues instead"
+    source:
+      path: "CLAUDE.md"
+      lines: "113"
+      commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
+
+  - rule: "All unit tests must work properly - use `#[tokio::test]` for async tests, not `#[test]`"
+    source:
+      path: "CLAUDE.md"
+      lines: "114"
+      commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
+
+  - rule: "Do NOT comment the obvious - comments should not simply repeat what the code does. Comment non-obvious algorithms, business logic, temporary exclusions, complex calculations, and subtle race conditions. Do NOT comment simple variable assignments, standard library usage, or basic control flow."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-131"
+      commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"

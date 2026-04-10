@@ -219,61 +219,54 @@ def test_getInternalCurrentAnchor_called_with_linkTargetOffset():
         "as the fourth parameter for per-link offset detection"
     )
 
+# =============================================================================
+# Pass-to-pass tests (verify no regression - repo's own CI checks)
+# =============================================================================
 
-def test_anchor_component_typescript_compiles():
-    """Pass-to-pass: Anchor component TypeScript must compile without errors."""
-    # Run TypeScript check with increased memory limit and only on anchor files
-    # We use NODE_OPTIONS to increase memory since the full repo typecheck is too heavy
-    result = run_command(
-        ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit --skipLibCheck 2>&1 | head -100 || true"],
-        timeout=300
-    )
-
-    # If it passes or the errors are not related to anchor files, consider it passing
-    # Since we already verify via test_anchor_tests_pass which includes TypeScript compilation
-    output = result.stdout + result.stderr
-
-    # Check for anchor-specific errors
-    anchor_errors = re.search(r'components/anchor/.*error', output, re.IGNORECASE)
-
-    assert result.returncode == 0 or anchor_errors is None, (
-        f"TypeScript compilation has anchor-specific errors:\n{output[:2000]}"
-    )
-
-
-def test_anchor_tests_pass():
-    """Pass-to-pass: Anchor component tests must pass."""
-    result = run_command(
-        ["npm", "test", "--", "components/anchor/__tests__/Anchor.test.tsx", "--no-coverage"],
-        timeout=300
-    )
-
-    assert result.returncode == 0, (
-        f"Anchor tests failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}"
-    )
-
-
-def test_repo_lint_biome_passes():
-    """Pass-to-pass: Biome lint check must pass (repo CI)."""
-    result = run_command(
+def test_repo_lint_biome():
+    """Repo CI: Biome lint check passes (pass_to_pass)."""
+    r = run_command(
         ["npm", "run", "lint:biome"],
         timeout=120
     )
-
-    assert result.returncode == 0, (
-        f"Biome lint failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+    assert r.returncode == 0, (
+        f"Biome lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
     )
 
 
-def test_repo_lint_eslint_anchor_passes():
-    """Pass-to-pass: ESLint check on anchor files must pass (repo CI)."""
-    result = run_command(
+def test_repo_lint_eslint_anchor():
+    """Repo CI: ESLint check on anchor files passes (pass_to_pass)."""
+    r = run_command(
         ["npx", "eslint", "components/anchor/", "--cache"],
         timeout=120
     )
+    # Allow warnings (exit code 0 or 1 with only warnings is OK)
+    output = r.stdout + r.stderr
+    has_errors = "error" in output.lower() and not "0 errors" in output
+    assert r.returncode == 0 or not has_errors, (
+        f"ESLint found errors in anchor files:\n{output[-1000:]}"
+    )
 
-    assert result.returncode == 0, (
-        f"ESLint check on anchor files failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+def test_repo_typescript_compiles():
+    """Repo CI: TypeScript compiles without errors (pass_to_pass)."""
+    r = run_command(
+        ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=4096' npx tsc --noEmit --skipLibCheck 2>&1"],
+        timeout=300
+    )
+    assert r.returncode == 0, (
+        f"TypeScript compilation failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    )
+
+
+def test_repo_anchor_tests():
+    """Repo CI: Anchor component tests pass (pass_to_pass)."""
+    r = run_command(
+        ["npm", "test", "--", "--testPathPatterns=anchor", "--no-coverage"],
+        timeout=300
+    )
+    assert r.returncode == 0, (
+        f"Anchor tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-1000:]}"
     )
 
 

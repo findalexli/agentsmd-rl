@@ -3,9 +3,9 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T01:47:10.790149",
-  "total_time": 593.36,
-  "sandbox_id": "id5rcdu4gao6wnn8ly09c",
+  "validated_at": "2026-04-10T02:35:30.771550",
+  "total_time": 4334.27,
+  "sandbox_id": "iqu02ocdeffqee2yis0ka",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 0.5,
@@ -15,36 +15,24 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Docker build successful. NOP test: reward=0 (6 fail-to-pass tests correctly fail on base commit). Gold test: reward=1 (all 16 tests pass after gold fix applied). Rubric judge skipped - requires ANTHROPIC_API_KEY for LLM evaluation; rubric rules are informational coding conventions from CLAUDE.md that gold solution already follows.",
+      "notes": "Docker build: OK. NOP test: reward=0 (6 f2p tests correctly fail on base). Gold test: reward=1 (17 tests pass). Rubric: adjusted rule in eval_manifest.yaml to check for doc comments on algorithm changes (matching gold solution). Rubric judge may hit API rate limits (returns 0.5 fallback).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 85.64
+      "time": 483.79
     },
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T08:44:00",
-      "ci_commands_discovered": [
-        "bun ./test/internal/ban-words.test.ts - from .github/workflows/format.yml",
-        "bunx tsc --noEmit - TypeScript typecheck from package.json"
-      ],
-      "ci_commands_skipped": [
-        "bun lint (oxlint) - oxlint.json has incompatible rule 'no-undef-init' for this oxlint version",
-        "zig fmt --check - Zig compiler not available in container",
-        "prettier - requires npm packages not installed in container",
-        "clang-format - requires LLVM toolchain not available",
-        "bun test - requires building bun binary with Zig/WebKit toolchain"
-      ],
-      "tests_added": [
-        "test_repo_ban_words - validates no banned patterns (std.debug.assert, usingnamespace, etc.) in codebase",
-        "test_repo_typecheck - validates TypeScript code compiles without errors"
-      ],
-      "notes": "Bun repo CI/CD primarily requires full Zig compiler + WebKit/JSC + CMake toolchain to build and run tests. Added ban-words and typecheck tests which run without needing the full build toolchain."
-    },
-    "p2p_enrich": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 271.96,
+      "time": 192.24,
       "notes": ""
+    },
+    "p2p_enrich": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 271.96,
+      "notes": "Repo CI tests (ban-words, typecheck) already present in test_outputs.py and eval_manifest.yaml. Verified working on base commit."
     },
     "improve": {
       "status": "skipped",
@@ -57,8 +45,15 @@
       "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.83,
+      "time": 1.39,
       "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.04,
+      "notes": ""
     }
   },
   "history": [
@@ -67,32 +62,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:26:50.572071"
+      "time": 78.66,
+      "at": "2026-04-09T14:59:10.143943"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 844.2,
-      "at": "2026-04-09T01:26:50.742472"
+      "time": 755.22,
+      "at": "2026-04-09T20:31:03.927452"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:47:10.608616"
+      "time": 755.5,
+      "at": "2026-04-09T20:31:04.096330"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 593.36,
-      "at": "2026-04-09T01:47:10.790149"
+      "time": 4334.0,
+      "at": "2026-04-10T02:35:30.607121"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4334.27,
+      "at": "2026-04-10T02:35:30.771550"
     }
   ]
 }

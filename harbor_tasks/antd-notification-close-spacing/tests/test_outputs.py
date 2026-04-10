@@ -10,8 +10,10 @@ COMPONENTS_DIR = os.path.join(REPO, "components")
 NOTIFICATION_DIR = os.path.join(COMPONENTS_DIR, "notification")
 
 
-def test_typescript_compilation():
-    """TypeScript compilation passes (pass_to_pass)."""
+# ==================== Pass-to-Pass Tests (CI/CD Regression Prevention) ====================
+
+def test_repo_typescript_compilation():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
     env = os.environ.copy()
     env["NODE_OPTIONS"] = "--max-old-space-size=4096"
     result = subprocess.run(
@@ -25,8 +27,8 @@ def test_typescript_compilation():
     assert result.returncode == 0, f"TypeScript compilation failed:\n{result.stderr[-1000:]}"
 
 
-def test_notification_unit_tests():
-    """Notification component tests pass (pass_to_pass)."""
+def test_repo_notification_unit_tests():
+    """Repo's notification component unit tests pass (pass_to_pass)."""
     env = os.environ.copy()
     env["NODE_OPTIONS"] = "--max-old-space-size=4096"
     # Generate version file first
@@ -49,8 +51,8 @@ def test_notification_unit_tests():
     assert result.returncode == 0, f"Notification tests failed:\n{result.stderr[-1000:]}\n{result.stdout[-1000:]}"
 
 
-def test_eslint_notification():
-    """ESLint passes on notification component (pass_to_pass)."""
+def test_repo_eslint_notification():
+    """Repo's ESLint passes on notification component (pass_to_pass)."""
     result = subprocess.run(
         ["npx", "eslint", "components/notification", "--cache"],
         cwd=REPO,
@@ -61,8 +63,8 @@ def test_eslint_notification():
     assert result.returncode == 0, f"ESLint failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
 
 
-def test_biome_lint_notification():
-    """Biome lint passes on notification component (pass_to_pass)."""
+def test_repo_biome_lint_notification():
+    """Repo's Biome lint passes on notification component (pass_to_pass)."""
     result = subprocess.run(
         ["npx", "biome", "lint", "components/notification"],
         cwd=REPO,
@@ -72,6 +74,44 @@ def test_biome_lint_notification():
     )
     assert result.returncode == 0, f"Biome lint failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
 
+
+def test_repo_node_tests():
+    """Repo's Node.js tests pass (pass_to_pass)."""
+    env = os.environ.copy()
+    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
+    # Generate version file first
+    subprocess.run(
+        ["npm", "run", "version"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=env
+    )
+    result = subprocess.run(
+        ["npx", "jest", "--config", ".jest.node.js", "--no-cache"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env=env
+    )
+    assert result.returncode == 0, f"Node tests failed:\n{result.stderr[-1000:]}\n{result.stdout[-1000:]}"
+
+
+def test_repo_markdown_lint():
+    """Repo's markdown linting passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["npx", "remark", ".", "-f", "-q"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Markdown lint failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+# ==================== Fail-to-Pass Tests (The Actual Fix Verification) ====================
 
 def test_purepanel_conditional_title_render():
     """PureContent should NOT render title div when title is null/undefined (fail_to_pass)."""
@@ -91,13 +131,13 @@ def test_style_first_child_margin():
     style_path = os.path.join(NOTIFICATION_DIR, "style", "index.ts")
     with open(style_path, 'r') as f:
         content = f.read()
-    
+
     # Check for the CSS rule that adds margin to description when it's the first child
     # This reserves space for the close button
     has_first_child_rule = "'&:first-child':" in content or '"&:first-child":' in content
     has_margin_inline_end = "marginInlineEnd" in content
     has_margin_top_zero = "marginTop: 0" in content
-    
+
     assert has_first_child_rule, "Style must include &:first-child rule for description spacing"
     assert has_margin_inline_end, "Style must include marginInlineEnd for close button spacing"
     assert has_margin_top_zero, "Style must set marginTop: 0 for first-child description"
@@ -108,16 +148,16 @@ def test_description_margin_value_is_token():
     style_path = os.path.join(NOTIFICATION_DIR, "style", "index.ts")
     with open(style_path, 'r') as f:
         content = f.read()
-    
+
     # Check that marginInlineEnd uses a token, not a hardcoded pixel value
     # The fix should use: marginInlineEnd: token.marginSM
     # Not: marginInlineEnd: 24 or some hardcoded number
     import re
-    
+
     # Look for marginInlineEnd in the first-child block
     pattern = r"'&:first-child':\s*\{[^}]*marginInlineEnd:\s*([^},]+)"
     match = re.search(pattern, content, re.DOTALL)
-    
+
     if match:
         margin_value = match.group(1).strip()
         # Should use token, not hardcoded number
@@ -139,7 +179,7 @@ def test_no_extra_blank_line_in_test():
     test_path = os.path.join(NOTIFICATION_DIR, "__tests__", "index.test.tsx")
     with open(test_path, 'r') as f:
         content = f.read()
-    
+
     # Check that there's exactly one blank line before "describe('When closeIcon is null"
     # The PR adds just one blank line between the previous test and this describe block
     lines = content.split('\n')
@@ -162,6 +202,6 @@ if __name__ == "__main__":
     pytest_args = ["-v", "--tb=short"]
     if len(sys.argv) > 1:
         pytest_args.extend(sys.argv[1:])
-    
+
     import pytest
     exit(pytest.main([__file__] + pytest_args))

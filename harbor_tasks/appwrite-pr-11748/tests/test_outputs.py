@@ -274,6 +274,20 @@ def test_composer_validate():
     assert r.returncode == 0, f"composer validate failed:\n{r.stderr[-500:]}"
 
 
+def test_composer_autoload_valid():
+    """Repo's composer autoload configuration is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["composer", "check-platform-reqs", "--no-scripts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # This may fail on platform reqs but should not crash
+    # We're mainly checking that composer.json parses correctly
+    assert r.returncode in [0, 1, 2], f"composer platform check crashed:\n{r.stderr[-500:]}"
+
+
 def test_php_syntax_all_modified():
     """All modified PHP files have valid syntax (pass_to_pass)."""
     modified_files = [
@@ -292,3 +306,71 @@ def test_php_syntax_all_modified():
             timeout=30,
         )
         assert r.returncode == 0, f"{file_path} has syntax errors:\n{r.stderr}"
+
+
+def test_php_syntax_app_init():
+    """All PHP files in app/init/ have valid syntax (pass_to_pass)."""
+    app_init_dir = REPO / "app/init"
+    php_files = list(app_init_dir.glob("*.php"))
+
+    for php_file in php_files:
+        r = subprocess.run(
+            ["php", "-l", str(php_file)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"{php_file.name} has syntax errors:\n{r.stderr}"
+
+
+def test_php_syntax_src_appwrite():
+    """Core source files in src/Appwrite have valid syntax (pass_to_pass)."""
+    # Check syntax of files in key directories
+    key_dirs = [
+        REPO / "src/Appwrite/Platform/Workers",
+        REPO / "src/Appwrite/Platform/Tasks",
+        REPO / "src/Appwrite/Event/Message",
+    ]
+
+    for directory in key_dirs:
+        if directory.exists():
+            for php_file in directory.glob("*.php"):
+                r = subprocess.run(
+                    ["php", "-l", str(php_file)],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                assert r.returncode == 0, f"{php_file.name} has syntax errors:\n{r.stderr}"
+
+def test_repo_lint():
+    """Repo's linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        "composer install --ignore-platform-reqs > /dev/null 2>&1 && composer lint",
+        shell=True, capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+def test_repo_analyze():
+    """Repo's static analysis passes (pass_to_pass)."""
+    r = subprocess.run(
+        "composer install --ignore-platform-reqs > /dev/null 2>&1 && composer analyze",
+        shell=True, capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Analyze failed:\n{r.stderr[-500:]}"
+
+def test_repo_unit_tests_event():
+    """Repo's unit tests for Event namespace pass (pass_to_pass)."""
+    r = subprocess.run(
+        "composer install --ignore-platform-reqs > /dev/null 2>&1 && vendor/bin/phpunit tests/unit/Event/",
+        shell=True, capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Event unit tests failed:\n{r.stderr[-500:]}"
+
+def test_repo_unit_tests_platform():
+    """Repo's unit tests for Platform namespace pass (pass_to_pass)."""
+    r = subprocess.run(
+        "composer install --ignore-platform-reqs > /dev/null 2>&1 && vendor/bin/phpunit tests/unit/Platform/",
+        shell=True, capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Platform unit tests failed:\n{r.stderr[-500:]}"

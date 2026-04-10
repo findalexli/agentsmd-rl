@@ -98,6 +98,37 @@ def test_syntax_check():
         )
 
 
+# [repo_tests] pass_to_pass
+def test_repo_check_license():
+    """License check passes - no PATENTS references (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/check_license.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_print_warnings():
+    """Print warnings test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/test_print_warnings.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print warnings test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_version_check():
+    """Version check passes (pass_to_pass)."""
+    _ensure_yarn()
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) -- core behavioral tests (ALL must use subprocess)
 # ---------------------------------------------------------------------------

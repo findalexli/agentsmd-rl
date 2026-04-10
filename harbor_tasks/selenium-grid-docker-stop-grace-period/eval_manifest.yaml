@@ -85,14 +85,14 @@ checks:
     description: DockerSession and related classes compile successfully
 
   - id: test_docker_session_unit_tests_exist
-    type: pass_to_pass
+    type: fail_to_pass
     origin: code_structure
-    description: DockerSessionTest.java exists with comprehensive tests
+    description: DockerSessionTest.java exists with comprehensive tests after fix
 
   - id: test_bazel_build_targets_include_new_deps
-    type: pass_to_pass
+    type: fail_to_pass
     origin: code_structure
-    description: BUILD.bazel files include new dependencies
+    description: BUILD.bazel files include new dependencies after fix
 
   - id: test_docker_library_compiles
     type: pass_to_pass
@@ -116,4 +116,27 @@ checks:
     description: DockerOptionsTest passes
 
 # LLM-judge rubric for soft/subjective checks
-rubric: []
+rubric:
+  - rule: "Use java.util.logging.Logger with LOG.info/warning/fine pattern for logging"
+    source:
+      path: "java/AGENTS.md"
+      lines: "16-24"
+      commit: "fbe388118cff80484638b724aaec3ee86c6eb0cd"
+
+  - rule: "Use Javadoc for public APIs with @param, @return, @throws tags"
+    source:
+      path: "java/AGENTS.md"
+      lines: "32-42"
+      commit: "fbe388118cff80484638b724aaec3ee86c6eb0cd"
+
+  - rule: "Comments should explain why, not what - prefer well-named methods over comments"
+    source:
+      path: "AGENTS.md"
+      lines: "47"
+      commit: "fbe388118cff80484638b724aaec3ee86c6eb0cd"
+
+  - rule: "Maintain API/ABI compatibility - avoid breaking changes to public interfaces"
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "fbe388118cff80484638b724aaec3ee86c6eb0cd"

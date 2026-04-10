@@ -22,6 +22,21 @@ checks:
     origin: repo_tests
     description: "Upstream test files are syntactically valid"
 
+  - id: test_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on modified file (CI standard)"
+
+  - id: test_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Black formatting check passes on modified file (CI standard)"
+
+  - id: test_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "isort import ordering check passes on modified file (CI standard)"
+
   - id: core_bug_fixed
     type: fail_to_pass
     origin: pr_diff
@@ -43,11 +58,9 @@ checks:
   #     commit: "{{BASE_COMMIT}}"
 
 rubric:
-  # Soft rules for LLM judge. Only rules genuinely needing subjective evaluation.
-  # Remove this section if no applicable soft rules exist.
-  []
-  # - rule: "TODO: verbatim text from config file"
-  #   source:
-  #     path: "AGENTS.md"
-  #     lines: "45"
-  #     commit: "{{BASE_COMMIT}}"
+  # Rules about test code quality - checking the actual code in the modified file
+  - rule: "Modified code should include explanatory comments describing why changes were made, not just what the code does."
+    reference: "# Keep LoRA GT on the normal backend path so adapter state matches CI."
+
+  - rule: "Helper functions should have clear, descriptive names that indicate their purpose."
+    reference: "def _is_lora_case(case: DiffusionTestCase) -> bool:"

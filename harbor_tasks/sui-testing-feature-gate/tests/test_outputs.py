@@ -141,6 +141,24 @@ def test_upstream_crates_enable_testing_feature():
         assert match is not None, f"{crate_path} must enable testing feature for sui-transactional-test-runner"
 
 
+def test_repo_cargo_clippy_sui_types():
+    """cargo clippy -p sui-types must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "sui-types", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_xlint():
+    """cargo xlint must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "xlint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo xlint failed:\n{r.stderr[-500:]}"
+
+
 def test_cargo_check_sui_types_release():
     """cargo check --release -p sui-types must pass."""
     result = subprocess.run(

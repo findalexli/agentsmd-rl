@@ -75,6 +75,21 @@ checks:
     origin: repo_tests
     description: "Repo's Ruff formatting check passes on target file"
 
+  - id: repo_precommit_yaml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's YAML files pass pre-commit check"
+
+  - id: repo_precommit_eof
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's files pass end-of-file-fixer pre-commit check"
+
+  - id: repo_precommit_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's files pass trailing-whitespace pre-commit check"
+
 rubric:
   - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation"
     source:
@@ -88,7 +103,7 @@ rubric:
       lines: "76"
       commit: "02a25454bc8ff348b05ae2a62040d5ec48237e16"
 
-  - rule: "Explicit type hints on function signatures"
+  - rule: "Explicit type hints on function signatures (except for standard framework objects like app or serving_models)"
     source:
       path: "AGENTS.md"
       lines: "99-100"

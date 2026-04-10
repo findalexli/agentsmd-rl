@@ -181,3 +181,31 @@ def test_cargo_lock_consistent():
             f"Cargo.lock mismatch:\n{r.stderr[-500:]}"
         # For other errors (like missing clang), we pass - the lock file is valid
     # If return code is 0, the lock file is definitely consistent
+
+
+def test_cargo_metadata_valid():
+    """
+    Cargo.toml files produce valid metadata (pass_to_pass).
+    Verifies all workspace manifests are well-formed and dependencies resolve.
+    """
+    r = subprocess.run(
+        ["cargo", "metadata", "--format-version", "1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo metadata failed:\n{r.stderr[-500:]}"
+
+
+def test_cargo_deny_check():
+    """
+    Cargo dependencies pass cargo-deny license/advisory checks (pass_to_pass).
+    Verifies dependency licensing and security advisories.
+    """
+    r = subprocess.run(
+        ["cargo", "deny", "check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    # cargo-deny may not be installed, in which case we skip
+    stderr_lower = r.stderr.lower()
+    if any(msg in stderr_lower for msg in ["could not find", "not installed", "no such command"]):
+        return  # Skip if cargo-deny is not available
+    assert r.returncode == 0, f"cargo deny check failed:\n{r.stderr[-500:]}"

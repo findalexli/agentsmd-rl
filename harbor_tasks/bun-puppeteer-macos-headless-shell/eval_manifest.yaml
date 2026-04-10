@@ -64,6 +64,11 @@ checks:
     origin: repo_tests
     description: "Repo oxlint check passes on target file"
 
+  - id: test_repo_oxlint_config
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo oxlint config file is valid JSONC"
+
 # Note on rubric: The general Bun testing guidelines in test/CLAUDE.md advise
 # against setting timeouts on tests and waiting for time to pass. However, for
 # this specific integration test file (dev-server-puppeteer.ts), the fixes are
@@ -71,10 +76,22 @@ checks:
 # timeout values (30_000, 60_000) are for Puppeteer's launch() function, and the
 # retry delay (3000ms) handles transient macOS launch issues. These are appropriate
 # fixes for macOS Gatekeeper issues that cause browser launch failures.
-#
-# The rubric is intentionally left empty because:
-# 1. The "no timeouts" rule refers to Bun's test runner timeouts, not Puppeteer launch timeouts
-# 2. The "no waiting for time" rule refers to test assertions, not retry delays for system calls
-# 3. The gold solution intentionally adds these values to fix the macOS headless shell issues
 
-rubric: []
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "139"
+      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
+
+  - rule: "Avoid dynamic import & require. Only use dynamic import or require when specifically testing dynamic import behavior. Otherwise, always use module-scope import statements."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "156-175"
+      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
+
+  - rule: "Prefer async/await over callbacks. When callbacks must be used and it's just a single callback, use Promise.withResolvers."
+    source:
+      path: "test/CLAUDE.md"
+      lines: "102-110"
+      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"

@@ -62,4 +62,31 @@ checks:
     origin: repo_tests
     description: "Repo unit tests (vitest) pass"
 
-rubric: []
+  - id: repo_core_init
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo js/core/src/init.test.ts tests pass"
+
+  - id: repo_client_init
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo client/js/src/test/init.test.ts tests pass"
+
+rubric:
+  - rule: "Avoid AI-generated PR content. Solutions should demonstrate clear understanding of the problem and be consistent with the relevant sections of the codebase."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "23"
+      commit: "ac29df82a735c72c021c07e0816f78001147671b"
+
+  - rule: "Follow existing code style in the target files. Check neighboring code for patterns and conventions."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "392-393"
+      commit: "ac29df82a735c72c021c07e0816f78001147671b"
+
+  - rule: "Format frontend code changes using the project's formatting scripts before submitting."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "415-437"
+      commit: "ac29df82a735c72c021c07e0816f78001147671b"

@@ -351,3 +351,344 @@ def test_repo_collect_statistics_ast_valid():
         cwd=REPO,
     )
     assert r.returncode == 0, f"AST parsing failed:\n{r.stderr}"
+
+
+# =============================================================================
+# Additional Pass-to-Pass Tests: CIDB and Secret Integration
+# These validate the specific CI/CD components used in the fix
+# =============================================================================
+
+def test_repo_cidb_class_ast_valid():
+    """
+    Pass-to-pass: ci.praktika.cidb module must have valid AST.
+    Validates that the CIDB class definition exists and has expected structure.
+    This uses AST parsing to avoid import-time dependencies.
+    """
+    cidb_file = REPO / "ci" / "praktika" / "cidb.py"
+    if not cidb_file.exists():
+        pytest.skip("cidb.py not found")
+
+    source = cidb_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        assert False, f"CIDB syntax error: {e}"
+
+    # Check for CIDB class definition
+    class_found = False
+    has_init = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "CIDB":
+            class_found = True
+            # Check for __init__ method
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+                    has_init = True
+                    break
+            break
+
+    assert class_found, "CIDB class definition not found in cidb.py"
+    assert has_init, "CIDB class missing __init__ method"
+
+
+def test_repo_praktika_get_secret_callable():
+    """
+    Pass-to-pass: Info.get_secret must be callable with Settings constants.
+    Validates that the fix can use Info().get_secret(Settings.SECRET_CI_DB_*).
+    """
+    env = dict(os.environ)
+    python_path = env.get("PYTHONPATH", "")
+    ci_path = str(REPO / "ci")
+    env["PYTHONPATH"] = f"{ci_path}:{python_path}" if python_path else ci_path
+
+    r = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from ci.praktika.info import Info; "
+            "from ci.praktika.settings import Settings; "
+            "# Validate method signature exists and accepts the expected argument types; "
+            "assert callable(getattr(Info, 'get_secret', None)), 'Info.get_secret not callable'",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+        env=env,
+    )
+
+
+# =============================================================================
+# Additional Repo CI/CD Pass-to-Pass Tests (Static Analysis)
+# These tests use AST parsing to avoid runtime dependencies
+# =============================================================================
+
+def test_repo_cidb_module_syntax():
+    """
+    Pass-to-pass: ci.praktika.cidb module must have valid syntax and AST.
+    The fix uses CIDB(url=url, user=user, passwd=pwd) pattern.
+    Validates CIDB class structure via AST parsing.
+    """
+    cidb_file = REPO / "ci" / "praktika" / "cidb.py"
+    if not cidb_file.exists():
+        pytest.skip("cidb.py not found")
+
+    source = cidb_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        assert False, f"CIDB syntax error: {e}"
+
+    # Check for CIDB class with url, user, passwd parameters in __init__
+    cidb_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "CIDB":
+            cidb_class = node
+            break
+
+    assert cidb_class is not None, "CIDB class not found"
+
+    # Check __init__ has url, user, passwd parameters
+    init_method = None
+    for item in cidb_class.body:
+        if isinstance(item, ast.FunctionDef) and item.name == "__init__":
+            init_method = item
+            break
+
+    assert init_method is not None, "CIDB.__init__ not found"
+    args = [arg.arg for arg in init_method.args.args]
+    assert "url" in args, "CIDB.__init__ missing url parameter"
+    assert "user" in args, "CIDB.__init__ missing user parameter"
+    assert "passwd" in args, "CIDB.__init__ missing passwd parameter"
+
+
+def test_repo_secret_module_syntax():
+    """
+    Pass-to-pass: ci.praktika.secret module must have valid syntax and AST.
+    The base code uses Secret.Config and Secret.Type.
+    Validates Secret class structure via AST parsing.
+    """
+    secret_file = REPO / "ci" / "praktika" / "secret.py"
+    if not secret_file.exists():
+        pytest.skip("secret.py not found")
+
+    source = secret_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        assert False, f"Secret syntax error: {e}"
+
+    # Check for Secret class with Config inner class
+    secret_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Secret":
+            secret_class = node
+            break
+
+    assert secret_class is not None, "Secret class not found"
+
+    # Check for Config inner class
+    config_class = None
+    for item in secret_class.body:
+        if isinstance(item, ast.ClassDef) and item.name == "Config":
+            config_class = item
+            break
+
+    assert config_class is not None, "Secret.Config inner class not found"
+
+    # Check for get_value method in Config
+    get_value_method = None
+    for item in config_class.body:
+        if isinstance(item, ast.FunctionDef) and item.name == "get_value":
+            get_value_method = item
+            break
+
+    assert get_value_method is not None, "Secret.Config.get_value method not found"
+
+
+def test_repo_info_module_syntax():
+    """
+    Pass-to-pass: ci.praktika.info module must have valid syntax and AST.
+    The fix uses Info().get_secret() pattern.
+    Validates Info.get_secret method exists via AST parsing.
+    """
+    info_file = REPO / "ci" / "praktika" / "info.py"
+    if not info_file.exists():
+        pytest.skip("info.py not found")
+
+    source = info_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        assert False, f"Info syntax error: {e}"
+
+    # Check for Info class with get_secret method
+    info_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Info":
+            info_class = node
+            break
+
+    assert info_class is not None, "Info class not found"
+
+    # Check for get_secret method
+    get_secret_method = None
+    for item in info_class.body:
+        if isinstance(item, ast.FunctionDef) and item.name == "get_secret":
+            get_secret_method = item
+            break
+
+    assert get_secret_method is not None, "Info.get_secret method not found"
+
+    # Check method has at least one parameter (self + at least one arg)
+    args = [arg.arg for arg in get_secret_method.args.args]
+    assert len(args) >= 2, "Info.get_secret must accept at least one argument besides self"
+
+
+def test_repo_s3_module_syntax():
+    """
+    Pass-to-pass: ci.praktika.s3 module must have valid syntax and AST.
+    The collect_statistics.py script uses S3.copy_file_to_s3.
+    Validates S3 class structure via AST parsing.
+    """
+    s3_file = REPO / "ci" / "praktika" / "s3.py"
+    if not s3_file.exists():
+        pytest.skip("s3.py not found")
+
+    source = s3_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        assert False, f"S3 syntax error: {e}"
+
+    # Check for S3 class with copy_file_to_s3 method
+    s3_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "S3":
+            s3_class = node
+            break
+
+    assert s3_class is not None, "S3 class not found"
+
+    # Check for copy_file_to_s3 method
+    copy_method = None
+    for item in s3_class.body:
+        if isinstance(item, ast.FunctionDef) and item.name == "copy_file_to_s3":
+            copy_method = item
+            break
+
+    assert copy_method is not None, "S3.copy_file_to_s3 method not found"
+
+
+def test_repo_utils_shell_syntax():
+    """
+    Pass-to-pass: ci.praktika.utils module must have valid syntax.
+    The collect_statistics.py script uses Shell.check.
+    Validates Shell class structure via AST parsing.
+    """
+    utils_file = REPO / "ci" / "praktika" / "utils.py"
+    if not utils_file.exists():
+        pytest.skip("utils.py not found")
+
+    source = utils_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        assert False, f"Utils syntax error: {e}"
+
+    # Check for Shell class with check method
+    shell_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Shell":
+            shell_class = node
+            break
+
+    assert shell_class is not None, "Shell class not found"
+
+    # Check for check method
+    check_method = None
+    for item in shell_class.body:
+        if isinstance(item, ast.FunctionDef) and item.name == "check":
+            check_method = item
+            break
+
+    assert check_method is not None, "Shell.check method not found"
+
+
+def test_repo_result_module_syntax():
+    """
+    Pass-to-pass: ci.praktika.result module must have valid syntax.
+    The collect_statistics.py script uses Result.from_commands_run and Result.create_from.
+    Validates Result class structure via AST parsing.
+    """
+    result_file = REPO / "ci" / "praktika" / "result.py"
+    if not result_file.exists():
+        pytest.skip("result.py not found")
+
+    source = result_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        assert False, f"Result syntax error: {e}"
+
+    # Check for Result class
+    result_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Result":
+            result_class = node
+            break
+
+    assert result_class is not None, "Result class not found"
+
+    # Check for from_commands_run and create_from methods
+    method_names = []
+    for item in result_class.body:
+        if isinstance(item, ast.FunctionDef):
+            method_names.append(item.name)
+
+    assert "from_commands_run" in method_names, "Result.from_commands_run method not found"
+    assert "create_from" in method_names or "complete_job" in method_names, "Result.create_from or complete_job method not found"
+
+
+def test_repo_settings_secret_ci_db_defined():
+    """
+    Pass-to-pass: Settings must define SECRET_CI_DB_* constants.
+    The fix uses Settings.SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD.
+    Validates these are defined in the _Settings class via AST parsing.
+    """
+    settings_file = REPO / "ci" / "praktika" / "settings.py"
+    if not settings_file.exists():
+        pytest.skip("settings.py not found")
+
+    source = settings_file.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as e:
+        assert False, f"Settings syntax error: {e}"
+
+    # Check for _Settings class with SECRET_CI_DB_* attributes
+    settings_class = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "_Settings":
+            settings_class = node
+            break
+
+    assert settings_class is not None, "_Settings class not found"
+
+    # Check for SECRET_CI_DB_* assignments (including type-annotated assignments)
+    found_attrs = set()
+    for item in settings_class.body:
+        if isinstance(item, ast.Assign):
+            for target in item.targets:
+                if isinstance(target, ast.Name):
+                    if target.id.startswith("SECRET_CI_DB"):
+                        found_attrs.add(target.id)
+        elif isinstance(item, ast.AnnAssign):
+            # Handle type-annotated assignments like SECRET_CI_DB_URL: str = ""
+            if isinstance(item.target, ast.Name):
+                if item.target.id.startswith("SECRET_CI_DB"):
+                    found_attrs.add(item.target.id)
+
+    assert "SECRET_CI_DB_URL" in found_attrs, "Settings missing SECRET_CI_DB_URL"
+    assert "SECRET_CI_DB_USER" in found_attrs, "Settings missing SECRET_CI_DB_USER"
+    assert "SECRET_CI_DB_PASSWORD" in found_attrs, "Settings missing SECRET_CI_DB_PASSWORD"

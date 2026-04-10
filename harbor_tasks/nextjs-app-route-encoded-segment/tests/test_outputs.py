@@ -120,7 +120,7 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_encoded_single_dynamic():
-    """Encoded single dynamic placeholder %5B...%5D is recognized."""
+    """Encoded single dynamic placeholder %5BprojectSlug%5D is recognized."""
     r1 = _parse_route("/vercel/%5BprojectSlug%5D")
     assert "projectSlug" in r1["names"]
 
@@ -287,7 +287,7 @@ def test_repo_typescript_syntax_app_router():
             capture_output=True,
             timeout=30,
         )
-        assert r.returncode == 0, f"TypeScript syntax check failed for {filepath}:\\n{r.stderr.decode()}"
+        assert r.returncode == 0, f"TypeScript syntax check failed for {filepath}:\n{r.stderr.decode()}"
 
 
 # [repo_tests] pass_to_pass
@@ -306,4 +306,82 @@ def test_repo_imports_resolvable():
         capture_output=True,
         timeout=30,
     )
-    assert r.returncode == 0, f"Import test failed:\\n{r.stderr.decode()}"
+    assert r.returncode == 0, f"Import test failed:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_app_router():
+    """ESLint passes on router files (pass_to_pass)."""
+    # Use the local eslint after installing dependencies
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && corepack enable && pnpm install >/dev/null 2>&1 && ./node_modules/.bin/eslint --config eslint.cli.config.mjs " + TARGET_FILE],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_app_router():
+    """Prettier formatting check passes on router files (pass_to_pass)."""
+    # Use the local prettier
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && corepack enable && pnpm install >/dev/null 2>&1 && ./node_modules/.bin/prettier --check " + TARGET_FILE],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_interception_routes():
+    """Interception routes unit tests pass (pass_to_pass)."""
+    # Install deps, build the package, and run the specific unit test
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && corepack enable && pnpm install >/dev/null 2>&1 && pnpm build --filter=next >/dev/null 2>&1 && ./node_modules/.bin/jest interception-routes.test.ts --no-coverage"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Interception routes unit tests failed:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_is_dynamic():
+    """Is-dynamic route unit tests pass (pass_to_pass)."""
+    # Install deps, build the package, and run the specific unit test
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && corepack enable && pnpm install >/dev/null 2>&1 && pnpm build --filter=next >/dev/null 2>&1 && ./node_modules/.bin/jest is-dynamic.test.ts --no-coverage"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Is-dynamic unit tests failed:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_validate_app_paths():
+    """App paths validation unit tests pass (pass_to_pass)."""
+    # These tests directly use parseAppRoute from the modified app.ts
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && corepack enable && pnpm install >/dev/null 2>&1 && pnpm build --filter=next >/dev/null 2>&1 && ./node_modules/.bin/jest packages/next/src/build/validate-app-paths.test.ts --no-coverage"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Validate app paths unit tests failed:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_extract_pathname_segments():
+    """Extract pathname route param segments unit tests pass (pass_to_pass)."""
+    # These tests directly import and use parseAppRoute from the modified app.ts
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && corepack enable && pnpm install >/dev/null 2>&1 && pnpm build --filter=next >/dev/null 2>&1 && ./node_modules/.bin/jest packages/next/src/build/static-paths/app/extract-pathname-route-param-segments-from-loader-tree.test.ts --no-coverage"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Extract pathname segments unit tests failed:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"

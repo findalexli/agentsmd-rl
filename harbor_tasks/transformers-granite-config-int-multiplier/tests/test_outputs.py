@@ -306,3 +306,37 @@ def test_repo_ruff_format():
         timeout=30,
     )
     assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Config utils tests (lightweight, config-focused)
+def test_repo_config_utils():
+    """Configuration utils tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/utils/test_configuration_utils.py",
+            "-v", "--timeout=60", "-x",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, f"Config utils tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Granite tensor registration test
+def test_repo_granite_tensor_registration():
+    """Granite model tensor registration test passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/models/granite/test_modeling_granite.py::GraniteModelTest::test_all_tensors_are_parameter_or_buffer",
+            "-v", "--timeout=120",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=200,
+    )
+    assert r.returncode == 0, f"Granite tensor registration test failed:\n{r.stderr[-500:]}"

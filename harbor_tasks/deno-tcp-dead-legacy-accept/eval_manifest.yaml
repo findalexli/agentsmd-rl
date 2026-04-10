@@ -42,6 +42,41 @@ checks:
     origin: repo_tests
     description: "Repo CI: _listen.ts must export ceilPowOf2 with correct signature and backoff constants"
 
+  - id: test_repo_git_base_commit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: git verify repo is at expected base commit ad725eea313df6204d342d84ace4af1b11cc341f"
+
+  - id: test_repo_git_status_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: git verify repo has no uncommitted changes at base commit"
+
+  - id: test_repo_git_ls_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: git verify modified files tcp_wrap.ts and lint plugin exist in git tree"
+
+  - id: test_repo_grep_deno_listen
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: grep verify tcp_wrap.ts contains Deno.listen on base commit"
+
+  - id: test_repo_grep_deno_usage_count
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: grep verify tcp_wrap.ts has >=3 Deno.* usages matching EXPECTED_VIOLATIONS"
+
+  - id: test_repo_grep_expected_violations
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: grep verify EXPECTED_VIOLATIONS lists tcp_wrap.ts:3 on base commit"
+
+  - id: test_repo_grep_listen_exports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: grep verify _listen.ts exports ceilPowOf2 and backoff constants"
+
   - id: legacy_listen_branch_removed
     type: fail_to_pass
     origin: pr_diff
@@ -62,4 +97,21 @@ checks:
     origin: pr_diff
     description: "Imports only used by dead legacy code (delay, INITIAL_ACCEPT_BACKOFF_DELAY, MAX_ACCEPT_BACKOFF_DELAY) must be removed"
 
-rubric: []
+rubric:
+  - rule: "Before committing, run tools/format.js to format code, and tools/lint.js --js for JS/TS changes"
+    source:
+      path: "CLAUDE.md"
+      lines: "21-26"
+      commit: "ad725eea313df6204d342d84ace4af1b11cc341f"
+
+  - rule: "Keep changes minimal. Do not do drive-by changes in a PR."
+    source:
+      path: "CLAUDE.md"
+      lines: "34-36"
+      commit: "ad725eea313df6204d342d84ace4af1b11cc341f"
+
+  - rule: "Internal symbols in JS (ext/node/polyfills/) use the k prefix convention: kIpc, kSerialization, etc. Flag deviations."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "165-166"
+      commit: "ad725eea313df6204d342d84ace4af1b11cc341f"

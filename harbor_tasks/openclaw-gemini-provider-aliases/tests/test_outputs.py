@@ -62,6 +62,19 @@ def test_repo_no_conflict_markers():
     assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass — google-shared utilities tests
+def test_repo_google_shared_tests():
+    """Google shared utilities tests pass (pass_to_pass)."""
+    r = _run(
+        ["npx", "vitest", "run", "extensions/google/google-shared.test.ts", "--reporter=verbose"],
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Google shared tests failed (rc={r.returncode}):\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+    )
+    assert "FAIL" not in r.stdout, f"Some tests failed:\n{r.stdout}"
+
+
 # [repo_tests] pass_to_pass — extension boundary checks
 def test_repo_extension_no_src_outside_plugin_sdk():
     """Extensions don't import src/** outside plugin-sdk (pass_to_pass)."""
@@ -89,6 +102,39 @@ def test_repo_format_check():
         timeout=30,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — TypeScript typecheck for plugin-sdk types
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes for plugin-sdk types (pass_to_pass)."""
+    r = _run(
+        ["npx", "tsc", "--noEmit", "--project", "tsconfig.plugin-sdk.dts.json"],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — plugin-sdk types build
+def test_repo_build():
+    """Repo's plugin-sdk types build passes (pass_to_pass)."""
+    r = _run(
+        ["pnpm", "build:plugin-sdk:dts"],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Plugin-sdk types build failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — pnpm test:extension wrapper for google
+def test_repo_test_extension_google():
+    """Google extension tests pass via CI test:extension wrapper (pass_to_pass)."""
+    r = _run(
+        ["pnpm", "test:extension", "google"],
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"test:extension google failed (rc={r.returncode}):\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+    )
+    assert "FAIL" not in r.stdout, f"Some tests failed:\n{r.stdout}"
 
 
 # ---------------------------------------------------------------------------

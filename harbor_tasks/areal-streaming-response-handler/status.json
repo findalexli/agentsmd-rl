@@ -3,19 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T09:24:56.298214",
-  "total_time": 782.96,
-  "sandbox_id": "isb0fo7fvf6v68jic9xf0",
+  "validated_at": "2026-04-10T02:11:02.941217",
+  "total_time": 2866.33,
+  "sandbox_id": "ijpf03ypusx3o9ghhojnl",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 294.14,
-      "notes": "Added 2 repo_tests pass_to_pass gates: test_repo_ruff_lint (ruff check), test_repo_ruff_format (ruff format --check). CI discovery: Repo uses ruff for linting/formatting (pyproject.toml config), pytest for tests (requires heavy deps torch/sglang etc). The target module has heavy ML dependencies that prevent running full pytest in the test container, so only static analysis checks (ruff, syntax) were added as p2p gates."
+      "notes": "P2P enrichment complete. Fixed pip install bug in test_repo_ruff_format. Added 4 new repo_tests pass_to_pass gates: test_repo_yaml_check (YAML syntax), test_repo_json_check (JSON syntax), test_repo_trailing_whitespace (no trailing whitespace), test_repo_eof_newline (EOF newline). Total: 6 repo_tests p2p gates (ruff lint, ruff format, mdformat, yaml, json, trailing_ws, eof_newline) + 4 static/agent_config p2p gates. CI discovery: Repo uses ruff for linting/formatting (pyproject.toml config), mdformat for markdown (pre-commit), pre-commit hooks for YAML/JSON syntax checks."
     },
     "improve": {
       "status": "skipped",
@@ -28,51 +28,67 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 301.87,
+      "time": 359.82,
       "notes": ""
     },
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All checks passed",
+      "attempts": 2,
+      "notes": "All core checks passed: Docker build succeeded, NOP test returned reward=0 (3 expected failures on base code), Gold test returned reward=1 (all 10 tests passed). Rubric judge requires ANTHROPIC_API_KEY env var (not available).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 76.48
+      "time": 75.34
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.7,
-      "notes": "ICR=1.00"
+      "time": 1.34,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 6700.85,
-      "at": "2026-04-09T06:17:21.243476"
+      "time": 420.96,
+      "at": "2026-04-09T20:25:29.581022"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 782.7,
-      "at": "2026-04-09T09:24:56.122391"
+      "time": 300.1,
+      "at": "2026-04-09T22:04:08.715834"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 782.96,
-      "at": "2026-04-09T09:24:56.298214"
+      "time": 300.36,
+      "at": "2026-04-09T22:04:08.880386"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2866.02,
+      "at": "2026-04-10T02:11:02.760866"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2866.33,
+      "at": "2026-04-10T02:11:02.941217"
     }
   ]
 }

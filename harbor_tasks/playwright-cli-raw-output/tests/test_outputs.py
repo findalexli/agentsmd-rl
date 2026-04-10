@@ -353,3 +353,27 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"Help text test failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+def test_repo_eslint_backend():
+    """Repo's linter passes on backend files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install > /dev/null 2>&1 && npx eslint packages/playwright-core/src/tools/backend/response.ts packages/playwright-core/src/tools/backend/browserBackend.ts packages/playwright-core/src/tools/backend/evaluate.ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+def test_repo_eslint_cli():
+    """Repo's linter passes on cli files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install > /dev/null 2>&1 && npx eslint packages/playwright-core/src/tools/cli-client/program.ts packages/playwright-core/src/tools/cli-client/session.ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+def test_repo_eslint_daemon():
+    """Repo's linter passes on daemon files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install > /dev/null 2>&1 && npx eslint packages/playwright-core/src/tools/cli-daemon/daemon.ts packages/playwright-core/src/tools/cli-daemon/helpGenerator.ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

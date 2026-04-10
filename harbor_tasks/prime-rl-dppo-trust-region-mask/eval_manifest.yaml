@@ -22,6 +22,21 @@ checks:
     origin: repo_tests
     description: "Repo ruff format check passes on modified files"
 
+  - id: repo_ruff_check_test_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ruff lint check passes on modified test file"
+
+  - id: repo_ruff_format_test_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ruff format check passes on modified test file"
+
+  - id: repo_imports_work
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified modules can be imported and used at base commit"
+
   - id: dppo_config_fields
     type: fail_to_pass
     origin: pr_diff
@@ -56,4 +71,29 @@ checks:
     type: pass_to_pass
     origin: pr_diff
     description: "Negative advantages with low violations are still masked"
+
+rubric:
+  - rule: "When renaming or removing config fields, emit a deprecation warning with a clear migration path. Do not silently drop fields."
+    source:
+      path: "skills/config/SKILL.md"
+      lines: "73"
+      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
+
+  - rule: "Incompatible option combinations should raise in model_validator at config resolution time, not at runtime."
+    source:
+      path: "skills/config/SKILL.md"
+      lines: "72"
+      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
+
+  - rule: "Use targeted comments sparingly to clarify ambiguous logic. Don't explain your work process or reference old code."
+    source:
+      path: "AGENTS.md"
+      lines: "6"
+      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
+
+  - rule: "Write tests as plain functions with pytest fixtures. Don't use class-based tests."
+    source:
+      path: "AGENTS.md"
+      lines: "44"
+      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
 

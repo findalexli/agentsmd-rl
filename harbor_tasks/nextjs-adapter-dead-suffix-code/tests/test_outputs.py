@@ -156,3 +156,69 @@ def test_surrounding_code_intact():
     }
     failed = [k for k, v in checks.items() if not v]
     assert not failed, f"Surrounding code damaged -- missing: {', '.join(failed)}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass-to-pass gates
+# ---------------------------------------------------------------------------
+
+# [repo_ci] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    import subprocess
+
+    # Install deps, build the next and eslint-plugin-next packages first, then run typecheck
+    r = subprocess.run(
+        ["bash", "-c", "cd /repo && corepack enable && pnpm install && pnpm run build --filter=next --filter=@next/eslint-plugin-next && pnpm run typescript"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_lint_typescript():
+    """Repo's package-level TypeScript checks pass (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /repo && corepack enable && pnpm install && pnpm run build --filter=next --filter=@next/eslint-plugin-next && pnpm run lint-typescript"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint TypeScript failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_lint_eslint():
+    """Repo's ESLint checks pass on modified files (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /repo && corepack enable && pnpm install && pnpm run build --filter=next --filter=@next/eslint-plugin-next && pnpm run lint-eslint -- packages/next/src/build/adapter/build-complete.ts packages/next/src/build/index.ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_prettier():
+    """Repo's Prettier formatting check passes on modified files (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /repo && corepack enable && pnpm install && pnpm prettier --check packages/next/src/build/adapter/build-complete.ts packages/next/src/build/index.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_unit_tests_build():
+    """Repo's unit tests for the build module pass (pass_to_pass)."""
+    import subprocess
+
+    # Run unit tests for files matching 'build' pattern - these are fast and don't require build
+    r = subprocess.run(
+        ["bash", "-c", "cd /repo && corepack enable && pnpm install && pnpm jest --testPathPattern='build/(analysis|static-paths|validate-app-paths|normalize-catchall-routes)' --passWithNoTests --testTimeout=30000"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build module unit tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"

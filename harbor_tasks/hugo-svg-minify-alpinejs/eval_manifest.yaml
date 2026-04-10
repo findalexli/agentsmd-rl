@@ -12,7 +12,6 @@ source:
     - go.mod
     - go.sum
 
-# Checks - one per test function in test_outputs.py
 checks:
   - id: svg_alpine_x_bind
     name: "SVG preserves x-bind:href directives"
@@ -96,7 +95,22 @@ checks:
     test_function: test_repo_module_check
     points: 5
 
-# Agent config rules - from AGENTS.md and CLAUDE.md
+  - id: repo_staticcheck
+    name: "Repo minifiers passes staticcheck"
+    description: "Pass-to-pass: Repo minifiers package passes staticcheck linting"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_staticcheck_minifiers
+    points: 5
+
+  - id: repo_race_test
+    name: "Repo minifiers passes race detector"
+    description: "Pass-to-pass: Repo minifiers package passes race detector tests"
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_race_minifiers
+    points: 5
+
 agent_config:
   - rule: "Use qt matchers in tests instead of raw if/t.Fatal checks"
     file_pattern: "*_test.go"
@@ -107,18 +121,17 @@ agent_config:
   - rule: "Avoid exporting symbols not needed outside package"
     file_pattern: "*.go"
     check_type: grep
-    content: "^func [A-Z]"  # If new exports added, flag for review
-    negative_check: true  # No NEW exports should be added
+    content: "^func [A-Z]"
+    negative_check: true
     source: "AGENTS.md: Never export symbols not needed"
 
   - rule: "Avoid global state"
     file_pattern: "*.go"
     check_type: grep
-    content: "^var\\s+\\w+.*="  # Check for package-level vars
-    negative_check: true  # No new globals
+    content: "^var\\s+\\w+.*="
+    negative_check: true
     source: "AGENTS.md: Avoid global state at (almost) all cost"
 
-# Rubric for LLM evaluation
 rubric:
   - criterion: "Solution follows Hugo code style"
     description: "Code is brief, uses clear variable names, follows Go conventions"

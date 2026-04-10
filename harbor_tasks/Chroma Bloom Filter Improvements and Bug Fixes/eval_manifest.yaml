@@ -107,4 +107,58 @@ checks:
     test: "test_bloom_filter_unit_tests"
     points: 10
 
-rubric: []
+  # Pass-to-Pass tests - Repo CI Checks
+  - id: "cargo_fmt"
+    name: "Cargo Format Check"
+    description: "Rust code formatting passes (cargo fmt --check)"
+    file: "tests/test_outputs.py"
+    test: "test_cargo_fmt_check"
+    points: 5
+
+  - id: "cargo_clippy"
+    name: "Cargo Clippy Check"
+    description: "Rust clippy linting passes"
+    file: "tests/test_outputs.py"
+    test: "test_cargo_clippy_check"
+    points: 5
+
+  - id: "bloom_filter_module_tests"
+    name: "Bloom Filter Module Unit Tests"
+    description: "Bloom filter module unit tests pass (pass_to_pass)"
+    file: "tests/test_outputs.py"
+    test: "test_bloom_filter_module_tests"
+    points: 5
+
+  - id: "modified_files_exist"
+    name: "Modified Files Exist"
+    description: "Modified source files exist and are readable"
+    file: "tests/test_outputs.py"
+    test: "test_modified_files_exist"
+    points: 2
+
+  - id: "bloom_filter_has_tests"
+    name: "Bloom Filter Has Tests"
+    description: "Bloom filter module contains at least 7 unit tests"
+    file: "tests/test_outputs.py"
+    test: "test_bloom_filter_has_tests"
+    points: 3
+
+  - id: "no_trailing_whitespace"
+    name: "No Trailing Whitespace"
+    description: "No trailing whitespace in modified Rust files"
+    file: "tests/test_outputs.py"
+    test: "test_no_trailing_whitespace_rust"
+    points: 2
+
+rubric:
+  - rule: "Follow the directory structure defined for the Mintlify documentation package (e.g., docs/, cloud/, guides/)."
+    source:
+      path: "docs/mintlify/AGENTS.md"
+      lines: "9-15"
+      commit: "f206bbf894bd8a9f3bcf4db7d7a01425c70640d7"
+
+# Note: No agent config files were found for the Rust codebase at the base commit.
+# The only CLAUDE.md and AGENTS.md files exist in docs/mintlify/ for documentation purposes only.
+# P2P Enrichment notes: Docker lacks protoc which prevents cargo build/test/clippy.
+# CI commands from .github/workflows/pr.yml: cargo fmt --check, cargo clippy --all-targets --all-features
+# Modified files: rust/segment/src/bloom_filter.rs, rust/segment/src/blockfile_record.rs

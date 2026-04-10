@@ -132,6 +132,20 @@ def test_translation_completeness():
     assert result.returncode == 0, f"Translation check failed:\n{result.stdout}\n{result.stderr}"
 
 
+def test_repo_unit_tests():
+    """PASS-TO-PASS: Frontend slash-command unit tests pass (vitest run).
+
+    Runs the repo's existing vitest test suite for slash-command functionality
+    to validate the base commit has working tests. Focuses on the slash-command
+    menu and related components that are relevant to the modified code.
+    """
+    result = run_npm_command(
+        ["npm", "run", "test", "--", "--run", "--reporter=verbose", "slash-command"],
+        timeout=60
+    )
+    assert result.returncode == 0, f"Slash-command tests failed:\n{result.stdout}\n{result.stderr}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

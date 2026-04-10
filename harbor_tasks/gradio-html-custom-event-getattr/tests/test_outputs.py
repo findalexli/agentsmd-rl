@@ -242,3 +242,51 @@ def test_gradio_imports():
         cwd=REPO, capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, f"Gradio import failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — from scripts/lint_backend.sh (CI test-python.yml)
+def test_repo_lint_backend():
+    """Backend lint script passes on modified file (repo CI)."""
+    # The repo CI runs: ./scripts/lint_backend.sh which checks gradio, test, client
+    # We run ruff check specifically on the modified file to avoid pre-existing issues
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/components/html.py", "--quiet"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Backend lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — from test/test_events.py (events system)
+def test_repo_events_unit_tests():
+    """Event system unit tests pass (repo CI) — tests that don't need server."""
+    # These test the event listener system that custom events extend
+    # Only run specific test classes that don't launch the app
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_events.py::TestEvent::test_clear_event", "test/test_events.py::TestEvent::test_consecutive_events", "test/test_events.py::TestEvent::test_on_listener", "test/test_events.py::TestEvent::test_load_chaining", "test/test_events.py::TestEvent::test_load_chaining_reuse", "test/test_events.py::TestEventErrors", "test/test_events.py::test_event_pyi_file_matches_source_code", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Events unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from test/test_blocks.py (blocks config tests)
+def test_repo_blocks_config_tests():
+    """Blocks config tests pass (repo CI) — test event wiring in blocks."""
+    # Tests Blocks configuration and event wiring without launching server
+    subprocess.run(["pip", "install", "pytest", "pytest-asyncio", "-q"], capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_blocks.py::TestBlocksMethods::test_load_from_config_with_blocks_events", "-v", "--tb=short"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Blocks events config test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — basic gradio functionality smoke test
+def test_repo_gradio_version():
+    """Gradio version can be retrieved (repo CI smoke test)."""
+    r = subprocess.run(
+        ["python", "-c", "import gradio; print(gradio.__version__)"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Gradio version check failed:\n{r.stderr}"
+    assert len(r.stdout.strip()) > 0, "Gradio version is empty"

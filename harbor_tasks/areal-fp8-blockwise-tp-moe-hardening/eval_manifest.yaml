@@ -75,23 +75,6 @@ checks:
       lines: "37-42"
       commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
 
-rubric:
-  - rule: "Follow existing code patterns in the same module."
-    source:
-      path: "CLAUDE.md"
-      lines: "76"
-      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
-  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies. Keep inheritance shallow."
-    source:
-      path: ".claude/rules/code-style.md"
-      lines: "7-11"
-      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
-  - rule: "DTensor requires consistent mesh across all ranks. Use DTensor.from_local() with correct placements."
-    source:
-      path: ".claude/rules/distributed.md"
-      lines: "21-22"
-      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
-
   # Repo CI/CD checks (pass_to_pass)
   - id: test_repo_ruff_lint
     type: pass_to_pass
@@ -123,3 +106,34 @@ rubric:
     origin: repo_tests
     description: "Repo passes pre-commit detect-private-key check"
 
+  - id: test_repo_precommit_large_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo passes pre-commit check-added-large-files (no large files committed)"
+
+  - id: test_repo_precommit_json
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JSON files pass pre-commit check-json"
+
+  - id: test_repo_precommit_nbstripout
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Jupyter notebooks pass nbstripout (no outputs committed)"
+
+rubric:
+  - rule: "Follow existing code patterns in the same module."
+    source:
+      path: "CLAUDE.md"
+      lines: "76"
+      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
+  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies. Keep inheritance shallow."
+    source:
+      path: ".claude/rules/code-style.md"
+      lines: "7-11"
+      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
+  - rule: "DTensor requires consistent mesh across all ranks. Use DTensor.from_local() with correct placements."
+    source:
+      path: ".claude/rules/distributed.md"
+      lines: "21-22"
+      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"

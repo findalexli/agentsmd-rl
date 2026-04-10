@@ -3,43 +3,43 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T14:13:15.331579",
-  "total_time": 18083.09,
-  "sandbox_id": "is0tkazyhpyax9jkustdq",
-  "backend": "fireworks",
+  "validated_at": "2026-04-10T02:00:26.958887",
+  "total_time": 2230.31,
+  "sandbox_id": "iiinwvn6tpsflwwtlhjz6",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 151.59,
+      "model": "opus",
+      "backend": "gemini",
+      "time": 564.03,
       "notes": ""
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
+      "model": "opus",
+      "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
+      "status": "fail",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All four validation checks passed:\n1. Docker build: SUCCESS - Image built with Helm and Python dependencies\n2. NOP test: reward=0 (expected) - 7 tests failed on base commit as expected\n3. Gold test: reward=1 (expected) - All 15 tests passed after applying solve.sh\n4. Rubric judge: Could not run due to ANTHROPIC_API_KEY issue (401 Unauthorized), but manually verified all rubric rules are satisfied by gold solution:\n   - helm_precedence_order: Correct precedence in pod-template-file (kubernetes > workers > global)\n   - schema_definitions_complete: Both celery.affinity and kubernetes.affinity properly defined\n   - deprecation_handling: NOTES.txt warning, schema deprecation note, newsfragment added",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 370.39
+      "notes": "NOP test passes (reward 0). Gold test passes (reward 1). However, the Rubric judge is fundamentally broken for this task. `judge.py` is hardcoded to evaluate config file changes (e.g., CLAUDE.md) and instructs the LLM to FAIL if no config files were touched. The gold solution correctly modifies only Helm chart code files, which `judge.py` filters out. Additionally, the auto-generated rubric rules in eval_manifest.yaml use incorrect keys ('description' instead of 'rule', 'file' instead of 'path') and incorrectly try to evaluate code behavior using a config judge. Finally, the judge script is currently hitting HTTP 429 Too Many Requests rate limits on the Anthropic API fallback. Since the evaluation mechanism is structurally incompatible with the task and hitting API limits, the validation step cannot complete successfully.",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1629.52
     },
     "rubric_judge": {
-      "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.72,
-      "notes": "ICR=1.00"
+      "status": "fail",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1.3,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -47,9 +47,17 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 18083.09,
-      "at": "2026-04-09T14:13:15.331579"
+      "backend": "gemini",
+      "time": 2230.04,
+      "at": "2026-04-10T02:00:26.791218"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 2230.31,
+      "at": "2026-04-10T02:00:26.958887"
     }
   ]
 }

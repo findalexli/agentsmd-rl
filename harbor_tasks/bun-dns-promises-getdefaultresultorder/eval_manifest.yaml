@@ -43,4 +43,38 @@ checks:
     origin: repo_tests
     description: "Repo's DNS module tests pass"
 
-rubric: []
+  - id: test_repo_package_json_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package.json lint check passes (exact version deps)"
+
+  - id: test_repo_int_from_float
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's int_from_float internal test passes"
+
+  - id: test_repo_prettier_dns
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's DNS TypeScript file formatting passes (prettier)"
+rubric:
+  - rule: "The fix must call defaultResultOrder() instead of returning the function reference in getDefaultResultOrder()."
+    source:
+      path: "src/js/node/dns.ts"
+      lines: "94-96"
+      commit: "0ff0065f9e5a34c26bd8d1bede19d4239bb95b55"
+    reference: "return defaultResultOrder();"
+
+  - rule: "dns.promises must export getDefaultResultOrder function."
+    source:
+      path: "src/js/node/dns.ts"
+      lines: "943-950"
+      commit: "0ff0065f9e5a34c26bd8d1bede19d4239bb95b55"
+    reference: "getDefaultResultOrder,"
+
+  - rule: "dns.promises must export getServers function."
+    source:
+      path: "src/js/node/dns.ts"
+      lines: "943-950"
+      commit: "0ff0065f9e5a34c26bd8d1bede19d4239bb95b55"
+    reference: "getServers,"

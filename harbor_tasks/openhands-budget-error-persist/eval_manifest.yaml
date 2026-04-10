@@ -58,6 +58,11 @@ checks:
     origin: repo_tests
     description: "Repo unit tests pass (npm run test with vitest)"
 
+  - id: test_repo_error_handling_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Error handling & recovery tests pass (covers modified WebSocket context code)"
+
   # Structural tests
   - id: test_frontend_builds
     type: pytest
@@ -74,5 +79,21 @@ checks:
       lines: "44-46"
       text: "If you've made changes to the frontend, you should run cd frontend && npm run lint:fix && npm run build"
 
-rubric: []
-  # No soft/subjective rules - all checks are programmatic
+rubric:
+  - rule: "Follow the frontend data fetching architecture: UI components → TanStack Query hooks → Data Access Layer (frontend/src/api). Never call API client methods directly from UI components."
+    source:
+      path: "AGENTS.md"
+      lines: "134-140"
+      commit: "8ce3089a68018c507025c7410ee3ba25856b23fd"
+
+  - rule: "Install pre-commit hooks before making any changes to the codebase by running `make install-pre-commit-hooks`."
+    source:
+      path: "AGENTS.md"
+      lines: "16-18"
+      commit: "8ce3089a68018c507025c7410ee3ba25856b23fd"
+
+  - rule: "Use i18n keys for user-facing error messages. Import I18nKey from the i18n declaration file and use consistent translation keys for error states."
+    source:
+      path: "AGENTS.md"
+      lines: "132-133"
+      commit: "8ce3089a68018c507025c7410ee3ba25856b23fd"

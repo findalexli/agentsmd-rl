@@ -8,7 +8,24 @@ source_pr:
 
 agent_config: []
 
-rubric: []
+rubric:
+  - rule: "Do NOT comment the obvious. Comments should explain non-obvious algorithms, business logic, temporary timeouts/thresholds, complex calculations, subtle race conditions, and assumptions. Do NOT comment simple variable assignments, standard library usage, self-descriptive function calls, or basic control flow."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-131"
+      commit: "bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2"
+
+  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions. Fix the underlying issues instead."
+    source:
+      path: "CLAUDE.md"
+      lines: "113"
+      commit: "bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2"
+
+  - rule: "For async tests, use #[tokio::test] instead of #[test]."
+    source:
+      path: "CLAUDE.md"
+      lines: "114"
+      commit: "bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2"
 
 checks:
   - id: test_rust_syntax_valid
@@ -45,3 +62,18 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: Repo's Rust code passes cargo fmt --check
+
+  - id: test_target_file_has_tests_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file contains test module with unit tests
+
+  - id: test_cargo_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-core Cargo.toml is valid and readable
+
+  - id: test_repo_git_status_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository has clean git status

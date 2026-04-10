@@ -1,11 +1,12 @@
 """Tests for migration 0097 SQLite foreign key fix."""
 
 import ast
+import subprocess
 import sys
 import os
 
 # Add the repo to path for imports
-REPO = "/workspace/airflow"
+REPO = "/workspace/task"
 sys.path.insert(0, os.path.join(REPO, "airflow-core/src"))
 
 MIGRATION_PATH = os.path.join(
@@ -224,7 +225,7 @@ def test_disable_sqlite_fkeys_context_structure():
                             context_expr = item.context_expr
                             if isinstance(context_expr, ast.Call):
                                 if (isinstance(context_expr.func, ast.Attribute) and
-                                    context_expr.func.attr == "batch_alter_table"):
+                                    inner_context.func.attr == "batch_alter_table"):
                                     batch_positions.append(i)
 
                 # All UPDATEs should be before batch_alter_table calls
@@ -236,3 +237,101 @@ def test_disable_sqlite_fkeys_context_structure():
                 return  # Success
 
     raise AssertionError("disable_sqlite_fkeys block with expected structure not found")
+
+
+# ============================================================================
+# Pass-to-Pass Tests (Repo CI checks that must pass before AND after fix)
+# ============================================================================
+
+
+def test_repo_ruff_check():
+    """Repo's ruff linting passes on migration file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # ruff may already be installed
+    r = subprocess.run(
+        ["ruff", "check", MIGRATION_PATH],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format():
+    """Repo's ruff formatting passes on migration file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", MIGRATION_PATH],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_pyflakes():
+    """Repo's pyflakes static analysis passes on migration file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyflakes", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pyflakes", MIGRATION_PATH],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pyflakes failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_python_compile():
+    """Repo's migration file compiles as valid Python (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "compileall", MIGRATION_PATH],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stdout}\n{r.stderr}"
+
+def test_repo_ruff_check_migrations_dir():
+    """Repo's ruff linting passes on entire migrations dir (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "airflow-core/src/airflow/migrations/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+def test_repo_ruff_format_migrations_dir():
+    """Repo's ruff formatting passes on entire migrations dir (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "airflow-core/src/airflow/migrations/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+def test_repo_pyflakes_migrations_dir():
+    """Repo's pyflakes static analysis passes on entire migrations dir (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pyflakes", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pyflakes", "airflow-core/src/airflow/migrations/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Pyflakes failed:\n{r.stdout}\n{r.stderr}"
+
+def test_repo_python_compile_migrations_dir():
+    """Repo's entire migrations dir compiles as valid Python (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "compileall", "-q", "airflow-core/src/airflow/migrations/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python compilation failed:\n{r.stdout}\n{r.stderr}"

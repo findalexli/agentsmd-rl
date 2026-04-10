@@ -1,16 +1,10 @@
 # Use the official ClickHouse binary builder image which has all dependencies
 FROM clickhouse/binary-builder:latest
 
-# Install Python for test runner and git for applying patches
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-pytest \
-    git \
-    clang \
-    && rm -rf /var/lib/apt/lists/*
+# Install pytest via pip (lightweight)
+RUN pip3 install pytest
 
-# Create necessary directories
+# Create necessary directories - repo will be mounted
 RUN mkdir -p /workspace/ClickHouse /logs/verifier
 
 WORKDIR /workspace/ClickHouse

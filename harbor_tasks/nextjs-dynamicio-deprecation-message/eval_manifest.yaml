@@ -42,4 +42,31 @@ checks:
     origin: repo_tests
     description: "Repo's Prettier formatting passes on config.ts"
 
-rubric: []
+  - id: test_repo_typescript
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript type check passes"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for config warnings pass"
+
+rubric:
+  - rule: "When modifying experimental flags, maintain proper wiring across config-shared.ts, config-schema.ts, and define-env.ts. If a flag is consumed in pre-compiled runtime internals, also wire runtime env values (next-server.ts/export/worker.ts as needed)."
+    source:
+      path: "AGENTS.md"
+      lines: "167-174"
+      commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
+
+  - rule: "Replace deprecated experimental.dynamicIO with cacheComponents. The dynamicIO feature has been replaced by cacheComponents - error messages must clearly indicate this migration path."
+    source:
+      path: ".claude-plugin/plugins/cache-components/skills/cache-components/SKILL.md"
+      lines: "9,293-299"
+      commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
+
+  - rule: "Error messages for deprecated/invalid config options must include a link to relevant documentation for user guidance."
+    source:
+      path: "AGENTS.md"
+      lines: "105-113"
+      commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"

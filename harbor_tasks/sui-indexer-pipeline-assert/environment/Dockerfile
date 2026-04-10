@@ -1,12 +1,14 @@
 FROM rust:1.85-slim
 
-# Install dependencies: git, python3, pip
+# Install dependencies: git, python3, pip, libclang
 RUN apt-get update && apt-get install -y \
     git \
     python3 \
     python3-pip \
     pkg-config \
     libssl-dev \
+    libclang-dev \
+    clang \
     && rm -rf /var/lib/apt/lists/*
 
 # Create workspace

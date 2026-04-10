@@ -103,33 +103,29 @@ checks:
     origin: repo_tests
     description: "Repo's bun.lock must be valid and parseable by bun"
 
+  - id: test_repo_prettier_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's code must be formatted with prettier"
+
+  - id: test_repo_bun_parse_build_ts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bun must be able to parse the build.ts file syntax"
+
+  - id: test_repo_import_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All imports in build.ts must use valid syntax"
+
 rubric:
-  - rule: "Use single word names by default for new locals, params, and helper functions."
+  - rule: "The solution modifies build.ts to fix Windows path issues: uses relative import specifiers, sorts export keys, and normalizes backslashes."
     source:
-      path: "AGENTS.md"
-      lines: "25-26"
+      path: "packages/opencode/script/build.ts"
+      lines: "68-90"
       commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - rule: "Keep things in one function unless composable or reusable."
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
+    reference: |
+      const dist = path.join(appDir, "dist")
+      const files = (await Array.fromAsync(new Bun.Glob("**/*").scan({ cwd: dist })))
+        .map((file) => file.replaceAll("\\", "/"))
+        .sort()

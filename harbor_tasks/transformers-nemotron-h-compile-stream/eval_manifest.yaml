@@ -71,13 +71,28 @@ checks:
     origin: repo_tests
     description: "Modeling file has required modular auto-generated header"
 
+  - id: test_repo_nemotron_h_import_sort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff import sorting check passes on modified files"
+
+  - id: test_repo_nemotron_h_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax validation passes on modified files"
+
+  - id: test_repo_nemotron_h_modeling_conventions
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modeling file follows HF naming conventions with required classes"
+
 rubric:
-  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
+  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo! Instead, edit the modular file."
     source:
       path: "CLAUDE.md"
       lines: "67"
       commit: "20a233bdc5c0fae8fa116184f105adf498d44ba2"
-  - rule: "We try to avoid direct inheritance between model-specific files in `src/transformers/models/`."
+  - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/."
     source:
       path: "CLAUDE.md"
       lines: "64"

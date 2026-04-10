@@ -318,3 +318,23 @@ def test_repo_flow_typecheck_passes():
         # Check if it's a real Flow error vs infrastructure issue
         if "error" in combined or "flow" in combined:
             assert False, f"Flow typecheck failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_modified_test_files_exist():
+    """Modified test files exist and are readable (pass_to_pass).
+
+    Basic sanity check that the test files modified in the PR exist and
+    have readable content. This validates the repo structure is intact.
+    """
+    test_files = [
+        f"{REPO}/packages/react-reconciler/src/__tests__/useMemoCache-test.js",
+        f"{REPO}/packages/react-reconciler/src/__tests__/ReactIncrementalErrorReplay-test.js",
+        f"{REPO}/packages/react-reconciler/src/__tests__/ReactIncrementalErrorHandling-test.internal.js",
+    ]
+
+    for test_file in test_files:
+        assert Path(test_file).exists(), f"Test file does not exist: {test_file}"
+        assert Path(test_file).is_file(), f"Path is not a file: {test_file}"
+        content = Path(test_file).read_text()
+        assert len(content) > 0, f"Test file is empty: {test_file}"

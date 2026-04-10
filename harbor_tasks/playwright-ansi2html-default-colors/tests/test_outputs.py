@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import subprocess
 import json
 import os
+import sys
 import tempfile
 
 REPO = "/workspace/playwright"
@@ -147,3 +148,10 @@ def test_repo_lint_packages():
     """Package consistency check passes (pass_to_pass)."""
     r = _run_with_npm_ci("npm run lint-packages", timeout=120)
     assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tsc():
+    """TypeScript typecheck passes after build (pass_to_pass)."""
+    # tsc requires build artifacts (generated files) to be present first
+    r = _run_with_npm_ci("npm run build && npm run tsc", timeout=360)
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-1000:]}"

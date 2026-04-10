@@ -85,7 +85,7 @@ checks:
     origin: repo_tests
     description: "Private key file must not be empty"
 
-  # New pass-to-pass tests (repo_tests - config validation)
+  # Pass-to-pass tests (repo_tests - config validation)
   - id: test_redis_conf_valid
     type: pass_to_pass
     origin: repo_tests
@@ -96,4 +96,52 @@ checks:
     origin: repo_tests
     description: "Valkey Dockerfile must exist and reference certificate files"
 
-rubric: []
+  # New pass-to-pass tests (repo_tests - CI/CD TLS certificate checks)
+  - id: test_cert_tls_version_compatible
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate must use RSA key for TLS version compatibility"
+
+  - id: test_cert_valid_for_tls_server
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate must have required extensions for TLS server use"
+
+  - id: test_cert_and_key_pair_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate and key must form a valid cryptographic pair for TLS"
+
+  - id: test_redis_tls_config_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Redis TLS configuration must have valid syntax with all required settings"
+
+  - id: test_cert_no_weak_algorithms
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate must not use weak/insecure algorithms (SHA1, MD5, DSA)"
+
+  - id: test_cert_chain_depth
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Self-signed certificate must have localhost as issuer and subject"
+
+rubric:
+  - rule: "Follow existing code style - check neighboring files for patterns"
+    source:
+      path: "CLAUDE.md"
+      lines: "144"
+      commit: "c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25"
+
+  - rule: "All changes must be tested - if you're not testing your changes, you're not done"
+    source:
+      path: "CLAUDE.md"
+      lines: "142"
+      commit: "c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25"
+
+  - rule: "Use absolute paths - Always use absolute paths in file operations"
+    source:
+      path: "CLAUDE.md"
+      lines: "145"
+      commit: "c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25"

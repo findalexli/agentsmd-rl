@@ -1,14 +1,15 @@
-FROM golang:1.24-bookworm
+FROM golang:bookworm
 
 # Install Python for pytest
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv \
+    python3-pytest \
     && rm -rf /var/lib/apt/lists/*
 
 # Create logs directory
-RUN mkdir -p /logs/verifier
+RUN mkdir -p /logs/verifier /workspace/task && ln -s /tests /workspace/task/tests
 
 # Clone Hugo at the base commit (shallow clone with full history for the commit)
 WORKDIR /workspace

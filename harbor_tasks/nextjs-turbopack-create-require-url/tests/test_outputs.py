@@ -293,3 +293,17 @@ def test_repo_node_file_trace_fixtures_exist():
     # Verify input.js exists in the base fixture
     input_file = f"{base_fixture}/input.js"
     assert os.path.isfile(input_file), f"Base fixture input.js missing: {input_file}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_error_codes():
+    """Repo's check-error-codes script passes (pass_to_pass).
+
+    This validates that error codes in the Next.js package are correctly
+    formatted and all referenced error codes have corresponding documentation.
+    """
+    r = subprocess.run(
+        ["node", "packages/next/check-error-codes.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-error-codes failed:\n{r.stderr[-500:]}"

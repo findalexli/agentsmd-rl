@@ -140,6 +140,36 @@ def test_repo_ty_check_works():
         os.unlink(tmp)
 
 
+# [repo_tests] pass_to_pass
+def test_repo_check_ty_crate():
+    """Repo's ty crate compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--bin", "ty"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check --bin ty failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_ty_python_semantic():
+    """Modified crate ty_python_semantic compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p ty_python_semantic failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typed_dict_mdtest():
+    """Repo's mdtest for typed_dict.md passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--", "mdtest::typed_dict.md", "--test-threads=1"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"typed_dict mdtest failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

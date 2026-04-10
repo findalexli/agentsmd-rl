@@ -41,21 +41,37 @@ checks:
       The codebase passes Prettier formatting checks (yarn test:other).
       This is the prettier check from the repo's CI pipeline.
 
-  - id: move_tests_pass
-    name: "Move tests pass with correct arrow positioning"
-    type: behavioral
+  - id: binding_unit_tests
+    name: "binding.test.tsx unit tests pass"
+    type: pass_to_pass
+    origin: repo_tests
     description: |
-      The move.test.tsx tests should pass, validating that arrows with bindings
-      correctly update their position when elements are moved.
-    origin: p2p
+      The packages/element/tests/binding.test.tsx tests pass.
+      These tests cover the binding.ts module including arrow binding behavior.
 
-  - id: history_tests_pass
-    name: "History tests pass with bidirectional binding"
-    type: behavioral
+  - id: drag_create_tests
+    name: "dragCreate.test.tsx tests pass"
+    type: pass_to_pass
+    origin: repo_tests
     description: |
-      The history.test.tsx tests should pass, validating bidirectional binding
-      behavior during undo/redo operations.
-    origin: p2p
+      The packages/excalidraw/tests/dragCreate.test.tsx tests pass.
+      These tests cover drag-to-create functionality including arrow creation.
+
+  - id: linear_element_editor_tests
+    name: "linearElementEditor.test.tsx tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The packages/element/tests/linearElementEditor.test.tsx tests pass.
+      These tests cover linear element (arrow/line) editing functionality.
+
+  - id: elbow_arrow_tests
+    name: "elbowArrow.test.tsx tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The packages/element/tests/elbowArrow.test.tsx tests pass.
+      These tests cover elbow arrow routing and binding behavior.
 
   - id: binding_imports
     name: "pointsEqual and pointFrom are imported"
@@ -78,14 +94,15 @@ checks:
       config_file: .github/copilot-instructions.md
       lines: "TypeScript Guidelines - prefer implementations without allocation"
 
-  - id: no_regression_in_syntax
-    name: "TypeScript type checking passes"
-    type: behavioral
-    description: |
-      The modified code must pass TypeScript type checking (yarn test:typecheck).
-    origin: agent_config
+rubric:
+  - rule: "Where possible, prefer implementations without allocation"
     source:
-      config_file: CLAUDE.md
-      lines: "Development Workflow - use yarn test:typecheck to verify TypeScript"
+      path: ".github/copilot-instructions.md"
+      lines: "14-15"
+      commit: "60ab14c2f633112613843eec3c049f6da0f566e8"
 
-rubric: []
+  - rule: "When writing math related code, always include packages/math/src/types.ts and use the Point type instead of {x, y}"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "44-46"
+      commit: "60ab14c2f633112613843eec3c049f6da0f566e8"

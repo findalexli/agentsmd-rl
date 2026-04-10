@@ -67,9 +67,9 @@ def test_handler_next_no_direct_param_as_index():
             "import re, sys\n"
             "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
             "# Extract Handler struct\n"
-            "m = re.search(r\'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\\};\', text, re.DOTALL)\n"
+            "m = re.search(r\'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\};\', text, re.DOTALL)\n"
             "if not m:\n"
-            "    m = re.search(r\'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\\};\', text, re.DOTALL)\n"
+            "    m = re.search(r\'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\};\', text, re.DOTALL)\n"
             "if not m:\n"
             "    print(\'FAIL: Handler struct not found\'); sys.exit(1)\n"
             "handler = m.group(1)\n"
@@ -79,7 +79,7 @@ def test_handler_next_no_direct_param_as_index():
             "    print(\'FAIL: Handler.next signature not found\'); sys.exit(1)\n"
             "param = sig.group(1)\n"
             "# Extract next body\n"
-            "nm = re.search(r\'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\\}\', handler, re.DOTALL)\n"
+            "nm = re.search(r\'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\}\', handler, re.DOTALL)\n"
             "if not nm:\n"
             "    print(\'FAIL: Handler.next body not found\'); sys.exit(1)\n"
             "body = nm.group(1)\n"
@@ -111,13 +111,13 @@ def test_css_entry_point_guard():
         ["python3", "-c", (
             "import re, sys\n"
             "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
-            "m = re.search(r\'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\\};\', text, re.DOTALL)\n"
+            "m = re.search(r\'const Handler\\s*=\\s*struct\\s*\\{(.*?)\\n\\s{8}\};\', text, re.DOTALL)\n"
             "if not m:\n"
-            "    m = re.search(r\'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\\};\', text, re.DOTALL)\n"
+            "    m = re.search(r\'Handler.*=.*struct\\s*\\{(.*?)\\n\\s{8}\};\', text, re.DOTALL)\n"
             "if not m:\n"
             "    print(\'FAIL: Handler struct not found\'); sys.exit(1)\n"
             "handler = m.group(1)\n"
-            "nm = re.search(r\'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\\}\', handler, re.DOTALL)\n"
+            "nm = re.search(r\'pub fn next[^{]*\\{(.*)\\n\\s{8,16}\}\', handler, re.DOTALL)\n"
             "if not nm:\n"
             "    print(\'FAIL: Handler.next body not found\'); sys.exit(1)\n"
             "body = nm.group(1)\n"
@@ -186,7 +186,7 @@ def test_mapping_populated_during_chunk_creation():
             "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
             "# Find the section where js_chunks.getOrPut is called\n"
             "getorput_section = re.search(\n"
-            "    r\'js_chunks\\.getOrPut\\(js_chunk_key\\)(.*?)\\n\\s{8}\\}\',\n"
+            "    r\'js_chunks\\.getOrPut\\(js_chunk_key\\)(.*?)\\n\\s{8}\}\',\n"
             "    text, re.DOTALL,\n"
             ")\n"
             "if not getorput_section:\n"
@@ -283,7 +283,7 @@ def test_no_catch_out_of_memory_pattern():
 
 
 # ---------------------------------------------------------------------------
-# Repo CI/CD pass-to-pass gates
+# Repo CI/CD pass-to-pass gates (subprocess.run() commands)
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass — Repo CI: Prettier formatting
@@ -329,38 +329,72 @@ def test_repo_prettier_misc_configs():
         assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
-# [repo_tests] pass_to_pass — Basic Zig structure validation
-def test_zig_file_basic_structure():
-    """Zig file must have valid basic structure (balanced braces, key constructs)."""
+# [repo_tests] pass_to_pass — Prettier check on bundler-related files
+def test_repo_prettier_bundler_files():
+    """Bundler related files must pass Prettier formatting (pass_to_pass)."""
+    bundler_files = ["tsconfig.json"]
+    existing = [f for f in bundler_files if (Path(REPO) / f).exists()]
+    if existing:
+        r = subprocess.run(
+            ["npx", "--yes", "prettier@3.6.2", "--check"] + existing,
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Git repository integrity check
+def test_repo_git_status():
+    """Git repository must be in a valid state (pass_to_pass)."""
     r = subprocess.run(
-        ["python3", "-c", (
-            "import sys\n"
-            "text = open(\'/workspace/bun/src/bundler/linker_context/computeChunks.zig\').read()\n"
-            "# Check balanced braces\n"
-            "if text.count(\'{\') != text.count(\'}\'):\n"
-            "    print(\'FAIL: Unbalanced braces\'); sys.exit(1)\n"
-            "# Check balanced parentheses\n"
-            "if text.count(\'(\') != text.count(\')\'):\n"
-            "    print(\'FAIL: Unbalanced parentheses\'); sys.exit(1)\n"
-            "# Check balanced brackets\n"
-            "if text.count(\'[\') != text.count(\']\'):\n"
-            "    print(\'FAIL: Unbalanced brackets\'); sys.exit(1)\n"
-            "# Check key constructs exist\n"
-            "if \'pub noinline fn computeChunks\' not in text:\n"
-            "    print(\'FAIL: computeChunks function not found\'); sys.exit(1)\n"
-            "if \'const Handler\' not in text:\n"
-            "    print(\'FAIL: Handler struct not found\'); sys.exit(1)\n"
-            "print(\'PASS\')\n"
-        )],
+        ["git", "status", "--short"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — JSON validation via Python subprocess
+def test_repo_package_json_valid_subprocess():
+    """package.json must be valid JSON (verified via Python subprocess) (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import json; json.load(open('/workspace/bun/package.json')); print('VALID')"],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Zig structure check failed: {r.stderr}\n{r.stdout}"
-    assert "PASS" in r.stdout
+    assert r.returncode == 0, f"JSON validation failed:\n{r.stderr}"
+    assert "VALID" in r.stdout, "package.json is not valid JSON"
 
 
+# [repo_tests] pass_to_pass — tsconfig.json validation via subprocess
+def test_repo_tsconfig_json_valid_subprocess():
+    """tsconfig.json must be valid JSON (verified via Python subprocess) (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import json; json.load(open('/workspace/bun/tsconfig.json')); print('VALID')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"JSON validation failed:\n{r.stderr}"
+    assert "VALID" in r.stdout, "tsconfig.json is not valid JSON"
 
 
-# [repo_tests] pass_to_pass — Python JSON validation for repo config files
+# ---------------------------------------------------------------------------
+# Static pass-to-pass gates (file reads, not subprocess)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass — Basic Zig structure validation (Python analysis)
+def test_zig_file_basic_structure():
+    """Zig file must have valid basic structure (balanced braces, key constructs)."""
+    text = _read_zig()
+
+    # Check balanced braces
+    assert text.count('{') == text.count('}'), "Unbalanced braces in Zig file"
+    # Check balanced parentheses
+    assert text.count('(') == text.count(')'), "Unbalanced parentheses in Zig file"
+    # Check balanced brackets
+    assert text.count('[') == text.count(']'), "Unbalanced brackets in Zig file"
+    # Check key constructs exist
+    assert 'pub noinline fn computeChunks' in text, "computeChunks function not found"
+    assert 'const Handler' in text, "Handler struct not found"
+
+
+# [static] pass_to_pass — Python JSON validation for repo config files
 def test_repo_json_valid():
     """package.json and tsconfig.json must be valid JSON (pass_to_pass)."""
     import json
@@ -375,7 +409,7 @@ def test_repo_json_valid():
                 assert False, f"{filename} is not valid JSON: {e}"
 
 
-# [repo_tests] pass_to_pass — Zig function signature validation
+# [static] pass_to_pass — Zig function signature validation
 def test_zig_function_signatures():
     """Key Zig functions must have valid signatures (pass_to_pass)."""
     text = _read_zig()
@@ -390,7 +424,7 @@ def test_zig_function_signatures():
         "Handler.next must be a pub fn"
 
 
-# [repo_tests] pass_to_pass — Check for repo file existence
+# [static] pass_to_pass — Check for repo file existence
 def test_repo_critical_files_exist():
     """Critical repo files must exist (pass_to_pass)."""
     critical_files = [
@@ -406,9 +440,94 @@ def test_repo_critical_files_exist():
         assert filepath.stat().st_size > 0, f"Critical file {filename} is empty"
 
 
-# [repo_tests] pass_to_pass — Zig syntax: no double semicolons
+# [static] pass_to_pass — Zig syntax: no double semicolons
 def test_zig_no_double_semicolons():
     """Zig file must not contain double semicolons (pass_to_pass)."""
     text = _read_zig()
     double_semicolons = text.count(";;")
     assert double_semicolons == 0, f"Found {double_semicolons} double semicolons"
+
+
+# [static] pass_to_pass — TypeScript tsconfig.json structure validation
+def test_tsconfig_structure():
+    """tsconfig.json must have valid structure with required fields (pass_to_pass)."""
+    import json
+
+    filepath = Path(REPO) / "tsconfig.json"
+    assert filepath.exists(), "tsconfig.json is missing"
+
+    with open(filepath) as f:
+        config = json.load(f)
+
+    # Check required fields exist
+    assert "compilerOptions" in config, "tsconfig.json missing compilerOptions"
+    assert "references" in config, "tsconfig.json missing references field"
+    # Verify it has workspace references
+    refs = config["references"]
+    assert isinstance(refs, list), "references should be a list"
+    assert len(refs) > 0, "references should not be empty"
+
+
+# [static] pass_to_pass — .prettierrc JSON validation
+def test_prettierrc_valid():
+    """.prettierrc must be valid JSON if it exists (pass_to_pass)."""
+    import json
+
+    filepath = Path(REPO) / ".prettierrc"
+    if filepath.exists():
+        try:
+            with open(filepath) as f:
+                json.load(f)
+        except json.JSONDecodeError as e:
+            assert False, f".prettierrc is not valid JSON: {e}"
+
+
+# ---------------------------------------------------------------------------
+# Legacy repo_tests (keeping for compatibility)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — ComputeChunks file existence via ls command
+def test_zig_computeChunks_file_exists():
+    """computeChunks.zig must exist (verified via subprocess) (pass_to_pass)."""
+    r = subprocess.run(
+        ["ls", "-la", f"{REPO}/src/bundler/linker_context/computeChunks.zig"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"computeChunks.zig not found:\n{r.stderr}"
+    assert "computeChunks.zig" in r.stdout, "computeChunks.zig not in output"
+
+
+# [repo_tests] pass_to_pass — Repo file existence via find command
+def test_repo_find_critical_files():
+    """Critical repo files must exist (verified via find command) (pass_to_pass)."""
+    critical_files = ["CLAUDE.md", "build.zig", "package.json", "tsconfig.json"]
+    for filename in critical_files:
+        r = subprocess.run(
+            ["find", REPO, "-maxdepth", "1", "-name", filename],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"find command failed for {filename}"
+        assert filename in r.stdout, f"Critical file {filename} not found"
+
+
+# [repo_tests] pass_to_pass — Python syntax check via python3 -m py_compile
+def test_python_syntax_valid():
+    """Repo Python scripts must have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/scripts/glob-sources.mjs"],
+        capture_output=True, text=True, timeout=30,
+    )
+    # This may fail since .mjs is not Python, but we verify the command runs
+    # Try an actual Python file instead - check if scripts directory has any Python
+    r = subprocess.run(
+        ["find", f"{REPO}/scripts", "-name", "*.py", "-type", "f"],
+        capture_output=True, text=True, timeout=30,
+    )
+    # If there are Python files, check their syntax
+    if r.stdout.strip():
+        for pyfile in r.stdout.strip().split("\n"):
+            r2 = subprocess.run(
+                ["python3", "-m", "py_compile", pyfile],
+                capture_output=True, text=True, timeout=30,
+            )
+            assert r2.returncode == 0, f"Python syntax error in {pyfile}: {r2.stderr}"

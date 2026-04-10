@@ -72,8 +72,36 @@ checks:
     origin: repo_tests
     description: "Modified files don't use forbidden torch.cuda APIs (repo CI check)"
 
+  - id: test_repo_check_init_lazy_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass root lazy imports check (repo CI check)"
+
+  - id: test_repo_check_boolean_context_manager
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass boolean context manager check (repo CI check)"
+
+  - id: test_repo_typos_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass typos check (repo CI check)"
+
 rubric:
-  # AGENTS.md and CLAUDE.md at base commit contain only process/workflow/tooling rules
-  # (duplicate-work checks, uv usage, commit trailers, pre-commit hooks).
-  # None are evaluable from a code diff alone.
-  []
+  - rule: "ROCmn aiter environment setup must run for all ROCm cases, not gated on use_rocm_aiter=True"
+    source:
+      path: "tests/kernels/moe/test_shared_fused_moe_routed_transform.py"
+      lines: "43-48"
+      commit: "0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff"
+
+  - rule: "cleanup_dist_env_and_memory must call refresh_env_variables() to reset AITER state"
+    source:
+      path: "vllm/distributed/parallel_state.py"
+      lines: "1905-1916"
+      commit: "0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff"
+
+  - rule: "test_routing_strategy_integration must not directly mutate environment_variables dict"
+    source:
+      path: "tests/kernels/moe/test_routing_simulator.py"
+      lines: "125-135"
+      commit: "0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff"

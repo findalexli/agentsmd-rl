@@ -3,25 +3,25 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T12:53:23.618907",
-  "total_time": 13291.14,
-  "sandbox_id": "i3flasvlibz5qxh3wxxc5",
+  "validated_at": "2026-04-10T00:33:02.198429",
+  "total_time": 9234.33,
+  "sandbox_id": "i8f3chxfuw4lh6xnuae5g",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 215.14,
-      "notes": ""
+      "notes": "Added 3 new pass_to_pass CI tests with origin: repo_tests: (1) cargo_check_all_features - cargo check -p ty_python_semantic --all-features, (2) cargo_clippy_all_features - cargo clippy -p ty_python_semantic --all-features -- -D warnings, (3) cargo_test_doc - cargo test -p ty_python_semantic --doc. Total 8 p2p tests now (5 original + 3 new). All pass on base commit."
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1714.37,
+      "time": 915.75,
       "notes": ""
     },
     "improve": {
@@ -36,43 +36,71 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed solve.sh idempotency check. The original check 'grep -q '    fn singleline'' was incorrectly matching 'fn singleline_union_element_label' function. Changed to 'grep -E '^\\s+fn singleline\\(&self\\)'' to properly detect when the patch is already applied.",
+      "notes": "Fixed solve.sh idempotency check by using proper regex pattern '^\\s+fn singleline\\(&self\\)' to detect when patch is applied. Also fixed patch formatting by using external display.patch file.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 949.78
+      "time": 1315.6
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.79,
-      "notes": "ICR=1.00"
+      "time": 45.05,
+      "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 34.68
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6172.12,
-      "at": "2026-04-09T06:44:18.508052"
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1195.57,
+      "at": "2026-04-09T14:48:06.618368"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 13290.88,
-      "at": "2026-04-09T12:53:23.451480"
+      "time": 308.12,
+      "at": "2026-04-09T15:02:59.695259"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 13291.14,
-      "at": "2026-04-09T12:53:23.618907"
+      "time": 308.48,
+      "at": "2026-04-09T15:02:59.948087"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9234.01,
+      "at": "2026-04-10T00:33:01.970592"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9234.33,
+      "at": "2026-04-10T00:33:02.198429"
     }
   ]
 }

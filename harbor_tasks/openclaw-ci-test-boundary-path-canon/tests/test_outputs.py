@@ -456,16 +456,24 @@ def test_no_prototype_mutation_in_tests():
 # ---------------------------------------------------------------------------
 
 
-def _run_in_repo(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
+def _run_in_repo(cmd: list[str], timeout: int = 180) -> subprocess.CompletedProcess:
     """Run a command in the repo directory."""
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=REPO)
 
 
-def test_repo_lint():
+def test_repo_oxlint():
     """Repo's oxlint passes on modified files (pass_to_pass)."""
+    # First install pnpm and dependencies
+    r = _run_in_repo(["npm", "install", "-g", "pnpm"], timeout=60)
+    assert r.returncode == 0, f"Failed to install pnpm: {r.stderr}"
+
+    r = _run_in_repo(["pnpm", "install", "--frozen-lockfile"], timeout=180)
+    assert r.returncode == 0, f"Failed to install dependencies: {r.stderr}"
+
     r = _run_in_repo(
         [
-            "./node_modules/.bin/oxlint",
+            "npx",
+            "oxlint",
             "src/media-understanding/media-understanding-misc.test.ts",
             "src/auto-reply/reply/commands.test.ts",
         ],
@@ -474,11 +482,41 @@ def test_repo_lint():
     assert r.returncode == 0, f"Lint failed:\n{r.stdout}\n{r.stderr}"
 
 
-def test_repo_media_tests():
-    """Repo's media-understanding tests pass (pass_to_pass)."""
+def test_repo_oxfmt():
+    """Repo's oxfmt format check passes on modified files (pass_to_pass)."""
+    r = _run_in_repo(["npm", "install", "-g", "pnpm"], timeout=60)
+    assert r.returncode == 0, f"Failed to install pnpm: {r.stderr}"
+
+    r = _run_in_repo(["pnpm", "install", "--frozen-lockfile"], timeout=180)
+    assert r.returncode == 0, f"Failed to install dependencies: {r.stderr}"
+
     r = _run_in_repo(
         [
-            "./node_modules/.bin/vitest",
+            "pnpm",
+            "exec",
+            "oxfmt",
+            "--check",
+            "src/media-understanding/media-understanding-misc.test.ts",
+            "src/auto-reply/reply/commands.test.ts",
+        ],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_media_tests():
+    """Repo's media-understanding SSRF tests pass (pass_to_pass)."""
+    r = _run_in_repo(["npm", "install", "-g", "pnpm"], timeout=60)
+    assert r.returncode == 0, f"Failed to install pnpm: {r.stderr}"
+
+    r = _run_in_repo(["pnpm", "install", "--frozen-lockfile"], timeout=180)
+    assert r.returncode == 0, f"Failed to install dependencies: {r.stderr}"
+
+    r = _run_in_repo(
+        [
+            "pnpm",
+            "exec",
+            "vitest",
             "run",
             "src/media-understanding/media-understanding-misc.test.ts",
         ],
@@ -489,6 +527,12 @@ def test_repo_media_tests():
 
 def test_repo_media_unit_tests():
     """Repo's media-understanding unit tests pass (pass_to_pass)."""
+    r = _run_in_repo(["npm", "install", "-g", "pnpm"], timeout=60)
+    assert r.returncode == 0, f"Failed to install pnpm: {r.stderr}"
+
+    r = _run_in_repo(["pnpm", "install", "--frozen-lockfile"], timeout=180)
+    assert r.returncode == 0, f"Failed to install dependencies: {r.stderr}"
+
     test_files = [
         "src/media-understanding/attachments.normalize.test.ts",
         "src/media-understanding/attachments.guards.test.ts",
@@ -497,5 +541,26 @@ def test_repo_media_unit_tests():
         "src/media-understanding/resolve.test.ts",
         "src/media-understanding/provider-registry.test.ts",
     ]
-    r = _run_in_repo(["./node_modules/.bin/vitest", "run"] + test_files, timeout=120)
+    r = _run_in_repo(["pnpm", "exec", "vitest", "run"] + test_files, timeout=120)
     assert r.returncode == 0, f"Media unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_commands_tests():
+    """Repo's auto-reply commands tests pass (pass_to_pass)."""
+    r = _run_in_repo(["npm", "install", "-g", "pnpm"], timeout=60)
+    assert r.returncode == 0, f"Failed to install pnpm: {r.stderr}"
+
+    r = _run_in_repo(["pnpm", "install", "--frozen-lockfile"], timeout=180)
+    assert r.returncode == 0, f"Failed to install dependencies: {r.stderr}"
+
+    r = _run_in_repo(
+        [
+            "pnpm",
+            "exec",
+            "vitest",
+            "run",
+            "src/auto-reply/reply/commands.test.ts",
+        ],
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Commands tests failed:\n{r.stderr[-500:]}"

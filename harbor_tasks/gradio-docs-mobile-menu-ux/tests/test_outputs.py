@@ -33,6 +33,16 @@ def test_header_svelte_structure():
     assert "click_nav" in content, "Missing click_nav state variable"
     assert "Gradio logo" in content, "Missing logo alt text"
 
+    # Validate Svelte block structure (each opening block has a closing block)
+    # Note: Svelte blocks are like {#if condition}, not {#if}
+    open_if = len(re.findall(r"\{#if\b", content))
+    close_if = content.count("{/if}")
+    assert open_if == close_if, f"Mismatched #if blocks: {open_if} open, {close_if} close"
+
+    open_each = len(re.findall(r"\{#each\b", content))
+    close_each = content.count("{/each}")
+    assert open_each == close_each, f"Mismatched #each blocks: {open_each} open, {close_each} close"
+
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — CI/CD checks that should pass on base and after fix
@@ -68,6 +78,36 @@ def test_repo_format_check():
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_client_build():
+    """Repo's client package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.17.0"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install pnpm: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -94,16 +134,16 @@ def test_nav_links_data_driven():
             '''
 const fs = require("fs");
 const src = fs.readFileSync(process.argv[1], "utf8");
-const script = (src.match(/<script[^>]*>([\\s\\S]*?)<\\/script>/) || [])[1] || "";
+const script = (src.match(/<script[^>]*>([\s\S]*?)<\/script>/) || [])[1] || "";
 
 // Check for array literal with link objects containing label+href in script
-const hasLinkArray = /\\[\\s*\\{[^\\]]*label[^\\]]*href[^\\]]*\\/docs[^\\]]*\\}/.test(script);
+const hasLinkArray = /\[\s*\{[^\]]*label[^\]]*href[^\]]*\/docs[^\]]*\}/.test(script);
 
 // Check for {#each} iteration over nav data in template
-const hasEachNav = /\\{#each\\s+\\w+\\s+as\\s+\\{\\s*label/.test(src);
+const hasEachNav = /\{#each\s+\w+\s+as\s+\{\s*label/.test(src);
 
 // Count {#each} blocks (nav + community should yield at least 2)
-const eachCount = (src.match(/\\{#each/g) || []).length;
+const eachCount = (src.match(/\{#each/g) || []).length;
 
 console.log(JSON.stringify({ hasLinkArray, hasEachNav, eachCount }));
 ''',
@@ -133,13 +173,13 @@ const fs = require("fs");
 const src = fs.readFileSync(process.argv[1], "utf8");
 
 // Old code coupled desktop/mobile nav via class:hidden={!show_nav}
-const hasCoupledToggle = /class:hidden=\\{!show_nav\\}/.test(src);
+const hasCoupledToggle = /class:hidden=\{!show_nav\}/.test(src);
 
 // Old code had $: show_nav = click_nav || ... reactive statement
-const hasShowNavReactive = /\\$:\\s*show_nav\\s*=/.test(src);
+const hasShowNavReactive = /\$:\s*show_nav\s*=/.test(src);
 
 // Fixed code uses "hidden lg:flex" on <nav> (desktop always visible, mobile hidden)
-const hasHiddenLgFlex = /<nav[\\s\\S]{0,400}hidden[\\s\\S]{0,20}lg:flex/.test(src);
+const hasHiddenLgFlex = /<nav[\s\S]{0,400}hidden[\s\S]{0,20}lg:flex/.test(src);
 
 console.log(JSON.stringify({ hasCoupledToggle, hasShowNavReactive, hasHiddenLgFlex }));
 ''',

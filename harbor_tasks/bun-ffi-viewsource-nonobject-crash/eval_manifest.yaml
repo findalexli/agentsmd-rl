@@ -51,33 +51,98 @@ checks:
 
   - id: test_js_files_valid_syntax
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Repo's JavaScript/TypeScript files have valid syntax"
 
   - id: test_tsconfig_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Repo's tsconfig.json is valid"
 
   - id: test_ffi_zig_parse_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "ffi.zig has valid Zig structure (balanced braces, valid keywords)"
 
   - id: test_repo_file_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Critical repo files exist and are non-empty"
 
   - id: test_zig_no_banned_patterns
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Zig source doesn't contain banned patterns from CLAUDE.md"
 
   - id: test_js_lint_oxlint
     type: pass_to_pass
+    origin: static
+    description: "Repo's JavaScript/TypeScript passes oxlint (skipped due to config incompatibility)"
+
+  - id: test_repo_oxlint_config_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's oxlint.json is valid JSON"
+
+  - id: test_repo_prettier_config_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's .prettierrc is valid JSON"
+
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's package.json is valid"
+
+  - id: test_repo_claude_md_exists
+    type: pass_to_pass
+    origin: static
+    description: "Repo's CLAUDE.md exists and has expected content"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (repo_tests) — Actual CI/CD commands using subprocess.run()
+  # ---------------------------------------------------------------------------
+
+  - id: test_repo_prettier_ffi_tests
+    type: pass_to_pass
     origin: repo_tests
-    description: "Repo's JavaScript/TypeScript passes oxlint"
+    description: "FFI test files pass prettier formatting check (npx prettier --check)"
+
+  - id: test_repo_prettier_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's JavaScript/TypeScript scripts pass prettier check"
+
+  - id: test_repo_package_json_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's package.json is valid JSON (verified via Node.js subprocess)"
+
+  - id: test_repo_tsconfig_json_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's tsconfig.json is valid JSON (verified via Node.js subprocess)"
+
+  # New p2p tests added during enrichment
+  - id: test_oxlint_ffi_source
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FFI TypeScript source passes oxlint (npx oxlint src/js/bun/ffi.ts)"
+
+  - id: test_oxlint_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo scripts pass oxlint (npx oxlint scripts/build.mjs)"
+
+  - id: test_prettier_config_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo config files pass prettier formatting (npx prettier --check .prettierrc tsconfig.json)"
+
+  - id: test_ffi_test_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FFI test files have valid structure (verified via Node.js)"
 
 rubric:
   - rule: "In Zig code, be careful with allocators and use defer for cleanup where applicable."

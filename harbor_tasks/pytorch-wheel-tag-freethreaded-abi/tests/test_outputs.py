@@ -411,3 +411,36 @@ def test_repo_shell_scripts_syntax():
             capture_output=True, text=True, timeout=10,
         )
         assert r.returncode == 0, f"{sh_file.name} has shell syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_gomp_compiles():
+    """check_gomp.py must compile without errors (pass_to_pass)."""
+    gomp_path = "/workspace/.ci/pytorch/smoke_test/check_gomp.py"
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", gomp_path],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"check_gomp.py failed to compile:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_gomp_imports():
+    """check_gomp.py must be importable (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import sys; sys.path.insert(0, '/workspace/.ci/pytorch/smoke_test'); import check_gomp; print('OK')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"check_gomp.py import failed:\n{r.stderr}"
+    assert "OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_wheel_tags_imports():
+    """check_wheel_tags.py must be importable (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import sys; sys.path.insert(0, '/workspace/.ci/pytorch/smoke_test'); import check_wheel_tags; print('OK')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"check_wheel_tags.py import failed:\n{r.stderr}"
+    assert "OK" in r.stdout

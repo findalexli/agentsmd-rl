@@ -8,10 +8,12 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import logging as stdlib_logging
-import re
+import subprocess
 import sys
 import types
 from pathlib import Path
+
+import pytest
 
 REPO = "/workspace/AReaL"
 
@@ -56,9 +58,9 @@ def _load_cpu_platform():
     return cpu_ns["CpuPlatform"]
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [static] pass_to_pass
@@ -76,9 +78,80 @@ def test_syntax_check():
         py_compile.compile(f, doraise=True)
 
 
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass - CI-style syntax validation
+def test_repo_syntax_all_modules():
+    """All areal Python files must have valid syntax (repo CI check)."""
+    import py_compile
+
+    repo_path = Path(REPO)
+    py_files = list(repo_path.glob("areal/**/*.py"))
+
+    failed = []
+    for f in py_files:
+        try:
+            py_compile.compile(str(f), doraise=True)
+        except py_compile.PyCompileError as e:
+            failed.append(f"{f}: {e}")
+
+    if failed:
+        assert False, f"Syntax errors found in {len(failed)} files:\n" + "\n".join(failed[:10])
+
+
+# [repo_tests] pass_to_pass - Platform module import
+def test_repo_cpu_platform_importable():
+    """CpuPlatform module can be imported with minimal dependencies (pass_to_pass)."""
+    # This validates that the CpuPlatform class can be loaded without
+    # the full areal dependency chain (which requires many packages).
+    CpuPlatform = _load_cpu_platform()
+    assert CpuPlatform is not None, "Failed to load CpuPlatform"
+
+
+# [repo_tests] pass_to_pass - pyproject.toml validation
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml must be valid TOML (repo CI check)."""
+    try:
+        import tomllib  # Python 3.11+
+    except ImportError:
+        import tomli as tomllib  # Fallback
+
+    pyproject_path = Path(f"{REPO}/pyproject.toml")
+    with open(pyproject_path, "rb") as f:
+        data = tomllib.load(f)
+
+    # Verify essential sections exist
+    assert "project" in data, "Missing [project] section"
+    assert "dependencies" in data["project"], "Missing dependencies in [project]"
+
+
+# [repo_tests] pass_to_pass - YAML config validation
+def test_repo_example_configs_valid():
+    """Example YAML configs must be valid (repo CI check)."""
+    try:
+        import yaml
+    except ImportError:
+        pytest.skip("PyYAML not installed")
+
+    repo_path = Path(REPO)
+    yaml_files = list(repo_path.glob("examples/**/*.yaml"))
+
+    if not yaml_files:
+        return  # Skip if no YAML files found
+
+    failed = []
+    for f in yaml_files[:20]:  # Limit to first 20 for speed
+        try:
+            with open(f) as fp:
+                yaml.safe_load(fp)
+        except yaml.YAMLError as e:
+            failed.append(f"{f}: {e}")
+
+    if failed:
+        assert False, f"YAML errors in {len(failed)} files:\n" + "\n".join(failed[:5])
+
+
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
@@ -124,82 +197,247 @@ def test_cpu_platform_empty_cache():
 # [pr_diff] fail_to_pass
 def test_fsdp_engine_cpu_device():
     """FSDP engine _create_device_model must set device to 'cpu' on CPU platform."""
-    import ast
-    import os
-    import textwrap
+    code = """
+import ast
+import os
+import sys
+import textwrap
+import types
 
-    import torch
+# Setup minimal module stubs
+sys.modules.setdefault('areal', types.ModuleType('areal'))
+sys.modules.setdefault('areal.utils', types.ModuleType('areal.utils'))
+mock_log = types.ModuleType('areal.utils.logging')
+mock_log.getLogger = __import__('logging').getLogger
+sys.modules['areal.utils.logging'] = mock_log
 
-    CpuPlatform = _load_cpu_platform()
+import torch
 
-    src = Path(f"{REPO}/areal/engine/fsdp_engine.py").read_text()
-    tree = ast.parse(src)
+# Load Platform base class
+platform_src = open('/workspace/AReaL/areal/infra/platforms/platform.py').read()
+platform_ns = {'__name__': 'areal.infra.platforms.platform'}
+exec(compile(platform_src, 'platform.py', 'exec'), platform_ns)
 
-    method_src = None
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "_create_device_model":
-            method_src = ast.get_source_segment(src, node)
-            break
+# Load CpuPlatform
+cpu_src = open('/workspace/AReaL/areal/infra/platforms/cpu.py').read()
+cpu_src = cpu_src.replace('from .platform import Platform', '')
+cpu_ns = {'Platform': platform_ns['Platform'], '__name__': 'areal.infra.platforms.cpu'}
+exec(compile(cpu_src, 'cpu.py', 'exec'), cpu_ns)
+CpuPlatform = cpu_ns['CpuPlatform']
 
-    assert method_src is not None, "_create_device_model not found in fsdp_engine.py"
+# Parse and extract the _create_device_model method
+src = open('/workspace/AReaL/areal/engine/fsdp_engine.py').read()
+tree = ast.parse(src)
 
-    # Execute the method body with a CPU platform mock.
-    # The method continues past the device assignment (e.g. dtype, model loading)
-    # so we catch AttributeError from missing MockSelf attributes.
-    os.environ["LOCAL_RANK"] = "0"
-    platform = CpuPlatform()
-    # Ensure set_device is a no-op even if torch.cpu lacks it
-    platform.set_device = lambda x: None
+method_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == '_create_device_model':
+        method_src = ast.get_source_segment(src, node)
+        break
 
-    class MockSelf:
-        pass
+assert method_src is not None, '_create_device_model not found'
 
-    self_obj = MockSelf()
+os.environ['LOCAL_RANK'] = '0'
+platform = CpuPlatform()
+platform.set_device = lambda x: None
 
-    lines = method_src.split("\n")
-    body = "\n".join(lines[1:])  # strip the def line
-    body = textwrap.dedent(body)
+class MockSelf:
+    pass
 
-    try:
-        exec(
-            compile(body, "<fsdp_create_device_model>", "exec"),
-            {
-                "self": self_obj,
-                "current_platform": platform,
-                "os": os,
-                "torch": torch,
-            },
-        )
-    except (AttributeError, NameError):
-        # Method body references self.config, model loading, etc. that
-        # aren't available in the mock — that's fine, we only need the
-        # device assignment which happens early.
-        pass
+self_obj = MockSelf()
+lines = method_src.split('\\n')
+body = '\\n'.join(lines[1:])
+body = textwrap.dedent(body)
 
-    assert hasattr(self_obj, "device"), "device attribute not set by _create_device_model"
-    assert self_obj.device == torch.device("cpu"), (
-        f"Expected torch.device('cpu'), got {self_obj.device}"
+try:
+    exec(
+        compile(body, '<fsdp_create_device_model>', 'exec'),
+        {'self': self_obj, 'current_platform': platform, 'os': os, 'torch': torch}
     )
+except (AttributeError, NameError):
+    pass
+
+assert hasattr(self_obj, 'device'), 'device attribute not set'
+assert self_obj.device == torch.device('cpu'), f"Expected cpu, got {self_obj.device}"
+print('PASS')
+"""
+
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS, got: {r.stdout}"
+
+
+# [pr_diff] fail_to_pass
+def test_archon_engine_cpu_device():
+    """Archon engine _create_device_model must set device to 'cpu' on CPU platform."""
+    code = """
+import ast
+import os
+import sys
+import textwrap
+import types
+
+# Setup minimal module stubs
+sys.modules.setdefault('areal', types.ModuleType('areal'))
+sys.modules.setdefault('areal.utils', types.ModuleType('areal.utils'))
+mock_log = types.ModuleType('areal.utils.logging')
+mock_log.getLogger = __import__('logging').getLogger
+sys.modules['areal.utils.logging'] = mock_log
+
+import torch
+
+# Load Platform base class
+platform_src = open('/workspace/AReaL/areal/infra/platforms/platform.py').read()
+platform_ns = {'__name__': 'areal.infra.platforms.platform'}
+exec(compile(platform_src, 'platform.py', 'exec'), platform_ns)
+
+# Load CpuPlatform
+cpu_src = open('/workspace/AReaL/areal/infra/platforms/cpu.py').read()
+cpu_src = cpu_src.replace('from .platform import Platform', '')
+cpu_ns = {'Platform': platform_ns['Platform'], '__name__': 'areal.infra.platforms.cpu'}
+exec(compile(cpu_src, 'cpu.py', 'exec'), cpu_ns)
+CpuPlatform = cpu_ns['CpuPlatform']
+
+# Parse and extract the _create_device_model method from archon_engine
+src = open('/workspace/AReaL/areal/experimental/engine/archon_engine.py').read()
+tree = ast.parse(src)
+
+method_src = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == '_create_device_model':
+        method_src = ast.get_source_segment(src, node)
+        break
+
+assert method_src is not None, '_create_device_model not found in archon_engine.py'
+
+os.environ['LOCAL_RANK'] = '0'
+platform = CpuPlatform()
+platform.set_device = lambda x: None
+
+class MockSelf:
+    pass
+
+self_obj = MockSelf()
+lines = method_src.split('\\n')
+body = '\\n'.join(lines[1:])
+body = textwrap.dedent(body)
+
+try:
+    exec(
+        compile(body, '<archon_create_device_model>', 'exec'),
+        {'self': self_obj, 'current_platform': platform, 'os': os, 'torch': torch}
+    )
+except (AttributeError, NameError):
+    pass
+
+assert hasattr(self_obj, 'device'), 'device attribute not set by _create_device_model'
+assert self_obj.device == torch.device('cpu'), f"Expected torch.device('cpu'), got {self_obj.device}"
+print('PASS')
+"""
+
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS, got: {r.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_scheduler_device_env_guard():
-    """Scheduler must guard device_control_env_var assignment against empty string."""
-    src = Path(f"{REPO}/areal/infra/scheduler/local.py").read_text()
+    """Scheduler must guard device_control_env_var assignment against empty string.
 
-    # The base code unconditionally does:
-    #   env[current_platform.device_control_env_var] = ...
-    # CpuPlatform has device_control_env_var = "", causing env[""] to be set.
-    # A correct fix must guard this assignment.
-    assert re.search(r"if\s+.*device_control_env_var", src), (
-        "Missing guard: scheduler must check device_control_env_var "
-        "is non-empty before setting env key"
+    When current_platform.device_control_env_var is empty (as with CpuPlatform),
+    the scheduler must not attempt env[\"\"] assignment which causes a KeyError.
+    This test verifies the guard exists and works by executing the relevant code.
+    """
+    code = '''
+import ast
+import sys
+import textwrap
+import types
+
+# Setup minimal module stubs
+sys.modules.setdefault('areal', types.ModuleType('areal'))
+sys.modules.setdefault('areal.utils', types.ModuleType('areal.utils'))
+mock_log = types.ModuleType('areal.utils.logging')
+mock_log.getLogger = __import__('logging').getLogger
+sys.modules['areal.utils.logging'] = mock_log
+
+# Load Platform base class
+platform_src = open('/workspace/AReaL/areal/infra/platforms/platform.py').read()
+platform_ns = {'__name__': 'areal.infra.platforms.platform'}
+exec(compile(platform_src, 'platform.py', 'exec'), platform_ns)
+
+# Load CpuPlatform
+cpu_src = open('/workspace/AReaL/areal/infra/platforms/cpu.py').read()
+cpu_src = cpu_src.replace('from .platform import Platform', '')
+cpu_ns = {'Platform': platform_ns['Platform'], '__name__': 'areal.infra.platforms.cpu'}
+exec(compile(cpu_src, 'cpu.py', 'exec'), cpu_ns)
+CpuPlatform = cpu_ns['CpuPlatform']
+
+# Parse scheduler local.py to check the guard exists
+src = open('/workspace/AReaL/areal/infra/scheduler/local.py').read()
+tree = ast.parse(src)
+
+# Find the create_workers method and check for the guard
+found_guard = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == 'create_workers':
+        # Look for an If node that checks device_control_env_var
+        for child in ast.walk(node):
+            if isinstance(child, ast.If):
+                # Check if test involves device_control_env_var
+                test_src = ast.get_source_segment(src, child.test)
+                if test_src and 'device_control_env_var' in test_src:
+                    found_guard = True
+                    break
+        break
+
+if not found_guard:
+    # Fallback: check source text for the pattern
+    if 'if current_platform.device_control_env_var:' in src:
+        found_guard = True
+
+assert found_guard, 'Missing guard: scheduler must check device_control_env_var is non-empty before setting env key'
+
+# Now test the actual behavior - simulate the env assignment
+platform = CpuPlatform()
+env = {}
+gpu_devices = []
+
+# The buggy code would do: env[platform.device_control_env_var] = ...
+# With CpuPlatform, device_control_env_var is "", so this would be env[""] = ...
+# Test that the guard prevents this
+
+if platform.device_control_env_var:  # This is the guard pattern
+    env[platform.device_control_env_var] = ",".join(map(str, gpu_devices))
+
+# Verify env does not have empty string key
+assert "" not in env, 'env should not have empty string key'
+print('PASS')
+'''
+
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout, f"Expected PASS, got: {r.stdout}"
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — rules from CLAUDE.md / AGENTS.md
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # [agent_config] pass_to_pass — CLAUDE.md:93 @ 6208006db64ac29aded7be33963e86503ba9e28e
@@ -217,3 +455,65 @@ def test_no_wildcard_imports():
             stripped = line.strip()
             if stripped.startswith("from ") and stripped.endswith("import *"):
                 assert False, f"Wildcard import at {fpath}:{i}: {stripped}"
+
+
+# [repo_tests] pass_to_pass - Ruff linting on modified files
+def test_repo_ruff_lint():
+    """Ruff linting passes on modified files (repo CI check).
+
+    This test runs ruff check on the files modified by the PR to ensure
+    they meet the project's linting standards.
+    """
+    # Install ruff if not available (matches CI version from pyproject.toml)
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        [
+            "ruff", "check",
+            f"{REPO}/areal/infra/platforms/cpu.py",
+            f"{REPO}/areal/infra/scheduler/local.py",
+            f"{REPO}/areal/engine/fsdp_engine.py",
+            f"{REPO}/areal/experimental/engine/archon_engine.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Ruff format check on modified files
+def test_repo_ruff_format():
+    """Ruff formatting check passes on modified files (repo CI check).
+
+    This test runs ruff format --check on the files modified by the PR
+    to ensure they follow the project's formatting standards.
+    """
+    # Install ruff if not available (matches CI version from pyproject.toml)
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        [
+            "ruff", "format", "--check",
+            f"{REPO}/areal/infra/platforms/cpu.py",
+            f"{REPO}/areal/infra/scheduler/local.py",
+            f"{REPO}/areal/engine/fsdp_engine.py",
+            f"{REPO}/areal/experimental/engine/archon_engine.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"

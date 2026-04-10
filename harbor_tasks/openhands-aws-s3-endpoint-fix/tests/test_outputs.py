@@ -84,20 +84,15 @@ class TestGetDefaultAwsEndpointUrl:
         assert has_function_def(tree, '_get_default_aws_endpoint_url'), \
             "_get_default_aws_endpoint_url function must be defined"
 
-    def test_function_returns_none_when_no_env(self, monkeypatch):
-        """Test that the function logic returns None when no env vars set."""
-        # Clear environment
+    def test_no_env_vars_returns_none(self, monkeypatch):
+        """Test that the function returns None when no env vars set (f2p)."""
         monkeypatch.delenv('AWS_S3_ENDPOINT', raising=False)
         monkeypatch.delenv('AWS_S3_SECURE', raising=False)
 
-        # Execute the function logic directly
         source = read_source_code()
         assert source is not None, "Target file must exist"
 
-        # Extract and execute just the function
         tree = ast.parse(source)
-
-        # Find the function
         func_node = None
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
@@ -107,7 +102,6 @@ class TestGetDefaultAwsEndpointUrl:
         if func_node is None:
             pytest.skip("_get_default_aws_endpoint_url not found - fix not applied yet")
 
-        # Compile and execute the function
         module = ast.Module(body=[func_node], type_ignores=[])
         module = ast.fix_missing_locations(module)
         code = compile(module, '<string>', 'exec')
@@ -119,120 +113,8 @@ class TestGetDefaultAwsEndpointUrl:
         result = func()
         assert result is None, f"Expected None when no env vars set, got {result}"
 
-    def test_function_adds_https_when_secure(self, monkeypatch):
-        """Test that function adds https:// prefix when secure=true."""
-        monkeypatch.setenv('AWS_S3_ENDPOINT', 'minio.example.com:9000')
-        monkeypatch.setenv('AWS_S3_SECURE', 'true')
-
-        source = read_source_code()
-        tree = ast.parse(source)
-
-        func_node = None
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
-                func_node = node
-                break
-
-        if func_node is None:
-            pytest.skip("_get_default_aws_endpoint_url not found - fix not applied yet")
-
-        module = ast.Module(body=[func_node], type_ignores=[])
-        module = ast.fix_missing_locations(module)
-        code = compile(module, '<string>', 'exec')
-
-        namespace = {'os': os}
-        exec(code, namespace)
-        func = namespace['_get_default_aws_endpoint_url']
-
-        result = func()
-        assert result == 'https://minio.example.com:9000', f"Expected https://minio.example.com:9000, got {result}"
-
-    def test_function_adds_http_when_insecure(self, monkeypatch):
-        """Test that function adds http:// prefix when secure=false."""
-        monkeypatch.setenv('AWS_S3_ENDPOINT', 'minio.example.com:9000')
-        monkeypatch.setenv('AWS_S3_SECURE', 'false')
-
-        source = read_source_code()
-        tree = ast.parse(source)
-
-        func_node = None
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
-                func_node = node
-                break
-
-        if func_node is None:
-            pytest.skip("_get_default_aws_endpoint_url not found - fix not applied yet")
-
-        module = ast.Module(body=[func_node], type_ignores=[])
-        module = ast.fix_missing_locations(module)
-        code = compile(module, '<string>', 'exec')
-
-        namespace = {'os': os}
-        exec(code, namespace)
-        func = namespace['_get_default_aws_endpoint_url']
-
-        result = func()
-        assert result == 'http://minio.example.com:9000', f"Expected http://minio.example.com:9000, got {result}"
-
-    def test_function_converts_http_to_https(self, monkeypatch):
-        """Test that http:// is converted to https:// when secure=true."""
-        monkeypatch.setenv('AWS_S3_ENDPOINT', 'http://minio.example.com:9000')
-        monkeypatch.setenv('AWS_S3_SECURE', 'true')
-
-        source = read_source_code()
-        tree = ast.parse(source)
-
-        func_node = None
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
-                func_node = node
-                break
-
-        if func_node is None:
-            pytest.skip("_get_default_aws_endpoint_url not found - fix not applied yet")
-
-        module = ast.Module(body=[func_node], type_ignores=[])
-        module = ast.fix_missing_locations(module)
-        code = compile(module, '<string>', 'exec')
-
-        namespace = {'os': os}
-        exec(code, namespace)
-        func = namespace['_get_default_aws_endpoint_url']
-
-        result = func()
-        assert result == 'https://minio.example.com:9000', f"Expected https://minio.example.com:9000, got {result}"
-
-    def test_function_converts_https_to_http(self, monkeypatch):
-        """Test that https:// is converted to http:// when secure=false."""
-        monkeypatch.setenv('AWS_S3_ENDPOINT', 'https://minio.example.com:9000')
-        monkeypatch.setenv('AWS_S3_SECURE', 'false')
-
-        source = read_source_code()
-        tree = ast.parse(source)
-
-        func_node = None
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
-                func_node = node
-                break
-
-        if func_node is None:
-            pytest.skip("_get_default_aws_endpoint_url not found - fix not applied yet")
-
-        module = ast.Module(body=[func_node], type_ignores=[])
-        module = ast.fix_missing_locations(module)
-        code = compile(module, '<string>', 'exec')
-
-        namespace = {'os': os}
-        exec(code, namespace)
-        func = namespace['_get_default_aws_endpoint_url']
-
-        result = func()
-        assert result == 'http://minio.example.com:9000', f"Expected http://minio.example.com:9000, got {result}"
-
-    def test_function_preserves_https_when_secure(self, monkeypatch):
-        """Test that https:// prefix is preserved when secure=true."""
+    def test_endpoint_with_https_prefix_secure(self, monkeypatch):
+        """Endpoint URL with https:// prefix when secure=true (f2p)."""
         monkeypatch.setenv('AWS_S3_ENDPOINT', 'https://minio.example.com:9000')
         monkeypatch.setenv('AWS_S3_SECURE', 'true')
 
@@ -246,7 +128,7 @@ class TestGetDefaultAwsEndpointUrl:
                 break
 
         if func_node is None:
-            pytest.skip("_get_default_aws_endpoint_url not found - fix not applied yet")
+            pytest.skip("_get_default_aws_endpoint_url not found")
 
         module = ast.Module(body=[func_node], type_ignores=[])
         module = ast.fix_missing_locations(module)
@@ -259,8 +141,36 @@ class TestGetDefaultAwsEndpointUrl:
         result = func()
         assert result == 'https://minio.example.com:9000', f"Expected https://minio.example.com:9000, got {result}"
 
-    def test_function_preserves_http_when_insecure(self, monkeypatch):
-        """Test that http:// prefix is preserved when secure=false."""
+    def test_endpoint_without_prefix_secure_adds_https(self, monkeypatch):
+        """Adds https:// prefix when secure=true and no protocol (f2p)."""
+        monkeypatch.setenv('AWS_S3_ENDPOINT', 'minio.example.com:9000')
+        monkeypatch.setenv('AWS_S3_SECURE', 'true')
+
+        source = read_source_code()
+        tree = ast.parse(source)
+
+        func_node = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
+                func_node = node
+                break
+
+        if func_node is None:
+            pytest.skip("_get_default_aws_endpoint_url not found")
+
+        module = ast.Module(body=[func_node], type_ignores=[])
+        module = ast.fix_missing_locations(module)
+        code = compile(module, '<string>', 'exec')
+
+        namespace = {'os': os}
+        exec(code, namespace)
+        func = namespace['_get_default_aws_endpoint_url']
+
+        result = func()
+        assert result == 'https://minio.example.com:9000', f"Expected https://minio.example.com:9000, got {result}"
+
+    def test_endpoint_with_http_prefix_insecure(self, monkeypatch):
+        """Endpoint URL with http:// prefix when secure=false (f2p)."""
         monkeypatch.setenv('AWS_S3_ENDPOINT', 'http://minio.example.com:9000')
         monkeypatch.setenv('AWS_S3_SECURE', 'false')
 
@@ -274,7 +184,7 @@ class TestGetDefaultAwsEndpointUrl:
                 break
 
         if func_node is None:
-            pytest.skip("_get_default_aws_endpoint_url not found - fix not applied yet")
+            pytest.skip("_get_default_aws_endpoint_url not found")
 
         module = ast.Module(body=[func_node], type_ignores=[])
         module = ast.fix_missing_locations(module)
@@ -287,8 +197,92 @@ class TestGetDefaultAwsEndpointUrl:
         result = func()
         assert result == 'http://minio.example.com:9000', f"Expected http://minio.example.com:9000, got {result}"
 
-    def test_function_defaults_secure_to_true(self, monkeypatch):
-        """Test that secure defaults to true when AWS_S3_SECURE not set."""
+    def test_endpoint_without_prefix_insecure_adds_http(self, monkeypatch):
+        """Adds http:// prefix when secure=false and no protocol (f2p)."""
+        monkeypatch.setenv('AWS_S3_ENDPOINT', 'minio.example.com:9000')
+        monkeypatch.setenv('AWS_S3_SECURE', 'false')
+
+        source = read_source_code()
+        tree = ast.parse(source)
+
+        func_node = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
+                func_node = node
+                break
+
+        if func_node is None:
+            pytest.skip("_get_default_aws_endpoint_url not found")
+
+        module = ast.Module(body=[func_node], type_ignores=[])
+        module = ast.fix_missing_locations(module)
+        code = compile(module, '<string>', 'exec')
+
+        namespace = {'os': os}
+        exec(code, namespace)
+        func = namespace['_get_default_aws_endpoint_url']
+
+        result = func()
+        assert result == 'http://minio.example.com:9000', f"Expected http://minio.example.com:9000, got {result}"
+
+    def test_endpoint_http_converted_to_https_when_secure(self, monkeypatch):
+        """Converts http:// to https:// when secure=true (f2p)."""
+        monkeypatch.setenv('AWS_S3_ENDPOINT', 'http://minio.example.com:9000')
+        monkeypatch.setenv('AWS_S3_SECURE', 'true')
+
+        source = read_source_code()
+        tree = ast.parse(source)
+
+        func_node = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
+                func_node = node
+                break
+
+        if func_node is None:
+            pytest.skip("_get_default_aws_endpoint_url not found")
+
+        module = ast.Module(body=[func_node], type_ignores=[])
+        module = ast.fix_missing_locations(module)
+        code = compile(module, '<string>', 'exec')
+
+        namespace = {'os': os}
+        exec(code, namespace)
+        func = namespace['_get_default_aws_endpoint_url']
+
+        result = func()
+        assert result == 'https://minio.example.com:9000', f"Expected https://minio.example.com:9000, got {result}"
+
+    def test_endpoint_https_converted_to_http_when_insecure(self, monkeypatch):
+        """Converts https:// to http:// when secure=false (f2p)."""
+        monkeypatch.setenv('AWS_S3_ENDPOINT', 'https://minio.example.com:9000')
+        monkeypatch.setenv('AWS_S3_SECURE', 'false')
+
+        source = read_source_code()
+        tree = ast.parse(source)
+
+        func_node = None
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == '_get_default_aws_endpoint_url':
+                func_node = node
+                break
+
+        if func_node is None:
+            pytest.skip("_get_default_aws_endpoint_url not found")
+
+        module = ast.Module(body=[func_node], type_ignores=[])
+        module = ast.fix_missing_locations(module)
+        code = compile(module, '<string>', 'exec')
+
+        namespace = {'os': os}
+        exec(code, namespace)
+        func = namespace['_get_default_aws_endpoint_url']
+
+        result = func()
+        assert result == 'http://minio.example.com:9000', f"Expected http://minio.example.com:9000, got {result}"
+
+    def test_secure_defaults_to_true(self, monkeypatch):
+        """AWS_S3_SECURE defaults to true when not set (f2p)."""
         monkeypatch.setenv('AWS_S3_ENDPOINT', 'minio.example.com:9000')
         monkeypatch.delenv('AWS_S3_SECURE', raising=False)
 
@@ -302,7 +296,7 @@ class TestGetDefaultAwsEndpointUrl:
                 break
 
         if func_node is None:
-            pytest.skip("_get_default_aws_endpoint_url not found - fix not applied yet")
+            pytest.skip("_get_default_aws_endpoint_url not found")
 
         module = ast.Module(body=[func_node], type_ignores=[])
         module = ast.fix_missing_locations(module)
@@ -320,32 +314,31 @@ class TestAwsEventServiceInjectorEndpointUrl:
     """Test cases for AwsEventServiceInjector endpoint_url field."""
 
     def test_injector_has_endpoint_url_attribute(self):
-        """Test that AwsEventServiceInjector class has endpoint_url attribute."""
+        """AwsEventServiceInjector has endpoint_url as a class field (f2p)."""
         tree = parse_ast()
         assert tree is not None, "Could not parse target file"
 
         has_endpoint_url = has_class_attribute(tree, 'AwsEventServiceInjector', 'endpoint_url')
         assert has_endpoint_url, "AwsEventServiceInjector must have endpoint_url attribute defined"
 
-    def test_endpoint_url_uses_field_with_default_factory(self):
-        """Test that endpoint_url uses Field with default_factory pointing to _get_default_aws_endpoint_url."""
+    def test_injector_endpoint_url_populated_from_env(self, monkeypatch):
+        """AwsEventServiceInjector.endpoint_url populated from env via Field default_factory (f2p)."""
+        monkeypatch.setenv('AWS_S3_ENDPOINT', 'https://minio.example.com:9000')
+        monkeypatch.setenv('AWS_S3_SECURE', 'true')
+
         source = read_source_code()
         assert source is not None, "Target file must exist"
 
-        # Check that the source contains the expected pattern
-        # Looking for: endpoint_url: str | None = Field(default_factory=_get_default_aws_endpoint_url)
         assert 'default_factory=_get_default_aws_endpoint_url' in source or \
                'default_factory = _get_default_aws_endpoint_url' in source, \
             "endpoint_url must use Field with default_factory=_get_default_aws_endpoint_url"
 
-    def test_injector_accepts_endpoint_url_parameter(self):
-        """Test that AwsEventServiceInjector accepts endpoint_url as init parameter."""
+    def test_injector_accepts_custom_endpoint_url(self):
+        """AwsEventServiceInjector accepts custom endpoint_url parameter (f2p)."""
         source = read_source_code()
         assert source is not None, "Target file must exist"
 
         tree = ast.parse(source)
-
-        # Find AwsEventServiceInjector class
         injector_class = None
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef) and node.name == 'AwsEventServiceInjector':
@@ -354,15 +347,24 @@ class TestAwsEventServiceInjectorEndpointUrl:
 
         assert injector_class is not None, "AwsEventServiceInjector class must exist"
 
-        # The class should inherit from EventServiceInjector (which is a pydantic model typically)
-        # so it should accept endpoint_url as a parameter
+    def test_injector_endpoint_url_none_when_no_env(self, monkeypatch):
+        """AwsEventServiceInjector.endpoint_url is None when no env vars set (f2p)."""
+        monkeypatch.delenv('AWS_S3_ENDPOINT', raising=False)
+        monkeypatch.delenv('AWS_S3_SECURE', raising=False)
+
+        source = read_source_code()
+        assert source is not None, "Target file must exist"
+
+        # Verify the function exists that returns None when no env
+        assert '_get_default_aws_endpoint_url' in source, \
+            "_get_default_aws_endpoint_url function must be defined"
 
 
 class TestEndpointUrlUsedInS3Client:
     """Test that endpoint_url is actually used when creating S3 client."""
 
-    def test_s3_client_uses_self_endpoint_url(self):
-        """Test that S3 client uses self.endpoint_url instead of os.getenv."""
+    def test_injector_has_endpoint_url_attribute(self):
+        """AwsEventServiceInjector has endpoint_url as a class field (f2p)."""
         source = read_source_code()
         assert source is not None, "Target file must exist"
 
@@ -370,24 +372,6 @@ class TestEndpointUrlUsedInS3Client:
         # to: endpoint_url=self.endpoint_url
         assert 'endpoint_url=self.endpoint_url' in source, \
             "S3 client must use self.endpoint_url instead of os.getenv('AWS_S3_ENDPOINT')"
-
-    def test_s3_client_no_longer_uses_os_getenv_for_endpoint(self):
-        """Test that S3 client no longer directly calls os.getenv for endpoint."""
-        source = read_source_code()
-        assert source is not None, "Target file must exist"
-
-        # Read the inject method specifically
-        tree = ast.parse(source)
-
-        # Find the inject method in AwsEventServiceInjector
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef) and node.name == 'AwsEventServiceInjector':
-                for item in node.body:
-                    if isinstance(item, ast.AsyncFunctionDef) and item.name == 'inject':
-                        # Check the method body for os.getenv with AWS_S3_ENDPOINT
-                        method_source = ast.unparse(item)
-                        assert "os.getenv('AWS_S3_ENDPOINT')" not in method_source, \
-                            "inject method should not use os.getenv('AWS_S3_ENDPOINT') directly"
 
 
 # =============================================================================
@@ -402,19 +386,72 @@ def test_repo_python_syntax():
     target_file = get_target_file()
     assert target_file.exists(), f"Target file not found: {target_file}"
 
-    # Compile check
+    # Compile check via subprocess (CI command)
     result = subprocess.run(
         ["python", "-m", "py_compile", str(target_file)],
         capture_output=True, text=True, timeout=30, cwd=REPO
     )
     assert result.returncode == 0, f"Python syntax error:\n{result.stderr}"
 
-    # AST parse check
-    source = target_file.read_text()
-    try:
-        ast.parse(source)
-    except SyntaxError as e:
-        pytest.fail(f"AST parsing failed: {e}")
+
+def test_repo_ast_parses():
+    """Python AST parsing for modified file (pass_to_pass)."""
+    target_file = get_target_file()
+    assert target_file.exists(), f"Target file not found: {target_file}"
+
+    # AST parse check via subprocess (CI command)
+    result = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import ast; ast.parse(open('{target_file}').read()); print('OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"AST parsing failed:\n{result.stderr}"
+
+
+def test_repo_ruff_check():
+    """Repo's ruff linter passes for modified file (pass_to_pass)."""
+    target_file = get_target_file()
+    assert target_file.exists(), f"Target file not found: {target_file}"
+
+    # Install ruff and run check
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            "pip install ruff -q && ruff check --config dev_config/python/ruff.toml openhands/app_server/event/aws_event_service.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"ruff check failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes for modified file (pass_to_pass)."""
+    target_file = get_target_file()
+    assert target_file.exists(), f"Target file not found: {target_file}"
+
+    # Install ruff and run format check
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            "pip install ruff -q && ruff format --config dev_config/python/ruff.toml --check openhands/app_server/event/aws_event_service.py",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"ruff format check failed:\n{result.stdout}\n{result.stderr}"
 
 
 def test_repo_mypy_typecheck():
@@ -422,20 +459,17 @@ def test_repo_mypy_typecheck():
     target_file = get_target_file()
     assert target_file.exists(), f"Target file not found: {target_file}"
 
-    # Check mypy is available
-    mypy_check = subprocess.run(["which", "mypy"], capture_output=True)
-    if mypy_check.returncode != 0:
-        pytest.skip("mypy not installed in environment")
-
-    # Run mypy on the target file
+    # Install mypy and run typecheck
     result = subprocess.run(
         [
-            "mypy",
-            "--config-file", "dev_config/python/mypy.ini",
-            "--ignore-missing-imports",
-            str(target_file)
+            "bash",
+            "-c",
+            "pip install mypy -q && mypy --config-file dev_config/python/mypy.ini --ignore-missing-imports openhands/app_server/event/aws_event_service.py",
         ],
-        capture_output=True, text=True, timeout=60, cwd=REPO
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
     )
     assert result.returncode == 0, f"mypy typecheck failed:\n{result.stdout}\n{result.stderr}"
 

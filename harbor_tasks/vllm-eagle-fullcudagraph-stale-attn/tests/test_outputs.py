@@ -304,3 +304,52 @@ def test_no_wildcard_imports():
         if isinstance(node, ast.ImportFrom):
             for alias in node.names:
                 assert alias.name != "*", f"Wildcard import from {node.module}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests (repo_tests) — pass_to_pass gates from actual CI
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # ruff install is best-effort, continue even if it has issues
+
+    r = subprocess.run(
+        ["ruff", "check", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_py_compile():
+    """Modified file compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(FILE)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
+def test_repo_ast_parse():
+    """Modified file parses as valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{FILE}').read())"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed:\n{r.stderr}"

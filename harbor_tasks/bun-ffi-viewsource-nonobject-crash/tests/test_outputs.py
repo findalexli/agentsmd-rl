@@ -96,6 +96,47 @@ def test_js_files_valid_syntax():
                 raise AssertionError(f"Invalid JSON in {f}: {e}")
 
 
+def test_repo_prettier_ffi_tests():
+    """FFI test files pass prettier formatting check (pass_to_pass)."""
+    # Run prettier check on the FFI test directory (CI command from package.json)
+    r = subprocess.run(
+        ["npx", "--yes", "prettier@latest", "--check", "test/js/bun/ffi/*.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on FFI tests:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_scripts():
+    """Repo's JavaScript/TypeScript scripts pass prettier check (pass_to_pass)."""
+    # Run prettier check on a sample of script files (CI command from package.json)
+    r = subprocess.run(
+        ["npx", "--yes", "prettier@latest", "--check", "scripts/build.mjs", "scripts/build.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on scripts:\n{r.stderr[-500:]}"
+
+
+def test_repo_package_json_parseable():
+    """Repo's package.json is valid JSON (pass_to_pass)."""
+    # Use Node.js to validate package.json
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('package.json')); console.log('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json is not valid JSON:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "package.json validation failed"
+
+
+def test_repo_tsconfig_json_parseable():
+    """Repo's tsconfig.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('tsconfig.json')); console.log('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"tsconfig.json is not valid JSON:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, "tsconfig.json validation failed"
+
+
 def test_tsconfig_valid():
     """Repo's tsconfig.json is valid (pass_to_pass)."""
     import json
@@ -355,3 +396,129 @@ def test_no_inline_import_in_diff():
         # @import at file/struct level is OK; deeply indented = inside a function
         if "@import(" in line and len(line) - len(line.lstrip()) > 8:
             raise AssertionError(f"Inline @import inside function body: {line.strip()}")
+
+
+def test_repo_oxlint_config_valid():
+    """Repo's oxlint.json exists and has valid structure (pass_to_pass)."""
+    import json
+    p = Path(REPO) / "oxlint.json"
+    assert p.exists(), "oxlint.json missing"
+    raw = p.read_text()
+    # Check for required structure without full parsing (handles JSON with comments)
+    assert '"categories"' in raw, "oxlint.json missing categories section"
+    assert '"rules"' in raw, "oxlint.json missing rules section"
+    assert '"ignorePatterns"' in raw, "oxlint.json missing ignorePatterns section"
+
+
+def test_repo_prettier_config_valid():
+    """Repo's .prettierrc is valid JSON (pass_to_pass)."""
+    import json
+    p = Path(REPO) / ".prettierrc"
+    assert p.exists(), ".prettierrc missing"
+    try:
+        config = json.loads(p.read_text())
+        assert "printWidth" in config, "Invalid prettier config structure"
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"Invalid .prettierrc: {e}")
+
+
+def test_repo_package_json_valid():
+    """Repo's package.json is valid (pass_to_pass)."""
+    import json
+    p = Path(REPO) / "package.json"
+    assert p.exists(), "package.json missing"
+    try:
+        config = json.loads(p.read_text())
+        assert "name" in config, "Invalid package.json structure"
+        assert "version" in config, "Invalid package.json structure"
+    except json.JSONDecodeError as e:
+        raise AssertionError(f"Invalid package.json: {e}")
+
+
+def test_repo_claude_md_exists():
+    """Repo's CLAUDE.md (AGENTS.md) exists and is non-empty (pass_to_pass)."""
+    p = Path(REPO) / "CLAUDE.md"
+    assert p.exists(), "CLAUDE.md missing"
+    content = p.read_text()
+    assert len(content) > 1000, "CLAUDE.md appears to be too short or empty"
+    # Check for meaningful content (not just whitespace)
+    non_whitespace = len([c for c in content if not c.isspace()])
+    assert non_whitespace > 500, "CLAUDE.md appears to lack meaningful content"
+
+
+def test_oxlint_ffi_source():
+    """FFI TypeScript source passes oxlint (pass_to_pass)."""
+    # Run oxlint on the FFI source file (CI command from package.json 'lint' script)
+    r = subprocess.run(
+        ["npx", "--yes", "oxlint@latest", "src/js/bun/ffi.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # oxlint returns 0 on success (even with warnings), non-zero on parse errors
+    assert r.returncode == 0, f"oxlint failed on FFI source:\n{r.stderr[-500:]}"
+    # Check for parse errors which would indicate broken code
+    assert "Parse error" not in r.stderr, f"JS parse errors in FFI source:\n{r.stderr[-500:]}"
+
+
+def test_oxlint_scripts():
+    """Repo scripts pass oxlint (pass_to_pass)."""
+    # Run oxlint on build scripts (CI command adapted from 'lint' script)
+    r = subprocess.run(
+        ["npx", "--yes", "oxlint@latest", "scripts/build.mjs"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed on scripts:\n{r.stderr[-500:]}"
+    assert "Parse error" not in r.stderr, f"JS parse errors in scripts:\n{r.stderr[-500:]}"
+
+
+def test_prettier_config_files():
+    """Repo config files pass prettier formatting (pass_to_pass)."""
+    # Run prettier check on config files (CI command from format.yml)
+    r = subprocess.run(
+        ["npx", "--yes", "prettier@latest", "--check", ".prettierrc", "tsconfig.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed on config files:\n{r.stderr[-500:]}"
+
+
+def test_ffi_test_files_valid():
+    """FFI test files have valid structure (pass_to_pass)."""
+    # Validate that test files have proper test structure using Node.js
+    # Write the validation script to a temp file to avoid escaping issues
+    # Use simpler string-based checks instead of regex to avoid escaping problems
+    script_path = f"{REPO}/.tmp_test_validator.js"
+    script_lines = [
+        "const fs = require('fs');",
+        "const files = [",
+        "    'test/js/bun/ffi/ffi-error-messages.test.ts',",
+        "    'test/js/bun/ffi/addr32.test.ts',",
+        "    'test/js/bun/ffi/cc.test.ts'",
+        "];",
+        "const hasTestPattern = (content) => {",
+        "    // Check for test/describe/it with optional .modifier like .skipIf, .only",
+        "    // Use simple string checks to avoid regex escaping issues",
+        "    const patterns = ['test(', 'describe(', 'it(', 'test.skip', 'describe.skip', 'it.skip', 'test.only', 'describe.only', 'it.only'];",
+        "    return patterns.some(p => content.includes(p));",
+        "};",
+        "for (const f of files) {",
+        "    const content = fs.readFileSync(f, 'utf8');",
+        "    if (!hasTestPattern(content)) {",
+        "        console.error('No tests found in ' + f);",
+        "        process.exit(1);",
+        "    }",
+        "    if (!content.includes('import')) {",
+        "        console.error('No imports found in ' + f);",
+        "        process.exit(1);",
+        "    }",
+        "}",
+        "console.log('All FFI test files have valid structure');",
+    ]
+    Path(script_path).write_text("\n".join(script_lines))
+    try:
+        r = subprocess.run(
+            ["node", script_path],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"FFI test validation failed:\n{r.stderr[-500:]}"
+        assert "valid structure" in r.stdout, "FFI test structure check failed"
+    finally:
+        Path(script_path).unlink(missing_ok=True)

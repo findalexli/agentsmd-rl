@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-cd /workspace/OpenHands
+cd /workspace/openhands
 
 # Apply the gold patch for adding toast notifications on org switch
 cat <<'PATCH' | git apply -

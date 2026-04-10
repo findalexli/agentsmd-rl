@@ -108,6 +108,32 @@ def test_typecheck():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_repo_tool_define():
+    """Tool.define tests pass (covers effectified TodoWriteTool pattern)."""
+    r = subprocess.run(
+        ["bun", "test", "test/tool/tool-define.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Tool.define tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_session_prompt_effect():
+    """Session prompt-effect tests pass (covers Todo.layer integration)."""
+    r = subprocess.run(
+        ["bun", "test", "test/session/prompt-effect.test.ts"],
+        cwd=str(PKG_DIR),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Session prompt-effect tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-1000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------

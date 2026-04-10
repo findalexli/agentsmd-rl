@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import importlib
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -287,12 +288,42 @@ def test_no_modular_generated_files_edited():
             )
 
 
+# [repo_tests] pass_to_pass
+@pytest.mark.skipif(not shutil.which("ruff"), reason="ruff not installed")
+def test_ruff_check_modified_files():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "src/transformers/__init__.py", "utils/check_repo.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+@pytest.mark.skipif(not shutil.which("ruff"), reason="ruff not installed")
+def test_ruff_format_modified_files():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "src/transformers/__init__.py", "utils/check_repo.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_inits():
+    """Repo's init file consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"check_inits failed:\n{r.stderr[-500:]}"
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:2 @ 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
+@pytest.mark.skipif(not shutil.which("ruff"), reason="ruff not installed")
 def test_ruff_style_check():
     """Modified files pass ruff style checks (make style is required before opening a PR)."""
-    import shutil
-    if not shutil.which("ruff"):
-        pytest.skip("ruff not installed")
     r = subprocess.run(
         ["ruff", "check", "src/transformers/__init__.py", "utils/check_repo.py"],
         cwd=REPO, capture_output=True, text=True, timeout=60,

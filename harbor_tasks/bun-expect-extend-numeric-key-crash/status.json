@@ -3,56 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T01:48:07.113996",
-  "total_time": 649.69,
-  "sandbox_id": "iba3bd2mds27z9xhdmrts",
+  "validated_at": "2026-04-10T02:31:09.079853",
+  "total_time": 4072.56,
+  "sandbox_id": "ihlglzcph4qkgyidy8n4q",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09",
-      "status": "completed",
-      "notes": "Enriched pass_to_pass tests with 4 new repo CI-derived tests. Fixed escaping issues in 3 existing tests. All 16 tests now pass with gold patch.",
-      "ci_commands_discovered": [
-        "package.json scripts: zig:check, zig:format, lint, typecheck, build, banned",
-        ".github/workflows/lint.yml - bun lint (oxlint)",
-        ".github/workflows/format.yml - zig fmt, clang-format, prettier",
-        "test/internal/ban-words.test.ts - bun codebase pattern banning"
-      ],
-      "ci_commands_added": [
-        "test_repo_zig_syntax_basic - checks balanced braces, @import presence",
-        "test_repo_zig_no_trailing_whitespace - checks zig fmt style",
-        "test_repo_zig_naming_conventions - validates camelCase",
-        "test_repo_expect_file_structure - validates module structure",
-        "test_repo_zig_import_organization - validates import patterns",
-        "test_repo_zig_ban_words - validates extend() has no banned patterns"
-      ],
-      "ci_commands_not_added": [
-        "zig build check - requires zig binary and WebKit",
-        "bun run lint - requires oxlint and npm packages",
-        "bun run typecheck - requires tsc and bun packages",
-        "prettier - requires npm packages",
-        "clang-format - requires LLVM installation",
-        "Full ban-words.ts - requires bun binary"
-      ],
-      "rationale": "The bun repo requires full build environment. Added static analysis tests that approximate what repo CI checks. 6 new repo_ci tests added, 5 pass on base commit, all 6 pass with gold patch.",
-      "current_test_status": {
-        "total": 16,
-        "pass_to_pass": 13,
-        "fail_to_pass": 3,
-        "passing_on_base": 13,
-        "passing_with_gold": 16,
-        "new_p2p_tests_added": 6,
-        "new_p2p_tests_passing_on_base": 6,
-        "new_p2p_tests_passing_with_gold": 6
-      },
-      "fixes_applied": [
-        "Fixed triple-quoted string escaping (r\"\"\" prefix) in 3 fail_to_pass tests",
-        "Fixed regex escape sequences (\\bword\\b instead of special chars)",
-        "Fixed escape sequence in test_no_catch_outofmemory_pattern",
-        "Adjusted test_repo_zig_ban_words to only check extend() body, not full file"
-      ]
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 383.03,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -70,22 +33,22 @@
     },
     "validate": {
       "status": "pass",
-      "timestamp": "2026-04-09",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All 4 validation checks passed: Docker build successful, NOP test reward=0 (3 fail_to_pass tests correctly fail on base commit), Gold test reward=1 (all 16 tests pass after gold patch), Rubric judge ICR=1.0. No fixes required - task is properly configured.",
+      "timestamp": "2026-04-10",
+      "notes": "All validation checks passed: Docker build successful, NOP test reward=0 (3 fail_to_pass tests correctly fail on base commit), Gold test reward=1 (all 17 tests pass after gold patch), Rubric judge ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 79.11
+      "time": 68.62
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.67,
-      "notes": "ICR=1.00"
+      "time": 1.27,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -94,16 +57,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T01:48:06.955465"
+      "time": 78.95,
+      "at": "2026-04-09T14:59:10.433212"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 649.69,
-      "at": "2026-04-09T01:48:07.113996"
+      "time": 791.64,
+      "at": "2026-04-09T20:31:40.334595"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 791.97,
+      "at": "2026-04-09T20:31:40.560608"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4072.3,
+      "at": "2026-04-10T02:31:08.915664"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4072.56,
+      "at": "2026-04-10T02:31:09.079853"
     }
   ]
 }

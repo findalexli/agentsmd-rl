@@ -1,0 +1,74 @@
+source_pr:
+  url: "https://github.com/JetBrains/kotlin/pull/5781"
+  title: "[FIR] Fix false positive DUPLICATE_BRANCH_CONDITION_IN_WHEN"
+  merge_commit: "eb0a08b9484cb0385e7b28afb5227552b7b13eae"
+  base_commit: "94c83dce9cc665ff0b6761add7aab84ff9c77b01"
+
+# Agent config rules to enforce
+agent_config:
+  - id: compiler_test_guidelines
+    file: ".ai/guidelines.md"
+    lines: "56-66"
+    rule: "Use -q (quiet) flag when running Gradle tests"
+    type: programmatic
+  - id: fir_prefix_commits
+    file: "compiler/AGENTS.md"
+    lines: "46-47"
+    rule: "Use FIR: prefix in commit messages for FIR-related changes"
+    type: rubric
+
+# Rubric for soft/subjective guidance
+rubric:
+  - "Code follows Kotlin project style and conventions"
+  - "Test file follows FIR analysis test format with proper directives"
+  - "Commit message explains WHY not just WHAT"
+
+# Checks (must match test_outputs.py function names exactly)
+checks:
+  - id: test_guard_condition_fix_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Guard conditions only check when subject, not other variables - prevents false positive for 'else if b is Int'"
+
+  - id: test_helper_method_behaviorally_correct
+    type: fail_to_pass
+    origin: pr_diff
+    description: "isArgumentWhenSubject helper method correctly identifies subject expressions via unwrapSmartcastExpression()"
+    gated_by: test_guard_condition_fix_behavior
+
+  - id: test_old_unguarded_pattern_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Old unguarded pattern with nested if check is removed - fixes the false positive root cause"
+    gated_by: test_guard_condition_fix_behavior
+
+  - id: test_checkered_logic_restructured_for_subject_only
+    type: fail_to_pass
+    origin: pr_diff
+    description: "After guard condition, checker directly accesses arguments[1] assuming subject is at arguments[0]"
+    gated_by: test_helper_method_behaviorally_correct
+
+  - id: test_guard_condition_test_data_parsable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test data file for guard condition exists and has correct structure with KT-85244 reference"
+
+  - id: test_kotlin_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified Kotlin checker file is syntactically valid (balanced braces/parentheses)"
+
+  - id: test_repo_checker_imports_complete
+    type: pass_to_pass
+    origin: static
+    description: "Checker file has all required imports and package declaration"
+
+  - id: test_repo_testdata_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test data file has valid structure with required directives (ISSUE, RUN_PIPELINE_TILL)"
+
+  - id: test_repo_analysis_tests_directory_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FIR analysis tests directory has expected structure with build.gradle.kts"

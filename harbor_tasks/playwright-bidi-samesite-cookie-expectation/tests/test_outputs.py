@@ -15,6 +15,32 @@ SPEC_FILE = f"{REPO}/tests/library/browsercontext-fetch.spec.ts"
 EXPECTATIONS_FILE = f"{REPO}/tests/bidi/expectations/moz-firefox-nightly-library.txt"
 
 
+def _npm_install():
+    """Install npm dependencies (cached)."""
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+
+
+def _npm_build():
+    """Build the repo (required for some checks)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+def _ensure_built():
+    """Ensure repo is installed and built."""
+    marker = Path(f"{REPO}/packages/playwright-core/lib/common/types.js")
+    if not marker.exists():
+        _npm_install()
+        _npm_build()
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -144,42 +170,18 @@ def test_bidi_expectation_removed():
 # [repo_tests] pass_to_pass
 def test_repo_build():
     """Repo's build step completes successfully (pass_to_pass)."""
-    # npm install + build (build required before other checks)
-    r = subprocess.run(
-        ["npm", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    _npm_install()
     r = subprocess.run(
         ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_typecheck():
-    """Repo's TypeScript typecheck passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
-    r = subprocess.run(
-        ["npm", "run", "tsc"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
-
-
-# [repo_tests] pass_to_pass
 def test_repo_eslint():
     """Repo's ESLint linting passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    _npm_install()
     r = subprocess.run(
         ["npm", "run", "eslint"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -188,24 +190,47 @@ def test_repo_eslint():
 
 
 # [repo_tests] pass_to_pass
+def test_repo_tsc():
+    """Repo's TypeScript type check passes (pass_to_pass)."""
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_check_deps():
     """Repo's dependency check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
-    r = subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    # Build is required before check-deps can pass
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    _ensure_built()
     r = subprocess.run(
         ["npm", "run", "check-deps"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Check-deps failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo's package linting passes (pass_to_pass)."""
+    _npm_install()
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint-packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_test_types():
+    """Repo's test types check passes (pass_to_pass)."""
+    _ensure_built()
+    r = subprocess.run(
+        ["npm", "run", "test-types"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test-types failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

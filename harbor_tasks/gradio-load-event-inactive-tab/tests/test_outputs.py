@@ -71,7 +71,7 @@ for (let i = methodStart; i < src.length; i++) {
 const body = src.substring(bs, be);
 
 // Bug pattern: spread-replace overwrites entire props object
-if (/\\.props\\.props\\s*=\\s*\\{[^}]*\\.\\.\\./.test(body)) {
+if (/\\.props\\.props\\s*=\\s*\\{[^}]*\\.\\./.test(body)) {
     console.log(JSON.stringify({pass:false, reason:'spread-replace pattern still present in update_state'}));
     process.exit(0);
 }
@@ -219,10 +219,10 @@ console.log(JSON.stringify({pass:true}));
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — regression
+# Pass-to-pass (static) — file content checks
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_core_methods_present():
     """All core AppTree methods must still be present."""
     src = _read_source()
@@ -235,7 +235,7 @@ def test_core_methods_present():
         assert sig in src, f"Method {sig[:-1]} is missing from AppTree"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_helper_functions_intact():
     """Standalone helper functions and tab/accordion handling must remain."""
     src = _read_source()
@@ -255,7 +255,11 @@ def test_helper_functions_intact():
         "Accordion handling removed from make_visible_if_not_rendered"
 
 
-# [repo_tests] pass_to_pass
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands via subprocess.run()
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI: pnpm format:check
 def test_repo_format_check():
     """Repo's Prettier format check passes (pass_to_pass)."""
     r = subprocess.run(
@@ -265,7 +269,27 @@ def test_repo_format_check():
     assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
+# [repo_tests] pass_to_pass — CI: pnpm --filter @gradio/client build
+def test_repo_client_build():
+    """Repo's client package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/gradio && corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm --filter @gradio/client build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: pnpm --filter @gradio/client test
+def test_repo_client_tests():
+    """Repo's client package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/gradio && corepack enable && corepack prepare pnpm@10.17.0 --activate && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm --filter @gradio/client test"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: pnpm test:run
 def test_repo_unit_tests():
     """Repo's unit tests pass (pass_to_pass)."""
     r = subprocess.run(

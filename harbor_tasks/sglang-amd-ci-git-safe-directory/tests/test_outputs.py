@@ -55,7 +55,7 @@ def test_syntax_check():
             ["bash", "-n", script], capture_output=True, timeout=10
         )
         assert r.returncode == 0, (
-            f"{script} has bash syntax errors:\n{r.stderr.decode()}"
+            f"{script} has bash syntax errors:\\n{r.stderr.decode()}"
         )
 
 
@@ -75,7 +75,7 @@ def test_shellcheck():
             capture_output=True, text=True, timeout=60
         )
         assert r.returncode == 0, (
-            f"{script} failed shellcheck (severity=error):\n{r.stdout[-500:]}"
+            f"{script} failed shellcheck (severity=error):\\n{r.stdout[-500:]}"
         )
 
 
@@ -89,7 +89,7 @@ def test_docker_exec_safe_directory():
     for script in SCRIPTS:
         text = _read_no_comments(script)
         assert _is_real_command(
-            text, r"docker\s+exec\s+.*safe\.directory"
+            text, r"docker\\s+exec\\s+.*safe\\.directory"
         ), f"{script}: no real docker exec setting safe.directory found"
 
 
@@ -103,9 +103,9 @@ def test_safe_directory_after_docker_run():
         docker_run_line = None
         safe_dir_line = None
         for i, line in enumerate(lines):
-            if re.search(r"docker\s+run\b", line):
+            if re.search(r"docker\\s+run\\b", line):
                 docker_run_line = i
-            if re.search(r"safe\.directory", line):
+            if re.search(r"safe\\.directory", line):
                 safe_dir_line = i
 
         assert docker_run_line is not None, f"{script}: no docker run found"
@@ -121,8 +121,8 @@ def test_safe_directory_targets_checkout():
     """safe.directory must target /sglang-checkout or wildcard '*'."""
     for script in SCRIPTS:
         text = _read_no_comments(script)
-        has_path = _is_real_command(text, r"safe\.directory.*/sglang-checkout")
-        has_wildcard = _is_real_command(text, r"safe\.directory.*\*")
+        has_path = _is_real_command(text, r"safe\\.directory.*/sglang-checkout")
+        has_wildcard = _is_real_command(text, r"safe\\.directory.*\\*")
         assert has_path or has_wildcard, (
             f"{script}: safe.directory must target /sglang-checkout or '*'"
         )
@@ -134,5 +134,42 @@ def test_git_config_global_or_system():
     for script in SCRIPTS:
         text = _read_no_comments(script)
         assert re.search(
-            r"git\s+config\s+--(global|system)", text
+            r"git\\s+config\\s+--(global|system)", text
         ), f"{script}: git config should use --global or --system flag"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — repo CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_scripts_executable():
+    """Scripts with shebang are executable (repo CI: check-shebang-scripts-are-executable)."""
+    for script in SCRIPTS:
+        r = subprocess.run(
+            ["bash", "-c", f'if head -1 "{script}" | grep -q "^#!/" && [ ! -x "{script}" ]; then exit 1; fi'],
+            capture_output=True, text=True, timeout=10
+        )
+        assert r.returncode == 0, f"{script}: has shebang but is not executable"
+
+
+# [repo_tests] pass_to_pass
+def test_no_trailing_whitespace():
+    """Modified scripts have no trailing whitespace (repo CI: trailing-whitespace)."""
+    for script in SCRIPTS:
+        r = subprocess.run(
+            ["grep", "-lE", r'\\t$| +$', script],
+            capture_output=True, text=True, timeout=10
+        )
+        assert r.returncode == 1, f"{script}: has trailing whitespace"
+
+
+# [repo_tests] pass_to_pass
+def test_no_merge_conflict_markers():
+    """Modified scripts have no merge conflict markers (repo CI: check-merge-conflict)."""
+    for script in SCRIPTS:
+        r = subprocess.run(
+            ["grep", "-lE", r'^<<<<<<<|^=======|^>>>>>>>', script],
+            capture_output=True, text=True, timeout=10
+        )
+        assert r.returncode == 1, f"{script}: has merge conflict markers"

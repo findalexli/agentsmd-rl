@@ -15,7 +15,7 @@ checks:
   - id: astro_regex_escape_frontmatter
     type: fail_to_pass
     origin: pr_diff
-    description: "Astro frontmatter with escaped regex patterns (/\\d{4}/, /\\w{2,3}/) parses without diagnostics"
+    description: "Astro frontmatter with escaped regex patterns (/\d{4}/, /\w{2,3}/) parses without diagnostics"
 
   - id: escape_handler_order
     type: fail_to_pass
@@ -47,6 +47,16 @@ checks:
     origin: repo_tests
     description: "Repo's cargo test -p biome_html_parser --test spec_tests passes"
 
+  - id: test_repo_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo fmt -- --check passes (code formatting)"
+
+  - id: test_repo_quotes_seen_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "QuotesSeen lexer unit tests pass - regression test for PR #9728 escape handler changes"
+
 rubric:
   - rule: "Do NOT embed the context of the current work into comments. A comment like `// As per issue #1234, we skip this case` ties the code to a transient artifact. Instead, explain *why* the case is skipped in terms any future reader would understand."
     source:
@@ -58,4 +68,22 @@ rubric:
     source:
       path: ".claude/skills/biome-developer/SKILL.md"
       lines: "153"
+      commit: "467fd87daec3d8c1fe64850a82480364480b313e"
+
+  - rule: "Bug fixes that affect behavior are user-facing changes and MUST include a changeset. Changesets must use `patch` type for bug fixes and start with `Fixed [#NUMBER](issue link): description`."
+    source:
+      path: "AGENTS.md"
+      lines: "61-132"
+      commit: "467fd87daec3d8c1fe64850a82480364480b313e"
+
+  - rule: "Parser changes MUST include tests. Create test files in `tests/` covering valid cases in `html_specs/ok/` and error cases in `html_specs/error/`. Bug fixes must include a test that reproduces the bug and validates the fix."
+    source:
+      path: "AGENTS.md"
+      lines: "181-198"
+      commit: "467fd87daec3d8c1fe64850a82480364480b313e"
+
+  - rule: "Presence test: Always return `Absent` if the first token doesn't match - never progress parsing before returning `Absent`. This is a fundamental parser pattern."
+    source:
+      path: ".claude/skills/parser-development/SKILL.md"
+      lines: "300-301"
       commit: "467fd87daec3d8c1fe64850a82480364480b313e"

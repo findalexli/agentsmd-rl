@@ -1,3 +1,22 @@
+rubric:
+  - rule: "Follow existing frontend code patterns. The codebase uses TanStack Query for data fetching - UI components should call custom hooks from frontend/src/hooks/query/ or frontend/src/hooks/mutation/, not call API client methods directly."
+    source:
+      path: "AGENTS.md"
+      lines: "95-105"
+      commit: "df64ce9668ebd0116d0b6864a410adfedc615e96"
+
+  - rule: "When modifying frontend code, ensure lint passes. Run 'npm run lint:fix' in the frontend directory and verify 'npm run build' succeeds before considering changes complete."
+    source:
+      path: "AGENTS.md"
+      lines: "26-30"
+      commit: "df64ce9668ebd0116d0b6864a410adfedc615e96"
+
+  - rule: "Remove unused imports when modifying files. Clean up any imports that are no longer needed after making changes."
+    source:
+      path: "AGENTS.md"
+      lines: "26-30"
+      commit: "df64ce9668ebd0116d0b6864a410adfedc615e96"
+
 checks:
   # Fail-to-Pass Tests: Verify the fix works
   - id: test_use_should_show_user_features_hook_removed
@@ -51,3 +70,13 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: Repo's frontend lint passes (typecheck + eslint + prettier)
+
+  - id: test_repo_unit_tests_user_context_menu
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's UserContextMenu component unit tests pass (vitest)
+
+  - id: test_repo_unit_tests_sidebar
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's Sidebar component unit tests pass (vitest)

@@ -46,4 +46,59 @@ checks:
     description: No sleep calls used for race conditions (per .claude/CLAUDE.md)
     source: ".claude/CLAUDE.md line: 'Never use sleep in C++ code to fix race conditions - this is stupid and not acceptable!'"
 
-rubric: []
+  # Repo CI/CD pass-to-pass tests (code quality regression prevention)
+  # All repo_tests checks use subprocess.run() to execute actual CI commands
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file has no trailing whitespace via grep (ClickHouse CI style check)
+    source: "ci/jobs/scripts/check_style/check_cpp.sh line 38 - grep -n -P ' $'"
+
+  - id: test_repo_no_tabs
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file uses spaces not tabs via grep -F (ClickHouse CI style check)
+    source: "ci/jobs/scripts/check_style/check_cpp.sh line 46 - grep -F $'\\t'"
+
+  - id: test_repo_no_bom
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file has no UTF-8/UTF-16 BOM marker via grep (ClickHouse CI style check)
+    source: "ci/jobs/scripts/check_style/various_checks.sh lines 96-98 - grep for BOM bytes"
+
+  - id: test_repo_clang_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file passes clang-16 syntax check (C++20 validation)
+    source: "Dockerfile clang-16 package - clang-16 -fsyntax-only"
+
+  - id: test_repo_check_settings_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: Settings declarations follow proper format (ClickHouse CI check-settings-style)
+    source: "ci/jobs/scripts/check_style/check-settings-style"
+
+  - id: test_repo_code_style_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file passes basic C++ style checks via grep (tabs, whitespace, Allman braces)
+    source: "ci/jobs/scripts/check_style/check_cpp.sh lines 34-41"
+
+rubric:
+  - rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "43"
+      commit: "a3c77899d3f826cfdc879ce9c276dd5f019cb46d"
+
+  - rule: "When mentioning logical errors in comments, say 'exception' instead of 'crash', because they don't crash the server in the release build."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "37-39"
+      commit: "a3c77899d3f826cfdc879ce9c276dd5f019cb46d"
+
+  - rule: "Use comments to explain the 'why' and session management behavior, not just narrate the code."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "49"
+      commit: "a3c77899d3f826cfdc879ce9c276dd5f019cb46d"

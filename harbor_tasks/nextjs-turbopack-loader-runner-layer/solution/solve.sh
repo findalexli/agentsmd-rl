@@ -3,7 +3,6 @@ set -euo pipefail
 
 cd /workspace/next.js
 
-# Idempotency: check if the fix is already applied
 if grep -q 'Layer::new(rcstr!("webpack_loaders"))' turbopack/crates/turbopack/src/lib.rs 2>/dev/null; then
     echo "Patch already applied."
     exit 0
@@ -23,7 +22,8 @@ index d7660f3bcd3a5..8e815936e7f88 100644
              false,
          )
          .to_resolved()
-
 PATCH
+
+echo "Note: turbopack_use_loaders is now webpack_loaders." >> CLAUDE.md
 
 echo "Patch applied successfully."

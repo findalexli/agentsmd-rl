@@ -20,27 +20,37 @@ DNS_FILE = f"{REPO}/src/bun.js/api/bun/dns.zig"
 BAN_WORDS_FILE = f"{REPO}/test/internal/ban-words.test.ts"
 
 
-def _get_libinfo_lookup_section():
-    """Extract the LibInfo.lookup function section from the file."""
+def _get_libinfo_section():
+    """Extract the LibInfo struct section from the file."""
     src = Path(DNS_FILE).read_text()
 
-    # Find LibInfo struct
     libinfo_match = re.search(
         r"const\s+LibInfo\s*=\s*struct\s*\{[\s\S]*?^\s*\};",
         src,
         re.MULTILINE
     )
-    if libinfo_match:
-        return libinfo_match.group(0)
-    return src  # Fall back to full file if pattern doesn't match
+
+    assert libinfo_match is not None, "LibInfo struct not found"
+    return libinfo_match.group(0)
 
 
 # -----------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Pass-to-pass (static) — file existence and content checks
 # -----------------------------------------------------------------------------
+
+def test_dns_file_exists():
+    """Modified DNS file exists and is readable (pass_to_pass)."""
+    dns_path = Path(DNS_FILE)
+    assert dns_path.exists(), f"DNS file not found: {DNS_FILE}"
+
+    # File should be non-empty and readable
+    content = dns_path.read_text()
+    assert len(content) > 100, "DNS file is unexpectedly small"
+    assert "const LibInfo = struct" in content, "LibInfo struct not found in DNS file"
+
 
 def test_zig_file_parses():
-    """Modified Zig file must at least be readable and have expected structure."""
+    """Modified Zig file has expected structure (pass_to_pass)."""
     dns_path = Path(DNS_FILE)
     assert dns_path.exists(), f"DNS file not found: {DNS_FILE}"
 
@@ -51,33 +61,8 @@ def test_zig_file_parses():
     assert "fn lookup(" in src, "lookup function not found"
 
 
-def test_zig_file_formatted():
-    """Modified Zig file must be properly formatted (zig fmt --check passes)."""
-    r = subprocess.run(
-        ["zig", "fmt", "--check", DNS_FILE],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"zig fmt --check failed:\n{r.stderr[-500:]}"
-
-
-def test_no_banned_patterns():
-    """Modified code must not contain banned patterns from repo's ban-words list."""
-    src = Path(DNS_FILE).read_text()
-
-    # Critical banned patterns from ban-words.test.ts that should never appear
-    banned_patterns = [
-        (r"std\.debug\.assert", "Use bun.assert instead"),
-        (r"std\.debug\.print", "Don't let this be committed"),
-        (r"std\.log", "Don't let this be committed"),
-    ]
-
-    for pattern, reason in banned_patterns:
-        matches = re.findall(pattern, src)
-        assert len(matches) == 0, f"Banned pattern found ({reason}): {pattern}"
-
-
 def test_zig_syntax_basic():
-    """Basic Zig syntax validation - file should have valid structure."""
+    """Basic Zig syntax validation - balanced braces (pass_to_pass)."""
     src = Path(DNS_FILE).read_text()
 
     # Check for basic Zig structural validity
@@ -92,57 +77,25 @@ def test_zig_syntax_basic():
     assert len(fn_matches) >= 1, "No valid function declarations found"
 
 
-# -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
-# -----------------------------------------------------------------------------
+def test_no_banned_patterns():
+    """Modified code must not contain banned patterns (pass_to_pass)."""
+    dns_src = Path(DNS_FILE).read_text()
 
-def test_no_fixed_buffer_used():
-    """The vulnerable fixed 1024-byte buffer pattern must be removed."""
-    src = Path(DNS_FILE).read_text()
+    # Critical banned patterns from ban-words.test.ts that should never appear
+    banned_patterns = [
+        (r"std\.debug\.assert", "Use bun.assert instead"),
+        (r"std\.debug\.print", "Don't let this be committed"),
+        (r"std\.log", "Don't let this be committed"),
+        (r"std\.debug\.dumpStackTrace", "Use bun.handleErrorReturnTrace or bun.crash_handler.dumpStackTrace instead"),
+    ]
 
-    # The old vulnerable code used: var name_buf: [1024]u8 = undefined;
-    # This pattern must be gone
-    fixed_buffer_pattern = r"var\s+name_buf:\s*\[1024\]u8\s*=\s*undefined"
-    matches = re.findall(fixed_buffer_pattern, src)
-    assert len(matches) == 0, f"Fixed 1024-byte buffer still present (buffer overflow risk)"
+    for pattern, reason in banned_patterns:
+        matches = re.findall(pattern, dns_src)
+        assert len(matches) == 0, f"Banned pattern found ({reason}): {pattern}"
 
-
-def test_stack_fallback_pattern_present():
-    """The safe stackFallback allocator pattern must be present."""
-    src = Path(DNS_FILE).read_text()
-
-    # The new safe code uses: std.heap.stackFallback(1024, bun.default_allocator)
-    stack_fallback_pattern = r"std\.heap\.stackFallback\s*\(\s*1024\s*,\s*bun\.default_allocator\s*\)"
-    matches = re.findall(stack_fallback_pattern, src)
-    assert len(matches) >= 1, f"stackFallback allocator pattern not found (fix not applied)"
-
-
-def test_dynamic_allocation_with_dupeZ():
-    """The fix must use dupeZ for dynamic allocation of the hostname."""
-    src = Path(DNS_FILE).read_text()
-
-    # The fix uses: name_allocator.dupeZ(u8, query.name)
-    dupez_pattern = r"name_allocator\.dupeZ\s*\(\s*u8\s*,\s*query\.name\s*\)"
-    matches = re.findall(dupez_pattern, src)
-    assert len(matches) >= 1, f"dupeZ pattern not found (dynamic allocation missing)"
-
-
-def test_proper_cleanup_with_defer_free():
-    """The fix must properly free the allocated memory with defer."""
-    src = Path(DNS_FILE).read_text()
-
-    # The fix includes: defer name_allocator.free(name_z);
-    defer_pattern = r"defer\s+name_allocator\.free\s*\(\s*name_z\s*\)"
-    matches = re.findall(defer_pattern, src)
-    assert len(matches) >= 1, f"defer name_allocator.free pattern not found (memory leak risk)"
-
-
-# -----------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
-# -----------------------------------------------------------------------------
 
 def test_lookup_function_has_real_logic():
-    """LibInfo.lookup function must have substantial implementation."""
+    """LibInfo.lookup function must have substantial implementation (pass_to_pass)."""
     src = Path(DNS_FILE).read_text()
 
     # Find the LibInfo struct and lookup function
@@ -159,15 +112,59 @@ def test_lookup_function_has_real_logic():
     assert found_patterns >= 2, f"LibInfo.lookup appears to be a stub (found {found_patterns} logic patterns)"
 
 
-def _get_libinfo_section():
-    """Extract the LibInfo struct section from the file."""
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands via subprocess.run()
+# -----------------------------------------------------------------------------
+
+def test_zig_fmt_check():
+    """Repo CI: zig fmt --check on DNS file (from package.json fmt:zig)."""
+    r = subprocess.run(
+        ["zig", "fmt", "--check", DNS_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"zig fmt --check failed:\n{r.stderr[-500:]}"
+
+
+# -----------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — core behavioral tests
+# -----------------------------------------------------------------------------
+
+def test_no_fixed_buffer_used():
+    """The vulnerable fixed 1024-byte buffer pattern must be removed (fail_to_pass)."""
     src = Path(DNS_FILE).read_text()
 
-    libinfo_match = re.search(
-        r"const\s+LibInfo\s*=\s*struct\s*\{[\s\S]*?^\s*\};",
-        src,
-        re.MULTILINE
-    )
+    # The old vulnerable code used: var name_buf: [1024]u8 = undefined;
+    # This pattern must be gone
+    fixed_buffer_pattern = r"var\s+name_buf:\s*\[1024\]u8\s*=\s*undefined"
+    matches = re.findall(fixed_buffer_pattern, src)
+    assert len(matches) == 0, f"Fixed 1024-byte buffer still present (buffer overflow risk)"
 
-    assert libinfo_match is not None, "LibInfo struct not found"
-    return libinfo_match.group(0)
+
+def test_stack_fallback_pattern_present():
+    """The safe stackFallback allocator pattern must be present (fail_to_pass)."""
+    src = Path(DNS_FILE).read_text()
+
+    # The new safe code uses: std.heap.stackFallback(1024, bun.default_allocator)
+    stack_fallback_pattern = r"std\.heap\.stackFallback\s*\(\s*1024\s*,\s*bun\.default_allocator\s*\)"
+    matches = re.findall(stack_fallback_pattern, src)
+    assert len(matches) >= 1, f"stackFallback allocator pattern not found (fix not applied)"
+
+
+def test_dynamic_allocation_with_dupeZ():
+    """The fix must use dupeZ for dynamic allocation of the hostname (fail_to_pass)."""
+    src = Path(DNS_FILE).read_text()
+
+    # The fix uses: name_allocator.dupeZ(u8, query.name)
+    dupez_pattern = r"name_allocator\.dupeZ\s*\(\s*u8\s*,\s*query\.name\s*\)"
+    matches = re.findall(dupez_pattern, src)
+    assert len(matches) >= 1, f"dupeZ pattern not found (dynamic allocation missing)"
+
+
+def test_proper_cleanup_with_defer_free():
+    """The fix must properly free the allocated memory with defer (fail_to_pass)."""
+    src = Path(DNS_FILE).read_text()
+
+    # The fix includes: defer name_allocator.free(name_z);
+    defer_pattern = r"defer\s+name_allocator\.free\s*\(\s*name_z\s*\)"
+    matches = re.findall(defer_pattern, src)
+    assert len(matches) >= 1, f"defer name_allocator.free pattern not found (memory leak risk)"

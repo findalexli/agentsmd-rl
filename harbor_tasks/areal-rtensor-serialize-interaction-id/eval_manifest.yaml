@@ -47,10 +47,40 @@ checks:
     origin: repo_tests
     description: "Modified files can be processed by ruff linter (no crashes/syntax errors)"
 
-  - id: modified_files_exist
+  - id: ruff_format_modified
     type: pass_to_pass
     origin: repo_tests
+    description: "Modified files can be processed by ruff formatter (no crashes/syntax errors)"
+
+  - id: modified_files_exist
+    type: pass_to_pass
+    origin: static
     description: "Modified files exist in the repository"
+
+  - id: py_compile_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files compile to bytecode without errors"
+
+  - id: import_modified_modules
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python modules can be imported without errors"
+
+  - id: ci_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI workflow YAML files are syntactically valid"
+
+  - id: eof_newline_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files end with exactly one newline"
+
+  - id: no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no trailing whitespace"
 
   - id: no_wildcard_imports
     type: pass_to_pass

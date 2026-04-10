@@ -596,3 +596,61 @@ def test_repo_precommit_private_key():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Private key detection check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_large_files():
+    """Repo passes pre-commit check-added-large-files (pass_to_pass).
+
+    Ensures no files larger than 1000KB are committed (excluding uv.lock).
+    """
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "-q"], check=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-added-large-files", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Large files check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_json():
+    """Repo's JSON files pass pre-commit check-json (pass_to_pass)."""
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "-q"], check=True)
+
+    r = subprocess.run(
+        ["pre-commit", "run", "check-json", "--all-files"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"JSON check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_nbstripout():
+    """Repo's Jupyter notebooks pass nbstripout (no outputs committed) (pass_to_pass).
+
+    nbstripout ensures notebook outputs and execution counts are not committed,
+    keeping the repo size small and diffs clean.
+    """
+    import subprocess
+    import sys
+
+    subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "-q"], check=True)
+
+    notebook_files = [
+        "notebook/math_reflection_en.ipynb",
+        "notebook/math_reflection_zh.ipynb",
+        "notebook/search_agent_zh.ipynb",
+    ]
+    for fname in notebook_files:
+        r = subprocess.run(
+            ["pre-commit", "run", "nbstripout", "--files", f"{REPO}/{fname}"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        assert r.returncode == 0, f"nbstripout check failed for {fname}:\\n{r.stderr}"

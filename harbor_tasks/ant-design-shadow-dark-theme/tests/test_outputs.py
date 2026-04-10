@@ -243,6 +243,70 @@ def test_npm_lint_theme():
     assert result.returncode == 0, f"Lint check failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
 
 
+
+
+def test_repo_node_tests():
+    """
+    Run the repository's Node.js/SSR tests.
+
+    This tests server-side rendering of components, ensuring the fix
+    doesn't break SSR compatibility (pass_to_pass).
+    """
+    env = os.environ.copy()
+    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
+
+    result = subprocess.run(
+        ["npm", "run", "test:node"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env=env
+    )
+
+    assert result.returncode == 0, f"Node.js tests failed:\n{result.stdout[-1500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_dropdown_demo_tests():
+    """
+    Run dropdown component demo tests.
+
+    This tests dropdown demo rendering with snapshots (pass_to_pass).
+    The gold patch modifies dropdown snapshots for shadow color fixes.
+    """
+    result = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "--no-cache",
+         "--testPathPatterns=dropdown/__tests__/demo-extend.test",
+         "--maxWorkers=1"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    assert result.returncode == 0, f"Dropdown demo tests failed:\n{result.stdout[-1500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_menu_demo_tests():
+    """
+    Run menu component demo tests.
+
+    This tests menu demo rendering with snapshots (pass_to_pass).
+    The gold patch modifies menu snapshots for shadow color fixes.
+    """
+    result = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "--no-cache",
+         "--testPathPatterns=menu/__tests__/demo-extend.test",
+         "--maxWorkers=1"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    assert result.returncode == 0, f"Menu demo tests failed:\n{result.stdout[-1500:]}\n{result.stderr[-500:]}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

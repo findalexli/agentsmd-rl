@@ -80,3 +80,38 @@ def test_not_stub():
             assert len(stmts) >= 1, "Function body is a stub"
             return
     raise AssertionError("Function not found")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo code passes ruff linter (pass_to_pass)."""
+    # Install ruff first
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "math_ops.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's existing unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, '/workspace/dummy-repo')
+from math_ops import add
+# Test the working add function
+assert add(2, 3) == 5, "add(2, 3) failed"
+assert add(-1, 1) == 0, "add(-1, 1) failed"
+assert add(0, 0) == 0, "add(0, 0) failed"
+print("All unit tests passed")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+    assert "passed" in r.stdout.lower(), "Tests did not report success"

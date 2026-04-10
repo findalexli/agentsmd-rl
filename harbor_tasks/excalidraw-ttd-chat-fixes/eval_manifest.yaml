@@ -4,130 +4,121 @@ source:
   pr_number: 10657
   base_commit: a0b98a944f1ddedba090b8a6908ff38b9132177e
   merge_commit: 24a69418615196827688d7c495450740ba5c7a40
-  title: "fix: retries and related UX fixes"
-
+  title: 'fix: retries and related UX fixes'
 checks:
-  - id: "typescript_compiles"
-    description: "TypeScript compiles without errors"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "chat_interface_uses_layout_effect"
-    description: "ChatInterface uses useLayoutEffect for scroll behavior (no flicker)"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "ongenerate_type_defined"
-    description: "OnGenerate type defined with object parameter in types.ts"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "chat_interface_uses_ongenerate_prop"
-    description: "ChatInterface uses onGenerate instead of onSendMessage"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "allow_fixing_parse_error_prop"
-    description: "allowFixingParseError prop controls repair button visibility"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "text_to_diagram_uses_ongenerate_object"
-    description: "TextToDiagram calls onGenerate with object parameter syntax"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "use_text_generation_signature"
-    description: "useTextGeneration has correct onGenerate signature"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "regeneration_shows_pending_immediately"
-    description: "Regeneration immediately shows pending with empty content"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "content_type_check"
-    description: "useTTDChatStorage uses typeof check for content"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "find_last_index_usage"
-    description: "utils/chat.ts uses findLastIndex helper correctly"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "messages_end_has_id"
-    description: "messages-end div has id for testability"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "ttd_chat_panel_uses_ongenerate"
-    description: "TTDChatPanel uses onGenerate instead of onSendMessage"
-    origin: "test_outputs"
-    weight: 1
-
-  - id: "chat_message_error_structure"
-    description: "ChatMessage has correct error message structure"
-    origin: "test_outputs"
-    weight: 1
-
-  # Pass-to-pass tests: existing CI/CD checks must still pass
-  - id: "repo_typecheck"
-    description: "Repo's TypeScript typecheck passes"
-    origin: "test_outputs"
-    type: "pass_to_pass"
-    weight: 0
-
-  - id: "repo_lint"
-    description: "Repo's ESLint passes"
-    origin: "test_outputs"
-    type: "pass_to_pass"
-    weight: 0
-
-  - id: "repo_prettier"
-    description: "Repo's Prettier formatting check passes"
-    origin: "test_outputs"
-    type: "pass_to_pass"
-    weight: 0
-
-  - id: "repo_unit_tests"
-    description: "Repo's unit tests pass"
-    origin: "test_outputs"
-    type: "pass_to_pass"
-    weight: 0
-
-  # Agent config checks
-  - id: "use_typescript"
-    description: "Code uses TypeScript (from copilot-instructions.md)"
-    origin: "agent_config"
-    source:
-      file: ".github/copilot-instructions.md"
-      lines: "9-11"
-    weight: 0
-
-  - id: "functional_components_hooks"
-    description: "Use functional components with hooks (from copilot-instructions.md)"
-    origin: "agent_config"
-    source:
-      file: ".github/copilot-instructions.md"
-      lines: "18-20"
-    weight: 0
-
-  - id: "immutable_data"
-    description: "Use immutable data (const, readonly) per copilot-instructions.md"
-    origin: "agent_config"
-    source:
-      file: ".github/copilot-instructions.md"
-      lines: "14-16"
-    weight: 0
-
-  - id: "follow_react_hooks_rules"
-    description: "Follow React hooks rules (no conditional hooks)"
-    origin: "agent_config"
-    source:
-      file: ".github/copilot-instructions.md"
-      lines: "18-20"
-    weight: 0
-
-rubric: []
+- id: typescript_compiles
+  description: TypeScript compiles without errors
+  origin: test_outputs
+  weight: 1
+- id: chat_interface_uses_layout_effect
+  description: ChatInterface uses useLayoutEffect for scroll behavior (no flicker)
+  origin: test_outputs
+  weight: 1
+- id: ongenerate_type_defined
+  description: OnGenerate type defined with object parameter in types.ts
+  origin: test_outputs
+  weight: 1
+- id: chat_interface_uses_ongenerate_prop
+  description: ChatInterface uses onGenerate instead of onSendMessage
+  origin: test_outputs
+  weight: 1
+- id: allow_fixing_parse_error_prop
+  description: allowFixingParseError prop controls repair button visibility
+  origin: test_outputs
+  weight: 1
+- id: text_to_diagram_uses_ongenerate_object
+  description: TextToDiagram calls onGenerate with object parameter syntax
+  origin: test_outputs
+  weight: 1
+- id: use_text_generation_signature
+  description: useTextGeneration has correct onGenerate signature
+  origin: test_outputs
+  weight: 1
+- id: regeneration_shows_pending_immediately
+  description: Regeneration immediately shows pending with empty content
+  origin: test_outputs
+  weight: 1
+- id: content_type_check
+  description: useTTDChatStorage uses typeof check for content
+  origin: test_outputs
+  weight: 1
+- id: find_last_index_usage
+  description: utils/chat.ts uses findLastIndex helper correctly
+  origin: test_outputs
+  weight: 1
+- id: messages_end_has_id
+  description: messages-end div has id for testability
+  origin: test_outputs
+  weight: 1
+- id: ttd_chat_panel_uses_ongenerate
+  description: TTDChatPanel uses onGenerate instead of onSendMessage
+  origin: test_outputs
+  weight: 1
+- id: chat_message_error_structure
+  description: ChatMessage has correct error message structure
+  origin: test_outputs
+  weight: 1
+- id: repo_typecheck
+  description: Repo's TypeScript typecheck passes
+  origin: test_outputs
+  type: pass_to_pass
+  weight: 0
+- id: repo_lint
+  description: Repo's ESLint passes
+  origin: test_outputs
+  type: pass_to_pass
+  weight: 0
+- id: repo_prettier
+  description: Repo's Prettier formatting check passes
+  origin: test_outputs
+  type: pass_to_pass
+  weight: 0
+- id: repo_unit_tests
+  description: Repo's unit tests pass
+  origin: test_outputs
+  type: pass_to_pass
+  weight: 0
+- id: use_typescript
+  description: Code uses TypeScript (from copilot-instructions.md)
+  origin: agent_config
+  source:
+    file: .github/copilot-instructions.md
+    lines: 9-11
+  weight: 0
+- id: functional_components_hooks
+  description: Use functional components with hooks (from copilot-instructions.md)
+  origin: agent_config
+  source:
+    file: .github/copilot-instructions.md
+    lines: 18-20
+  weight: 0
+- id: immutable_data
+  description: Use immutable data (const, readonly) per copilot-instructions.md
+  origin: agent_config
+  source:
+    file: .github/copilot-instructions.md
+    lines: 14-16
+  weight: 0
+- id: follow_react_hooks_rules
+  description: Follow React hooks rules (no conditional hooks)
+  origin: agent_config
+  source:
+    file: .github/copilot-instructions.md
+    lines: 18-20
+  weight: 0
+rubric:
+- rule: Use PascalCase for component names, interfaces, and type aliases
+  source:
+    path: .github/copilot-instructions.md
+    lines: '28'
+    commit: a0b98a944f1ddedba090b8a6908ff38b9132177e
+- rule: Use camelCase for variables, functions, and methods
+  source:
+    path: .github/copilot-instructions.md
+    lines: '29'
+    commit: a0b98a944f1ddedba090b8a6908ff38b9132177e
+- rule: Use optional chaining (?.) and nullish coalescing (??) operators
+  source:
+    path: .github/copilot-instructions.md
+    lines: '17'
+    commit: a0b98a944f1ddedba090b8a6908ff38b9132177e

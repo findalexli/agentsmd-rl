@@ -75,6 +75,22 @@ checks:
     origin: repo_tests
     description: Unit tests for sui-move-natives-latest pass
 
+  # Additional pass-to-pass: CI/CD tests found from repo exploration
+  - id: test_cargo_xlint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo xlint passes (license and project lints)
+
+  - id: test_execution_layer_cut_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: Execution layer cut script works (./scripts/execution_layer.py cut)
+
+  - id: test_cargo_fmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo fmt --check passes (code formatting)
+
 # Rules derived from agent config files (CLAUDE.md, AGENTS.md, SKILL.md)
 # This PR touches protocol config, so relevant rules from the protocol-config skill apply
 agent_config:
@@ -103,4 +119,15 @@ agent_config:
     relevant: false  # Not adding new files
 
 # Rubric for soft/subjective criteria (LLM-judge only)
-rubric: []
+rubric:
+  - rule: "Do NOT comment the obvious. Comments should explain non-obvious algorithms, business logic, or subtle assumptions - not narrate what the code does."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-131"
+      commit: "a6d32d34bb8e01047eca44e9e62001639090b9a7"
+
+  - rule: "New protocol config fields must use Option<T> type and be initialized with Some(value) in the version block."
+    source:
+      path: ".claude/skills/protocol-config/SKILL.md"
+      lines: "99-104"
+      commit: "a6d32d34bb8e01047eca44e9e62001639090b9a7"

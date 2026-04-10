@@ -81,6 +81,38 @@ checks:
       path: ".github/workflows/pre-commit.yml"
       commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
 
+  - id: test_repo_yaml_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's YAML workflow files have valid syntax"
+    source:
+      path: ".github/workflows/pre-commit.yml"
+      commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
+
+  - id: test_repo_eof_newlines
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files end with exactly one newline (pre-commit end-of-file-fixer)"
+    source:
+      path: ".pre-commit-config.yaml"
+      commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
+
+  - id: test_repo_no_private_keys
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files contain no private keys (pre-commit detect-private-key)"
+    source:
+      path: ".pre-commit-config.yaml"
+      commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
+
+  - id: test_repo_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified infrastructure modules (rpc_server, local, slurm) compile without errors"
+    source:
+      path: "pyproject.toml"
+      commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
+
 rubric:
   - rule: "Follow existing code patterns in the same module — error response keys should be consistent with the dominant convention in each file."
     source:

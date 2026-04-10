@@ -7,6 +7,43 @@ source:
   merge_commit: ""
 
 checks:
+  # Pass-to-pass (repo_tests) — CI/validity checks
+  - id: test_repo_git_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is in valid state"
+
+  - id: test_repo_package_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "package.json is valid JSON"
+
+  - id: test_repo_target_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file (workbenchThemeService.ts) exists"
+
+  - id: test_repo_theme_test_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Theme test file exists"
+
+  - id: test_repo_ts_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target TypeScript file has balanced braces (basic syntax check)"
+
+  - id: test_repo_product_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "product.json is valid JSON"
+
+  - id: test_repo_settings_json_comments
+    type: pass_to_pass
+    origin: repo_tests
+    description: ".vscode/settings.json exists (may contain comments, not strict JSON)"
+
+  # Fail-to-pass (pr_diff) — core behavioral checks
   - id: method_exists
     type: fail_to_pass
     origin: pr_diff

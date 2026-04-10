@@ -21,9 +21,11 @@ RUN ln -sf /usr/bin/clang-18 /usr/bin/clang && \
 
 # Clone ClickHouse repo at base commit
 WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/ClickHouse/ClickHouse.git && \
-    cd ClickHouse && \
-    git checkout 32310ea30010c92c101d7e93c535c6bd17057dcf
+RUN mkdir -p /workspace/ClickHouse && cd /workspace/ClickHouse && \
+    git init && \
+    git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
+    git fetch origin 32310ea30010c92c101d7e93c535c6bd17057dcf --depth 1 && \
+    git checkout FETCH_HEAD
 
 # Create log directory
 RUN mkdir -p /logs/verifier

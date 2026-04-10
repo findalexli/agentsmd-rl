@@ -3,81 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0,
   "gold_reward": 1,
-  "validated_at": "2026-04-09T02:08:25.237057",
-  "total_time": 1867.9,
-  "sandbox_id": "i6t4cev1p73dlyaquwpw8",
+  "validated_at": "2026-04-10T03:55:06.379279",
+  "total_time": 9110.22,
+  "sandbox_id": "iboiugo0ducx8o0vy27sc",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.0,
+  "rubric_icr": 0.5,
   "nodes": {
-    "validate": {
-      "status": "pass",
-      "nop_reward": 0,
-      "gold_reward": 1,
-      "attempts": 1,
-      "notes": "Docker build successful. NOP test correctly fails 5 fail-to-pass tests (reward=0). Gold test passes all 10 tests (reward=1). Rubric judge returned 0.0 due to no git diff in gold container (setup limitation, not a violation).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 242.44
-    },
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T09:00:00+00:00",
-      "ci_commands_discovered": [
-        {
-          "command": "pnpm format:check",
-          "source": "package.json scripts, AGENTS.md:44, .github/workflows/tests-js.yml",
-          "status": "working",
-          "added_as_p2p": true,
-          "test_id": "repo_format_check",
-          "notes": "Passes on base commit. Uses prettier with prettier-plugin-svelte."
-        },
-        {
-          "command": "pnpm lint",
-          "source": "package.json scripts, AGENTS.md",
-          "status": "not_working",
-          "added_as_p2p": false,
-          "notes": "Missing @eslint/js module in node_modules. ESLint fails with ERR_MODULE_NOT_FOUND."
-        },
-        {
-          "command": "pnpm ts:check / svelte-check",
-          "source": "package.json scripts, AGENTS.md",
-          "status": "not_working",
-          "added_as_p2p": false,
-          "notes": "Pre-existing type errors in base commit (cs.js, missing generated JSON files in js/_website). Would fail on base commit."
-        },
-        {
-          "command": "pnpm test:run",
-          "source": "package.json scripts, .github/workflows/tests-js.yml",
-          "status": "not_working",
-          "added_as_p2p": false,
-          "notes": "Requires Playwright browsers which are not installed in container. Browser tests fail without chromium."
-        },
-        {
-          "command": "ruff check / ruff format",
-          "source": "scripts/lint_backend.sh, scripts/format_backend.sh, pyproject.toml",
-          "status": "not_working",
-          "added_as_p2p": false,
-          "notes": "ruff is not installed in the Docker image. Would require pip install."
-        }
-      ],
-      "tests_added": [
-        {
-          "test_function": "test_repo_format_check",
-          "test_file": "tests/test_outputs.py",
-          "check_id": "repo_format_check",
-          "manifest_entry": "eval_manifest.yaml",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Repo-wide frontend formatting check (pnpm format:check) passes"
-        }
-      ],
-      "notes": "Added 1 p2p test for the repo's CI format:check. This complements the existing test_prettier_formatting which only checks Header.svelte. The new test runs pnpm format:check across the entire repo to ensure the gold patch doesn't break any formatting rules enforced by CI."
-    },
-    "p2p_enrich": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 803.43,
+      "time": 645.88,
       "notes": ""
     },
     "improve": {
@@ -87,12 +24,22 @@
       "time": 0,
       "notes": "tests look good"
     },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK, NOP test reward=0 (5 fail-to-pass tests correctly fail on buggy base), Gold test reward=1 (all 13 tests pass on fixed code), rubric judge returns 0.0 due to no API key (expected behavior when GEMINI_API_KEY or ANTHROPIC_API_KEY not set)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 411.54
+    },
     "rubric_judge": {
       "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.68,
-      "notes": "ICR=0.00"
+      "time": 1.16,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -101,16 +48,32 @@
       "nop": 0,
       "gold": 1,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T02:08:25.071129"
+      "time": 3530.18,
+      "at": "2026-04-09T21:17:18.683838"
     },
     {
       "verdict": "pass",
       "nop": 0,
       "gold": 1,
       "backend": "fireworks",
-      "time": 1867.9,
-      "at": "2026-04-09T02:08:25.237057"
+      "time": 3530.52,
+      "at": "2026-04-09T21:17:18.916743"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 9109.95,
+      "at": "2026-04-10T03:55:06.215158"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 9110.22,
+      "at": "2026-04-10T03:55:06.379279"
     }
   ]
 }

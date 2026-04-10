@@ -6,9 +6,9 @@ PR:   #91697
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 
-Rust codebase — no compiler in Docker image. f2p tests use subprocess to
-execute Python validation scripts that parse Rust source files and verify
-the structural changes required by the PR.
+Rust codebase — cargo and rustup are installed on-demand in tests.
+f2p tests use subprocess to execute Python validation scripts that
+parse Rust source files and verify the structural changes required by the PR.
 """
 
 import subprocess
@@ -20,6 +20,42 @@ REPO = "/workspace/next.js"
 APP_FILE = f"{REPO}/crates/next-api/src/app.rs"
 PROJECT_FILE = f"{REPO}/crates/next-api/src/project.rs"
 MOD_FILE = f"{REPO}/turbopack/crates/turbopack-core/src/module_graph/mod.rs"
+
+
+def _ensure_rustup():
+    """Ensure rustup and the nightly toolchain are installed."""
+    cargo_check = subprocess.run(
+        ["which", "cargo"], capture_output=True, text=True, timeout=5
+    )
+    if cargo_check.returncode == 0:
+        return  # cargo already available
+
+    # Install rustup - the toolchain will be installed from rust-toolchain.toml
+    install = subprocess.run(
+        ["bash", "-c",
+         "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if install.returncode != 0:
+        pytest.skip(f"Failed to install rustup: {install.stderr}")
+
+
+def _run_cargo(*args, cwd=REPO, timeout=300):
+    """Run a cargo command with rustup available."""
+    _ensure_rustup()
+    # Use cargo from rustup installation
+    cargo_path = Path.home() / ".cargo" / "bin" / "cargo"
+    env_setup = "source $HOME/.cargo/env 2>/dev/null || true"
+    cmd = f"{env_setup}; {cargo_path} {' '.join(args)}"
+    return subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=cwd,
+    )
 
 
 def _run_validator(name: str, code: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -60,46 +96,25 @@ def test_antistub_files_have_substantial_content():
 
 def test_repo_rustfmt_check():
     """Repo Rust code passes rustfmt check (pass_to_pass). CI: cargo fmt --all -- --check"""
-    cargo_check = subprocess.run(
-        ["which", "cargo"], capture_output=True, text=True, timeout=5
-    )
-    if cargo_check.returncode != 0:
-        pytest.skip("cargo not available - requires Dockerfile fix")
-
-    r = subprocess.run(
-        ["cargo", "fmt", "--all", "--", "--check"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = _run_cargo("fmt", "--all", "--", "--check", timeout=120)
     assert r.returncode == 0, f"rustfmt check failed: {r.stderr[-500:]}"
 
 
 def test_repo_cargo_check_turbopack_core():
     """Repo turbopack-core crate passes cargo check (pass_to_pass). CI: cargo check --package turbopack-core"""
-    cargo_check = subprocess.run(
-        ["which", "cargo"], capture_output=True, text=True, timeout=5
-    )
-    if cargo_check.returncode != 0:
-        pytest.skip("cargo not available - requires Dockerfile fix")
-
-    r = subprocess.run(
-        ["cargo", "check", "--package", "turbopack-core"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = _run_cargo("check", "--package", "turbopack-core", timeout=300)
     assert r.returncode == 0, f"cargo check failed: {r.stderr[-500:]}"
 
 
 def test_repo_cargo_check_next_api():
     """Repo next-api crate passes cargo check (pass_to_pass). CI: cargo check --package next-api"""
-    cargo_check = subprocess.run(
-        ["which", "cargo"], capture_output=True, text=True, timeout=5
-    )
-    if cargo_check.returncode != 0:
-        pytest.skip("cargo not available - requires Dockerfile fix")
+    r = _run_cargo("check", "--package", "next-api", timeout=300)
+    assert r.returncode == 0, f"cargo check failed: {r.stderr[-500:]}"
 
-    r = subprocess.run(
-        ["cargo", "check", "--package", "next-api"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+
+def test_repo_cargo_check_next_core():
+    """Repo next-core crate passes cargo check (pass_to_pass). CI: cargo check --package next-core"""
+    r = _run_cargo("check", "--package", "next-core", timeout=300)
     assert r.returncode == 0, f"cargo check failed: {r.stderr[-500:]}"
 
 

@@ -190,12 +190,14 @@ def test_no_banned_words_in_dns_zig():
 # [repo_tests] pass_to_pass — CI/CD: oxlint config validation (from oxlint.json)
 def test_dns_js_no_oxlint_violations():
     """JS/TS files in dns-related paths pass basic linting rules (from oxlint.json)."""
-    # Check if there are any JS files in the DNS directory that might have issues
-    js_files = glob.glob(f"{REPO}/src/js/**/*dns*", recursive=True)
-    js_files.extend(glob.glob(f"{REPO}/src/js/**/dns/**/*", recursive=True))
+    # Check the actual DNS JS files: src/js/node/dns.ts and src/js/node/dns.promises.ts
+    dns_js_files = [
+        f"{REPO}/src/js/node/dns.ts",
+        f"{REPO}/src/js/node/dns.promises.ts",
+    ]
 
-    for js_file in js_files:
-        if not js_file.endswith((".js", ".ts", ".mjs")):
+    for js_file in dns_js_files:
+        if not Path(js_file).exists():
             continue
 
         try:
@@ -203,16 +205,85 @@ def test_dns_js_no_oxlint_violations():
         except Exception:
             continue
 
-        # Check for no-debugger rule (from oxlint.json)
         lines = content.split("\n")
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
             # Skip comments
             if stripped.startswith("//") or stripped.startswith("/*"):
                 continue
-            # Check for debugger statement (common error)
+            # Check for debugger statement (from oxlint.json no-debugger rule)
             if re.search(r'\bdebugger\b', stripped):
                 pytest.fail(f"{js_file}:{i}: debugger statement found (violation of no-debugger rule)")
+
+
+# [repo_tests] pass_to_pass — CI/CD: ban-words check for JS DNS files (from .github/workflows/format.yml)
+def test_no_banned_words_in_js_dns():
+    """DNS JS files do not contain banned words/patterns (CI ban-words check)."""
+    dns_js_files = [
+        f"{REPO}/src/js/node/dns.ts",
+        f"{REPO}/src/js/node/dns.promises.ts",
+    ]
+
+    # Banned patterns from test/internal/ban-words.test.ts relevant to JS files
+    banned_patterns = {
+        " != undefined": "This is by definition Undefined Behavior",
+        " == undefined": "This is by definition Undefined Behavior",
+        "undefined != ": "This is by definition Undefined Behavior",
+        "undefined == ": "This is by definition Undefined Behavior",
+        "debugger": "Don't commit debugger statements",
+    }
+
+    for js_file in dns_js_files:
+        if not Path(js_file).exists():
+            continue
+
+        try:
+            content = Path(js_file).read_text()
+        except Exception:
+            continue
+
+        lines = content.split("\n")
+        for pattern, message in banned_patterns.items():
+            for i, line in enumerate(lines, 1):
+                if pattern in line:
+                    # Skip commented lines
+                    stripped = line.strip()
+                    if not stripped.startswith("//") and not stripped.startswith("/*"):
+                        pytest.fail(f"{js_file}:{i}: Banned pattern '{pattern}' found. {message}")
+
+
+# [repo_tests] pass_to_pass — CI/CD: JS syntax validation
+def test_dns_js_syntax_valid():
+    """DNS JS files have valid syntax (pass_to_pass)."""
+    dns_js_files = [
+        f"{REPO}/src/js/node/dns.ts",
+        f"{REPO}/src/js/node/dns.promises.ts",
+    ]
+
+    for js_file in dns_js_files:
+        if not Path(js_file).exists():
+            continue
+
+        try:
+            content = Path(js_file).read_text()
+        except Exception as e:
+            pytest.fail(f"Failed to read {js_file}: {e}")
+
+        # Basic syntax checks for JS/TS files
+        # Check for balanced parentheses in function signatures (common error)
+        open_parens = content.count("(")
+        close_parens = content.count(")")
+        # Allow some flexibility for unclosed parens in comments/strings
+        assert abs(open_parens - close_parens) <= 10, (
+            f"{js_file}: Parenthesis imbalance: {open_parens} open vs {close_parens} close"
+        )
+
+        # Check for balanced braces
+        open_braces = content.count("{")
+        close_braces = content.count("}")
+        assert abs(open_braces - close_braces) <= 5, (
+            f"{js_file}: Brace imbalance: {open_braces} open vs {close_braces} close"
+        )
 
 
 # ---------------------------------------------------------------------------

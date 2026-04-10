@@ -203,7 +203,7 @@ def test_syntax_valid():
         r = subprocess.run(
             ["node", "-e",
              f"const s=require('fs').readFileSync('{path}','utf8');"
-             "let d=0;for(const c of s){if(c==='{')d++;if(c==='}')d--;}"
+             "let d=0;for(const c of s){if(c==='{')d++;if(c==='}')d--;if(d<0){console.error('Unbalanced');process.exit(1)}}"
              "if(d!==0){console.error('Unbalanced');process.exit(1)}"],
             capture_output=True, timeout=10,
         )
@@ -230,7 +230,7 @@ def test_handlers_not_stub():
     for path, name in [(DOC_SERVER, "doc"), (GUIDE_SERVER, "guide")]:
         src = _read(path)
         has_logic = ("try" in src or "if " in src) and \
-                    bool(re.search(r"new\s+Response", src))
+            bool(re.search(r"new\s+Response", src))
         assert has_logic, f"{name}: GET handler appears to be a stub"
         lines = [l for l in src.splitlines()
                  if l.strip() and not l.strip().startswith("//")
@@ -243,12 +243,27 @@ def test_handlers_not_stub():
 # Pass-to-pass - repo CI/CD tests (p2p enrichment)
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
-def test_repo_format_check():
-    """Repo Prettier format check passes on modified files (pass_to_pass)."""
-    # Install pnpm and dependencies
+def _setup_pnpm():
+    """Install pnpm globally and install dependencies."""
     subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, text=True, timeout=60)
     subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, text=True, timeout=180, cwd=REPO)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo Prettier format check passes (pass_to_pass)."""
+    _setup_pnpm()
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check_modified():
+    """Repo Prettier format check passes on modified files (pass_to_pass)."""
+    _setup_pnpm()
     r = subprocess.run(
         ["pnpm", "format:check", "--",
          "js/_website/src/routes/api/markdown/[doc]/+server.ts",
@@ -256,30 +271,81 @@ def test_repo_format_check():
          "js/_website/src/lib/components/DocsCopyMarkdown.svelte"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Format check on modified files failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_build():
+    """Repo client build succeeds (pass_to_pass)."""
+    _setup_pnpm()
+    r = subprocess.run(
+        ["pnpm", "--filter", "@gradio/client", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client build failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_typescript_syntax():
-    """Modified TypeScript files have valid syntax (pass_to_pass)."""
-    # Install pnpm and dependencies
-    subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, text=True, timeout=60)
-    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, text=True, timeout=180, cwd=REPO)
+    """Modified TypeScript files have valid syntax and can be parsed (pass_to_pass)."""
+    _setup_pnpm()
+
+    # Use TypeScript compiler to parse the modified files
     check_script = """
 const ts = require('typescript');
 const fs = require('fs');
+const path = require('path');
+
 const files = [
   'js/_website/src/routes/api/markdown/[doc]/+server.ts',
   'js/_website/src/routes/api/markdown/guide/[guide]/+server.ts'
 ];
+
+let hasError = false;
 for (const f of files) {
-  const content = fs.readFileSync(f, 'utf8');
-  const source = ts.createSourceFile(f, content, ts.ScriptTarget.Latest, true);
-  if (!source.statements) {
-    console.error('Parse error in ' + f);
-    process.exit(1);
+  const fullPath = path.join(process.cwd(), f);
+  if (!fs.existsSync(fullPath)) {
+    console.error('File not found: ' + f);
+    hasError = true;
+    continue;
   }
-  console.log('OK: ' + f);
+  const content = fs.readFileSync(fullPath, 'utf8');
+
+  // Parse with TypeScript - this will throw on syntax errors
+  let source;
+  try {
+    source = ts.createSourceFile(f, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  } catch (e) {
+    console.error('Parse error in ' + f + ': ' + e.message);
+    hasError = true;
+    continue;
+  }
+
+  // Check we got a valid AST
+  if (!source.statements) {
+    console.error('Invalid AST: no statements found in ' + f);
+    hasError = true;
+    continue;
+  }
+
+  // Verify key SvelteKit types can be parsed (basic sanity check)
+  const hasImports = source.statements.some(s => ts.isImportDeclaration(s));
+  const hasExports = source.statements.some(s =>
+    ts.isExportDeclaration(s) ||
+    (ts.isVariableStatement(s) && s.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)) ||
+    (ts.isFunctionDeclaration(s) && s.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword))
+  );
+
+  if (!hasImports && !hasExports) {
+    console.error('Warning: No imports or exports found in ' + f + ' - may be malformed');
+    // Don't fail on this, just warn
+  }
+
+  console.log('OK: ' + f + ' (' + source.statements.length + ' top-level statements)');
+}
+
+if (hasError) {
+  process.exit(1);
 }
 console.log('PASS');
 """

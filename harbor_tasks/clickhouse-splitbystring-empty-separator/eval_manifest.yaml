@@ -9,6 +9,7 @@ source:
 
 # Checks - one per test_* function in test_outputs.py
 checks:
+  # Fail-to-Pass Tests
   - id: test_cpp_code_compiles
     type: fail_to_pass
     origin: pr_diff
@@ -29,30 +30,83 @@ checks:
     origin: pr_diff
     description: "Exact error messages match the expected strings from the PR"
 
+  # Pass-to-Pass Tests - Static Checks (file existence, content validation)
   - id: test_target_file_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Target source file TokenizerFactory.cpp exists and is readable"
 
   - id: test_source_file_valid_cpp
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Source file has valid C++ structure with balanced braces and parentheses"
 
   - id: test_required_components_exist
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Source contains required components (split_by_string_creator, castAs, BAD_ARGUMENTS)"
 
   - id: test_sql_test_files_exist
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "SQL test files exist (03403_function_tokens.sql and .reference)"
 
   - id: test_sql_test_content
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "SQL test file contains valid test cases for splitByString tokenizer"
+
+  # Pass-to-Pass Tests - Repo CI Commands (actual subprocess.run() commands)
+  - id: test_style_various_checks
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ClickHouse CI style checks (various_checks.sh) pass on base commit"
+
+  - id: test_python_syntax_clickhouse_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax check of clickhouse-test tool passes"
+
+  - id: test_settings_style_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ClickHouse settings style check (check-settings-style) passes"
+
+  - id: test_git_workspace_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git workspace is clean with no uncommitted changes"
+
+  - id: test_clang_syntax_only_target
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Clang syntax-only check runs successfully on target file"
+
+  # NEW: Additional Pass-to-Pass Tests - Repo CI Commands
+  - id: test_repo_pytest_xfail_xpass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ClickHouse pytest xfail/xpass consistency check passes"
+
+  - id: test_mypy_diff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ClickHouse mypy diff check on changed Python files passes"
+
+  - id: test_ci_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax check of CI job scripts (check_ci.py, etc.) passes"
+
+  - id: test_tests_ci_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax check of tests/ci scripts passes"
+
+  - id: test_queries_sql_basic_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SQL test files have valid structure and are readable"
 
 # Rules from agent config files that are programmatically checkable
 agent_config:
@@ -74,4 +128,15 @@ agent_config:
     applicable: true
 
 # Soft/subjective rules for LLM judge
-rubric: []
+rubric:
+  - rule: "When writing tests in tests/queries, prefer adding a new test instead of extending existing ones"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "141"
+      commit: "2ffea49f37f25c9a09a74b9ecb338b05eb426370"
+
+  - rule: "When adding a new test, consult `./tests/queries/0_stateless/add-test` to determine the correct name prefix for the new test"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "143"
+      commit: "2ffea49f37f25c9a09a74b9ecb338b05eb426370"

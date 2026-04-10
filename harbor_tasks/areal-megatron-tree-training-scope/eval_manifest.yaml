@@ -60,6 +60,30 @@ checks:
       path: "pyproject.toml"
       tool: "ruff"
 
+  - id: repo_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace in modified file"
+    source:
+      path: ".pre-commit-config.yaml"
+      hook: "trailing-whitespace"
+
+  - id: repo_end_of_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "File ends with exactly one newline"
+    source:
+      path: ".pre-commit-config.yaml"
+      hook: "end-of-file-fixer"
+
+  - id: repo_no_private_keys
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No private keys detected in modified file"
+    source:
+      path: ".pre-commit-config.yaml"
+      hook: "detect-private-key"
+
 rubric:
   - rule: "Follow existing code patterns in the same module"
     source:

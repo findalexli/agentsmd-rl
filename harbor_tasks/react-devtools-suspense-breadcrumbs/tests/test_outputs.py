@@ -205,3 +205,21 @@ def test_repo_license():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_version_check():
+    """Repo version consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_print_warnings():
+    """Repo print warnings test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/test_print_warnings.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print warnings test failed:\n{r.stderr[-500:]}"

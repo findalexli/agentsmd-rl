@@ -433,3 +433,29 @@ def test_orchestrator_uses_rollout_is_truncated():
     # Check that the code uses rollout["is_truncated"] directly
     assert 'rollout["is_truncated"]' in content or "rollout['is_truncated']" in content, \
         "orchestrator should use rollout['is_truncated'] directly instead of get_is_truncated(rollout)"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "src/prime_rl/orchestrator/trajectories.py", "src/prime_rl/orchestrator/orchestrator.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "src/prime_rl/orchestrator/trajectories.py", "src/prime_rl/orchestrator/orchestrator.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"

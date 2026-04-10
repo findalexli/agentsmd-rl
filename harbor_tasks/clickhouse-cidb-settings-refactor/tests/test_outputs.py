@@ -154,3 +154,24 @@ def test_repo_python_ast_valid():
         ast.parse(content)
     except SyntaxError as e:
         assert False, f"Invalid AST in {TARGET_FILE}: {e}"
+
+
+def test_repo_ci_pytest_xfail():
+    """Repo's CI internal pytest xfail/xpass tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "pytest", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # pytest install should succeed
+    assert r.returncode == 0, f"Failed to install pytest:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tests/test_pytest_xfail_xpass.py", "-v"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO / "ci",
+    )
+    assert r.returncode == 0, f"CI pytest xfail/xpass tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

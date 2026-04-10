@@ -370,3 +370,30 @@ def test_repo_oxlint():
     # Exit code 0 = success (warnings don't cause non-zero exit)
     # Exit code 1 = errors found
     assert r.returncode == 0, f"oxlint failed with errors:\\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint_config():
+    """Repo's oxlint config file is valid JSONC (JSON with comments) (pass_to_pass)."""
+    config_path = Path(REPO) / "oxlint.json"
+    assert config_path.exists(), "oxlint.json config file not found"
+
+    # Parse as JSONC (JSON with comments) - oxlint uses JSONC
+    r = _run_node(
+        """
+const fs = require('fs');
+const src = fs.readFileSync('/workspace/bun/oxlint.json', 'utf8');
+// Strip single-line comments at start of lines
+let noComments = src.replace(/^\\s*\\/\\/.*$/gm, '');
+// Handle inline comments after JSON values with comma
+noComments = noComments.replace(/,(\\s*)\\/\\/.*$/gm, ',');
+// Handle inline comments after closing brackets/values
+noComments = noComments.replace(/([}\\]"0-9])\\s*\\/\\/.*$/gm, '$1');
+// Strip multi-line comments
+noComments = noComments.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');
+// Parse as JSON
+JSON.parse(noComments);
+console.log('PASS');
+"""
+    )
+    assert r.returncode == 0, f"oxlint.json is not valid JSONC: {r.stderr}"

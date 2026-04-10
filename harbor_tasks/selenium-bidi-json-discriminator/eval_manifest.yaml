@@ -49,6 +49,21 @@ checks:
     origin: repo_tests
     description: C# code compiles without syntax errors
 
+  - id: test_repo_dotnet_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: .NET code follows editorconfig formatting conventions
+
+  - id: test_repo_file_header
+    type: pass_to_pass
+    origin: repo_tests
+    description: C# source files have proper copyright headers
+
+  - id: test_repo_jsonextensions_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: JsonExtensions.cs compiles without errors
+
   # Aliases for backward compatibility with test function names
   - id: test_discriminator_basic_extraction
     type: fail_to_pass
@@ -70,4 +85,15 @@ checks:
     origin: repo_tests
     description: Alias for test_syntax_validity - Code syntax is valid
 
-rubric: []
+rubric:
+  - rule: "Comments should explain *why*, not *what*. Use well-named methods and variables instead of comments that merely narrate code."
+    source:
+      path: "AGENTS.md"
+      lines: "36-37"
+      commit: "5c2bf6b42fb66f895d936cf13a392385fb032689"
+
+  - rule: "Use efficient patterns for JSON parsing. Prefer Utf8JsonReader.ValueTextEquals(span/readonlySpan) for property name comparison instead of GetString() to avoid unnecessary string allocations."
+    source:
+      path: "dotnet/AGENTS.md"
+      lines: "14-44"
+      commit: "5c2bf6b42fb66f895d936cf13a392385fb032689"

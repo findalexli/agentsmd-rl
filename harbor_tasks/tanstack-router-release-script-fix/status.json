@@ -3,88 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T08:22:44.666386",
-  "total_time": 0.0,
-  "sandbox_id": "ih7ajfiiscx4gdkvhhm5h",
+  "validated_at": "2026-04-10T00:29:08.716660",
+  "total_time": 9000.83,
+  "sandbox_id": "iyo0cx8ytmx9fsb6244yv",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "timestamp": "2026-04-09",
-      "ci_commands_discovered": [
-        {
-          "command": "node --check scripts/create-github-release.mjs",
-          "description": "JavaScript syntax validation",
-          "works": true,
-          "time_seconds": "<10",
-          "added_as_p2p": true,
-          "test_id": "test_repo_script_syntax"
-        },
-        {
-          "command": "npx prettier --check scripts/create-github-release.mjs",
-          "description": "Prettier formatting check",
-          "works": true,
-          "time_seconds": "<10",
-          "added_as_p2p": true,
-          "test_id": "test_repo_script_formatting"
-        },
-        {
-          "command": "pnpm run test:eslint",
-          "description": "ESLint checks via nx",
-          "works": false,
-          "reason": "Requires nx cloud token and full dependency tree"
-        },
-        {
-          "command": "pnpm run test:types",
-          "description": "TypeScript type checking",
-          "works": false,
-          "reason": "Requires building packages first, takes >120s"
-        },
-        {
-          "command": "pnpm run build",
-          "description": "Build all packages",
-          "works": false,
-          "reason": "Takes too long (>120s) for benchmark"
-        }
-      ],
-      "tests_added": [
-        {
-          "test_file": "tests/test_outputs.py",
-          "test_functions": [
-            "test_repo_script_syntax() - Validates JS syntax with node --check",
-            "test_repo_script_formatting() - Validates formatting with prettier --check"
-          ]
-        },
-        {
-          "manifest_file": "eval_manifest.yaml",
-          "entries": [
-            {
-              "id": "test_repo_script_syntax",
-              "type": "pass_to_pass",
-              "origin": "repo_tests"
-            },
-            {
-              "id": "test_repo_script_formatting",
-              "type": "pass_to_pass",
-              "origin": "repo_tests"
-            }
-          ]
-        }
-      ],
-      "verification": {
-        "base_commit": "ab46b5ec42296c60dc46d97481f038b8df68ed84",
-        "p2p_tests_pass": true,
-        "f2p_tests_fail_expectedly": true,
-        "test_output_summary": "11 tests: 5 passed (2 p2p + 3 unchanged f2p), 6 failed (expected f2p failures)"
-      },
-      "notes": [
-        "Discovered CI commands from .github/workflows/pr.yml",
-        "Limited p2p tests to commands that work without network/GPU and complete in <60s",
-        "Selected commands target the modified file (scripts/create-github-release.mjs)",
-        "Both p2p tests pass on base commit and will continue to pass after the fix"
-      ]
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 266.63,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -105,17 +36,17 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All 4 checks passed: Docker build succeeded, NOP test reward=0 (6 pass, 5 fail as expected), Gold test reward=1 (11/11 pass), test.sh fixed to properly write reward file",
+      "notes": "All 4 checks passed: Docker build succeeded, NOP test reward=0 (6 f2p tests fail as expected), Gold test reward=1 (16/16 pass). Rubric judge auth error but previous ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 73.58
+      "time": 59.3
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.77,
-      "notes": "ICR=1.00"
+      "time": 1.21,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -126,6 +57,38 @@
       "backend": "fireworks",
       "time": 0.0,
       "at": "2026-04-09T08:22:44.666386"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1.0,
+      "at": "2026-04-09T14:52:43.743286"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1472.88,
+      "at": "2026-04-09T14:52:43.910292"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9000.57,
+      "at": "2026-04-10T00:29:08.549545"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9000.83,
+      "at": "2026-04-10T00:29:08.716660"
     }
   ]
 }

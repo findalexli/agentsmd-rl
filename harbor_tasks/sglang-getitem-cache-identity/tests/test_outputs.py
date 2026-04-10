@@ -175,6 +175,100 @@ def test_codespell_check():
 
 
 # ---------------------------------------------------------------------------
+# Additional pass_to_pass gates from repo's pre-commit / CI
+# ---------------------------------------------------------------------------
+
+def test_check_ast():
+    """Modified Python files must have valid AST (pass_to_pass)."""
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import ast
+import sys
+from pathlib import Path
+
+files = ["{io_struct_path}", "{tokenizer_manager_path}"]
+for f in files:
+    try:
+        ast.parse(Path(f).read_text())
+    except SyntaxError as e:
+        print(f"Syntax error in {{f}}: {{e}}")
+        sys.exit(1)
+print("All Python files have valid AST")
+"""],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST validation failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_no_trailing_whitespace():
+    """Modified files must not have trailing whitespace (pass_to_pass)."""
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+from pathlib import Path
+
+files = ["{io_struct_path}", "{tokenizer_manager_path}"]
+errors = []
+for f in files:
+    content = Path(f).read_text()
+    lines = content.split('\\n')
+    for i, line in enumerate(lines, 1):
+        if line.rstrip() != line and line.strip():
+            errors.append(f"{{f}}:{{i}}: trailing whitespace")
+if errors:
+    print('\\\\n'.join(errors))
+    sys.exit(1)
+print("No trailing whitespace found")
+"""],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_end_of_file_fixer():
+    """Modified files must end with a single newline (pass_to_pass)."""
+    io_struct_path = _get_io_struct_path()
+    tokenizer_manager_path = _get_tokenizer_manager_path()
+
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+from pathlib import Path
+
+files = ["{io_struct_path}", "{tokenizer_manager_path}"]
+errors = []
+for f in files:
+    content = Path(f).read_bytes()
+    if not content.endswith(b'\\n'):
+        errors.append(f"{{f}}: missing final newline")
+    elif content.endswith(b'\\n\\n'):
+        errors.append(f"{{f}}: multiple trailing newlines")
+if errors:
+    print('\\\\n'.join(errors))
+    sys.exit(1)
+print("All files end with single newline")
+"""],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"End-of-file check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via AST inspection
 # ---------------------------------------------------------------------------
 

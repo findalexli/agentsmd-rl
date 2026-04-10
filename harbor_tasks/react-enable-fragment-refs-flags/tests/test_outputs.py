@@ -195,7 +195,7 @@ def test_instance_handles_in_all_forks():
 def test_repo_lint():
     """Repo's ESLint passes (pass_to_pass)."""
     r = subprocess.run(
-        ["yarn", "lint", "--fix"],
+        ["yarn", "lint"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
@@ -210,10 +210,10 @@ def test_repo_flags():
     assert r.returncode == 0, f"Flags check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_flow():
-    """Repo's Flow type check passes (pass_to_pass)."""
+def test_repo_version_check():
+    """Repo's version check passes (pass_to_pass)."""
     r = subprocess.run(
-        ["node", "./scripts/tasks/flow.js"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

@@ -61,7 +61,7 @@ def test_not_stub():
 # [pr_diff] fail_to_pass
 def test_core_bug_fixed():
     """LoRA GT cases use normal backend path while non-LoRA GT uses diffusers backend."""
-    # The fix changes the backend selection logic to check if it's a LoRA case
+    # The fix changes the backend selection logic to check if it is a LoRA case
     # In the fixed version, _is_lora_case() is called before forcing --backend diffusers
     src = MODIFIED_FILE.read_text()
 
@@ -69,7 +69,7 @@ def test_core_bug_fixed():
     assert "_is_lora_case" in src, "Fix not applied: _is_lora_case function not found"
 
     # The condition should check for _is_lora_case before forcing diffusers backend
-    # In GT gen mode, non-LoRA cases get --backend diffusers, LoRA cases don't
+    # In GT gen mode, non-LoRA cases get --backend diffusers, LoRA cases do not
     assert "if not _is_lora_case(case) and" in src or \
            "if not _is_lora_case(case)" in src, \
         "Fix not applied: _is_lora_case check missing in GT mode logic"
@@ -78,7 +78,7 @@ def test_core_bug_fixed():
 # [pr_diff] fail_to_pass
 def test_edge_case():
     """Dynamic LoRA loading check runs in both GT and non-GT modes."""
-    # The fix removes the 'not is_gt_gen_mode' guard from run_lora_dynamic_load_check
+    # The fix removes the not is_gt_gen_mode guard from run_lora_dynamic_load_check
     src = MODIFIED_FILE.read_text()
 
     # Find the line with run_lora_dynamic_load_check
@@ -91,8 +91,8 @@ def test_edge_case():
 
     assert found_line is not None, "run_lora_dynamic_load_check not found"
 
-    # In the fixed version, it should NOT have 'and not is_gt_gen_mode' or similar
-    # The condition should be simply 'if case.run_lora_dynamic_load_check:'
+    # In the fixed version, it should NOT have and not is_gt_gen_mode or similar
+    # The condition should be simply if case.run_lora_dynamic_load_check:
     assert "not is_gt_gen_mode" not in found_line, \
         "Fix not applied: GT mode guard still present in dynamic LoRA check"
 
@@ -105,7 +105,7 @@ def test_edge_case():
 def test_existing_tests_pass():
     """Upstream test suite (CPU-safe subset) still passes."""
     # Run a quick syntax/import check on key test files to ensure they still work
-    # Since we can't run the full test suite (requires GPU, dependencies), we
+    # Since we cannot run the full test suite (requires GPU, dependencies), we
     # verify the test files are syntactically valid
 
     test_files = [
@@ -126,3 +126,47 @@ def test_existing_tests_pass():
         )
         assert result.returncode == 0, f"Test file {test_file} has syntax errors:\n{result.stderr}"
 
+
+# [repo_tests] pass_to_pass
+def test_ruff_check():
+    """Ruff linting passes on modified file (CI standard)."""
+    # Install ruff if not present
+    subprocess.run(["pip", "install", "ruff", "-q"], check=False, capture_output=True)
+    result = subprocess.run(
+        ["ruff", "check", "--select=F401,F821", str(MODIFIED_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Ruff check failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_black_format():
+    """Black formatting check passes on modified file (CI standard)."""
+    # Install black if not present
+    subprocess.run(["pip", "install", "black", "-q"], check=False, capture_output=True)
+    result = subprocess.run(
+        ["black", "--check", str(MODIFIED_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Black format check failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_isort_check():
+    """isort import ordering check passes on modified file (CI standard)."""
+    # Install isort if not present
+    subprocess.run(["pip", "install", "isort", "-q"], check=False, capture_output=True)
+    result = subprocess.run(
+        ["isort", "--check-only", str(MODIFIED_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"isort check failed:\n{result.stderr}"

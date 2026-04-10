@@ -49,14 +49,14 @@ checks:
 
   - id: test_repo_lint_passes
     type: pass_to_pass
-    origin: agent_config
-    source: AGENTS.md (line ~17-18)
+    origin: repo_tests
+    source: .github/workflows/lint.yml
     description: "Frontend linting passes (required by AGENTS.md before pushing)"
 
   - id: test_repo_typecheck_passes
     type: pass_to_pass
-    origin: agent_config
-    source: AGENTS.md (line ~17-18)
+    origin: repo_tests
+    source: .github/workflows/lint.yml
     description: "Frontend typecheck passes (required by AGENTS.md before pushing)"
 
   - id: test_repo_translation_completeness
@@ -72,15 +72,22 @@ checks:
     description: "Frontend build succeeds (TypeScript compilation and bundling)"
 
 rubric:
-  # Soft criteria for LLM judge evaluation
-  - criterion: "Properly uses Zustand store for state management"
-    weight: 1.0
+  # The fix properly imports useConversationStore from the stores module
+  - rule: "Import useConversationStore from #/stores/conversation-store"
+    source:
+      path: "frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx"
 
-  - criterion: "Updates both Zustand store and localStorage when closing panel"
-    weight: 1.0
+  # The fix uses Zustand store to check if unpinned tab is active
+  - rule: "Use conversation store to access selectedTab and isRightPanelShown state"
+    source:
+      path: "frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx"
 
-  - criterion: "Only closes panel when unpinned tab is the currently selected tab"
-    weight: 1.0
+  # The fix destructures setRightPanelShown from localStorage hook
+  - rule: "Destructured setRightPanelShown from useConversationLocalStorageState hook"
+    source:
+      path: "frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx"
 
-  - criterion: "Follows existing code patterns in the component"
-    weight: 0.5
+  # The fix only closes panel when unpinned tab is the active selected tab
+  - rule: "Only closes right panel when selectedTab === tab && isRightPanelShown"
+    source:
+      path: "frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx"

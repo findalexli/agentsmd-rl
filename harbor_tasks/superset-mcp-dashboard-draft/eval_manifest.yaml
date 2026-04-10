@@ -75,6 +75,47 @@ checks:
     description: "Repo's MCP dashboard generation tests pass on both base and fix"
     origin: "repo_tests"
 
+  # ADDITIONAL P2P ENRICHMENT: CI validation tests
+  - id: "test_repo_schema_syntax"
+    name: "MCP schema Python syntax validation"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    weight: 1
+    description: "MCP dashboard schema file passes Python syntax check (py_compile)"
+    origin: "repo_tests"
+
+  - id: "test_repo_test_file_syntax"
+    name: "MCP test file Python syntax validation"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    weight: 1
+    description: "MCP dashboard test file passes Python syntax check (py_compile)"
+    origin: "repo_tests"
+
+  - id: "test_repo_schema_ast_parse"
+    name: "MCP schema AST parsing validation"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    weight: 1
+    description: "MCP dashboard schema file can be parsed via AST (mypy/pylint style)"
+    origin: "repo_tests"
+
+  - id: "test_repo_imports_check"
+    name: "MCP dependency imports validation"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    weight: 1
+    description: "Pydantic imports work correctly (core dependency check)"
+    origin: "repo_tests"
+
+  - id: "test_repo_unit_test_discovery"
+    name: "MCP test discovery validation"
+    type: "pass_to_pass"
+    file: "tests/test_outputs.py"
+    weight: 1
+    description: "MCP dashboard tests can be discovered via AST without importing"
+    origin: "repo_tests"
+
   # Agent config rule checks (from CLAUDE.md, AGENTS.md, etc.)
   - id: "python_type_hints"
     name: "Python code has type hints"

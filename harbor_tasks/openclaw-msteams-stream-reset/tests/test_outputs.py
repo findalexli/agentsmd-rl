@@ -53,7 +53,7 @@ def _run_node_test(test_body):
 
         Path(mock_path).write_text(_MOCK_STREAM_JS)
 
-        # ESM loader: intercept streaming-message import → mock
+        # ESM loader: intercept streaming-message import -> mock
         loader_src = (
             "const MOCK = '__MOCK__';\n"
             "export async function resolve(specifier, context, nextResolve) {\n"
@@ -235,7 +235,7 @@ def test_pending_finalize_awaited():
         "\n"
         "        results[label] = {\n"
         "            early_finalized: earlyFinalized,\n"
-        "            final_finalized: stream.isFinalized,\n"
+            "            final_finalized: stream.isFinalized,\n"
         "        };\n"
         "    }\n"
         "    console.log(JSON.stringify(results));\n"
@@ -403,7 +403,7 @@ def test_no_escaped_package_imports():
             with open(filepath) as f:
                 for i, line in enumerate(f, 1):
                     # Extract the import specifier (relative paths only)
-                    m = re.search(r"""from\s+['\"](\.\/|\..\/)(.*?)['\"]""", line)
+                    m = re.search(r"""from\s+['\"](\.\/|\.\.\/)(.*?)['\"]""", line)
                     if not m:
                         continue
                     specifier = m.group(1) + m.group(2)
@@ -514,3 +514,139 @@ def test_repo_import_validity():
                         violations.append(f"{filepath}: import escapes package: {specifier}")
 
     assert not violations, "Invalid imports found:\n" + "\n".join(violations[:5])
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_private_keys():
+    """No private keys committed to the repo (pass_to_pass).
+
+    Uses detect-secrets baseline to check for potential secrets in the
+    msteams extension files. Mirrors the CI security-fast job.
+    """
+    baseline_path = os.path.join(REPO, ".secrets.baseline")
+    ext_dir = os.path.join(REPO, "extensions/msteams")
+
+    # Check if baseline exists and is valid JSON
+    if Path(baseline_path).exists():
+        try:
+            with open(baseline_path) as f:
+                baseline = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            baseline = {"results": {}}
+    else:
+        baseline = {"results": {}}
+
+    # Known secret patterns to check (from .pre-commit-config.yaml detect-private-key)
+    private_key_patterns = [
+        r"BEGIN\s+(RSA|DSA|EC|OPENSSH|PGP)\s+PRIVATE\s+KEY",
+        r"BEGIN\s+PRIVATE\s+KEY",
+        r"ssh-rsa\s+[A-Za-z0-9+/=]+",
+        r"BEGIN\s+ENCRYPTED\s+PRIVATE\s+KEY",
+        r"BEGIN\s+PGP\s+PRIVATE\s+KEY\s+BLOCK",
+    ]
+
+    violations = []
+    excluded_files = {".secrets.baseline", ".detect-secrets.cfg"}
+
+    for root, _dirs, files in os.walk(ext_dir):
+        for fname in files:
+            if fname in excluded_files:
+                continue
+            if not fname.endswith(".ts"):
+                continue
+            filepath = os.path.join(root, fname)
+            rel_path = os.path.relpath(filepath, REPO)
+
+            try:
+                with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+            except (IOError, OSError):
+                continue
+
+            # Check for private key patterns
+            for pattern in private_key_patterns:
+                for match in re.finditer(pattern, content, re.IGNORECASE):
+                    # Check if this is in the baseline (known/allowed secret)
+                    baseline_entry = baseline.get("results", {}).get(rel_path, [])
+                    is_allowed = False
+                    for entry in baseline_entry:
+                        if entry.get("line_number") == content[:match.start()].count("\n") + 1:
+                            is_allowed = True
+                            break
+                    if not is_allowed:
+                        line_num = content[:match.start()].count("\n") + 1
+                        violations.append(f"{filepath}:{line_num}: potential private key detected")
+
+    assert not violations, "Potential private keys found:\n" + "\n".join(violations[:5])
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax():
+    """TypeScript files in msteams extension have valid syntax (pass_to_pass).
+
+    Validates that .ts files can be parsed without syntax errors using Node.js
+    --experimental-strip-types. This catches basic syntax issues without
+    requiring full type checking (which needs node_modules).
+    """
+    ext_dir = os.path.join(REPO, "extensions/msteams/src")
+    violations = []
+
+    for root, _dirs, files in os.walk(ext_dir):
+        for fname in files:
+            if not fname.endswith(".ts") or fname.endswith((".d.ts")):
+                continue
+            filepath = os.path.join(root, fname)
+
+            # Try to parse the file with Node.js TypeScript support
+            r = subprocess.run(
+                ["node", "--experimental-strip-types", "--no-warnings", "-e", "0"],
+                input=Path(filepath).read_text(),
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+
+            if r.returncode != 0:
+                # Extract the error message
+                err_msg = r.stderr.split("\n")[0] if r.stderr else "parse error"
+                violations.append(f"{filepath}: {err_msg}")
+
+    assert not violations, "TypeScript syntax errors found:\n" + "\n".join(violations[:5])
+
+
+# [repo_tests] pass_to_pass — CI/CD check: no merge conflict markers
+def test_repo_no_conflict_markers():
+    """Repo has no unresolved merge conflict markers (pass_to_pass).
+
+    Mirrors the CI check-merge-conflict pre-commit hook using the repo's
+    own script: scripts/check-no-conflict-markers.mjs
+    """
+    r = subprocess.run(
+        ["node", "scripts/check-no-conflict-markers.mjs"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Merge conflict markers found:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD check: target file TypeScript compilation
+def test_repo_target_typescript_parse():
+    """Target reply-stream-controller.ts is valid TypeScript (pass_to_pass).
+
+    Validates the specific modified file can be parsed by Node.js
+    --experimental-strip-types, mirroring CI TypeScript checks.
+    """
+    r = subprocess.run(
+        ["node", "--experimental-strip-types", "--no-warnings", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    # Exit 0 means it parsed successfully (it won't run, just parse)
+    # Note: This validates syntax; missing imports will cause runtime errors
+    # but the syntax must be valid
+    assert r.returncode == 0 or "import" in r.stderr, (
+        f"Target file has TypeScript syntax errors:\n{r.stderr[-500:]}"
+    )

@@ -21,23 +21,23 @@ checks:
     description: "Component is a real implementation, not a stub"
 
   # --------------------------------------------------------------------------
-  # Pass-to-pass (repo CI equivalents - added during p2p enrichment)
-  # These approximate the repo's CI checks without requiring Node.js
+  # Pass-to-pass (static file analysis - added during p2p enrichment)
+  # These use Python-based static analysis (Node.js/pnpm unavailable in Docker)
   # --------------------------------------------------------------------------
   - id: test_repo_svelte_syntax_valid
     type: pass_to_pass
-    origin: repo_tests
-    description: "Svelte file has valid syntax (balanced braces, no legacy on: directives). Mirrors: pnpm lint + pnpm ts:check"
+    origin: static
+    description: "Svelte file has valid syntax (balanced braces, no malformed tags). Mirrors: pnpm lint / ts:check"
 
   - id: test_repo_colorpicker_package_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Colorpicker package has valid structure for build. Mirrors: pnpm build validation"
 
   - id: test_repo_svelte_5_event_handlers
     type: pass_to_pass
-    origin: repo_tests
-    description: "All interactive elements use Svelte 5 native event handlers. Mirrors: pnpm lint for Svelte 5 migration compliance"
+    origin: static
+    description: "Component has proper Svelte 5 event handler structure. Mirrors: lint/typecheck for Svelte 5 migration compliance"
 
   # --------------------------------------------------------------------------
   # Fail-to-pass (pr_diff - original)

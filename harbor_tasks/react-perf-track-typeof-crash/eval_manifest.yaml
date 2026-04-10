@@ -64,7 +64,20 @@ checks:
     description: "Repo ESLint checks pass (pass_to_pass)"
 
 rubric:
-  # No applicable soft rules: rubric.yaml only contained process/tooling rules
-  # (run tests with flags, commit hygiene) and compiler-specific rules unrelated
-  # to this task in packages/shared/.
-  []
+  - rule: "When running tests, use --silent flag to limit output to only failures and --no-watchman to avoid sandboxing issues."
+    source:
+      path: ".claude/skills/test/SKILL.md"
+      lines: "39-42"
+      commit: "e32c1261219a9d665f392a4799b8a24ea326f1a1"
+
+  - rule: "Run Flow type checking with a specific renderer (default: dom-node) using 'yarn flow dom-node' to catch type errors before committing."
+    source:
+      path: ".claude/skills/flow/SKILL.md"
+      lines: "20-23"
+      commit: "e32c1261219a9d665f392a4799b8a24ea326f1a1"
+
+  - rule: "Before committing, run 'yarn prettier' to fix formatting and 'yarn linc' to check for remaining lint issues that would fail CI."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "8-11"
+      commit: "e32c1261219a9d665f392a4799b8a24ea326f1a1"

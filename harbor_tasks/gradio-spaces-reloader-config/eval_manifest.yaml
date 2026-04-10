@@ -57,4 +57,51 @@ checks:
     origin: repo_tests
     description: "Repo's ruff format check passes on modified file"
 
-rubric: []
+  - id: test_repo_unit_reload
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's reload module unit tests pass"
+
+  - id: test_repo_unit_utils_delete_none
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utils delete_none unit tests pass"
+
+  - id: test_repo_unit_utils_sanitize_csv
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utils sanitize CSV unit tests pass"
+
+  - id: test_repo_unit_utils_format_ner
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utils format NER unit tests pass"
+
+  - id: test_repo_unit_utils_append_suffix
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utils append unique suffix unit tests pass"
+
+  - id: test_repo_unit_utils_function_params
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's utils function params unit tests pass"
+
+rubric:
+  - rule: "Follow existing code style and patterns in the codebase. When modifying a class, check neighboring methods for naming conventions, spacing, and structure."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "10-12"
+      commit: "34ee825ae7111488655e68f983e45d55673455a2"
+
+  - rule: "Remove TODO comments when the issue is addressed. Do not leave resolved TODOs in the code."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "10-12"
+      commit: "34ee825ae7111488655e68f983e45d55673455a2"
+
+  - rule: "Code must pass ruff format and ruff lint checks as configured in pyproject.toml."
+    source:
+      path: "pyproject.toml"
+      lines: "76-113"
+      commit: "34ee825ae7111488655e68f983e45d55673455a2"

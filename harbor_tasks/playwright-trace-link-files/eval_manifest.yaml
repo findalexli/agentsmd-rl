@@ -17,6 +17,16 @@ checks:
     origin: repo_tests
     description: "ESLint passes on modified files"
 
+  - id: repo_lint_packages
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Workspace packages are consistent"
+
+  - id: repo_generate_channels
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Protocol channel generation works"
+
   - id: trace_loader_accepts_optional_tracefile
     type: fail_to_pass
     origin: pr_diff
@@ -62,4 +72,9 @@ checks:
     origin: pr_diff
     description: "Tracing stop has error handling when traceLegend is not set"
 
-rubric: []
+rubric:
+  - rule: "TraceLoader.load() must accept optional traceFile parameter as second argument for filtering trace files"
+    reference: "async load(backend: TraceLoaderBackend, traceFile?: string, unzipProgress?: (done: number, total: number) => void)"
+
+  - rule: "CLI program.ts must catch errors from cliProgram() with .catch(logErrorAndExit) for proper error handling"
+    reference: "cliProgram().catch(logErrorAndExit)"

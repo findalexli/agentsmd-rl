@@ -142,6 +142,9 @@ def test_child_stdio_struct_fields():
 # - cargo check -p deno_io
 # - cargo check -p deno_process
 # - cargo clippy -p deno_process -p deno_io -- -D warnings
+# - cargo test -p deno_io --lib
+# - cargo test -p deno_process --lib
+# - cargo fmt --check
 #
 # Skipped commands (not suitable for p2p):
 # - cargo fmt --check: requires rustfmt component, rustup sync issues
@@ -178,3 +181,33 @@ def test_cargo_clippy_process_io():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt_check():
+    """Cargo fmt check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check", "ext/process/lib.rs", "ext/io/lib.rs"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_test_deno_io():
+    """Unit tests for deno_io package pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_io", "--lib"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test deno_io failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_test_deno_process():
+    """Unit tests for deno_process package pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "deno_process", "--lib"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo test deno_process failed:\n{r.stderr[-500:]}"

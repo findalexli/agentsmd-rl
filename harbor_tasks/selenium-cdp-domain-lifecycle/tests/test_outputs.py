@@ -14,6 +14,44 @@ from pathlib import Path
 
 REPO = Path("/workspace/selenium")
 
+# Track if bazel is installed (done lazily)
+_bazel_checked = False
+_bazel_path = None
+
+
+def _ensure_bazel():
+    """Install bazelisk if needed and return the bazel path."""
+    global _bazel_checked, _bazel_path
+    if _bazel_checked:
+        return _bazel_path
+
+    # Check if bazel is available
+    r = subprocess.run(["which", "bazel"], capture_output=True, text=True)
+    if r.returncode == 0:
+        _bazel_path = "bazel"
+        _bazel_checked = True
+        return _bazel_path
+
+    # Install bazelisk
+    install_cmd = [
+        "bash", "-c",
+        "curl -sL https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64 "
+        "-o /usr/local/bin/bazelisk && chmod +x /usr/local/bin/bazelisk "
+        "&& ln -sf /usr/local/bin/bazelisk /usr/local/bin/bazel"
+    ]
+    r = subprocess.run(install_cmd, capture_output=True, text=True)
+    if r.returncode == 0:
+        _bazel_path = "bazel"
+    else:
+        _bazel_path = None
+
+    _bazel_checked = True
+    return _bazel_path
+
+
+# =============================================================================
+# Fail-to-pass tests - verify the fix is correctly applied
+# =============================================================================
 
 def test_v143domains_has_lazy_fields():
     """V143Domains class has Lazy<T> fields for network, javaScript, target, log."""
@@ -152,25 +190,44 @@ def test_devtools_domains_tests_file_exists():
     assert "Is.SameAs(domains.JavaScript)" in content
 
 
-def test_dotnet_syntax_valid():
-    """C# source files have valid syntax with proper type consistency."""
-    # Check that all three V*Domains.cs files have proper Lazy field types
-    for version in ["v143", "v144", "v145"]:
-        version_num = version.replace("v", "")
-        source_file = REPO / f"dotnet/src/webdriver/DevTools/{version}/V{version_num}Domains.cs"
-        content = source_file.read_text()
+# =============================================================================
+# Pass-to-pass tests - CI/CD gates using actual subprocess commands
+# =============================================================================
 
-        # Basic syntax checks
-        assert "class" in content, f"Missing class keyword in V{version_num}Domains.cs"
-        assert "{" in content, f"Missing opening braces in V{version_num}Domains.cs"
-        assert "}" in content, f"Missing closing braces in V{version_num}Domains.cs"
+def test_repo_bazel_build_webdriver():
+    """Bazel build of dotnet webdriver passes (pass_to_pass)."""
+    bazel = _ensure_bazel()
+    assert bazel is not None, "Could not install bazel"
 
-        # Check that all Lazy fields are properly typed (no cross-version mixing)
-        assert f"Lazy<V{version_num}Network>" in content, f"Missing or incorrect Lazy<V{version_num}Network> in {version}"
-        assert f"Lazy<V{version_num}JavaScript>" in content, f"Missing or incorrect Lazy<V{version_num}JavaScript> in {version}"
-        assert f"Lazy<V{version_num}Target>" in content, f"Missing or incorrect Lazy<V{version_num}Target> in {version}"
-        assert f"Lazy<V{version_num}Log>" in content, f"Missing or incorrect Lazy<V{version_num}Log> in {version}"
+    r = subprocess.run(
+        [bazel, "build", "//dotnet/src/webdriver:webdriver-net8.0"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bazel build failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"
 
+
+def test_repo_bazel_build_devtools():
+    """Bazel build of DevTools module passes (pass_to_pass)."""
+    bazel = _ensure_bazel()
+    assert bazel is not None, "Could not install bazel"
+
+    # Build the DevTools targets (includes v143, v144, v145)
+    r = subprocess.run(
+        [bazel, "build", "//dotnet/src/webdriver/DevTools/..."],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bazel DevTools build failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"
+
+
+# =============================================================================
+# Static pass-to-pass tests - file content validation (generic syntax checks)
+# =============================================================================
 
 def test_cs_files_balanced_braces():
     """C# source files have balanced braces (pass_to_pass)."""
@@ -202,11 +259,6 @@ def test_cs_files_balanced_braces():
 
 def test_cs_files_valid_identifiers():
     """C# source files use valid C# identifiers (pass_to_pass)."""
-    import re
-
-    # Basic C# identifier pattern (simplified)
-    identifier_pattern = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
-
     for version in ["v143", "v144", "v145"]:
         version_num = version.replace("v", "")
         source_file = REPO / f"dotnet/src/webdriver/DevTools/{version}/V{version_num}Domains.cs"
@@ -238,11 +290,6 @@ def test_cs_files_no_syntax_errors():
 
         # Check for common syntax issues
         assert ";;" not in content, f"Double semicolon found in V{version_num}Domains.cs"
-
-        # Check all string literals are properly closed (basic check)
-        quote_count = content.count('"')
-        # Note: This is a heuristic - doesn't handle escaped quotes
-        # but works for our specific files
 
         # Check class has proper inheritance
         assert "class V{}Domains : DevToolsDomains".format(version_num) in content, (

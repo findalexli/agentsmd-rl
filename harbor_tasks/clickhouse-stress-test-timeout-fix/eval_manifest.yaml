@@ -69,6 +69,37 @@ checks:
     origin: repo_tests
     description: "Bash syntax check passes on upgrade_runner.sh"
 
+  # Additional p2p tests for discovered shell scripts
+  - id: test_create_tpcds_shellcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on create_tpcds.sh"
+
+  - id: test_create_tpcds_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bash syntax check passes on create_tpcds.sh"
+
+  - id: test_create_tpch_shellcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on create_tpch.sh"
+
+  - id: test_create_tpch_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bash syntax check passes on create_tpch.sh"
+
+  - id: test_attach_gdb_lib_shellcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Shellcheck passes on attach_gdb.lib"
+
+  - id: test_attach_gdb_lib_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bash syntax check passes on attach_gdb.lib"
+
 # Agent configuration rules from AGENTS.md / CLAUDE.md
 agent_config:
   - rule: "Do not use rebase or amend - add new commits instead"
@@ -92,4 +123,21 @@ agent_config:
     applicable: true
 
 # Rubric for soft/subjective evaluation criteria (if any)
-rubric: []
+rubric:
+  - rule: "Comments should explain the 'why' behind non-obvious changes, not narrate the code"
+    source:
+      path: ".claude/skills/review/SKILL.md"
+      lines: "120-122"
+      commit: "0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661"
+
+  - rule: "Follow existing code style in shell scripts. Check neighboring .sh files for patterns."
+    source:
+      path: ".claude/skills/review/SKILL.md"
+      lines: "56"
+      commit: "0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661"
+
+  - rule: "Use clear, informative error messages that help users understand what went wrong"
+    source:
+      path: ".claude/skills/review/SKILL.md"
+      lines: "75-77"
+      commit: "0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661"

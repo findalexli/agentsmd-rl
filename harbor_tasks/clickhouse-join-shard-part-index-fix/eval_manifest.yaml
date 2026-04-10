@@ -64,46 +64,98 @@ checks:
     source: ".claude/CLAUDE.md - Write function names as `f` instead of `f()`"
     description: "Comments follow function naming convention (no () in function references)"
 
-  # Repo structure and style tests (repo_tests)
+  # Repo structure and style tests (static - file content checks, not subprocess.run)
   - id: test_target_file_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Target file exists in repo structure"
 
   - id: test_no_tabs_in_target_file
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "No tab characters in target file (spaces only)"
 
   - id: test_line_ending_lf
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "File uses LF line endings (Unix-style)"
 
   - id: test_no_trailing_whitespace
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "No trailing whitespace in modified section"
 
   - id: test_file_size_reasonable
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Target file size is reasonable (not truncated/corrupted)"
 
   - id: test_no_merge_conflict_markers
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "No merge conflict markers in file"
 
   - id: test_basic_cpp_file_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "File has valid basic C++ structure (balanced braces, includes)"
 
   - id: test_no_print_debug_statements
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "No debug print statements (cout, printf) in modified section"
+
+  # Repo CI/CD style checks (repo_tests - subprocess.run() commands)
+  - id: test_repo_clang_format_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Modified code follows clang-format style rules (no tabs, trailing whitespace)"
+
+  - id: test_repo_lf_line_endings
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: File uses LF line endings (Unix-style), not CRLF"
+
+  - id: test_repo_file_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: File has valid C++ structure for CMake build system"
+
+  - id: test_repo_code_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Modified code section has valid C++ syntax (Allman braces, balanced parens)"
+
+  # p2p_enrichment: Added subprocess.run() based tests for actual CI commands
+  - id: test_repo_no_tabs_in_target
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: No tabs in target file (via grep -P '\\t')"
+
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: No trailing whitespace (via grep -P ' $')"
+
+  - id: test_repo_lf_line_endings_subprocess
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: LF line endings (via grep -P '\\r')"
+
+  - id: test_repo_no_merge_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: No merge conflict markers (via grep -F)"
+
+  - id: test_repo_no_bom_in_file
+    type: pass_to_pass
+    origin: static
+    description: "Repo CI: No UTF-8 BOM in file"
+
+  - id: test_repo_file_has_pragma_once_if_header
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Header files have #pragma once (via head -n1)"
 
 # Rubric for LLM-only evaluation (soft/subjective rules)
 rubric:

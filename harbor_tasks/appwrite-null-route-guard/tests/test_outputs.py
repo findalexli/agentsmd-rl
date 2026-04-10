@@ -215,5 +215,117 @@ def test_repo_php_syntax_all():
         )
 
 
+def test_repo_lint():
+    """
+    P2P: Verify the modified file passes PSR-12 linting (pass_to_pass).
+    Runs Laravel Pint to check code formatting on the API controller.
+    """
+    result = subprocess.run(
+        ["vendor/bin/pint", "--test", "--config", "pint.json", str(API_PHP)],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"Linting failed on {API_PHP}:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+def test_repo_static_analysis():
+    """
+    P2P: Verify key files pass PHPStan static analysis (pass_to_pass).
+    Runs PHPStan on the modified controller file.
+    """
+    result = subprocess.run(
+        ["./vendor/bin/phpstan", "analyse", str(API_PHP), "-c", "phpstan.neon", "--memory-limit=1G", "--no-progress"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"Static analysis failed on {API_PHP}:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+def test_repo_static_analysis_full():
+    """
+    P2P: Full PHPStan static analysis on the entire codebase (pass_to_pass).
+    Runs PHPStan on all configured paths (src, app, bin, tests).
+    """
+    result = subprocess.run(
+        ["./vendor/bin/phpstan", "analyse", "-c", "phpstan.neon", "--memory-limit=1G", "--no-progress"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"Full static analysis failed:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+def test_repo_unit_cors():
+    """
+    P2P: CORS unit tests pass (pass_to_pass).
+    Tests the CORS handling logic used by API controllers.
+    """
+    result = subprocess.run(
+        ["vendor/bin/phpunit", "tests/unit/Network/CorsTest.php", "--no-progress"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"CORS unit tests failed:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+def test_repo_unit_detector():
+    """
+    P2P: Detector unit tests pass (pass_to_pass).
+    Tests the client/device detection used in API request handling.
+    """
+    result = subprocess.run(
+        ["vendor/bin/phpunit", "tests/unit/Detector/DetectorTest.php", "--no-progress"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"Detector unit tests failed:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+def test_repo_unit_collections():
+    """
+    P2P: Collections validation unit tests pass (pass_to_pass).
+    Tests collection validation logic used by the platform.
+    """
+    result = subprocess.run(
+        ["vendor/bin/phpunit", "tests/unit/General/CollectionsTest.php", "--no-progress"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"Collections unit tests failed:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+def test_repo_unit_branch_domain():
+    """
+    P2P: Branch domain validation unit tests pass (pass_to_pass).
+    Tests branch domain validation used in routing/platform logic.
+    """
+    result = subprocess.run(
+        ["vendor/bin/phpunit", "tests/unit/Filter/BranchDomainTest.php", "--no-progress"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, (
+        f"Branch domain unit tests failed:\n{result.stdout}\n{result.stderr}"
+    )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

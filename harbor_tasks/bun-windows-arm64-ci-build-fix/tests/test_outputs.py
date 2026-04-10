@@ -38,7 +38,7 @@ def test_windows_arm64_uses_bun_runtime():
     test_script = f"""
 const fs = require('fs');
 const code = fs.readFileSync('{REPO}/.buildkite/ci.mjs', 'utf8');
-if (!code.includes('target.os === "windows" && target.arch === "aarch64"')) {{
+if (!code.includes('const runtime = target.os === "windows" && target.arch === "aarch64"')) {{
     console.error('Runtime selection logic not found');
     process.exit(1);
 }}
@@ -132,13 +132,8 @@ def test_repo_lint():
 # [repo_tests] pass_to_pass
 def test_repo_typecheck():
     """Repo's TypeScript typecheck passes (pass_to_pass)."""
-    install = subprocess.run(
-        ["bun", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert install.returncode == 0, f"bun install failed: {install.stderr}"
     r = subprocess.run(
-        ["npx", "tsc", "--noEmit"],
+        ["bunx", "tsc@6.0.2", "--noEmit"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
@@ -157,3 +152,42 @@ def test_repo_banned_words():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Banned words check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_lint():
+    """Repo's package.json lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/package-json-lint.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Package JSON lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_ci():
+    """CI script parses as valid JavaScript (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", f"{REPO}/.buildkite/ci.mjs"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CI script syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_utils():
+    """Utils script parses as valid JavaScript (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", f"{REPO}/scripts/utils.mjs"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Utils script syntax check failed:\n{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_bun_build_ci_ts():
+    """Repo's ci.ts script can be built with bun (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "build", "scripts/build/ci.ts", "--target=bun"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun build ci.ts failed:\n{r.stderr[-500:]}"

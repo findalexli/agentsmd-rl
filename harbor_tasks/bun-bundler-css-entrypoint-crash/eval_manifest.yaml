@@ -74,6 +74,20 @@ checks:
     origin: pr_diff
     description: "Entry-point-to-chunk mapping is written when JS chunks are created"
 
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "225"
+      commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"
+
+  - rule: "Use comments to explain invariants, not narrate code. Comments should clarify why something is done, not restate what the code does."
+    source:
+      path: "CLAUDE.md"
+      lines: "1-5"
+      commit: "7abe6c387d0746b26eeed7fe9175e14560840cbb"
+
+  # Repo CI/CD tests - these actually run subprocess commands
   - id: test_repo_prettier_config_files
     type: pass_to_pass
     origin: repo_tests
@@ -94,28 +108,76 @@ checks:
     origin: repo_tests
     description: "Additional config files (.prettierrc, .clang-tidy) must pass Prettier formatting"
 
-  - id: test_zig_file_basic_structure
+  # New repo_tests added during p2p enrichment
+  - id: test_repo_prettier_bundler_files
     type: pass_to_pass
     origin: repo_tests
+    description: "Bundler related files (tsconfig.json) must pass Prettier formatting"
+
+  - id: test_repo_git_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository must be in a valid state (git status passes)"
+
+  - id: test_repo_package_json_valid_subprocess
+    type: pass_to_pass
+    origin: repo_tests
+    description: "package.json must be valid JSON (verified via Python subprocess)"
+
+  - id: test_repo_tsconfig_json_valid_subprocess
+    type: pass_to_pass
+    origin: repo_tests
+    description: "tsconfig.json must be valid JSON (verified via Python subprocess)"
+
+  # Static analysis tests - file reads, not subprocess commands
+  - id: test_zig_file_basic_structure
+    type: pass_to_pass
+    origin: static
     description: "Zig file must have valid basic structure (balanced braces, key constructs)"
 
   - id: test_zig_no_double_semicolons
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Zig file must not contain double semicolons"
 
   - id: test_repo_json_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "package.json and tsconfig.json must be valid JSON"
 
   - id: test_zig_function_signatures
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Key Zig functions must have valid signatures (computeChunks, Handler.next)"
 
   - id: test_repo_critical_files_exist
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Critical repo files (CLAUDE.md, build.zig, package.json, etc.) must exist"
 
+  - id: test_prettierrc_valid
+    type: pass_to_pass
+    origin: static
+    description: ".prettierrc must be valid JSON if it exists"
+
+  # Replaces test_repo_typecheck with static version
+  - id: test_tsconfig_structure
+    type: pass_to_pass
+    origin: static
+    description: "tsconfig.json must have valid structure with required fields"
+
+  # Additional repo CI tests for the bundler code change (subprocess commands)
+  - id: test_zig_computeChunks_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "computeChunks.zig must exist (verified via ls subprocess)"
+
+  - id: test_repo_find_critical_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Critical repo files must exist (verified via find subprocess)"
+
+  - id: test_python_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python scripts must have valid syntax (verified via py_compile)"

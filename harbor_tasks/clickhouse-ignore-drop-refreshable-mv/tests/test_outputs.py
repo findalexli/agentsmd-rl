@@ -15,7 +15,7 @@ def test_refreshable_view_check_exists():
         content = f.read()
 
     # Check for the comment about refreshable views
-    assert "Don't ignore DROP for refreshable materialized views" in content, \
+    assert re.search(r"Don't ignore `?DROP`? for refreshable materialized views", content), \
         "Missing comment about refreshable materialized views"
 
     # Check for the dynamic_cast to StorageMaterializedView
@@ -43,7 +43,7 @@ def test_truncate_behavior_documented():
         content = f.read()
 
     # Check for the comment explaining why TRUNCATE is problematic
-    assert "TRUNCATE doesn't stop" in content, \
+    assert re.search(r"`?TRUNCATE`? doesn't stop", content), \
         "Missing explanation about TRUNCATE not stopping refresh task"
 
     assert "orphaned view would keep refreshing indefinitely" in content, \
@@ -199,3 +199,62 @@ def test_repo_file_readable():
 
     # Check for namespace usage
     assert 'namespace DB' in content or 'namespace' in content, "File missing namespace"
+
+
+def test_repo_no_duplicate_includes():
+    """Repo's C++ files have no duplicate includes (pass_to_pass)."""
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    includes = []
+    for line in content.split('\n'):
+        if re.match(r'^#include ', line):
+            includes.append(line.strip())
+
+    include_counts = {line: includes.count(line) for line in includes}
+    duplicates = {line: count for line, count in include_counts.items() if count > 1}
+
+    assert not duplicates, f"Found duplicate includes: {duplicates}"
+
+
+def test_repo_yaml_syntax_valid():
+    """Repo's YAML files have valid syntax (pass_to_pass)."""
+    import yaml
+
+    yaml_files = [
+        os.path.join(REPO, ".github/workflows/pull_request.yml"),
+        os.path.join(REPO, ".github/workflows/master.yml"),
+    ]
+
+    errors = []
+    for yaml_file in yaml_files:
+        if os.path.exists(yaml_file):
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    yaml.safe_load(f)
+            except yaml.YAMLError as e:
+                errors.append(f"{yaml_file}: {e}")
+
+    assert not errors, f"YAML syntax errors: {'; '.join(errors)}"
+
+
+def test_repo_python_syntax_valid():
+    """Repo's Python files have valid syntax (pass_to_pass)."""
+    py_files = [
+        os.path.join(REPO, "tests/clickhouse-test"),
+        os.path.join(REPO, "ci/jobs/check_style.py"),
+    ]
+
+    errors = []
+    for py_file in py_files:
+        if os.path.exists(py_file):
+            result = subprocess.run(
+                ["python3", "-m", "py_compile", py_file],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode != 0:
+                errors.append(f"{py_file}: {result.stderr[:200]}")
+
+    assert not errors, f"Python syntax errors: {'; '.join(errors)}"

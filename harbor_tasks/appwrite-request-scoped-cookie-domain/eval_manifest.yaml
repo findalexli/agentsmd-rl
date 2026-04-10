@@ -53,12 +53,33 @@ checks:
   - id: create_session_closure_uses_params
     name: createSession closure accepts params
     type: p2p
+    origin: static
     description: Verify the createSession closure signature includes new parameters
 
   - id: php_syntax_valid
     name: PHP syntax is valid
     type: p2p
+    origin: static
     description: All modified PHP files must have valid syntax
+
+  # New pass-to-pass repo tests - using actual CI commands
+  - id: repo_composer_validate
+    name: composer.json is valid
+    type: p2p
+    origin: repo_tests
+    description: composer validate passes without errors
+
+  - id: repo_php_syntax_modified_files
+    name: PHP syntax check on modified files
+    type: p2p
+    origin: repo_tests
+    description: php -l passes on all 4 modified PHP files
+
+  - id: repo_composer_audit
+    name: composer audit passes
+    type: p2p
+    origin: repo_tests
+    description: composer audit runs successfully (may skip if no packages)
 
 # Agent config rules (from AGENTS.md, CLAUDE.md, etc.)
 agent_config:
@@ -68,7 +89,24 @@ agent_config:
   checks: []
 
 # Rubric for LLM judge evaluation (soft/subjective rules)
-rubric: []
+rubric:
+  - rule: "Use dependency injection via inject() method instead of global Config::getParam() for accessing request-scoped values like domainVerification and cookieDomain."
+    source:
+      path: "AGENTS.md"
+      lines: "45-57"
+      commit: "2dce141d1747e95e50d8d9575baae1d8ac42699b"
+
+  - rule: "When updating documents, pass only changed attributes as a sparse Document rather than passing the full document."
+    source:
+      path: "AGENTS.md"
+      lines: "83-93"
+      commit: "2dce141d1747e95e50d8d9575baae1d8ac42699b"
+
+  - rule: "HTTP endpoint action files must only be named Get.php, Create.php, Update.php, Delete.php, or XList.php. For non-CRUD operations, model as property updates (e.g., Status/Update.php instead of Block.php)."
+    source:
+      path: "src/Appwrite/Platform/AGENTS.md"
+      lines: "40-42"
+      commit: "2dce141d1747e95e50d8d9575baae1d8ac42699b"
 
 # Test mapping - each check maps to a test function
 test_mapping:
@@ -82,3 +120,6 @@ test_mapping:
   teams_membership_no_global_config: test_teams_membership_no_global_config
   create_session_closure_uses_params: test_create_session_closure_uses_params
   php_syntax_valid: test_php_syntax_valid
+  repo_composer_validate: test_repo_composer_validate
+  repo_php_syntax_modified_files: test_repo_php_syntax_modified_files
+  repo_composer_audit: test_repo_composer_audit

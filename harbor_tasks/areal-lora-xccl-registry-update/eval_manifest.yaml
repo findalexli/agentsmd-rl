@@ -41,26 +41,44 @@ checks:
       lines: "93"
       commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"
 
-
   - id: test_repo_python_compilation
     type: pass_to_pass
-    origin: repo_ci
-    description: "Repo CI: Modified Python files compile without errors"
+    origin: static
+    description: "Modified Python files compile without py_compile errors"
 
   - id: test_repo_key_functions_exist
     type: pass_to_pass
-    origin: repo_ci
-    description: "Repo CI: Key functions modified in PR exist and are extractable"
+    origin: static
+    description: "Key functions modified in PR exist and are extractable via AST"
 
   - id: test_repo_function_bodies_parse
     type: pass_to_pass
-    origin: repo_ci
-    description: "Repo CI: Key function bodies parse without syntax errors"
+    origin: static
+    description: "Key function bodies parse without syntax errors via AST"
 
   - id: test_repo_ruff_linting
     type: pass_to_pass
-    origin: repo_ci
-    description: "Repo CI: Modified files pass ruff linting (matching .pre-commit-config.yaml v0.14.9)"
+    origin: repo_tests
+    description: "Modified files pass ruff linting (CI command: ruff check)"
+    command: "ruff check areal/engine/vllm_ext/areal_vllm_server.py areal/engine/vllm_remote.py"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass ruff format check (CI command: ruff format --check)"
+    command: "ruff format --check areal/engine/vllm_ext/areal_vllm_server.py areal/engine/vllm_remote.py"
+
+  - id: test_repo_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no trailing whitespace (CI check from pre-commit)"
+    command: "pre-commit hook trailing-whitespace (simulated)"
+
+  - id: test_repo_end_of_file_newline
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files end with a newline (CI check from pre-commit)"
+    command: "pre-commit hook end-of-file-fixer (simulated)"
 
 rubric:
   - rule: "Follow existing code patterns in the same module"

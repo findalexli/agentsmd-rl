@@ -299,7 +299,7 @@ public class ValidateSyncFix {
         int idx = src.indexOf("void " + name + "(");
         if (idx < 0) idx = src.indexOf(name + "(");
         if (idx < 0) return "";
-        int brace = src.indexOf('{', idx);
+        int brace = src.indexOf("{", idx);
         if (brace < 0) return "";
         int count = 1, end = brace + 1;
         while (end < src.length() && count > 0) {
@@ -364,3 +364,95 @@ def test_java_no_syntax_errors():
 
     # Check for valid package declaration
     assert re.search(r"^package\s+[\w.]+;", src, re.MULTILINE), "Package declaration not found or invalid"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) -- CI/CD tests that run actual repo commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_apache_license_header():
+    """Target Java file has Apache License 2.0 header (pass_to_pass).
+
+    Validates that the modified Java file contains the required Apache License
+    header using a subprocess call to grep for the license pattern.
+    This mirrors the RAT (Release Audit Tool) check from CI.
+    """
+    license_pattern = "Licensed to the Apache Software Foundation"
+    r = subprocess.run(
+        ["grep", "-q", license_pattern, TARGET_FILE],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, f"Apache License header not found in {TARGET_FILE}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_status_clean():
+    """Git repository is valid with expected file state (pass_to_pass).
+
+    Validates the git repository status using subprocess.
+    Allows the target file to be modified (expected during fix application)
+    and untracked files in /logs.
+    """
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    lines = [l for l in r.stdout.strip().split("\n") if l.strip()]
+    # Allow: untracked in /logs, or modified target file
+    allowed_patterns = [
+        "?? /logs",
+        "M runners/flink/src/main/java/org/apache/beam/runners/flink/translation/wrappers/streaming/io/source/LazyFlinkSourceSplitEnumerator.java",
+    ]
+    unexpected = []
+    for line in lines:
+        if not any(line.startswith(p) or line == p for p in allowed_patterns):
+            unexpected.append(line)
+    assert len(unexpected) == 0, f"Repository has unexpected changes: {unexpected}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_target_file_exists():
+    """Target file exists at expected path (pass_to_pass).
+
+    Uses subprocess to verify the LazyFlinkSourceSplitEnumerator.java file
+    exists in the repository at the expected location.
+    """
+    r = subprocess.run(
+        ["test", "-f", TARGET_FILE],
+        capture_output=True,
+    )
+    assert r.returncode == 0, f"Target file not found: {TARGET_FILE}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_java_package_structure():
+    """Java package declaration matches directory structure (pass_to_pass).
+
+    Validates that the package declaration in the Java file matches
+    the actual directory structure using subprocess-based file path checks.
+    """
+    expected_package = "org.apache.beam.runners.flink.translation.wrappers.streaming.io.source"
+    r = subprocess.run(
+        ["grep", "-q", f"^package {expected_package};", TARGET_FILE],
+        capture_output=True,
+    )
+    assert r.returncode == 0, f"Package declaration doesn't match expected: {expected_package}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_has_class_declaration():
+    """Target file contains valid public class declaration (pass_to_pass).
+
+    Uses subprocess-based grep to verify the Java file contains
+    the expected public class declaration.
+    """
+    r = subprocess.run(
+        ["grep", "-q", r"public class LazyFlinkSourceSplitEnumerator", TARGET_FILE],
+        capture_output=True,
+    )
+    assert r.returncode == 0, "Public class declaration not found in target file"

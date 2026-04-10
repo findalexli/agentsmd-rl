@@ -52,6 +52,27 @@ checks:
     origin: repo_tests
     description: "Composer autoload works correctly"
 
+  # CI/CD repo tests (enriched)
+  - id: test_composer_validate
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: composer.json validates successfully"
+
+  - id: test_pint_linter
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: PSR-12 code style check via Laravel Pint passes"
+
+  - id: test_phpstan_analysis
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Static analysis via PHPStan passes for modified files"
+
+  - id: test_composer_audit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Composer security audit passes with no vulnerabilities"
+
   # Agent config checks
   - id: test_code_style_psr12
     type: fail_to_pass
@@ -62,4 +83,29 @@ checks:
       rule: "Follow PSR-12 coding standard, use PSR-4 autoloading, strict type declarations, comprehensive PHPDoc"
     description: "Code follows PSR-12 standard and PSR-4 autoloading"
 
-rubric: []
+rubric:
+  - rule: "Follow existing code patterns and alphabetical ordering. When adding new SDK imports and cases, maintain the alphabetical order of existing language imports and switch cases."
+    source:
+      path: "src/Appwrite/Platform/AGENTS.md"
+      lines: "18-24"
+      commit: "1ab05acc93a9f3c9b1e4dfb55dded2597f06a838"
+    reference: |
+      use Appwrite\SDK\Language\Rust;
+      case 'rust':
+          $config = new Rust();
+          break;
+
+  - rule: "Maintain consistent array structure. When adding new SDK configurations, follow the exact same key order and formatting as existing SDK entries in the array."
+    source:
+      path: "AGENTS.md"
+      lines: "25-30"
+      commit: "1ab05acc93a9f3c9b1e4dfb55dded2597f06a838"
+    reference: |
+      'key' => 'rust',
+      'name' => 'Rust',
+      'version' => '0.1.0',
+      'url' => 'https://github.com/appwrite/sdk-for-rust',
+      'package' => 'https://crates.io/crates/appwrite',
+      'enabled' => true,
+      'beta' => true,
+      'dev' => true

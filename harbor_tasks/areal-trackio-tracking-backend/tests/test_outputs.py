@@ -563,6 +563,43 @@ def test_no_wildcard_imports():
 # Pass-to-pass (repo_tests) — CI/CD validation
 # ---------------------------------------------------------------------------
 
+def test_repo_ruff_format():
+    """Modified files are formatted according to ruff format (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/api/cli_args.py",
+         "areal/utils/logging.py", "areal/utils/stats_logger.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_repo_ruff_lint():
+    """Modified files pass ruff linter checks (pass_to_pass).
+
+    Ignores UP042 (enum inheritance style) as it's a pre-existing codebase issue.
+    """
+    r = subprocess.run(
+        ["ruff", "check", "--ignore", "UP042", "areal/api/cli_args.py",
+         "areal/utils/logging.py", "areal/utils/stats_logger.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint check failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_repo_python_syntax():
+    """Modified files have valid Python syntax (pass_to_pass)."""
+    for fname in [
+        "areal/api/cli_args.py",
+        "areal/utils/logging.py",
+        "areal/utils/stats_logger.py",
+    ]:
+        src = Path(f"{REPO}/{fname}").read_text()
+        try:
+            ast.parse(src)
+        except SyntaxError as e:
+            raise AssertionError(f"Syntax error in {fname}: {e}")
+
+
 def test_repo_yaml_valid():
     """Repo's YAML configuration files are syntactically valid (pass_to_pass)."""
     import yaml

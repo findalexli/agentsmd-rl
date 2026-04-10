@@ -66,6 +66,36 @@ print("PASS")
 # Pass-to-pass (repo_tests / static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass
+def test_repo_syntax_check():
+    """Repo CI: Python syntax check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/calculator.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_check():
+    """Repo CI: Module imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import calculator"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_multiply_regression():
+    """Repo CI: multiply function still works (regression test, pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import calculator; result = calculator.multiply(3, 4); assert result == 12, f'Expected 12, got {result}'"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Multiply test failed:\n{r.stderr}"
+
+
 # [static] pass_to_pass
 def test_existing_function_unchanged():
     """The multiply function still works correctly."""
@@ -96,6 +126,5 @@ def test_not_stub():
             # Check it has an actual return with an operation
             for stmt in node.body:
                 if isinstance(stmt, ast.Return):
-                    # Should have some operation, not just a constant or pass
+                    # Should have some operation, not just a constant
                     assert not isinstance(stmt.value, ast.Constant), "Function returns constant (stub)"
-                    assert not isinstance(stmt.value, ast.NameConstant), "Function returns constant (stub)"

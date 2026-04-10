@@ -263,3 +263,115 @@ def test_modified_headers_have_guards():
             f"{header}: Missing or invalid header guard (expected #ifndef ELECTRON_*_H_)"
         assert re.search(endif_pattern, content), \
             f"{header}: Missing or invalid #endif comment (expected // ELECTRON_*_H_)"
+
+
+def test_cpplint():
+    """
+    P2P: Modified C++ files must pass cpplint checks.
+
+    Repo CI requires all C++ code to pass cpplint style checks.
+    Uses the same filters as Electron's CI (from lint.js).
+    """
+    # Install cpplint first
+    install_r = subprocess.run(
+        ["pip", "install", "cpplint", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # cpplint may already be installed, ignore install errors
+
+    # Same filters as used in Electron's lint.js (CPPLINT_FILTERS)
+    cpplint_filters = (
+        "-build/include,-build/include_order,-build/namespaces,"
+        "-readability/casting,-runtime/int,-whitespace/braces,"
+        "-build/c++11,-build/header_guard,-readability/todo,"
+        "-runtime/references,-whitespace/comma,-whitespace/end_of_line,"
+        "-whitespace/forcolon,-whitespace/indent,-whitespace/line_length,"
+        "-whitespace/newline,-whitespace/operators,-whitespace/parens,"
+        "-whitespace/semicolon,-whitespace/tab"
+    )
+
+    modified_files = [
+        "shell/browser/web_contents_permission_helper.h",
+        "shell/browser/web_contents_permission_helper.cc",
+        "shell/browser/api/electron_api_web_contents.cc",
+        "shell/browser/serial/electron_serial_delegate.cc",
+    ]
+
+    r = subprocess.run(
+        ["python3", "/usr/local/lib/python3.12/site-packages/cpplint.py",
+         "--filter=" + cpplint_filters] + modified_files,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"cpplint check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_modified_files_exist():
+    """
+    P2P: All modified files must exist in the repository.
+
+    Verifies that the files modified by the PR exist and are readable.
+    """
+    modified_files = [
+        "shell/browser/web_contents_permission_helper.h",
+        "shell/browser/web_contents_permission_helper.cc",
+        "shell/browser/api/electron_api_web_contents.cc",
+        "shell/browser/serial/electron_serial_delegate.cc",
+    ]
+
+    for filepath in modified_files:
+        full_path = REPO / filepath
+        assert full_path.exists(), f"Modified file does not exist: {filepath}"
+        assert full_path.is_file(), f"Modified path is not a file: {filepath}"
+        # Verify file is readable and non-empty
+        content = full_path.read_text()
+        assert len(content) > 0, f"Modified file is empty: {filepath}"
+
+
+def test_serial_delegate_has_can_request_port_permission():
+    """
+    P2P: ElectronSerialDelegate must have CanRequestPortPermission method.
+
+    Verifies the class structure is as expected before modifications.
+    """
+    content = read_file("shell/browser/serial/electron_serial_delegate.cc")
+
+    # Must have CanRequestPortPermission function
+    assert "ElectronSerialDelegate::CanRequestPortPermission" in content, \
+        "ElectronSerialDelegate must have CanRequestPortPermission method"
+
+
+def test_web_contents_permission_helper_structure():
+    """
+    P2P: WebContentsPermissionHelper must have expected class structure.
+
+    Verifies that the class has the expected methods before modification.
+    """
+    h_content = read_file("shell/browser/web_contents_permission_helper.h")
+    cc_content = read_file("shell/browser/web_contents_permission_helper.cc")
+
+    # Check for class definition in header
+    assert "class WebContentsPermissionHelper" in h_content, \
+        "WebContentsPermissionHelper class must be defined in header"
+
+    # Check for expected methods in header
+    assert "CheckMediaAccessPermission" in h_content, \
+        "CheckMediaAccessPermission must be declared in header"
+    assert "CheckSerialAccessPermission" in h_content, \
+        "CheckSerialAccessPermission must be declared in header"
+    assert "CheckPermission" in h_content, \
+        "CheckPermission must be declared in header"
+
+    # Check for implementations in cc file
+    assert "WebContentsPermissionHelper::CheckMediaAccessPermission" in cc_content, \
+        "CheckMediaAccessPermission must be implemented"
+    assert "WebContentsPermissionHelper::CheckSerialAccessPermission" in cc_content, \
+        "CheckSerialAccessPermission must be implemented"
+    assert "WebContentsPermissionHelper::CheckPermission" in cc_content, \
+        "CheckPermission must be implemented"

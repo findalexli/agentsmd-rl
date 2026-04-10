@@ -189,6 +189,91 @@ CSPROJ
         assert pattern not in output, f"Syntax error found: {pattern}\n{output[:500]}"
 
 
+def test_repo_dotnet_format():
+    """
+    Pass-to-pass: Repo code follows .NET formatting conventions.
+
+    Runs dotnet format to check that the webdriver project follows
+    standard C# formatting conventions (editorconfig compliance).
+    """
+    result = subprocess.run(
+        ["bash", "-c", f"""
+        cd {REPO}/dotnet
+
+        # Create temporary solution file
+        dotnet new sln -n CheckSln 2>/dev/null
+        dotnet sln CheckSln.sln add src/webdriver/Selenium.WebDriver.csproj 2>/dev/null
+
+        # Check format with error severity only (ignores warnings like unused usings)
+        dotnet format CheckSln.sln --verify-no-changes --severity error 2>&1
+        echo EXIT:$?
+        """],
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    # Check for actual exit code in output (last line should be EXIT:N)
+    output = result.stdout + result.stderr
+    assert "EXIT:0" in output, f"dotnet format found formatting issues:\n{output[-1000:]}"
+
+
+def test_repo_file_header():
+    """
+    Pass-to-pass: C# source files have proper copyright headers.
+
+    Verifies the target file starts with the standard Selenium copyright header.
+    """
+    result = subprocess.run(
+        ["bash", "-c", f"head -20 {TARGET_FILE} | grep -c '<copyright file=\"JsonExtensions.cs\"' || true"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+
+    count = int(result.stdout.strip() or 0)
+    assert count > 0, "Target file should have proper copyright header with file attribute"
+
+
+def test_repo_jsonextensions_compiles():
+    """
+    Pass-to-pass: JsonExtensions.cs compiles without errors.
+
+    Validates that the modified file can be compiled standalone.
+    """
+    result = subprocess.run(
+        ["bash", "-c", f"""
+        cd /tmp
+        mkdir -p json_ext_check
+        cd json_ext_check
+
+        # Create minimal project
+        cat > check.csproj << 'CSPROJ'
+<Project Sdk=\"Microsoft.NET.Sdk\">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+  </PropertyGroup>
+</Project>
+CSPROJ
+
+        # Copy the target file
+        cp {TARGET_FILE} .
+
+        # Build and capture exit code
+        dotnet build check.csproj --verbosity quiet 2>&1
+        echo EXIT:$?
+        """],
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    output = result.stdout + result.stderr
+    assert "EXIT:0" in output, f"JsonExtensions.cs failed to compile:\n{output[-1000:]}"
+
+
 # Alias for backward compatibility
 test_discriminator_basic_extraction = test_valuetextequals_usage
 test_discriminator_with_nested_objects = test_correct_read_skip_pattern

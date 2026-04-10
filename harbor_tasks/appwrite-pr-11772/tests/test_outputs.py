@@ -4,7 +4,6 @@ This verifies that the Create.php file properly handles concurrent
 database metadata bootstrapping without separate existence checks.
 """
 
-import ast
 import json
 import re
 import subprocess
@@ -15,6 +14,11 @@ import yaml
 
 REPO = Path("/workspace/appwrite")
 TARGET_FILE = REPO / "src/Appwrite/Platform/Modules/Databases/Http/VectorsDB/Collections/Create.php"
+
+COMPOSER_JSON = REPO / "composer.json"
+PINT_JSON = REPO / "pint.json"
+PHPSTAN_NEON = REPO / "phpstan.neon"
+PHPUNIT_XML = REPO / "phpunit.xml"
 
 
 def test_target_file_exists():
@@ -107,7 +111,7 @@ def test_no_pre_check_exists():
     # This is a negative test - we're checking the bad pattern is NOT present
 
     # Look for the bad pattern: exists check wrapping create
-    bad_pattern = r'if\s*\(\s*!\s*\$dbForDatabases->exists\s*\([^)]+\)\s*\)\s*\{[^}]*\$dbForDatabases->create\s*\('
+    bad_pattern = r'if\s*\(\s*!\s*\$dbForDatabases->exists\s*\([^)]*\)\s*\)\s*\{[^}]*\$dbForDatabases->create\s*\('
     match = re.search(bad_pattern, content, re.DOTALL)
     assert match is None, \
         "Must NOT pre-check exists() before calling create() - this is the race condition being fixed"
@@ -119,7 +123,7 @@ def test_create_called_in_loop():
 
     # Verify that $dbForDatabases->create() is inside a for loop
     # Look for create() call followed by break inside loop braces
-    create_in_loop = r'for\s*\([^)]+\)\s*\{[^}]*\$dbForDatabases->create\s*\(\s*\)[^}]*break\s*;[^}]*\}'
+    create_in_loop = r'for\s*\([^)]*\)\s*\{[^}]*\$dbForDatabases->create\s*\(\s*\)[^}]*break\s*;[^}]*\}'
     assert re.search(create_in_loop, content, re.DOTALL), \
         "$dbForDatabases->create() must be called inside the retry loop with a break statement"
 
@@ -168,19 +172,57 @@ def test_retry_logic_comprehensive():
 
 
 # =============================================================================
-# PASS-TO-PASS TESTS - Verify repo CI/CD checks pass on both base and fixed
+# PASS-TO-PASS TESTS - Repo CI/CD tests (origin: repo_tests)
+# These run actual CI commands via subprocess.run()
 # =============================================================================
-# These tests validate that the repository's CI/CD pipeline would pass on the
-# code, ensuring the fix doesn't break existing functionality.
 
-COMPOSER_JSON = REPO / "composer.json"
-PINT_JSON = REPO / "pint.json"
-PHPSTAN_NEON = REPO / "phpstan.neon"
-PHPUNIT_XML = REPO / "phpunit.xml"
+
+def test_composer_validate():
+    """Repo's composer.json passes composer validation (pass_to_pass)."""
+    result = subprocess.run(
+        ["composer", "validate", "--no-check-publish", str(COMPOSER_JSON)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"composer validate failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_composer_audit():
+    """Repo's dependencies pass composer security audit (pass_to_pass)."""
+    result = subprocess.run(
+        ["composer", "audit", "--no-interaction"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Audit returns 0 on success, 1 on warnings, 2 on errors
+    # We accept 0 and 1 (warnings are OK for p2p)
+    assert result.returncode in [0, 1], f"composer audit found critical issues:\n{result.stderr}"
+
+
+def test_php_syntax_check():
+    """Target PHP file passes php -l syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["php", "-l", str(TARGET_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"PHP syntax check failed:\n{result.stderr}"
+
+
+# =============================================================================
+# PASS-TO-PASS TESTS - Static file validation (origin: static)
+# These validate file structure without running CI commands
+# =============================================================================
 
 
 def test_composer_json_valid():
-    """Repo's composer.json is valid JSON (pass_to_pass)."""
+    """Repo's composer.json is valid JSON with required structure (pass_to_pass)."""
     assert COMPOSER_JSON.exists(), "composer.json must exist"
     content = COMPOSER_JSON.read_text()
     try:
@@ -201,7 +243,7 @@ def test_composer_json_valid():
 
 
 def test_pint_json_valid():
-    """Repo's pint.json (linter config) is valid JSON (pass_to_pass)."""
+    """Repo's pint.json (linter config) is valid JSON with PSR-12 preset (pass_to_pass)."""
     assert PINT_JSON.exists(), "pint.json must exist"
     content = PINT_JSON.read_text()
     try:
@@ -225,6 +267,7 @@ def test_phpstan_config_valid():
 
     # Basic structure validation
     assert data is not None, "phpstan.neon must not be empty"
+    assert "parameters" in data, "phpstan.neon must have parameters section"
 
 
 def test_phpunit_xml_valid():
@@ -239,7 +282,7 @@ def test_phpunit_xml_valid():
 
 
 def test_target_file_no_syntax_errors():
-    """Target PHP file has no obvious syntax errors (pass_to_pass)."""
+    """Target PHP file has balanced braces/parens/brackets (pass_to_pass)."""
     content = TARGET_FILE.read_text()
 
     # Check for balanced braces
@@ -256,37 +299,6 @@ def test_target_file_no_syntax_errors():
     open_bracket = content.count('[')
     close_bracket = content.count(']')
     assert open_bracket == close_bracket, f"Unbalanced brackets: {open_bracket} open, {close_bracket} close"
-
-    # Check for semicolons at end of statements (basic check)
-    # PHP class methods should have semicolons after statements
-    lines = content.split('\n')
-    in_multiline_comment = False
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-
-        # Skip empty lines, comments, and common patterns that don't need semicolons
-        if not stripped:
-            continue
-        if stripped.startswith('//') or stripped.startswith('#'):
-            continue
-        if stripped.startswith('/*'):
-            in_multiline_comment = True
-        if in_multiline_comment:
-            if '*/' in stripped:
-                in_multiline_comment = False
-            continue
-
-        # Skip lines that don't need semicolons
-        skip_patterns = [
-            '{', '}', ')', '(', '//', '/*', '*/', '*',
-            'if ', 'else ', 'elseif ', 'for ', 'foreach ', 'while ', 'switch ',
-            'try ', 'catch ', 'function ', 'class ', 'namespace ',
-            'echo ', 'print ', 'return ', 'break', 'continue',
-        ]
-        if any(stripped.startswith(p) for p in skip_patterns):
-            continue
-        if stripped.endswith('{') or stripped.endswith('}') or stripped.endswith(')') or stripped.endswith('('):
-            continue
 
 
 def test_php_namespace_declarations_valid():

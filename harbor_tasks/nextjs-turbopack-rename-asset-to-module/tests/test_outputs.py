@@ -161,3 +161,33 @@ def test_repo_cargo_test_turbopack_core():
         cwd=REPO,
     )
     assert r.returncode == 0, f"cargo test failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_cargo_fmt_check():
+    """Repo's Rust code passes cargo fmt --check (pass_to_pass).
+
+    This verifies that all Rust code follows the repo's formatting conventions.
+    """
+    r = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_clippy_turbopack_core():
+    """Repo's cargo clippy passes on turbopack-core crate (pass_to_pass).
+
+    This verifies that the modified crate has no lint warnings.
+    """
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "turbopack-core", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"

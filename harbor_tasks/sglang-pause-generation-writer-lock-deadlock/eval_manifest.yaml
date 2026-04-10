@@ -22,6 +22,26 @@ checks:
     origin: repo_tests
     description: "Repo's ruff lint checks pass (F401, F821)"
 
+  - id: test_repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import ordering check passes on modified file"
+
+  - id: test_repo_black_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black formatting check passes on modified file"
+
+  - id: test_repo_codespell_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's codespell check passes on modified file"
+
+  - id: test_repo_precommit_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pre-commit check-ast hook passes on modified file"
+
   - id: update_weights_from_ipc_uses_pause_check
     type: fail_to_pass
     origin: pr_diff
@@ -43,4 +63,20 @@ checks:
     description: "Function maintains proper async structure and exception handling"
 
 rubric:
-  []
+  - rule: "Add a short trailing comment explaining why that header is included (for example `// For TensorMatcher, SymbolicSize, SymbolicDevice`). This matches the current JIT kernel style and keeps include usage self-documenting."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "29-30"
+      commit: "8c3d80eabec2d2a41ccff4d15b5fc81e59d24fbe"
+
+  - rule: "Use comments to explain invariants and the reasoning behind non-obvious logic, not to narrate what the code does. Explanatory comments should answer 'why' rather than 'what'."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "297-298"
+      commit: "8c3d80eabec2d2a41ccff4d15b5fc81e59d24fbe"
+
+  - rule: "Follow existing code patterns and conventions in neighboring functions. When fixing a bug or adding a feature, check similar functions in the same file for established patterns (e.g., conditional lock acquisition, nullcontext usage, error handling)."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "1-4"
+      commit: "8c3d80eabec2d2a41ccff4d15b5fc81e59d24fbe"

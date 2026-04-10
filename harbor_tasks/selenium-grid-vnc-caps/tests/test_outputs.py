@@ -206,3 +206,20 @@ def test_repo_bazel_query_grid():
     assert result.returncode == 0, f"Bazel query failed:\n{result.stderr[-500:]}"
     # Should return at least one target
     assert result.stdout.strip(), "Bazel query returned no targets"
+
+
+def test_repo_node_options_test():
+    """
+    Pass-to-pass: NodeOptionsTest passes.
+    This test covers grid node configuration options, which is related to the
+    SessionCapabilitiesMutator component being fixed (pass_to_pass).
+    """
+    result = subprocess.run(
+        ["bazel", "test", "//java/test/org/openqa/selenium/grid/node/config:NodeOptionsTest",
+         "--test_output=errors"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600
+    )
+    assert result.returncode == 0, f"NodeOptionsTest failed:\n{result.stderr[-1000:]}"

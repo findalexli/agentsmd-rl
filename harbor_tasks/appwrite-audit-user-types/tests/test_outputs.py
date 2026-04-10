@@ -235,4 +235,13 @@ def test_repo_phpstan_modified():
 if __name__ == "__main__":
     # Run all tests
     import pytest
-    sys.exit(pytest.main([__file__, "-v"]))
+    exit_code = pytest.main([__file__, "-v"])
+    try:
+        import os
+        os.makedirs("/logs/verifier", exist_ok=True)
+        with open("/logs/verifier/reward.txt", "w") as f:
+            f.write("1" if exit_code == 0 else "0")
+    except Exception as e:
+        print(f"Failed to write reward.txt: {e}")
+    sys.exit(exit_code)
+

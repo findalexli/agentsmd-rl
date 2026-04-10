@@ -47,7 +47,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests using subprocess
+# Fail-to-pass (pr_diff) - core behavioral tests using subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -133,10 +133,10 @@ def test_forward_passes_device_no_redundant_to():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — regression + anti-stub
+# Pass-to-pass - regression + anti-stub
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_file_structure_intact():
     """modeling_xlnet.py retains expected classes and key methods."""
     src = Path(TARGET).read_text()
@@ -158,7 +158,7 @@ def test_not_stub():
     _, _, func_node = _get_method_node("XLNetModel", "relative_positional_encoding")
 
     meaningful = [s for s in func_node.body if not isinstance(s, (ast.Pass, ast.Expr))]
-    assert len(meaningful) >= 5, f"Only {len(meaningful)} meaningful statements — likely a stub"
+    assert len(meaningful) >= 5, f"Only {len(meaningful)} meaningful statements - likely a stub"
 
     arange_count = sum(
         1
@@ -197,7 +197,11 @@ def test_device_keyword_in_signature():
         raise AssertionError("device parameter has no default value, expected None")
 
 
-# [repo_tests] pass_to_pass - CI checks that work on base commit
+# ---------------------------------------------------------------------------
+# Pass-to-pass - CI checks (repo_tests) that work on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
 def test_repo_ruff_check():
     """Repo's ruff lint check passes on xlnet module (pass_to_pass)."""
     r = subprocess.run(
@@ -207,6 +211,7 @@ def test_repo_ruff_check():
     assert r.returncode == 0, f"Ruff check failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass
 def test_repo_ruff_format():
     """Repo's ruff format check passes on xlnet module (pass_to_pass)."""
     r = subprocess.run(
@@ -216,34 +221,96 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
-def test_repo_model_imports():
-    """Repo's xlnet model imports work correctly (pass_to_pass)."""
-    # Use the same pattern as existing tests - check from /workspace/transformers
-    code = """
-import sys
-sys.path.insert(0, '/workspace/transformers/src')
-
-# Check syntax and structure without full imports
+# [repo_tests] pass_to_pass
+def test_repo_xlnet_ast_parses():
+    """XLNet modeling file parses as valid Python (pass_to_pass)."""
+    code = f"""
 import ast
-src = open('src/transformers/models/xlnet/modeling_xlnet.py').read()
+src = open('{REPO}/src/transformers/models/xlnet/modeling_xlnet.py').read()
 tree = ast.parse(src)
-
-# Check for key classes
-class_names = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
-assert 'XLNetModel' in class_names
-assert 'XLNetPreTrainedModel' in class_names
-
-# Check for key methods
-func_names = [n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
-assert 'relative_positional_encoding' in func_names
-assert 'forward' in func_names
-assert 'positional_embedding' in func_names
-
-print("IMPORT_OK")
+print("PARSE_OK")
 """
     r = subprocess.run(
         [sys.executable, "-c", code],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True, text=True, timeout=60,
     )
-    assert r.returncode == 0, f"Import test failed: {r.stderr}"
-    assert "IMPORT_OK" in r.stdout, f"Import test did not complete: {r.stdout}"
+    assert r.returncode == 0, f"AST parse failed: {r.stderr}"
+    assert "PARSE_OK" in r.stdout, f"Parse did not complete: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_xlnet_structure():
+    """XLNet modeling file has expected classes and methods (pass_to_pass)."""
+    code = f"""
+import ast
+src = open('{REPO}/src/transformers/models/xlnet/modeling_xlnet.py').read()
+tree = ast.parse(src)
+
+# Check for key classes
+class_names = {{n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}}
+assert "XLNetModel" in class_names, "XLNetModel not found"
+assert "XLNetPreTrainedModel" in class_names, "XLNetPreTrainedModel not found"
+
+# Check for key methods
+func_names = {{n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}}
+assert "relative_positional_encoding" in func_names, "relative_positional_encoding not found"
+assert "forward" in func_names, "forward not found"
+assert "positional_embedding" in func_names, "positional_embedding not found"
+
+print("STRUCTURE_OK")
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Structure check failed: {r.stderr}"
+    assert "STRUCTURE_OK" in r.stdout, f"Structure check did not complete: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_xlnet_relative_positional_encoding_not_stub():
+    """XLNet relative_positional_encoding has substantial logic, not a stub (pass_to_pass)."""
+    code = f"""
+import ast
+src = open('{REPO}/src/transformers/models/xlnet/modeling_xlnet.py').read()
+tree = ast.parse(src)
+
+# Find the XLNetModel class and relative_positional_encoding method
+xlnet_model = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "XLNetModel":
+        xlnet_model = node
+        break
+
+assert xlnet_model is not None, "XLNetModel class not found"
+
+# Find relative_positional_encoding method
+rpe_method = None
+for item in xlnet_model.body:
+    if isinstance(item, ast.FunctionDef) and item.name == "relative_positional_encoding":
+        rpe_method = item
+        break
+
+assert rpe_method is not None, "relative_positional_encoding not found"
+
+# Check it has substantial logic (not just Pass)
+meaningful = [s for s in rpe_method.body if not isinstance(s, (ast.Pass, ast.Expr))]
+assert len(meaningful) >= 5, f"Only {{len(meaningful)}} meaningful statements - likely a stub"
+
+# Check for torch.arange calls
+arange_count = sum(
+    1 for node in ast.walk(rpe_method)
+    if isinstance(node, ast.Call)
+    and isinstance(node.func, ast.Attribute)
+    and node.func.attr == "arange"
+)
+assert arange_count >= 3, f"Only {{arange_count}} torch.arange calls, expected >=3"
+
+print("NOT_STUB_OK")
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Not-stub check failed: {r.stderr}"
+    assert "NOT_STUB_OK" in r.stdout, f"Not-stub check did not complete: {r.stdout}"

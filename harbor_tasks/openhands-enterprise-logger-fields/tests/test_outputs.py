@@ -193,6 +193,23 @@ def test_repo_unit_tests():
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-1000:]}"
 
 
+def test_repo_ruff_format():
+    """Repo's Ruff format check passes on enterprise/server (pass_to_pass).
+
+    Verifies that all Python files in the server directory follow
+    the project's code formatting standards.
+    """
+    r = subprocess.run(
+        ["poetry", "run", "ruff", "format", "--check",
+         "--config", "dev_config/python/ruff.toml", "server"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=ENTERPRISE_DIR,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
 def test_repo_pyproject_valid():
     """Repo's pyproject.toml is valid (pass_to_pass)."""
     import tomllib

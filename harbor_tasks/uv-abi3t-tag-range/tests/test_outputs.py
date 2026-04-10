@@ -62,7 +62,7 @@ def _run_cargo_test(test_name, timeout=300):
     """Run a specific cargo test in the uv-platform-tags crate."""
     return subprocess.run(
         ["cargo", "test", "--package", "uv-platform-tags", "--",
-         test_name, "--exact"],
+         f"tags::tests::{test_name}", "--exact"],
         cwd=REPO, capture_output=True, timeout=timeout,
     )
 
@@ -90,7 +90,7 @@ def test_abi3t_tags_for_lower_versions():
     """Free-threaded CPython 3.15 must emit abi3t tags for versions 3.2-3.14."""
     original = _inject_custom_tests()
     try:
-        r = _run_cargo_test("tests::abi3t_emitted_for_cp32_with_freethreaded_315")
+        r = _run_cargo_test("abi3t_emitted_for_cp32_with_freethreaded_315")
         assert r.returncode == 0, (
             f"abi3t tags not emitted for lower versions:\n"
             f"{r.stdout.decode()}\n{r.stderr.decode()}"
@@ -104,7 +104,7 @@ def test_abi3t_tags_with_python313():
     """Free-threaded CPython 3.13 must also emit abi3t tags (3.2-3.13)."""
     original = _inject_custom_tests()
     try:
-        r = _run_cargo_test("tests::abi3t_emitted_for_freethreaded_313")
+        r = _run_cargo_test("abi3t_emitted_for_freethreaded_313")
         assert r.returncode == 0, (
             f"abi3t tags not emitted for 3.13t:\n"
             f"{r.stdout.decode()}\n{r.stderr.decode()}"
@@ -120,7 +120,7 @@ def test_abi3t_tags_with_python313():
 # [repo_tests] pass_to_pass
 def test_existing_tests_pass():
     """Upstream snapshot test for free-threaded tags still passes."""
-    r = _run_cargo_test("tests::test_system_tags_freethreaded_include_abi3t")
+    r = _run_cargo_test("test_system_tags_freethreaded_include_abi3t")
     assert r.returncode == 0, (
         f"Existing tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
@@ -148,4 +148,16 @@ def test_uv_platform_tags_clippy():
     )
     assert r.returncode == 0, (
         f"Clippy failed:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_uv_platform_tags_cargo_fmt():
+    """Rustfmt check passes for uv-platform-tags crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--package", "uv-platform-tags", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo fmt check failed:\n{r.stderr[-500:]}"
     )

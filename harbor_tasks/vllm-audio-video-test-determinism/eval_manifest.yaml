@@ -72,7 +72,24 @@ checks:
     origin: repo_tests
     description: "Repo's boolean context manager check passes on target test file"
 
-rubric: []
-# No applicable soft rules — AGENTS.md rules are process-oriented
-# (duplicate checks, PR descriptions, commit trailers, tooling requirements)
-# and not verifiable from code diffs.
+  - id: test_repo_forbidden_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's forbidden imports check passes on target test file"
+
+  - id: test_repo_torch_cuda
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's torch.cuda API check passes on target test file"
+
+  - id: test_repo_init_lazy_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's root __init__ lazy imports check passes"
+
+rubric:
+  - rule: "AI-assisted commits must include attribution trailers (Co-authored-by:, Assisted-by:, or Generated-by:)"
+    source:
+      path: "AGENTS.md"
+      lines: "85-94"
+      commit: "c133f3374625652c88e122fff995e4126c4635c0"

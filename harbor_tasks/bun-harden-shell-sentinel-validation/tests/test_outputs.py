@@ -40,7 +40,7 @@ def _run_bun_ts(script_content: str, timeout: int = 30) -> tuple[int, str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -64,7 +64,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests (source code verification)
+# Fail-to-pass (pr_diff) - core behavioral tests (source code verification)
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -167,7 +167,7 @@ def test_raw_sentinel_no_crash():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (repo_tests / static) - regression + anti-stub
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -206,50 +206,20 @@ def test_bounds_check_logic_present():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD checks that should pass on base commit
+# Pass-to-pass (repo_tests) - CI/CD checks that should pass on base commit
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_repo_banned_words():
     """Repo banned words check passes (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c",
-         "apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 && "
-         "curl -fsSL https://bun.sh/install | bash >/dev/null 2>&1 && "
-         "export PATH=\"/root/.bun/bin:$PATH\" && "
-         "bun install >/dev/null 2>&1 && "
-         "bun test test/internal/ban-words.test.ts"],
+        ["bun", "./test/internal/ban-words.test.ts"],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=60,
         cwd=REPO,
     )
     assert r.returncode == 0, f"Banned words test failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_modified_shell_files_exist():
-    """Modified shell Zig files exist and are readable (pass_to_pass)."""
-    files_to_check = [
-        "src/shell/shell.zig",
-        "src/shell/Builtin.zig",
-        "src/shell/states/Cmd.zig",
-        "src/shell/interpreter.zig",
-    ]
-    for file_path in files_to_check:
-        full_path = Path(f"{REPO}/{file_path}")
-        assert full_path.exists(), f"{file_path} must exist"
-        content = full_path.read_text()
-        assert len(content) > 0, f"{file_path} must not be empty"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_shell_zig_has_structure():
-    """Basic check that shell Zig files have valid structure (pass_to_pass)."""
-    # Check interpreter.zig has expected structure
-    interpreter_zig = Path(f"{REPO}/src/shell/interpreter.zig").read_text()
-    assert "pub const Interpreter" in interpreter_zig or "Interpreter" in interpreter_zig, "Interpreter must be defined"
-    assert "@import(\"std\")" in interpreter_zig, "Must import std"
 
 
 # [repo_tests] pass_to_pass
@@ -261,9 +231,8 @@ def test_repo_shell_file_tests():
         text=True,
         timeout=120,
         cwd=REPO,
-        env={**os.environ, "PATH": f"/root/.bun/bin:{os.environ.get('PATH', '')}"}
     )
-    assert r.returncode == 0, f"Shell file tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Shell file tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -275,9 +244,47 @@ def test_repo_shell_instance_tests():
         text=True,
         timeout=120,
         cwd=REPO,
-        env={**os.environ, "PATH": f"/root/.bun/bin:{os.environ.get('PATH', '')}"}
     )
-    assert r.returncode == 0, f"Shell instance tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Shell instance tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_default_tests():
+    """Repo's Bun shell default tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/bunshell-default.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell default tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_throw_tests():
+    """Repo's Bun shell throw tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/throw.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell throw tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shell_output_tests():
+    """Repo's Bun shell output tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/shell/shelloutput.test.ts", "--timeout", "30"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell output tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -289,20 +296,30 @@ def test_repo_run_shell_tests():
         text=True,
         timeout=120,
         cwd=REPO,
-        env={**os.environ, "PATH": f"/root/.bun/bin:{os.environ.get('PATH', '')}"}
     )
-    assert r.returncode == 0, f"CLI run-shell tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"CLI run-shell tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_typecheck():
     """Repo's TypeScript typecheck passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["bunx", "tsc", "--noEmit", "--project", "tsconfig.json"],
+    # Install dependencies first
+    r1 = subprocess.run(
+        ["bun", "install"],
         capture_output=True,
         text=True,
         timeout=120,
         cwd=REPO,
-        env={**os.environ, "PATH": f"/root/.bun/bin:{os.environ.get('PATH', '')}"}
     )
-    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    if r1.returncode != 0:
+        # install failure is not a test failure - might be network issues
+        pass
+
+    r = subprocess.run(
+        ["bun", "run", "node_modules/typescript/bin/tsc", "--noEmit", "--project", "tsconfig.json"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

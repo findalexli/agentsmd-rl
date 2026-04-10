@@ -158,6 +158,24 @@ def test_cargo_test_sui_rpc_api_passes():
     assert result.returncode == 0, f"Tests failed to compile:\n{result.stderr[-1000:]}"
 
 
+def test_cargo_xlint_passes():
+    """Pass-to-pass: License check passes (repo CI/CD).
+
+    cargo xlint verifies that all source files have proper license headers
+    (Copyright (c) Mysten Labs, Inc. and SPDX-License-Identifier: Apache-2.0).
+    This is run in CI to ensure license compliance.
+    """
+    result = subprocess.run(
+        ["cargo", "xlint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0, f"License check failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
 def test_code_has_proper_documentation():
     """Fail-to-pass: Constant must have explanatory comment."""
     file_path = os.path.join(REPO, TARGET_FILE)

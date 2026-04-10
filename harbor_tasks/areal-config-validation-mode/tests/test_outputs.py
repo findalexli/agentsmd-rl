@@ -220,3 +220,33 @@ def test_no_print_statements():
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name) and node.func.id == "print":
                 assert False, "print() call found in cli_args.py — must use areal.utils.logging"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD tests (pass_to_pass) — verify repo's own tests pass on base
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_validation():
+    """Modified file must have valid Python syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/areal/api/cli_args.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Modified file must pass ruff format check (pass_to_pass)."""
+    # Install ruff if not present
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=120
+    )
+    # Run format check on modified file
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/areal/api/cli_args.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}\n{r.stdout}"

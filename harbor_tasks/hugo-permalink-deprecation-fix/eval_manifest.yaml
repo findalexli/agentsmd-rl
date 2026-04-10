@@ -24,68 +24,114 @@ checks:
       the deprecated .Site.Data pattern.
 
   - id: test_permalink_integration_tests_pass
-    name: "Permalink integration tests pass"
-    type: p2p
+    name: "Permalink integration tests pass with new tokens"
+    type: f2p
     description: |
       Runs the Go permalink integration tests (TestPermalinks) and
-      verifies they pass without deprecation errors.
+      verifies they pass after the :filename → :contentbasename fix.
+      This is an f2p test because the base commit has deprecated tokens.
 
   - id: test_pagebundler_tests_pass
     name: "Page bundler tests pass with :slugorcontentbasename"
-    type: p2p
+    type: f2p
     description: |
       Runs the page bundler tests (TestHTMLFilesIsue11999) and verifies
-      they pass with the :slugorcontentbasename token.
+      they pass after the :slugorfilename → :slugorcontentbasename fix.
+      This is an f2p test because the base commit has deprecated tokens.
 
   - id: test_multihost_tests_pass
     name: "Multihost tests pass with :contentbasename"
-    type: p2p
+    type: f2p
     description: |
       Runs the multihost tests (TestMultiHost) and verifies they pass
-      with the updated permalink configuration.
+      after the :filename → :contentbasename fix.
+      This is an f2p test because the base commit has deprecated tokens.
 
   - id: test_hugo_modules_data_access
     name: "Hugo modules tests pass with hugo.Data"
-    type: p2p
+    type: f2p
     description: |
       Runs the hugo modules tests (TestMount) and verifies they pass
-      with the hugo.Data pattern.
+      after the .Site.Data → hugo.Data fix.
+      This is an f2p test because the base commit uses deprecated patterns.
 
   - id: test_page_path_tests_pass
     name: "Page path tests pass with :contentbasename"
-    type: p2p
+    type: f2p
     description: |
       Runs the page path tests (TestPagePathDisablePathToLower) and
-      verifies they pass with the updated permalink configuration.
+      verifies they pass after the :filename → :contentbasename fix.
+      This is an f2p test because the base commit has deprecated tokens.
 
   - id: test_repo_go_build
     name: "Repo Go build passes"
     type: p2p
-    origin: repo_ci
+    origin: repo_tests
     description: |
       Verifies that the entire Hugo codebase compiles successfully with
-      `go build ./...`. This is a basic pass-to-pass check ensuring the
-      repo builds on both base and fixed commits.
+      `go build ./...`. This is a true p2p check - the code builds
+      at both base and gold commits since the changes are in test files.
 
   - id: test_repo_go_vet
     name: "Repo go vet passes on key packages"
     type: p2p
-    origin: repo_ci
+    origin: repo_tests
     description: |
       Runs `go vet` on key packages (./common/hugo/..., ./hugolib/...,
-      ./resources/page/...) to perform static analysis checks. This mirrors
-      the Hugo CI checks on packages relevant to the PR changes, while avoiding
-      resource issues from running on the entire codebase.
+      ./resources/page/...) to perform static analysis checks. This is a
+      true p2p check - static analysis passes at both base and gold commits.
 
   - id: test_repo_gofmt
     name: "Repo gofmt passes"
     type: p2p
-    origin: repo_ci
+    origin: repo_tests
     description: |
       Verifies all Go files are properly formatted using `gofmt -l .`.
-      Empty output indicates all files are correctly formatted.
+      This is a true p2p check - formatting is consistent at both commits.
 
-rubric: []
+  - id: test_repo_go_mod_verify
+    name: "Go module verification passes"
+    type: p2p
+    origin: repo_tests
+    description: |
+      Runs `go mod verify` to check that dependencies have not been
+      tampered with. This is a standard CI check that validates module
+      integrity and should pass at both base and gold commits.
+
+  - id: test_repo_check_sh_exists
+    name: "Repo check.sh script is present"
+    type: p2p
+    origin: repo_tests
+    description: |
+      Verifies that the check.sh script exists and is a valid bash script.
+      This script (gofmt, staticcheck, tests) is the repo's primary CI
+      entry point. This is a lightweight p2p check that only verifies
+      script presence, not full execution (which would take too long).
+
+rubric:
+  - rule: "Brevity is good. Don't write a novel in code, comments, or commit messages. Debug utility comments for deprecation handling are acceptable."
+    source:
+      path: "AGENTS.md"
+      lines: "1,9"
+      commit: "fa8658111f9c79b3f6381273fe822854a759fe1a"
+
+  - rule: "Assume maintainers are Go experts - don't explain the obvious with comments. Temporary debug utilities (e.g., hdebug) with brief explanations are acceptable."
+    source:
+      path: "AGENTS.md"
+      lines: "2-4"
+      commit: "fa8658111f9c79b3f6381273fe822854a759fe1a"
+
+  - rule: "In tests, use qt matchers (e.g., b.Assert(err, qt.ErrorMatches, ...)) instead of raw if/t.Fatal checks."
+    source:
+      path: "AGENTS.md"
+      lines: "8"
+      commit: "fa8658111f9c79b3f6381273fe822854a759fe1a"
+
+  - rule: "In tests, always use the latest Hugo specification for layouts (e.g., layouts/page.html not layouts/_default/single.html)."
+    source:
+      path: "AGENTS.md"
+      lines: "9"
+      commit: "fa8658111f9c79b3f6381273fe822854a759fe1a"
 
 agent_config:
   files:

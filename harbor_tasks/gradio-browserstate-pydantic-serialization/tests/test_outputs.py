@@ -150,6 +150,26 @@ def test_ruff_format_gradio_components():
     )
 
 
+# [repo_tests] pass_to_pass — repo CI/CD: semgrep security check
+def test_semgrep_browser_state():
+    """Repo's semgrep security scan passes on browser_state.py (pass_to_pass).
+
+    Mirrors the semgrep CI workflow that runs on PR changes.
+    Uses semgrep community rules to check for security issues.
+    """
+    # Ensure semgrep is installed
+    subprocess.run(["pip", "install", "semgrep", "-q"], check=True, timeout=120)
+    result = subprocess.run(
+        ["semgrep", "--config=auto", "--error", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, (
+        f"semgrep check failed on browser_state.py:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax check
 # ---------------------------------------------------------------------------

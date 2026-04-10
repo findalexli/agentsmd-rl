@@ -192,6 +192,26 @@ def test_repo_vet_cri_all():
     assert r.returncode == 0, f"go vet on all CRI packages failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_go_mod_verify():
+    """Repo's go modules verify successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "mod", "verify"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=GO_ENV
+    )
+    assert r.returncode == 0, f"go mod verify failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_test_util_all():
+    """Repo's util package tests all pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "test", "./internal/cri/util/...", "-count=1", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env=GO_ENV
+    )
+    assert r.returncode == 0, f"util package tests failed:\n{r.stderr[-500:]}"
+
+
 def test_deprecated_newstring_not_used():
     """Fail-to-pass: NewString function should not exist or be used."""
     result = subprocess.run(
@@ -228,6 +248,8 @@ if __name__ == "__main__":
         test_repo_vet_cri,
         test_repo_build_cri_all,
         test_repo_vet_cri_all,
+        test_repo_go_mod_verify,
+        test_repo_test_util_all,
     ]
 
     passed = 0

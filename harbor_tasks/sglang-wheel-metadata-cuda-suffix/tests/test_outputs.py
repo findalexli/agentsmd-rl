@@ -201,6 +201,36 @@ def test_rename_wheels_executable():
     assert os.access(SCRIPT, os.X_OK), f"{SCRIPT} is not executable"
 
 
+# [repo_tests] pass_to_pass — build.sh syntax check
+def test_build_sh_syntax():
+    """build.sh must have valid bash syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", f"{REPO}/sgl-kernel/build.sh"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"build.sh has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — kernel-runner-setup.sh syntax check
+def test_kernel_runner_setup_sh_syntax():
+    """kernel-runner-setup.sh must have valid bash syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", f"{REPO}/sgl-kernel/kernel-runner-setup.sh"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"kernel-runner-setup.sh has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — wheel module available
+def test_wheel_module_installed():
+    """wheel Python module must be installed (required by rename_wheels.sh) (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import wheel; print(wheel.__version__)"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"wheel module not installed or import failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -65,13 +65,13 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_shell_flush_skips_css_only_outlining():
     """During shell flush, stylesheets-only content should NOT trigger outlining."""
-    # Test with varying stylesheet counts — all should return false when in shell
+    # Test with varying stylesheet counts - all should return false when in shell
     for size in [1, 3, 7]:
         state = f'{{ stylesheets: {{ size: {size} }}, suspenseyImages: false }}'
         output = _extract_and_eval_has_suspensey(state, "true")
@@ -147,7 +147,7 @@ def test_all_renderers_updated():
     ]
     for filepath in configs:
         content = Path(filepath).read_text()
-        # Find hasSuspenseyContent signature — must include flushingInShell or equivalent 2nd param
+        # Find hasSuspenseyContent signature - must include flushingInShell or equivalent 2nd param
         fn_match = re.search(
             r'hasSuspenseyContent\s*\(([^)]*)\)',
             content,
@@ -164,7 +164,7 @@ def test_all_renderers_updated():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression
+# Pass-to-pass (pr_diff) - regression
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -179,7 +179,7 @@ def test_streaming_still_outlines_for_css():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD gates
+# Pass-to-pass (repo_tests) - CI/CD gates
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -236,7 +236,7 @@ def test_repo_fizz_server():
 def test_repo_fizz_shell_hydration():
     """Repo's ReactDOMFizzShellHydration tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzShellHydration"],
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzShellHydration-test"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Fizz shell hydration tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
@@ -260,3 +260,53 @@ def test_repo_fizz_server_node():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Fizz server node tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_print_warnings():
+    """Repo's print warnings check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["./scripts/ci/test_print_warnings.sh"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print warnings check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_dom_float():
+    """Repo's ReactDOMFloat tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFloat"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"DOM Float tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fizz_view_transition():
+    """Repo's ReactDOMFizzViewTransition tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzViewTransition"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fizz view transition tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fizz_form():
+    """Repo's ReactDOMFizzForm tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzForm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fizz form tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_fizz_suspense_list():
+    """Repo's ReactDOMFizzSuspenseList tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=ReactDOMFizzSuspenseList"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fizz suspense list tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

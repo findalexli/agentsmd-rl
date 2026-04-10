@@ -100,7 +100,7 @@ index 5166429e324..acf5cdcd9a2 100644
      ->inject('apiKey')
 -    ->action(function (Http $utopia, Request $request, Response $response, Document $project, User $user, Event $queueForEvents, Audit $queueForAudits, Context $usage, UsagePublisher $publisherForUsage, Delete $queueForDeletes, EventDatabase $queueForDatabase, Build $queueForBuilds, Messaging $queueForMessaging, Func $queueForFunctions, Event $queueForWebhooks, Realtime $queueForRealtime, Database $dbForProject, Authorization $authorization, callable $timelimit, EventProcessor $eventProcessor, Bus $bus, ?Key $apiKey) use ($parseLabel) {
 +    ->inject('mode')
-+    ->action(function (Http $utopia, Request $request, Response $response, Document $project, User $user, Event $queueForEvents, Audit $queueForAudits, Context $usage, UsagePublisher $publisherForUsage, Delete $queueForDeletes, EventDatabase $queueForDatabase, Build $queueForBuilds, Messaging $queueForMessaging, Func $queueForFunctions, Event $queueForWebhooks, Realtime $queueForRealtime, Database $dbForProject, Authorization $documentDatabase, callable $timelimit, EventProcessor $eventProcessor, Bus $bus, ?Key $apiKey, string $mode) use ($parseLabel) {
++    ->action(function (Http $utopia, Request $request, Response $response, Document $project, User $user, Event $queueForEvents, Audit $queueForAudits, Context $usage, UsagePublisher $publisherForUsage, Delete $queueForDeletes, EventDatabase $queueForDatabase, Build $queueForBuilds, Messaging $queueForMessaging, Func $queueForFunctions, Event $queueForWebhooks, Realtime $queueForRealtime, Database $dbForProject, Authorization $authorization, callable $timelimit, EventProcessor $eventProcessor, Bus $bus, ?Key $apiKey, string $mode) use ($parseLabel) {
 
          $responsePayload = $response->getPayload();
 
@@ -195,7 +195,7 @@ index 486807d5f9a..acdb6defc7b 100644
                  'osCode' => $os['osCode'],
 diff --git a/src/Appwrite/Utopia/Response/Model/Log.php b/src/Appwrite/Utopia/Response/Model/Log.php
 index a8c00280d3f..1e48a6bc89e 100644
---- a/src/Appwrite/Utopia/Response/Log.php
+--- a/src/Appwrite/Utopia/Response/Model/Log.php
 +++ b/src/Appwrite/Utopia/Response/Model/Log.php
 @@ -40,6 +40,12 @@ public function __construct()
                  'default' => '',

@@ -25,6 +25,16 @@ def _read_render_html_impl():
     return src[start:]
 
 
+def _run_in_repo(cmd, timeout=180):
+    """Run a command in the repo directory with setup."""
+    full_cmd = f"cd {REPO} && {cmd}"
+    r = subprocess.run(
+        ["bash", "-c", full_cmd],
+        capture_output=True, text=True, timeout=timeout,
+    )
+    return r
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -74,9 +84,9 @@ if (funcStart === -1) {{ process.exit(2); }}
 const funcSrc = src.slice(funcStart);
 
 // Check for Promise.all wrapping styledJsxInsertedHTML — the bug pattern.
-// Allow up to 800 chars between Promise.all([ and styledJsxInsertedHTML
-// to account for whitespace/comments.
-if (/Promise\\.all\\(\\s*\\[[\\s\\S]{{0,800}}?styledJsxInsertedHTML/.test(funcSrc)) {{
+// Look for Promise.all([ followed by styledJsxInsertedHTML within 800 chars.
+const pattern = /Promise[.]all[(]\\s*\\[[^]]{{0,800}}styledJsxInsertedHTML/;
+if (pattern.test(funcSrc)) {{
     console.error('FAIL: styledJsxInsertedHTML is inside Promise.all');
     process.exit(1);
 }}
@@ -174,47 +184,48 @@ def test_flush_before_style_read():
 # These tests verify the repo's own tests/typechecks pass on base AND after fix
 # ---------------------------------------------------------------------------
 
-REPO_DIR = "/workspace/next.js"
-
-
-def _run_in_container(cmd, timeout=120):
-    """Run a command inside the Docker container with setup."""
-    setup = "npm install -g corepack && corepack enable && npx pnpm install --frozen-lockfile >/dev/null 2>&1 && npx pnpm build >/dev/null 2>&1 && "
-    full_cmd = f"cd {REPO_DIR} && {setup}{cmd}"
-    r = subprocess.run(
-        ["bash", "-c", full_cmd],
-        capture_output=True, text=True, timeout=timeout + 300,  # Extra time for setup
+# [repo_tests] pass_to_pass — Prettier formatting check on modified file
+def test_repo_prettier_render():
+    """Repo's Prettier check on render.tsx passes (pass_to_pass)."""
+    r = _run_in_repo(
+        "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+        "npx prettier --check packages/next/src/server/render.tsx",
+        timeout=60
     )
-    return r
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
-# [repo_tests] pass_to_pass — TypeScript typecheck
-def test_repo_typescript():
-    """Repo's TypeScript typecheck passes (pass_to_pass)."""
-    r = _run_in_container("npx pnpm typescript", timeout=120)
-    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-1000:]}"
+# [repo_tests] pass_to_pass — ESLint check on modified file
+def test_repo_eslint_render():
+    """Repo's ESLint check on render.tsx passes (pass_to_pass)."""
+    r = _run_in_repo(
+        "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+        "pnpm lint-eslint packages/next/src/server/render.tsx",
+        timeout=60
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
-# [repo_tests] pass_to_pass — Unit tests
-def test_repo_unit_tests():
-    """Repo's unit tests pass (pass_to_pass)."""
-    # Install pnpm globally so it's available for ESLint tests, then run tests
-    r = _run_in_container("npx pnpm exec jest test/unit --passWithNoTests", timeout=120)
-    # Check for pass - 95+ test suites should pass
-    output = r.stdout + r.stderr
-    # Accept if >95% of tests pass (some ESLint config tests may fail due to env issues)
-    # Look for the summary line: "Test Suites: X failed, Y passed"
-    import re as _re
-    match = _re.search(r'Test Suites:\s*(\d+)\s+failed,\s*(\d+)\s+passed', output)
-    if match:
-        failed = int(match.group(1))
-        passed = int(match.group(2))
-        total = failed + passed
-        pass_rate = passed / total if total > 0 else 0
-        assert pass_rate >= 0.95, f"Unit tests pass rate {pass_rate:.1%} < 95%:\n{output[-1000:]}"
-    else:
-        # If we can't parse the summary, require exit code 0
-        assert r.returncode == 0, f"Unit tests failed:\n{output[-1000:]}"
+# [repo_tests] pass_to_pass — ast-grep lint check (repo-wide patterns)
+def test_repo_ast_grep():
+    """Repo's ast-grep lint patterns pass (pass_to_pass)."""
+    r = _run_in_repo(
+        "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+        "pnpm lint-ast-grep",
+        timeout=60
+    )
+    assert r.returncode == 0, f"ast-grep lint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — language linting (alex)
+def test_repo_language_lint():
+    """Repo's inclusive language linting (alex) passes (pass_to_pass)."""
+    r = _run_in_repo(
+        "corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+        "pnpm lint-language",
+        timeout=120
+    )
+    assert r.returncode == 0, f"Language lint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

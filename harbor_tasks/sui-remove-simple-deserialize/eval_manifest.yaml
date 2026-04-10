@@ -83,5 +83,21 @@ checks:
     origin: repo_tests
     description: "cargo build --all-targets should pass on move-core-types (repo CI check)"
 
-# No rubric rules - this is a straightforward cleanup task
-rubric: []
+rubric:
+  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead. When removing unused code, delete it completely rather than suppressing warnings."
+    source:
+      path: "CLAUDE.md"
+      lines: "117"
+      commit: "53de0108098a9c041edc28ce4083f8dc9436a4d3"
+
+  - rule: "ALWAYS run cargo xclippy after finishing development to ensure code passes all linting checks. Code cleanup changes must not introduce new clippy warnings."
+    source:
+      path: "CLAUDE.md"
+      lines: "115"
+      commit: "53de0108098a9c041edc28ce4083f8dc9436a4d3"
+
+  - rule: "Use #[cfg(test)] for test-only code used within the same crate. When modifying tests alongside code changes, ensure the test code follows the same quality standards as production code."
+    source:
+      path: "CLAUDE.md"
+      lines: "104-106"
+      commit: "53de0108098a9c041edc28ce4083f8dc9436a4d3"

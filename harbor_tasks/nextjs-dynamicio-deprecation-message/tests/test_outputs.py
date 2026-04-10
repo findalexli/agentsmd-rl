@@ -140,9 +140,39 @@ def test_repo_prettier():
         ["bash", "-c", "cd /workspace/next.js && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    
+
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/next.js && npx prettier --check packages/next/src/server/config.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_typescript():
+    """Repo's TypeScript type check passes (pass_to_pass)."""
+    # Install dependencies and build first (needed for type check)
+    subprocess.run(
+        ["bash", "-c", "cd /workspace/next.js && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run build >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/next.js && npx tsc --noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests():
+    """Repo's unit tests for config warnings pass (pass_to_pass)."""
+    # Install dependencies and build first (needed for jest)
+    subprocess.run(
+        ["bash", "-c", "cd /workspace/next.js && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run build >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/next.js && npx jest test/unit/warn-removed-experimental-config.test.ts --runInBand"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

@@ -85,25 +85,37 @@ checks:
     origin: task_tests
     description: "Required imports are present"
 
+  # Repo CI tests - these run actual CI commands
+  - id: test_repo_biome_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Biome linting passes on Cascader component"
+
+  - id: test_repo_cascader_style_file_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cascader style file is valid TypeScript"
+
+  - id: test_repo_node_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Node.js version is compatible"
+
 rubric:
-  - rule: "Use CSS-in-JS with @ant-design/cssinjs, never hardcode colors/sizes"
-    source: ".github/copilot-instructions.md"
-    category: "code_quality"
+  - rule: "Use CSS-in-JS with @ant-design/cssinjs for all styling, never use raw CSS strings"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "62"
+      commit: "1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299"
 
-  - rule: "Support both light and dark themes using design tokens (no hardcoded values)"
-    source: ".github/copilot-instructions.md"
-    category: "code_quality"
+  - rule: "Use CSS logical properties for RTL support (e.g., margin-inline-start instead of margin-left)"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "68"
+      commit: "1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299"
 
-  - rule: "Use CSS logical properties for RTL support (e.g., margin-inline-start)"
-    source: ".github/copilot-instructions.md"
-    category: "code_quality"
-
-  - rule: "Demo imports use absolute paths (antd, antd/es/*), never relative paths"
-    source: "CLAUDE.md, AGENTS.md"
-    category: "conventions"
-    notes: "If adding a demo file"
-
-  - rule: "Test imports use relative paths (.., ../index), never absolute paths"
-    source: "CLAUDE.md, AGENTS.md"
-    category: "conventions"
-    notes: "If adding a test file"
+  - rule: "Respect prefers-reduced-motion for CSS animations and transitions"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "69"
+      commit: "1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299"

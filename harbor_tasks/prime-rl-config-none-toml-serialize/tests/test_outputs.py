@@ -29,6 +29,39 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------
 
 
+# [repo_tests] pass_to_pass - TOML config files must be valid
+def test_repo_toml_configs_valid():
+    """All TOML config files in the repo must be valid (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            "import tomllib; from pathlib import Path; "
+            "[tomllib.load(open(f, 'rb')) for f in (list(Path('configs').rglob('*.toml')) + list(Path('examples').rglob('*.toml')))]; "
+            "print('TOML OK')",
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TOML validation failed:\n{r.stderr[-500:]}"
+    assert "TOML OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass - Config module must import correctly
+def test_repo_config_module_imports():
+    """Config module must import and have required exports (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            "from prime_rl.utils.config import cli, BaseConfig; "
+            "assert hasattr(BaseConfig, '_none_str_to_none'), '_none_str_to_none missing'; "
+            "assert callable(cli), 'cli not callable'; "
+            "print('Config imports OK')",
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config import test failed:\n{r.stderr[-500:]}"
+    assert "Config imports OK" in r.stdout
+
+
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified files (config.py, all entrypoints) must parse without errors."""

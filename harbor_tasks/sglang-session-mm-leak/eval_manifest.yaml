@@ -42,4 +42,34 @@ checks:
     origin: repo_tests
     description: "All modified Python files compile without syntax errors"
 
-rubric: []
+  - id: ruff_lint_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on modified files (F401, F821 checks)"
+
+  - id: black_format_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black formatter passes on modified files"
+
+  - id: isort_imports_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import ordering passes on modified files"
+
+rubric:
+  - rule: "Extract reusable operations into methods rather than duplicating inline loops. The gold solution adds a release_features() method to MultimodalInputs and calls it from multiple locations."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "389-394"
+      commit: "c2b3e42ad64521c018443f7efe294658a0b1da3b"
+  - rule: "Follow existing code patterns in the same file. When modifying schedule_batch.py, check neighboring methods and classes for naming conventions, documentation style, and structure."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "296-298"
+      commit: "c2b3e42ad64521c018443f7efe294658a0b1da3b"
+  - rule: "Add clear docstrings to new public methods explaining their purpose."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "337-347"
+      commit: "c2b3e42ad64521c018443f7efe294658a0b1da3b"

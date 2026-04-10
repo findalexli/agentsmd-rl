@@ -193,3 +193,21 @@ def test_repo_rustfmt():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Rustfmt check failed:\n{r.stdout[-500:]}"
+
+
+def test_repo_xlint():
+    """Repo's license headers pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "xlint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
+
+
+def test_build_system_packages_check():
+    """The modified build-system-packages test compiles (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "sui-framework", "--test", "build-system-packages"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build system packages check failed:\n{r.stderr[-500:]}"

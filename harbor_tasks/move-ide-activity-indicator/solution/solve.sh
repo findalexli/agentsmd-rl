@@ -12,7 +12,7 @@ fi
 # Apply the gold patch
 git apply <<'PATCH'
 diff --git a/external-crates/move/crates/move-analyzer/editors/code/.eslintrc.json b/external-crates/move/crates/move-analyzer/editors/code/.eslintrc.json
-index 3de7bd269775..b78aa66d96f6 100644
+index 3de7bd2697..b78aa66d96 100644
 --- a/external-crates/move/crates/move-analyzer/editors/code/.eslintrc.json
 +++ b/external-crates/move/crates/move-analyzer/editors/code/.eslintrc.json
 @@ -2,7 +2,6 @@
@@ -128,7 +128,7 @@ index 3de7bd269775..b78aa66d96f6 100644
 +}
 \ No newline at end of file
 diff --git a/external-crates/move/crates/move-analyzer/editors/code/package-lock.json b/external-crates/move/crates/move-analyzer/editors/code/package-lock.json
-index 30653b673675..2b235e59d340 100644
+index 30653b6736..2b235e59d3 100644
 --- a/external-crates/move/crates/move-analyzer/editors/code/package-lock.json
 +++ b/external-crates/move/crates/move-analyzer/editors/code/package-lock.json
 @@ -1,12 +1,12 @@
@@ -147,7 +147,7 @@ index 30653b673675..2b235e59d340 100644
        "dependencies": {
          "command-exists": "^1.2.9",
 diff --git a/external-crates/move/crates/move-analyzer/editors/code/package.json b/external-crates/move/crates/move-analyzer/editors/code/package.json
-index 6bb15ff92af2..30fd1f8d805b 100644
+index 6bb15ff92a..30fd1f8d80 100644
 --- a/external-crates/move/crates/move-analyzer/editors/code/package.json
 +++ b/external-crates/move/crates/move-analyzer/editors/code/package.json
 @@ -5,7 +5,7 @@
@@ -161,7 +161,7 @@ index 6bb15ff92af2..30fd1f8d805b 100644
      "url": "https://github.com/MystenLabs/sui.git",
 diff --git a/external-crates/move/crates/move-analyzer/editors/code/src/activity_monitor.ts b/external-crates/move/crates/move-analyzer/editors/code/src/activity_monitor.ts
 new file mode 100644
-index 000000000000..647bb9c2e5e0
+index 0000000000..647bb9c2e5
 --- /dev/null
 +++ b/external-crates/move/crates/move-analyzer/editors/code/src/activity_monitor.ts
 @@ -0,0 +1,216 @@
@@ -382,7 +382,7 @@ index 000000000000..647bb9c2e5e0
 +    }
 +}
 diff --git a/external-crates/move/crates/move-analyzer/editors/code/src/context.ts b/external-crates/move/crates/move-analyzer/editors/code/src/context.ts
-index e7d6e4e429b8..932276bae39f 100644
+index e7d6e4e429..932276bae3 100644
 --- a/external-crates/move/crates/move-analyzer/editors/code/src/context.ts
 +++ b/external-crates/move/crates/move-analyzer/editors/code/src/context.ts
 @@ -12,9 +12,13 @@ import * as vscode from 'vscode';
@@ -392,7 +392,7 @@ index e7d6e4e429b8..932276bae39f 100644
 +import { ServerActivityMonitor } from './activity_monitor';
  import { assert } from 'console';
  import { IndentAction } from 'vscode';
-
+ 
 +// Must match PROGRESS_TOKEN in analyzer.rs
 +const PROGRESS_TOKEN = 'symbolication';
 +
@@ -402,7 +402,7 @@ index e7d6e4e429b8..932276bae39f 100644
 @@ -76,6 +80,15 @@ function shouldInstall(bundledVersionString: string | null,
  export class Context {
      private client: lc.LanguageClient | undefined;
-
+ 
 +    private activityMonitor: ServerActivityMonitor | undefined;
 +
 +    // Create the output channel and pass it to every LanguageClient
@@ -413,7 +413,7 @@ index e7d6e4e429b8..932276bae39f 100644
 +    private readonly moveOutputChannel: vscode.OutputChannel;
 +
      configuration: Configuration;
-
+ 
      private lintLevel: string;
 @@ -113,6 +126,7 @@ export class Context {
          this.resolvedServerPath = this.configuration.serverPath;
@@ -426,7 +426,7 @@ index e7d6e4e429b8..932276bae39f 100644
 @@ -169,6 +183,29 @@ export class Context {
          this.extensionContext.subscriptions.push(disposable);
      }
-
+ 
 +    /**
 +     * Initialize the `move-analyzer` activity monitor in the status bar
 +     * that:
@@ -473,7 +473,7 @@ index e7d6e4e429b8..932276bae39f 100644
 +                closed: () => ({ action: lc.CloseAction.DoNotRestart }),
 +            },
          };
-
+ 
          const client = new lc.LanguageClient(
 @@ -212,6 +257,38 @@ export class Context {
              serverOptions,
@@ -515,13 +515,13 @@ index e7d6e4e429b8..932276bae39f 100644
          const res = client.start();
          this.extensionContext.subscriptions.push({ dispose: async () => client.stop() });
 diff --git a/external-crates/move/crates/move-analyzer/editors/code/src/main.ts b/external-crates/move/crates/move-analyzer/editors/code/src/main.ts
-index 897453b6b618..430eef88d2b1 100644
+index 897453b6b6..430eef88d2 100644
 --- a/external-crates/move/crates/move-analyzer/editors/code/src/main.ts
 +++ b/external-crates/move/crates/move-analyzer/editors/code/src/main.ts
 @@ -167,6 +167,15 @@ export async function activate(extensionContext: Readonly<vscode.ExtensionContex
          return;
      }
-
+ 
 +    // Initialize activity monitor with version info.
 +    const serverVersionResult = childProcess.spawnSync(
 +        context.resolvedServerPath,
@@ -535,13 +535,13 @@ index 897453b6b618..430eef88d2b1 100644
      context.registerCommand('serverVersion', serverVersion);
      context.registerCommand('serverRestart', serverRestart);
 diff --git a/external-crates/move/crates/move-analyzer/src/analyzer.rs b/external-crates/move/crates/move-analyzer/src/analyzer.rs
-index a4148e463e26..ee3ed6001205 100644
+index a4148e463e..ee3ed60012 100644
 --- a/external-crates/move/crates/move-analyzer/src/analyzer.rs
 +++ b/external-crates/move/crates/move-analyzer/src/analyzer.rs
 @@ -2,20 +2,20 @@
  // Copyright (c) The Move Contributors
  // SPDX-License-Identifier: Apache-2.0
-
+ 
 -use anyhow::Result;
  use crossbeam::channel::{bounded, select};
 -use lsp_server::{Connection, Message, Notification, Request, Response};
@@ -566,7 +566,7 @@ index a4148e463e26..ee3ed6001205 100644
 -    path::PathBuf,
      sync::{Arc, Mutex},
  };
-
+ 
 @@ -30,7 +30,7 @@ use crate::{
              on_document_symbol_request, on_go_to_def_request, on_go_to_type_def_request,
              on_hover_request, on_references_request,
@@ -579,7 +579,7 @@ index a4148e463e26..ee3ed6001205 100644
 @@ -42,6 +42,10 @@ const LINT_NONE: &str = "none";
  const LINT_DEFAULT: &str = "default";
  const LINT_ALL: &str = "all";
-
+ 
 +/// Token shared between server and client to correlate $/progress
 +/// notifications with the compilation activity.
 +const PROGRESS_TOKEN: &str = "symbolication";
@@ -590,16 +590,16 @@ index a4148e463e26..ee3ed6001205 100644
 @@ -129,7 +133,7 @@ pub fn run<F: MoveFlavor>(flavor: Option<Flavor>) {
      })
      .expect("could not serialize server capabilities");
-
+ 
 -    let (diag_sender, diag_receiver) = bounded::<Result<BTreeMap<PathBuf, Vec<Diagnostic>>>>(0);
 +    let (diag_sender, diag_receiver) = bounded::<SymbolicatorMessage>(0);
      let initialize_params: lsp_types::InitializeParams =
          serde_json::from_value(client_response).expect("could not deserialize client capabilities");
-
+ 
 @@ -201,14 +205,33 @@ pub fn run<F: MoveFlavor>(flavor: Option<Flavor>) {
-     )
-     .expect("could not finish connection initialization");
-
+         )
+         .expect("could not finish connection initialization");
+ 
 +    // Ask the client to create a progress token for symbolication. The client
 +    // uses this token to match subsequent $/progress begin/end notifications
 +    // to the compilation activity.
@@ -738,13 +738,13 @@ index a4148e463e26..ee3ed6001205 100644
                          eprintln!("symbolicator message error: {:?}", error);
                          // if the analyzer crashes in a separate thread, this error will keep
 diff --git a/external-crates/move/crates/move-analyzer/src/symbols/runner.rs b/external-crates/move/crates/move-analyzer/src/symbols/runner.rs
-index a138e4db52d..9763a9abac38 100644
+index a1387e4db5..9763a9abac 100644
 --- a/external-crates/move/crates/move-analyzer/src/symbols/runner.rs
 +++ b/external-crates/move/crates/move-analyzer/src/symbols/runner.rs
 @@ -14,7 +14,7 @@ use crate::{
      utils::canonicalize_path,
  };
-
+ 
 -use anyhow::{Result, anyhow};
 +use anyhow::anyhow;
  use crossbeam::channel::Sender;
@@ -753,7 +753,7 @@ index a138e4db52d..9763a9abac38 100644
 @@ -33,6 +33,20 @@ use move_package_alt::MoveFlavor;
  /// Interval for checking if the parent process is still alive (in seconds)
  const PARENT_LIVENESS_MONITORING_INTERVAL_SECS: u64 = 10;
-
+ 
 +/// Messages sent from the symbolication runner thread to the main analyzer loop.
 +pub enum SymbolicatorMessage {
 +    /// Compilation diagnostics — forwarded as textDocument/publishDiagnostics

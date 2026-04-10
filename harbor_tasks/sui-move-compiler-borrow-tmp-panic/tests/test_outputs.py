@@ -79,24 +79,38 @@ def test_no_ice_panic_in_error_handling():
         assert has_proper_tmp_message, "Fix incomplete: ICE panic removed but proper tmp message not found"
 
 
-def test_compiler_unit_tests_pass():
-    """Pass-to-pass test: existing compiler unit tests should pass.
+def test_move_compiler_borrow_assign_tests():
+    """Pass-to-pass test: move-compiler borrow assignment tests should pass.
 
-    This verifies the fix doesn't break existing functionality.
+    Runs the borrow assignment tests from move_check_testsuite to verify
+    no regressions in borrow checker functionality.
     """
-    # Run a subset of compiler tests to verify no regressions
     result = subprocess.run(
-        ["cargo", "test", "-p", "move-compiler", "--lib", "--", "borrow",
-         "--test-threads=1"],
+        ["cargo", "test", "--test", "move_check_testsuite", "--", "borrows/assign"],
         capture_output=True,
         text=True,
         timeout=600,
-        cwd=REPO,
+        cwd=f"{REPO}/external-crates/move/crates/move-compiler",
     )
 
-    # Should not have panicked
-    assert "panic" not in result.stderr.lower() or "thread panicked" not in result.stderr, \
-        f"Tests panicked:\n{result.stderr[-1000:]}"
+    assert result.returncode == 0, f"Borrow assign tests failed:\n{result.stderr[-1000:]}"
+
+
+def test_move_compiler_borrow_freeze_tests():
+    """Pass-to-pass test: move-compiler borrow freeze tests should pass.
+
+    Runs the borrow freeze tests from move_2024/borrows to verify
+    no regressions in Move 2024 borrow checker functionality.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "--test", "move_check_testsuite", "--", "move_2024/borrows/freeze"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/external-crates/move/crates/move-compiler",
+    )
+
+    assert result.returncode == 0, f"Borrow freeze tests failed:\n{result.stderr[-1000:]}"
 
 
 def test_move_compiler_builds():

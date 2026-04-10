@@ -270,3 +270,30 @@ def test_repo_py_compile():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+# [repo_tests] pass_to_pass - CI/CD gate (flake8)
+def test_repo_flake8():
+    """Target file passes flake8 linting per repo config (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "flake8", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "flake8", str(TARGET)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"flake8 failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI/CD gate (ruff)
+def test_repo_ruff():
+    """Target file passes ruff linting per repo config (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", str(TARGET)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff failed:\n{r.stdout}\n{r.stderr}"

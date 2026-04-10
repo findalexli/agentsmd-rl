@@ -74,4 +74,54 @@ checks:
     origin: repo_tests
     description: Repo CI cargo fmt --check passes
 
-rubric: []
+  # Additional repo CI/CD pass-to-pass tests added during enrichment
+  - id: test_repo_move_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI cargo move-clippy passes on external-crates/move workspace
+
+  - id: test_repo_value_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI value_tests module passes - validates VM value operations
+
+  - id: test_repo_return_value_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI return_value_tests module passes - validates VM return value handling
+
+  - id: test_repo_loader_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI loader_tests module passes - validates VM module loading
+
+rubric:
+  - rule: "Always run cargo xclippy after finishing development to ensure code passes all linting checks"
+    source:
+      path: "CLAUDE.md"
+      lines: "111"
+      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
+
+  - rule: "Never disable or ignore tests - all tests must pass and be enabled"
+    source:
+      path: "CLAUDE.md"
+      lines: "112"
+      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
+
+  - rule: "Never use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead"
+    source:
+      path: "CLAUDE.md"
+      lines: "113"
+      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
+
+  - rule: "Do NOT comment the obvious - comments should not simply repeat what the code does. Comment non-obvious algorithms, temporary exclusions, or subtle race conditions"
+    source:
+      path: "CLAUDE.md"
+      lines: "118-131"
+      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
+
+  - rule: "All new files must start with the Apache-2.0 license header: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-20"
+      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"

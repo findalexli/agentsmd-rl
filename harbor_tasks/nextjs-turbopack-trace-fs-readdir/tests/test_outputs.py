@@ -402,12 +402,68 @@ print("PASS")
 
 
 
+
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD quality gates from repo conventions
+# Pass-to-pass (repo_tests) — REAL CI commands via subprocess.run()
 # ---------------------------------------------------------------------------
 
 
 # [repo_tests] pass_to_pass
+def test_repo_prettier_js_files():
+    """Modified JS fixture files pass Prettier format check.
+
+    Runs the repo's actual CI formatter (npx prettier --check) on the
+    modified JavaScript test fixtures.
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", WILDCARD_INPUT],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for wildcard/input.js:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["npx", "prettier", "--check", WILDCARD3_INPUT],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for wildcard3/input.js:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_js_files():
+    """Modified JS fixture files have valid Node.js syntax.
+
+    Uses node --check to validate JavaScript syntax (same as Node.js CI).
+    """
+    r = subprocess.run(
+        ["node", "--check", WILDCARD_INPUT],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js syntax check failed for wildcard/input.js:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["node", "--check", WILDCARD3_INPUT],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node.js syntax check failed for wildcard3/input.js:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — file content checks (NOT subprocess.run)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
 def test_source_files_no_hard_tabs():
     """Source files use spaces not tabs (repo CI/CD: cargo fmt).
 
@@ -436,7 +492,7 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_no_trailing_whitespace_on_modified_lines():
     """Key source files have no trailing whitespace (repo CI/CD: lint standard).
 
@@ -466,7 +522,7 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_unit_rs_valid_rstest_syntax():
     """unit.rs has valid rstest syntax structure (repo CI/CD: cargo test).
 
@@ -501,7 +557,7 @@ print(f"PASS: Found {case_count} test cases")
     assert "PASS" in r.stdout
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_fixture_files_valid_syntax():
     """NFT fixture files have valid syntax structure.
 
@@ -536,7 +592,7 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_cargo_toml_structure():
     """Cargo.toml files have valid structure (repo CI/CD: cargo check).
 
@@ -575,7 +631,7 @@ print("PASS: All Cargo.toml files have valid structure")
     assert "PASS" in r.stdout
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_well_known_rs_function_structure():
     """well_known.rs has expected function structure (repo CI/CD: cargo check).
 
@@ -611,7 +667,7 @@ print(f"PASS: Found {fn_with_bodies} functions with bodies")
     assert "PASS" in r.stdout
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_references_mod_structure():
     """references/mod.rs has expected module structure (repo CI/CD: cargo check).
 
@@ -649,7 +705,7 @@ print(f"PASS: references/mod.rs has {len(non_empty)} non-empty lines")
     assert "PASS" in r.stdout
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_mod_rs_enum_structure():
     """mod.rs has expected enum definitions (repo CI/CD: cargo check).
 

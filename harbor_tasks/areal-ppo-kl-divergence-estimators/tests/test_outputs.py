@@ -329,13 +329,13 @@ def test_no_print_in_function():
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass (repo_tests) — CI/CD checks from repo
+# pass_to_pass (repo_tests) — CI/CD checks from repo (run actual commands)
 # ---------------------------------------------------------------------------
 
 
-# [repo_tests] pass_to_pass
+# [repo_tests] pass_to_pass — ruff critical syntax errors on actor.py
 def test_repo_ruff_syntax():
-    """Repo's Python syntax and critical errors check passes (pass_to_pass)."""
+    """Repo's Python syntax and critical errors check passes (ruff --select=E9,F63,F7,F82)."""
     # First try to install ruff
     subprocess.run(
         ["pip", "install", "ruff", "--quiet"],
@@ -356,9 +356,32 @@ def test_repo_ruff_syntax():
     assert r.returncode == 0, f"Ruff syntax check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
+# [repo_tests] pass_to_pass — ruff format check on actor.py
+def test_repo_ruff_format():
+    """actor.py passes ruff format check (pass_to_pass)."""
+    # First try to install ruff
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True, text=True, timeout=60
+    )
+    # Try via python module
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    if r.returncode == 0:
+        return
+    # Fallback: try ruff directly
+    r = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — py_compile for actor.py
 def test_repo_py_compile():
-    """actor.py compiles without syntax errors (pass_to_pass)."""
+    """actor.py compiles without syntax errors via py_compile (pass_to_pass)."""
     r = subprocess.run(
         ["python3", "-m", "py_compile", TARGET],
         capture_output=True, text=True, timeout=30, cwd=REPO
@@ -366,42 +389,42 @@ def test_repo_py_compile():
     assert r.returncode == 0, f"py_compile failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass
-def test_repo_actor_module_parse():
-    """actor.py parses as valid Python AST (pass_to_pass)."""
-    source = Path(TARGET).read_text()
-    try:
-        ast.parse(source)
-    except SyntaxError as e:
-        raise AssertionError(f"actor.py has syntax error: {e}")
+# [repo_tests] pass_to_pass — ruff critical errors on full areal module
+def test_repo_ruff_critical_areal():
+    """Repo's areal module has no critical syntax errors (ruff E9,F63,F7,F82) (pass_to_pass)."""
+    # First try to install ruff
+    subprocess.run(
+        ["pip", "install", "ruff==0.14.9", "--quiet"],
+        capture_output=True, text=True, timeout=60
+    )
+    # Run ruff on full areal module for critical errors only
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "--select=E9,F63,F7,F82", f"{REPO}/areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    if r.returncode == 0:
+        return
+    # Fallback: try ruff directly
+    r = subprocess.run(
+        ["ruff", "check", "--select=E9,F63,F7,F82", f"{REPO}/areal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO
+    )
+    assert r.returncode == 0, f"Ruff critical check failed on areal/:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - JSON validity check
-def test_repo_json_valid():
-    """Repo JSON files are valid (pass_to_pass)."""
-    import json
-    json_files = [
-        f"{REPO}/skills-lock.json",
+# [repo_tests] pass_to_pass — py_compile for critical PPO files
+def test_repo_all_py_syntax():
+    """Critical PPO Python files compile without syntax errors (pass_to_pass)."""
+    import py_compile
+    import os
+    # Test critical files related to the PR changes
+    critical_files = [
+        f"{REPO}/areal/trainer/ppo/actor.py",
+        f"{REPO}/areal/trainer/ppo/stats.py",
     ]
-    for path in json_files:
-        try:
-            with open(path) as f:
-                json.load(f)
-        except Exception as e:
-            raise AssertionError(f"JSON validation failed for {path}: {e}")
-
-
-# [repo_tests] pass_to_pass - YAML validity check
-def test_repo_yaml_valid():
-    """Repo YAML workflow files are valid (pass_to_pass)."""
-    import yaml
-    yaml_files = [
-        f"{REPO}/.github/workflows/pre-commit.yml",
-        f"{REPO}/.pre-commit-config.yaml",
-    ]
-    for path in yaml_files:
-        try:
-            with open(path) as f:
-                yaml.safe_load(f)
-        except Exception as e:
-            raise AssertionError(f"YAML validation failed for {path}: {e}")
+    for path in critical_files:
+        if os.path.exists(path):
+            try:
+                py_compile.compile(path, doraise=True)
+            except Exception as e:
+                raise AssertionError(f"Syntax error in {path}: {e}")

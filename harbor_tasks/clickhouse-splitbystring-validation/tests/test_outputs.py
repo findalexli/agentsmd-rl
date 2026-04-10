@@ -205,6 +205,77 @@ def test_code_compiles():
             f"Parse error in code: {result.stderr}"
 
 
+def test_repo_git_tracked():
+    """
+    Pass-to-pass: Verify the target file is tracked by git (repo structure check).
+    """
+    result = subprocess.run(
+        ["git", "ls-files", TARGET_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO
+    )
+    # File should be tracked by git
+    assert result.returncode == 0, f"git ls-files failed: {result.stderr}"
+    assert TARGET_FILE in result.stdout, f"Target file {TARGET_FILE} is not tracked by git"
+
+
+def test_repo_file_headers():
+    """
+    Pass-to-pass: Verify the target file has proper include structure.
+    """
+    with open(FULL_PATH, 'r') as f:
+        content = f.read()
+
+    # File should start with an include
+    lines = content.split('\n')
+    first_non_empty = None
+    for line in lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith('//'):
+            first_non_empty = stripped
+            break
+
+    assert first_non_empty is not None, "File appears to be empty"
+    assert first_non_empty.startswith('#include'), \
+        f"First non-empty line should be an include: {first_non_empty}"
+
+
+def test_repo_no_trailing_whitespace():
+    """
+    Pass-to-pass: Verify the target file has no trailing whitespace (repo style check).
+    ClickHouse CI enforces no trailing whitespace.
+    """
+    result = subprocess.run(
+        ["grep", "-n", " $", FULL_PATH],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    # grep returns 0 if matches found (bad), 1 if no matches (good)
+    trailing_ws_lines = result.stdout.strip().split('\n') if result.stdout.strip() else []
+    # Filter to only report significant issues (not just empty lines with spaces)
+    significant_issues = [line for line in trailing_ws_lines if line.strip()]
+    assert not significant_issues, f"Trailing whitespace found:\n{result.stdout}"
+
+
+def test_repo_no_tabs():
+    """
+    Pass-to-pass: Verify the target file uses spaces instead of tabs (repo style check).
+    ClickHouse uses 4 spaces for indentation, not tabs.
+    """
+    result = subprocess.run(
+        ["grep", "-n", "-P", "\\t", FULL_PATH],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+    # grep returns 0 if matches found (bad - tabs present), 1 if no matches (good)
+    assert result.returncode == 1 or not result.stdout.strip(), \
+        f"Tabs found in file (should use 4 spaces):\n{result.stdout[:500]}"
+
+
 def test_repo_clang_syntax_check():
     """
     Pass-to-pass: Repo's C++ syntax check passes using clang-18.
@@ -291,3 +362,170 @@ def test_repo_code_style_basic():
                 # This is K&R style - Allman would have { on next line
                 # We document this but don't fail as it may be intentional
                 pass
+
+
+# New p2p tests using actual CI commands (origin: repo_tests)
+
+
+def test_repo_cpp_style_braces_ci():
+    """
+    Pass-to-pass: Verify Allman-style braces using grep (repo CI style check).
+    ClickHouse uses Allman style (opening brace on new line).
+    Source: .clang-format (BreakBeforeBraces: Custom with AfterControlStatement: true)
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["grep", "-n", "^for.*) *{$", TARGET_FILE],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # If grep finds matches, that's a violation (K&R style with { on same line)
+    # grep returns 0 if matches found (bad), 1 if no matches (good)
+    assert r.returncode != 0 or not r.stdout.strip(), \
+        f"K&R brace style found (Allman style required - brace on new line):\n{r.stdout[:500]}"
+
+
+def test_repo_cpp_style_tabs_ci():
+    """
+    Pass-to-pass: Verify no tabs in modified C++ file (repo CI style check).
+    ClickHouse uses 4 spaces for indentation (UseTab: Never in .clang-format).
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["grep", "-n", "-P", "\\t", TARGET_FILE],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # grep returns 0 if matches found (bad - tabs present), 1 if no matches (good)
+    assert r.returncode == 1 or not r.stdout.strip(), \
+        f"Tabs found in file (should use 4 spaces):\n{r.stdout[:500]}"
+
+
+def test_repo_cpp_style_trailing_whitespace_ci():
+    """
+    Pass-to-pass: Verify no trailing whitespace using grep (repo CI style check).
+    ClickHouse CI enforces no trailing whitespace.
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["grep", "-n", " $", TARGET_FILE],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # Filter out empty lines - only report lines with actual content + trailing whitespace
+    if r.returncode == 0 and r.stdout.strip():
+        lines = r.stdout.strip().split("\n")
+        significant = [l for l in lines if l.strip().rstrip(" ") != l.strip() or l.strip()]
+        assert not significant, f"Trailing whitespace found:\n{r.stdout[:500]}"
+
+
+def test_repo_git_log_ci():
+    """
+    Pass-to-pass: Verify git log works and shows expected base commit (repo structure check).
+    origin: repo_tests
+    """
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-n", "1"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git log failed: {r.stderr}"
+    assert "7dad4d8" in r.stdout, f"Expected commit not found in log:\n{r.stdout}"
+
+
+def test_repo_file_compiles_ci():
+    """
+    Pass-to-pass: Verify the C++ file has no syntax errors using clang-18.
+    Tests basic syntax validity without requiring full build.
+    origin: repo_tests
+    """
+    # Run clang-18 syntax check with multiple include paths
+    include_paths = [
+        "-I", os.path.join(REPO, "src"),
+        "-I", os.path.join(REPO, "base"),
+        "-I", os.path.join(REPO, "contrib"),
+    ]
+
+    defines = [
+        "-D__cplusplus=202002L",
+        "-DNDEBUG",
+    ]
+
+    cmd = ["clang-18", "-fsyntax-only", "-std=c++20", "-x", "c++"] + defines + include_paths + [FULL_PATH]
+
+    r = subprocess.run(
+        cmd,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    # For p2p, we only care about actual syntax errors, not missing includes
+    stderr_lower = r.stderr.lower()
+
+    # Check for actual syntax/parse errors (not missing includes)
+    syntax_error_patterns = [
+        "syntax error",
+        "expected expression",
+        "expected ';'",
+        "expected '}'",
+        "expected ')'",
+        "unexpected",
+        "unknown type name",
+        "no member named",
+        "use of undeclared identifier",
+        "invalid operands",
+        "cannot initialize",
+    ]
+
+    for pattern in syntax_error_patterns:
+        assert pattern not in stderr_lower, f"C++ syntax error detected: {pattern}\n{r.stderr[:1000]}"
+
+
+def test_repo_yaml_config_valid_ci():
+    """
+    Pass-to-pass: Verify .github/dependabot.yaml is valid YAML (repo CI config check).
+    ClickHouse CI depends on valid YAML configs.
+    origin: repo_tests
+    """
+    import yaml
+
+    yaml_file = os.path.join(REPO, ".github", "dependabot.yaml")
+    if os.path.exists(yaml_file):
+        try:
+            with open(yaml_file, 'r') as f:
+                yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            assert False, f"Invalid YAML in dependabot.yaml: {e}"
+
+
+def test_repo_clang_format_config_valid_ci():
+    """
+    Pass-to-pass: Verify .clang-format config is valid YAML (repo CI config check).
+    ClickHouse CI depends on this config for style checks.
+    origin: repo_tests
+    """
+    import yaml
+
+    clang_format_path = os.path.join(REPO, ".clang-format")
+    try:
+        with open(clang_format_path, 'r') as f:
+            config = yaml.safe_load(f)
+        # Verify key ClickHouse style settings exist
+        assert "BasedOnStyle" in config, "BasedOnStyle not in .clang-format"
+        assert "BreakBeforeBraces" in config, "BreakBeforeBraces not in .clang-format"
+        assert config.get("BasedOnStyle") == "WebKit", f"Expected BasedOnStyle: WebKit, got {config.get('BasedOnStyle')}"
+    except yaml.YAMLError as e:
+        assert False, f"Invalid YAML in .clang-format: {e}"
+
+
+def test_repo_clang_tidy_config_valid_ci():
+    """
+    Pass-to-pass: Verify .clang-tidy config is valid YAML (repo CI config check).
+    ClickHouse uses clang-tidy for static analysis in CI.
+    origin: repo_tests
+    """
+    import yaml
+
+    clang_tidy_path = os.path.join(REPO, ".clang-tidy")
+    try:
+        with open(clang_tidy_path, 'r') as f:
+            config = yaml.safe_load(f)
+        # Verify key settings exist
+        assert "Checks" in config, "Checks not in .clang-tidy config"
+    except yaml.YAMLError as e:
+        assert False, f"Invalid YAML in .clang-tidy: {e}"

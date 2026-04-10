@@ -123,8 +123,7 @@ def test_script_syntax_valid():
     """Verify the script has valid JavaScript/Node.js syntax."""
     result = subprocess.run(
         ["node", "--check", str(SCRIPT_PATH)],
-        capture_output=True,
-        text=True
+        capture_output=True, text=True
     )
     assert result.returncode == 0, f"Script has syntax errors: {result.stderr}"
 
@@ -172,6 +171,57 @@ def test_repo_script_formatting():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert result.returncode == 0, f"Script formatting check failed:\n{result.stdout[-500:]}"
+
+
+def test_repo_all_mjs_scripts_syntax():
+    """All .mjs scripts in the repo have valid JavaScript syntax (pass_to_pass)."""
+    scripts_dir = REPO / "scripts"
+    mjs_files = list(scripts_dir.glob("*.mjs"))
+    assert mjs_files, "No .mjs files found in scripts directory"
+
+    for script_file in mjs_files:
+        result = subprocess.run(
+            ["node", "--check", str(script_file)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert result.returncode == 0, f"Script {script_file.name} has syntax errors: {result.stderr}"
+
+
+def test_repo_all_scripts_formatting():
+    """All scripts in the repo follow Prettier formatting (pass_to_pass)."""
+    result = subprocess.run(
+        ["npx", "prettier", "--check", "scripts/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Scripts formatting check failed:\n{result.stdout[-500:]}"
+
+
+def test_repo_markdown_formatting():
+    """Repo's markdown files follow Prettier formatting (pass_to_pass)."""
+    result = subprocess.run(
+        ["npx", "prettier", "--check", "*.md"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Markdown formatting check failed:\n{result.stdout[-500:]}"
+
+
+def test_repo_package_json_formatting():
+    """Repo's package.json follows Prettier formatting (pass_to_pass)."""
+    result = subprocess.run(
+        ["npx", "prettier", "--check", "package.json"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert result.returncode == 0, f"package.json formatting check failed:\n{result.stdout[-500:]}"
+
+
+def test_repo_git_valid():
+    """Repo has a valid git repository with commits (pass_to_pass)."""
+    result = subprocess.run(
+        ["git", "log", "--oneline", "-1"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Git log failed: {result.stderr}"
+    assert result.stdout.strip(), "Git log returned empty output"
 
 
 if __name__ == "__main__":

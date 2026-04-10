@@ -42,6 +42,21 @@ checks:
     origin: static
     description: "TaskGuard trait exists in operation/mod.rs with dirty_state method"
 
+  - id: repo_git_status_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is in a clean state with no uncommitted changes"
+
+  - id: repo_no_whitespace_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No trailing whitespace or merge conflict markers in tracked files"
+
+  - id: repo_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files exist and are tracked in git"
+
 rubric:
   - rule: "cargo fmt uses ASCII order (uppercase before lowercase) — just run `cargo fmt`"
     source:

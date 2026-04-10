@@ -42,4 +42,42 @@ checks:
     origin: repo_tests
     description: "Repo's Flow typecheck passes"
 
-rubric: []
+  - id: test_repo_flags
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's feature flags check passes"
+
+  - id: test_repo_react_suspense_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactSuspense tests pass — tests related to Suspense/fallback behavior"
+
+  - id: test_repo_react_lazy_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ReactLazy tests pass — tests lazy loading with Suspense"
+
+rubric:
+  - rule: "Follow the existing code style in the file being modified. Check neighboring lines for patterns around naming, spacing, and structure."
+    source:
+      path: "CLAUDE.md"
+      lines: "7"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"
+
+  - rule: "Use comments to explain invariants and fiber structure relationships, not to narrate what each line does. Document WHY the code behaves a certain way, especially for complex traversal logic."
+    source:
+      path: ".claude/skills/verify/SKILL.md"
+      lines: "16-24"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"
+
+  - rule: "Run yarn prettier to format code before committing. The codebase uses Prettier for consistent formatting."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "10"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"
+
+  - rule: "Run yarn linc to check for lint issues before committing. ESLint errors will fail CI and must be fixed."
+    source:
+      path: ".claude/skills/fix/SKILL.md"
+      lines: "11"
+      commit: "f944b4c5352be02623d2d7415c0806350f875114"

@@ -35,6 +35,11 @@ checks:
     type: "pytest"
     origin: "test_outputs"
 
+  - id: "test_repo_unit_tests_warpc_no_sigsegv"
+    description: "Repo warpc unit tests don't crash with SIGSEGV (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "test_outputs"
+
   - id: "test_repo_go_vet"
     description: "Repo's go vet passes on the warpc package (pass_to_pass)"
     type: "pass_to_pass"
@@ -61,9 +66,16 @@ checks:
     origin: "repo_tests"
 
 rubric:
-  # No soft/subjective rules from AGENTS.md that need LLM judging
-  # The programmatic tests cover the functional correctness
-  []
+  - rule: "Brevity is good in code and comments. Do not write a novel."
+    source:
+      path: "AGENTS.md"
+      lines: "10"
+      commit: "54c804876a5b63c3447b612ce6823339f3f486fc"
+  - rule: "Assume maintainers are Go experts: don't use comments to explain the obvious."
+    source:
+      path: "AGENTS.md"
+      lines: "2-3"
+      commit: "54c804876a5b63c3447b612ce6823339f3f486fc"
 
 # Agent configs that were discovered and tested against
 agent_configs:

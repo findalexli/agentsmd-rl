@@ -341,3 +341,65 @@ def test_repo_dotenv_unit_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Dotenv unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_host_env_policy():
+    """Repo's host-env security policy check passes (pass_to_pass)."""
+    # Install dependencies first (idempotent)
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["pnpm", "check:host-env-policy:swift"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Host-env policy check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_infra_unit_tests():
+    """Repo's unit tests for infra module pass (pass_to_pass)."""
+    # Install dependencies first (idempotent)
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--config", "vitest.unit.config.ts", "src/infra/"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Infra unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_auth_pairing_account_scope():
+    """Repo's auth pairing account scope lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["pnpm", "lint:auth:pairing-account-scope"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Auth pairing account scope lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_webhook_body_read():
+    """Repo's webhook no low-level body read lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["pnpm", "lint:webhook:no-low-level-body-read"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Webhook body read lint failed:\n{r.stderr[-500:]}"

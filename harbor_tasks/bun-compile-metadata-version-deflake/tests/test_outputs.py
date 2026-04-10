@@ -212,6 +212,16 @@ def test_repo_prettier():
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — EditorConfig compliance check
+def test_repo_editorconfig():
+    """Repo's EditorConfig check passes on test file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "editorconfig-checker", str(TEST_FILE)],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"EditorConfig check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------

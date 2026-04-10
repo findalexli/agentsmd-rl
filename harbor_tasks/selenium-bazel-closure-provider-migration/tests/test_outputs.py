@@ -172,5 +172,16 @@ def test_repo_bazel_syntax_check():
     assert r.returncode == 0, f"Bazel syntax check failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_buildifier_check():
+    """PASS-TO-PASS: Bazel Starlark files pass buildifier lint (repo CI check)."""
+    # Run buildifier to check that the Starlark file is properly formatted
+    # This is the linter used in CI (see scripts/format.sh)
+    r = subprocess.run(
+        ["bazel", "run", "//:buildifier", "--", "-mode=check", "javascript/private/header.bzl"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Buildifier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

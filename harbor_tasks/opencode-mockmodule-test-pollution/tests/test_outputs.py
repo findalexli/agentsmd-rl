@@ -230,3 +230,48 @@ def test_config_test_not_stubbed():
         "Missing serialization test block"
     )
     assert re.search(r"spyOn.*BunProc|BunProc.*mock", src), "Missing BunProc.run mock"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests (repo_tests) — pass_to_pass gates using actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_thread_test():
+    """Repo's thread.test.ts passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/cli/tui/thread.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"thread.test.ts failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_config_test():
+    """Repo's config.test.ts passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/config/config.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"config.test.ts failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True, text=True, timeout=180, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Repo's modified test files pass prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "packages/opencode/test/cli/tui/thread.test.ts",
+         "packages/opencode/test/config/config.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"prettier check failed:\n{r.stderr[-500:]}"

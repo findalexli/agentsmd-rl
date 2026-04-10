@@ -6,7 +6,7 @@ python3 -m pip install pytest -q --break-system-packages 2>/dev/null || pip inst
 
 # Run tests
 cd /workspace/bun
-python3 -m pytest /home/agent/tests/test_outputs.py -v 2>&1 | tee /logs/verifier/pytest.log
+python3 -m pytest /tests/test_outputs.py -v 2>&1 | tee /logs/verifier/pytest.log
 
 # Write binary reward
 if [ ${PIPESTATUS[0]} -eq 0 ]; then

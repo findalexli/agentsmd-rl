@@ -82,16 +82,14 @@ def test_wpewebkit_stub_exists():
 
 def test_mypy_can_resolve_webdriver_imports():
     """mypy should be able to resolve types from selenium.webdriver."""
-    test_code = '''
+    test_code = """
 from selenium.webdriver import Chrome, Firefox, ChromeOptions, Keys
 
 def test_types() -> None:
-    # These should all resolve without mypy errors
     driver: Chrome
     options: ChromeOptions
     key: Keys
-'''
-    # Write test file
+"""
     test_file = PY_DIR / "_test_type_resolve.py"
     test_file.write_text(test_code)
 
@@ -99,19 +97,13 @@ def test_types() -> None:
         result = subprocess.run(
             [sys.executable, "-m", "mypy", str(test_file), "--ignore-missing-imports",
              "--disable-error-code", "unused-ignore"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            cwd=str(PY_DIR)
+            capture_output=True, text=True, timeout=60, cwd=str(PY_DIR)
         )
-        # mypy returns 0 on success, 1 on type errors
-        # Allow some errors - we mainly care that types resolve, not that the whole codebase is clean
         output = result.stdout + result.stderr
-        # Check for actual type resolution errors related to our imports
-        critical_errors = [line for line in output.split('\n')
-                          if 'error' in line.lower()
-                          and 'cannot find' in line.lower()
-                          and 'webdriver' in line.lower()]
+        critical_errors = [line for line in output.split("\n")
+                          if "error" in line.lower()
+                          and "cannot find" in line.lower()
+                          and "webdriver" in line.lower()]
         assert not critical_errors, f"Type resolution failed:\n{output}"
     finally:
         test_file.unlink(missing_ok=True)
@@ -119,17 +111,13 @@ def test_types() -> None:
 
 def test_import_desired_capabilities_directly():
     """Import DesiredCapabilities from common submodule directly."""
-    # This tests the fix in remote_connection.py
-    code = '''
+    code = """
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 print("OK")
-'''
+"""
     result = subprocess.run(
         [sys.executable, "-c", code],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        cwd=str(PY_DIR)
+        capture_output=True, text=True, timeout=30, cwd=str(PY_DIR)
     )
     assert result.returncode == 0, f"Import failed: {result.stderr}"
     assert "OK" in result.stdout
@@ -139,8 +127,6 @@ def test_pyproject_includes_pyi():
     """pyproject.toml should include *.pyi in package data."""
     pyproject_path = PY_DIR / "pyproject.toml"
     content = pyproject_path.read_text()
-
-    # Should have "*.pyi" in the package-data section
     assert '"*.pyi"' in content or "'*.pyi'" in content, \
         "pyproject.toml should include '*.pyi' in package-data"
 
@@ -152,8 +138,6 @@ def test_webdriver_stub_has_all_exports():
         pytest.skip("Stub file doesn't exist yet")
 
     content = stub_path.read_text()
-
-    # Check for key exports
     expected = [
         "Chrome", "ChromeOptions", "ChromeService",
         "Firefox", "FirefoxOptions", "FirefoxService",
@@ -162,7 +146,6 @@ def test_webdriver_stub_has_all_exports():
         "Remote",
         "ActionChains", "Keys",
     ]
-
     missing = [e for e in expected if e not in content]
     assert not missing, f"Stub missing exports: {missing}"
 
@@ -175,10 +158,7 @@ def test_selenium_package_imports():
     """Basic selenium package should be importable."""
     result = subprocess.run(
         [sys.executable, "-c", "import selenium; print('OK')"],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        cwd=str(PY_DIR)
+        capture_output=True, text=True, timeout=30, cwd=str(PY_DIR)
     )
     assert result.returncode == 0, f"Import failed: {result.stderr}"
 
@@ -187,10 +167,7 @@ def test_webdriver_package_imports():
     """selenium.webdriver package should be importable."""
     result = subprocess.run(
         [sys.executable, "-c", "from selenium import webdriver; print('OK')"],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        cwd=str(PY_DIR)
+        capture_output=True, text=True, timeout=30, cwd=str(PY_DIR)
     )
     assert result.returncode == 0, f"Import failed: {result.stderr}"
 
@@ -207,18 +184,16 @@ def test_stub_syntax_valid():
         SELENIUM_PKG / "webdriver" / "webkitgtk" / "__init__.pyi",
         SELENIUM_PKG / "webdriver" / "wpewebkit" / "__init__.pyi",
     ]
-
     for stub_path in stub_files:
         if not stub_path.exists():
             continue
         content = stub_path.read_text()
         try:
-            compile(content, str(stub_path), 'exec')
+            compile(content, str(stub_path), "exec")
         except SyntaxError as e:
             assert False, f"Syntax error in {stub_path}: {e}"
 
 
-# Import pytest for skip functionality
 import pytest
 
 
@@ -251,3 +226,36 @@ def test_repo_python_compileall():
         capture_output=True, text=True, timeout=120, cwd=str(PY_DIR),
     )
     assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+def test_repo_remote_connection_unit_tests():
+    """Repo's unit tests for remote_connection module pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/unit/selenium/webdriver/remote/remote_connection_tests.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=str(PY_DIR),
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}"
+
+
+def test_repo_chrome_edge_options_unit_tests():
+    """Repo's unit tests for Chrome and Edge options pass (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "test/unit/selenium/webdriver/chrome/chrome_options_tests.py", "test/unit/selenium/webdriver/edge/edge_options_tests.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=str(PY_DIR),
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}"
+
+
+def test_repo_import_modified_modules():
+    """Modified chrome/edge remote_connection modules are importable (pass_to_pass)."""
+    code = """
+from selenium.webdriver.chrome.remote_connection import ChromeRemoteConnection
+from selenium.webdriver.edge.remote_connection import EdgeRemoteConnection
+print("All modified modules import successfully")
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=str(PY_DIR),
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+    assert "import successfully" in r.stdout

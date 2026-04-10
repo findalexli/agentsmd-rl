@@ -4,8 +4,8 @@ set -e
 # Ensure log directory exists
 mkdir -p /logs/verifier
 
-# Install pytest and CI tools if needed
-pip install -q pytest mypy ruff validate-pyproject 2>/dev/null || true
+# Install pytest and CI tools if needed, along with test dependencies
+pip install -q pytest mypy ruff validate-pyproject rich certifi trio trio-websocket typing_extensions urllib3 websocket-client pytest-mock pysocks filetype 2>/dev/null || true
 
 # Run the test file
 cd /workspace/selenium/py

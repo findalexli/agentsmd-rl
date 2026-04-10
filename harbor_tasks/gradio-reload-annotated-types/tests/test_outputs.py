@@ -40,6 +40,22 @@ def test_skills_syntax():
     ast.parse(open(SKILLS).read())
 
 
+# [repo_tests] pass_to_pass — CI/CD lint check
+def test_repo_ruff_check():
+    """Repo's ruff lint check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-e", ".", "-e", "client/python", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff/gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", UTILS, SKILLS],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests using subprocess
 # ---------------------------------------------------------------------------
@@ -272,3 +288,53 @@ def test_repo_imports_cleanly():
     )
     assert r.returncode == 0, f"Failed to import gradio: {r.stderr[-500:]}"
     assert "OK" in r.stdout, "Import test did not complete successfully"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-e", ".", "-e", "client/python", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff/gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", UTILS, SKILLS],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_abspath():
+    """Repo's utils abspath tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestAbspath", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Utils abspath tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_validate_url():
+    """Repo's utils URL validation tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-e", ".", "-e", "client/python", "-q"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install gradio: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_utils.py::TestValidateURL", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "PYTHONPATH": REPO},
+    )
+    assert r.returncode == 0, f"Utils URL validation tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

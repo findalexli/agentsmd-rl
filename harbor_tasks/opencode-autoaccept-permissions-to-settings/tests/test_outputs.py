@@ -301,3 +301,14 @@ visit(sf);
 console.log(constCount > letCount ? '1' : '0');
 """ % SETTINGS_GENERAL)
     assert result == "1", "settings-general.tsx uses let more than const (AGENTS.md says prefer const)"
+
+# [repo_tests] pass_to_pass — prettier check
+def test_repo_prettier_check():
+    """Modified files are correctly formatted with prettier (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "prettier", "--check", 
+         "packages/app/src/components/prompt-input.tsx",
+         "packages/app/src/components/settings-general.tsx"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

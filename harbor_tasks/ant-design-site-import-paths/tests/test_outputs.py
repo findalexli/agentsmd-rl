@@ -152,6 +152,23 @@ def test_repo_version():
     )
     assert result.returncode == 0, f"Version generation failed:\n{result.stderr[-500:]}"
 
+
+def test_repo_biome():
+    """Repo's Biome linting passes (pass_to_pass).
+
+    Biome linting must pass on the base commit.
+    This ensures code quality and consistency.
+    """
+    result = subprocess.run(
+        ["npm", "run", "lint:biome"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO
+    )
+    assert result.returncode == 0, f"Biome lint failed:\n{result.stderr[-500:]}"
+
+
 def test_no_relative_component_imports_in_dumi():
     """No relative imports to components/ directory in .dumi (fail-to-pass).
 

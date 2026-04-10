@@ -53,51 +53,125 @@ checks:
     description: KotlinFlowIterator no longer has deinit (it was moved to Iterator class)
 
   # Pass-to-pass tests: Verify repo remains functional
-  - id: test_kotlin_syntax_basic
+  # Subprocess-based CI tests (origin: repo_tests)
+  - id: test_repo_gradle_settings_exist
     type: pass_to_pass
     origin: repo_tests
-    description: Kotlin file has valid syntax (basic checks)
+    description: "CI: Repo Gradle settings file exists and is parseable"
 
-  - id: test_swift_syntax_basic
+  - id: test_repo_kotlin_file_syntax_ktlint
     type: pass_to_pass
     origin: repo_tests
-    description: Swift file has valid syntax (basic checks)
+    description: "CI: Kotlin coroutine support file has valid basic structure via Python validation"
 
-  - id: test_kotlin_coroutine_support_imports
+  - id: test_repo_swift_file_syntax_basic
     type: pass_to_pass
     origin: repo_tests
-    description: Kotlin coroutine support file has required imports
+    description: "CI: Swift coroutine support file has valid basic structure via Python validation"
 
-  - id: test_kotlin_coroutine_support_classes
+  - id: test_repo_swift_export_module_exists
     type: pass_to_pass
     origin: repo_tests
-    description: Kotlin coroutine support file has required class definitions
+    description: "CI: Swift export standalone module files exist and are accessible"
 
-  - id: test_swift_coroutine_support_imports
+  - id: test_repo_test_data_integrity
     type: pass_to_pass
     origin: repo_tests
-    description: Swift coroutine support file has required imports
+    description: "CI: Coroutine test data directories exist and have content"
 
-  - id: test_swift_coroutine_support_classes
+  - id: test_repo_git_log_base_commit
     type: pass_to_pass
     origin: repo_tests
-    description: Swift coroutine support file has required class definitions
-
-  - id: test_coroutine_test_data_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: Coroutine integration test data exists and is complete
+    description: "CI: Repository is at expected base commit"
 
   - id: test_repo_git_status_expected
     type: pass_to_pass
     origin: repo_tests
-    description: Repository git status is as expected - clean at base or has fix applied
+    description: "CI: Repository git status is as expected - clean at base or has fix applied"
 
   - id: test_patch_applies_cleanly
     type: pass_to_pass
     origin: repo_tests
-    description: Gold patch can be applied cleanly to repository
+    description: "CI: Gold patch can be applied cleanly to repository"
 
-# No agent_config checks or rubric needed - no applicable agent configs found
+  # New CI-based tests using subprocess.run() (origin: repo_tests)
+  - id: test_kotlin_file_compiles_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Kotlin coroutine support file has valid syntax via subprocess"
+
+  - id: test_swift_file_compiles_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Swift coroutine support file has valid syntax via subprocess"
+
+  - id: test_kotlin_coroutine_support_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Kotlin coroutine support file has required imports via subprocess"
+
+  - id: test_kotlin_coroutine_support_classes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Kotlin coroutine support file has required classes via subprocess"
+
+  - id: test_swift_coroutine_support_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Swift coroutine support file has required imports via subprocess"
+
+  - id: test_swift_coroutine_support_classes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Swift coroutine support file has required classes via subprocess"
+
+  - id: test_coroutine_test_data_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Coroutine integration test data exists and is valid via subprocess"
+
+  - id: test_repo_swift_export_test_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Swift export test support files exist via subprocess"
+
+  - id: test_repo_gradle_module_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Swift export modules have proper Gradle structure via subprocess"
+
+  - id: test_repo_kotlin_file_line_count
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Kotlin coroutine support file has reasonable size"
+
+  - id: test_repo_swift_file_line_count
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Swift coroutine support file has reasonable size"
+
 agent_config: []
-rubric: []
+rubric:
+  - rule: "Commit messages must explain not just WHAT but also WHY and HOW the changes work."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "81"
+      commit: "aa96b1eb9878f7e427671338882cd24dc514a090"
+
+  - rule: "Keep commit subject line under 72 characters and use imperative mood."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "80"
+      commit: "aa96b1eb9878f7e427671338882cd24dc514a090"
+
+  - rule: "Reference YouTrack issues (KT-XXXXX) in commit messages when applicable, using ^KT-XXXXX Fixed in the body to auto-close issues."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "78-79"
+      commit: "aa96b1eb9878f7e427671338882cd24dc514a090"
+
+  - rule: "Do not modify *Generated.java test files directly - regenerate them with the generateTests Gradle task."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "26"
+      commit: "aa96b1eb9878f7e427671338882cd24dc514a090"

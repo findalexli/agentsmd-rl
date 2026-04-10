@@ -12,20 +12,31 @@ checks:
     origin: static
     description: "All five target source files must exist and be non-empty"
 
-  - id: test_repo_header_structure_valid
+  - id: test_static_header_structure_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Header files have valid structure (pragma once or include guards)"
 
-  - id: test_repo_cpp_syntax_basic
+  - id: test_static_cpp_syntax_basic
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "C++ source files have balanced braces and valid includes"
 
-  - id: test_repo_code_patterns_consistent
+  - id: test_static_code_patterns_consistent
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "C++ files follow repo code style (consistent indentation)"
+
+  - id: test_static_include_patterns_valid
+    type: pass_to_pass
+    origin: static
+    description: "C++ files use valid include syntax (angle brackets or quotes)"
+
+  - id: test_static_header_guards_valid
+    type: pass_to_pass
+    origin: static
+    description: "Header files have valid include guards or pragma once"
+
 
   - id: test_cpp_pattern_compiles
     type: fail_to_pass
@@ -114,9 +125,4 @@ rubric:
     source:
       path: "src/bun.js/bindings/v8/AGENTS.md"
       lines: "285"
-      commit: "fe4a66e086bebd2c3c5a238effa801426d736278"
-  - rule: "Prefer concurrent tests over sequential tests when multiple tests in the same file spawn processes or write files; use test.concurrent or describe.concurrent."
-    source:
-      path: "test/AGENTS.md"
-      lines: "22"
       commit: "fe4a66e086bebd2c3c5a238effa801426d736278"

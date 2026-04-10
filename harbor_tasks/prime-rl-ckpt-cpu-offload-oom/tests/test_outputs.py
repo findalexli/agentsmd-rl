@@ -45,6 +45,18 @@ def test_syntax_check():
     compile(source, str(CKPT_FILE), "exec")
 
 
+# [repo_tests] pass_to_pass - Repo CI: py_compile check on ckpt.py
+def test_repo_py_compile_ckpt():
+    """Repo file ckpt.py must compile without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", str(CKPT_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
 # [repo_tests] pass_to_pass - Repo CI: ruff lint check
 def test_repo_ruff_check():
     """Repo's ruff lint check passes (pass_to_pass)."""
@@ -81,6 +93,35 @@ def test_repo_ruff_format():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: pyproject.toml syntax validation
+def test_repo_pyproject_toml_valid():
+    """Repo's pyproject.toml must be valid TOML (pass_to_pass)."""
+    import tomllib
+    pyproject_path = Path(f"{REPO}/pyproject.toml")
+    content = pyproject_path.read_text()
+    # This will raise an exception if the TOML is invalid
+    tomllib.loads(content)
+
+
+# [repo_tests] pass_to_pass - Repo CI: all prime_rl source files compile
+def test_repo_all_prime_rl_files_compile():
+    """All prime_rl Python source files must compile without syntax errors (pass_to_pass)."""
+    src_dir = Path(f"{REPO}/src/prime_rl")
+    # Find all Python files in the source directory
+    py_files = list(src_dir.rglob("*.py"))
+    failed_files = []
+    for f in py_files:
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(f)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if r.returncode != 0:
+            failed_files.append(f"{f}: {r.stderr}")
+    assert not failed_files, f"py_compile failed for:\n" + "\n".join(failed_files)
 
 
 # ---------------------------------------------------------------------------

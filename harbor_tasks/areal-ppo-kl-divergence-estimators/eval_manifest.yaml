@@ -74,22 +74,41 @@ checks:
     origin: repo_tests
     description: "Repo's Python syntax and critical errors check passes (ruff --select=E9,F63,F7,F82)"
 
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "actor.py passes ruff format check (repo CI standard)"
+
   - id: test_repo_py_compile
     type: pass_to_pass
     origin: repo_tests
     description: "actor.py compiles without syntax errors (python3 -m py_compile)"
 
-  - id: test_repo_actor_module_parse
+  - id: test_repo_ruff_critical_areal
     type: pass_to_pass
     origin: repo_tests
-    description: "actor.py parses as valid Python AST"
+    description: "Repo's areal module has no critical syntax errors (ruff E9,F63,F7,F82)"
 
-  - id: test_repo_json_valid
+  - id: test_repo_all_py_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo JSON files are valid (skills-lock.json)"
+    description: "Critical PPO Python files compile without syntax errors (py_compile)"
 
-  - id: test_repo_yaml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo YAML workflow files are valid (pre-commit.yml, .pre-commit-config.yaml)"
+rubric:
+  - rule: "Follow existing code patterns in the same module. Look at neighboring code for tensor operations, stats logging, and control flow conventions."
+    source:
+      path: "CLAUDE.md"
+      lines: "66"
+      commit: "a0d122930f7de028404235688c7dba3f01854954"
+
+  - rule: "Use stats_tracker for metrics observability. Register training metrics via stats_tracker.stat() with denominator for per-token averaging."
+    source:
+      path: "AGENTS.md"
+      lines: "97"
+      commit: "a0d122930f7de028404235688c7dba3f01854954"
+
+  - rule: "Detach tensors from computation graph when computing metrics that do not require gradients."
+    source:
+      path: "AGENTS.md"
+      lines: "84-97"
+      commit: "a0d122930f7de028404235688c7dba3f01854954"

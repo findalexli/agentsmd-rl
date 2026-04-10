@@ -292,6 +292,44 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — repo CI ruff format check
+def test_ruff_format_clean():
+    """Changed files must be properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-m", "ruff", "format",
+            "src/transformers/configuration_utils.py",
+            "src/transformers/modeling_rope_utils.py",
+            "src/transformers/utils/auto_docstring.py",
+            "utils/check_config_attributes.py",
+            "--check",
+            "--quiet",
+        ],
+        cwd=REPO, capture_output=True, timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format issues:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — repo CI import checks
+def test_transformers_imports():
+    """Core transformers modules must import without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import sys; sys.path.insert(0, '/workspace/transformers/src'); "
+         "from transformers.configuration_utils import PreTrainedConfig; "
+         "from transformers.modeling_rope_utils import RotaryEmbeddingConfigMixin; "
+         "from transformers.utils.auto_docstring import auto_method_docstring; "
+         "print('All imports successful')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+    assert "All imports successful" in r.stdout
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / .ai/skills/SKILL.md
 # ---------------------------------------------------------------------------
 

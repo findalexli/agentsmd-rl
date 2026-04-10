@@ -42,4 +42,25 @@ checks:
     origin: repo_tests
     description: "Repo's chunked_gae tests pass"
 
-rubric: []
+  - id: test_repo_plugin_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin contract tests pass (33 CPU-only tests)"
+
+  - id: test_repo_syntax_py
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Python files in repo parse without syntax errors"
+
+rubric:
+  - rule: "Use defensive attribute checks for optional args attributes. Prefer `hasattr(args, 'attr')` or `getattr(args, 'attr', None) is not None` before assigning provider attributes."
+    source:
+      path: "slime/backends/megatron_utils/model_provider.py"
+      lines: "98-101"
+      commit: "7f2a03b5d390f93a90776b8d99ace6b82fa61738"
+
+  - rule: "Follow existing code style for provider attribute assignments. Check neighboring attribute assignments in the same function for pattern consistency."
+    source:
+      path: "slime/backends/megatron_utils/model_provider.py"
+      lines: "91-101"
+      commit: "7f2a03b5d390f93a90776b8d99ace6b82fa61738"

@@ -172,3 +172,39 @@ def test_repo_dns_tests():
         cwd=REPO,
     )
     assert r.returncode == 0, f"DNS tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_package_json_lint():
+    """Repo's package.json lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/package-json-lint.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Package.json lint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_int_from_float():
+    """Repo's int_from_float internal test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/internal/int_from_float.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"int_from_float test failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_prettier_dns():
+    """Repo's DNS TypeScript file formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "--bun", "prettier@latest", "--check", "src/js/node/dns.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

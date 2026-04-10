@@ -4,117 +4,162 @@ source_pr:
   number: 102109
   merge_commit: da8ef1e1609917391264ae6710b3546afba8e482
   base_commit: bc855b917b3f456bfd6198c5bc29a1bc5672aabf
-
 task_metadata:
   name: clickhouse-cidb-secrets-refactor
   title: Refactor CIDB secrets to use Settings instead of hardcoded values
-  description: |
-    The collect_statistics.py script hardcoded public CIDB secret names
-    (clickhouse-test-stat-url, etc.), so the NightlyStatistics job always
-    queried the public CIDB — even in private forks that override
-    Settings.SECRET_CI_DB_* via private_settings_overrides.py.
-
-    This task replaces the hardcoded Secret.Config calls with
-    Info().get_secret(Settings.SECRET_CI_DB_URL) / SECRET_CI_DB_USER /
-    SECRET_CI_DB_PASSWORD, matching the pattern used in runner.py and
-    cidb_cluster.py.
-
+  description: "The collect_statistics.py script hardcoded public CIDB secret names\n\
+    (clickhouse-test-stat-url, etc.), so the NightlyStatistics job always\nqueried\
+    \ the public CIDB \u2014 even in private forks that override\nSettings.SECRET_CI_DB_*\
+    \ via private_settings_overrides.py.\n\nThis task replaces the hardcoded Secret.Config\
+    \ calls with\nInfo().get_secret(Settings.SECRET_CI_DB_URL) / SECRET_CI_DB_USER\
+    \ /\nSECRET_CI_DB_PASSWORD, matching the pattern used in runner.py and\ncidb_cluster.py.\n"
   difficulty: easy
   estimated_time: 15 min
-  tags: ["python", "refactoring", "ci", "secrets"]
-
-# Programmatic checks that run via test_outputs.py
+  tags:
+  - python
+  - refactoring
+  - ci
+  - secrets
 checks:
-  - id: "imports_correct_classes"
-    name: "Imports Info and Settings from ci.praktika"
-    type: "pass_to_pass"
-    description: "Verifies that Info and Settings are imported from ci.praktika"
-
-  - id: "no_hardcoded_secret_config"
-    name: "No hardcoded secret names"
-    type: "fail_to_pass"
-    description: "Hardcoded secret names (clickhouse-test-stat-*) must be removed"
-
-  - id: "no_secret_config_usage"
-    name: "No Secret.Config usage"
-    type: "fail_to_pass"
-    description: "Secret.Config should not be used for CIDB credentials"
-
-  - id: "uses_settings_constants"
-    name: "Uses Settings.SECRET_CI_DB_* constants"
-    type: "fail_to_pass"
-    description: "Must use Settings.SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD"
-
-  - id: "uses_info_get_secret"
-    name: "Uses Info().get_secret() pattern"
-    type: "fail_to_pass"
-    description: "Must use Info().get_secret() to retrieve secrets"
-
-  - id: "cidb_initialization_pattern"
-    name: "CIDB initialized with settings-derived values"
-    type: "pass_to_pass"
-    description: "CIDB must be initialized with url/user/passwd derived from settings"
-
-  - id: "syntax_valid"
-    name: "Python syntax is valid"
-    type: "pass_to_pass"
-    description: "The modified file must have valid Python syntax"
-
-  - id: "file_structure_unchanged"
-    name: "File structure preserved"
-    type: "pass_to_pass"
-    description: "Functions like get_job_stat_for_interval must still exist"
-
-  - id: "quantiles_and_days_unchanged"
-    name: "Constants unchanged"
-    type: "pass_to_pass"
-    description: "QUANTILES and DAYS constants should not be modified"
-
-  # Pass-to-pass tests: Repo CI/CD validation
-  - id: "repo_python_syntax"
-    name: "Repo Python syntax valid"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "collect_statistics.py must have valid Python syntax"
-
-  - id: "repo_praktika_module_syntax"
-    name: "Repo praktika module syntax valid"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "ci/praktika/ Python files must have valid syntax"
-
-  - id: "repo_praktika_settings_importable"
-    name: "Repo praktika.settings importable"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "ci.praktika.settings must be importable with required constants"
-
-  - id: "repo_praktika_info_importable"
-    name: "Repo praktika.info importable"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "ci.praktika.info.Info must be importable with get_secret method"
-
-  - id: "repo_ci_jobs_syntax"
-    name: "Repo CI jobs syntax valid"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "All ci/jobs/*.py files must have valid Python syntax"
-
-  - id: "repo_praktika_tests_pass"
-    name: "Repo praktika tests pass"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "ci/tests/test_pytest_xfail_xpass.py tests must pass"
-
-  - id: "repo_collect_statistics_ast_valid"
-    name: "Repo collect_statistics AST valid"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "collect_statistics.py must have valid AST structure for static analysis"
-
-# Rules from agent configs (relevant for rubric/LLM evaluation)
+- id: imports_correct_classes
+  name: Imports Info and Settings from ci.praktika
+  type: pass_to_pass
+  description: Verifies that Info and Settings are imported from ci.praktika
+- id: no_hardcoded_secret_config
+  name: No hardcoded secret names
+  type: fail_to_pass
+  description: Hardcoded secret names (clickhouse-test-stat-*) must be removed
+- id: no_secret_config_usage
+  name: No Secret.Config usage
+  type: fail_to_pass
+  description: Secret.Config should not be used for CIDB credentials
+- id: uses_settings_constants
+  name: Uses Settings.SECRET_CI_DB_* constants
+  type: fail_to_pass
+  description: Must use Settings.SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD
+- id: uses_info_get_secret
+  name: Uses Info().get_secret() pattern
+  type: fail_to_pass
+  description: Must use Info().get_secret() to retrieve secrets
+- id: cidb_initialization_pattern
+  name: CIDB initialized with settings-derived values
+  type: pass_to_pass
+  description: CIDB must be initialized with url/user/passwd derived from settings
+- id: syntax_valid
+  name: Python syntax is valid
+  type: pass_to_pass
+  description: The modified file must have valid Python syntax
+- id: file_structure_unchanged
+  name: File structure preserved
+  type: pass_to_pass
+  description: Functions like get_job_stat_for_interval must still exist
+- id: quantiles_and_days_unchanged
+  name: Constants unchanged
+  type: pass_to_pass
+  description: QUANTILES and DAYS constants should not be modified
+- id: repo_python_syntax
+  name: Repo Python syntax valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: collect_statistics.py must have valid Python syntax
+- id: repo_praktika_module_syntax
+  name: Repo praktika module syntax valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci/praktika/ Python files must have valid syntax
+- id: repo_praktika_settings_importable
+  name: Repo praktika.settings importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.settings must be importable with required constants
+- id: repo_praktika_info_importable
+  name: Repo praktika.info importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.info.Info must be importable with get_secret method
+- id: repo_ci_jobs_syntax
+  name: Repo CI jobs syntax valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All ci/jobs/*.py files must have valid Python syntax
+- id: repo_praktika_tests_pass
+  name: Repo praktika tests pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci/tests/test_pytest_xfail_xpass.py tests must pass
+- id: repo_collect_statistics_ast_valid
+  name: Repo collect_statistics AST valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: collect_statistics.py must have valid AST structure for static analysis
+- id: repo_cidb_class_ast_valid
+  name: Repo CIDB class AST valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.cidb.CIDB class must have valid AST structure
+- id: repo_praktika_get_secret_callable
+  name: Repo praktika get_secret callable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Info.get_secret must be callable with Settings constants
+- id: repo_cidb_module_syntax
+  name: Repo CIDB module syntax and structure valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.cidb.CIDB class must have valid AST with url/user/passwd
+    parameters
+- id: repo_secret_module_syntax
+  name: Repo Secret module syntax and structure valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.secret.Secret must have valid AST with Config class and
+    get_value method
+- id: repo_info_module_syntax
+  name: Repo Info module syntax and structure valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.info.Info must have valid AST with get_secret method
+- id: repo_s3_module_syntax
+  name: Repo S3 module syntax and structure valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.s3.S3 must have valid AST with copy_file_to_s3 method
+- id: repo_utils_shell_syntax
+  name: Repo Utils Shell syntax and structure valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.utils.Shell must have valid AST with check method
+- id: repo_result_module_syntax
+  name: Repo Result module syntax and structure valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ci.praktika.result.Result must have valid AST with from_commands_run
+    and create_from methods
+- id: repo_settings_secret_ci_db_defined
+  name: Repo Settings defines SECRET_CI_DB constants
+  type: pass_to_pass
+  origin: repo_tests
+  description: Settings must define SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD
+    constants
 agent_config: []
-
-# Soft/subjective criteria for LLM judge
-rubric: []
+rubric:
+- rule: Follow existing code patterns in the same directory. The PR should match patterns
+    used in neighboring files (e.g., using Info().get_secret() with Settings constants
+    like in runner.py and cidb_cluster.py).
+  source:
+    path: AGENTS.md
+    lines: 1-3
+    commit: bc855b917b3f456bfd6198c5bc29a1bc5672aabf
+- rule: When writing documentation or comments, write names of functions and methods
+    as `f` instead of `f()` - we prefer it for mathematical purity when it refers
+    a function itself rather than its application.
+  source:
+    path: AGENTS.md
+    lines: 9-10
+    commit: bc855b917b3f456bfd6198c5bc29a1bc5672aabf
+- rule: For CI-related changes, use the 'CI Fix or improvement' changelog category
+    rather than 'Bug Fix' unless it's a real bug fix.
+  source:
+    path: .claude/skills/clickhouse-pr-description/SKILL.md
+    lines: 85-90
+    commit: bc855b917b3f456bfd6198c5bc29a1bc5672aabf

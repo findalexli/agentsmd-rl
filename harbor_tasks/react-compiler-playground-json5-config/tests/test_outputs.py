@@ -212,15 +212,19 @@ def test_json5_parses_valid_configs():
 # [repo_tests] pass_to_pass
 def test_repo_package_json_valid():
     """Repo's playground package.json is valid JSON (pass_to_pass)."""
-    pkg = json.loads(Path(PACKAGE_JSON).read_text())
-    assert "dependencies" in pkg, "package.json must have dependencies"
-    assert "playground" in pkg.get("name", ""), "package name should be playground"
+    r = subprocess.run(
+        ["node", "-e", f"JSON.parse(require('fs').readFileSync('{PACKAGE_JSON}')); console.log('VALID_JSON');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json is not valid JSON:\n{r.stderr}"
+    assert "VALID_JSON" in r.stdout, "package.json should be valid JSON"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_compilation_ts_parsable():
-    """Repo's compilation.ts is syntactically valid JavaScript (pass_to_pass)."""
-    # Use Node.js to verify the file parses without errors
+def test_repo_compilation_ts_syntax():
+    """Repo's compilation.ts has valid JavaScript/TypeScript syntax (pass_to_pass)."""
+    # Use Node.js --check to verify the file parses without syntax errors
+    # Node.js treats .ts files as JS for syntax checking (ignoring type annotations)
     r = subprocess.run(
         ["node", "--check", COMPILATION_TS],
         capture_output=True, text=True, timeout=30, cwd=REPO,
@@ -229,22 +233,8 @@ def test_repo_compilation_ts_parsable():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_config_editor_tsx_valid():
-    """Repo's ConfigEditor.tsx has valid TSX structure (pass_to_pass)."""
-    src = Path(CONFIG_EDITOR_TSX).read_text()
-    assert len(src) > 0, "ConfigEditor.tsx must not be empty"
-    # TSX files should have JSX syntax - check for basic patterns
-    assert "<" in src and ">" in src, "ConfigEditor.tsx should contain JSX tags"
-    # Check for balanced braces (basic syntax check)
-    open_braces = src.count("{")
-    close_braces = src.count("}")
-    assert open_braces == close_braces, \
-        f"ConfigEditor.tsx: Unbalanced braces ({open_braces} open, {close_braces} close)"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_default_store_ts_parsable():
-    """Repo's defaultStore.ts is syntactically valid JavaScript (pass_to_pass)."""
+def test_repo_default_store_ts_syntax():
+    """Repo's defaultStore.ts has valid JavaScript/TypeScript syntax (pass_to_pass)."""
     r = subprocess.run(
         ["node", "--check", DEFAULT_STORE_TS],
         capture_output=True, text=True, timeout=30, cwd=REPO,
@@ -253,21 +243,34 @@ def test_repo_default_store_ts_parsable():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_no_syntax_errors_in_modified_files():
-    """Modified files have no obvious syntax errors (pass_to_pass)."""
-    # Check that all modified files have balanced braces and valid structure
-    files_to_check = [
-        COMPILATION_TS,
-        DEFAULT_STORE_TS,
-        CONFIG_EDITOR_TSX,
-    ]
-    for filepath in files_to_check:
-        src = Path(filepath).read_text()
-        # Basic brace balance check
-        open_braces = src.count("{")
-        close_braces = src.count("}")
-        assert open_braces == close_braces, \
-            f"{filepath}: Unbalanced braces ({open_braces} open, {close_braces} close)"
+def test_repo_prettier_check_compilation():
+    """Repo's compilation.ts passes prettier formatting check (pass_to_pass)."""
+    # The React repo CI uses prettier for code formatting
+    r = subprocess.run(
+        ["npx", "prettier", "--check", COMPILATION_TS],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"compilation.ts fails prettier check:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check_default_store():
+    """Repo's defaultStore.ts passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", DEFAULT_STORE_TS],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"defaultStore.ts fails prettier check:\n{r.stderr}{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check_config_editor():
+    """Repo's ConfigEditor.tsx passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", CONFIG_EDITOR_TSX],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ConfigEditor.tsx fails prettier check:\n{r.stderr}{r.stdout}"
 
 
 # [repo_tests] pass_to_pass

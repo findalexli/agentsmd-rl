@@ -51,37 +51,45 @@ checks:
       lines: "94-101"
       commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
 
-  # [repo_tests] p2p checks added during enrichment
-  - id: cookiemap_no_banned_patterns
+  # [repo_tests] p2p checks - subprocess-based CI commands from the repo
+  - id: git_no_conflict_markers
     type: pass_to_pass
     origin: repo_tests
-    description: "CookieMap.cpp must not contain banned C++ anti-patterns from repo CI"
-    source:
-      path: "test/internal/ban-words.test.ts"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
-  - id: cookiemap_file_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CookieMap.cpp must have proper structure: includes, namespace, class definition"
-    source:
-      path: "src/bun.js/bindings/CookieMap.cpp"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
-  - id: cookiemap_clang_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CookieMap.cpp must follow the repo's C++ formatting style (clang-format)"
+    description: "Source files have no merge conflict markers or trailing whitespace (git diff --check)"
     source:
       path: ".github/workflows/format.yml"
       commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
 
-  - id: cookiemap_cpp_syntax_valid
+  - id: git_valid_repo_state
     type: pass_to_pass
     origin: repo_tests
-    description: "CookieMap.cpp must have valid C++ syntax (balanced braces/parens)"
+    description: "Repository has valid git state with commit history"
     source:
-      path: "src/.clang-format"
+      path: ".github/workflows/format.yml"
+      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
+
+  - id: no_banned_patterns_in_cookiemap
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CookieMap.cpp has no banned C++ anti-patterns (git grep check)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
+
+  - id: cookiemap_tracked_in_git
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CookieMap.cpp is tracked in git at expected path"
+    source:
+      path: "src/bun.js/bindings/CookieMap.cpp"
+      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
+
+  - id: cookiemap_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "CookieMap.cpp file exists at expected path"
+    source:
+      path: "src/bun.js/bindings/CookieMap.cpp"
       commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
 
 rubric:

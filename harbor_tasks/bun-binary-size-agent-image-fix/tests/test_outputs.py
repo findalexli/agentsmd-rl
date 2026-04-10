@@ -8,10 +8,45 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import os
 from pathlib import Path
 
 REPO = "/workspace/bun"
 TARGET_FILE = ".buildkite/ci.mjs"
+
+
+def _ensure_bun():
+    """Ensure bun is available in PATH, installing if necessary."""
+    env = os.environ.copy()
+    env["PATH"] = "/usr/local/bin:" + env.get("PATH", "")
+
+    # Check if bun is available
+    result = subprocess.run(
+        ["which", "bun"],
+        capture_output=True,
+        env=env,
+    )
+    if result.returncode != 0:
+        # Install bun globally via npm
+        subprocess.run(
+            ["npm", "install", "-g", "bun"],
+            capture_output=True,
+            timeout=120,
+        )
+    return env
+
+
+def _bun_install(env):
+    """Run bun install in the repo."""
+    result = subprocess.run(
+        ["bun", "install"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+        env=env,
+    )
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -86,20 +121,18 @@ def test_no_handbuilt_platform_object():
 # [repo_tests] pass_to_pass
 def test_repo_lint():
     """Repo JavaScript linting passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install", "-g", "bun"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
+    env = _ensure_bun()
 
-    r = subprocess.run(
-        ["bun", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = _bun_install(env)
     assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
 
     r = subprocess.run(
         ["bun", "lint"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env=env,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
 
@@ -107,20 +140,18 @@ def test_repo_lint():
 # [repo_tests] pass_to_pass
 def test_repo_prettier():
     """Modified file passes Prettier formatting check (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install", "-g", "bun"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
+    env = _ensure_bun()
 
-    r = subprocess.run(
-        ["bun", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = _bun_install(env)
     assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
 
     r = subprocess.run(
         ["npx", "prettier", "--check", f"{REPO}/{TARGET_FILE}"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+        env=env,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
@@ -128,20 +159,18 @@ def test_repo_prettier():
 # [repo_tests] pass_to_pass
 def test_repo_banned_words():
     """Banned words check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install", "-g", "bun"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
+    env = _ensure_bun()
 
-    r = subprocess.run(
-        ["bun", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = _bun_install(env)
     assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
 
     r = subprocess.run(
         ["bun", "run", "banned"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env=env,
     )
     assert r.returncode == 0, f"Banned words check failed:\n{r.stderr[-500:]}"
 
@@ -149,20 +178,18 @@ def test_repo_banned_words():
 # [repo_tests] pass_to_pass
 def test_repo_typecheck():
     """Repo TypeScript typecheck passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "install", "-g", "bun"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
+    env = _ensure_bun()
 
-    r = subprocess.run(
-        ["bun", "install"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
+    r = _bun_install(env)
     assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
 
     r = subprocess.run(
         ["npx", "tsc", "--noEmit"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+        env=env,
     )
     assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
 

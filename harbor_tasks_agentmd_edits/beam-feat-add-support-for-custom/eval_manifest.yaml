@@ -48,17 +48,56 @@ checks:
     origin: pr_diff
     description: "VertexAIRunInference YAML wrapper accepts and passes invoke_route parameter"
 
+  - id: handler_not_stub
+    type: fail_to_pass
+    origin: pr_diff
+    description: "VertexAIModelHandlerJSON._parse_invoke_response method exists with real logic"
+
   # ---------------------------------------------------------------------------
-  # Regression/anti-stub checks (pass_to_pass)
+  # Repo CI tests (pass_to_pass) - linting and formatting
   # ---------------------------------------------------------------------------
-  - id: existing_unit_tests_pass
+  - id: repo_pylint
     type: pass_to_pass
     origin: repo_tests
-    description: "Upstream unit tests for vertex_ai_inference still pass"
+    description: "Repo's pylint passes on modified files"
 
-  - id: handler_not_stub
+  - id: repo_yapf
     type: pass_to_pass
-    origin: static
-    description: "VertexAIModelHandlerJSON has real logic, not just pass/return"
+    origin: repo_tests
+    description: "Repo's yapf formatting check passes on vertex_ai_inference.py"
 
-rubric: []
+  - id: repo_yapf_yaml_ml
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's yapf formatting check passes on yaml_ml.py"
+
+rubric:
+  - rule: "Follow the Google Python Style Guide naming conventions: use snake_case for functions/methods/variables, PascalCase for classes, and 2-space indentation"
+    source:
+      path: "sdks/python/.pylintrc"
+      lines: "48-66,194"
+      commit: "be8dfed0530d9192454e410b7d5842651f35ffd6"
+
+  - rule: "Use yapf for code formatting with the project's configuration (yapf==0.43.0). Run 'tox -e py3-yapf' to auto-format or 'tox -e py3-yapf-check' to verify"
+    source:
+      path: "contributor-docs/python-tips.md"
+      lines: "282-350"
+      commit: "be8dfed0530d9192454e410b7d5842651f35ffd6"
+
+  - rule: "Include the Apache License 2.0 header at the top of every new Python file"
+    source:
+      path: "sdks/python/apache_beam/ml/inference/vertex_ai_inference.py"
+      lines: "1-16"
+      commit: "be8dfed0530d9192454e410b7d5842651f35ffd6"
+
+  - rule: "Document all public methods, classes, and modules with descriptive docstrings. Functions over 10 lines must have docstrings. Use Args/Returns/Raises sections for clarity"
+    source:
+      path: "sdks/python/.pylintrc"
+      lines: "25-29"
+      commit: "be8dfed0530d9192454e410b7d5842651f35ffd6"
+
+  - rule: "Follow existing code patterns in the module. For ML inference handlers, match the existing structure: store parameters as private instance variables (e.g., self._param), use type hints in method signatures, and follow the RemoteModelHandler interface"
+    source:
+      path: "sdks/python/apache_beam/ml/inference/vertex_ai_inference.py"
+      lines: "55-120"
+      commit: "be8dfed0530d9192454e410b7d5842651f35ffd6"

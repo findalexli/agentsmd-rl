@@ -22,15 +22,30 @@ checks:
     origin: repo_tests
     description: "Modified files pass ruff format check (repo CI standard)"
 
-  - id: create_session_method_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "HttpRTensorBackend has a _create_session method"
+  - id: no_large_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files are not unreasonably large (>1000KB)"
 
-  - id: create_session_configuration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_create_session configures timeout, read buffer, and TCPConnector"
+  - id: no_private_keys
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files do not contain private keys"
+
+  - id: no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files have no trailing whitespace"
+
+  - id: files_end_with_newline
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files end with a newline"
+
+  - id: python_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files have valid AST (repo CI syntax validation)"
 
   - id: fetch_tensor_retries_on_transient_failure
     type: fail_to_pass

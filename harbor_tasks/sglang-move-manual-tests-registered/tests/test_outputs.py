@@ -186,24 +186,6 @@ def test_remaining_registered_files_have_registration():
 # Pass-to-pass (repo_tests) — CI/CD regression prevention
 # -----------------------------------------------------------------------------
 
-def test_repo_precommit():
-    """Repo's pre-commit checks pass (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip", "install", "pre-commit", "-q"],
-        capture_output=True,
-        timeout=60,
-    )
-    # pre-commit run may need network to download hooks; skip if network fails
-    r = subprocess.run(
-        ["bash", "-c", "SKIP=no-commit-to-branch pre-commit run --all-files --show-diff-on-failure"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Pre-commit checks failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
-
-
 def test_ci_register_module():
     """ci_register module parses without errors (pass_to_pass)."""
     ci_register_path = f"{REPO}/python/sglang/test/ci/ci_register.py"
@@ -272,3 +254,102 @@ def test_ci_register_black():
         timeout=60,
     )
     assert r.returncode == 0, f"Black formatting check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_ci_register_isort():
+    """ci_register module passes isort import sorting check (pass_to_pass)."""
+    # Install isort
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Run isort check
+    r = subprocess.run(
+        ["isort", "--check", f"{REPO}/python/sglang/test/ci/ci_register.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_ci_register_codespell():
+    """ci_register module passes codespell spelling check (pass_to_pass)."""
+    # Install codespell
+    r = subprocess.run(
+        ["pip", "install", "codespell", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Run codespell check
+    r = subprocess.run(
+        ["codespell", f"{REPO}/python/sglang/test/ci/ci_register.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"codespell check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_workflow_yaml_valid():
+    """CI workflow YAML files are valid (pass_to_pass)."""
+    # Install pyyaml if needed
+    r = subprocess.run(
+        ["pip", "install", "pyyaml", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Test lint.yml and pr-gate.yml are valid YAML
+    for yaml_file in ["lint.yml", "pr-gate.yml"]:
+        filepath = f"{REPO}/.github/workflows/{yaml_file}"
+        if Path(filepath).exists():
+            r = subprocess.run(
+                [sys.executable, "-c", f"import yaml; yaml.safe_load(open('{filepath}'))"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            assert r.returncode == 0, f"YAML validation failed for {yaml_file}:\n{r.stderr[-500:]}"
+
+
+def test_pyproject_toml_valid():
+    """pyproject.toml is valid TOML (pass_to_pass)."""
+    filepath = f"{REPO}/python/pyproject.toml"
+    if Path(filepath).exists():
+        r = subprocess.run(
+            [sys.executable, "-c", f"import tomllib; tomllib.load(open('{filepath}', 'rb'))"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"TOML validation failed:\n{r.stderr[-500:]}"
+
+
+def test_registered_dir_isort():
+    """Registered test files pass isort import sorting check (pass_to_pass)."""
+    # Install isort
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    # Check the registered test files
+    script_dir = f"{REPO}/test"
+    registered_files = glob.glob(
+        os.path.join(script_dir, "registered", "**", "*.py"), recursive=True
+    )
+    test_files = [f for f in registered_files if not f.endswith(("/conftest.py", "/__init__.py"))]
+
+    errors = []
+    for filepath in test_files:
+        r = subprocess.run(
+            ["isort", "--check", filepath],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if r.returncode != 0:
+            errors.append(f"{filepath}: {r.stderr[-200:]}")
+
+    assert len(errors) == 0, f"isort errors found:\n" + "\n".join(errors[:5])

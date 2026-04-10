@@ -113,7 +113,7 @@ def test_slider_component_functional():
     """Test that the Slider component still functions correctly after type changes."""
     # This is an integration test - we run the repo's existing tests for the slider
     result = subprocess.run(
-        ["npm", "test", "--", "--testPathPattern=slider", "--testNamePattern=", "--passWithNoTests", "--no-coverage"],
+        ["sh", "-c", "npm run version && npx jest --config .jest.js --no-cache --testPathPatterns='slider/__tests__/(?!demo)' --passWithNoTests --no-coverage"],
         cwd=REPO_PATH,
         capture_output=True,
         text=True,
@@ -139,13 +139,18 @@ def test_slider_component_functional():
 
 def test_repo_slider_unit_tests():
     """Repo's unit tests for slider component pass (pass_to_pass)."""
+    # Need to generate version file first (required by antd test setup)
+    subprocess.run(
+        ["npm", "run", "version"],
+        capture_output=True,
+        cwd=REPO_PATH,
+    )
     r = subprocess.run(
         ["npx", "jest", "--config", ".jest.js", "--no-cache",
-         "--testPathPatterns", "components/slider/__tests__/index.test.tsx",
-         "--no-coverage"],
+         "--testPathPatterns=slider/__tests__/index", "--no-coverage", "--maxWorkers=2"],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=180,
         cwd=REPO_PATH,
     )
     assert r.returncode == 0, f"Slider unit tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
@@ -178,6 +183,41 @@ def test_repo_biome_lint_slider():
     print("Biome lint check on slider passed")
 
 
+def test_repo_biome_check_slider():
+    """Repo's Biome check (format + lint) on slider component passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "biome", "check", "components/slider"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Biome check failed:\n{r.stderr[-500:]}"
+    print("Biome check on slider passed")
+
+
+def test_repo_tsc_slider():
+    """Repo's TypeScript compilation passes (pass_to_pass)."""
+    import os
+    env = os.environ.copy()
+    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "--skipLibCheck"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO_PATH,
+        env=env,
+    )
+    # Check for any slider-specific errors
+    stderr_lines = r.stderr.strip().split('\n') if r.stderr else []
+    slider_errors = [line for line in stderr_lines if 'slider' in line.lower()]
+    if slider_errors:
+        assert False, f"TypeScript errors in slider component:\n{chr(10).join(slider_errors[-10:])}"
+    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-500:]}"
+    print("TypeScript compilation passed")
+
+
 if __name__ == "__main__":
     test_functions = [
         test_typescript_compilation,
@@ -188,6 +228,8 @@ if __name__ == "__main__":
         test_repo_slider_unit_tests,
         test_repo_eslint_slider,
         test_repo_biome_lint_slider,
+        test_repo_biome_check_slider,
+        test_repo_tsc_slider,
     ]
 
     passed = 0

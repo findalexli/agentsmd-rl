@@ -60,10 +60,31 @@ def test_context_menu_div_always_present():
         "Context menu wrapper div with opacity classes should always be present"
 
     # Verify the div is NOT inside a conditional block
-    # The pattern should be: <div className={cn(...)}> followed by UserContextMenu
-    div_pattern = r'<div\s+\n?\s*className=\{cn\(\s*"opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"'
-    assert re.search(div_pattern, content, re.DOTALL), \
-        "Context menu wrapper div should be rendered unconditionally (not inside {condition && ...})"
+    # In the fixed version, the <div> with opacity classes should appear AFTER UserAvatar
+    # and NOT be wrapped in a conditional like {condition && (...)}.
+    # We check for this by looking at the structure around UserAvatar and the div
+    lines = content.split('\n')
+    user_avatar_idx = None
+    for i, line in enumerate(lines):
+        if '<UserAvatar' in line:
+            user_avatar_idx = i
+            break
+
+    assert user_avatar_idx is not None, "UserAvatar component should be rendered"
+
+    # Check the lines after UserAvatar - should NOT find a conditional { with shouldShowUserActions
+    for i in range(user_avatar_idx + 1, min(user_avatar_idx + 10, len(lines))):
+        if '{shouldShowUserActions' in lines[i] or '{shouldShowUserActions' in lines[i]:
+            assert False, f"Context menu should not be conditionally rendered with shouldShowUserActions (found at line {i+1})"
+        # Look for unconditional <div with cn( call
+        if '<div' in lines[i] and 'className={cn(' in lines[i]:
+            return  # Success - found unconditional div
+
+    # If we get here, check if the structure matches fixed version
+    # Fixed version: UserAvatar followed by unconditional <div> with className={cn(...
+    context_after_avatar = '\n'.join(lines[user_avatar_idx:user_avatar_idx+15])
+    assert 'className={cn(' in context_after_avatar, \
+        "Context menu wrapper div with className={cn(...)} should appear after UserAvatar"
 
 
 def test_typescript_user_actions_no_errors():
@@ -167,3 +188,33 @@ def test_repo_lint():
         timeout=120,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_user_context_menu():
+    """Repo's unit tests for UserContextMenu component pass (pass_to_pass).
+
+    Runs vitest on the user-context-menu.test.tsx file.
+    """
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run", "__tests__/components/features/user/user-context-menu.test.tsx"],
+        cwd=f"{REPO}/frontend",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"UserContextMenu unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_sidebar():
+    """Repo's unit tests for Sidebar component pass (pass_to_pass).
+
+    Runs vitest on the sidebar.test.tsx file.
+    """
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run", "__tests__/components/features/sidebar/sidebar.test.tsx"],
+        cwd=f"{REPO}/frontend",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Sidebar unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

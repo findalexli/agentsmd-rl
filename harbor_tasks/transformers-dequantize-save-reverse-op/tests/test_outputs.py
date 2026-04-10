@@ -569,3 +569,123 @@ print("PASS: core_model_loading ops work correctly")
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass - Metal quantization config tests
+def test_repo_metal_config():
+    """MetalConfig unit tests pass (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import unittest
+from tests.quantization.metal.test_metal import MetalConfigTest
+suite = unittest.TestLoader().loadTestsFromTestCase(MetalConfigTest)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MetalConfig tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Metal quantizer environment tests
+def test_repo_metal_quantizer_env():
+    """MetalHfQuantizer environment validation tests pass (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import unittest
+from tests.quantization.metal.test_metal import MetalQuantizerEnvironmentTest
+suite = unittest.TestLoader().loadTestsFromTestCase(MetalQuantizerEnvironmentTest)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MetalQuantizerEnvironmentTest failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Metal affine quantize/dequantize tests
+def test_repo_metal_affine_quantize():
+    """Metal affine quantize/dequantize roundtrip tests pass (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import unittest
+from tests.quantization.metal.test_metal import AffineQuantizeDequantizeTest
+suite = unittest.TestLoader().loadTestsFromTestCase(AffineQuantizeDequantizeTest)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AffineQuantizeDequantizeTest failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Metal Linear module tests
+def test_repo_metal_linear():
+    """MetalLinear module tests pass (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import unittest
+from tests.quantization.metal.test_metal import MetalLinearTest
+suite = unittest.TestLoader().loadTestsFromTestCase(MetalLinearTest)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MetalLinearTest failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Metal ConversionOps tests
+def test_repo_metal_conversion_ops():
+    """Metal ConversionOps (MetalQuantize/MetalDequantize) tests pass (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import unittest
+from tests.quantization.metal.test_metal import MetalConversionOpsTest
+suite = unittest.TestLoader().loadTestsFromTestCase(MetalConversionOpsTest)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MetalConversionOpsTest failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - MXFP4 config tests
+def test_repo_mxfp4_config():
+    """Mxfp4Config unit tests pass (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import unittest
+from tests.quantization.mxfp4.test_mxfp4 import Mxfp4ConfigTest
+suite = unittest.TestLoader().loadTestsFromTestCase(Mxfp4ConfigTest)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mxfp4ConfigTest failed:\n{r.stdout}\n{r.stderr}"

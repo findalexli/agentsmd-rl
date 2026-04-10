@@ -74,19 +74,35 @@ def test_blob_validation_rejects_string():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_existing_blob_deserialization_works():
-    """Valid Blob references must still serialize and deserialize correctly."""
+def test_react_flight_reply_formdata():
+    """FormData with Blob serialization works (pass_to_pass)."""
     r = subprocess.run(
         [
             "yarn", "test", "--silent", "--no-watchman",
             "--testPathPattern", "ReactFlightDOMReply-test",
-            "--testNamePattern", "can serialize and deserialize a Blob",
+            "--testNamePattern", "can pass FormData as a reply",
         ],
         cwd=REPO, capture_output=True, timeout=120,
     )
     output = r.stdout.decode() + r.stderr.decode()
     assert r.returncode == 0, (
-        f"Existing Blob serialization/deserialization test broken:\n{output[-2000:]}"
+        f"FormData serialization test broken:\n{output[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_react_flight_reply_all():
+    """All ReactFlightDOMReply tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "yarn", "test", "--silent", "--no-watchman",
+            "--testPathPattern", "ReactFlightDOMReply-test",
+        ],
+        cwd=REPO, capture_output=True, timeout=300,
+    )
+    output = r.stdout.decode() + r.stderr.decode()
+    assert r.returncode == 0, (
+        f"ReactFlightDOMReply tests failed:\n{output[-2000:]}"
     )
 
 

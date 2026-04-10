@@ -267,7 +267,7 @@ def test_no_wildcard_imports():
 def test_repo_flow_typecheck():
     """Repos Flow typecheck passes on modified file (pass_to_pass)."""
     r = subprocess.run(
-        ["yarn", "flow", "check", TARGET],
+        ["yarn", "flow", "xplat"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-1000:]}{r.stdout[-500:]}"
@@ -277,7 +277,7 @@ def test_repo_flow_typecheck():
 def test_repo_lint():
     """Repos ESLint passes on modified file (pass_to_pass)."""
     r = subprocess.run(
-        ["yarn", "lint", TARGET],
+        ["yarn", "lint", "packages/react-native-renderer/src/ReactFiberConfigFabric.js"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

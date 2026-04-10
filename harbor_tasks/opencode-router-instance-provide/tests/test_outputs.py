@@ -365,3 +365,68 @@ def test_repo_unit_tests():
         cwd=f"{REPO}/packages/opencode",
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_worktree_tests():
+    """Worktree tests pass — covers worktree routing logic (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/project/worktree.test.ts", "--timeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Worktree tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_server_tests():
+    """Server tests pass — covers server routing and session handling (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/server/", "--timeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Server tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_control_plane_tests():
+    """Control-plane tests pass — covers workspace adaptors and SSE (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/control-plane/", "--timeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Control-plane tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_instance_tests():
+    """Instance/project tests pass — covers Instance.provide and bootstrap (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/project/", "--timeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Instance/project tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_opencode():
+    """Opencode package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "run", "build"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"

@@ -1,105 +1,113 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28494
-  base_commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
-  merge_commit: "9ce5b052840cecea4aa1977aeb063c47d0137a22"
-
+  base_commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+  merge_commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
 checks:
-  - id: source_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "All five WebCore source files must exist and be non-empty"
-
-  - id: message_port_closed_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "postMessageToRemote must check m_isClosed before m_pendingMessages"
-
-  - id: message_port_variable_index
-    type: fail_to_pass
-    origin: pr_diff
-    description: "m_isClosed guard uses computed index, not hardcoded literal"
-
-  - id: abort_signal_reason_visited
-    type: fail_to_pass
-    origin: pr_diff
-    description: "visitChildrenImpl visits chained signal().reason()"
-
-  - id: broadcast_channel_weak_ptr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "allBroadcastChannels map uses template pointer wrapper, not raw pointer"
-
-  - id: event_listener_map_thread_affinity
-    type: fail_to_pass
-    origin: pr_diff
-    description: "At least 4/5 EventListenerMap mutators have thread affinity checks before Locker"
-
-  - id: event_listener_map_thread_uid_member
-    type: fail_to_pass
-    origin: pr_diff
-    description: "EventListenerMap.h declares a thread UID member variable"
-
-  - id: event_listener_map_gc_thread_exemption
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Thread affinity helper exempts GC threads via function call"
-
-  - id: broadcast_channel_still_registers
-    type: pass_to_pass
-    origin: pr_diff
-    description: "BroadcastChannel constructor still registers in global map"
-
-  - id: visit_children_retains_base_calls
-    type: pass_to_pass
-    origin: pr_diff
-    description: "visitChildrenImpl retains Base::visitChildren and addWebCoreOpaqueRoot"
-
-  - id: broadcast_channel_locker_style
-    type: pass_to_pass
-    origin: agent_config
-    description: "BroadcastChannel.cpp follows existing Locker pattern"
-    source:
-      path: "CLAUDE.md"
-      lines: "228"
-      commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
-
-  # Repo CI/CD pass-to-pass tests — verify repository health on base and gold commits
-  - id: repo_source_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified C++ source files have valid structure (non-empty, proper includes)"
-
-  - id: repo_headers_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C++ header files have valid include guards and expected includes"
-
-  - id: repo_git_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository is valid and at expected base commit"
-
-  - id: repo_line_endings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Source files use LF line endings (not CRLF)"
-
-  - id: repo_cpp_toolchain
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C++ compiler toolchain works and supports C++17"
-
-  - id: repo_cpp_syntax_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified C++ files have basic syntactic validity (balanced braces/parens)"
-
+- id: source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All five WebCore source files must exist and be non-empty
+- id: message_port_closed_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: postMessageToRemote must check m_isClosed before m_pendingMessages
+- id: message_port_variable_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: m_isClosed guard uses computed index, not hardcoded literal
+- id: abort_signal_reason_visited
+  type: fail_to_pass
+  origin: pr_diff
+  description: visitChildrenImpl visits chained signal().reason()
+- id: broadcast_channel_weak_ptr
+  type: fail_to_pass
+  origin: pr_diff
+  description: allBroadcastChannels map uses template pointer wrapper, not raw pointer
+- id: event_listener_map_thread_affinity
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least 4/5 EventListenerMap mutators have thread affinity checks
+    before Locker
+- id: event_listener_map_thread_uid_member
+  type: fail_to_pass
+  origin: pr_diff
+  description: EventListenerMap.h declares a thread UID member variable
+- id: event_listener_map_gc_thread_exemption
+  type: fail_to_pass
+  origin: pr_diff
+  description: Thread affinity helper exempts GC threads via function call
+- id: broadcast_channel_still_registers
+  type: pass_to_pass
+  origin: pr_diff
+  description: BroadcastChannel constructor still registers in global map
+- id: visit_children_retains_base_calls
+  type: pass_to_pass
+  origin: pr_diff
+  description: visitChildrenImpl retains Base::visitChildren and addWebCoreOpaqueRoot
+- id: broadcast_channel_locker_style
+  type: pass_to_pass
+  origin: agent_config
+  description: BroadcastChannel.cpp follows existing Locker pattern
+  source:
+    path: CLAUDE.md
+    lines: '228'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+- id: repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and at expected base commit via git rev-parse
+- id: repo_cpp_toolchain
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ compiler toolchain works and supports C++17 via g++ subprocess
+- id: repo_source_structure
+  type: pass_to_pass
+  origin: static
+  description: Modified C++ source files have valid structure (non-empty, proper includes)
+- id: repo_headers_valid
+  type: pass_to_pass
+  origin: static
+  description: C++ header files have valid include guards and expected includes
+- id: repo_line_endings
+  type: pass_to_pass
+  origin: static
+  description: Source files use LF line endings (not CRLF)
+- id: repo_cpp_syntax_basic
+  type: pass_to_pass
+  origin: static
+  description: Modified C++ files have basic syntactic validity (balanced braces/parens)
+- id: repo_editorconfig
+  type: pass_to_pass
+  origin: static
+  description: Source files follow basic editorconfig rules (no trailing whitespace,
+    ends with newline)
+- id: repo_no_tabs
+  type: pass_to_pass
+  origin: static
+  description: Modified C++ files use spaces for indentation (no hard tabs)
+- id: repo_no_banned_words
+  type: pass_to_pass
+  origin: static
+  description: Modified files do not contain banned words/phrases (HACK, etc.)
+- id: repo_include_guards_webcore
+  type: pass_to_pass
+  origin: static
+  description: WebCore header files have proper include guards or pragma once
+- id: repo_license_headers
+  type: pass_to_pass
+  origin: static
+  description: Modified files have license headers (WebKit/Bun convention)
+- id: repo_no_merge_conflict_markers
+  type: pass_to_pass
+  origin: static
+  description: Modified files do not contain Git merge conflict markers
 rubric:
-  - rule: "Follow existing code style — check neighboring files for patterns"
-    source:
-      path: "CLAUDE.md"
-      lines: "228"
-      commit: "639bc4351cd7b5daa38b99d47a506dec68e95353"
+- rule: Update CLAUDE.md with a note about WebCore fixes applied.
+  source:
+    path: CLAUDE.md
+    lines: '228'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+  reference: '- WebCore fixes applied: MessagePortChannel memory leak, JSAbortController
+    signal reason, BroadcastChannel use-after-free, EventListenerMap thread affinity.'

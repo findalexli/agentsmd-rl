@@ -19,8 +19,7 @@ def helm_template(values=None, show_only=None, chart_dir=None):
     cmd = ["helm", "template", "test-release", chart_dir]
 
     if values:
-        # Create temporary values file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(values, f)
             values_file = f.name
         cmd.extend(["-f", values_file])
@@ -38,8 +37,6 @@ def helm_template(values=None, show_only=None, chart_dir=None):
         )
         if result.returncode != 0:
             raise RuntimeError(f"helm template failed: {result.stderr}")
-
-        # Parse YAML documents
         docs = list(yaml.safe_load_all(result.stdout))
         return [d for d in docs if d is not None]
     finally:
@@ -48,7 +45,6 @@ def helm_template(values=None, show_only=None, chart_dir=None):
 
 
 def get_doc_by_kind(docs, kind):
-    """Get document by Kubernetes kind."""
     for doc in docs:
         if doc.get("kind") == kind:
             return doc
@@ -56,14 +52,12 @@ def get_doc_by_kind(docs, kind):
 
 
 def jmespath_search(path, doc):
-    """Simple JMESPath-like search for nested dict access."""
     parts = path.split(".")
     current = doc
     for part in parts:
         if current is None:
             return None
         if part.startswith("[") and part.endswith("]"):
-            # Array index
             idx = int(part[1:-1])
             if isinstance(current, list) and idx < len(current):
                 current = current[idx]
@@ -77,12 +71,10 @@ def jmespath_search(path, doc):
 
 
 def extract_pod_template_from_configmap(docs):
-    """Extract the pod template from the ConfigMap data."""
     for doc in docs:
         if doc.get("kind") == "ConfigMap":
             data = doc.get("data", {})
             for key, value in data.items():
-                # Try to parse as YAML pod template
                 try:
                     pod = yaml.safe_load(value)
                     if pod and pod.get("kind") == "Pod":
@@ -92,7 +84,6 @@ def extract_pod_template_from_configmap(docs):
     return None
 
 
-# Test 1: Fail-to-pass test - workers.kubernetes.affinity should be used for pod-template-file
 @pytest.mark.parametrize("affinity_values", [
     {
         "nodeAffinity": {
@@ -122,10 +113,6 @@ def extract_pod_template_from_configmap(docs):
     },
 ])
 def test_workers_kubernetes_affinity_pod_template(affinity_values):
-    """
-    Test that workers.kubernetes.affinity is correctly applied to pod-template-file.
-    This is a fail-to-pass test - without the fix, this should not work.
-    """
     values = {
         "executor": "KubernetesExecutor",
         "workers": {
@@ -134,27 +121,18 @@ def test_workers_kubernetes_affinity_pod_template(affinity_values):
             },
         },
     }
-
     docs = helm_template(
         values=values,
         show_only=["templates/configmaps/configmap.yaml"],
     )
-
     pod_doc = extract_pod_template_from_configmap(docs)
     assert pod_doc is not None, "Pod template should be found in ConfigMap"
-
     spec_affinity = jmespath_search("spec.affinity", pod_doc)
     assert spec_affinity is not None, "Pod should have affinity set"
     assert spec_affinity == affinity_values, f"Affinity should match input: {spec_affinity} != {affinity_values}"
 
 
-# Test 2: Fail-to-pass test - workers.celery.affinity should be used for worker StatefulSet
 def test_workers_celery_affinity_deployment():
-    """
-    Test that workers.celery.affinity is correctly applied to worker StatefulSet.
-    This is a fail-to-pass test - without the fix, this should not work.
-    """
-    # Use a simpler affinity that won't have type issues with Helm
     affinity_values = {
         "nodeAffinity": {
             "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -168,7 +146,6 @@ def test_workers_celery_affinity_deployment():
             }
         }
     }
-
     values = {
         "executor": "CeleryExecutor",
         "workers": {
@@ -177,28 +154,18 @@ def test_workers_celery_affinity_deployment():
             },
         },
     }
-
     docs = helm_template(
         values=values,
         show_only=["templates/workers/worker-deployment.yaml"],
     )
-
-    # Celery worker is a StatefulSet, not a Deployment
     statefulset_doc = get_doc_by_kind(docs, "StatefulSet")
-    assert statefulset_doc is not None, f"StatefulSet document should be generated, got: {[d.get('kind') for d in docs if d]}"
-
+    assert statefulset_doc is not None
     spec_affinity = jmespath_search("spec.template.spec.affinity", statefulset_doc)
     assert spec_affinity is not None, "StatefulSet should have affinity set"
-    # Compare the actual content
-    assert spec_affinity.get("nodeAffinity", {}).get("requiredDuringSchedulingIgnoredDuringExecution", {}).get("nodeSelectorTerms", [{}])[0].get("matchExpressions", [{}])[0].get("key") == "foo-bar-key", f"Affinity not correctly set: {spec_affinity}"
+    assert spec_affinity.get("nodeAffinity", {}).get("requiredDuringSchedulingIgnoredDuringExecution", {}).get("nodeSelectorTerms", [{}])[0].get("matchExpressions", [{}])[0].get("key") == "foo-bar-key"
 
 
-# Test 3: Fail-to-pass test - precedence test - workers.kubernetes.affinity should take precedence over workers.affinity
 def test_kubernetes_affinity_precedence():
-    """
-    Test that workers.kubernetes.affinity takes precedence over workers.affinity.
-    When both are set, workers.kubernetes.affinity should be used.
-    """
     old_affinity = {
         "podAffinity": {
             "preferredDuringSchedulingIgnoredDuringExecution": [
@@ -212,7 +179,6 @@ def test_kubernetes_affinity_precedence():
             ]
         }
     }
-
     new_affinity = {
         "nodeAffinity": {
             "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -226,7 +192,6 @@ def test_kubernetes_affinity_precedence():
             }
         }
     }
-
     values = {
         "executor": "KubernetesExecutor",
         "workers": {
@@ -236,25 +201,18 @@ def test_kubernetes_affinity_precedence():
             },
         },
     }
-
     docs = helm_template(
         values=values,
         show_only=["templates/configmaps/configmap.yaml"],
     )
-
     pod_doc = extract_pod_template_from_configmap(docs)
     assert pod_doc is not None, "Pod template should be found in ConfigMap"
-
     spec_affinity = jmespath_search("spec.affinity", pod_doc)
     assert spec_affinity is not None, "Pod should have affinity set"
-    assert spec_affinity == new_affinity, f"New affinity should take precedence over old: got {spec_affinity}"
+    assert spec_affinity == new_affinity, f"New affinity should take precedence: {spec_affinity}"
 
 
-# Test 4: Backward compatibility - workers.affinity should still work
 def test_backward_compatibility_old_affinity():
-    """
-    Test that the old workers.affinity still works for backward compatibility.
-    """
     affinity_values = {
         "nodeAffinity": {
             "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -268,145 +226,96 @@ def test_backward_compatibility_old_affinity():
             }
         }
     }
-
     values = {
         "executor": "KubernetesExecutor",
         "workers": {
             "affinity": affinity_values,
         },
     }
-
     docs = helm_template(
         values=values,
         show_only=["templates/configmaps/configmap.yaml"],
     )
-
     pod_doc = extract_pod_template_from_configmap(docs)
     assert pod_doc is not None, "Pod template should be found in ConfigMap"
-
     spec_affinity = jmespath_search("spec.affinity", pod_doc)
     assert spec_affinity is not None, "Pod should have affinity set"
-    assert spec_affinity == affinity_values, f"Old affinity should still work: {spec_affinity} != {affinity_values}"
+    assert spec_affinity == affinity_values
 
 
-# Test 5: Verify schema changes - values.schema.json should have new fields
 def test_schema_has_new_affinity_fields():
-    """
-    Test that values.schema.json has the new affinity fields defined.
-    """
     schema_path = os.path.join(CHART_DIR, "values.schema.json")
     with open(schema_path) as f:
         schema = json.load(f)
-
-    # Check workers.celery.affinity exists
     celery_props = jmespath_search("properties.workers.properties.celery.properties", schema)
     assert celery_props is not None, "workers.celery properties should exist"
     assert "affinity" in celery_props, "workers.celery.affinity should be defined in schema"
-
-    # Check workers.kubernetes.affinity exists
     kubernetes_props = jmespath_search("properties.workers.properties.kubernetes.properties", schema)
     assert kubernetes_props is not None, "workers.kubernetes properties should exist"
-    assert "affinity" in kubernetes_props, "workers.kubernetes.affinity should be defined in schema"
+    assert "affinity" in kubernetes_props
 
 
-# Test 6: Verify schema description mentions deprecation
 def test_schema_deprecation_description():
-    """
-    Test that the deprecated workers.affinity field has deprecation note in schema.
-    """
     schema_path = os.path.join(CHART_DIR, "values.schema.json")
     with open(schema_path) as f:
         schema = json.load(f)
-
     workers_affinity_desc = jmespath_search("properties.workers.properties.affinity.description", schema)
-    assert workers_affinity_desc is not None, "workers.affinity description should exist"
-    assert "deprecated" in workers_affinity_desc.lower(), "workers.affinity description should mention deprecation"
+    assert workers_affinity_desc is not None
+    assert "deprecated" in workers_affinity_desc.lower()
 
 
-# Test 7: Verify NOTES.txt has deprecation warning
 def test_notes_deprecation_warning():
-    """
-    Test that NOTES.txt contains deprecation warning for workers.affinity.
-    """
     notes_path = os.path.join(CHART_DIR, "templates/NOTES.txt")
     with open(notes_path) as f:
         notes = f.read()
+    assert "workers.affinity" in notes
+    assert "deprecated" in notes.lower() or "renamed" in notes.lower()
 
-    assert "workers.affinity" in notes, "NOTES.txt should mention workers.affinity"
-    assert "deprecated" in notes.lower() or "renamed" in notes.lower(), "NOTES.txt should warn about deprecation"
 
-
-# Test 8: Verify values.yaml has new affinity fields
 def test_values_yaml_has_new_fields():
-    """
-    Test that values.yaml has the new affinity fields defined.
-    """
     values_path = os.path.join(CHART_DIR, "values.yaml")
     with open(values_path) as f:
         values = yaml.safe_load(f)
-
-    # Check workers.celery.affinity exists
     celery_affinity = jmespath_search("workers.celery.affinity", values)
-    assert celery_affinity is not None, "workers.celery.affinity should exist"
-    assert isinstance(celery_affinity, dict), "workers.celery.affinity should be a dict"
-
-    # Check workers.kubernetes.affinity exists
+    assert celery_affinity is not None
+    assert isinstance(celery_affinity, dict)
     kubernetes_affinity = jmespath_search("workers.kubernetes.affinity", values)
-    assert kubernetes_affinity is not None, "workers.kubernetes.affinity should exist"
-    assert isinstance(kubernetes_affinity, dict), "workers.kubernetes.affinity should be a dict"
+    assert kubernetes_affinity is not None
+    assert isinstance(kubernetes_affinity, dict)
 
 
-# Test 9: Pass-to-pass test - Helm lint should pass
 def test_helm_lint():
-    """
-    Pass-to-pass test: Helm lint should pass on the chart.
-    """
     result = subprocess.run(
         ["helm", "lint", CHART_DIR],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    assert result.returncode == 0, f"Helm lint failed:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"Helm lint failed: {result.stdout} {result.stderr}"
 
 
-# Test 10: Pass-to-pass test - Helm template with default values should work
 def test_helm_template_default_values():
-    """
-    Pass-to-pass test: Helm template should work with default values.
-    """
     result = subprocess.run(
         ["helm", "template", "test-release", CHART_DIR],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    assert result.returncode == 0, f"Helm template failed:\n{result.stderr}"
-    # Should produce non-empty output
-    assert result.stdout.strip(), "Helm template should produce output"
+    assert result.returncode == 0, f"Helm template failed: {result.stderr}"
+    assert result.stdout.strip()
 
 
-# Test 11: Pass-to-pass test - Helm lint strict mode (repo CI check)
 def test_helm_lint_strict():
-    """
-    Pass-to-pass test: Helm lint strict mode passes (repo CI check).
-    Verifies chart follows Helm best practices.
-    """
     result = subprocess.run(
         ["helm", "lint", CHART_DIR, "--strict"],
         capture_output=True,
         text=True,
         timeout=60,
     )
-    assert result.returncode == 0, f"Helm lint strict failed:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"Helm lint strict failed: {result.stdout} {result.stderr}"
 
 
-# Test 12: Pass-to-pass test - Helm template with values.yaml (repo CI check)
 def test_helm_template_with_values():
-    """
-    Pass-to-pass test: Helm template with explicit values.yaml passes (repo CI check).
-    Verifies all templates render correctly with default configuration.
-    """
     values_path = os.path.join(CHART_DIR, "values.yaml")
     result = subprocess.run(
         ["helm", "template", "test-release", CHART_DIR, "-f", values_path],
@@ -414,21 +323,15 @@ def test_helm_template_with_values():
         text=True,
         timeout=60,
     )
-    assert result.returncode == 0, f"Helm template with values.yaml failed:\n{result.stderr}"
-    assert result.stdout.strip(), "Helm template should produce non-empty output"
+    assert result.returncode == 0
+    assert result.stdout.strip()
 
 
-# Test 13: Pass-to-pass test - Helm template validation with KubernetesExecutor (repo CI check)
 def test_helm_template_kubernetes_executor():
-    """
-    Pass-to-pass test: Helm template with KubernetesExecutor passes (repo CI check).
-    Verifies pod-template-file renders correctly for the modified executor path.
-    """
     values = {"executor": "KubernetesExecutor"}
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(values, f)
         values_file = f.name
-
     try:
         result = subprocess.run(
             ["helm", "template", "test-release", CHART_DIR, "-f", values_file],
@@ -436,22 +339,16 @@ def test_helm_template_kubernetes_executor():
             text=True,
             timeout=60,
         )
-        assert result.returncode == 0, f"Helm template with KubernetesExecutor failed:\n{result.stderr}"
+        assert result.returncode == 0
     finally:
         os.unlink(values_file)
 
 
-# Test 14: Pass-to-pass test - Helm template validation with CeleryExecutor (repo CI check)
 def test_helm_template_celery_executor():
-    """
-    Pass-to-pass test: Helm template with CeleryExecutor passes (repo CI check).
-    Verifies worker StatefulSet renders correctly for the modified Celery path.
-    """
     values = {"executor": "CeleryExecutor"}
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(values, f)
         values_file = f.name
-
     try:
         result = subprocess.run(
             ["helm", "template", "test-release", CHART_DIR, "-f", values_file],
@@ -459,6 +356,158 @@ def test_helm_template_celery_executor():
             text=True,
             timeout=60,
         )
-        assert result.returncode == 0, f"Helm template with CeleryExecutor failed:\n{result.stderr}"
+        assert result.returncode == 0
     finally:
         os.unlink(values_file)
+
+
+def test_values_yaml_schema_validation():
+    try:
+        import jsonschema
+    except ImportError:
+        subprocess.run(["pip", "install", "-q", "jsonschema"], check=True)
+        import jsonschema
+    values_path = os.path.join(CHART_DIR, "values.yaml")
+    with open(values_path) as f:
+        values = yaml.safe_load(f)
+    schema_path = os.path.join(CHART_DIR, "values.schema.json")
+    with open(schema_path) as f:
+        schema = json.load(f)
+    try:
+        jsonschema.validate(instance=values, schema=schema)
+    except jsonschema.ValidationError as e:
+        pytest.fail(f"Schema validation failed: {e.message}")
+
+
+def test_chart_yaml_valid():
+    chart_yaml_path = os.path.join(CHART_DIR, "Chart.yaml")
+    with open(chart_yaml_path) as f:
+        chart_yaml = yaml.safe_load(f)
+    assert "apiVersion" in chart_yaml
+    assert "name" in chart_yaml
+    assert "version" in chart_yaml
+    assert chart_yaml["apiVersion"] == "v2"
+    assert chart_yaml["name"] == "airflow"
+
+
+HELM_TESTS_DIR = os.path.join(REPO, "helm-tests")
+
+
+def install_test_deps():
+    subprocess.run(
+        ["pip", "install", "-q", "jsonschema", "jmespath"],
+        capture_output=True,
+        check=True,
+    )
+
+
+def test_repo_chart_quality_schema_validation():
+    install_test_deps()
+    result = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/helm_tests/airflow_aux/test_chart_quality.py::TestChartQuality::test_values_validate_schema",
+            "-xvs",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=HELM_TESTS_DIR,
+    )
+    assert result.returncode == 0, f"Failed: {result.stdout} {result.stderr}"
+
+
+def test_repo_worker_affinity():
+    install_test_deps()
+    result = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/helm_tests/airflow_core/test_worker.py::TestWorker::test_affinity",
+            "-xvs",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=HELM_TESTS_DIR,
+    )
+    assert result.returncode == 0, f"Failed: {result.stdout} {result.stderr}"
+
+
+def test_repo_worker_default_affinity():
+    install_test_deps()
+    result = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/helm_tests/airflow_core/test_worker.py::TestWorker::test_should_create_default_affinity",
+            "-xvs",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=HELM_TESTS_DIR,
+    )
+    assert result.returncode == 0, f"Failed: {result.stdout} {result.stderr}"
+
+
+def test_repo_pod_template_workers_affinity():
+    install_test_deps()
+    result = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/helm_tests/airflow_aux/test_pod_template_file.py::TestPodTemplateFile::test_workers_affinity",
+            "-xvs",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=HELM_TESTS_DIR,
+    )
+    assert result.returncode == 0, f"Failed: {result.stdout} {result.stderr}"
+
+
+def test_repo_pod_template_global_affinity():
+    install_test_deps()
+    result = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/helm_tests/airflow_aux/test_pod_template_file.py::TestPodTemplateFile::test_global_affinity",
+            "-xvs",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=HELM_TESTS_DIR,
+    )
+    assert result.returncode == 0, f"Failed: {result.stdout} {result.stderr}"
+
+
+def test_repo_pod_template_affinity_overwrite():
+    install_test_deps()
+    result = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/helm_tests/airflow_aux/test_pod_template_file.py::TestPodTemplateFile::test_affinity_overwrite",
+            "-xvs",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=HELM_TESTS_DIR,
+    )
+    assert result.returncode == 0, f"Failed: {result.stdout} {result.stderr}"
+
+
+def test_repo_worker_affinity_overwrite():
+    install_test_deps()
+    result = subprocess.run(
+        [
+            "python", "-m", "pytest",
+            "tests/helm_tests/airflow_core/test_worker.py::TestWorker::test_affinity_overwrite",
+            "-xvs",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=HELM_TESTS_DIR,
+    )
+    assert result.returncode == 0, f"Failed: {result.stdout} {result.stderr}"

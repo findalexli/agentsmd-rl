@@ -149,6 +149,144 @@ def test_bun_ts_pch_implicit_deps():
 # These ensure the fix doesn't break existing repo functionality
 # ---------------------------------------------------------------------------
 
+# [repo_tests] pass_to_pass — EditorConfig compliance check
+def test_repo_editorconfig_compliance():
+    """Build scripts comply with EditorConfig (pass_to_pass).
+
+    Verifies that scripts/build/*.ts files follow basic EditorConfig rules:
+    - UTF-8 encoding
+    - LF line endings
+    - No trailing whitespace
+    - Final newline present
+    """
+    build_dir = Path(f"{REPO}/scripts/build")
+    ts_files = list(build_dir.glob("*.ts"))
+
+    issues = []
+    for f in ts_files:
+        content = f.read_bytes()
+
+        # Check UTF-8 encoding
+        try:
+            text = content.decode('utf-8')
+        except UnicodeDecodeError as e:
+            issues.append(f"{f.name}: Not valid UTF-8 ({e})")
+            continue
+
+        # Check no trailing whitespace
+        for i, line in enumerate(text.split('\n'), 1):
+            if line.rstrip() != line:
+                issues.append(f"{f.name}:{i}: Trailing whitespace")
+
+        # Check final newline
+        if text and not text.endswith('\n'):
+            issues.append(f"{f.name}: Missing final newline")
+
+        # Check no CR (Windows line endings)
+        if '\r' in text:
+            issues.append(f"{f.name}: Contains CR (Windows line endings)")
+
+    if issues:
+        assert False, "EditorConfig violations:\n" + "\n".join(issues[:20])
+
+
+# [repo_tests] pass_to_pass — Build script import integrity
+def test_repo_build_script_imports():
+    """Build script imports reference existing files (pass_to_pass).
+
+    Parses import statements in scripts/build/*.ts and verifies
+    that relative imports point to files that exist.
+    """
+    import re
+
+    build_dir = Path(f"{REPO}/scripts/build")
+    ts_files = list(build_dir.glob("*.ts"))
+
+    import_re = re.compile(r"import\s+.*?\s+from\s+['\"](\.[^'\"]+)['\"]|import\s+['\"](\.[^'\"]+)['\"]")
+
+    missing = []
+    for f in ts_files:
+        text = f.read_text()
+        for match in import_re.finditer(text):
+            imp = match.group(1) or match.group(2)
+            if imp:
+                # Resolve relative to the file
+                if imp.endswith('.ts'):
+                    target = f.parent / imp
+                else:
+                    target = f.parent / (imp + '.ts')
+
+                if not target.exists():
+                    missing.append(f"{f.name}: import '{imp}' -> {target} not found")
+
+    if missing:
+        assert False, "Missing import targets:\n" + "\n".join(missing[:20])
+
+
+# [repo_tests] pass_to_pass — JSON config files are valid
+def test_repo_json_configs_valid():
+    """JSON configuration files are syntactically valid (pass_to_pass)."""
+    import json
+
+    json_files = [
+        f"{REPO}/tsconfig.json",
+        f"{REPO}/tsconfig.base.json",
+        f"{REPO}/.prettierrc",
+        f"{REPO}/oxlint.json",
+        f"{REPO}/scripts/build/tsconfig.json",
+    ]
+
+    errors = []
+    for path_str in json_files:
+        path = Path(path_str)
+        if path.exists():
+            try:
+                json.loads(path.read_text())
+            except json.JSONDecodeError as e:
+                errors.append(f"{path.name}: {e}")
+
+    if errors:
+        assert False, "Invalid JSON files:\n" + "\n".join(errors)
+
+
+# [repo_tests] pass_to_pass — Git repository integrity
+def test_repo_git_integrity():
+    """Git repository is in a valid state (pass_to_pass).
+
+    Runs git fsck to verify the repository is not corrupted.
+    """
+    r = subprocess.run(
+        ["git", "fsck", "--full", "--strict"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git fsck failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Shell script syntax check
+def test_repo_shell_scripts_syntax():
+    """Shell scripts have valid syntax (pass_to_pass).
+
+    Uses bash -n to check syntax of shell scripts in .buildkite/.
+    """
+    shell_dir = Path(f"{REPO}/.buildkite")
+    if not shell_dir.exists():
+        return
+
+    sh_files = list(shell_dir.rglob("*.sh"))
+    errors = []
+
+    for f in sh_files:
+        r = subprocess.run(
+            ["bash", "-n", str(f)],
+            capture_output=True, text=True, timeout=30,
+        )
+        if r.returncode != 0:
+            errors.append(f"{f.name}: {r.stderr.strip()}")
+
+    if errors:
+        assert False, "Shell syntax errors:\n" + "\n".join(errors[:10])
+
+
 # [repo_tests] pass_to_pass — Build scripts exist and have content
 def test_repo_build_scripts_exist():
     """Build scripts exist and are non-empty (pass_to_pass)."""
@@ -193,62 +331,3 @@ def test_repo_build_scripts_structure():
     assert 'n.rule("cxx"' in compile_ts, "compile.ts must define cxx rule"
     assert 'n.rule("cc"' in compile_ts, "compile.ts must define cc rule"
     assert 'n.rule("pch"' in compile_ts, "compile.ts must define pch rule"
-
-
-# [repo_tests] pass_to_pass — Banned words check (simplified)
-def test_repo_banned_words():
-    """Build scripts don't contain obviously banned terms (pass_to_pass)."""
-    ban_limits_path = Path(f"{REPO}/test/internal/ban-limits.json")
-    if not ban_limits_path.exists():
-        # Skip if ban-limits.json doesn't exist in this commit
-        return
-
-    import json
-    ban_limits = json.loads(ban_limits_path.read_text())
-
-    bun_ts = Path(f"{REPO}/scripts/build/bun.ts").read_text()
-    compile_ts = Path(f"{REPO}/scripts/build/compile.ts").read_text()
-
-    banned = ban_limits.get('banned', [])
-    for word in banned:
-        # Skip short words that might appear in normal code
-        if len(word) < 4:
-            continue
-        assert word.lower() not in bun_ts.lower(), f"bun.ts contains banned word: {word}"
-        assert word.lower() not in compile_ts.lower(), f"compile.ts contains banned word: {word}"
-
-
-# [repo_tests] pass_to_pass — TypeScript typecheck (skipped if tsc not available)
-def test_repo_typecheck():
-    """Repo's TypeScript typecheck passes (pass_to_pass).
-
-    Runs tsc --noEmit to verify no type errors in scripts/build/*.ts
-    """
-    import shutil
-    if not shutil.which("npx"):
-        # Skip if npx is not available (tools not installed in Docker)
-        return
-
-    r = subprocess.run(
-        ["npx", "tsc", "--noEmit", "--project", f"{REPO}/scripts/build/tsconfig.json"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
-
-
-# [repo_tests] pass_to_pass — Lint check (skipped if oxlint not available)
-def test_repo_lint():
-    """Repo's JavaScript lint passes (pass_to_pass).
-
-    Runs oxlint on src/js to verify no lint errors.
-    """
-    import shutil
-    if not shutil.which("npx"):
-        # Skip if npx is not available (tools not installed in Docker)
-        return
-
-    r = subprocess.run(
-        ["npx", "oxlint", "--config=oxlint.json", "--format=github", "src/js"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"

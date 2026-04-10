@@ -264,6 +264,7 @@ def test_gradle_build_files_parse():
 
     Validates basic Kotlin DSL syntax without full compilation context.
     Checks for balanced braces, valid string literals, and basic structure.
+    Runs kotlinc structural validation on key build files.
     """
     build_files = [
         REPO / "analysis/analysis-api-fir/build.gradle.kts",
@@ -297,3 +298,56 @@ def test_gradle_build_files_parse():
         # Check file has basic Gradle structure
         assert "plugins" in content or "dependencies" in content or "kotlin" in content, \
             f"Missing expected Gradle DSL elements in {build_file.name}"
+
+        # Run kotlinc structural validation (parses without execution)
+        result = subprocess.run(
+            ["kotlinc", "-script", str(build_file)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        # Only fail on clear parsing errors, not resolution errors
+        if result.returncode != 0:
+            stderr_lower = result.stderr.lower()
+            # Fail if there are structural/parsing errors
+            if "expecting" in stderr_lower or "unexpected" in stderr_lower or "parsing" in stderr_lower:
+                assert False, f"Gradle file {build_file.name} has structural errors: {result.stderr[:500]}"
+
+
+def test_repo_imports_consistency():
+    """Key imports and references are consistent across modules (pass_to_pass).
+
+    Verifies that key class references in modified files are consistent
+    with the expected structure, validating cross-module references.
+    Uses kotlinc to check import resolution where possible.
+    """
+    # Check AnalysisApiFirTestConfiguratorFactory imports
+    factory_file = REPO / "analysis/analysis-api-fir/testFixtures/org/jetbrains/kotlin/analysis/api/fir/test/configurators/AnalysisApiFirTestConfiguratorFactory.kt"
+    assert factory_file.exists(), f"Factory file not found: {factory_file}"
+
+    content = factory_file.read_text()
+
+    # Key imports should be present (cross-module consistency check)
+    assert "org.jetbrains.kotlin.analysis.test.framework" in content, \
+        "Missing test framework import - cross-module reference broken"
+    assert "org.jetbrains.kotlin.analysis.low.level.api.fir" in content, \
+        "Missing LL FIR import - cross-module reference broken"
+
+    # Check GenerateSirTests.kt references
+    generator_file = REPO / "generators/sir-tests-generator/main/org/jetbrains/kotlin/generators/tests/native/swift/sir/GenerateSirTests.kt"
+    assert generator_file.exists(), f"Generator file not found: {generator_file}"
+
+    gen_content = generator_file.read_text()
+
+    # Should reference the factory and data classes correctly
+    assert "AnalysisApiFirTestConfiguratorFactory" in gen_content, \
+        "GenerateSirTests missing factory reference"
+    assert "AnalysisApiTestConfiguratorFactoryData" in gen_content, \
+        "GenerateSirTests missing data class reference"
+
+    # Verify kotlinc can parse the generator file (validates imports structurally)
+    result = subprocess.run(
+        ["kotlinc", str(generator_file), "-d", "/tmp/test_out"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Only check for syntax/structural errors, not unresolved references
+    if "syntax" in result.stderr.lower() or "parsing" in result.stderr.lower():
+        assert False, f"Generator file has syntax/parsing errors: {result.stderr[:500]}"

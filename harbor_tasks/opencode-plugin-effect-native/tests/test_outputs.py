@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -47,6 +48,34 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         )
     finally:
         script.unlink(missing_ok=True)
+
+
+def _ensure_bun() -> str:
+    """Ensure bun is available, installing it if necessary. Returns bun path."""
+    bun_path = Path.home() / ".bun" / "bin" / "bun"
+    if not bun_path.exists():
+        # Install bun with required dependencies
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True, timeout=60,
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "unzip"],
+            capture_output=True, timeout=60,
+        )
+        subprocess.run(
+            ["bash", "-c", "curl -fsSL https://bun.sh/install | bash"],
+            capture_output=True, check=True, timeout=120,
+        )
+    return str(bun_path)
+
+
+def _bun_env() -> dict:
+    """Return environment dict with bun in PATH."""
+    bun_dir = str(Path.home() / ".bun" / "bin")
+    env = dict(os.environ)
+    env["PATH"] = f"{bun_dir}:{env.get('PATH', '')}"
+    return env
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +274,85 @@ def test_auth_override_test_updated():
         "Test file not updated to match Effect.tryPromise pattern"
     assert "Effect.ignore" in test_src, \
         "Test file not updated to match Effect.ignore pattern"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests - actual CI commands)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    bun = _ensure_bun()
+    env = _bun_env()
+    # Install dependencies first
+    r = subprocess.run(
+        [bun, "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    if r.returncode != 0:
+        # Try without frozen lockfile if it fails
+        r = subprocess.run(
+            [bun, "install"],
+            capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+        )
+    r = subprocess.run(
+        [bun, "run", "typecheck"],
+        capture_output=True, text=True, timeout=600, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_auth_override_test():
+    """Repo's auth-override plugin test passes (pass_to_pass).
+
+    This test validates the plugin config hook error isolation pattern,
+    which is directly related to the modified plugin/index.ts code.
+    """
+    bun = _ensure_bun()
+    env = _bun_env()
+    # Install dependencies first
+    r = subprocess.run(
+        [bun, "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    if r.returncode != 0:
+        r = subprocess.run(
+            [bun, "install"],
+            capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+        )
+    r = subprocess.run(
+        [bun, "test", "test/plugin/auth-override.test.ts"],
+        capture_output=True, text=True, timeout=600, cwd=f"{REPO}/packages/opencode", env=env,
+    )
+    assert r.returncode == 0, f"Auth-override test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_tests():
+    """Repo's plugin tests pass (pass_to_pass).
+
+    Runs all plugin-related tests to verify plugin loading and lifecycle
+    functionality remains intact after changes.
+    """
+    bun = _ensure_bun()
+    env = _bun_env()
+    # Install dependencies first
+    r = subprocess.run(
+        [bun, "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    if r.returncode != 0:
+        r = subprocess.run(
+            [bun, "install"],
+            capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+        )
+    r = subprocess.run(
+        [bun, "test", "test/plugin/"],
+        capture_output=True, text=True, timeout=600, cwd=f"{REPO}/packages/opencode", env=env,
+    )
+    assert r.returncode == 0, f"Plugin tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

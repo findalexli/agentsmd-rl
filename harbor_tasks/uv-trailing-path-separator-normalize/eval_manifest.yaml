@@ -2,52 +2,72 @@ version: "2.0"
 
 source:
   repo: "{{OWNER}}/{{REPO}}"
-  pr: 0  # {{PR_NUMBER}}
+  pr: {{PR_NUMBER}}
   base_commit: "{{BASE_COMMIT}}"
   merge_commit: "{{MERGE_COMMIT}}"
 
 checks:
+  # -------------------------------------------------------------------------
+  # Static gates (pass_to_pass) — basic quality checks
+  # -------------------------------------------------------------------------
   - id: syntax_check
     type: pass_to_pass
     origin: static
     description: "Modified files must parse without errors"
-
-  - id: core_bug_fixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TODO: describe the core behavioral change"
-
-  - id: edge_case
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TODO: describe a second input or edge case"
-
-  - id: existing_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream test suite still passes"
 
   - id: not_stub
     type: pass_to_pass
     origin: static
     description: "Modified function has real logic, not just pass/return"
 
-  # Uncomment and fill if agent config rules exist:
+  # -------------------------------------------------------------------------
+  # Behavioral tests (fail_to_pass) — code execution via subprocess
+  # -------------------------------------------------------------------------
+  # CRITICAL: These tests MUST use subprocess.run() to execute actual code.
+  # They should fail on base commit and pass after the fix is applied.
+
+  - id: core_bug_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TODO: describe the core behavioral change"
+    # Example: Function returns correct result for bug-triggering input
+
+  - id: edge_case
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TODO: describe a second input or edge case for the same fix"
+    # Example: Edge case input also handled correctly
+
+  # -------------------------------------------------------------------------
+  # Config-derived tests (fail_to_pass) — verifiable rules from CLAUDE.md
+  # -------------------------------------------------------------------------
+  # Uncomment and fill if agent config files have programmatically verifiable rules:
   # - id: config_rule
   #   type: fail_to_pass
   #   origin: agent_config
-  #   description: "TODO: rule from agent config"
+  #   description: "TODO: specific programmatic rule from config"
   #   source:
-  #     path: "AGENTS.md"
-  #     lines: "30"
+  #     path: "CLAUDE.md"
+  #     lines: "30-35"
   #     commit: "{{BASE_COMMIT}}"
 
+  # ------------------------------------------------------------------------
+  # Repo regression tests (pass_to_pass) — upstream test suite
+  # -------------------------------------------------------------------------
+  - id: existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream test suite still passes after changes"
+    # These tests pass on both base commit AND after the fix (regression check)
+
 rubric:
-  # Soft rules for LLM judge. Only rules genuinely needing subjective evaluation.
-  # Remove this section if no applicable soft rules exist.
+  # Soft rules for LLM judge. Only include rules that genuinely need
+  # subjective evaluation and cannot be verified programmatically.
+  # Remove this entire section if no soft rules apply.
   []
-  # - rule: "TODO: verbatim text from config file"
+  # Example:
+  # - rule: "TODO: verbatim text from CLAUDE.md describing a subjective rule"
   #   source:
-  #     path: "AGENTS.md"
-  #     lines: "45"
+  #     path: "CLAUDE.md"
+  #     lines: "45-50"
   #     commit: "{{BASE_COMMIT}}"

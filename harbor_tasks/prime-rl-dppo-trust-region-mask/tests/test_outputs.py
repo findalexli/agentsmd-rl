@@ -69,6 +69,56 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_ruff_check_test_file():
+    """Repo's ruff lint check passes on modified test file (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", "tests/unit/train/rl/test_loss.py", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed on test file:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format_test_file():
+    """Repo's ruff format check passes on modified test file (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff", "-q"], capture_output=True, timeout=60)
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", "tests/unit/train/rl/test_loss.py", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed on test file:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_imports_work():
+    """Modified modules can be imported and used at base commit (pass_to_pass)."""
+    r = _run_script("""
+        import torch
+        from prime_rl.configs.trainer import DefaultLossConfig
+        from prime_rl.trainer.rl.loss import default_loss_fn, LossInputs
+
+        # Test that config and loss function work at base commit
+        config = DefaultLossConfig()
+        trainer_logprobs = torch.tensor([-0.5, -0.3, -0.7, -0.4])
+        inference_logprobs = torch.tensor([-2.0, -1.8, -2.5, -2.2])
+        advantages = torch.tensor([1.0, 2.0, 0.5, 1.5])
+
+        inputs = LossInputs(
+            trainer_logprobs=trainer_logprobs,
+            inference_logprobs=inference_logprobs,
+            teacher_logprobs=None,
+            advantages=advantages,
+            loss_mask=torch.ones(4, dtype=torch.bool),
+        )
+
+        result = default_loss_fn(inputs, config)
+        assert hasattr(result, 'loss'), 'Result should have loss attribute'
+        assert hasattr(result, 'metrics'), 'Result should have metrics attribute'
+        print("PASS")
+    """)
+    assert r.returncode == 0, f"Import test failed:\n{r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — config field renaming
 # ---------------------------------------------------------------------------

@@ -7,64 +7,37 @@ source_pr:
   merge_commit: 3dbc8554a68f51f19ef4814de15432868f215a17
 
 checks:
-  # Fail-to-pass tests - core functionality
-  - id: test_agp_version_check_exists
+  # Fail-to-pass tests - core functionality (all use subprocess.run() via _run_gradle_compile)
+  - id: test_kotlin_compiles
     type: fail_to_pass
-    origin: agent_config
-    description: AGP version check (major >= 9 && minor >= 1) exists
-    source:
-      config_file: .ai/guidelines.md
-      lines: "When modifying AGP-related code, ensure version compatibility checks are implemented"
+    origin: pr_diff
+    description: Kotlin code compiles successfully validating all structural changes
+    # This test uses subprocess.run() to compile the Kotlin module
 
-  - id: test_agp_copies_r8_output_variable
+  - id: test_task_class_structure
     type: fail_to_pass
-    origin: agent_config
-    description: agpCopiesR8Output variable exists for conditional behavior
+    origin: pr_diff
+    description: MergeMappingFileTask has WithR8Outputs inner class and open taskAction
 
-  - id: test_conditional_task_registration
+  - id: test_agp_version_detection
     type: fail_to_pass
-    origin: agent_config
-    description: Task registration is conditional based on AGP version
+    origin: pr_diff
+    description: AGP version check (>= 9.1) exists for conditional task registration
 
-  - id: test_with_r8_outputs_inner_class_exists
+  - id: test_property_renaming
     type: fail_to_pass
-    origin: agent_config
-    description: WithR8Outputs inner class exists for pre-AGP 9.1 compatibility
+    origin: pr_diff
+    description: originalFile renamed to r8MappingFile and used in wiring
 
-  - id: test_r8_mapping_file_property
+  - id: test_r8_logic_separation
     type: fail_to_pass
-    origin: agent_config
-    description: r8MappingFile property exists and replaces originalFile
+    origin: pr_diff
+    description: R8 output copying logic separated into WithR8Outputs inner class
 
-  - id: test_no_original_file_property
+  - id: test_opt_in_annotation
     type: fail_to_pass
-    origin: agent_config
-    description: originalFile property is renamed to r8MappingFile
-
-  - id: test_delete_recursively_moved_to_inner_class
-    type: fail_to_pass
-    origin: agent_config
-    description: deleteRecursively is only in WithR8Outputs inner class
-
-  - id: test_output_dir_only_in_inner_class
-    type: fail_to_pass
-    origin: agent_config
-    description: outputDir property is only in WithR8Outputs inner class
-
-  - id: test_r8_outputs_file_collection_in_inner_class
-    type: fail_to_pass
-    origin: agent_config
-    description: r8Outputs FileCollection is only in WithR8Outputs inner class
-
-  - id: test_file_copying_in_inner_class_only
-    type: fail_to_pass
-    origin: agent_config
-    description: File copying (copyTo) is only in WithR8Outputs inner class
-
-  - id: test_internal_api_opt_in_annotation
-    type: fail_to_pass
-    origin: agent_config
-    description: InternalKotlinGradlePluginApi usage has @OptIn annotation
+    origin: pr_diff
+    description: @OptIn annotation present for InternalKotlinGradlePluginApi usage
 
   # Pass-to-pass tests - repo hygiene
   - id: test_target_file_exists
@@ -82,4 +55,21 @@ checks:
     origin: repo_tests
     description: Kotlin file has valid syntax (balanced braces)
 
-rubric: []
+rubric:
+  - rule: "When modifying AGP-related code, ensure version compatibility checks are implemented"
+    source:
+      path: ".ai/guidelines.md"
+      lines: "23-37"
+      commit: "b1cf5c86d38eaf02d1cf5187f26c23f11e94e126"
+
+  - rule: "Use @OptIn annotation when accessing InternalKotlinGradlePluginApi"
+    source:
+      path: "libraries/tools/kotlin-gradle-plugin/AGENTS.md"
+      lines: "50-53"
+      commit: "b1cf5c86d38eaf02d1cf5187f26c23f11e94e126"
+
+  - rule: "Document workarounds with comments explaining why they exist and when they can be removed"
+    source:
+      path: "libraries/tools/kotlin-compose-compiler/src/common/kotlin/org/jetbrains/kotlin/compose/compiler/gradle/internal/ComposeAgpMappingFile.kt"
+      lines: "126-128"
+      commit: "3dbc8554a68f51f19ef4814de15432868f215a17"

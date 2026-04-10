@@ -186,6 +186,40 @@ def test_em101_snapshot_tests():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_fix_module_tests():
+    """The fix module tests (including edits.rs) must pass."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "ruff_linter", "fix::"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+        env={
+            **__import__("os").environ,
+            "INSTA_FORCE_PASS": "1",
+            "INSTA_UPDATE": "always",
+        },
+    )
+    assert r.returncode == 0, (
+        f"Fix module tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_rules_tests():
+    """Ruff rules tests must pass (covers fresh_binding_name usage in mutable_fromkeys_value)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "ruff_linter", "rules::ruff::tests"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+        env={
+            **__import__("os").environ,
+            "INSTA_FORCE_PASS": "1",
+            "INSTA_UPDATE": "always",
+        },
+    )
+    assert r.returncode == 0, (
+        f"Ruff rules tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

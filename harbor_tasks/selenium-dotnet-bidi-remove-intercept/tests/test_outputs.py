@@ -126,6 +126,31 @@ def test_intercept_options_removed():
                             )
 
 
+def test_tests_updated():
+    """Tests are updated to use AddInterceptAsync instead of high-level methods (fail-to-pass).
+
+    Verify that the test file no longer references the removed high-level methods.
+    """
+    test_file = os.path.join(REPO, "dotnet/test/webdriver/BiDi/Network/NetworkTests.cs")
+
+    with open(test_file, 'r') as f:
+        content = f.read()
+
+    forbidden_methods = ['InterceptRequestAsync', 'InterceptResponseAsync', 'InterceptAuthAsync']
+    for method in forbidden_methods:
+        assert method not in content, (
+            f"Test file should not reference removed method '{method}' but still found"
+        )
+
+    # Also verify the tests now use AddInterceptAsync
+    assert 'AddInterceptAsync' in content, (
+        "Test file should use AddInterceptAsync as replacement"
+    )
+
+
+# ==================== PASS-TO-PASS TESTS ====================
+
+
 def test_addintercept_api_still_exists():
     """AddInterceptAsync method still exists and is accessible (pass-to-pass).
 
@@ -190,28 +215,6 @@ def test_csharp_syntax_valid():
                 )
 
 
-def test_tests_updated():
-    """Tests are updated to use AddInterceptAsync instead of high-level methods (fail-to-pass).
-
-    Verify that the test file no longer references the removed high-level methods.
-    """
-    test_file = os.path.join(REPO, "dotnet/test/webdriver/BiDi/Network/NetworkTests.cs")
-
-    with open(test_file, 'r') as f:
-        content = f.read()
-
-    forbidden_methods = ['InterceptRequestAsync', 'InterceptResponseAsync', 'InterceptAuthAsync']
-    for method in forbidden_methods:
-        assert method not in content, (
-            f"Test file should not reference removed method '{method}' but still found"
-        )
-
-    # Also verify the tests now use AddInterceptAsync
-    assert 'AddInterceptAsync' in content, (
-        "Test file should use AddInterceptAsync as replacement"
-    )
-
-
 def test_dotnet_project_structure_valid():
     """The .NET project structure is valid (pass-to-pass).
 
@@ -235,6 +238,85 @@ def test_dotnet_project_structure_valid():
         assert False, f"Invalid project file XML: {e}"
 
 
+# ==================== REPO CI TESTS (subprocess.run) ====================
+
+
+def test_repo_dotnet_format_whitespace():
+    """.NET webdriver project whitespace formatting passes (pass_to_pass).
+
+    Runs actual CI command: dotnet format whitespace --verify-no-changes
+    """
+    project_file = os.path.join(REPO, "dotnet/src/webdriver/Selenium.WebDriver.csproj")
+
+    r = subprocess.run(
+        ["dotnet", "format", "whitespace", "--verify-no-changes", project_file],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"dotnet format whitespace failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_dotnet_format_analyzers():
+    """.NET webdriver project analyzers pass (pass_to_pass).
+
+    Runs actual CI command: dotnet format analyzers --verify-no-changes
+    """
+    project_file = os.path.join(REPO, "dotnet/src/webdriver/Selenium.WebDriver.csproj")
+
+    r = subprocess.run(
+        ["dotnet", "format", "analyzers", "--verify-no-changes", project_file],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"dotnet format analyzers failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_dotnet_test_project_format():
+    """.NET test project whitespace formatting passes (pass_to_pass).
+
+    Runs actual CI command: dotnet format whitespace --verify-no-changes
+    """
+    project_file = os.path.join(REPO, "dotnet/test/webdriver/Selenium.WebDriver.Tests.csproj")
+
+    r = subprocess.run(
+        ["dotnet", "format", "whitespace", "--verify-no-changes", project_file],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"dotnet format whitespace for test project failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_dotnet_support_project_format():
+    """.NET support project whitespace formatting passes (pass_to_pass).
+
+    Runs actual CI command: dotnet format whitespace --verify-no-changes
+    """
+    project_file = os.path.join(REPO, "dotnet/src/support/Selenium.WebDriver.Support.csproj")
+
+    r = subprocess.run(
+        ["dotnet", "format", "whitespace", "--verify-no-changes", project_file],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    # Support project may not exist in all configurations
+    if r.returncode != 0 and ("not found" in r.stderr.lower() or "does not exist" in r.stderr.lower()):
+        return  # Skip if project not found
+    assert r.returncode == 0, f"dotnet format whitespace for support project failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_dotnet_restore():
+    """.NET project restore succeeds (pass_to_pass).
+
+    Verifies NuGet packages can be restored (basic project health check).
+    """
+    project_file = os.path.join(REPO, "dotnet/src/webdriver/Selenium.WebDriver.csproj")
+
+    r = subprocess.run(
+        ["dotnet", "restore", project_file],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"dotnet restore failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# Legacy tests kept for compatibility
+
+
 def test_dotnet_format_check():
     """.NET code formatting passes validation (pass-to-pass).
 
@@ -245,7 +327,7 @@ def test_dotnet_format_check():
 
     r = subprocess.run(
         ["dotnet", "format", "--verify-no-changes", "--severity", "error", project_file],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
 
     # Exit code 0 means no formatting errors found
@@ -262,7 +344,7 @@ def test_dotnet_test_project_format_check():
 
     r = subprocess.run(
         ["dotnet", "format", "--verify-no-changes", "--severity", "error", project_file],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
 
     # Exit code 0 means no formatting errors found
@@ -279,7 +361,7 @@ def test_dotnet_support_project_format_check():
 
     r = subprocess.run(
         ["dotnet", "format", "--verify-no-changes", "--severity", "error", project_file],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
 
     # Exit code 0 means no formatting errors found

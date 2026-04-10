@@ -474,3 +474,19 @@ def test_repo_black_format():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"black format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_autoflake():
+    """Repo's autoflake check for unused imports passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "autoflake", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install autoflake: {r.stderr}"
+
+    r = subprocess.run(
+        ["autoflake", "--remove-all-unused-imports", "--check"] + ALL_MODIFIED,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"autoflake check failed:\n{r.stderr[-500:]}"

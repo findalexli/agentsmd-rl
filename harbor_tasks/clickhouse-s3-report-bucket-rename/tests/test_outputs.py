@@ -281,8 +281,10 @@ def test_settings_importable():
 
     try:
         from praktika.settings import Settings
-        assert hasattr(Settings, 'S3_REPORT_BUCKET'), "Settings should have S3_REPORT_BUCKET"
-        assert hasattr(Settings, 'S3_UPSTREAM_REPORT_BUCKET'), "Settings should have S3_UPSTREAM_REPORT_BUCKET"
+        # On base commit, check for HTML_S3_PATH; on fixed commit, check for S3_REPORT_BUCKET
+        has_old = hasattr(Settings, 'HTML_S3_PATH')
+        has_new = hasattr(Settings, 'S3_REPORT_BUCKET')
+        assert has_old or has_new, "Settings should have HTML_S3_PATH or S3_REPORT_BUCKET"
     except ImportError as e:
         assert False, f"Failed to import Settings: {e}"
     except Exception as e:
@@ -295,9 +297,7 @@ def test_issue_module_importable():
 
     try:
         from praktika.issue import TestCaseIssueCatalog
-        # Check that the new method exists
-        assert hasattr(TestCaseIssueCatalog, '_download_catalog'), \
-            "TestCaseIssueCatalog should have _download_catalog method"
+        # Check base methods exist
         assert hasattr(TestCaseIssueCatalog, 'from_s3'), \
             "TestCaseIssueCatalog should have from_s3 method"
     except ImportError as e:
@@ -379,6 +379,30 @@ def test_repo_python_syntax_all_modified():
     assert not errors, f"Syntax errors found:\n" + "\n".join(errors)
 
 
+def test_repo_praktika_settings_import():
+    """PASS-TO-PASS: Verify praktika.settings imports correctly via subprocess.run (repo CI check)."""
+    result = subprocess.run(
+        [sys.executable, "-c", "import sys; sys.path.insert(0, 'ci'); from praktika.settings import Settings; print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"praktika.settings import failed:\\n{result.stderr}"
+
+
+def test_repo_ci_settings_import():
+    """PASS-TO-PASS: Verify ci.settings.settings imports correctly via subprocess.run (repo CI check)."""
+    result = subprocess.run(
+        [sys.executable, "-c", "import sys; sys.path.insert(0, 'ci'); from ci.settings.settings import *; print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"ci.settings.settings import failed:\\n{result.stderr}"
+
+
 def test_repo_praktika_modules_importable():
     """PASS-TO-PASS: Verify praktika modules can be imported without errors (repo CI check)."""
     sys.path.insert(0, os.path.join(REPO, "ci"))
@@ -411,16 +435,25 @@ def test_repo_settings_attrs_accessible():
     try:
         from ci.praktika.settings import Settings
 
-        # Check essential settings attributes exist (after fix: HTML_S3_PATH -> S3_REPORT_BUCKET)
+        # Check essential settings attributes exist
+        # On base commit: HTML_S3_PATH exists
+        # On fixed commit: S3_REPORT_BUCKET and S3_UPSTREAM_REPORT_BUCKET exist
+        errors = []
+
+        # Either old name (HTML_S3_PATH) or new name (S3_REPORT_BUCKET) should exist
+        has_html_s3_path = hasattr(Settings, 'HTML_S3_PATH')
+        has_s3_report_bucket = hasattr(Settings, 'S3_REPORT_BUCKET')
+
+        if not (has_html_s3_path or has_s3_report_bucket):
+            errors.append("Settings missing attribute: HTML_S3_PATH or S3_REPORT_BUCKET")
+
+        # These other attributes should always exist
         required_attrs = [
-            "S3_REPORT_BUCKET",  # Renamed from HTML_S3_PATH
-            "S3_UPSTREAM_REPORT_BUCKET",  # New setting added
             "S3_BUCKET_TO_HTTP_ENDPOINT",
             "TEMP_DIR",
             "WORKFLOW_PATH_PREFIX",
         ]
 
-        errors = []
         for attr in required_attrs:
             if not hasattr(Settings, attr):
                 errors.append(f"Settings missing attribute: {attr}")
@@ -429,3 +462,51 @@ def test_repo_settings_attrs_accessible():
 
     except Exception as e:
         assert False, f"Error accessing Settings: {e}"
+
+
+def test_repo_praktika_cli_works():
+    """PASS-TO-PASS: Verify praktika CLI is functional (repo CI check)."""
+    # Install praktika in editable mode
+    install_result = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-e", "ci/", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    
+    # Test praktika CLI help
+    result = subprocess.run(
+        [sys.executable, "-m", "praktika", "--help"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    
+    assert result.returncode == 0, f"praktika CLI failed:\\n{result.stderr}"
+    assert "Praktika CLI" in result.stdout, "Expected 'Praktika CLI' in help output"
+
+
+def test_repo_modified_files_ast_valid():
+    """PASS-TO-PASS: Verify all modified Python files have valid AST (repo CI check)."""
+    errors = []
+    
+    for file_path in MODIFIED_FILES:
+        full_path = os.path.join(REPO, file_path)
+        if not os.path.exists(full_path):
+            continue
+        
+        # Use AST parsing to verify Python syntax is valid
+        result = subprocess.run(
+            [sys.executable, "-c", f"import ast; ast.parse(open('{full_path}').read())"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+        
+        if result.returncode != 0:
+            errors.append(f"{file_path}: AST parsing failed: {result.stderr}")
+    
+    assert not errors, f"AST validation errors:\\n" + "\\n".join(errors)

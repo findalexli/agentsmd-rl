@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T04:46:18.315677",
-  "total_time": 8347.38,
-  "sandbox_id": "id9za4zjb2re4d87gt011",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T15:01:13.011104",
+  "total_time": 201.54,
+  "sandbox_id": "ilyzbpbymoc4mjt1qjpap",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 0.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -18,19 +18,14 @@
       "notes": "All 4 checks passed: Docker build succeeded, NOP test reward=0 (4 fail-to-pass tests correctly failing on buggy base), Gold test reward=1 (all 11 tests pass after solve.sh patch). Rubric judge returned 0.0 due to technical limitations (git repo inside Docker container, no Anthropic API key available - only Fireworks). Gold solution verified by inspection to follow all rubric rules: (1) Errors don't pass silently - logs warnings, (2) Simple code changes, (3) Explicit exception types (Exception, not bare except), (4) Try/except is for intentional robustness per PR purpose, (5) No unnecessary comments added.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 107.91
+      "time": 1.62
     },
     "p2p_enrichment": {
-      "status": "completed",
-      "ci_commands_found": [
-        "ruff check --config=pyproject.toml src/",
-        "ruff format --check --config=pyproject.toml src/"
-      ],
-      "tests_added": [
-        "test_repo_ruff_lint - Ruff lint check on orchestrator module",
-        "test_repo_ruff_format - Ruff format check on orchestrator module"
-      ],
-      "notes": "Added repo CI lint/format checks as pass_to_pass gates. Full unit tests require complex dependencies (pydantic_config, verifiers, uv) not available in base Docker image."
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1666.35,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -47,11 +42,11 @@
       "notes": "tests look good"
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.73,
-      "notes": "ICR=0.00"
+      "time": 1.37,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -70,6 +65,30 @@
       "backend": "fireworks",
       "time": 8347.38,
       "at": "2026-04-09T04:46:18.315677"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 980.93,
+      "at": "2026-04-09T14:44:32.085678"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 981.19,
+      "at": "2026-04-09T14:44:32.253123"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 201.54,
+      "at": "2026-04-09T15:01:13.011104"
     }
   ]
 }

@@ -515,3 +515,100 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+def test_repo_check_init_lazy_imports():
+    """Modified files pass root lazy imports check (repo CI check)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import subprocess
+import sys
+
+# Install pre-commit and regex if not available
+subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "regex", "--quiet"], check=False)
+
+# Run check_init_lazy_imports on parallel_state.py (the main modified module)
+result = subprocess.run(
+    ["python", "tools/pre_commit/check_init_lazy_imports.py", "vllm/distributed/parallel_state.py"],
+    capture_output=True, text=True
+)
+if result.returncode != 0:
+    print(f"Lazy imports check failed: {result.stdout}{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lazy imports check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"
+
+
+def test_repo_check_boolean_context_manager():
+    """Modified files pass boolean context manager check (repo CI check)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import subprocess
+import sys
+
+# Install pre-commit and regex if not available
+subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit", "regex", "--quiet"], check=False)
+
+# Run check_boolean_context_manager on the modified files
+files = [
+    "vllm/distributed/parallel_state.py",
+    "tests/kernels/moe/test_routing_simulator.py",
+    "tests/kernels/moe/test_shared_fused_moe_routed_transform.py",
+]
+result = subprocess.run(
+    ["python", "tools/pre_commit/check_boolean_context_manager.py"] + files,
+    capture_output=True, text=True
+)
+if result.returncode != 0:
+    print(f"Boolean context manager check failed: {result.stdout}{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Boolean context manager check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"
+
+
+def test_repo_typos_check():
+    """Modified files pass typos check (repo CI check)."""
+    r = subprocess.run(
+        [
+            "python3", "-c",
+            """
+import subprocess
+import sys
+
+# Install typos if not available
+subprocess.run([sys.executable, "-m", "pip", "install", "typos", "--quiet"], check=False)
+
+# Run typos on the modified files
+files = [
+    "vllm/distributed/parallel_state.py",
+    "tests/kernels/moe/test_routing_simulator.py",
+    "tests/kernels/moe/test_shared_fused_moe_routed_transform.py",
+]
+result = subprocess.run(
+    ["typos"] + files,
+    capture_output=True, text=True
+)
+if result.returncode != 0:
+    print(f"Typos check failed: {result.stdout}{result.stderr}", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typos check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout, f"Expected PASS in stdout, got: {r.stdout}"

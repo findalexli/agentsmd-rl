@@ -1,95 +1,107 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28457
-  base_commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
-  merge_commit: "2e610b1402f5cc17f11803b01b87cbc59f563fab"
-
+  base_commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
+  merge_commit: 2e610b1402f5cc17f11803b01b87cbc59f563fab
 checks:
-  - id: source_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Core source files (ReadableStream.ts, ReadableStreamInternals.ts, ReadableStream.cpp) must exist"
-
-  - id: null_excluded_from_direct_stream_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "readableStreamTo* functions must exclude null underlyingSource from the direct-stream path"
-
-  - id: close_direct_stream_sink_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "onCloseDirectStream must guard against null/undefined sink before sink.end()"
-
-  - id: flush_direct_stream_sink_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "onFlushDirectStream must guard against null/undefined sink before sink.flush()"
-
-  - id: stream_locked_on_direct_consumption
-    type: fail_to_pass
-    origin: pr_diff
-    description: "readableStreamToArrayBufferDirect must lock the stream to prevent double-consumption"
-
-  - id: cpp_exception_handling_after_call
-    type: fail_to_pass
-    origin: pr_diff
-    description: "C++ readableStreamTo* wrappers must handle exceptions after call() to JS builtins"
-
-  - id: core_functions_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Key ReadableStream functions still exist with substantial content"
-
-  - id: no_bare_call_apply
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare .call/.apply in JS builtins — must use .$call/.$apply"
-    source:
-      path: "src/js/CLAUDE.md"
-      lines: "56"
-      commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
-
-  - id: no_dynamic_require
-    type: pass_to_pass
-    origin: agent_config
-    description: "require() calls in JS builtins must use string literals only"
-    source:
-      path: "src/js/CLAUDE.md"
-      lines: "103"
-      commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
-
-  # Repo CI/CD tests (pass_to_pass gates)
-  - id: no_undefined_equality_comparison
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No undefined equality comparisons (== undefined, != undefined) in builtins"
-    source:
-      path: "test/internal/ban-words.test.ts"
-
-  - id: no_bare_jsboolean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No bare .jsBoolean(true/false) calls in builtins — use .true/.false"
-    source:
-      path: "test/internal/ban-words.test.ts"
-
-  - id: no_std_debug_in_builtins
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No std.debug.assert, std.debug.print in builtins"
-    source:
-      path: "test/internal/ban-words.test.ts"
-
-  - id: typescript_braces_balance
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript files must have balanced braces (basic syntax check)"
-
+- id: source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Core source files (ReadableStream.ts, ReadableStreamInternals.ts, ReadableStream.cpp)
+    must exist
+- id: null_excluded_from_direct_stream_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: readableStreamTo* functions must exclude null underlyingSource from
+    the direct-stream path
+- id: close_direct_stream_sink_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: onCloseDirectStream must guard against null/undefined sink before sink.end()
+- id: flush_direct_stream_sink_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: onFlushDirectStream must guard against null/undefined sink before sink.flush()
+- id: stream_locked_on_direct_consumption
+  type: fail_to_pass
+  origin: pr_diff
+  description: readableStreamToArrayBufferDirect must lock the stream to prevent double-consumption
+- id: cpp_exception_handling_after_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: C++ readableStreamTo* wrappers must handle exceptions after call()
+    to JS builtins
+- id: core_functions_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Key ReadableStream functions still exist with substantial content
+- id: no_bare_call_apply
+  type: pass_to_pass
+  origin: agent_config
+  description: "No bare .call/.apply in JS builtins \u2014 must use .$call/.$apply"
+  source:
+    path: src/js/CLAUDE.md
+    lines: '56'
+    commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
+- id: no_dynamic_require
+  type: pass_to_pass
+  origin: agent_config
+  description: require() calls in JS builtins must use string literals only
+  source:
+    path: src/js/CLAUDE.md
+    lines: '103'
+    commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
+- id: no_undefined_equality_comparison
+  type: pass_to_pass
+  origin: repo_tests
+  description: No undefined equality comparisons (== undefined, != undefined) in builtins
+  source:
+    path: test/internal/ban-words.test.ts
+- id: no_bare_jsboolean
+  type: pass_to_pass
+  origin: repo_tests
+  description: "No bare .jsBoolean(true/false) calls in builtins \u2014 use .true/.false"
+  source:
+    path: test/internal/ban-words.test.ts
+- id: no_std_debug_in_builtins
+  type: pass_to_pass
+  origin: repo_tests
+  description: No std.debug.assert, std.debug.print in builtins
+  source:
+    path: test/internal/ban-words.test.ts
+- id: typescript_braces_balance
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript files must have balanced braces (basic syntax check)
+- id: repo_ban_words_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ban-words test passes - no banned patterns in Zig source files
+  source:
+    path: test/internal/ban-words.test.ts
+- id: repo_typescript_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes (tsc --noEmit)
+  source:
+    path: tsconfig.base.json
+- id: repo_js_builtins_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: JS builtins files have valid syntax - verified by parsing with Bun
+  source:
+    path: src/js/builtins/ReadableStream.ts
+- id: repo_streams_readablestream_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Web Streams test file runs successfully
+  source:
+    path: test/js/web/streams/streams.test.js
 rubric:
-  - rule: "Use JSC intrinsics for performance"
-    source:
-      path: "src/js/CLAUDE.md"
-      lines: "105"
-      commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
+- rule: Use JSC intrinsics for performance
+  source:
+    path: src/js/CLAUDE.md
+    lines: '105'
+    commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
+  reference: Updated CLAUDE.md to emphasize using JSC intrinsics for performance.

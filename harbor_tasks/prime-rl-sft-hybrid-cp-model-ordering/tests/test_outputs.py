@@ -47,6 +47,54 @@ def test_syntax_check():
     compile(source, str(FILE), "exec")
 
 
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Repo's train.py passes Python syntax check via py_compile (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/src/prime_rl/trainer/sft/train.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_parse():
+    """Repo's train.py imports are syntactically valid (AST parse check) (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{REPO}/src/prime_rl/trainer/sft/train.py').read())"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_config_syntax():
+    """Repo's config files have valid TOML syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import os
+import sys
+errors = []
+for root, dirs, files in os.walk('{REPO}/configs'):
+    for f in files:
+        if f.endswith('.toml'):
+            path = os.path.join(root, f)
+            try:
+                import tomllib
+                with open(path, 'rb') as fp:
+                    tomllib.load(fp)
+            except Exception as e:
+                errors.append(f'{{path}}: {{e}}')
+if errors:
+    print('TOML errors:', errors)
+    sys.exit(1)
+print('All TOML files valid')
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TOML validation failed:\n{r.stderr}\n{r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

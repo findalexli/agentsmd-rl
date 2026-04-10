@@ -22,6 +22,21 @@ checks:
     origin: repo_tests
     description: "Repo modeling modules import without errors"
 
+  - id: repo_ci_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI-style import check: verify all affected modeling modules can be imported via subprocess"
+
+  - id: repo_function_existence
+    type: pass_to_pass
+    origin: repo_tests
+    description: "AST check via subprocess: get_llama_4_attn_scale exists in all expected modeling files"
+
+  - id: repo_mistral4_modular_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Verify modular_mistral4.py correctly imports get_llama_4_attn_scale from ministral3 via subprocess"
+
   - id: ministral3_modeling_scale_shape
     type: fail_to_pass
     origin: pr_diff

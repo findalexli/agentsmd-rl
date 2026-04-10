@@ -121,6 +121,61 @@ checks:
     description: Helm template with CeleryExecutor passes (repo CI check for modified path)
     points: 2
 
+  - id: test_values_yaml_schema_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: values.yaml validates against values.schema.json (repo CI check)
+    points: 2
+
+  - id: test_chart_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Chart.yaml is valid YAML with required fields (repo CI check)
+    points: 2
+
+  # Repo CI tests enrichment (added in p2p_enrichment phase)
+  - id: test_repo_chart_quality_schema_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - values.yaml validates against schema (TestChartQuality::test_values_validate_schema)
+    points: 2
+
+  - id: test_repo_worker_affinity
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Worker affinity test (TestWorker::test_affinity)
+    points: 2
+
+  - id: test_repo_worker_default_affinity
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Default worker affinity test (TestWorker::test_should_create_default_affinity)
+    points: 2
+
+  - id: test_repo_pod_template_workers_affinity
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Pod template workers affinity (TestPodTemplateFile::test_workers_affinity)
+    points: 2
+
+  - id: test_repo_pod_template_global_affinity
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Pod template global affinity (TestPodTemplateFile::test_global_affinity)
+    points: 2
+
+  - id: test_repo_pod_template_affinity_overwrite
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Pod template affinity precedence (TestPodTemplateFile::test_affinity_overwrite)
+    points: 2
+
+  - id: test_repo_worker_affinity_overwrite
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - Worker affinity precedence (TestWorker::test_affinity_overwrite)
+    points: 2
+
 rubric:
   - id: helm_precedence_order
     description: |

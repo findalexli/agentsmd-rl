@@ -60,18 +60,36 @@ checks:
       The merge function in getFieldWriters and getBeanWriters should format error
       messages with "%s vs %s" to show conflicting fields.
 
-  # Pass-to-pass tests (repo health)
-  - id: test_json_test_compiles_and_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      The JsonTest test suite should compile and run without errors.
-
+  # Pass-to-pass tests (repo health - these should pass at base commit)
   - id: test_bazel_build_java_src
     type: pass_to_pass
     origin: repo_tests
     description: |
-      Bazel build of //java/src/org/openqa/selenium/json should succeed.
+      Bazel build of //java/src/org/openqa/selenium/json:json should succeed.
+
+  - id: test_bazel_build_json_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Bazel build of //java/test/org/openqa/selenium/json:all should succeed.
+
+  - id: test_bazel_json_input_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      JsonInputTest should pass (unit tests for JSON parsing input handling).
+
+  - id: test_bazel_json_output_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      JsonOutputTest should pass (unit tests for JSON serialization output).
+
+  - id: test_bazel_query_json_targets
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Bazel query for //java/test/org/openqa/selenium/json:all should list all test targets.
 
 # Agent config rules to check (from java/AGENTS.md)
 agent_config:
@@ -85,4 +103,21 @@ agent_config:
       - "Use Javadoc for public APIs"
 
 # Rubric for LLM evaluation (soft/subjective criteria)
-rubric: []
+rubric:
+  - rule: "Use Javadoc for public APIs with @param, @return, and @throws tags as appropriate."
+    source:
+      path: "java/AGENTS.md"
+      lines: "32-42"
+      commit: "1303596bccafc9f39708d8ac61b52424c7d00394"
+
+  - rule: "Comments should explain 'why', not 'what' - prefer well-named methods over comments that narrate code."
+    source:
+      path: "AGENTS.md"
+      lines: "69-71"
+      commit: "1303596bccafc9f39708d8ac61b52424c7d00394"
+
+  - rule: "Follow existing code style and patterns in the Java bindings when adding new methods or classes."
+    source:
+      path: "java/AGENTS.md"
+      lines: "14"
+      commit: "1303596bccafc9f39708d8ac61b52424c7d00394"

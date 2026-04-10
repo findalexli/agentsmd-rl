@@ -47,6 +47,48 @@ checks:
     description: "Repo's PHP files have valid syntax (php -l)"
     points: 1
 
+  - id: "repo_lint"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's PHP files pass PSR-12 linting (pint)"
+    points: 1
+
+  - id: "repo_static_analysis"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's PHP files pass PHPStan static analysis"
+    points: 1
+
+  - id: "repo_static_analysis_full"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Full PHPStan analysis on src, app, bin, tests"
+    points: 1
+
+  - id: "repo_unit_cors"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "CORS unit tests pass (related to API handling)"
+    points: 1
+
+  - id: "repo_unit_detector"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Detector unit tests pass (client/device detection used in API)"
+    points: 1
+
+  - id: "repo_unit_collections"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Collections validation unit tests pass"
+    points: 1
+
+  - id: "repo_unit_branch_domain"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Branch domain validation unit tests pass (routing logic)"
+    points: 1
+
 agent_config:
   - source: "AGENTS.md"
     applies: true
@@ -60,4 +102,15 @@ agent_config:
     applies: false
     description: "Module structure rules - not relevant for shared controller fix"
 
-rubric: []
+rubric:
+  - rule: "Follow PSR-12 formatting enforced by Pint: proper brace placement, indentation, and spacing."
+    source:
+      path: "AGENTS.md"
+      lines: "98"
+      commit: "951a96ae01bceaabe6e2fb936686b7953209ce19"
+
+  - rule: "Use appropriate exception throwing with AppwriteException for error conditions instead of allowing fatal errors."
+    source:
+      path: "AGENTS.md"
+      lines: "96-120"
+      commit: "951a96ae01bceaabe6e2fb936686b7953209ce19"

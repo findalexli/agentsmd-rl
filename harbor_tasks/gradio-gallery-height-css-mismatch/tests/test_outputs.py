@@ -61,7 +61,7 @@ def test_css_class_consistency():
 
     # Collect class names from the template
     tmpl_classes = set()
-    for m in re.finditer(r'class=["\']([^"\']+)["\']', template):
+    for m in re.finditer('class=["\']([^"\']+)["\']', template):
         tmpl_classes.update(m.group(1).split())
 
     # Collect CSS class selectors from style block
@@ -116,7 +116,7 @@ def test_height_forwarding_accepts_strings():
     # Find height={...} expressions that reference gradio
     script = f"""
     const src = {json.dumps(src)};
-    const re = /height\\s*=\\s*\\{{/g;
+    const re = /height\s*=\s*\{{/g;
     let m, found = false;
     while ((m = re.exec(src)) !== null) {{
         let i = m.index + m[0].length, d = 1;
@@ -160,7 +160,7 @@ def test_height_forwarding_accepts_strings():
 def test_height_type_accepts_string():
     """GalleryProps.height type must accept CSS string values, not just number|'auto'."""
     src = Path(TYPES).read_text()
-    m = re.search(r"height\s*[?:]?\s*:\s*([^;}\n]+)", src)
+    m = re.search(r"height\s*[?:]?\s*:\s*([^;}\n]+)", src, re.MULTILINE)
     assert m is not None, "No height type definition found in types.ts"
 
     typedef = m.group(1).strip()
@@ -257,33 +257,50 @@ def test_gallery_not_stub():
 # Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and gold
 # ---------------------------------------------------------------------------
 
-def _setup_and_run(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
-    """Enable corepack, install deps, and run a pnpm command."""
-    # Setup corepack first
-    setup = subprocess.run(
+_REPO_SETUP_DONE = False
+
+
+def _ensure_setup():
+    """Enable corepack and install dependencies (idempotent)."""
+    global _REPO_SETUP_DONE
+    if _REPO_SETUP_DONE:
+        return
+    subprocess.run(
         "corepack enable && corepack prepare pnpm@latest --activate",
         shell=True, capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    # Install dependencies if needed
-    install = subprocess.run(
+    subprocess.run(
         ["pnpm", "install", "--frozen-lockfile"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    # Don't fail on install - might already be installed
-    
-    return subprocess.run(
-        cmd,
-        capture_output=True, text=True, timeout=timeout, cwd=REPO,
-    )
+    _REPO_SETUP_DONE = True
 
 
 def test_repo_format_check():
     """Repo code formatting check passes (pass_to_pass)."""
-    r = _setup_and_run(["pnpm", "format:check"], timeout=120)
+    _ensure_setup()
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 def test_repo_unit_tests():
     """Repo unit tests pass (pass_to_pass)."""
-    r = _setup_and_run(["pnpm", "test:run"], timeout=120)
+    _ensure_setup()
+    r = subprocess.run(
+        ["pnpm", "test:run"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_gallery_unit_tests():
+    """Gallery component unit tests pass (pass_to_pass)."""
+    _ensure_setup()
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts", "js/gallery/Gallery.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Gallery unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

@@ -48,4 +48,32 @@ checks:
     description: "usesServerHmr must still exclude edge runtime endpoints"
 
 rubric:
-  []
+  - rule: "Before editing files, read all README.md files in the directory path from repo root to the target file's directory to identify local patterns and conventions."
+    source:
+      path: "AGENTS.md"
+      lines: "46-54"
+      commit: "9a0214a12f1ed1901c4b01e84073ab854848eea0"
+
+  - rule: "When working with large files (>500 lines), grep first to find relevant line numbers, then read targeted ranges. Never re-read the same section without code changes in between."
+    source:
+      path: "AGENTS.md"
+      lines: "325-329"
+      commit: "9a0214a12f1ed1901c4b01e84073ab854848eea0"
+
+  - rule: "Pre-validate code changes before committing by running prettier and eslint on changed files to avoid slow lint-staged failures."
+    source:
+      path: "AGENTS.md"
+      lines: "361-366"
+      commit: "9a0214a12f1ed1901c4b01e84073ab854848eea0"
+
+  - rule: "When adding conditional require() paths or imports in server code, use DCE-safe if/else branching patterns that webpack can evaluate at compile time. Avoid early-return/throw guards."
+    source:
+      path: ".agents/skills/dce-edge/SKILL.md"
+      lines: "17-34"
+      commit: "9a0214a12f1ed1901c4b01e84073ab854848eea0"
+
+  - rule: "When reproducing CI failures locally, mirror CI environment variables exactly. For module-resolution validation, always verify without NEXT_SKIP_ISOLATE=1."
+    source:
+      path: ".agents/skills/runtime-debug/SKILL.md"
+      lines: "16-20"
+      commit: "9a0214a12f1ed1901c4b01e84073ab854848eea0"

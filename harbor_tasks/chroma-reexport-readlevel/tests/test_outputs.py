@@ -20,8 +20,7 @@ def test_readlevel_re_exported_in_types():
         content = f.read()
 
     # Check that ReadLevel is re-exported from chroma_types::plan
-    assert "pub use chroma_types::plan::ReadLevel;" in content, \
-        "ReadLevel is not re-exported in types.rs - expected 'pub use chroma_types::plan::ReadLevel;'"
+    assert "pub use chroma_types::plan::ReadLevel;" in content,         "ReadLevel is not re-exported in types.rs - expected 'pub use chroma_types::plan::ReadLevel;'"
 
 
 def test_readlevel_publicly_accessible():
@@ -57,8 +56,7 @@ fn main() {
         # Clean up
         os.remove(test_file)
 
-        assert result.returncode == 0, \
-            f"ReadLevel is not accessible via chroma::types::ReadLevel:\n{result.stderr}"
+        assert result.returncode == 0,             f"ReadLevel is not accessible via chroma::types::ReadLevel:\n{result.stderr}"
     finally:
         # Ensure cleanup happens even on timeout/assertion error
         if os.path.exists(test_file):
@@ -76,16 +74,17 @@ def test_collection_docs_use_correct_import():
 
     # The doc examples should use the re-exported path
     # They should NOT use chroma_types::plan::ReadLevel in examples
-    import_count = content.count("use chroma::types::ReadLevel")
+    # Count both direct imports and grouped imports that include ReadLevel from chroma::types
+    direct_count = content.count("use chroma::types::ReadLevel")
+    grouped_count = content.count("chroma::types::{SearchPayload, ReadLevel}")
+    import_count = direct_count + grouped_count
     wrong_import_count = content.count("use chroma_types::plan::ReadLevel")
 
     # After fix, we expect chroma::types::ReadLevel in doc examples
-    assert import_count >= 2, \
-        f"Doc examples should use 'use chroma::types::ReadLevel' at least twice, found {import_count}"
+    assert import_count >= 2,         f"Doc examples should use 'use chroma::types::ReadLevel' at least twice, found {import_count} (direct: {direct_count}, grouped: {grouped_count})"
 
     # The old import should not appear in the examples anymore
-    assert wrong_import_count == 0, \
-        f"Doc examples should NOT use 'use chroma_types::plan::ReadLevel', found {wrong_import_count} occurrences"
+    assert wrong_import_count == 0,         f"Doc examples should NOT use 'use chroma_types::plan::ReadLevel', found {wrong_import_count} occurrences"
 
 
 def test_rust_compiles_cleanly():
@@ -101,8 +100,7 @@ def test_rust_compiles_cleanly():
         timeout=300
     )
 
-    assert result.returncode == 0, \
-        f"Rust compilation failed:\n{result.stderr}"
+    assert result.returncode == 0,         f"Rust compilation failed:\n{result.stderr}"
 
 
 def test_all_re_exports_present():
@@ -136,8 +134,7 @@ def test_cargo_fmt():
         timeout=120
     )
 
-    assert result.returncode == 0, \
-        f"Rust formatting check failed:\n{result.stderr or result.stdout}"
+    assert result.returncode == 0,         f"Rust formatting check failed:\n{result.stderr or result.stdout}"
 
 
 def test_cargo_metadata():
@@ -153,5 +150,70 @@ def test_cargo_metadata():
         timeout=120
     )
 
+    assert result.returncode == 0,         f"Cargo metadata check failed (invalid Cargo.toml):\n{result.stderr[-500:]}"
+
+
+def test_chroma_crate_clippy():
+    """
+    Pass-to-pass: Repo chroma crate must pass clippy lints.
+    Runs cargo clippy --package chroma to verify no lint warnings.
+    """
+    result = subprocess.run(
+        ["cargo", "clippy", "--package", "chroma", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0,         f"Clippy check failed for chroma crate:\n{result.stderr[-500:]}"
+
+
+def test_chroma_crate_doc():
+    """
+    Pass-to-pass: Repo chroma crate documentation must build.
+    Runs cargo doc to verify documentation compiles without errors.
+    """
+    result = subprocess.run(
+        ["cargo", "doc", "--package", "chroma", "--no-deps"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0,         f"Documentation build failed for chroma crate:\n{result.stderr[-500:]}"
+
+
+def test_cargo_doc_test():
+    """
+    Pass-to-pass: Rust doctests must pass.
+    Runs cargo test --doc to verify code examples in documentation work.
+    This is from the repo's CI (_rust-tests.yml).
+    """
+    result = subprocess.run(
+        ["cargo", "test", "--doc", "--package", "chroma"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+
+    assert result.returncode == 0, f"Rust doctest failed:\n{result.stderr[-500:]}"
+
+def test_cargo_unit_tests():
+    """
+    Pass-to-pass: Repo chroma crate unit tests pass.
+    Runs cargo test on the chroma crate library code, skipping k8s integration tests
+    that fail outside of the Tilt environment.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "--package", "chroma", "--lib", "--", "--skip", "k8s_integration"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600
+    )
+
     assert result.returncode == 0, \
-        f"Cargo metadata check failed (invalid Cargo.toml):\n{result.stderr[-500:]}"
+        f"Unit tests failed for chroma crate:\n{result.stderr[-500:]}"

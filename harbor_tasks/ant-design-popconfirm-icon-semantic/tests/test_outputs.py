@@ -159,3 +159,23 @@ def test_semantic_test_file_updated():
 
     # Check for dynamic icon testing in function-based test
     assert "icon: 'dynamic-icon'" in content, "semantic.test.tsx should test dynamic icon classNames"
+
+
+def test_repo_tests_node():
+    """Repo's node tests pass (pass_to_pass)."""
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    r = subprocess.run(
+        ["npm", "run", "test:node"],
+        capture_output=True, text=True, timeout=180, cwd=REPO, env=env
+    )
+    assert r.returncode == 0, f"Node tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_tests_popconfirm():
+    """Popconfirm component tests pass (pass_to_pass)."""
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    r = subprocess.run(
+        ["npm", "test", "--", "--testPathPatterns=popconfirm"],
+        capture_output=True, text=True, timeout=180, cwd=REPO, env=env
+    )
+    assert r.returncode == 0, f"Popconfirm tests failed:\n{r.stderr[-1000:]}"

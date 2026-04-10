@@ -211,6 +211,50 @@ class TestPassToPassRepoTests:
         print(result.stderr[-1000:] if len(result.stderr) > 1000 else result.stderr)
         assert result.returncode == 0, f"Target file unit tests failed:\n{result.stderr[-500:]}"
 
+    def test_repo_ruff_format(self):
+        """Repo code formatting passes (pass_to_pass).
+
+        Verifies the codebase follows the project's formatting standards
+        as enforced in CI via ruff format --check.
+        """
+        import subprocess
+        # Ensure ruff is available
+        subprocess.run(['pip', 'install', '-q', 'ruff'], check=True, capture_output=True)
+        result = subprocess.run(
+            ['ruff', 'format', '--check', '--config', 'dev_config/python/ruff.toml', 'openhands/'],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        print(result.stdout[-1000:] if len(result.stdout) > 1000 else result.stdout)
+        print(result.stderr[-500:] if len(result.stderr) > 500 else result.stderr)
+        assert result.returncode == 0, f"Ruff format check failed:\n{result.stderr[-500:]}"
+
+    def test_repo_unit_tests_broad(self):
+        """Broader repo unit tests pass (pass_to_pass).
+
+        Runs a broader set of unit tests to ensure no regression beyond
+        the immediate app_server tests. Excludes heavy runtime/integration tests.
+        """
+        import subprocess
+        # Run unit tests but exclude runtime tests (those need Docker/special setup)
+        result = subprocess.run(
+            [
+                'python', '-m', 'pytest',
+                'tests/unit',
+                '--ignore=tests/unit/runtime', '--ignore=tests/unit/frontend', '--ignore=tests/unit/mcp',
+                '-v', '--tb=short', '--forked', '-n', '0', '-x'
+            ],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        print(result.stdout[-3000:] if len(result.stdout) > 3000 else result.stdout)
+        print(result.stderr[-1000:] if len(result.stderr) > 1000 else result.stderr)
+        assert result.returncode == 0, f"Broad unit tests failed:\n{result.stderr[-500:]}"
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

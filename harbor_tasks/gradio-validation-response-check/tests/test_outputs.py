@@ -191,20 +191,32 @@ def test_ruff_format_check():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_repo_ruff_check_gradio():
-    """Repo's ruff lint passes on gradio/ directory (pass_to_pass)."""
+def test_repo_ruff_check_queueing():
+    """Repo's ruff lint passes on modified file gradio/queueing.py (pass_to_pass)."""
     r = subprocess.run(
-        ["ruff", "check", "gradio", "--select=E,W,F", "--ignore=E501", "--no-fix"],
+        ["ruff", "check", "gradio/queueing.py", "--select=E,W,F", "--ignore=E501", "--no-fix"],
         cwd=REPO,
         capture_output=True,
         timeout=60,
     )
-    assert r.returncode == 0, f"ruff check failed on gradio/:\n{r.stdout.decode()[-500:]}"
+    assert r.returncode == 0, f"ruff check failed on gradio/queueing.py:\n{r.stdout.decode()[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_py_compile_gradio():
-    """All Python files in gradio/ compile without syntax errors (pass_to_pass)."""
+def test_repo_ruff_format_check_queueing():
+    """Repo's ruff format check passes on modified file gradio/queueing.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "gradio/queueing.py"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed on gradio/queueing.py:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile_queueing():
+    """Modified file gradio/queueing.py compiles without syntax errors (pass_to_pass)."""
     r = subprocess.run(
         ["python", "-m", "py_compile", "gradio/queueing.py"],
         cwd=REPO,
@@ -212,3 +224,27 @@ def test_repo_py_compile_gradio():
         timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in gradio/queueing.py:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_gradio_core():
+    """Repo's ruff lint passes on core gradio/ directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "gradio", "--select=E,W,F", "--ignore=E501", "--no-fix"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"ruff check failed on gradio/:\n{r.stdout.decode()[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_block_function_compile():
+    """Related file gradio/block_function.py compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "gradio/block_function.py"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax error in gradio/block_function.py:\n{r.stderr.decode()}"

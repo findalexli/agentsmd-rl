@@ -7,6 +7,9 @@ source:
   merge_commit: "f7d487057c75a73f5a570cf8fd83b49262ca9809"
 
 checks:
+  # ---------------------------------------------------------------------------
+  # Static pass_to_pass gates (syntax / structural checks)
+  # ---------------------------------------------------------------------------
   - id: file_exists_and_nontrivial
     type: pass_to_pass
     origin: static
@@ -22,6 +25,9 @@ checks:
     origin: static
     description: "Test file must be valid TypeScript that parses without errors"
 
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) — core behavioral tests
+  # ---------------------------------------------------------------------------
   - id: generate_route_types_retry_timeout
     type: fail_to_pass
     origin: pr_diff
@@ -42,6 +48,9 @@ checks:
     origin: pr_diff
     description: "retry() in tsc test must have timeout >= 10s"
 
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass (pr_diff) — regression checks
+  # ---------------------------------------------------------------------------
   - id: original_assertions_preserved
     type: pass_to_pass
     origin: pr_diff
@@ -57,6 +66,9 @@ checks:
     origin: pr_diff
     description: "All retry() blocks must contain expect() assertions"
 
+  # ---------------------------------------------------------------------------
+  # Agent config pass_to_pass gates (rules from AGENTS.md)
+  # ---------------------------------------------------------------------------
   - id: uses_retry_not_settimeout
     type: pass_to_pass
     origin: agent_config
@@ -84,14 +96,49 @@ checks:
       lines: "207-221"
       commit: "0090db224d177c51f6d5e45fe1be2527ce04e899"
 
+  # ---------------------------------------------------------------------------
+  # Repo CI/CD pass_to_pass gates (actual CI commands)
+  # ---------------------------------------------------------------------------
   - id: repo_prettier
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's prettier check passes on the test file"
+    description: "Repo's prettier check passes on the test file (npx prettier --check)"
 
-  - id: repo_eslint
+  - id: repo_node_syntax_check
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's ESLint check passes on the test file"
+    description: "Repo's test file passes Node.js syntax validation (node --check)"
 
-rubric: []
+  - id: repo_test_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file has proper structure with imports and describe/it blocks"
+
+  - id: repo_fixture_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Fixture directory has required Next.js e2e structure (app/, next.config.js, tsconfig.json)"
+
+  - id: repo_git_tracks_test_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file is tracked in git and has not been inadvertently deleted"
+
+rubric:
+  - rule: "Add comments to explain WHY, not WHAT. Comments should explain the reasoning behind timing decisions and race conditions."
+    source:
+      path: "AGENTS.md"
+      lines: "149-152"
+      commit: "0090db224d177c51f6d5e45fe1be2527ce04e899"
+
+  - rule: "Document timing invariants in tests when dealing with async operations. Explain relationships between events (e.g., route type generation happens after 'Ready' log)."
+    source:
+      path: "AGENTS.md"
+      lines: "385-390"
+      commit: "0090db224d177c51f6d5e45fe1be2527ce04e899"
+
+  - rule: "When fixing flaky tests, add explanatory comments that document the race condition being addressed, not just the fix itself."
+    source:
+      path: "AGENTS.md"
+      lines: "169-179"
+      commit: "0090db224d177c51f6d5e45fe1be2527ce04e899"

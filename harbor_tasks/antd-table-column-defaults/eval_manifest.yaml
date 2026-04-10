@@ -24,7 +24,9 @@ behavioral_requirements:
     8. Add demo and tests following project conventions
 
 checks:
+  # ============================================================================
   # Fail-to-pass tests (behavioral - test the actual bug/feature)
+  # ============================================================================
   - id: test_useFilledColumns_hook_exists
     type: fail_to_pass
     origin: behavioral
@@ -75,23 +77,39 @@ checks:
     origin: behavioral
     description: "Test file has column prop tests"
 
-  # Pass-to-pass tests (repo standards)
-  - id: test_typescript_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript compilation passes"
-
   - id: test_demo_file_exists
-    type: pass_to_pass
-    origin: repo_tests
+    type: fail_to_pass
+    origin: behavioral
     description: "Demo file for column defaults exists"
 
+  # ============================================================================
+  # Pass-to-pass tests (repo CI/CD tests - verified working in Docker)
+  # ============================================================================
+  - id: test_repo_lint_biome
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Biome linting passes"
+
+  - id: test_repo_lint_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint linting passes"
+
+  - id: test_repo_table_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Table component unit tests pass"
+
+
+  # ============================================================================
+  # Static checks (file content/structure)
+  # ============================================================================
   - id: test_demo_uses_absolute_imports
     type: pass_to_pass
     origin: agent_config
     source:
-      file: AGENTS.md
-      lines: "Demo 导入规范"
+      file: CLAUDE.md
+      section: "Demo 导入规范"
       commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
     description: "Demo file uses absolute imports per project convention"
 
@@ -99,31 +117,16 @@ checks:
     type: pass_to_pass
     origin: agent_config
     source:
-      file: AGENTS.md
-      lines: "Test 导入规范"
+      file: CLAUDE.md
+      section: "Test 导入规范"
       commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
     description: "Test file uses relative imports per project convention"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's own unit tests for column feature pass"
-
-  - id: test_repo_lint_biome
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Biome linting passes"
-
-  - id: test_repo_table_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Table component tests pass"
 
 rubric:
   - criterion: "Demo files use absolute imports"
     weight: 1
     source:
-      file: AGENTS.md
+      file: CLAUDE.md
       section: "Demo 导入规范"
       commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
     description: |
@@ -133,7 +136,7 @@ rubric:
   - criterion: "Test files use relative imports"
     weight: 1
     source:
-      file: AGENTS.md
+      file: CLAUDE.md
       section: "Test 导入规范"
       commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
     description: |

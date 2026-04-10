@@ -22,6 +22,16 @@ checks:
     origin: repo_tests
     description: "Repo's package consistency check passes"
 
+  - id: repo_check_deps
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's DEPS check passes"
+
+  - id: repo_lint_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's test lint (forbid-only) passes"
+
   - id: repeat_index_in_types
     type: fail_to_pass
     origin: pr_diff
@@ -52,4 +62,18 @@ checks:
     origin: pr_diff
     description: "Zero repeatEachIndex should not create annotation (falsy check)"
 
-rubric: []
+rubric:
+  - rule: "appendRepeatEachIndexAnnotation function must be added to testCaseView.tsx with proper truthy check for repeatEachIndex."
+    source:
+      path: "packages/html-reporter/src/testCaseView.tsx"
+      commit: "1bebb2d1759a9df0c676eb0708451abf90973fcc"
+
+  - rule: "TestCaseSummary type must include optional repeatEachIndex field in types.d.ts."
+    source:
+      path: "packages/html-reporter/src/types.d.ts"
+      commit: "1bebb2d1759a9df0c676eb0708451abf90973fcc"
+
+  - rule: "HtmlBuilder must pass repeatEachIndex to test case data in html.ts reporter."
+    source:
+      path: "packages/playwright/src/reporters/html.ts"
+      commit: "1bebb2d1759a9df0c676eb0708451abf90973fcc"

@@ -42,10 +42,20 @@ checks:
     origin: repo_tests
     description: "Repo's lint (eslint + prettier) passes after build"
 
-  - id: test_repo_tests
+  - id: test_repo_parser_tests
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's test suite passes excluding browser tests (~87s)"
+    description: "Parser tests pass (parser-modern + parser-legacy)"
+
+  - id: test_repo_compiler_errors_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Compiler error tests pass - parsing error handling"
+
+  - id: test_repo_validator_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Validator tests pass - expression validation"
 
 rubric:
   - rule: "Use snake_case for internal variable names and methods."

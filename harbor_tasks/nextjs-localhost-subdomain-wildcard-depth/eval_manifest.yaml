@@ -47,9 +47,22 @@ checks:
     origin: repo_tests
     description: "Repo's ESLint check passes on modified files"
 
-  - id: test_repo_unit_tests
+  - id: test_repo_csrf_logic_unit
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's test framework (jest) is available"
+    description: "CSRF origin matching logic unit tests pass"
 
-rubric: []
+  - id: test_repo_lint_eslint_csrf
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint check passes on csrf-protection.ts"
+
+rubric:
+  - rule: "The solution must change '*.localhost' to '**.localhost' in block-cross-site-dev.ts to fix multi-level subdomain matching."
+    reference: "'**.localhost' enables matching of multi-level subdomains like sub.app.localhost"
+
+  - rule: "The 'localhost' exact match entry must be preserved in the allowedOrigins array."
+    reference: "'localhost' must remain as an exact match entry"
+
+  - rule: "The allowedDevOrigins spread must be preserved to maintain backward compatibility."
+    reference: "...(allowedDevOrigins ?? []) must be preserved"

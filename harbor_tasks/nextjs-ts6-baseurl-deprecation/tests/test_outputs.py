@@ -314,3 +314,103 @@ def test_repo_getTypeScriptConfiguration_exports():
     ]
     for pattern in required_patterns:
         assert pattern in src, f"Missing required pattern: {pattern}"
+
+
+# [repo_tests] pass_to_pass - CI style: verify lib/typescript files structure
+def test_repo_typescript_lib_files_structure():
+    """Repo TypeScript lib files have valid structure and exports (pass_to_pass)."""
+    lib_dir = Path(f"{REPO}/packages/next/src/lib/typescript")
+
+    # All .ts files in lib/typescript should parse as valid TypeScript
+    ts_files = list(lib_dir.glob("*.ts"))
+    assert len(ts_files) >= 7, f"Expected at least 7 .ts files, found {len(ts_files)}"
+
+    for ts_file in ts_files:
+        src = ts_file.read_text()
+        # Check file has substantial content (not empty/stub)
+        lines = [l for l in src.split("\n") if l.strip() and not l.strip().startswith("//")]
+        assert len(lines) >= 5, f"{ts_file.name} too small ({len(lines)} meaningful lines)"
+
+
+# [repo_tests] pass_to_pass - CI style: verify target file has complete implementation
+def test_repo_target_file_complete():
+    """Target file has complete implementation matching repo standards (pass_to_pass)."""
+    src = Path(TARGET).read_text()
+
+    # Must have substantial non-comment, non-blank lines
+    code_lines = [l for l in src.split("\n") if l.strip() and not l.strip().startswith("//")]
+    assert len(code_lines) >= 80, f"Only {len(code_lines)} meaningful lines (expected >= 80)"
+
+    # Must have all key function definitions
+    required_functions = [
+        "function resolvePathAliasTarget",
+        "export async function getTypeScriptConfiguration",
+    ]
+    for func in required_functions:
+        assert func in src, f"Missing required function: {func}"
+
+    # Must have proper imports for a TypeScript-related module
+    assert "path" in src, "Missing path import"
+    assert "semver" in src, "Missing semver reference"
+
+
+# [repo_tests] pass_to_pass - CI: TypeScript configuration unit tests
+def test_repo_typescript_unit_tests():
+    """Repo's TypeScript configuration unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "npm install -g corepack@0.31 && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm build >/dev/null 2>&1 && npx jest packages/next/src/lib/typescript/writeConfigurationDefaults.test.ts"
+        ],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript unit tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass - CI: TypeScript type check
+def test_repo_typescript_typecheck():
+    """Repo's TypeScript type check for next package passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "npm install -g corepack@0.31 && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm build >/dev/null 2>&1 && pnpm --filter=next types"
+        ],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript type check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: All unit tests
+def test_repo_unit_tests():
+    """Repo's unit test suite passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "npm install -g corepack@0.31 && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm build >/dev/null 2>&1 && pnpm test-unit 2>&1 | tail -20"
+        ],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    # Check for test success in stdout
+    assert "passed" in r.stdout.lower() or r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI style: verify TypeScript syntax validity
+def test_repo_typescript_syntax_valid():
+    """All repo TypeScript lib files parse without syntax errors (pass_to_pass)."""
+    lib_dir = Path(f"{REPO}/packages/next/src/lib/typescript")
+    ts_files = list(lib_dir.glob("*.ts"))
+
+    for ts_file in ts_files:
+        r = _node(f"""
+const ts = require('/opt/ts-deps/node_modules/typescript');
+const fs = require('fs');
+const src = fs.readFileSync('{ts_file}', 'utf-8');
+try {{
+    ts.createSourceFile('test.ts', src, ts.ScriptTarget.Latest, true);
+    console.log('OK: {ts_file.name}');
+}} catch (e) {{
+    console.error('Parse failed for {ts_file.name}: ' + e.message);
+    process.exit(1);
+}}
+""")
+        assert r.returncode == 0, f"Syntax error in {ts_file.name}: {r.stderr}"

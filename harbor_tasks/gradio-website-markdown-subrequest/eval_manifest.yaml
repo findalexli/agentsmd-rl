@@ -46,14 +46,21 @@ checks:
       lines: "44"
       commit: "e900202946a615f8fea84253d7a4377fe8a504f0"
 
-  - id: test_repo_typescript_syntax
+  - id: test_repo_wrangler_build
     type: pass_to_pass
     origin: repo_tests
-    description: "Target TypeScript file must compile without errors"
+    description: "Repo's wrangler pages functions build passes"
+
+  - id: test_repo_client_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's @gradio/client package builds successfully"
 
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
+  - rule: "Use Cloudflare Workers style Response.redirect() for redirects, with new URL() for URL construction."
     source:
-      path: "AGENTS.md"
-      lines: "45"
+      path: "js/_website/functions/_shared.ts"
+      lines: "27-43"
       commit: "e900202946a615f8fea84253d7a4377fe8a504f0"
+    reference: |
+      return Response.redirect(`${url.origin}/api/markdown/${params.doc}`, 302);

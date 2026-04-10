@@ -35,7 +35,7 @@ checks:
   - id: file_structure_intact
     type: pass_to_pass
     origin: static
-    description: "File retains describe block and at least 3 it() test cases"
+    description: "File retains describe block and at least 3 test cases"
 
   - id: no_deprecated_check_usage
     type: pass_to_pass
@@ -54,6 +54,17 @@ checks:
       path: "AGENTS.md"
       lines: "180"
       commit: "60e71ac90c4f150982fda3ca937b1b0e4c9a7b29"
+
+  # Repo CI/CD tests (pass_to_pass) — verify fix doesn't break existing functionality
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Prettier formatting check passes on the test file"
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint check passes on the test file"
 
 rubric:
   - rule: "If modifying test setup, prefer real fixture directories (files: __dirname) over inline files objects in nextTestSetup."

@@ -52,9 +52,41 @@ checks:
     origin: repo_tests
     description: "Crate documentation must build without warnings"
 
+  - id: cargo_check_all_features
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Crate must compile with all features enabled"
+
+  - id: cargo_clippy_all_features
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Crate must pass clippy lints with all features enabled"
+
+  - id: cargo_test_doc
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Crate documentation tests must pass"
+
   - id: qualified_fields_not_pub
     type: fail_to_pass
     origin: pr_diff
     description: "DisplaySettings.qualified and qualified_type_aliases fields must be private"
 
-rubric: []
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: "AGENTS.md"
+      lines: "75"
+      commit: "162852609ad01f171ba868900d18e57236573785"
+
+  - rule: "If you have to suppress a Clippy lint, prefer to use #[expect()] over #[allow()], where possible. But if a lint is complaining about unused/dead code, it's usually best to just delete the unused code."
+    source:
+      path: "AGENTS.md"
+      lines: "81"
+      commit: "162852609ad01f171ba868900d18e57236573785"
+
+  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
+    source:
+      path: "AGENTS.md"
+      lines: "82"
+      commit: "162852609ad01f171ba868900d18e57236573785"

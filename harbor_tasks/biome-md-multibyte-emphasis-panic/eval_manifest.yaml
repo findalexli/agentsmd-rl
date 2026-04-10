@@ -52,4 +52,27 @@ checks:
     origin: repo_tests
     description: "Related markdown crates compile without errors"
 
-rubric: []
+rubric:
+  - rule: "Use saturating arithmetic operations when calculating byte offsets or lengths to prevent panics with multi-byte characters or edge cases."
+    source:
+      path: "crates/biome_markdown_parser/src/syntax/inline/emphasis.rs"
+      lines: "684-688"
+      commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
+
+  - rule: "Prefer tracking byte positions with start/end markers over accumulating length incrementally when parsing text ranges."
+    source:
+      path: ".claude/skills/parser-development/SKILL.md"
+      lines: "155-168"
+      commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
+
+  - rule: "Use just f (just format) and just l (just lint) before committing code changes."
+    source:
+      path: "CLAUDE.md"
+      lines: "290-294"
+      commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
+
+  - rule: "All code changes must include tests. Bug fixes should have a test that reproduces the bug and validates the fix."
+    source:
+      path: "AGENTS.md"
+      lines: "200-208"
+      commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"

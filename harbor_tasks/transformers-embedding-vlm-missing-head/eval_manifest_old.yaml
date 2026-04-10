@@ -1,0 +1,91 @@
+version: "2.0"
+
+source:
+  repo: "huggingface/transformers"
+  pr: 45000
+  base_commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
+  merge_commit: "4ee7f51e468b7408513dc294dad20e4edb13594f"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files must parse without syntax errors"
+
+  - id: modules_import
+    type: pass_to_pass
+    origin: pr_diff
+    description: "All affected modules import without errors"
+
+  - id: colpali_uses_base_model_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColPali must not use AutoModelForImageTextToText (needs base model without LM head)"
+
+  - id: colqwen2_uses_base_model_class
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColQwen2 must not use AutoModelForImageTextToText (needs base model without LM head)"
+
+  - id: colpali_forward_no_model_indirection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColPali forward must call self.vlm() directly, not self.vlm.model()"
+
+  - id: colqwen2_forward_no_model_indirection
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColQwen2 forward must not go through self.vlm.model (use self.vlm directly)"
+
+  - id: colpali_base_model_prefix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColPaliForRetrieval.base_model_prefix must be 'vlm'"
+
+  - id: colqwen2_base_model_prefix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColQwen2ForRetrieval.base_model_prefix must be 'vlm'"
+
+  - id: colmodernvbert_base_model_prefix
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ColModernVBertForRetrieval.base_model_prefix must be 'vlm'"
+
+  - id: colqwen2_conversion_mapping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "colqwen2 must exist in checkpoint conversion mapping"
+
+  - id: colpali_no_conversion_mapping
+    type: fail_to_pass
+    origin: pr_diff
+    description: "colpali entry must be removed from conversion mapping (no longer needed with base model)"
+
+  - id: modular_colqwen2_no_model_indirection
+    type: fail_to_pass
+    origin: agent_config
+    description: "modular_colqwen2.py (source of truth) must also call self.vlm() directly, not self.vlm.model() — modular files are authoritative when present"
+    source:
+      path: "CLAUDE.md"
+      lines: "67"
+      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
+
+rubric:
+  - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/."
+    source:
+      path: "CLAUDE.md"
+      lines: "64"
+      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
+
+  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo. Instead, edit the modular file."
+    source:
+      path: "CLAUDE.md"
+      lines: "67-68"
+      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
+
+  - rule: "PRs should be as brief as possible. Bugfix PRs can often be only one or two lines long. Aim to minimize the size of the diff."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "15"
+      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"

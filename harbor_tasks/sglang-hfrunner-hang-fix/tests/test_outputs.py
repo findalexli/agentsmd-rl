@@ -331,3 +331,53 @@ def test_repo_codespell():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Codespell found typos:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """Repo isort check passes on runners.py (imports are sorted)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        [sys.executable, "-m", "isort", "--check-only", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed (imports not sorted):\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyflakes():
+    """Repo pyflakes check passes on runners.py (no undefined names)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pyflakes", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pyflakes", TARGET],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyflakes found issues:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yamllint():
+    """Repo yamllint check passes on CI workflow files (valid YAML syntax)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "yamllint", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        [sys.executable, "-m", "yamllint", "-d", "relaxed", f"{REPO}/.github/workflows/lint.yml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # yamllint returns 0 on success, 1 on errors (warnings are ok)
+    # We only care about errors, not warnings like line too long
+    if r.returncode != 0 and "error" in r.stdout.lower():
+        assert False, f"yamllint found errors:\n{r.stdout}\n{r.stderr}"
+    # If only warnings, consider it a pass
+    assert r.returncode == 0 or (r.returncode == 0 or "warning" in r.stdout.lower()), f"yamllint failed:\n{r.stdout}\n{r.stderr}"

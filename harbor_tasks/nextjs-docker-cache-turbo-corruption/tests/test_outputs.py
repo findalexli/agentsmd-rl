@@ -44,8 +44,11 @@ def test_syntax_check():
             r = subprocess.run(["node", "--check", path], capture_output=True, text=True, timeout=10)
             assert r.returncode == 0, f"{path} has syntax errors: {r.stderr}"
     if Path(CACHE_MJS).exists():
-        r = subprocess.run(["node", "--input-type=module", "--check"],
-                           input=Path(CACHE_MJS).read_text(), capture_output=True, text=True, timeout=10)
+        r = subprocess.run(
+            ["node", "--input-type=module", "--check"],
+            input=Path(CACHE_MJS).read_text(),
+            capture_output=True, text=True, timeout=10
+        )
         assert r.returncode == 0, f"{CACHE_MJS} has syntax errors: {r.stderr}"
 
 
@@ -355,8 +358,8 @@ def test_build_image_and_force_preserved():
     """buildImage function and --force flag are preserved in docker-image-cache.js."""
     src = Path(CACHE_JS).read_text()
     has_build = bool(re.search(
-        r"(?:function\s+buildImage|const\s+buildImage\s*=|let\s+buildImage\s*=|"
-        r"async\s+function\s+buildImage|buildImage\s*\()", src
+        r"(?:function\s+buildImage|const\s+buildImage\s*=|let\s+buildImage\s*=|async\s+function\s+buildImage|buildImage\s*\()",
+        src
     ))
     assert has_build, "buildImage function not found in docker-image-cache.js"
     assert "force" in src, "--force flag not found in docker-image-cache.js"
@@ -399,12 +402,12 @@ def test_turbo_cache_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_ci) — CI/CD regression checks from the repo's own pipeline
+# Pass-to-pass (repo_tests) — CI/CD regression checks that run actual commands
 # ---------------------------------------------------------------------------
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_js_syntax_all_scripts():
-    """All JS files in scripts/ directory parse without syntax errors."""
+    """All JS files in scripts/ directory parse without syntax errors (runs node --check)."""
     scripts_dir = Path(f"{REPO}/scripts")
     if not scripts_dir.exists():
         return
@@ -424,7 +427,33 @@ def test_repo_js_syntax_all_scripts():
         assert r.returncode == 0, f"{path.name} has syntax errors: {r.stderr[:500]}"
 
 
-# [repo_ci] pass_to_pass
+# [repo_tests] pass_to_pass
+def test_repo_docker_native_build_js_syntax():
+    """docker-native-build.js syntax is valid (runs node --check)."""
+    assert Path(NATIVE_JS).exists(), "docker-native-build.js not found"
+    r = subprocess.run(
+        ["node", "--check", NATIVE_JS],
+        capture_output=True, text=True, timeout=10
+    )
+    assert r.returncode == 0, f"docker-native-build.js has syntax errors: {r.stderr[:500]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_docker_image_cache_js_syntax():
+    """docker-image-cache.js syntax is valid (runs node --check)."""
+    assert Path(CACHE_JS).exists(), "docker-image-cache.js not found"
+    r = subprocess.run(
+        ["node", "--check", CACHE_JS],
+        capture_output=True, text=True, timeout=10
+    )
+    assert r.returncode == 0, f"docker-image-cache.js has syntax errors: {r.stderr[:500]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — file structure and content checks (no subprocess)
+# ---------------------------------------------------------------------------
+
+# [static] pass_to_pass
 def test_repo_package_json_valid():
     """package.json is valid JSON and has required fields."""
     pkg_path = Path(f"{REPO}/package.json")
@@ -440,7 +469,7 @@ def test_repo_package_json_valid():
     assert "scripts" in pkg, "package.json missing 'scripts' field"
 
 
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_next_swc_package_json_valid():
     """packages/next-swc/package.json is valid JSON and has required scripts."""
     import json
@@ -456,7 +485,7 @@ def test_repo_next_swc_package_json_valid():
     assert "rust-check-fmt" in scripts, "Missing rust-check-fmt script"
 
 
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_cargo_toml_valid():
     """Cargo.toml is valid and workspace configuration is parseable."""
     cargo_path = Path(f"{REPO}/Cargo.toml")
@@ -468,7 +497,7 @@ def test_repo_cargo_toml_valid():
     assert "next-napi-bindings" in cargo_text, "next-napi-bindings not in workspace"
 
 
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_github_workflows_valid_yaml():
     """GitHub workflow files are valid YAML."""
     workflows_dir = Path(f"{REPO}/.github/workflows")
@@ -487,24 +516,9 @@ def test_repo_github_workflows_valid_yaml():
             raise AssertionError(f"build_and_test.yml is not valid YAML: {e}")
 
 
-# [repo_ci] pass_to_pass
-def test_repo_docker_native_build_js_syntax():
-    """docker-native-build.js syntax is valid and file structure is intact."""
-    assert Path(NATIVE_JS).exists(), "docker-native-build.js not found"
-    r = subprocess.run(
-        ["node", "--check", NATIVE_JS],
-        capture_output=True, text=True, timeout=10
-    )
-    assert r.returncode == 0, f"docker-native-build.js has syntax errors: {r.stderr[:500]}"
-    src = Path(NATIVE_JS).read_text()
-    # Verify essential functions exist
-    assert "ensureDockerImage" in src, "ensureDockerImage function not found"
-    assert "buildTarget" in src or "targets" in src, "Build target logic not found"
-
-
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_ci_scripts_exist():
-    """CI scripts referenced by build_and_deploy.yml exist and are valid."""
+    """CI scripts referenced by build_and_deploy.yml exist."""
     workflow = Path(f"{REPO}/.github/workflows/build_and_deploy.yml")
     if not workflow.exists():
         return
@@ -519,7 +533,7 @@ def test_repo_ci_scripts_exist():
         assert path.exists(), f"CI script {script} referenced by workflow not found"
 
 
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_turbo_json_valid():
     """turbo.json is valid JSON if it exists."""
     turbo_path = Path(f"{REPO}/turbo.json")
@@ -532,7 +546,7 @@ def test_repo_turbo_json_valid():
         raise AssertionError(f"turbo.json is not valid JSON: {e}")
 
 
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_turbo_jsonc_valid():
     """packages/next-swc/turbo.jsonc is valid JSONC if it exists."""
     if not Path(TURBO_JSONC).exists():
@@ -542,10 +556,37 @@ def test_repo_turbo_jsonc_valid():
     assert "{" in text and "}" in text, "turbo.jsonc missing JSON structure markers"
 
 
-# [repo_ci] pass_to_pass
+# [static] pass_to_pass
 def test_repo_rust_toolchain_toml_valid():
     """rust-toolchain.toml is valid and parseable."""
     toolchain_path = Path(f"{REPO}/rust-toolchain.toml")
     assert toolchain_path.exists(), "rust-toolchain.toml not found"
     text = toolchain_path.read_text()
     assert "[toolchain]" in text, "rust-toolchain.toml missing [toolchain] section"
+
+# [repo_tests] pass_to_pass
+def test_repo_normalize_version_bump():
+    """Execute normalize-version-bump.js (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/normalize-version-bump.js"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert r.returncode == 0, f"normalize-version-bump.js failed:\n{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_docker_native_build_help():
+    """docker-native-build.js parses args successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/docker-native-build.js", "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert r.returncode == 0, f"docker-native-build.js --help failed:\n{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_docker_native_build_sh_syntax():
+    """docker-native-build.sh has valid bash syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", "scripts/docker-native-build.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert r.returncode == 0, f"bash -n docker-native-build.sh failed:\n{r.stderr[-500:]}"

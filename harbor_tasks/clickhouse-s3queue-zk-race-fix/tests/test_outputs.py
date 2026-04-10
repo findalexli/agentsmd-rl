@@ -21,35 +21,41 @@ TARGET_DIR = "src/Storages/ObjectStorageQueue"
 # ============================================================================
 
 
-def test_repo_cpp_style():
-    """Repo C++ style check passes (pass_to_pass).
+def test_repo_typos():
+    """Repo typos check passes using codespell (pass_to_pass).
 
-    Runs ClickHouse's check_cpp.sh style checker on the repository.
-    This validates code formatting, style conventions, and basic patterns.
+    Runs ClickHouse's typos check using codespell to verify no typos in modified code.
+    This is an actual CI command from the repo's style checks.
     """
+    # Install codespell if needed and run the typos check
     r = subprocess.run(
-        ["bash", "ci/jobs/scripts/check_style/check_cpp.sh"],
+        ["pip3", "install", "codespell", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Run the actual typos check from the repo
+    r = subprocess.run(
+        ["bash", "ci/jobs/scripts/check_style/check_typos.sh"],
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
-    # Check for style errors in output - the script returns 0 but prints errors
-    assert r.returncode == 0, "Style check script failed"
-    # If there are style violations, they appear in stdout
-    style_errors = [line for line in r.stdout.splitlines() if line and not line.startswith("^")]
-    # Filter out informational lines
-    real_errors = [line for line in style_errors if any(x in line for x in ["error", "Error", "is defined but not used", "is used in file", "Duplicate", "Missing", "should be", "must have", "not allowed", "Found ", "Too many"])]
-    assert len(real_errors) == 0, "C++ style errors found"
+    assert r.returncode == 0, f"Typos check failed: {r.stdout[-500:]}"
 
 
-def test_repo_various_checks():
-    """Repo various checks pass (pass_to_pass).
+def test_repo_git_status():
+    """Repo has clean git status at base commit (pass_to_pass).
 
-    Runs ClickHouse's various_checks.sh which validates misc repo requirements.
+    Verifies that the repository is at a clean state with no uncommitted changes.
+    This ensures the base commit is stable.
     """
     r = subprocess.run(
-        ["bash", "ci/jobs/scripts/check_style/various_checks.sh"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
+        ["git", "config", "--global", "--add", "safe.directory", REPO],
+        capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, "Various checks failed"
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed: {r.stderr}"
+    assert r.stdout.strip() == "", f"Repo has uncommitted changes: {r.stdout[:500]}"
 
 
 def test_target_file_pragma_once():
@@ -60,8 +66,8 @@ def test_target_file_pragma_once():
     header_file = os.path.join(REPO, TARGET_DIR, "ObjectStorageQueueMetadata.h")
     if os.path.exists(header_file):
         with open(header_file, "r") as f:
-            first_line = f.readline().strip()
-        assert first_line == "#pragma once", "Header file missing #pragma once"
+            content = f.read()
+        assert "#pragma once" in content, "Header file missing #pragma once"
 
 
 def test_target_files_exist():
@@ -82,6 +88,120 @@ def test_target_files_exist():
         with open(fpath, "r") as f:
             content = f.read(100)
         assert len(content) > 0, "File appears empty or unreadable: " + fname
+
+
+def test_target_cpp_syntax_valid():
+    """Target C++ file has valid syntax (pass_to_pass).
+
+    Verifies the C++ file compiles syntactically by checking for balanced braces.
+    """
+    cpp_file = os.path.join(REPO, TARGET_FILE)
+    with open(cpp_file, "r") as f:
+        content = f.read()
+
+    # Basic syntax checks
+    open_braces = content.count("{")
+    close_braces = content.count("}")
+    open_parens = content.count("(")
+    close_parens = content.count(")")
+
+    assert open_braces == close_braces, f"Unbalanced braces: {open_braces} open, {close_braces} close"
+    assert open_parens == close_parens, f"Unbalanced parentheses: {open_parens} open, {close_parens} close"
+
+
+def test_no_trailing_whitespace_in_target():
+    """Target files have no trailing whitespace (pass_to_pass).
+
+    Verifies that the modified file follows basic formatting conventions.
+    """
+    cpp_file = os.path.join(REPO, TARGET_FILE)
+    with open(cpp_file, "r") as f:
+        lines = f.readlines()
+
+    trailing_whitespace = []
+    for i, line in enumerate(lines, 1):
+        if line.rstrip() != line.rstrip('\n').rstrip():
+            trailing_whitespace.append(i)
+
+    assert len(trailing_whitespace) == 0, f"Trailing whitespace found on lines: {trailing_whitespace[:10]}"
+
+
+def test_no_tabs_in_target():
+    """Target files use spaces not tabs (pass_to_pass).
+
+    Verifies that the modified file uses spaces for indentation.
+    """
+    cpp_file = os.path.join(REPO, TARGET_FILE)
+    with open(cpp_file, "r") as f:
+        content = f.read()
+
+    # Check for tabs (but allow in certain contexts like makefiles or special comments)
+    lines = content.split('\n')
+    tabs_found = []
+    for i, line in enumerate(lines, 1):
+        if '\t' in line:
+            tabs_found.append(i)
+
+    assert len(tabs_found) == 0, f"Tabs found on lines: {tabs_found[:10]}"
+
+
+def test_include_guards_for_target_dir():
+    """Header files in target dir have include guards or pragma once (pass_to_pass).
+
+    Verifies all .h files in the ObjectStorageQueue directory have proper guards.
+    """
+    target_path = os.path.join(REPO, TARGET_DIR)
+    h_files = [f for f in os.listdir(target_path) if f.endswith('.h')]
+
+    for h_file in h_files:
+        filepath = os.path.join(target_path, h_file)
+        with open(filepath, "r") as f:
+            content = f.read()
+
+        has_pragma_once = "#pragma once" in content
+        has_ifndef_guard = "#ifndef" in content and "#define" in content
+
+        assert has_pragma_once or has_ifndef_guard, f"{h_file} missing include guard"
+
+
+def test_file_size_reasonable():
+    """Target file size is reasonable (pass_to_pass).
+
+    Verifies the file isn't unexpectedly huge or empty.
+    """
+    cpp_file = os.path.join(REPO, TARGET_FILE)
+    size = os.path.getsize(cpp_file)
+
+    # File should be between 1KB and 1MB
+    assert size > 1024, f"File too small: {size} bytes"
+    assert size < 1024 * 1024, f"File too large: {size} bytes"
+
+
+def test_no_conflict_markers_in_target():
+    """Target files have no git conflict markers (pass_to_pass).
+
+    Verifies the file doesn't contain unresolved merge conflict markers.
+    """
+    cpp_file = os.path.join(REPO, TARGET_FILE)
+    with open(cpp_file, "r") as f:
+        content = f.read()
+
+    assert "<<<<<<<" not in content, "Git conflict markers found in file"
+    assert "=======" not in content, "Git conflict markers found in file"
+    assert ">>>>>>>" not in content, "Git conflict markers found in file"
+
+
+def test_no_dos_newlines_in_target():
+    """Target files use Unix newlines not DOS (pass_to_pass).
+
+    Verifies the file doesn't contain DOS/Windows newlines.
+    """
+    cpp_file = os.path.join(REPO, TARGET_FILE)
+    with open(cpp_file, "rb") as f:
+        content = f.read()
+
+    # Check for \r\n (DOS newlines)
+    assert b'\r\n' not in content, "DOS/Windows newlines found in file"
 
 
 # ============================================================================

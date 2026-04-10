@@ -3,18 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T10:30:30.293163",
-  "total_time": 4717.14,
-  "sandbox_id": "i9qbnyki67t7ps9z5wgba",
+  "validated_at": "2026-04-09T22:47:04.392112",
+  "total_time": 2876.06,
+  "sandbox_id": "i3b5hafuqbnh48a0pqk6y",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 212.1,
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1278.79,
       "notes": ""
     },
     "improve": {
@@ -29,27 +29,73 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All 4 validation checks passed: Docker build OK, NOP test reward=0 (4 f2p tests correctly failing), Gold test reward=1 (15/15 tests passing), Rubric judge returns 1.0 (empty rubric)",
+      "notes": "Re-validated: Docker build OK, NOP reward=0 (4 f2p tests fail as expected), Gold reward=1 (24/24 tests pass). Rubric rules exist but judge returns 0.5 without ANTHROPIC_API_KEY; rules are about commit message format which cannot be evaluated when gold applies fix via sed.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 80.11
+      "time": 75.79
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.82,
-      "notes": "ICR=1.00"
+      "time": 1.31,
+      "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        "compiler/AGENTS.md",
+        "docs/code_authoring_and_core_review.md"
+      ],
+      "rules_added": 4,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 46.02
     }
   },
   "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 191.12,
+      "at": "2026-04-09T15:01:02.590628"
+    },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 4717.14,
-      "at": "2026-04-09T10:30:30.293163"
+      "time": 2554.2,
+      "at": "2026-04-09T21:01:02.774361"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2554.48,
+      "at": "2026-04-09T21:01:02.944722"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2875.8,
+      "at": "2026-04-09T22:47:04.235927"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2876.06,
+      "at": "2026-04-09T22:47:04.392112"
     }
   ]
 }

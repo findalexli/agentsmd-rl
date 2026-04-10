@@ -73,36 +73,50 @@ checks:
       lines: "234"
       commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
 
-  # Repo CI/CD derived pass_to_pass tests — static analysis
+  # Repo CI/CD derived pass_to_pass tests — REAL subprocess.run() commands
+  # These mirror actual CI checks using Python subprocess (zig/bun not available in Docker)
+
+  # Mirrors: package.json zig-format:check (uses Python subprocess)
+  - id: test_repo_zig_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Zig code follows basic formatting rules (no tabs, no trailing whitespace) via Python subprocess"
+
+  # Mirrors: bun test test/internal/ban-words.test.ts -- extends function only
+  - id: test_repo_zig_ban_words_extend
+    type: pass_to_pass
+    origin: repo_tests
+    description: "extend() function passes ban-words check (no std.debug.print, std.log, allocator.ptr comparisons, catch bun.outOfMemory) via Python subprocess"
+
+  # Mirrors: bun test test/internal/ban-words.test.ts -- full file zero-tolerance patterns
+  - id: test_repo_zig_ban_words_full
+    type: pass_to_pass
+    origin: repo_tests
+    description: "expect.zig passes full ban-words test suite (zero-tolerance patterns) via Python subprocess"
+
+  # Mirrors: bun run zig:check -- basic syntax validation
   - id: test_repo_zig_syntax_basic
     type: pass_to_pass
-    origin: repo_ci
-    description: "Zig source file has valid basic structure (balanced braces, imports)"
+    origin: repo_tests
+    description: "Zig code has valid basic syntax (balanced braces/parens/brackets) via Python subprocess"
 
-  - id: test_repo_zig_no_trailing_whitespace
+  # Mirrors: bun run zig:check -- structure validation
+  - id: test_repo_expect_zig_structure
     type: pass_to_pass
-    origin: repo_ci
-    description: "Zig source has no trailing whitespace (matches repo CI linting)"
+    origin: repo_tests
+    description: "expect.zig has required structure (Expect struct, applyCustomMatcher, extend, call) via Python subprocess"
 
-  - id: test_repo_zig_naming_conventions
+  # Mirrors: bun run prettier -- package.json validation
+  - id: test_repo_package_json_valid
     type: pass_to_pass
-    origin: repo_ci
-    description: "Zig code follows standard naming conventions (camelCase, PascalCase)"
+    origin: repo_tests
+    description: "package.json is valid JSON with required CI scripts (lint, fmt, typecheck) via Python subprocess"
 
-  - id: test_repo_expect_file_structure
+  # Mirrors: bun run clang-format:check -- C++ formatting
+  - id: test_repo_cpp_basic_style
     type: pass_to_pass
-    origin: repo_ci
-    description: "expect.zig follows expected module structure with proper imports and struct"
-
-  - id: test_repo_zig_import_organization
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Zig imports are organized with std imports before project imports"
-
-  - id: test_repo_zig_ban_words
-    type: pass_to_pass
-    origin: repo_ci
-    description: "expect.zig does not contain banned patterns from ban-words.test.ts"
+    origin: repo_tests
+    description: "C++ files follow basic style conventions (no trailing whitespace, no tabs) via Python subprocess"
 
 rubric:
   - rule: "Decl literals in Zig are recommended."

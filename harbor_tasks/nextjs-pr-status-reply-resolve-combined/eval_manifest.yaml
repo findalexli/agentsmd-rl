@@ -29,23 +29,28 @@ checks:
 
   - id: syntax_check
     type: pass_to_pass
-    origin: static
-    description: "scripts/pr-status.js must parse without syntax errors"
+    origin: repo_tests
+    description: "scripts/pr-status.js must parse without syntax errors (node --check)"
 
   - id: reply_thread_usage_error
     type: pass_to_pass
-    origin: static
+    origin: repo_tests
     description: "Existing reply-thread subcommand still validates args correctly"
 
   - id: resolve_thread_usage_error
     type: pass_to_pass
-    origin: static
+    origin: repo_tests
     description: "Existing resolve-thread subcommand still validates args correctly"
 
   - id: repo_prettier_pr_status
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's Prettier check passes on scripts/pr-status.js"
+
+  - id: repo_ast_grep_pr_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ast-grep scan passes on scripts/pr-status.js (no pattern violations)"
 
   - id: skill_md_thread_interaction_commands
     type: fail_to_pass

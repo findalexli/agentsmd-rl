@@ -70,15 +70,24 @@ checks:
       lines: "90-92"
       commit: "cca5b865b0883f7f6cdb02a01d4929387585d20d"
 
-rubric:
-  - rule: "Follow existing code patterns in the same module (e.g., error handling style, response types, decorator patterns)"
-    source:
-      path: "AGENTS.md"
-      lines: "40"
-      commit: "cca5b865b0883f7f6cdb02a01d4929387585d20d"
+  # Repo CI/CD tests (pass_to_pass gates)
+  - id: test_repo_syntax_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file has valid Python syntax (python -m py_compile)"
 
-  - rule: "Use descriptive error messages that help users understand what went wrong and how to fix it"
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified file passes ruff format check"
+
+rubric:
+  - rule: "Implement __post_init__ method with mode validation that raises ValueError for invalid modes"
     source:
-      path: "CLAUDE.md"
-      lines: "1-50"
-      commit: "cca5b865b0883f7f6cdb02a01d4929387585d20d"
+      path: "areal/api/cli_args.py"
+    reference: "WandBConfig and SwanlabConfig have __post_init__ validating mode against allowed values"
+
+  - rule: "Error messages must include the invalid mode and list all valid options"
+    source:
+      path: "areal/api/cli_args.py"
+    reference: "ValueError messages contain 'Invalid wandb/swanlab mode' and enumerate valid_modes"

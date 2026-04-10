@@ -19,6 +19,13 @@ WORKDIR /workspace/slime
 ENV PYTHONPATH="/workspace/slime"
 
 # psutil is needed by the fix (import psutil) and by tests for verification
-RUN pip install --no-cache-dir psutil
+# pytest and pytest-json-ctrf needed for test reporting
+# ruff, isort, black needed for pass-to-pass linting tests
+# Additional dependencies for repo tests
+RUN pip install --no-cache-dir \
+    psutil pytest pytest-json-ctrf ruff isort black \
+    torch numpy packaging pyyaml omegaconf \
+    tqdm httpx pybase64 pylatexenc sympy aiohttp pillow \
+    transformers
 
 RUN mkdir -p /logs/verifier

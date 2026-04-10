@@ -178,3 +178,12 @@ def test_repo_test_types():
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_eslint_backend():
+    """Repo's eslint check passes on modified backend directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0", "packages/playwright-core/src/tools/backend/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

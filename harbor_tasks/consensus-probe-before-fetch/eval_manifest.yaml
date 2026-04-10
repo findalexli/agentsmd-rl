@@ -43,30 +43,54 @@ behavioral_checks:
     type: "functional"
     description: "NetworkClient has probe_connectivity with correct signature"
 
-  # Repo CI/CD pass-to-pass tests - verify standard checks pass on both base and fix
+  # Repo CI/CD pass-to-pass tests - verified CI commands that work in Docker
+  - id: "p2p_repo_fmt_check"
+    name: "test_repo_cargo_fmt_check"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "Repo's cargo fmt --check passes (code formatting)"
+
   - id: "p2p_repo_check_config"
     name: "test_repo_cargo_check_consensus_config"
     type: "pass_to_pass"
     origin: "repo_tests"
-    description: "Repo's cargo check passes for consensus-config"
+    description: "cargo check -p consensus-config passes (verified in Docker)"
 
   - id: "p2p_repo_check_types"
     name: "test_repo_cargo_check_consensus_types"
     type: "pass_to_pass"
     origin: "repo_tests"
-    description: "Repo's cargo check passes for consensus-types"
+    description: "cargo check -p consensus-types passes (verified in Docker)"
 
   - id: "p2p_repo_clippy_config"
     name: "test_repo_cargo_clippy_consensus_config"
     type: "pass_to_pass"
     origin: "repo_tests"
-    description: "Repo's cargo clippy passes for consensus-config"
+    description: "cargo clippy -p consensus-config passes (verified in Docker)"
 
-  - id: "p2p_repo_test_config"
-    name: "test_repo_cargo_test_consensus_config"
+  - id: "p2p_repo_test_config_lib"
+    name: "test_repo_cargo_test_consensus_config_lib"
     type: "pass_to_pass"
     origin: "repo_tests"
-    description: "Repo's cargo test passes for consensus-config --lib"
+    description: "cargo test -p consensus-config --lib passes (verified in Docker)"
+
+  - id: "p2p_repo_test_config_snapshot"
+    name: "test_repo_cargo_test_consensus_config_snapshot"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "consensus-config snapshot test passes (parameters_test)"
+
+  - id: "p2p_repo_test_committee"
+    name: "test_repo_cargo_test_consensus_committee"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "consensus-config committee tests pass (verified in Docker)"
+
+  - id: "p2p_repo_test_types_lib"
+    name: "test_repo_cargo_test_consensus_types_lib"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    description: "cargo test -p consensus-types --lib passes (verified in Docker)"
 
 agent_config:
   # Agent config rules that should be followed
@@ -91,12 +115,28 @@ agent_config:
     source: "CLAUDE.md"
     description: "No #[allow(dead_code)] or similar lint suppressions"
 
-rubric: []
-  # No soft/subjective rules for this task
+rubric:
+  - rule: "Follow existing code style in the consensus crate. Check neighboring files for patterns on error handling, async patterns, and naming conventions."
+    source:
+      path: "CLAUDE.md"
+      lines: "6-7"
+      commit: "192a628cc56fcd901af4330d91c123fe8f493187"
+
+  - rule: "Comments should explain non-obvious algorithms, temporary exclusions/timeouts, and reasoning - not narrate obvious code. Document the 'why' for timeout values and probe logic."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-130"
+      commit: "192a628cc56fcd901af4330d91c123fe8f493187"
+
+  - rule: "All new files must start with the Mysten Labs Apache-2.0 license header."
+    source:
+      path: "CLAUDE.md"
+      lines: "15-21"
+      commit: "192a628cc56fcd901af4330d91c123fe8f493187"
 
 scoring:
-  total_checks: 10  # 7 behavioral + 3 agent_config
-  f2p_weight: 0.50  # 5 out of 7 behavioral tests are f2p
-  p2p_weight: 0.20  # 2 out of 7 behavioral tests are p2p
-  agent_config_weight: 0.30  # 3 agent_config checks
+  total_checks: 16  # 5 f2p + 2 p2p + 8 repo_tests p2p + 3 agent_config
+  f2p_weight: 0.40  # 5 f2p tests
+  p2p_weight: 0.40  # 10 p2p tests (2 existing + 8 new repo_tests)
+  agent_config_weight: 0.20  # 3 agent_config checks
   passing_threshold: 0.75

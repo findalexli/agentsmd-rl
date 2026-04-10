@@ -51,4 +51,41 @@ checks:
     origin: repo_tests
     description: "Repo's plugin contract tests pass (CPU-only, no GPU required)"
 
-rubric: []
+  - id: test_repo_plugin_rollout_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin rollout contract tests pass"
+
+  - id: test_repo_plugin_runtime_hook_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin runtime hook contract tests pass (validates slime/ray/rollout.py callsites)"
+
+  - id: test_repo_isort_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import ordering check passes"
+
+  - id: test_repo_black_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black formatting check passes on slime/ package"
+
+rubric:
+  - rule: "Code must pass ruff linting (E, F, B, UP rules). Run `ruff check slime/` to verify."
+    source:
+      path: "pyproject.toml"
+      lines: "25-36"
+      commit: "183e525f60fcf435f82f273e9eb69702d3ce431a"
+
+  - rule: "Imports must follow isort ordering with black profile. First party packages (slime, slime_plugins) should be separated from third party."
+    source:
+      path: "pyproject.toml"
+      lines: "9-19"
+      commit: "183e525f60fcf435f82f273e9eb69702d3ce431a"
+
+  - rule: "When modifying router/rollout code, follow existing patterns for argument handling and router initialization. Check neighboring functions in slime/ray/rollout.py for patterns."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "100-107"
+      commit: "183e525f60fcf435f82f273e9eb69702d3ce431a"

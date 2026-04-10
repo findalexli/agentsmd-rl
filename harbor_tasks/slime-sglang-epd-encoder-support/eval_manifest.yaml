@@ -22,6 +22,21 @@ checks:
     origin: repo_tests
     description: "Plugin contracts tests pass (CI/CD check - CPU compatible)"
 
+  - id: test_repo_black_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's files pass black syntax validation (CI/CD check)"
+
+  - id: test_repo_isort_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import ordering check passes (CI/CD check)"
+
+  - id: test_repo_chunked_gae
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's chunked GAE tests pass (CI/CD check - CPU compatible)"
+
   - id: encoder_worker_type_accepted
     type: fail_to_pass
     origin: pr_diff
@@ -67,4 +82,33 @@ checks:
     origin: pr_diff
     description: "start_rollout_servers implements phased EPD startup with encoder URL collection (AST: ray/GPU barrier)"
 
-rubric: []
+rubric:
+  - rule: "Follow existing code style. Check neighboring files for patterns."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "17-18"
+      commit: "5182e2d85c06827d57d0bbce98b5d39efeb5ae45"
+
+  - rule: "Wire configuration changes through arguments.py and document in customization.md."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "56-57,69-70"
+      commit: "5182e2d85c06827d57d0bbce98b5d39efeb5ae45"
+
+  - rule: "Keep exception handling explicit for invalid states instead of silently returning zeros."
+    source:
+      path: ".claude/skills/add-reward-function/SKILL.md"
+      lines: "43"
+      commit: "5182e2d85c06827d57d0bbce98b5d39efeb5ae45"
+
+  - rule: "Add tests for new behavior following repo patterns (tests/test_<feature>.py)."
+    source:
+      path: ".claude/skills/add-tests-and-ci/SKILL.md"
+      lines: "18-20"
+      commit: "5182e2d85c06827d57d0bbce98b5d39efeb5ae45"
+
+  - rule: "Follow black code style (line_length=119) and isort import ordering."
+    source:
+      path: "pyproject.toml"
+      lines: "15-28"
+      commit: "5182e2d85c06827d57d0bbce98b5d39efeb5ae45"

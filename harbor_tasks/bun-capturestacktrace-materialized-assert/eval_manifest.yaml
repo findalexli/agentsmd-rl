@@ -62,35 +62,54 @@ checks:
     path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
     lines: '184'
     commit: 44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7
+# Static file checks - these read files directly (not CI commands)
 - id: test_cpp_file_trailing_newline
   type: pass_to_pass
-  origin: repo_tests
-  description: 'C++ files must end with a newline (repo CI style check from .clang-tidy
-    FormatStyle: webkit)'
+  origin: static
+  description: 'C++ files must end with a newline (pass_to_pass static check)'
 - id: test_cpp_no_trailing_whitespace
   type: pass_to_pass
-  origin: repo_tests
-  description: C++ files must not have trailing whitespace (repo CI style check)
+  origin: static
+  description: C++ files must not have trailing whitespace (pass_to_pass static check)
 - id: test_cpp_no_banned_patterns
   type: pass_to_pass
-  origin: repo_tests
-  description: C++ files must not contain banned patterns (from test/internal/ban-words.test.ts)
+  origin: static
+  description: C++ files must not contain banned Zig patterns (pass_to_pass static check)
 - id: test_cpp_include_order
   type: pass_to_pass
-  origin: repo_tests
-  description: C++ files should have root.h first in includes (repo style from SKILL.md)
+  origin: static
+  description: C++ files should have root.h first in includes (pass_to_pass static check)
 - id: test_repo_cpp_syntax_valid
   type: pass_to_pass
-  origin: repo_tests
-  description: C++ file must have valid syntax indicators (repo structure check)
+  origin: static
+  description: C++ file must have valid syntax indicators (pass_to_pass static check)
 - id: test_repo_error_function_present
   type: pass_to_pass
+  origin: static
+  description: errorConstructorFuncCaptureStackTrace must be present (pass_to_pass static check)
+# Repo CI/CD pass_to_pass gates - Python helper scripts syntax
+- id: test_repo_python_misctools_syntax
+  type: pass_to_pass
   origin: repo_tests
-  description: errorConstructorFuncCaptureStackTrace must be present (repo gate)
+  description: Repo misctools Python scripts have valid syntax (pass_to_pass repo_tests)
+- id: test_repo_python_test_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test Python scripts have valid syntax (pass_to_pass repo_tests)
+- id: test_repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo shell scripts have valid bash syntax (pass_to_pass repo_tests)
+- id: test_repo_cpp_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ file exists at expected path (pass_to_pass repo_tests)
+- id: test_repo_git_tracks_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ file is tracked by git (pass_to_pass repo_tests)
 rubric:
-- rule: "Follow existing code style \u2014 check neighboring files for patterns (indentation,\
-    \ naming, bracing)."
-  source:
-    path: AGENTS.md
-    lines: '228'
-    commit: 44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7
+- rule: "Code changes must follow the existing C++ style in FormatStackTraceForJS.cpp — use 4-space indentation, JSC naming conventions, and preserve bracing style."
+  reference: |
+    The gold solution changes the hasMaterializedErrorInfo() check from negative guard to positive if-else branch,
+    maintaining the same indentation (4 spaces), brace placement (same-line), and naming conventions as surrounding code.

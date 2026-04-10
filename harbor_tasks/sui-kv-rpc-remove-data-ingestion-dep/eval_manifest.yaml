@@ -89,6 +89,17 @@ checks:
     origin: repo_tests
     description: Cargo.lock is consistent with Cargo.toml dependencies
 
+
+  - id: test_cargo_metadata_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo.toml files produce valid metadata
+
+  - id: test_cargo_deny_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo dependencies pass cargo-deny license/advisory checks
+
 # Agent configuration rules (from CLAUDE.md)
 agent_config:
   - file: CLAUDE.md
@@ -100,4 +111,21 @@ agent_config:
       - "Never use #[allow(dead_code)] or #[allow(unused)]"
 
 # Rubric for soft/subjective evaluation (LLM judge)
-rubric: []
+rubric:
+  - rule: "Do NOT comment the obvious. Comments should not simply repeat what the code does. Only comment non-obvious algorithms, temporary exclusions/timeouts, complex calculations, subtle race conditions, or assumptions about external state."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-131"
+      commit: "80af79ea6b5e18a23042fc7bda481e07472c7a8d"
+
+  - rule: "Follow existing code style when modifying files. Check neighboring files for patterns around imports, error handling, and function structure."
+    source:
+      path: "CLAUDE.md"
+      lines: "5-8"
+      commit: "80af79ea6b5e18a23042fc7bda481e07472c7a8d"
+
+  - rule: "When refactoring code (such as replacing API calls), remove unnecessary complexity and prefer simplified patterns that match the new dependency's recommended usage."
+    source:
+      path: "CLAUDE.md"
+      lines: "110-114"
+      commit: "80af79ea6b5e18a23042fc7bda481e07472c7a8d"

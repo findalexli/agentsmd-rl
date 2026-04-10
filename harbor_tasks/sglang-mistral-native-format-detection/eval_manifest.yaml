@@ -82,25 +82,51 @@ checks:
     origin: static
     description: "_is_mistral_native_format has real logic, not just pass/return"
 
-  - id: test_repo_syntax
+  - id: no_debug_statements
+    type: pass_to_pass
+    origin: static
+    description: "server_args.py has no debug statements (pdb, breakpoint, etc.)"
+
+  - id: no_trailing_whitespace
+    type: pass_to_pass
+    origin: static
+    description: "server_args.py has no trailing whitespace"
+
+  - id: ends_with_newline
+    type: pass_to_pass
+    origin: static
+    description: "server_args.py ends with newline"
+
+  - id: test_repo_py_compile
     type: pass_to_pass
     origin: repo_tests
-    description: Repo's server_args.py has valid Python syntax
+    description: "Repo's server_args.py compiles with Python py_compile"
 
-  - id: test_repo_no_debug_statements
+  - id: test_repo_ast_parse
     type: pass_to_pass
     origin: repo_tests
-    description: Repo's server_args.py has no debug statements
+    description: "Repo's server_args.py parses as valid Python AST"
 
-  - id: test_repo_no_trailing_whitespace
+  - id: test_repo_file_exists
     type: pass_to_pass
     origin: repo_tests
-    description: Repo's server_args.py has no trailing whitespace
+    description: "Repo's server_args.py file exists at expected path"
 
-  - id: test_repo_ends_with_newline
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's server_args.py ends with newline
+rubric:
+  - rule: "Use helper functions to avoid deeply nested conditionals. Complex nested if/else blocks should be refactored into well-named helper functions."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "250-290"
+      commit: "b2462694441412ad209c361dfa87f3f37a3d29f3"
 
-rubric: []
-# No applicable code-quality rules found in agent config files at base commit.
+  - rule: "Keep comments synchronized with related code. When functions interact with code in other files (e.g., name checks in get_config/get_tokenizer), add comments referencing the need to keep them in sync."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "30"
+      commit: "b2462694441412ad209c361dfa87f3f37a3d29f3"
+
+  - rule: "Use private constants (prefixed with underscore) for module-internal values that should not be part of the public API."
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "36-40"
+      commit: "b2462694441412ad209c361dfa87f3f37a3d29f3"

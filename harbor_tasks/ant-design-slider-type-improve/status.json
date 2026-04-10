@@ -3,12 +3,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T08:25:33.881249",
-  "total_time": 0.0,
-  "sandbox_id": "i4v45yquavpivh6rcn6af",
-  "backend": "fireworks",
+  "validated_at": "2026-04-10T02:49:22.027791",
+  "total_time": 5165.59,
+  "sandbox_id": "ik5e5cgrj8h8l78lxfwk6",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -19,8 +19,8 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
+      "model": "opus",
+      "backend": "gemini",
       "time": 0,
       "notes": "tests look good"
     },
@@ -28,19 +28,39 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "rubric_icr": 1.0,
-      "attempts": 3,
-      "notes": "Fixed: 1) npm ci -> npm install (no lockfile in shallow clone), 2) base_commit in manifest was wrong - updated from 5e6a263... to 447392669e4d1ccfe51dafde2b707c8c26a83949, 3) Added reward file writing to test.sh, 4) test.sh path fixed to use /tests/ mount point",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1091.73
+      "attempts": 2,
+      "notes": "Fixed eval_manifest.yaml base_commit to 5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7. Fixed test_outputs.py to exclude demo tests in component_functional check which were failing due to unrelated Jest timer issues. Tests now correctly fail on NOP and pass on Gold.",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 3181.5
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1.41,
+      "notes": "ICR=0.50"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1954.06,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.74,
-      "notes": "ICR=1.00"
+      "time": 173.56,
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".github/copilot-instructions.md",
+        ".agents/skills/changelog-collect/SKILL.md"
+      ],
+      "rules_added": 3,
+      "notes": ""
     }
   },
   "history": [
@@ -49,8 +69,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T08:25:33.881249"
+      "time": 464.02,
+      "at": "2026-04-09T14:35:55.102441"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 73.13,
+      "at": "2026-04-09T14:59:04.588932"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1620.68,
+      "at": "2026-04-09T20:45:29.199555"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 5165.33,
+      "at": "2026-04-10T02:49:21.863844"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 5165.59,
+      "at": "2026-04-10T02:49:22.027791"
     }
   ]
 }

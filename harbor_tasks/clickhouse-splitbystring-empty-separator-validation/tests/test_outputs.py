@@ -108,58 +108,168 @@ def test_error_message_updated_compiles():
     )
 
 
+# =============================================================================
+# Pass-to-Pass Tests using actual CI commands (origin: repo_tests)
+# =============================================================================
+
+SOURCE_FILE = os.path.join(REPO, "src/Interpreters/TokenizerFactory.cpp")
+
+
 def test_clickhouse_style_checks():
     """
-    Pass-to-pass: TokenizerFactory.cpp passes ClickHouse style checks.
+    Pass-to-pass: Run ClickHouse's CI style check script on the modified file.
 
-    Runs the repo's style check script on the modified file to ensure
-    it follows ClickHouse coding standards (no trailing whitespace,
-    no tabs, Allman braces, etc.).
+    Runs the repo's check_cpp.sh style check script. This is the actual
+    CI command used by ClickHouse to enforce coding standards.
     """
-    source_file = os.path.join(REPO, "src/Interpreters/TokenizerFactory.cpp")
+    style_check_script = os.path.join(REPO, "ci/jobs/scripts/check_style/check_cpp.sh")
 
-    # Run the style check script if it exists
-    style_check_script = os.path.join(REPO, "utils/check-style/check_cpp.sh")
+    # Run the style check script
+    result = subprocess.run(
+        ["bash", style_check_script],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
 
-    if os.path.exists(style_check_script):
-        result = subprocess.run(
-            ["bash", style_check_script, source_file],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            cwd=REPO,
-        )
+    # The script exits 0 even when style issues are found (they're printed to stdout)
+    # Check for specific TokenizerFactory.cpp issues in the output
+    output = result.stdout + result.stderr
 
-        # Style check should pass
-        assert result.returncode == 0, (
-            f"Style check failed for TokenizerFactory.cpp:\n{result.stdout}\n{result.stderr}"
-        )
-    else:
-        # Fallback: manual style checks
-        with open(source_file, 'r') as f:
-            content = f.read()
-            lines = content.split('\n')
+    # Filter for issues in our specific file
+    tokenizer_issues = [line for line in output.split('\n') if 'TokenizerFactory.cpp' in line]
 
-        # Check no trailing whitespace
-        trailing_ws_lines = []
-        for i, line in enumerate(lines, 1):
-            if line.rstrip() != line.rstrip('\n').rstrip('\r'):
-                trailing_ws_lines.append(i)
+    assert len(tokenizer_issues) == 0, (
+        f"Style check found issues in TokenizerFactory.cpp:\n" +
+        '\n'.join(tokenizer_issues[:10])
+    )
 
-        assert len(trailing_ws_lines) == 0, (
-            f"Found trailing whitespaces at lines: {trailing_ws_lines}"
-        )
 
-        # Check no tabs
-        tab_lines = []
-        for i, line in enumerate(lines, 1):
-            if '\t' in line:
-                tab_lines.append(i)
+def test_no_tabs_in_source():
+    """
+    Pass-to-pass: No tab characters in the source file via grep check.
 
-        assert len(tab_lines) == 0, (
-            f"Found tab characters at lines: {tab_lines}"
-        )
+    Uses grep to check for tabs, matching the ClickHouse CI approach
+    from check_cpp.sh: "xargs grep -F $'\\t'".
+    """
+    result = subprocess.run(
+        ["grep", "-F", "\t", SOURCE_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
 
+    # Return code 1 means no tabs found (good)
+    # Return code 0 means tabs were found (bad)
+    assert result.returncode == 1, (
+        f"Found tab characters in {SOURCE_FILE}:\n{result.stdout}"
+    )
+
+
+def test_no_trailing_whitespace():
+    """
+    Pass-to-pass: No trailing whitespace in the source file via grep check.
+
+    Uses grep -P ' $' to find trailing spaces, matching ClickHouse CI.
+    """
+    result = subprocess.run(
+        ["grep", "-n", "-P", " $", SOURCE_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # Return code 1 means no trailing whitespace (good)
+    assert result.returncode == 1, (
+        f"Found trailing whitespace in {SOURCE_FILE}:\n{result.stdout}"
+    )
+
+
+def test_no_curly_brace_on_same_line():
+    """
+    Pass-to-pass: Opening braces on new lines via grep check.
+
+    Uses grep to check for control statements with braces on same line,
+    matching the pattern from ClickHouse check_cpp.sh.
+    """
+    # Pattern: control statements followed by { on same line
+    result = subprocess.run(
+        ["grep", "-n", "-P",
+         r"^\s*\b(if|else if|if constexpr|else if constexpr|for|while|catch|switch)\b.*\{\s*$",
+         SOURCE_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # Filter out C++11 initialization patterns (e.g., `int x{0};`)
+    lines = result.stdout.split('\n') if result.stdout else []
+    violations = []
+    for line in lines:
+        if not line:
+            continue
+        # Skip lines with C++11 init patterns
+        if not re.search(r'\b\w+\s*\{[^}]*\};?', line):
+            violations.append(line)
+
+    assert len(violations) == 0, (
+        f"Found control statements with brace on same line:\n" + '\n'.join(violations[:5])
+    )
+
+
+def test_whitespace_after_control_before_paren():
+    """
+    Pass-to-pass: Control statements have whitespace before opening paren via grep.
+
+    Uses grep to check for missing whitespace after control keywords,
+    e.g., 'if(' vs 'if (' - matching ClickHouse CI check.
+    """
+    result = subprocess.run(
+        ["grep", "-n", "-P",
+         r"^\s*\b(if|else if|if constexpr|else if constexpr|for|while|catch|switch)\b\(",
+         SOURCE_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # Filter out comments (lines starting with //)
+    lines = result.stdout.split('\n') if result.stdout else []
+    violations = [line for line in lines if line and not line.strip().startswith('//')]
+
+    assert len(violations) == 0, (
+        f"Found control statements without space before '(':\n" + '\n'.join(violations[:5])
+    )
+
+
+def test_no_unnecessary_namespace_comments():
+    """
+    Pass-to-pass: No unnecessary // namespace comments via grep check.
+
+    Uses grep to find '}// namespace' patterns, matching ClickHouse CI.
+    """
+    result = subprocess.run(
+        ["grep", "-P", r"}\s*//+\s*namespace", SOURCE_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # Return code 1 means no namespace comments found (good)
+    assert result.returncode == 1, (
+        f"Found unnecessary namespace comments:\n{result.stdout}"
+    )
+
+
+# =============================================================================
+# Pass-to-Pass Tests using file reads (origin: static in eval_manifest.yaml)
+# =============================================================================
 
 def test_no_multiple_empty_lines():
     """
@@ -167,9 +277,7 @@ def test_no_multiple_empty_lines():
 
     From ClickHouse CI style check in check_cpp.sh.
     """
-    source_file = os.path.join(REPO, "src/Interpreters/TokenizerFactory.cpp")
-
-    with open(source_file, 'r') as f:
+    with open(SOURCE_FILE, 'r') as f:
         content = f.read()
 
     lines = content.split('\n')
@@ -197,9 +305,7 @@ def test_allman_brace_style():
     From agent config (CLAUDE.md): When writing C++ code, always use
     Allman-style braces (opening brace on a new line).
     """
-    source_file = os.path.join(REPO, "src/Interpreters/TokenizerFactory.cpp")
-
-    with open(source_file, 'r') as f:
+    with open(SOURCE_FILE, 'r') as f:
         content = f.read()
 
     # Look for the pattern where opening brace is on its own line after for loop
@@ -215,32 +321,194 @@ def test_allman_brace_style():
         )
 
 
-def test_no_curly_brace_on_same_line():
+def test_indentation_multiple_of_four():
     """
-    Pass-to-pass: Opening curly braces should be on a new line (Allman style).
+    Pass-to-pass: Indentation must use multiples of 4 spaces.
 
-    From ClickHouse CI style check: check_cpp.sh enforces braces on new lines.
+    From ClickHouse CI style check in check_cpp.sh.
     """
-    source_file = os.path.join(REPO, "src/Interpreters/TokenizerFactory.cpp")
-
-    with open(source_file, 'r') as f:
+    with open(SOURCE_FILE, 'r') as f:
         lines = f.readlines()
-
-    # Pattern: control statements followed by { on same line (excluding C++11 initialization)
-    control_pattern = re.compile(
-        r'^\s*\b(if|else if|if constexpr|else if constexpr|for|while|catch|switch)\b.*\{\s*$'
-    )
 
     violations = []
     for i, line in enumerate(lines, 1):
-        # Skip comments and lines with C++11 init (e.g., `int x{0};`)
+        # Skip empty lines and comment-only lines
         stripped = line.strip()
-        if stripped.startswith('//'):
+        if not stripped or stripped.startswith('//'):
             continue
-        if control_pattern.match(line) and not re.search(r'\b\w+\s*\{[^}]*\};?', stripped):
-            violations.append((i, stripped[:80]))
+
+        # Count leading spaces (not tabs - those are caught by another test)
+        leading_spaces = len(line) - len(line.lstrip())
+
+        # Indentation must be a multiple of 4
+        if leading_spaces % 4 != 0:
+            # Skip multi-line comment continuations (lines starting with *)
+            if stripped.startswith('*'):
+                continue
+            # Skip lines that are part of raw string literals or macros
+            if stripped.startswith('#'):
+                continue
+            violations.append((i, leading_spaces, stripped[:60]))
 
     assert len(violations) == 0, (
-        f"Found control statements with brace on same line: {violations}. "
-        "Opening braces should be on a new line per ClickHouse Allman style."
+        f"Found indentation not a multiple of 4 spaces: {violations}. "
+        "ClickHouse style requires all indentation to use multiples of 4 spaces."
     )
+
+
+def test_no_duplicate_includes():
+    """
+    Pass-to-pass: No duplicate #include directives in the file.
+
+    From ClickHouse CI style check in check_cpp.sh and check_style.py.
+    """
+    with open(SOURCE_FILE, 'r') as f:
+        content = f.read()
+
+    # Find all #include lines
+    include_pattern = re.compile(r'^#include\s+.+$', re.MULTILINE)
+    includes = include_pattern.findall(content)
+
+    # Count occurrences
+    include_counts = {}
+    for inc in includes:
+        include_counts[inc] = include_counts.get(inc, 0) + 1
+
+    duplicates = {inc: count for inc, count in include_counts.items() if count > 1}
+
+    assert len(duplicates) == 0, (
+        f"Found duplicate #include directives: {duplicates}. "
+        "ClickHouse style prohibits duplicate includes."
+    )
+
+
+# =============================================================================
+# Enriched Pass-to-Pass Tests using actual CI commands (origin: repo_tests)
+# These tests run real CI scripts from the ClickHouse repository
+# =============================================================================
+
+
+def test_repo_style_cpp_check():
+    """
+    Pass-to-pass: ClickHouse C++ style check via check_cpp.sh script.
+
+    Runs the actual CI style check script on the repository.
+    This is the same script used in ClickHouse CI to check style issues.
+    """
+    style_check_script = os.path.join(REPO, "ci/jobs/scripts/check_style/check_cpp.sh")
+
+    result = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && git config --global --add safe.directory {REPO} 2>/dev/null; bash {style_check_script} 2>&1 | grep -E 'TokenizerFactory.cpp|tokenizer' || true"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+
+    # Check that no style issues are found in TokenizerFactory.cpp
+    assert 'TokenizerFactory.cpp' not in result.stdout, (
+        f"Style check found issues in TokenizerFactory.cpp:\n{result.stdout}"
+    )
+    assert 'tokenizer' not in result.stdout.lower(), (
+        f"Style check found tokenizer-related issues:\n{result.stdout}"
+    )
+
+
+def test_repo_no_conflict_markers():
+    """
+    Pass-to-pass: No Git conflict markers in source files via grep.
+
+    Checks for conflict markers (<<<<<<<, =======, >>>>>>>) in the
+    modified source file, matching the ClickHouse CI check.
+    """
+    result = subprocess.run(
+        ["grep", "-P", "^(<<<<<<<|=======|>>>>>>>)$", SOURCE_FILE],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+
+    # Return code 1 means no conflict markers found (good)
+    assert result.returncode == 1, (
+        f"Found Git conflict markers in {SOURCE_FILE}:\n{result.stdout}"
+    )
+
+
+def test_repo_no_dos_newlines():
+    """
+    Pass-to-pass: No DOS/Windows newlines (CRLF) in source files.
+
+    Uses Python to check for CRLF, matching ClickHouse CI check intent.
+    """
+    with open(SOURCE_FILE, "rb") as f:
+        content = f.read()
+    
+    # Check for CRLF
+    has_crlf = b"\r\n" in content
+    
+    assert not has_crlf, (
+        f"Found DOS/Windows newlines (CRLF) in {SOURCE_FILE}. "
+        "Files should use Unix newlines (LF) only."
+    )
+
+
+def test_repo_no_utf8_bom():
+    """
+    Pass-to-pass: No UTF-8 BOM (Byte Order Mark) in source files.
+
+    Checks for UTF-8 BOM bytes at start of file, matching ClickHouse CI.
+    Uses Python to check first bytes instead of grep for reliability.
+    """
+    # Read the file in binary mode to check for BOM
+    with open(SOURCE_FILE, 'rb') as f:
+        content = f.read()
+    
+    # Check for UTF-8 BOM at the beginning (EF BB BF)
+    has_bom = content.startswith(b'\xef\xbb\xbf')
+    
+    assert not has_bom, (
+        f"Found UTF-8 BOM in {SOURCE_FILE}. "
+        "Files should not have UTF-8 Byte Order Mark."
+    )
+
+
+def test_repo_clang_syntax_only():
+    """
+    Pass-to-pass: C++ syntax check using clang-15 -fsyntax-only.
+
+    Performs a lightweight syntax-only compilation check on the
+    modified source file. This catches basic syntax errors without
+    doing a full build.
+    """
+    # Create minimal include paths for syntax check
+    cmd = [
+        "clang-15",
+        "-fsyntax-only",
+        "-std=c++20",
+        "-I", f"{REPO}/src",
+        "-I", f"{REPO}/base",
+        "-fsyntax-only",
+        SOURCE_FILE,
+    ]
+
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+
+    # We expect this to fail due to missing dependencies in a shallow clone,
+    # but we check that any errors are NOT syntax errors
+    if result.returncode != 0:
+        # Check that errors are about missing headers, not syntax
+        stderr_lower = result.stderr.lower()
+        syntax_errors = [
+            "expected", "unexpected", "syntax error", "invalid", "parse error"
+        ]
+        for err in syntax_errors:
+            assert err not in stderr_lower, (
+                f"Syntax error found in {SOURCE_FILE}: {result.stderr[:500]}"
+            )

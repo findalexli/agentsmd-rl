@@ -88,4 +88,26 @@ agent_config:
     category: maintainability
 
 # Rubric for LLM-based evaluation (soft/subjective rules)
-rubric: []
+rubric:
+  - rule: "Use comments to explain WHY a code change is needed, especially for subtle invariants or non-obvious bugs."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "148"
+      commit: "ac01e7e5223a05f2a77ba74cdd949232d9648918"
+    reference: |
+      /// Renumber part_index_in_query to be contiguous starting from added_parts.
+      /// filterPartsByQueryConditionCache may drop parts from selectRangesToRead(),
+      /// leaving non-contiguous part_index_in_query values. The distribution logic
+      /// below assumes contiguous indices to assign parts back to their sources.
+
+  - rule: "When writing comments, wrap literal names from ClickHouse classes, functions, and variables inside inline code blocks."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "3"
+      commit: "ac01e7e5223a05f2a77ba74cdd949232d9648918"
+
+  - rule: "When writing comments, write names of functions and methods as `f` instead of `f()` - prefer mathematical purity when referring to the function itself rather than its application."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "5"
+      commit: "ac01e7e5223a05f2a77ba74cdd949232d9648918"

@@ -62,6 +62,27 @@ checks:
     origin: repo_tests
     description: "Python scripts in scripts/ have valid syntax"
 
+  # Additional p2p checks from CI
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python scripts in scripts/ pass ruff linting"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python scripts in scripts/ pass ruff format check"
+
+  - id: test_repo_cargo_shear
+    type: pass_to_pass
+    origin: repo_tests
+    description: "No unused dependencies found in workspace (cargo shear)"
+
+  - id: test_repo_cargo_deny_uv_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "uv-build crate passes cargo deny bans check"
+
 rubric:
   - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
     source:

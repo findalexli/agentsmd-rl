@@ -393,8 +393,18 @@ def test_tsc_no_emit():
 
     Verifies the VSCode extension TypeScript sources compile without errors.
     """
+    # First install npm dependencies
     r = subprocess.run(
-        ["npx", "tsc", "--noEmit"],
+        ["npm", "install"],
+        cwd=VSCODE_EXT_DIR,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["./node_modules/.bin/tsc", "--noEmit"],
         cwd=VSCODE_EXT_DIR,
         capture_output=True,
         text=True,
@@ -408,8 +418,18 @@ def test_eslint_check():
 
     Verifies TypeScript files pass linting with zero warnings.
     """
+    # First install npm dependencies (if not already installed)
     r = subprocess.run(
-        ["npx", "eslint", ".", "--ext", "ts", "--max-warnings", "0"],
+        ["npm", "install"],
+        cwd=VSCODE_EXT_DIR,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    # npm install may fail if already installed, which is ok
+
+    r = subprocess.run(
+        ["./node_modules/.bin/eslint", ".", "--ext", "ts", "--max-warnings", "0"],
         cwd=VSCODE_EXT_DIR,
         capture_output=True,
         text=True,

@@ -47,13 +47,53 @@ checks:
     name: "Rust code formatting check (pass_to_pass)"
     file: "tests/test_outputs.py"
     weight: 1
-    origin: "p2p"
+    origin: "repo_tests"
 
   - id: "test_cargo_metadata"
     type: "pytest"
     name: "Cargo.toml validation check (pass_to_pass)"
     file: "tests/test_outputs.py"
     weight: 1
-    origin: "p2p"
+    origin: "repo_tests"
 
-rubric: []
+  - id: "test_chroma_crate_clippy"
+    type: "pytest"
+    name: "Chroma crate clippy lint check (pass_to_pass)"
+    file: "tests/test_outputs.py"
+    weight: 1
+    origin: "repo_tests"
+
+  - id: "test_chroma_crate_doc"
+    type: "pytest"
+    name: "Chroma crate documentation build check (pass_to_pass)"
+    file: "tests/test_outputs.py"
+    weight: 1
+    origin: "repo_tests"
+
+  - id: "test_cargo_doc_test"
+    type: "pytest"
+    name: "Rust doctest execution (pass_to_pass)"
+    file: "tests/test_outputs.py"
+    weight: 1
+    origin: "repo_tests"
+
+
+  - id: "test_cargo_unit_tests"
+    type: "pytest"
+    name: "Rust crate unit tests (pass_to_pass)"
+    file: "tests/test_outputs.py"
+    weight: 1
+    origin: "repo_tests"
+
+rubric:
+  - rule: "Follow existing code style. When re-exporting types, match the pattern of existing pub use statements in the file."
+    source:
+      path: "rust/chroma/src/types.rs"
+      lines: "1-50"
+      commit: "5221b7fe03361916adff5efde364cd6899afef7e"
+
+  - rule: "Doc examples should use the public API path (chroma::types) rather than internal crate paths (chroma_types::plan)."
+    source:
+      path: "rust/chroma/src/collection.rs"
+      lines: "180-190"
+      commit: "5221b7fe03361916adff5efde364cd6899afef7e"

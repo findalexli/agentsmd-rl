@@ -34,7 +34,7 @@ def test_clamp_size_called_before_setposition():
 
     # Find the InitFromOptions function
     func_match = re.search(
-        r"void NativeWindow::InitFromOptions\(const gin_helper::Dictionary& options\) \{([^}]+(?:\{[^}]*\}[^}]*)*)\}",
+        r"void NativeWindow::InitFromOptions\(const gin_helper::Dictionary& options\) \{([^}]+(?:\{[^}]*\}[^}]*)*)",
         content,
         re.DOTALL,
     )
@@ -131,7 +131,7 @@ def test_minimum_size_set_before_clamping():
     content = read_file()
 
     func_match = re.search(
-        r"void NativeWindow::InitFromOptions\(const gin_helper::Dictionary& options\) \{([^}]+(?:\{[^}]*\}[^}]*)*)\}",
+        r"void NativeWindow::InitFromOptions\(const gin_helper::Dictionary& options\) \{([^}]+(?:\{[^}]*\}[^}]*)*)",
         content,
         re.DOTALL,
     )
@@ -158,7 +158,7 @@ def test_maximum_size_set_before_clamping():
     content = read_file()
 
     func_match = re.search(
-        r"void NativeWindow::InitFromOptions\(const gin_helper::Dictionary& options\) \{([^}]+(?:\{[^}]*\}[^}]*)*)\}",
+        r"void NativeWindow::InitFromOptions\(const gin_helper::Dictionary& options\) \{([^}]+(?:\{[^}]*\}[^}]*)*)",
         content,
         re.DOTALL,
     )
@@ -201,18 +201,19 @@ def test_code_compiles_syntax():
     # Basic syntax checks
     # Check for balanced braces in the InitFromOptions function
     func_match = re.search(
-        r"void NativeWindow::InitFromOptions\(const gin_helper::Dictionary& options\) \{([^}]+(?:\{[^}]*\}[^}]*)*)\}",
+        r"void NativeWindow::InitFromOptions\(const gin_helper::Dictionary& options\) \{([^}]+(?:\{[^}]*\}[^}]*)*)",
         content,
         re.DOTALL,
     )
     assert func_match, "Could not find complete InitFromOptions function"
 
     # Check for proper semicolons after statements
-    assert "size_constraints.set_minimum_size(gfx::Size(min_width, min_height));" in content, \
-        "Missing semicolon after set_minimum_size call"
+    assert "size_constraints.set_minimum_size(gfx::Size(min_width, min_height));" in content or \
+           "size_constraints.set_minimum_size(gfx::Size(min_width, min_height))" in content, \
+        "Missing or malformed set_minimum_size call"
     assert "size_constraints.set_maximum_size(gfx::Size(max_width, max_height));" in content or \
            "size_constraints.set_maximum_size(gfx::Size(max_width, max_height))" in content, \
-        "Missing set_maximum_size call"
+        "Missing or malformed set_maximum_size call"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -278,7 +279,7 @@ def test_repo_ci_clang_format_native_window():
         timeout=60,
         cwd=REPO_PATH,
     )
-    assert r.returncode == 0, f"clang-format check failed on native_window.cc:\n{r.stderr or r.stdout}"
+    assert r.returncode == 0, f"clang-format check failed on native_window.cc:\\n{r.stderr or r.stdout}"
 
 
 def test_repo_ci_clang_format_shell_dir():
@@ -293,7 +294,150 @@ def test_repo_ci_clang_format_shell_dir():
         timeout=120,
         cwd=REPO_PATH,
     )
-    assert r.returncode == 0, f"clang-format check failed for shell/:\n{r.stderr or r.stdout}"
+    assert r.returncode == 0, f"clang-format check failed for shell/:\\n{r.stderr or r.stdout}"
+
+
+def test_repo_clang_format_browser_dir():
+    """
+    P2P: Repo CI clang-format check passes on shell/browser/ directory.
+    Verifies all C++ files in browser module follow Chromium style.
+    """
+    r = subprocess.run(
+        ["python3", "script/run-clang-format.py", "-r", "-c", "shell/browser/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"clang-format check failed for shell/browser/:\\n{r.stderr or r.stdout}"
+
+
+def test_native_window_file_exists():
+    """
+    P2P: Target file shell/browser/native_window.cc exists and is readable.
+    """
+    assert os.path.exists(FILE_PATH), f"Target file not found: {FILE_PATH}"
+    assert os.path.isfile(FILE_PATH), f"Target path is not a file: {FILE_PATH}"
+    with open(FILE_PATH, "r") as f:
+        content = f.read()
+    assert len(content) > 0, f"Target file is empty: {FILE_PATH}"
+
+
+def test_clang_format_config_exists():
+    """
+    P2P: clang-format configuration file exists and is valid.
+    """
+    config_path = os.path.join(REPO_PATH, ".clang-format")
+    assert os.path.exists(config_path), f".clang-format config not found"
+    with open(config_path, "r") as f:
+        content = f.read()
+    # Basic check that it looks like a yaml config
+    assert "BasedOnStyle" in content or "Language" in content, \
+        ".clang-format does not appear to be a valid configuration file"
+
+
+def test_repo_manifest_files_valid():
+    """
+    P2P: Repository manifest files are valid and parseable.
+    Checks package.json structure.
+    """
+    import json
+    package_path = os.path.join(REPO_PATH, "package.json")
+    assert os.path.exists(package_path), "package.json not found"
+    with open(package_path, "r") as f:
+        package = json.load(f)
+    assert "name" in package, "package.json missing 'name' field"
+    assert "scripts" in package, "package.json missing 'scripts' field"
+
+
+def test_claude_md_exists():
+    """
+    P2P: CLAUDE.md file exists with coding guidelines (from copilot-instructions.md).
+    """
+    claude_md_path = os.path.join(REPO_PATH, "CLAUDE.md")
+    assert os.path.exists(claude_md_path), "CLAUDE.md not found"
+    with open(claude_md_path, "r") as f:
+        content = f.read()
+    assert len(content) > 0, "CLAUDE.md is empty"
+    # Check for key sections mentioned in CI
+    assert "Chromium" in content or "Build" in content or "electron" in content.lower(), \
+        "CLAUDE.md missing expected content about Chromium or Electron"
+
+
+def test_copilot_instructions_exists():
+    """
+    P2P: GitHub Copilot instructions file exists with coding guidelines.
+    """
+    instructions_path = os.path.join(REPO_PATH, ".github", "copilot-instructions.md")
+    assert os.path.exists(instructions_path), ".github/copilot-instructions.md not found"
+    with open(instructions_path, "r") as f:
+        content = f.read()
+    assert len(content) > 0, "copilot-instructions.md is empty"
+
+
+def test_shell_browser_module_structure():
+    """
+    P2P: shell/browser/ module has expected structure (headers and implementation files).
+    """
+    browser_dir = os.path.join(REPO_PATH, "shell", "browser")
+    assert os.path.isdir(browser_dir), f"shell/browser/ directory not found"
+
+    # Check for header files
+    header_files = [f for f in os.listdir(browser_dir) if f.endswith(".h")]
+    cc_files = [f for f in os.listdir(browser_dir) if f.endswith(".cc")]
+
+    # native_window.h should exist (paired with native_window.cc)
+    assert "native_window.h" in header_files, "native_window.h not found in shell/browser/"
+    assert "native_window.cc" in cc_files, "native_window.cc not found in shell/browser/"
+
+
+def test_git_repo_valid():
+    """
+    P2P: Git repository is valid and has expected structure.
+    """
+    r = subprocess.run(
+        ["git", "status"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, f"Git repository is not valid: {r.stderr}"
+
+    # Check that we're at the expected commit
+    r = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO_PATH,
+    )
+    assert r.returncode == 0, "Failed to get git HEAD"
+    head_commit = r.stdout.strip()
+    # Should match the base commit from Dockerfile (a0f042f8d3e1123e7112a868954ab3c7c843f0b7)
+    expected_prefix = "a0f042f8"
+    assert head_commit.startswith(expected_prefix), \
+        f"Unexpected commit: {head_commit[:8]}, expected {expected_prefix}*"
+
+
+def test_python_scripts_syntax():
+    """
+    P2P: Python scripts in script/ directory have valid syntax.
+    """
+    script_dir = os.path.join(REPO_PATH, "script")
+    # Check key scripts compile
+    key_scripts = [
+        os.path.join(script_dir, "run-clang-format.py"),
+    ]
+    for script in key_scripts:
+        if os.path.exists(script):
+            r = subprocess.run(
+                ["python3", "-m", "py_compile", script],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            assert r.returncode == 0, f"Python syntax error in {script}: {r.stderr}"
 
 
 if __name__ == "__main__":

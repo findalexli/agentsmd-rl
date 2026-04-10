@@ -532,3 +532,145 @@ def test_repo_cpp_syntax_basic():
         # Check for unclosed string literals (basic check)
         double_quotes = content.count('"') - content.count('\\"')
         assert double_quotes % 2 == 0, f"{filepath} may have unclosed string literals"
+
+
+# ============================================================================
+# Pass-to-Pass Tests — Repo CI/CD validation (from .github/workflows/*.yml)
+# ============================================================================
+
+# [pass_to_pass] repo_tests — CI: Verify .editorconfig compliance (basic)
+def test_repo_editorconfig():
+    """Source files follow basic editorconfig rules (indentation, trailing whitespace)."""
+    files = [
+        f"{WEBCORE}/MessagePortChannel.cpp",
+        f"{WEBCORE}/JSAbortController.cpp",
+        f"{WEBCORE}/BroadcastChannel.cpp",
+        f"{WEBCORE}/EventListenerMap.cpp",
+        f"{WEBCORE}/EventListenerMap.h",
+    ]
+
+    for filepath in files:
+        content = Path(filepath).read_text()
+
+        # No trailing whitespace (common CI check)
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            if line.rstrip() != line:
+                assert False, f"{filepath}:{i+1} has trailing whitespace"
+
+        # Files should end with a single newline (POSIX standard)
+        if content and not content.endswith('\n'):
+            assert False, f"{filepath} does not end with newline"
+
+
+# [pass_to_pass] repo_tests — CI: Verify no tab characters (from format.yml)
+def test_repo_no_tabs():
+    """Modified C++ files use spaces for indentation (no hard tabs)."""
+    files = [
+        f"{WEBCORE}/MessagePortChannel.cpp",
+        f"{WEBCORE}/JSAbortController.cpp",
+        f"{WEBCORE}/BroadcastChannel.cpp",
+        f"{WEBCORE}/EventListenerMap.cpp",
+        f"{WEBCORE}/EventListenerMap.h",
+    ]
+
+    for filepath in files:
+        content = Path(filepath).read_bytes()
+        assert b'\t' not in content, f"{filepath} contains tab characters (should use spaces)"
+
+
+# [pass_to_pass] repo_tests — CI: Check for banned words (from format.yml)
+def test_repo_no_banned_words():
+    """Modified files do not contain banned words/phrases (basic check)."""
+    banned_patterns = [
+        (r'\bTODO\s*:\s*hack\b', "TODO: hack"),
+        (r'\bFIXME\s*:\s*hack\b', "FIXME: hack"),
+        (r'\bXXX\s*:\s*hack\b', "XXX: hack"),
+        (r'\bHACK\s*:\s*', "HACK:"),
+    ]
+
+    files = [
+        f"{WEBCORE}/MessagePortChannel.cpp",
+        f"{WEBCORE}/JSAbortController.cpp",
+        f"{WEBCORE}/BroadcastChannel.cpp",
+        f"{WEBCORE}/EventListenerMap.cpp",
+        f"{WEBCORE}/EventListenerMap.h",
+    ]
+
+    for filepath in files:
+        content = Path(filepath).read_text()
+        for pattern, description in banned_patterns:
+            match = re.search(pattern, content, re.IGNORECASE)
+            assert not match, f"{filepath} contains banned pattern: {description}"
+
+
+# [pass_to_pass] repo_tests — CI: Validate include guard style in headers
+def test_repo_include_guards_webcore():
+    """WebCore header files have proper include guards or pragma once."""
+    headers = [
+        f"{WEBCORE}/EventListenerMap.h",
+        f"{WEBCORE}/BroadcastChannel.h",
+    ]
+
+    for filepath in headers:
+        p = Path(filepath)
+        if not p.exists():
+            continue
+        content = p.read_text()
+
+        # Check for include guard pattern or pragma once
+        has_pragma_once = '#pragma once' in content
+        has_ifndef_guard = '#ifndef' in content and '#define' in content
+
+        assert has_pragma_once or has_ifndef_guard, \
+            f"{filepath} missing include guard (no #pragma once or #ifndef/#define)"
+
+
+# [pass_to_pass] repo_tests — CI: Validate license headers exist
+def test_repo_license_headers():
+    """Modified files have license headers (WebKit/Bun convention)."""
+    files = [
+        f"{WEBCORE}/MessagePortChannel.cpp",
+        f"{WEBCORE}/JSAbortController.cpp",
+        f"{WEBCORE}/BroadcastChannel.cpp",
+        f"{WEBCORE}/EventListenerMap.cpp",
+        f"{WEBCORE}/EventListenerMap.h",
+    ]
+
+    for filepath in files:
+        content = Path(filepath).read_text()
+
+        # Check for standard license/copyright patterns
+        # WebKit files typically have "GNU Library General Public License" or similar
+        has_license = (
+            'Copyright' in content or
+            'copyright' in content.lower() or
+            'SPDX-License-Identifier' in content or
+            'GNU' in content or
+            'License' in content or
+            'MIT License' in content or
+            'BSD' in content or
+            'Apache' in content or
+            'Permission is hereby granted' in content.lower()
+        )
+        assert has_license, f"{filepath} missing license/copyright notice"
+
+
+# [pass_to_pass] repo_tests — CI: Validate no merge conflict markers
+def test_repo_no_merge_conflict_markers():
+    """Modified files do not contain Git merge conflict markers."""
+    files = [
+        f"{WEBCORE}/MessagePortChannel.cpp",
+        f"{WEBCORE}/JSAbortController.cpp",
+        f"{WEBCORE}/BroadcastChannel.cpp",
+        f"{WEBCORE}/EventListenerMap.cpp",
+        f"{WEBCORE}/EventListenerMap.h",
+    ]
+
+    for filepath in files:
+        content = Path(filepath).read_text()
+
+        # Check for merge conflict markers
+        assert '<<<<<<<' not in content, f"{filepath} contains merge conflict marker <<<<<<<"
+        assert '=======' not in content, f"{filepath} contains merge conflict marker ======="
+        assert '>>>>>>>' not in content, f"{filepath} contains merge conflict marker >>>>>>>"

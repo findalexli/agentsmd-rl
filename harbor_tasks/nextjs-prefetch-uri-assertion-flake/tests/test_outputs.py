@@ -225,7 +225,7 @@ def test_retry_imported_from_next_test_utils():
     # Check the file imports retry from next-test-utils
     import_patterns = [
         r"from\s+['\"]next-test-utils['\"].*?\bretry\b",
-        r"import\s*\{[^}]*\bretry\b[^}]*\}\s*from\s*['\"]next-test-utils['\"]",
+        r"import\s*\{[^}]*\bretry\b[^}]*\}\s*from\s+['\"]next-test-utils['\"]",
         r"require\s*\(\s*['\"]next-test-utils['\"]\s*\).*?\bretry\b",
     ]
     has_import = any(re.search(p, content, re.DOTALL) for p in import_patterns)
@@ -250,3 +250,17 @@ def test_repo_error_codes():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Error codes check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_test_only():
+    """Target test file must not contain .only() (test debugging residue)."""
+    r = subprocess.run(
+        ["grep", "-n", "\\.only(", str(TARGET)],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    # grep returns 0 if found (bad), 1 if not found (good)
+    assert r.returncode == 1, f"Found .only() in test file - remove before committing:\n{r.stdout}"

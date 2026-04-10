@@ -82,16 +82,79 @@ checks:
   - id: test_repo_ci_clang_format_native_window
     type: pass_to_pass
     origin: repo_tests
-    description: Repo CI clang-format check passes on native_window.cc (npm run lint:clang-format)
+    description: Repo CI clang-format check passes on native_window.cc
     weight: 1
     source: CI command from package.json scripts.lint:clang-format
 
   - id: test_repo_ci_clang_format_shell_dir
     type: pass_to_pass
     origin: repo_tests
-    description: Repo CI clang-format check passes on shell/ directory (npm run lint:clang-format)
+    description: Repo CI clang-format check passes on shell/ directory
     weight: 1
     source: CI command from package.json scripts.lint:clang-format
+
+  - id: test_repo_clang_format_browser_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI clang-format check passes on shell/browser/ directory
+    weight: 1
+    source: CI command - extended clang-format coverage
+
+  - id: test_native_window_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file shell/browser/native_window.cc exists and is readable
+    weight: 1
+    source: Basic file structure validation
+
+  - id: test_clang_format_config_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: clang-format configuration file exists and is valid
+    weight: 1
+    source: Repo CI config validation
+
+  - id: test_repo_manifest_files_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository manifest files (package.json) are valid
+    weight: 1
+    source: Repo structure validation
+
+  - id: test_claude_md_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: CLAUDE.md file exists with coding guidelines
+    weight: 1
+    source: Documentation check from CLAUDE.md
+
+  - id: test_copilot_instructions_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: GitHub Copilot instructions file exists
+    weight: 1
+    source: Documentation check from .github/copilot-instructions.md
+
+  - id: test_shell_browser_module_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: shell/browser/ module has expected structure with headers and impl files
+    weight: 1
+    source: Module structure validation
+
+  - id: test_git_repo_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git repository is valid and at expected base commit
+    weight: 1
+    source: Git state validation
+
+  - id: test_python_scripts_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python CI scripts have valid syntax
+    weight: 1
+    source: CI tooling validation
 
   # ────────────────────────────────────────────────────────────────────────────
   # Agent Config Rules (from CLAUDE.md and copilot-instructions.md)
@@ -103,7 +166,7 @@ checks:
     origin: agent_config
     source:
       file: CLAUDE.md
-      lines: "C++: Follows Chromium style, enforced by clang-format"
+      lines: C++: Follows Chromium style, enforced by clang-format
 
   - id: test_clang_format_compliance
     description: Code passes clang-format check
@@ -111,7 +174,7 @@ checks:
     origin: agent_config
     source:
       file: .github/copilot-instructions.md
-      lines: "Follows Chromium coding style, enforced by clang-format and clang-tidy"
+      lines: Follows Chromium coding style, enforced by clang-format and clang-tidy
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Rubric for soft/subjective rules (LLM-judged)
@@ -121,14 +184,30 @@ rubric:
   - rule: The fix correctly reorders the InitFromOptions function so that size constraints are applied before position is set
     source:
       file: CLAUDE.md
-      context: Code style and structure guidelines
+      lines: "147-148"
+      commit: a0f042f8d3e1123e7112a868954ab3c7c843f0b7
+      context: Code style and structure guidelines - C++ follows Chromium style
 
   - rule: The code preserves the Windows-specific SetPosition workaround (calling it twice)
     source:
       file: PR diff
+      commit: a0f042f8d3e1123e7112a868954ab3c7c843f0b7
       context: The Windows-specific double SetPosition call must be preserved
 
   - rule: Conditional window centering logic (Center()) is preserved after the size constraint changes
     source:
       file: PR diff
+      commit: a0f042f8d3e1123e7112a868954ab3c7c843f0b7
       context: The else-if center block must remain functional
+
+  - rule: Code follows Chromium C++ style (2-space indentation, clang-format compliant)
+    source:
+      file: CLAUDE.md
+      lines: "147-148"
+      commit: a0f042f8d3e1123e7112a868954ab3c7c843f0b7
+
+  - rule: PR description includes a Notes section describing the user-visible fix
+    source:
+      file: CLAUDE.md
+      lines: "69-72"
+      commit: a0f042f8d3e1123e7112a868954ab3c7c843f0b7

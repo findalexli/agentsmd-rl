@@ -42,36 +42,47 @@ checks:
     origin: static
     description: "Modified function has real logic with queryKey, queryFn, enabled"
 
-  # New repo_tests pass_to_pass checks
+  # Static pass_to_pass checks (file existence/content)
   - id: target_file_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Target TypeScript file must exist and be readable"
 
   - id: file_has_typescript_exports
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "File must have TypeScript export statements"
 
   - id: file_imports_react_query
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "File must import from @tanstack/react-query"
 
   - id: file_has_proper_query_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "File must have standard React Query structure"
 
   - id: file_no_commonjs_require
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "File should not use CommonJS require"
 
   - id: config_directory_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "The data/config directory must exist"
+
+  # CI-derived repo_tests pass_to_pass checks
+  - id: typescript_file_parses
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript file must parse without syntax errors (tsx)"
+
+  - id: config_files_all_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All data/config TypeScript files must parse successfully"
 
   - id: query_enabled_gating_rule
     type: fail_to_pass

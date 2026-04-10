@@ -3,63 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0,
   "gold_reward": 1,
-  "validated_at": "2026-04-09T03:45:11.399566",
-  "total_time": 7674.49,
-  "sandbox_id": "iv5e8eun3mhsu1zw3cpd6",
+  "validated_at": "2026-04-09T14:56:58.004081",
+  "total_time": 1727.0,
+  "sandbox_id": "ivgc3nr46jd3e6jtre0aq",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T10:10:00",
-      "ci_commands_discovered": [
-        {
-          "command": "cargo check -p uv",
-          "source": "GitHub Actions workflow check-lint.yml",
-          "status": "added_as_p2p",
-          "timeout_seconds": 300,
-          "notes": "Used in existing fail_to_pass test; added as p2p gate with pytest.skip on timeout"
-        },
-        {
-          "command": "cargo fmt --all --check",
-          "source": "GitHub Actions workflow check-fmt.yml",
-          "status": "added_as_p2p",
-          "timeout_seconds": 60,
-          "notes": "Installs rustfmt first, then checks formatting"
-        },
-        {
-          "command": "cargo clippy --workspace --all-targets --all-features --locked -- -D warnings",
-          "source": "GitHub Actions workflow check-lint.yml",
-          "status": "skipped",
-          "notes": "Times out even on -p uv crate; too slow for p2p gate (>120s)"
-        },
-        {
-          "command": "cargo nextest run",
-          "source": "GitHub Actions workflow test.yml",
-          "status": "skipped",
-          "notes": "Full test suite takes too long; requires special filesystem setup"
-        }
-      ],
-      "tests_added": [
-        {
-          "test_function": "test_repo_cargo_check",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Repo Rust code compiles with cargo check",
-          "eval_manifest_id": "test_repo_cargo_check"
-        },
-        {
-          "test_function": "test_repo_cargo_fmt",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Repo Rust code is formatted correctly",
-          "eval_manifest_id": "test_repo_cargo_fmt"
-        }
-      ],
-      "files_modified": [
-        "tests/test_outputs.py",
-        "eval_manifest.yaml"
-      ]
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 127.48,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -85,14 +41,21 @@
       "notes": "All 4 validation checks passed: Docker build OK, NOP reward=0 (base code fails correctly), Gold reward=1 (fix works), Rubric ICR=1.0 (removed rubric section for code-only fix task). Also created CLAUDE.md from agent_configs.md for judge compatibility.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 604.19
+      "time": 125.22
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
+      "time": 0.14,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 3.73,
+      "notes": ""
     }
   },
   "history": [
@@ -111,6 +74,22 @@
       "backend": "fireworks",
       "time": 7674.49,
       "at": "2026-04-09T03:45:11.399566"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 1726.78,
+      "at": "2026-04-09T14:56:57.830007"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 1727.0,
+      "at": "2026-04-09T14:56:58.004081"
     }
   ]
 }

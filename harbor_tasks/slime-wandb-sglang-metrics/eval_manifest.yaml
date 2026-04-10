@@ -67,4 +67,42 @@ checks:
     origin: static
     description: "init_wandb_secondary still exists with non-trivial body"
 
-rubric: []
+  - id: test_repo_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on modified files"
+
+  - id: test_repo_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Black formatting check passes on modified files"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "isort formatting check passes on modified files"
+
+rubric:
+  - rule: "Follow existing naming patterns and conventions from neighboring code. When adding public methods, follow the naming style of similar methods in the same class."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "37, 54"
+      commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+
+  - rule: "When wrapping private methods for public/remote access, provide a clean public wrapper that maintains the same return type semantics."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "70-79"
+      commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+
+  - rule: "Keep utility functions focused and behavior-specific. Bridge/wrapper functions should delegate cleanly to their implementations without adding unnecessary indirection."
+    source:
+      path: ".claude/skills/add-reward-function/SKILL.md"
+      lines: "71-77"
+      commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"
+
+  - rule: "When modifying WandB integration code, handle the initialization lifecycle correctly: finish existing runs before reinitializing, and provide early returns for disabled/offline modes."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "95-98"
+      commit: "d4c4d3fb24d45c3cd12f47b64b30fc3301286778"

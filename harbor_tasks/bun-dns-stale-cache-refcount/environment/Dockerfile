@@ -15,6 +15,9 @@ RUN git init /workspace/bun && \
     git fetch --depth=1 origin 7960fe985dfa3418b507777a5a61289defbdb9dc && \
     git checkout FETCH_HEAD
 
+# Install bun for running CI checks
+RUN npm install -g bun
+
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/bun

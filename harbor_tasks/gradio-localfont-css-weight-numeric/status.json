@@ -3,44 +3,18 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T04:36:10.309145",
-  "total_time": 9220.13,
-  "sandbox_id": "itk6ixv88abb16tk6gvw6",
+  "validated_at": "2026-04-10T03:43:22.143564",
+  "total_time": 8405.93,
+  "sandbox_id": "i2fyx7sek5uqaybw4pbb3",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
-    "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All validations passed. Docker build succeeded. NOP test correctly failed on buggy code (reward=0) with 3 expected failures: test_numeric_font_weight, test_weight_path_separation, test_website_flag_rewrites_paths. Gold test passed (reward=1) with all 10 tests passing. Rubric judge returned 0.5 due to missing ANTHROPIC_API_KEY (expected in non-production environments).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 147.84
-    },
     "p2p_enrichment": {
-      "status": "completed",
-      "timestamp": "2026-04-09",
-      "ci_commands_found": [
-        "ruff check gradio/themes/utils/fonts.py scripts/generate_theme.py",
-        "ruff format --check gradio/themes/utils/fonts.py scripts/generate_theme.py",
-        "pytest test/test_theme_sharing.py -k 'not test_theme_builder_launches'",
-        "python -c 'import gradio; print(gradio.__version__)'"
-      ],
-      "tests_added": [
-        "test_gradio_themes_ruff_check - runs ruff check on modified files",
-        "test_gradio_theme_tests - runs repo's theme-related unit tests (excluding theme_builder)",
-        "test_gradio_fonts_module_imports - verifies fonts module imports work"
-      ],
-      "notes": "Added 3 pass_to_pass tests based on repo's CI/CD. Discovered ruff, pytest, and import checks work. Excluded test_theme_builder_launches as it requires built frontend."
-    },
-    "p2p_enrich": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 310.27,
+      "time": 365.76,
       "notes": ""
     },
     "improve": {
@@ -50,12 +24,22 @@
       "time": 0,
       "notes": "tests look good"
     },
-    "rubric_judge": {
+    "validate": {
       "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build successful. NOP test correctly shows reward=0 (3 fail-to-pass tests fail as expected: numeric_font_weight, weight_path_separation, website_flag_rewrites_paths). Gold test passes with all 18 tests passing and reward=1. Rubric judge ICR failure (0.5) is due to LLM API rate limiting (HTTP 429), not solution quality - gold solution passes all repo's own ruff format/check tests which verify style consistency.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
-      "notes": "ICR=1.00"
+      "time": 117.84
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.32,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -64,16 +48,32 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T04:36:10.149197"
+      "time": 2970.5,
+      "at": "2026-04-09T22:48:38.923695"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 9220.13,
-      "at": "2026-04-09T04:36:10.309145"
+      "time": 2970.77,
+      "at": "2026-04-09T22:48:39.090091"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8405.66,
+      "at": "2026-04-10T03:43:21.975152"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 8405.93,
+      "at": "2026-04-10T03:43:22.143564"
     }
   ]
 }

@@ -82,6 +82,33 @@ checks:
   - id: repo_typescript_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: "Test file has valid TypeScript syntax (balanced braces/parens)"
+    description: "TypeScript compiler can parse test file without syntax errors"
 
-rubric: []
+  - id: repo_node_parseable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file is readable and parseable by Node.js"
+
+  - id: repo_import_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test file has valid import/export syntax"
+
+rubric:
+  - rule: "Read all README.md files in the directory path from repo root to the target file's directory before editing, to identify local patterns and conventions."
+    source:
+      path: "AGENTS.md"
+      lines: "46-54"
+      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
+
+  - rule: "Use comments to explain the 'why' behind non-obvious code, not just narrate what the code does."
+    source:
+      path: "AGENTS.md"
+      lines: "427-432"
+      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
+
+  - rule: "Follow existing code style and patterns from neighboring files in the same directory."
+    source:
+      path: "AGENTS.md"
+      lines: "46"
+      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"

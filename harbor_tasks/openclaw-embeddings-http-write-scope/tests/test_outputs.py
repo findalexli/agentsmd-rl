@@ -227,6 +227,17 @@ def test_repo_embeddings_tests():
     # Install dependencies and run embeddings-specific tests
     r = subprocess.run(
         ["bash", "-c", "pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm exec vitest run --config vitest.gateway.config.ts src/gateway/embeddings-http.test.ts"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Embeddings tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    # Install dependencies and run TypeScript typecheck (tsgo is a fast Go-based TSC)
+    r = subprocess.run(
+        ["bash", "-c", "pnpm install --frozen-lockfile >/dev/null 2>&1 && ./node_modules/.bin/tsgo --noEmit"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

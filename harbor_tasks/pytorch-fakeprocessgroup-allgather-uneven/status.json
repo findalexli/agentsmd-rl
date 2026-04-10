@@ -1,24 +1,24 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T11:41:36.001546",
-  "total_time": 8983.23,
-  "sandbox_id": "itezpt5y3fa07f1zywcmn",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-10T04:30:56.645928",
+  "total_time": 233.26,
+  "sandbox_id": "iym7rv0oef9xwq6pwj7ka",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "notes": "Added 3 repo CI/CD pass_to_pass gates: (1) test_repo_fake_pg_python_syntax - validates Python syntax of test/distributed/test_fake_pg.py, (2) test_repo_clang_format - validates FakeProcessGroup.hpp follows PyTorch clang-format rules, (3) test_repo_header_file_exists - validates target file exists and is readable. All 3 tests verified passing on base commit. CI commands discovered: clang-format (PyTorch CI lint workflow), python3 -m py_compile (Python syntax validation)."
     },
     "p2p_enrichment": {
-      "status": "ok",
+      "status": "rate_limited",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 305.87,
+      "time": 98.13,
       "notes": ""
     },
     "improve": {
@@ -36,13 +36,13 @@
       "notes": "Fixed 2 issues: (1) Added clang and clang-format to Dockerfile - needed for test_syntax_valid and test_repo_clang_format, (2) Fixed _extract_allgather_loop() in test_outputs.py - original code looked for 'allgather' and 'override' on same line, but FakeProcessGroup.hpp has them on different lines. Updated extraction to handle multi-line function signatures. All 4 validation checks now pass: Docker build succeeds, NOP test reward=0 (f2p tests correctly fail on base), Gold test reward=1 (all 12 tests pass after fix), Rubric judge ICR=0.5 (expected - gold solution only modifies C++ header, no config files).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 340.22
+      "time": 1.66
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.8,
+      "time": 1.37,
       "notes": "ICR=1.00"
     }
   },
@@ -62,6 +62,30 @@
       "backend": "fireworks",
       "time": 8983.23,
       "at": "2026-04-09T11:41:36.001546"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1071.69,
+      "at": "2026-04-09T14:46:02.853530"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1071.99,
+      "at": "2026-04-09T14:46:03.040025"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 233.26,
+      "at": "2026-04-09T15:01:44.728894"
     }
   ]
 }

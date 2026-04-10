@@ -256,3 +256,126 @@ def test_prefer_const_in_memo():
     assert not re.search(r"\blet\s+\w+", memo), (
         "'let' found in values memo — prefer const with early returns"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD (pass_to_pass) — ensure repo's own checks pass on base commit
+# ---------------------------------------------------------------------------
+
+def _ensure_bun_and_deps():
+    """Ensure bun is installed and dependencies are available (installs if missing)."""
+    bun_check = subprocess.run(["which", "bun"], capture_output=True)
+    if bun_check.returncode != 0:
+        # Install unzip first (required for bun install)
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True, timeout=60,
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "unzip"],
+            capture_output=True, timeout=60,
+        )
+        # Install bun
+        install = subprocess.run(
+            ["bash", "-c",
+             "curl -fsSL https://bun.sh/install | bash && mv /root/.bun/bin/bun /usr/local/bin/bun"],
+            capture_output=True, text=True, timeout=120,
+        )
+        assert install.returncode == 0, f"Bun install failed: {install.stderr}"
+
+    # Check if node_modules exists at root (needed for workspace deps)
+    if not Path(f"{REPO}/node_modules").exists():
+        # Install dependencies at root
+        r = subprocess.run(
+            ["bun", "install"],
+            capture_output=True, text=True, timeout=300, cwd=REPO,
+        )
+        assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
+
+    return "/usr/local/bin/bun"
+
+
+# [repo_tests] pass_to_pass — repo's TypeScript typecheck for opencode package
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes on packages/opencode (pass_to_pass).
+
+    Installs Bun at runtime since the repo uses bun-specific features (catalog:).
+    Uses tsgo which is the typecheck command defined in package.json.
+    """
+    opencode_dir = f"{REPO}/packages/opencode"
+    _ensure_bun_and_deps()
+
+    # Run typecheck via bun in the opencode package
+    # The typecheck script runs: tsgo --noEmit
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=opencode_dir,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo's unit tests for the opencode package
+def test_repo_unit_tests():
+    """Repo's unit tests pass for opencode package (pass_to_pass).
+
+    Runs bun test to ensure the fix doesn't break existing test suite.
+    """
+    opencode_dir = f"{REPO}/packages/opencode"
+    _ensure_bun_and_deps()
+
+    # Run bun test in the opencode package
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000"],
+        capture_output=True, text=True, timeout=300, cwd=opencode_dir,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — theme store tests specifically for modified theme.tsx
+def test_repo_theme_store_tests():
+    """Theme store unit tests pass (covers theme.tsx context) (pass_to_pass).
+
+    Runs bun test on test/cli/tui/theme-store.test.ts which tests the
+    same theme.tsx module that the PR modifies.
+    """
+    opencode_dir = f"{REPO}/packages/opencode"
+    _ensure_bun_and_deps()
+
+    # Run only theme-store tests which cover the modified theme.tsx file
+    r = subprocess.run(
+        ["bun", "test", "test/cli/tui/theme-store.test.ts", "--timeout", "30000"],
+        capture_output=True, text=True, timeout=300, cwd=opencode_dir,
+    )
+    assert r.returncode == 0, f"Theme store tests failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — turbo typecheck at root (CI command)
+def test_repo_turbo_typecheck():
+    """Root turbo typecheck passes (CI command: bun turbo typecheck) (pass_to_pass).
+
+    Matches the CI typecheck command from .github/workflows/typecheck.yml.
+    """
+    _ensure_bun_and_deps()
+
+    # Run turbo typecheck from root (this is what CI runs)
+    r = subprocess.run(
+        ["bun", "turbo", "typecheck"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Turbo typecheck failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — turbo test at root (CI command)
+def test_repo_turbo_test():
+    """Root turbo test passes for opencode package (CI command: bun turbo test) (pass_to_pass).
+
+    Matches the CI test command from .github/workflows/test.yml.
+    """
+    _ensure_bun_and_deps()
+
+    # Run turbo test from root (this is what CI runs: bun turbo test)
+    r = subprocess.run(
+        ["bun", "turbo", "test", "--filter=opencode"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Turbo test failed:\nstdout: {r.stdout[-1000:]}\nstderr: {r.stderr[-500:]}"

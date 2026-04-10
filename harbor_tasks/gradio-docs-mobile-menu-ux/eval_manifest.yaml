@@ -17,6 +17,11 @@ checks:
     origin: repo_tests
     description: "Repo's Prettier format check passes on base commit and after fix"
 
+  - id: repo_client_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's @gradio/client package builds successfully on base and after fix"
+
   - id: mobile_fullscreen_overlay
     type: fail_to_pass
     origin: pr_diff
@@ -43,13 +48,8 @@ checks:
     description: "Mobile nav links close the menu when clicked (click_nav = false)"
 
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
+  - rule: "A changeset file should be created documenting the mobile menu UX improvement."
     source:
-      path: "AGENTS.md"
-      lines: "45"
+      path: ".changeset/tender-turtles-live.md"
       commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
-  - rule: "Frontend code is formatted with prettier."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
+    reference: "---\n\"website\": minor\n---\n\nfeat:improve mobile menu in docs"

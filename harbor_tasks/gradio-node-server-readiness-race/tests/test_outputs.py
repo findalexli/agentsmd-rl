@@ -246,3 +246,42 @@ def test_repo_python_syntax():
         except Exception as e:
             failed.append(f"{f}: {e}")
     assert not failed, f"Syntax errors found:\n" + "\n".join(failed)
+
+
+# [repo_tests] pass_to_pass - node_server.py must pass ruff linting
+def test_repo_ruff_node_server():
+    """gradio/node_server.py must pass ruff linting (pass_to_pass).
+
+    This verifies that the modified file follows the projects linting rules.
+    The full repo has pre-existing lint issues, but node_server.py is clean.
+    """
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/node_server.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - node_server.py must pass ruff format check
+def test_repo_ruff_format_node_server():
+    """gradio/node_server.py must pass ruff format check (pass_to_pass).
+
+    This verifies that the modified file follows the project's formatting rules.
+    """
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "gradio/node_server.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [static] pass_to_pass - node_server.py must exist
+def test_repo_node_server_exists():
+    """gradio/node_server.py must exist (pass_to_pass)."""
+    assert Path(NODE_SERVER_PATH).exists(), f"{NODE_SERVER_PATH} does not exist"

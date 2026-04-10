@@ -83,7 +83,7 @@ def test_weight_path_separation():
             if not block.strip():
                 continue
             weight_m = re.search(r"font-weight:\s*(\S+);", block)
-            url_m = re.search(r"url\(['\"]?([^)'\"]*)['\"]?\)", block)
+            url_m = re.search(r"url\([\'\"]?([^)\'\"]*)[\'\"]?\)", block)
             if not weight_m or not url_m:
                 continue
             weight = weight_m.group(1)
@@ -135,6 +135,30 @@ def test_default_preserves_static_paths():
         assert "url('static/" in css, "Without --website, static/ paths should be preserved"
     finally:
         os.unlink(tmp)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python files are formatted according to ruff (pass_to_pass)."""
+    import shutil
+    ruff = shutil.which("ruff")
+    if ruff is None:
+        ruff_result = subprocess.run(
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+        )
+        if ruff_result.returncode != 0:
+            import pytest
+            pytest.skip("ruff not available in this environment")
+        ruff_cmd = [sys.executable, "-m", "ruff"]
+    else:
+        ruff_cmd = [ruff]
+
+    result = subprocess.run(
+        ruff_cmd + ["format", "--check", f"{REPO}/gradio/themes/utils/fonts.py", f"{REPO}/scripts/generate_theme.py"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, f"ruff format --check failed:\n{result.stdout}\n{result.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -252,3 +276,81 @@ def test_gradio_fonts_module_imports():
         capture_output=True, text=True, cwd=REPO,
     )
     assert result.returncode == 0, f"Fonts module import failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_google_font_stylesheet_url_generation():
+    """GoogleFont.stylesheet() generates valid googleapis URLs (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-c",
+         "from gradio.themes.utils.fonts import GoogleFont; " +
+         "f = GoogleFont('Roboto'); " +
+         "r = f.stylesheet(); " +
+         "assert r['url'] and 'fonts.googleapis.com' in r['url']; " +
+         "assert 'display=swap' in r['url']; " +
+         "print('OK')"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, f"GoogleFont stylesheet test failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_generate_theme_script_runs():
+    """generate_theme.py script runs successfully without --website flag (pass_to_pass)."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".css", delete=False) as f:
+        tmp = f.name
+    try:
+        result = subprocess.run(
+            [sys.executable, f"{REPO}/scripts/generate_theme.py", "--outfile", tmp],
+            capture_output=True, text=True, cwd=REPO, timeout=30,
+        )
+        assert result.returncode == 0, f"generate_theme.py failed: {result.stderr}"
+        with open(tmp) as f:
+            content = f.read()
+        assert len(content) > 0, "Generated CSS file should not be empty"
+        assert "url('static/" in content, "Default CSS should contain static/ paths"
+    finally:
+        os.unlink(tmp)
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_theme_unit_tests():
+    """Repo's theme unit tests (BuiltInThemes, SemverMatch, GetThemeAssets) pass (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest",
+         "test/test_theme_sharing.py::TestBuiltInThemes",
+         "test/test_theme_sharing.py::TestSemverMatch",
+         "test/test_theme_sharing.py::TestGetThemeAssets",
+         "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Theme unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_gradio_imports_clean():
+    """Main gradio module imports without errors (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-c", "import gradio; print(gradio.__version__)"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert result.returncode == 0, f"Gradio import failed:\n{result.stderr}"
+    assert result.stdout.strip(), "Gradio version should be available"
+
+
+# [repo_tests] pass_to_pass
+def test_localfont_css_structure():
+    """LocalFont generates expected CSS structure with @font-face rules (pass_to_pass)."""
+    result = subprocess.run(
+        [sys.executable, "-c",
+         "from gradio.themes.utils.fonts import LocalFont; " +
+         "f = LocalFont(\'IBM Plex Mono\'); " +
+         "r = f.stylesheet(); " +
+         "assert \"@font-face\" in r[\"css\"]; " +
+         "assert \"font-family\" in r[\"css\"]; " +
+         "assert \"url(\" in r[\"css\"]; " +
+         "assert \"woff2\" in r[\"css\"]; " +
+         "print(\"OK\")"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    assert result.returncode == 0, f"LocalFont CSS structure test failed:\n{result.stderr}"

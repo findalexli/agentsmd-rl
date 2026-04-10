@@ -70,7 +70,7 @@ checks:
     description: "Repo's ESLint check passes on both base and gold"
     test: "test_p2p_repo_eslint"
     type: "pass_to_pass"
-    source: "repo_ci"
+    origin: "repo_tests"
     source_ref: "TanStack/router:package.json scripts.test:eslint"
 
   - id: "p2p_repo_typescript"
@@ -78,7 +78,7 @@ checks:
     description: "Repo's TypeScript typecheck passes on both base and gold"
     test: "test_p2p_repo_typescript"
     type: "pass_to_pass"
-    source: "repo_ci"
+    origin: "repo_tests"
     source_ref: "TanStack/router:package.json scripts.test:types"
 
   - id: "p2p_repo_unit_tests_ssr"
@@ -86,7 +86,7 @@ checks:
     description: "Repo's SSR-related unit tests pass on both base and gold"
     test: "test_p2p_repo_unit_tests_ssr"
     type: "pass_to_pass"
-    source: "repo_ci"
+    origin: "repo_tests"
     source_ref: "TanStack/router:packages/react-router/tests/Scripts.test.tsx"
 
   - id: "p2p_repo_build"
@@ -94,7 +94,30 @@ checks:
     description: "Repo's build verification passes on both base and gold"
     test: "test_p2p_repo_build"
     type: "pass_to_pass"
-    source: "repo_ci"
+    origin: "repo_tests"
     source_ref: "TanStack/router:package.json scripts.test:build"
 
-rubric: []
+rubric:
+  - rule: "Use TypeScript strict mode with extensive type safety. Types are fully inferred - never cast or annotate inferred values."
+    source:
+      path: "AGENTS.md"
+      lines: "27-29"
+      commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"
+
+  - rule: "Keep framework-agnostic core logic separated from React/Solid framework bindings."
+    source:
+      path: "AGENTS.md"
+      lines: "28"
+      commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"
+
+  - rule: "Do not use browser-only APIs (window, document, localStorage) without environment checks - they throw on the server during SSR."
+    source:
+      path: "packages/router-core/skills/router-core/ssr/SKILL.md"
+      lines: "281-296"
+      commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"
+
+  - rule: "When SSR is enabled, code must work correctly in both environments - component hooks should return null on server when appropriate."
+    source:
+      path: "packages/router-core/skills/router-core/ssr/SKILL.md"
+      lines: "8-10"
+      commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"

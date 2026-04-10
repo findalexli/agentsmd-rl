@@ -276,3 +276,22 @@ def test_all_relevant_crates_combined():
     stderr = r.stderr.decode()
     # Should have tests from all three crates (42 + 37 + 39 = ~118 tests)
     assert "0 passed" not in stderr, f"No tests ran:\n{stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_relevant_crates():
+    """Clippy linting passes on modified crates (pass_to_pass)."""
+    # First ensure clippy is installed
+    r = subprocess.run(
+        ["rustup", "component", "add", "clippy"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    # Run clippy on the relevant packages
+    r = subprocess.run(
+        ["cargo", "clippy", "--package", "uv-platform-tags",
+         "--package", "uv-distribution-filename",
+         "--package", "uv-distribution-types",
+         "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Clippy check failed:\n{r.stderr.decode()[-2000:]}"

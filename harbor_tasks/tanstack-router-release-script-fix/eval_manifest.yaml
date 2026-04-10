@@ -79,6 +79,36 @@ checks:
     origin: "repo_tests"
     source: "npx prettier --check scripts/create-github-release.mjs"
 
+  - id: "test_repo_all_mjs_scripts_syntax"
+    description: "All .mjs scripts have valid JavaScript syntax"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source: "node --check scripts/*.mjs"
+
+  - id: "test_repo_all_scripts_formatting"
+    description: "All scripts follow Prettier formatting"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source: "npx prettier --check scripts/"
+
+  - id: "test_repo_markdown_formatting"
+    description: "Markdown files follow Prettier formatting"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source: "npx prettier --check *.md"
+
+  - id: "test_repo_package_json_formatting"
+    description: "package.json follows Prettier formatting"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source: "npx prettier --check package.json"
+
+  - id: "test_repo_git_valid"
+    description: "Repo has a valid git repository with commits"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    source: "git log --oneline -1"
+
 scoring:
-  max_points: 9
+  max_points: 16
   points_per_check: 1

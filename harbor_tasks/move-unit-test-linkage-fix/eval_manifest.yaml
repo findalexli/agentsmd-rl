@@ -115,8 +115,25 @@ checks:
 # agent config rules for this specific code change
 agent_config: []
 
-# Rubric for soft/subjective requirements (empty for this task)
-rubric: []
+# Rubric for soft/subjective requirements
+rubric:
+  - rule: "Do NOT comment the obvious. Comments should explain non-obvious algorithms, business logic, or subtle race conditions - not narrate what the code does."
+    source:
+      path: "CLAUDE.md"
+      lines: "88-102"
+      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+
+  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions. Fix the underlying issues instead."
+    source:
+      path: "CLAUDE.md"
+      lines: "83-85"
+      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+
+  - rule: "Always run tests before submitting changes to verify the fix works correctly."
+    source:
+      path: "CLAUDE.md"
+      lines: "70-72"
+      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
 
 # Scoring
 total_points: 10

@@ -10,6 +10,7 @@ compile/run C code to analyze exception handling.
 """
 
 import os
+import pytest
 import re
 import subprocess
 import tempfile
@@ -494,3 +495,137 @@ def test_typescript_braces_balance():
             f"{Path(filepath).name}: unbalanced parentheses "
             f"({open_parens} open, {close_parens} close)"
         )
+
+
+def test_repo_ban_words_test():
+    """Repo's ban-words test passes - no banned patterns in Zig source files (pass_to_pass).
+    Runs the repo's actual ban-words test which checks for undefined behavior patterns,
+    std.debug usage, and other banned patterns in Zig source files."""
+    import shutil
+
+    bun_exe = shutil.which("bun")
+    if not bun_exe:
+        # Check if bun is in default install location
+        default_bun = os.path.expanduser("~/.bun/bin/bun")
+        if os.path.exists(default_bun):
+            bun_exe = default_bun
+
+    if not bun_exe:
+        # Install unzip if needed, then install Bun
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True, timeout=60,
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "unzip"],
+            capture_output=True, timeout=60,
+        )
+        install = subprocess.run(
+            "curl -fsSL https://bun.sh/install | bash",
+            shell=True, capture_output=True, text=True, timeout=120,
+        )
+        if install.returncode != 0:
+            pytest.skip(f"Could not install Bun: {install.stderr}")
+        bun_exe = os.path.expanduser("~/.bun/bin/bun")
+
+    r = subprocess.run(
+        [bun_exe, "./test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ban-words test failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_typescript_typecheck():
+    """TypeScript typecheck passes (tsc --noEmit) (pass_to_pass).
+    Verifies TypeScript files have no type errors."""
+    import shutil
+
+    bun_exe = shutil.which("bun")
+    if not bun_exe:
+        # Check if bun is in default install location
+        default_bun = os.path.expanduser("~/.bun/bin/bun")
+        if os.path.exists(default_bun):
+            bun_exe = default_bun
+
+    if not bun_exe:
+        # Install unzip if needed, then install Bun
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True, timeout=60,
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "unzip"],
+            capture_output=True, timeout=60,
+        )
+        install = subprocess.run(
+            "curl -fsSL https://bun.sh/install | bash",
+            shell=True, capture_output=True, text=True, timeout=120,
+        )
+        if install.returncode != 0:
+            pytest.skip(f"Could not install Bun: {install.stderr}")
+        bun_exe = os.path.expanduser("~/.bun/bin/bun")
+
+    # Use bunx to run tsc
+    r = subprocess.run(
+        [bun_exe, "x", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def _ensure_bun_installed():
+    """Ensure Bun is installed and return the path to the executable."""
+    import shutil
+
+    bun_exe = shutil.which("bun")
+    if not bun_exe:
+        default_bun = os.path.expanduser("~/.bun/bin/bun")
+        if os.path.exists(default_bun):
+            bun_exe = default_bun
+
+    if not bun_exe:
+        subprocess.run(
+            ["apt-get", "update", "-qq"],
+            capture_output=True, timeout=60,
+        )
+        subprocess.run(
+            ["apt-get", "install", "-y", "-qq", "unzip"],
+            capture_output=True, timeout=60,
+        )
+        install = subprocess.run(
+            "curl -fsSL https://bun.sh/install | bash",
+            shell=True, capture_output=True, text=True, timeout=120,
+        )
+        if install.returncode != 0:
+            pytest.skip(f"Could not install Bun: {install.stderr}")
+        bun_exe = os.path.expanduser("~/.bun/bin/bun")
+
+    return bun_exe
+
+
+def test_repo_js_builtins_syntax():
+    """JS builtins files have valid syntax (pass_to_pass).
+    Parses TypeScript builtins with Bun to verify no syntax errors.
+    Based on CI checks that validate builtin source files."""
+    bun_exe = _ensure_bun_installed()
+
+    # Parse the main ReadableStream builtins to verify syntax
+    for filepath in [TS_FILE, INTERNALS_FILE]:
+        r = subprocess.run(
+            [bun_exe, "--eval", f"await Bun.file('{filepath}').text(); console.log('OK')"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0 and "OK" in r.stdout, (
+            f"Syntax error in {Path(filepath).name}:\n{r.stderr[-500:]}"
+        )
+
+
+def test_repo_streams_readablestream_test():
+    """Repo's Web Streams test file runs successfully (pass_to_pass).
+    Runs the repo's streams test which covers ReadableStream functionality."""
+    bun_exe = _ensure_bun_installed()
+
+    r = subprocess.run(
+        [bun_exe, "test", "./test/js/web/streams/streams.test.js", "--timeout", "30000"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )

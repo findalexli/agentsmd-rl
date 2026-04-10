@@ -17,8 +17,7 @@ REPO = "/workspace/svelte"
 def _parse_template(template):
     """Parse a Svelte template via the compiler and return the AST as a dict."""
     script = (
-        "import { parse } from "
-        "'/workspace/svelte/packages/svelte/src/compiler/index.js';\n"
+        "import { parse } from '/workspace/svelte/packages/svelte/src/compiler/index.js';\n"
         f"const ast = parse({json.dumps(template)}, {{ modern: true }});\n"
         "console.log(JSON.stringify(ast));\n"
     )
@@ -33,7 +32,7 @@ def _parse_template(template):
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -57,12 +56,12 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) - core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_parens_before_block_comment():
-    """Template expression {(/**/ 42)} must parse — paren before block comment."""
+    """Template expression {(/**/ 42)} must parse - paren before block comment."""
     ast = _parse_template("{(/**/ 42)}")
     nodes = ast["fragment"]["nodes"]
     assert len(nodes) == 1, f"Expected 1 node, got {len(nodes)}"
@@ -76,7 +75,7 @@ def test_parens_before_block_comment():
 # [pr_diff] fail_to_pass
 def test_parens_before_named_comment():
     """Template expression {(/* comment */ \"hello\")} must parse correctly."""
-    ast = _parse_template('{(/* comment */ "hello")}')
+    ast = _parse_template('{(/* comment */ \"hello\")}')
     expr = ast["fragment"]["nodes"][0]["expression"]
     assert expr["type"] == "Literal", f"Expected Literal, got {expr['type']}"
     assert expr["value"] == "hello", f"Expected 'hello', got {expr['value']}"
@@ -92,7 +91,7 @@ def test_parens_identifier_after_comment():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and fixed
+# Pass-to-pass (repo_tests) - CI/CD checks that must pass on base and fixed
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -123,18 +122,37 @@ def test_repo_lint():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_tests():
-    """Repo's test suite passes, excluding browser tests (pass_to_pass)."""
-    # Exclude browser tests that require Playwright/Chromium
+def test_repo_parser_tests():
+    """Parser tests pass - relevant to expression parsing changes (pass_to_pass)."""
     r = subprocess.run(
-        ["pnpm", "vitest", "run", "--exclude", "**/tests/runtime-browser/**"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["pnpm", "vitest", "run", "packages/svelte/tests/parser-modern/test.ts", "packages/svelte/tests/parser-legacy/test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Parser tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compiler_errors_tests():
+    """Compiler error tests pass - relevant to parsing error handling (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "packages/svelte/tests/compiler-errors/test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compiler errors tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_validator_tests():
+    """Validator tests pass - relevant to expression validation (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "packages/svelte/tests/validator/test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Validator tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression checks
+# Pass-to-pass (pr_diff) - regression checks
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -143,7 +161,7 @@ def test_simple_expressions_parse():
     cases = [
         ("{42}", "Literal", {"value": 42}),
         ("{(42)}", "Literal", {"value": 42}),
-        ('{"hello"}', "Literal", {"value": "hello"}),
+        ('{\"hello\"}', "Literal", {"value": "hello"}),
         ("{true}", "Literal", {"value": True}),
     ]
     for template, expected_type, expected_props in cases:

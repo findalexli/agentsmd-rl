@@ -97,6 +97,104 @@ class TestCodeStructure:
         assert else_pattern is None, "Found else block with variable_width_formatter check - this should be removed"
 
 
+class TestRepoCIChecks:
+    """
+    Pass-to-pass tests that verify the repo's CI checks still pass.
+    These ensure the fix doesn't break existing functionality or style.
+
+    Note: Some checks may output warnings for pre-existing issues in the codebase,
+    but they pass if no new issues are introduced. We filter results to
+    focus on the target file where relevant.
+    """
+
+    def test_repo_submodules_check(self):
+        """Repo's submodule check passes (pass_to_pass)."""
+        r = subprocess.run(
+            ["bash", "ci/jobs/scripts/check_style/check_submodules.sh"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Submodule check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+    def test_repo_various_checks(self):
+        """Repo's various checks pass (pass_to_pass)."""
+        r = subprocess.run(
+            ["bash", "ci/jobs/scripts/check_style/various_checks.sh"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=REPO,
+        )
+        # The script exits with code 1 if the last grep finds nothing (success case).
+        # We check for actual errors in the output.
+        output = r.stdout + r.stderr
+
+        # Filter for actual error messages (not trace output)
+        error_keywords = ["should have", "does not have", "cannot", "should not",
+                          "Missing", "failed", "error:", "Error:"]
+
+        # The script produces messages for issues found
+        # We filter out bash trace lines starting with "+"
+        error_lines = []
+        for line in output.split("\n"):
+            if line.startswith("+"):
+                continue  # Skip bash trace
+            for keyword in error_keywords:
+                if keyword in line:
+                    error_lines.append(line)
+                    break
+
+        # If there are issues, they are printed as actual messages
+        assert len(error_lines) == 0, f"Various checks found issues:\n" + "\n".join(error_lines[:20])
+
+    def test_formatdatetime_sql_tests_parse(self):
+        """Repo's formatDateTime SQL test files are syntactically valid (pass_to_pass)."""
+        # Check that the SQL test files exist and have valid structure
+        test_files = [
+            "tests/queries/0_stateless/00718_format_datetime.sql",
+            "tests/queries/0_stateless/01362_year_of_ISO8601_week_modificators_for_formatDateTime.sql",
+        ]
+
+        for test_file in test_files:
+            full_path = os.path.join(REPO, test_file)
+            assert os.path.exists(full_path), f"Test file {test_file} does not exist"
+
+            # Read and validate the SQL
+            with open(full_path, 'r') as f:
+                content = f.read()
+
+            # Basic sanity checks for SQL validity
+            assert "formatDateTime" in content, f"Test file {test_file} should test formatDateTime"
+
+            # Check that all SELECT statements are properly formed
+            lines = content.split('\n')
+            open_parens = 0
+            for i, line in enumerate(lines):
+                if line.strip().startswith('--') or line.strip().startswith('/*'):
+                    continue
+                open_parens += line.count('(') - line.count(')')
+
+            assert open_parens == 0, f"Test file {test_file} has unbalanced parentheses"
+
+    def test_formatdatetime_reference_files_exist(self):
+        """Repo's formatDateTime test reference files exist and match SQL files (pass_to_pass)."""
+        sql_files = [
+            "tests/queries/0_stateless/00718_format_datetime.sql",
+            "tests/queries/0_stateless/01362_year_of_ISO8601_week_modificators_for_formatDateTime.sql",
+        ]
+
+        for sql_file in sql_files:
+            # Reference file has .reference extension
+            ref_file = sql_file.replace('.sql', '.reference')
+            sql_path = os.path.join(REPO, sql_file)
+            ref_path = os.path.join(REPO, ref_file)
+
+            assert os.path.exists(sql_path), f"SQL file {sql_file} does not exist"
+            assert os.path.exists(ref_path), f"Reference file {ref_file} does not exist for {sql_file}"
+
+
 class TestBehavioral:
     """
     Behavioral tests that verify the function behaves correctly.

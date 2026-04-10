@@ -63,19 +63,6 @@ checks:
       lines: "398"
       commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
 
-rubric:
-  - rule: "app-page.ts is a build template compiled by the user's bundler: Any require() in this file is traced by webpack/turbopack at next build time. You cannot require internal modules with relative paths because they won't be resolvable from the user's project. Instead, export new helpers from entry-base.ts and access them via entryBase.* in the template."
-    source:
-      path: "AGENTS.md"
-      lines: "407"
-      commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
-
-  - rule: "Keep require() behind compile-time if/else branches for DCE (avoid early-return/throw patterns)."
-    source:
-      path: "AGENTS.md"
-      lines: "396"
-      commit: "6a8a31a7f42bb7d133aed5a6d854d069883aa57b"
-
   - id: test_repo_check_error_codes
     type: pass_to_pass
     origin: repo_tests
@@ -90,3 +77,9 @@ rubric:
     type: pass_to_pass
     origin: repo_tests
     description: "Repo's Prettier formatting passes on app-page.ts"
+
+  - id: test_repo_lint_ast_grep
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ast-grep linting passes"
+

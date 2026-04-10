@@ -1,16 +1,17 @@
-FROM python:3.12-slim
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        python3 python3-pip \
         git curl ca-certificates tmux \
-        libicu-dev wget apt-transport-https software-properties-common && \
+        libicu-dev wget && \
     rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell (pwsh) for testing PowerShell scripts
-RUN wget -q "https://packages.microsoft.com/config/debian/$(. /etc/os-release && echo $VERSION_ID)/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb && \
+RUN wget -q "https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
     apt-get update && \

@@ -125,7 +125,7 @@ index 4b719406405a..59222484a651 100644
          setattr(injector_state, USER_CONTEXT_ATTR, gitlab_user_context)
 
          async with get_app_conversation_service(
-@@ -260,7 +283,7 @@ def _create_gitlab_v1_callback_processor(self):
+@@ -260,6 +283,6 @@ def _create_gitlab_v1_callback_processor(self):
                  'is_mr': self.is_mr,
                  'discussion_id': getattr(self, 'discussion_id', None),
              },

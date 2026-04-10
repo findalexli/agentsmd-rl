@@ -90,6 +90,61 @@ checks:
     origin: repo_tests
     description: check-mypy-diff.py has valid Python syntax
 
+  - id: test_clang_tidy_cache_sh_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: clang-tidy-cache.sh has valid bash syntax
+
+  - id: test_docker_in_docker_sh_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: docker_in_docker.sh has valid bash syntax
+
+  - id: test_docker_server_config_sh_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: docker_server/config.sh has valid bash syntax
+
+  - id: test_check_ci_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_ci.py has valid Python syntax
+
+  - id: test_find_tests_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: find_tests.py has valid Python syntax
+
+  - id: test_done_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: done.py has valid Python syntax
+
+  - id: test_log_parser_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: log_parser.py has valid Python syntax
+
+  - id: test_check_settings_style_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: check-settings-style runs without crashing
+
+  - id: test_check_mypy_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: check-mypy script runs without crashing
+
+  - id: test_check_aspell_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_aspell.sh runs without crashing
+
+  - id: test_check_typos_runs
+    type: pass_to_pass
+    origin: repo_tests
+    description: check_typos.sh runs without crashing
+
   # Agent config rules from .claude/skills/review/SKILL.md
   - id: agent_config_no_large_binary_files
     type: fail_to_pass
@@ -101,4 +156,21 @@ checks:
       commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
       rule: "Binary blobs (JARs, archives, compiled artifacts, datasets >1 MB, fat dependency bundles) must never be committed. They permanently bloat the repository for every clone and cannot be removed without history rewriting."
 
-rubric: []
+rubric:
+  - rule: "Add comments explaining invariants and rationale for complex logic, not just narrating what the code does. Every byte committed to git is cloned forever — bulk stat via xargs is preferred over fork-per-file for performance."
+    source:
+      path: ".claude/skills/review/SKILL.md"
+      lines: "226-230"
+      commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
+
+  - rule: "Scripts should detect platform differences (GNU vs BSD tools) explicitly rather than failing per-file. Use feature detection, not version checks."
+    source:
+      path: ".claude/skills/review/SKILL.md"
+      lines: "141-150"
+      commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
+
+  - rule: "Follow existing code style in the file being modified. Match surrounding brace style, indentation, and quoting patterns."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "1-50"
+      commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"

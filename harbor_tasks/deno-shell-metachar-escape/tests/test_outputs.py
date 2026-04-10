@@ -134,6 +134,33 @@ def test_deno_fmt():
     assert r.returncode == 0, f"Deno fmt check failed:\n{r.stderr}"
 
 
+def test_child_process_shell_escape():
+    """Repo's shell escape spec test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["deno", "run", "-A", "tests/specs/node/child_process_shell_escape/main.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shell escape test failed:\n{r.stderr}"
+
+
+def test_child_process_unref_stdio():
+    """Repo's child_process unref stdio spec test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["deno", "run", "-A", "tests/specs/node/child_process_unref_stdio/main.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"child_process unref stdio test failed:\n{r.stderr}"
+
+
+def test_child_process_unref_survives():
+    """Repo's child_process unref survives spec test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["deno", "run", "-A", "tests/specs/node/child_process_unref_survives/parent.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"child_process unref survives test failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass — regression tests (PR behavior preservation)
 # ---------------------------------------------------------------------------

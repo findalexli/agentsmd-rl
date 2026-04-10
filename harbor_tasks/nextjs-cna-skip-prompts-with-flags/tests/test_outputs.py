@@ -6,6 +6,8 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
+import os
 import re
 import subprocess
 
@@ -130,6 +132,75 @@ def test_repo_cna_help():
     assert r.returncode == 0, f"--help failed:\n{r.stderr}"
     assert "Usage:" in r.stdout, f"Missing usage info in help:\n{r.stdout[:500]}"
     assert "--ts" in r.stdout, f"Missing --ts flag in help:\n{r.stdout[:500]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cna_package_json_valid():
+    """create-next-app package.json is valid and has required fields (pass_to_pass)."""
+    pkg_path = f"{CNA}/package.json"
+    with open(pkg_path, 'r') as f:
+        pkg = json.load(f)
+    assert "name" in pkg, "Missing name field in package.json"
+    assert "version" in pkg, "Missing version field in package.json"
+    assert "bin" in pkg, "Missing bin field in package.json"
+    assert "create-next-app" in pkg["bin"], "Missing create-next-app binary entry"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cna_templates_exist():
+    """create-next-app templates directory exists with expected templates (pass_to_pass)."""
+    templates_dir = f"{CNA}/templates"
+    assert os.path.isdir(templates_dir), f"Templates directory not found: {templates_dir}"
+    expected_templates = ["app", "app-tw", "default", "default-tw"]
+    for template in expected_templates:
+        template_path = f"{templates_dir}/{template}"
+        assert os.path.isdir(template_path), f"Expected template not found: {template}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cna_tsx_loads():
+    """create-next-app TypeScript loads without errors via tsx (repo CI check)."""
+    r = subprocess.run(
+        ["npx", "tsx", "--version"],
+        capture_output=True, text=True, timeout=30, cwd=CNA,
+    )
+    assert r.returncode == 0, f"tsx check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cna_entry_exists():
+    """create-next-app entry point (index.ts) exists and is readable (repo CI check)."""
+    assert os.path.isfile(ENTRY), f"Entry point not found: {ENTRY}"
+    # Verify it's valid TypeScript by checking basic structure
+    content = open(ENTRY).read()
+    assert "#!/usr/bin/env node" in content, "Missing shebang"
+    assert "import" in content, "Missing imports"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cna_helpers_exist():
+    """create-next-app helper modules exist (repo CI check)."""
+    helpers = ["helpers/get-pkg-manager", "helpers/is-folder-empty", "helpers/validate-pkg"]
+    for helper in helpers:
+        helper_path = f"{CNA}/{helper}.ts"
+        assert os.path.isfile(helper_path), f"Helper not found: {helper_path}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cna_yes_flag_non_interactive():
+    """create-next-app --yes flag works non-interactively (repo CI check)."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest = os.path.join(tmpdir, "yes-test-app")
+        r = subprocess.run(
+            ["npx", "tsx", ENTRY, dest, "--yes", "--skip-install"],
+            capture_output=True, text=True, timeout=60, cwd=CNA,
+            stdin=subprocess.DEVNULL,
+        )
+        assert r.returncode == 0, f"--yes flag failed:\n{r.stderr}"
+        # Verify the app was created
+        assert os.path.isdir(dest), f"App directory not created: {dest}"
+        assert os.path.isfile(os.path.join(dest, "package.json")), "package.json not created"
 
 
 # ---------------------------------------------------------------------------

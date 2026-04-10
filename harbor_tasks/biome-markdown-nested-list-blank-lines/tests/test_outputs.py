@@ -87,7 +87,7 @@ def _run_rust_test(name, timeout=300):
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass — compilation gate
+# pass_to_pass - compilation gate
 # ---------------------------------------------------------------------------
 
 def test_cargo_check():
@@ -102,7 +102,69 @@ def test_cargo_check():
 
 
 # ---------------------------------------------------------------------------
-# fail_to_pass — core behavioral tests
+# pass_to_pass - repo CI/CD checks (enrichment)
+# ---------------------------------------------------------------------------
+
+def test_cargo_fmt_check():
+    """Rust code formatting passes (cargo fmt --check) (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr.decode()[-2000:]}"
+
+
+def test_cargo_clippy():
+    """Clippy lints pass for biome_markdown_parser crate (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "cargo", "clippy", "-p", "biome_markdown_parser",
+            "--all-features", "--all-targets", "--", "-D", "warnings",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr.decode()[-2000:]}"
+
+
+def test_cargo_test_markdown_parser():
+    """All tests in biome_markdown_parser crate pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "biome_markdown_parser", "--no-fail-fast"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stderr.decode()[-2000:]}"
+
+
+def test_cargo_test_markdown_parser_lib():
+    """Library unit tests for biome_markdown_parser pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "biome_markdown_parser", "--lib"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Lib tests failed:\n{r.stderr.decode()[-2000:]}"
+
+
+def test_cargo_test_markdown_parser_doc():
+    """Doc tests for biome_markdown_parser pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "biome_markdown_parser", "--doc"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Doc tests failed:\n{r.stderr.decode()[-2000:]}"
+
+
+# ---------------------------------------------------------------------------
+# fail_to_pass - core behavioral tests
 # ---------------------------------------------------------------------------
 
 def test_double_blank_nested_list_no_errors():
@@ -130,7 +192,7 @@ def test_deeper_nested_blank_lines_no_errors():
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass — regression guard
+# pass_to_pass - regression guard
 # ---------------------------------------------------------------------------
 
 def test_single_blank_nested_list_ok():

@@ -42,6 +42,16 @@ index 193cf74d3bec..ac9d766d6ae3 100644
        }
      } else {
        // Traverse down.
+diff --git a/.claude/AGENTS.md b/.claude/AGENTS.md
+new file mode 100644
+index 000000000000..8c2a52df0059
+--- /dev/null
++++ b/.claude/AGENTS.md
+@@ -0,0 +1,3 @@
++# React Suspense Context
++
++Ensure that context changes propagate to fallback consumers.
 PATCH
 
+git add -N .claude/AGENTS.md
 echo "Fix applied successfully"

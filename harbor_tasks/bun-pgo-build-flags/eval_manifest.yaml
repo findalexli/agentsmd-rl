@@ -72,4 +72,21 @@ checks:
     origin: static
     description: "resolveConfig has real PGO validation logic, not placeholder"
 
-# No rubric rules - this task modifies build scripts, not agent config files
+rubric:
+  - rule: "Explicit over implicit. All config decisions traceable to a line of code. No hidden defaults, no order-dependent global state. Use flat Config struct with values computed once in resolveConfig()."
+    source:
+      path: "scripts/build/CLAUDE.md"
+      lines: "15-19"
+      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
+
+  - rule: "Add compiler flags as entries in flat tables with when predicates. Each flag has a when predicate and desc. Related flags live adjacent so coupling is visible."
+    source:
+      path: "scripts/build/CLAUDE.md"
+      lines: "116-123"
+      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
+
+  - rule: "Follow existing code style - check neighboring files for patterns."
+    source:
+      path: "CLAUDE.md"
+      lines: "507"
+      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"

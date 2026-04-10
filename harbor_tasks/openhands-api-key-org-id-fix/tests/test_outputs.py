@@ -421,3 +421,51 @@ def test_repo_storage_tests():
     assert result.returncode == 0, (
         f'Enterprise storage tests failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}'
     )
+
+
+def test_repo_api_key_store_tests():
+    """PASS-TO-PASS: API key store tests pass (validates API key functionality).
+
+    Tests API key validation including legacy keys without org_id.
+    Relevant to the org_id fix since API keys are central to the fix.
+    """
+    result = subprocess.run(
+        [
+            'poetry', 'run', '--project=enterprise',
+            'pytest',
+            'enterprise/tests/unit/test_api_key_store.py',
+            '-v', '--tb=short', '-x',
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+
+    assert result.returncode == 0, (
+        f'API key store tests failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}'
+    )
+
+
+def test_repo_pre_commit():
+    """PASS-TO-PASS: Enterprise pre-commit hooks pass (code quality checks).
+
+    Runs ruff, mypy, and other code quality checks from the enterprise
+    pre-commit configuration.
+    """
+    result = subprocess.run(
+        [
+            'pre-commit', 'run',
+            '--all-files',
+            '--show-diff-on-failure',
+            '--config', './dev_config/python/.pre-commit-config.yaml',
+        ],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=f'{REPO}/enterprise',
+    )
+
+    assert result.returncode == 0, (
+        f'Pre-commit hooks failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}'
+    )

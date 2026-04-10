@@ -1,31 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T08:16:23.217598",
-  "total_time": 0.0,
-  "sandbox_id": "ixp55bvar5eiwqzo0410w",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T15:01:00.128490",
+  "total_time": 188.66,
+  "sandbox_id": "ixfclqmkg8k6rxybvxgl4",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "ci_commands_found": [
-        "cargo check -p move-unit-test",
-        "cargo test -p move-unit-test --lib",
-        "cargo clippy -p move-unit-test",
-        "cargo fmt --check -p move-unit-test",
-        "cargo test -p move-unit-test --test move_unit_test_testsuite"
-      ],
-      "tests_added": [
-        "test_move_clippy - Verifies clippy passes on move-unit-test crate",
-        "test_move_fmt - Verifies code formatting standards",
-        "test_move_unit_test_integration_tests - Verifies integration tests pass"
-      ],
-      "eval_manifest_updated": true,
-      "source": "CI workflows from .github/workflows/external.yml and .github/workflows/rust.yml"
+      "status": "rate_limited",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 2162.55,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -57,6 +47,13 @@
       "backend": "fireworks",
       "time": 0.86,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 36.33,
+      "notes": ""
     }
   },
   "history": [
@@ -67,6 +64,14 @@
       "backend": "fireworks",
       "time": 0.0,
       "at": "2026-04-09T08:16:23.217598"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 188.66,
+      "at": "2026-04-09T15:01:00.128490"
     }
   ]
 }

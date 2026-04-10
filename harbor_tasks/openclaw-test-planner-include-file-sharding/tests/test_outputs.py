@@ -391,3 +391,29 @@ def test_repo_test_planner():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, "Test-planner tests failed:\n" + r.stderr[-1000:]
+
+# [repo_tests] pass_to_pass
+def test_repo_check():
+    """Repo check passes (pass_to_pass).
+
+    Runs pnpm check to verify conflict markers, Swift policies, and typechecking (tsgo).
+    """
+    r = subprocess.run(
+        ["pnpm", "check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, "Check failed:\n" + r.stderr[-1000:]
+
+
+# [repo_tests] pass_to_pass
+def test_repo_executor_fallback():
+    """Repo test-planner.executor-fallback tests pass (pass_to_pass).
+
+    Runs the specific executor-fallback test suite to ensure executor modifications
+    don't break existing fallback logic.
+    """
+    r = subprocess.run(
+        ["pnpm", "test", "--", "test/scripts/test-planner.executor-fallback.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, "Executor-fallback tests failed:\n" + r.stderr[-1000:]

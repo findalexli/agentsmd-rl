@@ -52,5 +52,32 @@ checks:
     origin: repo_tests
     description: "Repo's type tests pass"
 
+  - id: test_repo_eslint_backend
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's eslint check passes on modified backend directory"
+
 rubric:
-  []
+  - rule: "Run npm run flint before committing to ensure all lint checks pass (eslint, tsc, doclint, etc.)"
+    source:
+      path: "CLAUDE.md"
+      lines: "37-39"
+      commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
+
+  - rule: "Use MCP tests (ctest-mcp) when modifying MCP tools in packages/playwright-core/src/tools/backend/"
+    source:
+      path: "CLAUDE.md"
+      lines: "52,57"
+      commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
+
+  - rule: "Follow DEPS system boundaries - client code never imports server code, server code never imports client code"
+    source:
+      path: "CLAUDE.md"
+      lines: "63-65"
+      commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
+
+  - rule: "Comments should improve readability and explain purpose, not narrate what code does. Code should be self-explanatory when possible."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "43"
+      commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"

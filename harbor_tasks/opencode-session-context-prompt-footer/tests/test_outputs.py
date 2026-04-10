@@ -16,6 +16,7 @@ PROMPT_FILE = f"{REPO}/packages/opencode/src/cli/cmd/tui/component/prompt/index.
 SESSION_FILE = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/index.tsx"
 HEADER_FILE = f"{REPO}/packages/opencode/src/cli/cmd/tui/routes/session/header.tsx"
 APP_FILE = f"{REPO}/packages/opencode/src/cli/cmd/tui/app.tsx"
+OPENCODE_PKG = f"{REPO}/packages/opencode"
 
 
 def _node(script: str) -> str:
@@ -306,6 +307,70 @@ def test_session_not_stubbed():
     """session/index.tsx must have substantial content (>300 lines)."""
     lines = Path(SESSION_FILE).read_text().splitlines()
     assert len(lines) > 300, f"session/index.tsx only has {len(lines)} lines — likely stubbed"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests (repo_tests) — actual CI commands that cover modified code
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+# CI command from packages/opencode/package.json: "typecheck": "tsgo --noEmit"
+# This validates the TypeScript compilation of the modified files
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes on opencode package (pass_to_pass).
+
+    Modified files:
+    - packages/opencode/src/cli/cmd/tui/app.tsx
+    - packages/opencode/src/cli/cmd/tui/component/prompt/index.tsx
+    - packages/opencode/src/cli/cmd/tui/routes/session/header.tsx (deleted)
+    - packages/opencode/src/cli/cmd/tui/routes/session/index.tsx
+    """
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=OPENCODE_PKG,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+# CI command from packages/opencode/package.json: "test": "bun test --timeout 30000"
+# Tests the prompt component functionality related to the PR changes
+def test_repo_prompt_part_tests():
+    """Repo's prompt-part tests pass (pass_to_pass).
+
+    Tests the prompt/part.ts module which is imported by the modified
+    prompt/index.tsx file. Validates prompt part handling (strip, assign).
+    """
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/cli/cmd/tui/prompt-part.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=OPENCODE_PKG,
+    )
+    assert r.returncode == 0, f"Prompt part tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+# CI command from packages/opencode/package.json: "test": "bun test --timeout 30000"
+# Tests TUI thread functionality related to session routes
+def test_repo_tui_thread_tests():
+    """Repo's TUI thread tests pass (pass_to_pass).
+
+    Tests the TUI thread module which is related to session handling.
+    Validates basic TUI functionality that the session route depends on.
+    """
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/cli/tui/thread.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=OPENCODE_PKG,
+    )
+    assert r.returncode == 0, f"TUI thread tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

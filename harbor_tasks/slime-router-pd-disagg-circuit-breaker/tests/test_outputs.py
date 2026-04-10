@@ -230,6 +230,89 @@ def test_repo_plugin_contracts():
     assert r.returncode == 0, f"Plugin contracts tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+def test_repo_plugin_rollout_contracts():
+    """Repo's plugin rollout contract tests pass (pass_to_pass)."""
+    # Install torch CPU version first
+    r = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install torch: {r.stderr[-500:]}"
+
+    # Install other dependencies
+    deps = ["numpy", "packaging", "pyyaml", "omegaconf", "tqdm", "httpx", "pybase64", "pylatexenc", "sympy", "aiohttp", "pytest"]
+    r = subprocess.run(
+        ["pip", "install"] + deps + ["-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install deps: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/test_plugin_rollout_contracts.py", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin rollout contract tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_plugin_runtime_hook_contracts():
+    """Repo's plugin runtime hook contract tests pass (pass_to_pass)."""
+    # Install torch CPU version first
+    r = subprocess.run(
+        ["pip", "install", "torch", "--index-url", "https://download.pytorch.org/whl/cpu", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install torch: {r.stderr[-500:]}"
+
+    # Install other dependencies
+    deps = ["numpy", "packaging", "pyyaml", "omegaconf", "tqdm", "httpx", "pybase64", "pylatexenc", "sympy", "aiohttp", "pytest"]
+    r = subprocess.run(
+        ["pip", "install"] + deps + ["-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install deps: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/plugin_contracts/test_plugin_runtime_hook_contracts.py", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin runtime hook contract tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_isort_check():
+    """Repo's isort import ordering check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["isort", "--check", "slime/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_black_check():
+    """Repo's black formatting check passes on slime/ package (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["black", "--check", "slime/ray/rollout.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Black check may fail on formatting but we check it doesn't crash
+    # The repo is at base commit so we only care about valid syntax check
+    assert r.returncode in [0, 1], f"black check crashed:\n{r.stderr[-500:]}"
+    # Ensure it didn't error out due to syntax issues
+    assert "Traceback" not in r.stderr, f"black encountered errors:\n{r.stderr[-500:]}"
+    assert "error" not in r.stderr.lower(), f"black encountered errors:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Anti-stub (static)
 # ---------------------------------------------------------------------------

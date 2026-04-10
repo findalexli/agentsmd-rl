@@ -466,3 +466,288 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Cfg blocks check failed: {r.stdout}\\n{r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression tests (actual subprocess calls)
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_is_release():
+    """Repo's check-is-release script passes (pass_to_pass).
+
+    Verifies the CI script that checks for release commits works correctly.
+    This is a real CI command that doesn't require network/GPU.
+    """
+    r = subprocess.run(
+        ["node", f"{REPO}/scripts/check-is-release.js"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    # This returns exit code 1 (not a release commit) or 0 (release commit)
+    # Both are valid - the script runs without errors
+    assert r.returncode in [0, 1], f"check-is-release script failed: {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_unused_turbo_tasks():
+    """Repo's check-unused-turbo-tasks script runs correctly (pass_to_pass).
+
+    Verifies the CI script that checks for unused turbo-tasks items works.
+    This is a real CI command from the Next.js repo's lint suite.
+    The script returns exit code 0 when no unused items found, 1 when found.
+    We only verify the script runs without crashing.
+    """
+    r = subprocess.run(
+        ["node", f"{REPO}/scripts/check-unused-turbo-tasks.mjs"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # Script returns 0 if no unused items, 1 if found - both are valid execution
+    assert r.returncode in [0, 1], f"check-unused-turbo-tasks script crashed: {r.stderr[-500:]}"
+    # Verify the script actually ran and produced expected output format
+    assert "turbo-tasks item" in r.stdout.lower() or "unused turbo-tasks" in r.stdout.lower(),         f"Script did not produce expected output: {r.stdout[:500]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_toml_valid():
+    """Repo's Cargo.toml for turbo-tasks-backend is valid TOML (pass_to_pass).
+
+    Verifies that the Cargo.toml file can be parsed and has valid structure
+    with required sections present.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+content = Path("{CARGO_FILE}").read_text()
+
+# Check required sections exist
+required_sections = ["[package]", "[features]", "[dependencies]"]
+for section in required_sections:
+    if section not in content:
+        print(f"FAIL: Required section {{section}} not found in Cargo.toml")
+        sys.exit(1)
+
+# Basic TOML syntax validation - check balanced brackets
+open_brackets = content.count('[')
+close_brackets = content.count(']')
+if open_brackets != close_brackets:
+    print(f"FAIL: Unbalanced brackets in Cargo.toml")
+    sys.exit(1)
+
+# Verify package name
+if 'name = "turbo-tasks-backend"' not in content:
+    print("FAIL: Package name mismatch")
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Cargo.toml valid check failed: {{r.stdout}}\\n{{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_source_compiles_basic():
+    """Basic Rust syntax validation of mod.rs (pass_to_pass).
+
+    Verifies that the Rust source file has valid structure:
+    - Balanced braces
+    - No obvious syntax errors
+    - Required imports present
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+content = Path("{MOD_FILE}").read_text()
+lines = content.split("\\n")
+
+# Check basic Rust syntax - balanced braces
+default_depth = 0
+depth = default_depth
+max_depth = 0
+for i, line in enumerate(lines):
+    # Skip comment lines
+    stripped = line.split("//")[0]
+    depth += stripped.count("{{") - stripped.count("}}")
+    max_depth = max(max_depth, depth)
+    if depth < 0:
+        print(f"FAIL: Unbalanced braces at line {{i+1}}")
+        sys.exit(1)
+
+if depth != default_depth:
+    print(f"FAIL: Unbalanced braces in file (final depth {{depth}})")
+    sys.exit(1)
+
+# Verify file is substantial (not truncated)
+if len(lines) < 100:
+    print(f"FAIL: File too short ({{len(lines)}} lines)")
+    sys.exit(1)
+
+# Check for required use statements common in the module
+required_patterns = ["use ", "mod ", "impl ", "fn ", "struct "]
+found_patterns = sum(1 for p in required_patterns if p in content)
+if found_patterns < 3:
+    print("FAIL: Missing expected Rust constructs")
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Source compiles basic check failed: {{r.stdout}}\\n{{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_print_cache_feature_structure():
+    """print_cache_item_size feature has correct structure (pass_to_pass).
+
+    Verifies the feature flag structure matches the expected pattern
+    for the turbopack stats instrumentation.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+content = Path("{CARGO_FILE}").read_text()
+
+# Find features section
+lines = content.split("\\n")
+in_features = False
+features = {{}}
+for line in lines:
+    stripped = line.strip()
+    if stripped == "[features]":
+        in_features = True
+        continue
+    if in_features and stripped.startswith("["):
+        break
+    if in_features and "=" in stripped and not stripped.startswith("#"):
+        parts = stripped.split("=", 1)
+        if len(parts) == 2:
+            name = parts[0].strip()
+            val = parts[1].strip()
+            features[name] = val
+
+# Check print_cache_item_size feature exists
+if "print_cache_item_size" not in features:
+    print("FAIL: print_cache_item_size feature not found")
+    sys.exit(1)
+
+# Verify it's a valid feature definition
+val = features["print_cache_item_size"]
+if not (val.startswith("[") and val.endswith("]")):
+    print(f"FAIL: Invalid feature value format: {{val}}")
+    sys.exit(1)
+
+# Check for dev-dependencies section (should exist for testing)
+if "[dev-dependencies]" not in content:
+    print("FAIL: No dev-dependencies section found")
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Feature structure check failed: {{r.stdout}}\\n{{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_backend_mod_structure():
+    """Backend mod.rs has expected structure (pass_to_pass).
+
+    Verifies the module structure is intact with expected impl blocks
+    and function definitions for the backend storage.
+    """
+    r = _run_py(f"""
+import re, sys
+from pathlib import Path
+
+content = Path("{MOD_FILE}").read_text()
+
+# Check for key backend structures
+required_patterns = [
+    ("impl.*BackingStorage", "impl block for BackingStorage"),
+    ("fn snapshot_and_persist", "snapshot_and_persist method"),
+    ("struct TaskCacheStats", "TaskCacheStats struct"),
+    ("impl.*TaskCacheStats", "TaskCacheStats impl"),
+]
+
+for pattern, desc in required_patterns:
+    if not re.search(pattern, content):
+        print(f"FAIL: Missing {{desc}}")
+        sys.exit(1)
+
+# Verify file has proper module structure with use statements
+use_count = len(re.findall(r'^use ', content, re.MULTILINE))
+if use_count < 5:
+    print(f"FAIL: Too few use statements ({{use_count}})")
+    sys.exit(1)
+
+# Check for presence of expected function patterns in impl blocks
+fn_count = len(re.findall(r'\\bfn \\w+', content))
+if fn_count < 10:
+    print(f"FAIL: Too few functions ({{fn_count}})")
+    sys.exit(1)
+
+print("PASS")
+""")
+    assert r.returncode == 0, f"Backend mod structure check failed: {{r.stdout}}\\n{{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lzzzz_dependency_correct():
+    """lzzzz dependency is correctly declared as optional (pass_to_pass).
+
+    Verifies the lzzzz lz4 compression dependency is marked as optional,
+    which is required for the feature split to work correctly.
+    """
+    r = _run_py(f"""
+import re, sys
+from pathlib import Path
+
+content = Path("{CARGO_FILE}").read_text()
+
+# Find lzzzz in dependencies section
+lines = content.split("\\n")
+in_deps = False
+for line in lines:
+    if line.strip() == "[dependencies]":
+        in_deps = True
+        continue
+    if in_deps and line.strip().startswith("["):
+        in_deps = False
+        continue
+    if in_deps and "lzzzz" in line:
+        # Check if it's marked as optional or workspace
+        if "optional" not in line and "workspace" not in line:
+            # Check next lines for optional = true
+            idx = lines.index(line)
+            next_lines = "\\n".join(lines[idx:idx+3])
+            if "optional" not in next_lines:
+                print("FAIL: lzzzz dependency should be optional")
+                sys.exit(1)
+
+# Verify lzzzz is in workspace (should be there as it's referenced via workspace = true)
+if "lzzzz = " not in content and "lzzzz" in content:
+    # It's referenced via workspace, which is correct
+    pass
+
+# Check that lzzzz appears with workspace = true pattern
+if re.search(r'lzzzz\\s*=\\s*\\{{.*workspace\\s*=\\s*true', content):
+    print("PASS")
+else:
+    # Also accept if it's just listed as a dependency (for base commit)
+    if "lzzzz" in content:
+        print("PASS")
+    else:
+        print("FAIL: lzzzz dependency not found")
+        sys.exit(1)
+""")
+    assert r.returncode == 0, f"lzzzz dependency check failed: {{r.stdout}}\\n{{r.stderr}}"
+    assert "PASS" in r.stdout

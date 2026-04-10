@@ -437,6 +437,21 @@ def test_no_wildcard_imports():
 # ---------------------------------------------------------------------------
 
 
+def test_repo_py_compile():
+    """All test files must compile to valid Python bytecode (pass_to_pass).
+
+    Matches Python pre-commit pattern: py_compile validates syntax AND
+    byte-compilation. Catches syntax errors that AST parsing might miss.
+    """
+    import py_compile
+
+    for fpath in ALL_FILES:
+        try:
+            py_compile.compile(fpath, doraise=True)
+        except py_compile.PyCompileError as e:
+            assert False, f"{fpath}: Failed to compile - {e}"
+
+
 def test_repo_test_classes_follow_naming():
     """All test classes must follow Test* naming convention (pass_to_pass).
 
@@ -559,3 +574,24 @@ def test_repo_pyproject_toml_valid():
             tomllib.loads(pyproject_path.read_text())
         except Exception as e:
             assert False, f"pyproject.toml: Invalid TOML - {e}"
+
+
+def test_repo_json_files_valid():
+    """All JSON files in the repo must be valid (pass_to_pass).
+
+    Matches pre-commit check-json hook.
+    """
+    import json
+
+    repo_json_files = [
+        f"{REPO}/.claude/settings.json",
+        f"{REPO}/skills-lock.json",
+    ]
+
+    for fpath in repo_json_files:
+        path = Path(fpath)
+        if path.exists():
+            try:
+                json.loads(path.read_text())
+            except json.JSONDecodeError as e:
+                assert False, f"{fpath}: Invalid JSON - {e}"

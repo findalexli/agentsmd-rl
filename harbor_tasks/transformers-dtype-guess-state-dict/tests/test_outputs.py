@@ -134,6 +134,20 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI-style checks using real repo commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "src/transformers/modeling_utils.py"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 

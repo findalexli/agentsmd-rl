@@ -34,37 +34,136 @@ def _run_node(script: str, timeout: int = 15) -> subprocess.CompletedProcess:
     )
 
 
-def _build_extraction_preamble() -> str:
-    """Build JS that extracts combineDebounceEntries + helpers from the TS source.
+def _run_ts_script(ts_code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Write TypeScript code to a temp file and run it with --experimental-strip-types."""
+    import tempfile
+    import os
 
-    Uses Node 22's built-in stripTypeScriptTypes for reliable TS->JS conversion.
+    # Write the TS code to a temp file
+    fd, path = tempfile.mkstemp(suffix='.ts', dir='/tmp')
+    try:
+        os.write(fd, ts_code.encode('utf-8'))
+        os.close(fd)
+
+        # Run with node --experimental-strip-types
+        return subprocess.run(
+            ["node", "--experimental-strip-types", path],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    finally:
+        try:
+            os.unlink(path)
+        except:
+            pass
+
+
+def _build_test_script(test_body: str) -> str:
+    """Build a complete TypeScript test script that can run standalone.
+
+    This approach reads the source file and creates a minimal test harness
+    by keeping only the function declarations and type definitions, replacing
+    the imports with minimal mock types.
     """
-    return textwrap.dedent("""\
-        const fs = require('fs');
-        const { stripTypeScriptTypes } = require('node:module');
-        const src = fs.readFileSync('%s/%s', 'utf8');
+    src = _read_target()
 
-        function extractFn(name) {
-            const re = new RegExp('(?:export\\\\s+)?function\\\\s+' + name + '\\\\s*(?:<[^>]*>)?\\\\s*\\\\(');
-            const idx = src.search(re);
-            if (idx === -1) return '';
-            let braces = 0, i = idx;
-            while (i < src.length) {
-                if (src[i] === '{') braces++;
-                if (src[i] === '}') { braces--; if (braces === 0) { i++; break; } }
-                i++;
-            }
-            return src.substring(idx, i);
-        }
+    # Create a minimal version of the file with mock types replacing imports
+    # Keep everything after the imports but replace the import statements
+    lines = src.split('\n')
+    result_lines = []
 
-        const combineFn = extractFn('combineDebounceEntries');
-        const normalizeFn = extractFn('normalizeDebounceMessageText');
-        const sanitizeFn = extractFn('sanitizeDebounceEntry');
+    # Skip import lines - we'll provide mock types
+    in_import = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('import '):
+            continue
+        result_lines.append(line)
 
-        const tsCode = [normalizeFn, sanitizeFn, combineFn].join('\\\\n\\\\n');
-        const jsCode = stripTypeScriptTypes(tsCode, { mode: 'strip', sourceUrl: 'extracted.ts' });
-        eval(jsCode);
-    """) % (REPO, TARGET)
+    modified_src = '\n'.join(result_lines)
+
+    # Add mock type definitions at the top
+    mock_types = '''// Mock type definitions for testing
+type NormalizedWebhookMessage = {
+  text: string | null | undefined;
+  senderId: string;
+  senderIdExplicit: boolean;
+  isGroup: boolean;
+  messageId: string;
+  timestamp: number;
+  attachments?: any[];
+  chatGuid?: string;
+  chatIdentifier?: string;
+  chatId?: string | number;
+  balloonBundleId?: string;
+  associatedMessageGuid?: string;
+  fromMe?: boolean;
+  replyToId?: string;
+  replyToBody?: string;
+  replyToSender?: string;
+};
+
+type BlueBubblesDebounceEntry = {
+  message: NormalizedWebhookMessage;
+  target: { channelId: string };
+};
+
+type WebhookTarget = any;
+type BlueBubblesCoreRuntime = any;
+type OpenClawConfig = any;
+
+// Stub for core dependency used in resolveBlueBubblesDebounceMs
+const core = { channel: { debounce: { resolveInboundDebounceMs: () => 500 } } };
+
+'''
+
+    # Now we need to extract only the functions we need plus any supporting types
+    # Find the three functions and the DEFAULT_INBOUND_DEBOUNCE_MS constant
+    import re
+
+    def extract_until_matching_brace(start_pattern: str, src: str) -> str:
+        """Extract code from start_pattern to the matching closing brace."""
+        match = re.search(start_pattern, src)
+        if not match:
+            return ''
+
+        start = match.start()
+        i = match.end()
+
+        # Find first opening brace
+        while i < len(src) and src[i] != '{':
+            i += 1
+        if i >= len(src):
+            return ''
+
+        # Count braces
+        brace_depth = 0
+        while i < len(src):
+            if src[i] == '{':
+                brace_depth += 1
+            elif src[i] == '}':
+                brace_depth -= 1
+                if brace_depth == 0:
+                    return src[start:i+1]
+            i += 1
+        return ''
+
+    # Extract each function
+    normalize_fn = extract_until_matching_brace(
+        r'function\s+normalizeDebounceMessageText\s*\(', src)
+    sanitize_fn = extract_until_matching_brace(
+        r'function\s+sanitizeDebounceEntry\s*\(', src)
+    combine_fn = extract_until_matching_brace(
+        r'function\s+combineDebounceEntries\s*\(', src)
+
+    # Also extract the DEFAULT_INBOUND_DEBOUNCE_MS constant
+    debounce_ms_match = re.search(r'const\s+DEFAULT_INBOUND_DEBOUNCE_MS\s*=\s*\d+;', src)
+    debounce_ms = debounce_ms_match.group(0) if debounce_ms_match else 'const DEFAULT_INBOUND_DEBOUNCE_MS = 500;'
+
+    # Build the test script
+    return mock_types + '\n' + debounce_ms + '\n\n' + normalize_fn + '\n\n' + sanitize_fn + '\n\n' + combine_fn + '\n' + test_body
 
 
 def _ensure_deps_installed() -> None:
@@ -101,11 +200,8 @@ def test_null_text_no_crash():
 
     Uses multi-entry batches to trigger the combine path where .text.trim() is called.
     """
-    preamble = _build_extraction_preamble()
-
-    script = preamble + textwrap.dedent("""\
-
-        function mkEntry(text, id, ts) {
+    test_body = textwrap.dedent("""
+        function mkEntry(text: any, id: string, ts: number): BlueBubblesDebounceEntry {
             return {
                 message: {
                     text: text, senderId: '+15551234567', senderIdExplicit: true,
@@ -130,24 +226,23 @@ def test_null_text_no_crash():
                     console.error('FAIL ' + c.label + ': result.text is ' + typeof result.text);
                     process.exit(1);
                 }
-            } catch (e) {
+            } catch (e: any) {
                 console.error('CRASH on ' + c.label + ': ' + e.message);
                 process.exit(1);
             }
         }
         console.log('OK');
     """)
-    r = _run_node(script)
+    ts_script = _build_test_script(test_body)
+    r = _run_ts_script(ts_script)
     assert r.returncode == 0, f"Crashed on null/undefined text entries: {r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_mixed_null_and_valid_entries():
     """Batch with null-text + valid-text entries combines without crash, valid text preserved."""
-    preamble = _build_extraction_preamble()
-    script = preamble + textwrap.dedent("""\
-
-        function mkEntry(text, id, ts) {
+    test_body = textwrap.dedent("""
+        function mkEntry(text: any, id: string, ts: number): BlueBubblesDebounceEntry {
             return {
                 message: {
                     text: text, senderId: '+15551234567', senderIdExplicit: true,
@@ -191,17 +286,16 @@ def test_mixed_null_and_valid_entries():
 
         console.log('OK');
     """)
-    r = _run_node(script)
+    ts_script = _build_test_script(test_body)
+    r = _run_ts_script(ts_script)
     assert r.returncode == 0, f"Crashed or lost valid text: {r.stderr}\n{r.stdout}"
 
 
 # [pr_diff] fail_to_pass
 def test_all_null_entries_produce_empty_text():
     """When all entries have null text, combined text is empty string (not crash)."""
-    preamble = _build_extraction_preamble()
-    script = preamble + textwrap.dedent("""\
-
-        function mkNull(id, ts) {
+    test_body = textwrap.dedent("""
+        function mkNull(id: string, ts: number): BlueBubblesDebounceEntry {
             return {
                 message: {
                     text: null, senderId: '+15551234567', senderIdExplicit: true,
@@ -236,7 +330,8 @@ def test_all_null_entries_produce_empty_text():
 
         console.log('OK');
     """)
-    r = _run_node(script)
+    ts_script = _build_test_script(test_body)
+    r = _run_ts_script(ts_script)
     assert r.returncode == 0, f"Crashed on all-null entries: {r.stderr}\n{r.stdout}"
 
 
@@ -247,10 +342,8 @@ def test_all_null_entries_produce_empty_text():
 # [pr_diff] pass_to_pass
 def test_valid_entries_combine_text():
     """Multiple valid-text entries combine correctly (text joined, latest timestamp used)."""
-    preamble = _build_extraction_preamble()
-    script = preamble + textwrap.dedent("""\
-
-        function mkEntry(text, id, ts) {
+    test_body = textwrap.dedent("""
+        function mkEntry(text: string, id: string, ts: number): BlueBubblesDebounceEntry {
             return {
                 message: {
                     text: text, senderId: '+15551234567', senderIdExplicit: true,
@@ -292,17 +385,16 @@ def test_valid_entries_combine_text():
 
         console.log('OK');
     """)
-    r = _run_node(script)
+    ts_script = _build_test_script(test_body)
+    r = _run_ts_script(ts_script)
     assert r.returncode == 0, f"Valid entry combination failed: {r.stderr}\n{r.stdout}"
 
 
 # [pr_diff] pass_to_pass
 def test_single_valid_entry_passthrough():
     """A single valid entry is returned as-is without mangling."""
-    preamble = _build_extraction_preamble()
-    script = preamble + textwrap.dedent("""\
-
-        function mkEntry(text, id, ts, sender, isGroup) {
+    test_body = textwrap.dedent("""
+        function mkEntry(text: string, id: string, ts: number, sender: string, isGroup: boolean): BlueBubblesDebounceEntry {
             return {
                 message: {
                     text: text, senderId: sender, senderIdExplicit: true,
@@ -325,8 +417,8 @@ def test_single_valid_entry_passthrough():
         }
 
         // Case 2: message with unicode
-        const r2 = combineDebounceEntries([mkEntry('Hey! \\u{1F44B} How are you?', 'msg-emoji', 9000, '+15550001111', false)]);
-        if (r2.text !== 'Hey! \\u{1F44B} How are you?') {
+        const r2 = combineDebounceEntries([mkEntry('Hey! 🙋 How are you?', 'msg-emoji', 9000, '+15550001111', false)]);
+        if (r2.text !== 'Hey! 🙋 How are you?') {
             console.error('FAIL case2: text mangled: ' + JSON.stringify(r2.text));
             process.exit(1);
         }
@@ -340,7 +432,8 @@ def test_single_valid_entry_passthrough():
 
         console.log('OK');
     """)
-    r = _run_node(script)
+    ts_script = _build_test_script(test_body)
+    r = _run_ts_script(ts_script)
     assert r.returncode == 0, f"Single entry passthrough failed: {r.stderr}\n{r.stdout}"
 
 
@@ -489,3 +582,18 @@ def test_repo_bluebubbles_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"BlueBubbles extension tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-500:]}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_lint():
+    """Repo's oxlint passes on target file (pass_to_pass).
+
+    Runs oxlint type-aware linting on the target file to ensure
+    the fix doesn't introduce lint errors.
+    """
+    _ensure_deps_installed()
+    r = subprocess.run(
+        ["./node_modules/.bin/oxlint", "--type-aware", f"{REPO}/{TARGET}"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

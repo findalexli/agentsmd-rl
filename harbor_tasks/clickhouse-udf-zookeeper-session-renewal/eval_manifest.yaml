@@ -12,48 +12,84 @@ checks:
     origin: repo_tests
     description: Target file exists with refreshObjects function and ZooKeeperRetriesControl
 
+  # Repo CI tests - subprocess.run() commands that run actual CI checks
+  - id: test_repo_no_tabs
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI no-tabs style check - source files contain no tab characters
+
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI trailing whitespace check - source files have no trailing whitespace
+
+  - id: test_repo_no_cerr_cout
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI std::cerr/std::cout check - use logging macros instead
+
+  - id: test_repo_no_std_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI std::format check - prefer fmt::format for performance
+
+  - id: test_repo_no_raw_assert
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI raw assert check - use CH_ASSERT instead of raw assert()
+
+  - id: test_repo_no_builtin_unreachable
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI __builtin_unreachable check - use UNREACHABLE() macro
+
+  - id: test_repo_no_std_filesystem_symlink
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI std::filesystem::is_symlink check - use DB::FS::isSymlink
+
+  - id: test_repo_clang_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI clang-format check - code follows formatting rules
+
+  # Static checks - file content validation
+  - id: test_clickhouse_allman_braces
+    type: pass_to_pass
+    origin: static
+    description: Code follows ClickHouse Allman brace style convention
+
+  - id: test_clickhouse_naming_conventions
+    type: pass_to_pass
+    origin: static
+    description: Code follows ClickHouse naming conventions (CamelCase types, snake_case members)
+
+  - id: test_clickhouse_logger_usage
+    type: pass_to_pass
+    origin: static
+    description: Uses ClickHouse LOG_* macros instead of std::cout/std::cerr
+
+  - id: test_exception_handling_patterns
+    type: pass_to_pass
+    origin: static
+    description: Follows ClickHouse exception handling patterns (tryLogCurrentException, KeeperException)
+
+  - id: test_cpp_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: C++ code passes basic syntax validation (balanced braces, parentheses)
+
+  # Fail-to-pass checks - Core behavioral fixes
   - id: test_no_sleep_in_code
     type: fail_to_pass
     origin: pr_diff
     description: No sleep calls in code (ClickHouse rule - never use sleep for race conditions)
 
   - id: test_deletion_logging
-    type: pass_to_pass
-    origin: agent_config
-    source: AGENTS.md
+    type: fail_to_pass
+    origin: pr_diff
     description: No unlogged deletions (ClickHouse deletion logging rule)
 
-  - id: test_clickhouse_allman_braces
-    type: pass_to_pass
-    origin: repo_tests
-    description: Code follows ClickHouse Allman brace style convention
-
-  - id: test_clickhouse_naming_conventions
-    type: pass_to_pass
-    origin: repo_tests
-    description: Code follows ClickHouse naming conventions (CamelCase types, snake_case members)
-
-  - id: test_no_raw_assert
-    type: pass_to_pass
-    origin: repo_tests
-    description: No raw assert() calls (ClickHouse uses CH_ASSERT)
-
-  - id: test_clickhouse_logger_usage
-    type: pass_to_pass
-    origin: repo_tests
-    description: Uses ClickHouse LOG_* macros instead of std::cout/std::cerr
-
-  - id: test_exception_handling_patterns
-    type: pass_to_pass
-    origin: repo_tests
-    description: Follows ClickHouse exception handling patterns (tryLogCurrentException, KeeperException)
-
-  - id: test_cpp_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: C++ code passes basic syntax validation via clang-format
-
-  # Fail-to-pass: Core behavioral fixes
   - id: test_session_renewal_in_retry_loop
     type: fail_to_pass
     origin: pr_diff
@@ -70,4 +106,27 @@ checks:
     description: Comments explain session renewal via zookeeper_getter and expired session handling
 
 # Rubric for subjective evaluation criteria
-rubric: []
+rubric:
+  - rule: "Use Allman-style braces (opening brace on a new line) for C++ code."
+    source:
+      path: "AGENTS.md"
+      lines: "95"
+      commit: "255e0773744e57c9b6435e713a6f8417ee690ea5"
+
+  - rule: "When mentioning logical errors, say 'exception' instead of 'crash', because they don't crash the server in the release build."
+    source:
+      path: "AGENTS.md"
+      lines: "13"
+      commit: "255e0773744e57c9b6435e713a6f8417ee690ea5"
+
+  - rule: "When writing comments, wrap literal names from ClickHouse SQL language, classes and functions inside inline code blocks, such as: `MergeTree`."
+    source:
+      path: "AGENTS.md"
+      lines: "9"
+      commit: "255e0773744e57c9b6435e713a6f8417ee690ea5"
+
+  - rule: "When writing comments, write names of functions and methods as `f` instead of `f()` for mathematical purity when referring to a function itself rather than its application."
+    source:
+      path: "AGENTS.md"
+      lines: "12"
+      commit: "255e0773744e57c9b6435e713a6f8417ee690ea5"

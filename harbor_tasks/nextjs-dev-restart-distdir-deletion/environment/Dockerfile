@@ -6,7 +6,7 @@ ENV LC_ALL=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux python3 && \
+        git curl ca-certificates build-essential tmux python3 python3-pytest && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /workspace /logs/verifier
@@ -22,3 +22,4 @@ RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"
 
 WORKDIR /workspace/next.js
+RUN pip3 install pytest-ctrf --break-system-packages

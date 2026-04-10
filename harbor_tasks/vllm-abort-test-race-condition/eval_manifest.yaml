@@ -68,7 +68,18 @@ checks:
     description: "Repo's typos check passes on modified file"
 
 rubric:
-  []
-  # AGENTS.md contains only process/workflow rules (duplicate-work checks,
-  # commit message format, use uv, run pre-commit, etc.) — none are
-  # evaluable from a code diff alone. No rubric rules apply.
+  - rule: "Run pre-commit hooks (ruff, mypy) on changed files to ensure code style and type safety."
+    source:
+      path: "AGENTS.md"
+      lines: "86-102"
+      commit: "171775f306a333a9cf105bfd533bf3e113d401d9"
+  - rule: "Use `uv` and `.venv/bin/python` for Python commands; never use system `python3` or bare `pip install`."
+    source:
+      path: "AGENTS.md"
+      lines: "42"
+      commit: "171775f306a333a9cf105bfd533bf3e113d401d9"
+  - rule: "Prefer 'search for X' patterns instead of hardcoding file paths that may change."
+    source:
+      path: "docs/contributing/editing-agent-instructions.md"
+      lines: "51-52"
+      commit: "171775f306a333a9cf105bfd533bf3e113d401d9"

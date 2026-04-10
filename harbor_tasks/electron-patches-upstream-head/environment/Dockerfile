@@ -12,4 +12,7 @@ RUN git clone --filter=blob:none https://github.com/electron/electron.git /works
 # Create logs directory for verifier
 RUN mkdir -p /logs/verifier
 
+# Create /workspace/task directory and symlink tests
+RUN mkdir -p /workspace/task && ln -s /tests /workspace/task/tests
+
 WORKDIR /workspace

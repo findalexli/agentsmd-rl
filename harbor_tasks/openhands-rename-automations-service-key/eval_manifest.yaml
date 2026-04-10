@@ -49,4 +49,31 @@ checks:
     origin: repo_tests
     description: "Enterprise service routes pass ruff linting"
 
-rubric: []
+  - id: test_repo_enterprise_service_routes_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Enterprise service routes pass ruff format check"
+
+  - id: test_repo_service_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "service.py has valid Python syntax"
+
+rubric:
+  - rule: "Run pre-commit hooks before making changes. Use `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml` for backend changes."
+    source:
+      path: "AGENTS.md"
+      lines: "16-24"
+      commit: "3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a"
+
+  - rule: "Follow enterprise import patterns: use relative imports without `enterprise.` prefix in enterprise code. Example: `from storage.database import ...` not `from enterprise.storage.database import ...`"
+    source:
+      path: "AGENTS.md"
+      lines: "202-205"
+      commit: "3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a"
+
+  - rule: "Enterprise code must pass linting and type checking. Use `poetry run pre-commit run --all-files --show-diff-on-failure --config ./dev_config/python/.pre-commit-config.yaml`"
+    source:
+      path: "AGENTS.md"
+      lines: "188-194"
+      commit: "3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a"

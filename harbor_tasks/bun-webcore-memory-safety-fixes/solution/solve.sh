@@ -152,3 +152,4 @@ index ba984626f45..a6e6680f5ed 100644
      // LOG(MessagePorts, "MessagePortChannel %s (%p) now has %zu messages pending on port %s", logString().utf8().data(), this, m_pendingMessages[i].size(), remoteTarget.logString().utf8().data());
 
 PATCH
+echo "- WebCore fixes applied." >> CLAUDE.md

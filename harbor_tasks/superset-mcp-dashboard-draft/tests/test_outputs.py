@@ -123,11 +123,11 @@ def test_repo_mcp_dashboard_schemas():
     # Check if we can import superset
     if not _check_import_works():
         pytest.skip("Superset dependencies not fully installed, skipping repo tests")
-    
+
     test_file = REPO_ROOT / "tests/unit_tests/mcp_service/dashboard/test_dashboard_schemas.py"
     if not test_file.exists():
         pytest.skip(f"Test file not found: {test_file}")
-    
+
     r = subprocess.run(
         ["pytest", str(test_file), "-v", "--tb=short"],
         capture_output=True,
@@ -143,11 +143,11 @@ def test_repo_mcp_dashboard_generation():
     # Check if we can import superset
     if not _check_import_works():
         pytest.skip("Superset dependencies not fully installed, skipping repo tests")
-    
+
     test_file = REPO_ROOT / "tests/unit_tests/mcp_service/dashboard/tool/test_dashboard_generation.py"
     if not test_file.exists():
         pytest.skip(f"Test file not found: {test_file}")
-    
+
     r = subprocess.run(
         ["pytest", str(test_file), "-v", "--tb=short"],
         capture_output=True,
@@ -156,6 +156,102 @@ def test_repo_mcp_dashboard_generation():
         cwd=REPO_ROOT,
     )
     assert r.returncode == 0, f"MCP dashboard generation tests failed: {r.stderr[-500:]}"
+
+
+# =============================================================================
+# ADDITIONAL PASS-TO-PASS TESTS: CI validation (p2p enrichment)
+# =============================================================================
+
+
+def test_repo_schema_syntax():
+    """Pass-to-pass test: MCP dashboard schema file is valid Python syntax (CI check).
+
+    Origin: repo_tests - Validates the actual schema file can be parsed by Python.
+    This is equivalent to running: python -m py_compile schemas.py
+    """
+    schema_file = REPO_ROOT / "superset/mcp_service/dashboard/schemas.py"
+    r = subprocess.run(
+        ["python", "-m", "py_compile", str(schema_file)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Schema file has syntax errors: {r.stderr}"
+
+
+def test_repo_test_file_syntax():
+    """Pass-to-pass test: MCP dashboard test file is valid Python syntax (CI check).
+
+    Origin: repo_tests - Validates the actual test file can be parsed by Python.
+    This is equivalent to running: python -m py_compile test_dashboard_generation.py
+    """
+    test_file = REPO_ROOT / "tests/unit_tests/mcp_service/dashboard/tool/test_dashboard_generation.py"
+    r = subprocess.run(
+        ["python", "-m", "py_compile", str(test_file)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Test file has syntax errors: {r.stderr}"
+
+
+def test_repo_schema_ast_parse():
+    """Pass-to-pass test: MCP schema AST parsing works (CI check).
+
+    Origin: repo_tests - Validates the schema can be parsed and analyzed via AST.
+    Mirrors the approach used by code analysis tools like mypy, pylint, ruff.
+    """
+    schema_file = REPO_ROOT / "superset/mcp_service/dashboard/schemas.py"
+    r = subprocess.run(
+        ["python", "-c",
+         f"import ast; ast.parse(open('{schema_file}').read()); print('AST parse OK')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Schema file AST parsing failed: {r.stderr}"
+
+
+def test_repo_imports_check():
+    """Pass-to-pass test: Key MCP dashboard imports are resolvable (CI check).
+
+    Origin: repo_tests - Tests that pydantic imports work (core dependency).
+    This validates the Python environment has required dependencies.
+    """
+    r = subprocess.run(
+        ["python", "-c",
+         "from pydantic import BaseModel, Field; print('Pydantic imports OK')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Pydantic import failed: {r.stderr}"
+
+
+def test_repo_unit_test_discovery():
+    """Pass-to-pass test: MCP dashboard tests can be discovered (CI check).
+
+    Origin: repo_tests - Discovers test functions via AST without importing.
+    This is the same approach pytest uses to find tests before execution.
+    """
+    test_file = REPO_ROOT / "tests/unit_tests/mcp_service/dashboard/tool/test_dashboard_generation.py"
+    
+    r = subprocess.run(
+        ["python", "-c",
+         f"""
+import ast
+with open('{test_file}') as f:
+    tree = ast.parse(f.read())
+tests = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name.startswith('test_')]
+print(f'Found {{len(tests)}} tests: {{tests[:3]}}...')
+print('Test discovery OK')
+"""],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Test discovery failed: {r.stderr}"
+    assert "Test discovery OK" in r.stdout, "Test discovery did not complete"
 
 
 if __name__ == "__main__":

@@ -96,7 +96,41 @@ checks:
     origin: repo_tests
     description: All Python files in repo have valid syntax
 
+  - id: test_repo_remote_connection_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for remote_connection module pass
+
+  - id: test_repo_chrome_edge_options_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for Chrome and Edge options pass
+
+  - id: test_repo_import_modified_modules
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified chrome/edge remote_connection modules are importable
+
 # Note: This task involves adding type stub files to an external package.
 # The rubric rules about AGENTS.md don't apply since this task doesn't
 # modify agent configuration files - it only adds .pyi stub files and
 # fixes imports in the selenium package.
+
+rubric:
+  - rule: "Every file must include the Apache License 2.0 header boilerplate"
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "124-150"
+      commit: "39436b0c1eabbed5489148b98a36302d77feed9e"
+
+  - rule: "Use union notation (|) instead of Optional for type hints"
+    source:
+      path: "py/AGENTS.md"
+      lines: "42-57"
+      commit: "39436b0c1eabbed5489148b98a36302d77feed9e"
+
+  - rule: "Follow existing code style in the repository; check neighboring files for patterns"
+    source:
+      path: "AGENTS.md"
+      lines: "69-71"
+      commit: "39436b0c1eabbed5489148b98a36302d77feed9e"

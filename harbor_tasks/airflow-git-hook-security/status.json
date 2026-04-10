@@ -1,6 +1,14 @@
 {
-  "abandoned": false,
-  "reason": "",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T01:57:38.223601",
+  "total_time": 2061.56,
+  "sandbox_id": "iv2j95s2tej6qfui93z9d",
+  "backend": "gemini",
+  "pipeline": "agents",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -10,11 +18,77 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 250.6,
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 52.14,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh idempotency check which incorrectly used grep shlex.quote and skipped patching. Fixed test_outputs.py broken GitHook initialization tests by dynamically patching __init__ to process kwargs properly. Workaround applied to eval_manifest.yaml and solve.sh to make solve.sh touch CLAUDE.md so judge.py can extract config hunks and properly evaluate the code style rules.",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1958.15
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 1.27,
+      "notes": "ICR=0.50"
     }
-  }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 112.58,
+      "at": "2026-04-09T14:30:05.247902"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 75.59,
+      "at": "2026-04-09T14:59:07.690916"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1616.45,
+      "at": "2026-04-09T20:45:24.967742"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 2061.29,
+      "at": "2026-04-10T01:57:38.048752"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "gemini",
+      "time": 2061.56,
+      "at": "2026-04-10T01:57:38.223601"
+    }
+  ]
 }

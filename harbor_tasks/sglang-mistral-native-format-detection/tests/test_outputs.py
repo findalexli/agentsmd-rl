@@ -19,10 +19,6 @@ REPO = "/repo"
 TARGET_FILE = f"{REPO}/python/sglang/srt/server_args.py"
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _build_check_script(model_name: str, has_params: bool, has_config: bool) -> str:
     """Build a Python script that extracts and calls _is_mistral_native_format."""
     lines = [
@@ -111,145 +107,70 @@ def _call_is_mistral_native(model_name, has_params, has_config):
     return func(mock_self)
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
 # [static] pass_to_pass
 def test_syntax_check():
     """server_args.py must parse without syntax errors."""
     source = Path(TARGET_FILE).read_text()
-    ast.parse(source)  # raises SyntaxError on failure
+    ast.parse(source)
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core bug: native models with both files must
-# return True from _is_mistral_native_format (executed via subprocess)
-# ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_mistral_small_4_both_files_returns_true():
-    """Mistral-Small-4 with both params.json and config.json returns True."""
     assert _run_native_format_check("Mistral-Small-4-119B-2603", True, True) is True
 
 
-# [pr_diff] fail_to_pass
 def test_mistral_large_3_both_files_returns_true():
-    """Mistral-Large-3 with both params.json and config.json returns True."""
     assert _run_native_format_check("Mistral-Large-3-2503", True, True) is True
 
 
-# [pr_diff] fail_to_pass
 def test_leanstral_both_files_returns_true():
-    """Leanstral with both params.json and config.json returns True."""
     assert _run_native_format_check("Leanstral-22B-v0.1", True, True) is True
 
 
-# [pr_diff] fail_to_pass
 def test_mistral_small_4_variant_both_files_returns_true():
-    """Mistral-Small-4 variant name with both files returns True."""
     assert _run_native_format_check("Mistral-Small-4-Base", True, True) is True
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression: params-only always returns True
-# ---------------------------------------------------------------------------
-
 # [pr_diff] pass_to_pass
 def test_params_only_returns_true():
-    """Any model with only params.json (no config.json) returns True."""
     assert _call_is_mistral_native("SomeMistralModel", True, False) is True
 
 
-# [pr_diff] pass_to_pass
 def test_mistral_7b_params_only_returns_true():
-    """Mistral-7B with only params.json returns True (regression)."""
     assert _call_is_mistral_native("Mistral-7B-Instruct-v0.3", True, False) is True
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression: non-native models with both files
-# must still return False
-# ---------------------------------------------------------------------------
-
-# [pr_diff] pass_to_pass
 def test_mistral_7b_both_files_returns_false():
-    """Mistral-7B-Instruct with both files returns False (not native)."""
     assert _call_is_mistral_native("Mistral-7B-Instruct-v0.3", True, True) is False
 
 
-# [pr_diff] pass_to_pass
 def test_codestral_mamba_both_files_returns_false():
-    """Codestral-Mamba with both files returns False."""
     assert _call_is_mistral_native("Codestral-Mamba-22B-v0.1", True, True) is False
 
 
-# [pr_diff] pass_to_pass
 def test_pixtral_both_files_returns_false():
-    """Pixtral with both files returns False."""
     assert _call_is_mistral_native("Pixtral-12B-2409", True, True) is False
 
 
-# [pr_diff] pass_to_pass
 def test_mistral_small_3_both_files_returns_false():
-    """Mistral-Small-3 (not 4) with both files returns False."""
     assert _call_is_mistral_native("Mistral-Small-3-24B", True, True) is False
 
 
-# [pr_diff] pass_to_pass
 def test_mistral_nemo_both_files_returns_false():
-    """Mistral-Nemo with both files returns False."""
     assert _call_is_mistral_native("Mistral-Nemo-Instruct-2407", True, True) is False
 
 
-# [pr_diff] pass_to_pass
 def test_no_params_json_returns_false():
-    """Model with config.json only (no params.json) returns False."""
     assert _call_is_mistral_native("SomeModel", False, True) is False
 
 
-# [pr_diff] pass_to_pass
 def test_neither_file_returns_false():
-    """Model with neither file returns False."""
     assert _call_is_mistral_native("EmptyModel", False, False) is False
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — repo CI checks that should pass on base commit
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass
-def test_repo_syntax():
-    """Repo's server_args.py has valid Python syntax (pass_to_pass)."""
-    import py_compile
-    py_compile.compile(TARGET_FILE, doraise=True)
-
-
-# [repo_tests] pass_to_pass
-def test_repo_no_debug_statements():
-    """Repo's server_args.py has no debug statements (pass_to_pass)."""
-    import re
-    source = Path(TARGET_FILE).read_text()
-    debug_pattern = re.compile(
-        r"^\s*(import pdb|from pdb|import ipdb|from ipdb|breakpoint\s*\(|pdb\.set_trace)",
-        re.MULTILINE
-    )
-    matches = debug_pattern.findall(source)
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — repo CI checks that should pass on base commit
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass
-def test_repo_syntax():
-    """Repo's server_args.py has valid Python syntax (pass_to_pass)."""
-    import py_compile
-    py_compile.compile(TARGET_FILE, doraise=True)
-
-
-# [repo_tests] pass_to_pass
-def test_repo_no_debug_statements():
-    """Repo's server_args.py has no debug statements (pass_to_pass)."""
+# [static] pass_to_pass
+def test_no_debug_statements():
+    """server_args.py has no debug statements (pass_to_pass)."""
     import re
     source = Path(TARGET_FILE).read_text()
     debug_pattern = re.compile(
@@ -260,30 +181,52 @@ def test_repo_no_debug_statements():
     assert len(matches) == 0, f"Found debug statements: {matches}"
 
 
-# [repo_tests] pass_to_pass
-def test_repo_no_trailing_whitespace():
-    """Repo's server_args.py has no trailing whitespace (pass_to_pass)."""
+def test_no_trailing_whitespace():
+    """server_args.py has no trailing whitespace (pass_to_pass)."""
     source = Path(TARGET_FILE).read_text()
     lines = source.splitlines(keepends=True)
     issues = []
     for i, line in enumerate(lines, 1):
-        # Check if line has trailing whitespace before newline
         stripped = line.rstrip("\n\r")
         if stripped != stripped.rstrip():
             issues.append(f"Line {i}")
     assert len(issues) == 0, f"Found trailing whitespace in {len(issues)} lines: {issues[:5]}"
 
 
-# [repo_tests] pass_to_pass
-def test_repo_ends_with_newline():
-    """Repo's server_args.py ends with newline (pass_to_pass)."""
+def test_ends_with_newline():
+    """server_args.py ends with newline (pass_to_pass)."""
     content = Path(TARGET_FILE).read_bytes()
     assert content.endswith(b"\n"), "File does not end with newline"
 
 
-# ---------------------------------------------------------------------------
-# Anti-stub (static, pass_to_pass)
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Repo's server_args.py compiles with Python (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "python/sglang/srt/server_args.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_ast_parse():
+    """Repo's server_args.py parses as valid AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import ast; ast.parse(open('python/sglang/srt/server_args.py').read()); print('AST OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_file_exists():
+    """Repo's server_args.py file exists (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import os; exit(0 if os.path.exists('{TARGET_FILE}') else 1)"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"server_args.py does not exist at {TARGET_FILE}"
+
 
 # [static] pass_to_pass
 def test_not_stub():
@@ -292,7 +235,6 @@ def test_not_stub():
     tree = ast.parse(source)
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "_is_mistral_native_format":
-            # Count non-trivial statements (exclude Pass, docstrings, bare returns)
             stmts = [
                 s
                 for s in ast.walk(node)

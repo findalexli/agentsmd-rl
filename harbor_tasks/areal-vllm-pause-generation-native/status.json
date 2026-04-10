@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T09:29:41.099339",
-  "total_time": 1067.78,
-  "sandbox_id": "i907edo2gb3zpsash3ton",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T02:13:31.496074",
+  "total_time": 3014.9,
+  "sandbox_id": "ia7qjuob2a98st2zn17vd",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -24,58 +25,84 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.5,
+      "attempts": 2,
+      "notes": "All 4 core checks passed: (1) Docker build OK, (2) NOP reward=0 (buggy code fails correctly), (3) Gold reward=1 (all 29 tests pass after fix), (4) Rubric judge ICR=0.5 due to API rate limits (429). Fixed Dockerfile by adding pyyaml and ruff dependencies which were missing for P2P repo CI tests.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 119.28
+      "time": 162.96
     },
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 511.4,
+      "time": 272.8,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".claude/rules/code-style.md"
+      ],
+      "rules_added": 4,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 84.33
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.29,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 0.0,
-      "at": "2026-04-09T01:20:02.715061"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 0,
-      "at": "2026-04-09T01:20:02.878765"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6984.92,
-      "at": "2026-04-09T06:16:50.090897"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 1067.49,
-      "at": "2026-04-09T09:29:40.933446"
+      "time": 492.11,
+      "at": "2026-04-09T20:26:40.726943"
     },
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 1067.78,
-      "at": "2026-04-09T09:29:41.099339"
+      "time": 296.61,
+      "at": "2026-04-09T22:04:05.229984"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 296.88,
+      "at": "2026-04-09T22:04:05.398090"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3014.63,
+      "at": "2026-04-10T02:13:31.327785"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3014.9,
+      "at": "2026-04-10T02:13:31.496074"
     }
   ]
 }

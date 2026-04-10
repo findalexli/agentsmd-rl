@@ -22,7 +22,7 @@ def test_envconfig_has_disable_strict_path_checking():
     Fail-to-pass: Verify DisableStrictPathChecking env var is added.
 
     The fix adds a DisableStrictPathChecking envconfig option that allows
-    temporarily disabling strict path checking via environment variable.
+temporarily disabling strict path checking via environment variable.
     """
     with open(ENVCONFIG_PATH, 'r') as f:
         content = f.read()
@@ -76,7 +76,7 @@ def test_server_has_strict_path_checking_logic():
         "strictPathCheckingLogEmitted field not found in Server struct"
 
     # Check for the empty method name check
-    assert "if sm == \"\"" in content, \
+    assert 'if sm == ""' in content, \
         "Empty method name check not found"
 
     # Check for the leading slash validation
@@ -281,3 +281,46 @@ def test_repo_go_mod_tidy():
     # -diff flag returns 0 if no changes needed, 1 if changes needed
     assert result.returncode == 0, \
         f"go.mod/go.sum need tidying:\n{result.stdout.decode()[-500:]}"
+
+
+def test_repo_make_binaries():
+    """
+    Pass-to-pass: containerd binaries build successfully.
+
+    Runs `make binaries` to verify the full containerd build works,
+    which exercises the vendored gRPC packages that are modified.
+    """
+    result = subprocess.run(
+        ["make", "binaries"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=180
+    )
+    assert result.returncode == 0, \
+        f"make binaries failed:\n{result.stderr.decode()[-500:]}"
+
+
+def test_repo_grpc_packages_build():
+    """
+    Pass-to-pass: Modified gRPC vendor packages compile.
+
+    Specifically builds the envconfig and server packages that are
+    modified by the security fix to ensure they compile correctly.
+    """
+    result = subprocess.run(
+        ["go", "build", "./vendor/google.golang.org/grpc/internal/envconfig"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"grpc/envconfig build failed:\n{result.stderr.decode()[-500:]}"
+
+    result = subprocess.run(
+        ["go", "build", "./vendor/google.golang.org/grpc"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"grpc build failed:\n{result.stderr.decode()[-500:]}"

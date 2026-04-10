@@ -104,6 +104,65 @@ def test_terraform_files_exist():
         assert fpath.stat().st_size > 0, f"Required file {tf_file} is empty"
 
 
+def test_terraform_providers():
+    """Terraform providers are correctly configured (pass_to_pass)."""
+    # Install terraform
+    install_cmd = """
+        apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 &&
+        curl -fsSL -o /tmp/terraform.zip
+        https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
+        unzip -qo /tmp/terraform.zip -d /tmp/
+    """.strip().replace("\n        ", " ")
+    r = subprocess.run(
+        ["bash", "-c", install_cmd],
+        capture_output=True, text=True, timeout=120, cwd="/tmp"
+    )
+    assert r.returncode == 0, f"Terraform installation failed: {r.stderr}"
+
+    # Initialize terraform
+    r = subprocess.run(
+        ["/tmp/terraform", "init", "-backend=false", "-input=false"],
+        capture_output=True, text=True, timeout=60, cwd=TF_DIR
+    )
+    assert r.returncode == 0, f"Terraform init failed:\n{r.stderr[-500:]}"
+
+    # Check providers
+    r = subprocess.run(
+        ["/tmp/terraform", "providers"],
+        capture_output=True, text=True, timeout=60, cwd=TF_DIR
+    )
+    assert r.returncode == 0, f"Terraform providers check failed:\n{r.stderr[-500:]}"
+    # Verify required providers are present
+    assert "hashicorp/google" in r.stdout, "Missing required provider: hashicorp/google"
+    assert "hashicorp/kubernetes" in r.stdout, "Missing required provider: hashicorp/kubernetes"
+
+
+def test_required_variables_exist():
+    """Required variables are defined in variables.tf (pass_to_pass, static)."""
+    content = (TF_DIR / "variables.tf").read_text()
+    required_vars = ["project_id", "vpc_name", "subnet_name", "ratelimit_config_yaml"]
+    for var in required_vars:
+        pattern = rf'variable\s+"{var}"'
+        assert re.search(pattern, content), f"Required variable '{var}' not found in variables.tf"
+
+
+def test_outputs_configured():
+    """Outputs are defined in outputs.tf (pass_to_pass, static)."""
+    content = (TF_DIR / "outputs.tf").read_text()
+    required_outputs = ["cluster_name", "load_balancer_ip"]
+    for output in required_outputs:
+        pattern = rf'output\s+"{output}"'
+        assert re.search(pattern, content), f"Required output '{output}' not found in outputs.tf"
+
+
+def test_prerequisites_configured():
+    """Prerequisites.tf has required API services (pass_to_pass, static)."""
+    content = (TF_DIR / "prerequisites.tf").read_text()
+    required_services = ["container", "iam", "compute"]
+    for service in required_services:
+        assert service in content, f"Required service '{service}' not found in prerequisites.tf"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests with HCL block parsing
 # ---------------------------------------------------------------------------

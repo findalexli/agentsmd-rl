@@ -48,6 +48,79 @@ checks:
     origin: repo_tests
     description: Basic Allman brace style compliance - ClickHouse coding standards
 
+  - id: test_repo_git_tracked
+    name: Repo git tracked check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verifies the target file is tracked by git (repo structure check)
+
+  - id: test_repo_file_headers
+    name: Repo file headers check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verifies the target file has proper include structure
+
+  - id: test_repo_no_trailing_whitespace
+    name: Repo no trailing whitespace check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verifies the target file has no trailing whitespace (ClickHouse style)
+
+  - id: test_repo_no_tabs
+    name: Repo no tabs check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verifies the target file uses spaces instead of tabs (ClickHouse style)
+
+  # New p2p tests with actual CI commands
+  - id: test_repo_cpp_style_braces_ci
+    name: C++ style braces CI check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify Allman-style braces using grep - matches ClickHouse CI style check
+
+  - id: test_repo_cpp_style_tabs_ci
+    name: C++ style tabs CI check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify no tabs in modified file using grep - matches ClickHouse CI style check
+
+  - id: test_repo_cpp_style_trailing_whitespace_ci
+    name: C++ style trailing whitespace CI check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify no trailing whitespace using grep - matches ClickHouse CI style check
+
+  - id: test_repo_git_log_ci
+    name: Git log CI check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify git log works and shows expected base commit - repo structure validation
+
+  - id: test_repo_file_compiles_ci
+    name: C++ file compiles CI check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify C++ file has no syntax errors using clang-18 - standard ClickHouse CI validation
+
+  - id: test_repo_yaml_config_valid_ci
+    name: YAML config valid CI check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify .github/dependabot.yaml is valid YAML - ClickHouse CI config validation
+
+  - id: test_repo_clang_format_config_valid_ci
+    name: Clang-format config valid CI check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify .clang-format config is valid YAML - ClickHouse CI style config validation
+
+  - id: test_repo_clang_tidy_config_valid_ci
+    name: Clang-tidy config valid CI check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Verify .clang-tidy config is valid YAML - ClickHouse static analysis config validation
+
   - id: test_allman_brace_style
     name: Allman brace style compliance
     type: agent_config

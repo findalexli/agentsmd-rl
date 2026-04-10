@@ -279,6 +279,62 @@ def test_plugin_loader_tests_pass():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_filesystem_tests_pass():
+    """Existing filesystem test suite still passes — covers Filesystem.statAsync changes."""
+    r = subprocess.run(
+        ["bun", "test", "test/filesystem/filesystem.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"filesystem tests failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_plugin_meta_tests_pass():
+    """Existing plugin meta test suite still passes — covers PluginMeta.setTheme changes."""
+    r = subprocess.run(
+        ["bun", "test", "test/plugin/meta.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"plugin meta tests failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_theme_store_tests_pass():
+    """Existing theme-store test suite still passes — covers upsertTheme functionality."""
+    r = subprocess.run(
+        ["bun", "test", "test/cli/tui/theme-store.test.ts"],
+        cwd=PKG,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"theme-store tests failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_typecheck_passes():
+    """TypeScript typecheck passes on packages/opencode — covers type changes in theme.tsx and runtime.ts."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        cwd=PKG,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"typecheck failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------

@@ -17,9 +17,19 @@ source:
       lines: "1-150"
       applies: true
 
-  # Rubric for subjective/soft rules from agent configs (e.g., "write clear comments")
-  # This PR doesn't have specific soft rules to check
-  rubric: []
+  # Rubric for subjective/soft rules from agent configs
+  rubric:
+    - rule: "Do NOT comment the obvious. Comments should explain non-obvious algorithms, temporary exclusions/timeouts, complex calculations, subtle race conditions, or assumptions - not narrate what the code does."
+      source:
+        path: "CLAUDE.md"
+        lines: "116-131"
+        commit: "21a5ae30270cc67b3e331d7beb342be2d19c7e97"
+
+    - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions. Fix the underlying issues instead."
+      source:
+        path: "CLAUDE.md"
+        lines: "111-114"
+        commit: "21a5ae30270cc67b3e331d7beb342be2d19c7e97"
 
 checks:
   # Pass-to-pass tests (repo tests that should always pass)
@@ -33,14 +43,19 @@ checks:
     origin: repo_tests
     description: "Crate's Rust files are properly formatted"
 
-  - id: test_crate_structure
+  - id: test_cargo_clippy
     type: pass_to_pass
     origin: repo_tests
+    description: "Crate passes clippy lints with no warnings"
+
+  - id: test_crate_structure
+    type: pass_to_pass
+    origin: static
     description: "Crate has the expected module structure with all required files"
 
   - id: test_ingestion_module_exports
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Ingestion module exports key types for public API"
 
   # Fail-to-pass tests (behavioral changes that verify the fix)

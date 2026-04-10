@@ -74,6 +74,20 @@ def test_error_codes_check():
     assert r.returncode == 0, f"Error codes check failed:\\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Modified TypeScript files must pass ESLint (pass_to_pass)."""
+    # Install pnpm if not available and install dependencies
+    subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, timeout=120, cwd=REPO)
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, timeout=300, cwd=REPO)
+
+    r = subprocess.run(
+        ["npx", "eslint", "--config", "eslint.cli.config.mjs", APP_RENDER, COMPONENT_TREE],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint check failed:\\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

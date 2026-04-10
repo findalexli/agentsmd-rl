@@ -5,7 +5,7 @@ set -e
 pip3 install pytest --quiet 2>/dev/null || true
 
 # Run the tests
-cd /workspace/task/tests
+cd /tests
 python3 -m pytest test_outputs.py -v 2>&1 | tee /logs/verifier/test_output.log
 
 # Write binary reward based on test results

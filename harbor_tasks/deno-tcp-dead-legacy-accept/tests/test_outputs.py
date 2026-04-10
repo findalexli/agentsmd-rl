@@ -44,6 +44,95 @@ def test_repo_tcp_wrap_imports():
     )
 
 
+# [repo_tests] pass_to_pass - Repo CI: git verify repo is at expected base commit
+def test_repo_git_base_commit():
+    """Repo must be at the expected base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "rev-parse", "HEAD"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"git rev-parse failed: {r.stderr}"
+    commit = r.stdout.strip()
+    expected = "ad725eea313df6204d342d84ace4af1b11cc341f"
+    assert commit == expected, f"Expected commit {expected}, got {commit}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: git verify repo is in a valid state
+def test_repo_git_status_clean():
+    """Repo must be in a valid git state (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    # Allow either clean state (base commit) or with modifications (post-fix)
+    # Any state is valid as long as git status works
+
+
+# [repo_tests] pass_to_pass - Repo CI: git verify modified files exist
+def test_repo_git_ls_files():
+    """Modified files must exist in git tree (pass_to_pass)."""
+    for path in [TCP_WRAP, LINT_PLUGIN]:
+        rel_path = path.replace(f"{REPO}/", "")
+        r = subprocess.run(
+            ["git", "-C", REPO, "ls-files", rel_path],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"git ls-files failed for {rel_path}: {r.stderr}"
+        assert r.stdout.strip() == rel_path, f"File {rel_path} not tracked in git"
+
+
+# [repo_tests] pass_to_pass - Repo CI: grep verify tcp_wrap.ts Deno.listen is accessible
+def test_repo_grep_deno_listen():
+    """tcp_wrap.ts must be accessible for grep (Deno.listen presence varies by commit)."""
+    # Use -c to get count; returns 0 if found, 1 if not found (both are valid states)
+    r = subprocess.run(
+        ["grep", "-c", "Deno.listen", TCP_WRAP],
+        capture_output=True, text=True, timeout=30,
+    )
+    # Valid states: base commit has 1+ (legacy path), post-fix has 0 (removed)
+    # returncode 0 = found, 1 = not found (both valid); other codes = error
+    assert r.returncode in (0, 1), f"grep error for Deno.listen: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: grep verify tcp_wrap.ts Deno.* is accessible
+def test_repo_grep_deno_usage_count():
+    """tcp_wrap.ts must be accessible for Deno.* grep (count varies by commit)."""
+    r = subprocess.run(
+        ["grep", "-oE", r"\bDeno\.\w+", TCP_WRAP],
+        capture_output=True, text=True, timeout=30,
+    )
+    # Valid states: base commit has 3+ (Deno.listen, Deno.errors.*), post-fix has 0
+    # Just verify the grep command works (returncode 0 = found matches, 1 = no matches)
+    assert r.returncode in (0, 1), f"grep error for Deno.*: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: grep verify EXPECTED_VIOLATIONS is accessible
+def test_repo_grep_expected_violations():
+    """EXPECTED_VIOLATIONS must be accessible for grep (tcp_wrap.ts presence varies by commit)."""
+    r = subprocess.run(
+        ["grep", "tcp_wrap.ts.*:", LINT_PLUGIN],
+        capture_output=True, text=True, timeout=30,
+    )
+    # Valid states: base commit has entry, post-fix removed it
+    # returncode 0 = found (base), 1 = not found (post-fix) - both valid
+    assert r.returncode in (0, 1), f"grep error for EXPECTED_VIOLATIONS: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass - Repo CI: grep verify _listen.ts exports
+def test_repo_grep_listen_exports():
+    """_listen.ts must export ceilPowOf2 and backoff constants (pass_to_pass)."""
+    listen_path = f"{REPO}/ext/node/polyfills/internal_binding/_listen.ts"
+
+    for pattern in ["export function ceilPowOf2", "export const INITIAL_ACCEPT_BACKOFF_DELAY"]:
+        r = subprocess.run(
+            ["grep", "-c", pattern, listen_path],
+            capture_output=True, text=True, timeout=30,
+        )
+        count = int(r.stdout.strip()) if r.returncode == 0 else 0
+        assert count > 0, f"Expected pattern '{pattern}' in _listen.ts, found {count} occurrences"
+
+
 # [repo_tests] pass_to_pass - Repo CI check: ensure _listen.ts exports are intact
 def test_repo_listen_module_exports():
     """_listen.ts must export ceilPowOf2 and backoff constants (used by tcp_wrap.ts)."""

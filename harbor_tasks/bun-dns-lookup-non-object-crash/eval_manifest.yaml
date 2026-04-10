@@ -75,4 +75,27 @@ checks:
       path: "oxlint.json"
       config: "correctness"
 
-rubric: []
+  - id: no_banned_words_in_js_dns
+    type: pass_to_pass
+    origin: repo_tests
+    description: "DNS JS files do not contain banned words/patterns (CI ban-words check)"
+    source:
+      path: "test/internal/ban-words.test.ts"
+      workflow: "Format"
+
+  - id: dns_js_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "DNS JS files have valid syntax"
+    source:
+      path: "src/js/node/dns.ts"
+      validation: "syntax"
+
+
+rubric:
+  - rule: "When modifying type checks on JSValue, use semantically correct methods (isObject vs isCell)."
+    source:
+      path: "src/bun.js/api/bun/dns.zig"
+      lines: "2719"
+      commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
+    reference: "arguments.ptr[1].isObject()"

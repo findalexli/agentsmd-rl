@@ -88,6 +88,45 @@ def test_repo_ruff():
     assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_isort():
+    """Repo's isort check passes on modified files (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "isort", "--quiet"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "isort", "--check-only", "--profile=black", CHECKPOINT, DATA, PROCESSING],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_black():
+    """Repo's black formatting check passes on modified files (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "black", "--quiet"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "black", "--check", CHECKPOINT, DATA, PROCESSING],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"black check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_autoflake():
+    """Repo's autoflake check passes on modified files (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "autoflake", "--quiet"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python3", "-m", "autoflake", "--check", "--remove-all-unused-imports", CHECKPOINT, DATA, PROCESSING],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"autoflake check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------

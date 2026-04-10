@@ -23,22 +23,33 @@ checks:
   - id: test_repo_unit_tests_pass
     type: pass_to_pass
     origin: repo_tests
+    source:
+      file: .github/workflows/fe-unit-tests.yml
+      lines: "npm run test:coverage"
     description: Frontend unit tests pass (vitest)
+
+  - id: test_repo_test_coverage
+    type: pass_to_pass
+    origin: repo_tests
+    source:
+      file: .github/workflows/fe-unit-tests.yml
+      lines: "npm run test:coverage"
+    description: Frontend unit tests with coverage for hooks-modal component
 
   - id: test_repo_lint_passes
     type: pass_to_pass
-    origin: agent_config
+    origin: repo_tests
     source:
-      file: AGENTS.md
-      lines: "If you've made changes to the frontend, you should run `cd frontend && npm run lint:fix && npm run build`"
-    description: Frontend linting passes
+      file: .github/workflows/lint.yml
+      lines: "npm run lint"
+    description: Frontend linting passes (eslint + prettier)
 
   - id: test_typescript_compiles
     type: pass_to_pass
-    origin: agent_config
+    origin: repo_tests
     source:
-      file: AGENTS.md
-      lines: "If you've made changes to the frontend, you should run `cd frontend && npm run lint:fix && npm run build`"
+      file: .github/workflows/lint.yml
+      lines: "npm run typecheck && tsc"
     description: TypeScript type checking passes
 
   - id: test_translation_completeness

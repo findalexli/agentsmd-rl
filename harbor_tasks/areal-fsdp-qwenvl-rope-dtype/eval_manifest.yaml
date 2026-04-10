@@ -64,22 +64,10 @@ checks:
       path: "AGENTS.md"
       lines: "189"
       commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
-
-  - id: repo_all_python_syntax
+  - id: repo_ruff_lint
     type: pass_to_pass
     origin: repo_tests
-    description: "All Python files in areal/ have valid syntax"
-
-  - id: repo_no_bare_excepts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No bare except: clauses in areal/engine/"
-
-  - id: repo_import_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Engine module imports are syntactically valid"
-
+    description: "Engine files must pass ruff linting (E, W, I rules)"
   - id: no_print_statements
     type: pass_to_pass
     origin: agent_config
@@ -88,3 +76,37 @@ checks:
       path: "AGENTS.md"
       lines: "90-92"
       commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
+
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Engine files must be formatted according to ruff standards"
+
+  - id: repo_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All YAML workflow files must have valid syntax"
+
+  - id: repo_json_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All JSON files in repo must have valid syntax"
+
+rubric:
+  - rule: "Use explicit dtype/device for tensors; prefer explicit conversion over implicit. Check dtype before operations that require specific types."
+    source:
+      path: ".claude/rules/code-style.md"
+      lines: "65-68"
+      commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
+
+  - rule: "Use keyword arguments for clarity when calling functions with multiple optional/none parameters. Prefer `fn(arg=value)` over positional when parameter meaning isn't obvious from value alone."
+    source:
+      path: "AGENTS.md"
+      lines: "83-84"
+      commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
+    reference: |
+      # From AGENTS.md "Always do":
+      - Read relevant files before modifying code
+      - Run `pre-commit run --all-files` before committing
+      - Follow existing code patterns in the same module
+      - Add tests for new functionality

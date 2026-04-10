@@ -119,11 +119,10 @@ rm -rf "$ZIG_TEMP"
 def test_claude_md_valid():
     """CLAUDE.md (AGENTS.md) exists and is non-empty (pass_to_pass).
     Verifies the project's coding guidelines file is present and AGENTS.md symlink is valid.
-    CI gate: CLAUDE.md is referenced by AGENTS.md and contains coding rules.
     """
     claude_md = Path(f"{REPO}/CLAUDE.md")
-    assert claude_md.exists(), f"CLAUDE.md does not exist"
-    assert claude_md.stat().st_size > 1000, f"CLAUDE.md is unexpectedly small"
+    assert claude_md.exists(), "CLAUDE.md does not exist"
+    assert claude_md.stat().st_size > 1000, "CLAUDE.md is unexpectedly small"
 
     # Verify AGENTS.md symlink points to CLAUDE.md
     agents_md = Path(f"{REPO}/AGENTS.md")
@@ -143,6 +142,96 @@ def test_repo_structure_intact():
     for path in required_paths:
         p = Path(path)
         assert p.exists(), f"Required repo path does not exist: {path}"
+
+
+def test_coderabbit_config_valid():
+    """CodeRabbit config (.coderabbit.yaml) exists and is valid YAML (pass_to_pass).
+    Verifies CodeRabbit AI code review configuration is valid YAML.
+    """
+    config_path = Path(f"{REPO}/.coderabbit.yaml")
+    assert config_path.exists(), ".coderabbit.yaml does not exist"
+    assert config_path.stat().st_size > 100, ".coderabbit.yaml is unexpectedly small"
+
+    content = config_path.read_text()
+
+    # Validate YAML is parseable (try PyYAML first, fallback to basic checks)
+    try:
+        import yaml
+        try:
+            parsed = yaml.safe_load(content)
+            # Verify expected top-level keys exist
+            assert isinstance(parsed, dict), ".coderabbit.yaml must be a YAML dictionary"
+            assert "language" in parsed, ".coderabbit.yaml missing 'language' key"
+            assert "reviews" in parsed, ".coderabbit.yaml missing 'reviews' key"
+        except yaml.YAMLError as e:
+            assert False, f".coderabbit.yaml is not valid YAML: {e}"
+    except ImportError:
+        # Fallback: basic structural validation if PyYAML not available
+        assert "language:" in content, ".coderabbit.yaml missing 'language' key"
+        assert "reviews:" in content, ".coderabbit.yaml missing 'reviews' key"
+
+
+def test_agents_symlink_valid():
+    """AGENTS.md is a valid symlink pointing to CLAUDE.md (pass_to_pass).
+    Verifies AGENTS.md must be a symlink to CLAUDE.md per repo conventions.
+    """
+    agents_md = Path(f"{REPO}/AGENTS.md")
+    claude_md = Path(f"{REPO}/CLAUDE.md")
+
+    # Must exist (as symlink or file)
+    assert agents_md.exists() or agents_md.is_symlink(), "AGENTS.md does not exist"
+
+    # Must be a symlink
+    assert agents_md.is_symlink(), "AGENTS.md must be a symlink to CLAUDE.md"
+
+    # Symlink target must point to CLAUDE.md
+    target = os.readlink(agents_md)
+    assert target == "CLAUDE.md", f"AGENTS.md must point to 'CLAUDE.md', got '{target}'"
+
+    # CLAUDE.md must exist and be valid
+    assert claude_md.exists(), "CLAUDE.md (target of AGENTS.md symlink) does not exist"
+    assert claude_md.stat().st_size > 1000, "CLAUDE.md is unexpectedly small"
+
+
+def test_editorconfig_valid():
+    """EditorConfig file exists and contains expected settings (pass_to_pass).
+    CI gate: EditorConfig specifies consistent formatting rules (utf-8, lf, trim whitespace).
+    """
+    editorconfig = Path(f"{REPO}/.editorconfig")
+    assert editorconfig.exists(), ".editorconfig does not exist"
+    assert editorconfig.stat().st_size > 50, ".editorconfig is unexpectedly small"
+
+    content = editorconfig.read_text()
+
+    # Verify core settings expected by the repo
+    assert "root = true" in content, ".editorconfig must have root = true"
+    assert "charset = utf-8" in content, ".editorconfig must specify charset = utf-8"
+    assert "insert_final_newline = true" in content, ".editorconfig must specify insert_final_newline"
+    assert "trim_trailing_whitespace = true" in content, ".editorconfig must specify trim_trailing_whitespace"
+    assert "end_of_line = lf" in content, ".editorconfig must specify lf line endings"
+
+
+def test_ban_words_passes():
+    """Internal ban-words test passes (pass_to_pass).
+    CI gate from format.yml - checks for banned words/phrases in the codebase.
+    Requires bun to be installed. Skips if bun is not available.
+    """
+    # Check if bun is available
+    r = subprocess.run(
+        ["which", "bun"],
+        capture_output=True, text=True, timeout=10,
+    )
+    if r.returncode != 0:
+        # Skip if bun not available - this is expected in minimal Docker
+        import pytest
+        pytest.skip("bun not available in this environment")
+        return
+
+    r = subprocess.run(
+        ["bun", "./test/internal/ban-words.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ban-words test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

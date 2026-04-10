@@ -149,12 +149,7 @@ def test_saas_conversation_store_imported(gitlab_ast):
 
 def test_initialize_conversation_not_imported(gitlab_ast):
     """V0: initialize_conversation is NOT imported (removed)."""
-    source = '\n'.join(gitlab_ast.source_lines)
-    # Should not import initialize_conversation
-    assert 'from openhands.server.services.conversation_service import' in source
-    assert 'initialize_conversation' not in source or \
-           'start_conversation' in source and 'initialize_conversation' not in source.split('import')[1].split('start_conversation')[0], \
-        "initialize_conversation should not be imported (use SaasConversationStore instead)"
+    assert not gitlab_ast.has_import('openhands.server.services.conversation_service', 'initialize_conversation'),         "initialize_conversation should not be imported (use SaasConversationStore instead)"
 
 
 def test_get_resolver_instance_called(gitlab_ast):
@@ -232,5 +227,115 @@ def test_save_metadata_called(gitlab_ast):
         "store.save_metadata should be called with conversation_metadata"
 
 
+# Pass-to-pass tests: CI/CD validation (repo's own checks)
+
+def test_repo_pre_commit_lint():
+    """Repo's pre-commit hooks pass on modified files (pass_to_pass)."""
+    import subprocess
+    import os
+    env = os.environ.copy()
+    env['PATH'] = f"{os.path.expanduser('~')}/.local/bin:{env.get('PATH', '')}"
+    subprocess.run(['pip', 'install', 'pre-commit==4.2.0', '-q'], check=True, env=env)
+    r = subprocess.run(
+        ['pre-commit', 'run', '--files',
+         'enterprise/integrations/gitlab/gitlab_view.py',
+         'enterprise/integrations/github/github_view.py',
+         '--config', 'enterprise/dev_config/python/.pre-commit-config.yaml'],
+        capture_output=True, text=True, cwd=REPO_DIR, timeout=300, env=env
+    )
+    assert r.returncode == 0, f"Pre-commit failed:\n{r.stdout}\n{r.stderr}"
+
+def test_repo_enterprise_integration_tests():
+    """Enterprise integration unit tests pass (pass_to_pass)."""
+    import subprocess
+    import os
+    env = os.environ.copy()
+    env['PATH'] = f"{os.path.expanduser('~')}/.local/bin:{env.get('PATH', '')}"
+    subprocess.run(['pip', 'install', 'poetry', '-q'], check=True, env=env)
+    install = subprocess.run(
+        ['poetry', '-C', 'enterprise', 'install', '--with', 'dev,test', '-q'],
+        capture_output=True, text=True, cwd=REPO_DIR, timeout=400, env=env
+    )
+    assert install.returncode == 0, f"Poetry install failed:\n{install.stderr[-500:]}"
+    test_files = [
+        'tests/unit/integrations/gitlab/test_gitlab_service.py',
+        'tests/unit/integrations/gitlab/test_gitlab_manager.py',
+        'tests/unit/integrations/github/test_github_manager.py',
+        'tests/unit/integrations/test_resolver_context.py',
+        'tests/unit/integrations/test_resolver_org_router.py'
+    ]
+    test_env = env.copy()
+    test_env['PYTHONPATH'] = f'{REPO_DIR}:{REPO_DIR}/enterprise'
+    r = subprocess.run(
+        ['poetry', '-C', 'enterprise', 'run', 'pytest', '-v'] + test_files,
+        capture_output=True, text=True, cwd=REPO_DIR, timeout=300, env=test_env
+    )
+    assert r.returncode == 0, f"Enterprise integration tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+# AST-based static structure checks (should be origin: static)
+
+def test_gitlab_view_syntax_valid():
+    """GitLab view file has valid Python syntax (pass_to_pass)."""
+    import ast
+    if not GITLAB_VIEW_PATH.exists():
+        import pytest
+        pytest.skip("gitlab_view.py not found")
+    source = GITLAB_VIEW_PATH.read_text()
+    try:
+        ast.parse(source)
+    except SyntaxError as e:
+        import pytest
+        pytest.fail(f"gitlab_view.py has syntax error: {e}")
+
+def test_github_view_syntax_valid():
+    """GitHub view file has valid Python syntax (pass_to_pass)."""
+    import ast
+    if not GITHUB_VIEW_PATH.exists():
+        import pytest
+        pytest.skip("github_view.py not found")
+    source = GITHUB_VIEW_PATH.read_text()
+    try:
+        ast.parse(source)
+    except SyntaxError as e:
+        import pytest
+        pytest.fail(f"github_view.py has syntax error: {e}")
+
+def test_enterprise_tests_exist():
+    """Enterprise tests directory exists with GitLab/GitHub tests (pass_to_pass)."""
+    enterprise_tests = REPO_DIR / 'enterprise' / 'tests' / 'unit' / 'integrations'
+    gitlab_tests = enterprise_tests / 'gitlab'
+    github_tests = enterprise_tests / 'github'
+    assert gitlab_tests.exists(), "GitLab tests directory should exist"
+    assert github_tests.exists(), "GitHub tests directory should exist"
+    gitlab_test_files = list(gitlab_tests.glob('test_*.py'))
+    github_test_files = list(github_tests.glob('test_*.py'))
+    assert len(gitlab_test_files) > 0, "GitLab tests should exist"
+    assert len(github_test_files) > 0, "GitHub tests should exist"
+
+def test_gitlab_view_imports_resolve():
+    """GitLab view imports are syntactically valid (pass_to_pass)."""
+    import ast
+    if not GITLAB_VIEW_PATH.exists():
+        import pytest
+        pytest.skip("gitlab_view.py not found")
+    source = GITLAB_VIEW_PATH.read_text()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            assert node.module is not None or node.level > 0, f"Invalid import at line {node.lineno}"
+
+def test_github_view_imports_resolve():
+    """GitHub view imports are syntactically valid (pass_to_pass)."""
+    import ast
+    if not GITHUB_VIEW_PATH.exists():
+        import pytest
+        pytest.skip("github_view.py not found")
+    source = GITHUB_VIEW_PATH.read_text()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom):
+            assert node.module is not None or node.level > 0, f"Invalid import at line {node.lineno}"
+
 if __name__ == '__main__':
+    import pytest
     pytest.main([__file__, '-v'])

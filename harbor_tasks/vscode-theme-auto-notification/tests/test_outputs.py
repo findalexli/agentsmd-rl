@@ -64,6 +64,155 @@ def _method_body(method_name: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/validity checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_git_valid():
+    """Git repository is in valid state (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status"], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """package.json is valid JSON (pass_to_pass)."""
+    code = """
+const fs = require("fs");
+try {
+    JSON.parse(fs.readFileSync("package.json", "utf8"));
+    console.log("VALID");
+} catch (e) {
+    console.error("INVALID:", e.message);
+    process.exit(1);
+}
+"""
+    r = _node(code)
+    assert r.returncode == 0, f"package.json is invalid:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_target_file_exists():
+    """Target file (workbenchThemeService.ts) exists (pass_to_pass)."""
+    r = subprocess.run(
+        ["test", "-f", f"{REPO}/{TARGET}"], capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Target file does not exist: {TARGET}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_theme_test_file_exists():
+    """Theme test file exists (pass_to_pass)."""
+    test_file = "src/vs/workbench/services/themes/test/common/workbenchThemeService.test.ts"
+    r = subprocess.run(
+        ["test", "-f", f"{REPO}/{test_file}"], capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Theme test file does not exist: {test_file}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ts_syntax_valid():
+    """Target TypeScript file has balanced braces (basic syntax check) (pass_to_pass)."""
+    code = f"""
+const fs = require("fs");
+const content = fs.readFileSync("{TARGET}", "utf8");
+let braceCount = 0;
+let inString = false;
+let stringChar = null;
+let inComment = false;
+let commentType = null;
+for (let i = 0; i < content.length; i++) {{
+    const char = content[i];
+    const next = content[i+1];
+    if (!inString && !inComment) {{
+        if (char === "/" && next === "/") {{
+            inComment = true;
+            commentType = "line";
+            i++;
+            continue;
+        }}
+        if (char === "/" && next === "*") {{
+            inComment = true;
+            commentType = "block";
+            i++;
+            continue;
+        }}
+    }} else if (inComment && commentType === "line" && char === "\\n") {{
+        inComment = false;
+        commentType = null;
+        continue;
+    }} else if (inComment && commentType === "block" && char === "*" && next === "/") {{
+        inComment = false;
+        commentType = null;
+        i++;
+        continue;
+    }}
+    if (inComment) continue;
+    if ((char === "'" || char === '"' || char === "`") && content[i-1] !== "\\\\") {{
+        if (!inString) {{ inString = true; stringChar = char; }}
+        else if (stringChar === char) {{ inString = false; stringChar = null; }}
+    }}
+    if (!inString) {{
+        if (char === "{{") braceCount++;
+        if (char === "}}") braceCount--;
+        if (braceCount < 0) {{
+            console.error("Closing brace without opening");
+            process.exit(1);
+        }}
+    }}
+}}
+if (braceCount !== 0) {{
+    console.error("Unbalanced braces:", braceCount);
+    process.exit(1);
+}}
+console.log("OK");
+"""
+    r = _node(code)
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_product_json_valid():
+    """product.json is valid JSON (pass_to_pass)."""
+    code = """
+const fs = require("fs");
+try {
+    JSON.parse(fs.readFileSync("product.json", "utf8"));
+    console.log("VALID");
+} catch (e) {
+    console.error("INVALID:", e.message);
+    process.exit(1);
+}
+"""
+    r = _node(code)
+    assert r.returncode == 0, f"product.json is invalid:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_settings_json_comments():
+    """.vscode/settings.json exists (may contain comments, not strict JSON) (pass_to_pass)."""
+    code = """
+const fs = require("fs");
+if (!fs.existsSync('.vscode/settings.json')) {
+    console.log("NOT_EXISTS");
+    process.exit(0);
+}
+const content = fs.readFileSync('.vscode/settings.json', 'utf8');
+// Basic check: file should have content and contain settings
+if (content.length > 0 && content.includes('{')) {
+    console.log('VALID');
+} else {
+    console.error('INVALID: settings file is empty or malformed');
+    process.exit(1);
+}
+"""
+    r = _node(code)
+    assert r.returncode == 0, f"settings.json check failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral checks
 # ---------------------------------------------------------------------------
 

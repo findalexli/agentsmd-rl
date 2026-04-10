@@ -5,19 +5,23 @@ These tests verify that:
 1. The operator has the new openlineage_inject_parent_job_info and openlineage_inject_transport_info parameters
 2. The helper functions for injecting configuration exist and work correctly
 3. The injection logic properly modifies configuration_overrides
+4. The repo's existing CI/CD tests pass (pass_to_pass gates)
 """
 
 import pytest
+import subprocess
 import sys
 import os
 from unittest import mock
 
 # Add the airflow paths
-sys.path.insert(0, "/workspace/airflow/providers/amazon/src")
-sys.path.insert(0, "/workspace/airflow/providers/openlineage/src")
-sys.path.insert(0, "/workspace/airflow/providers/common/compat/src")
 sys.path.insert(0, "/workspace/airflow/airflow-core/src")
 sys.path.insert(0, "/workspace/airflow/task-sdk/src")
+sys.path.insert(0, "/workspace/airflow/providers/common/compat/src")
+sys.path.insert(0, "/workspace/airflow/providers/openlineage/src")
+sys.path.insert(0, "/workspace/airflow/providers/amazon/src")
+
+REPO = "/workspace/airflow"
 
 # Constants for tests
 EXAMPLE_CONTEXT = {
@@ -384,6 +388,116 @@ class TestInputImmutability:
         )
 
         assert original == original_copy
+
+
+# =============================================================================
+# PASS-TO-PASS TESTS (Repo CI/CD Tests)
+# These tests verify that existing repo tests pass on both base and gold commits
+# =============================================================================
+
+
+class TestRepoEmrTestsPass:
+    """Pass-to-pass: EMR Serverless operator tests from the repo pass."""
+
+    def test_repo_emr_serverless_operator_tests(self):
+        """Repo's EMR Serverless operator unit tests pass (pass_to_pass)."""
+        r = subprocess.run(
+            [
+                "uv", "run", "--project", "providers/amazon",
+                "pytest", "providers/amazon/tests/unit/amazon/aws/operators/test_emr_serverless.py",
+                "-v", "--tb=short"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"EMR Serverless operator tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+    def test_repo_emr_serverless_hook_tests(self):
+        """Repo's EMR Serverless hook unit tests pass (pass_to_pass)."""
+        r = subprocess.run(
+            [
+                "uv", "run", "--project", "providers/amazon",
+                "pytest", "providers/amazon/tests/unit/amazon/aws/hooks/test_emr_serverless.py",
+                "-v", "--tb=short"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"EMR Serverless hook tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+class TestRepoOpenlineageTestsPass:
+    """Pass-to-pass: OpenLineage spark utils tests from the repo pass."""
+
+    def test_repo_openlineage_spark_utils_tests(self):
+        """Repo's OpenLineage spark utils unit tests pass (pass_to_pass)."""
+        r = subprocess.run(
+            [
+                "uv", "run", "--project", "providers/openlineage",
+                "pytest", "providers/openlineage/tests/unit/openlineage/utils/test_spark.py",
+                "-v", "--tb=short"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"OpenLineage spark utils tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+class TestRepoCompatTestsPass:
+    """Pass-to-pass: Common compat module tests from the repo pass."""
+
+    def test_repo_common_compat_openlineage_tests(self):
+        """Repo's common compat openlineage tests pass (pass_to_pass)."""
+        r = subprocess.run(
+            [
+                "uv", "run", "--project", "providers/common/compat",
+                "pytest", "providers/common/compat/tests/unit/common/compat/openlineage/utils/test_spark.py",
+                "-v", "--tb=short"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Common compat tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+class TestRepoCodeQuality:
+    """Pass-to-pass: Code quality checks from the repo pass."""
+
+    def test_repo_amazon_ruff_check(self):
+        """Repo's Amazon provider code passes ruff linting (pass_to_pass)."""
+        r = subprocess.run(
+            [
+                "uv", "run", "--project", "providers/amazon",
+                "ruff", "check", "providers/amazon/src/airflow/providers/amazon/aws/operators/emr.py"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Amazon provider ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+    def test_repo_openlineage_ruff_check(self):
+        """Repo's OpenLineage provider code passes ruff linting (pass_to_pass)."""
+        r = subprocess.run(
+            [
+                "uv", "run", "--project", "providers/openlineage",
+                "ruff", "check", "providers/openlineage/src/airflow/providers/openlineage/utils/spark.py"
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"OpenLineage provider ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
 if __name__ == "__main__":

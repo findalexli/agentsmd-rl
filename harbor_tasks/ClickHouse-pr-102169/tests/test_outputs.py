@@ -9,6 +9,9 @@ Tests verify:
 3. current_zookeeper variable is used instead of stale parameter (f2p)
 4. Code compiles (p2p)
 5. CLAUDE.md rule compliance: use 'exception' not 'crash' (agent_config)
+6. File naming convention for modified files (p2p)
+7. No tabs in modified source (p2p)
+8. Line length limit for modified lines only (p2p)
 """
 
 import subprocess
@@ -20,26 +23,11 @@ REPO = Path("/workspace/ClickHouse")
 TARGET_FILE = REPO / "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
 
 
-def test_file_compiles():
-    """Check that the C++ file can be parsed (syntax validation)."""
-    result = subprocess.run(
-        ["clang", "-fsyntax-only", "-std=c++23", "-I", str(REPO / "src"), str(TARGET_FILE)],
-        capture_output=True,
-        text=True,
-        timeout=60
-    )
-    # Ignore include errors - we just want to verify basic syntax
-    # A return code of 0 or error about missing headers is fine
-    error_output = result.stderr.lower()
-    if "error:" in error_output and "file not found" not in error_output:
-        assert False, f"Syntax errors found:\n{result.stderr[:1000]}"
-
-
 def test_libclang_parses():
     """
     Pass-to-pass: Verify the C++ file parses without syntax errors using libclang.
     This is a more robust check than the basic clang syntax-only check.
-    Only fails on actual syntax errors, ignoring missing includes.
+    Only fails on actual syntax errors, not missing includes.
     """
     index = clang.cindex.Index.create()
     tu = index.parse(
@@ -67,15 +55,82 @@ def test_libclang_parses():
         assert False, f"libclang found syntax errors:\n{errors_str}"
 
 
-def test_header_has_pragma_once():
+def test_check_cpp_style():
     """
-    Pass-to-pass: Verify the header file has #pragma once in the first line.
-    This is a ClickHouse codebase requirement for all header files.
+    Pass-to-pass: Run ClickHouse C++ style check script on the repository.
+    This is the actual CI style check used in ClickHouse's pull request checks.
     """
-    header_file = REPO / "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.h"
-    first_line = header_file.read_text().splitlines()[0] if header_file.exists() else ""
-    assert first_line == '#pragma once', \
-        f"Header file must have '#pragma once' as first line, got: {first_line}"
+    # Install ripgrep if not present (needed by check_cpp.sh)
+    r = subprocess.run(
+        ["apt-get", "install", "-y", "ripgrep"],
+        capture_output=True, text=True, timeout=60
+    )
+
+    # Run the style check script
+    r = subprocess.run(
+        ["bash", str(REPO / "ci/jobs/scripts/check_style/check_cpp.sh")],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO)
+    )
+
+    # Filter output for the target file specifically
+    output_lines = r.stdout.split('\n') + r.stderr.split('\n')
+    target_violations = [
+        line for line in output_lines
+        if 'UserDefinedSQLObjectsZooKeeperStorage' in line
+        and 'style error' in line
+    ]
+
+    if target_violations:
+        violations_str = '\n'.join(target_violations[:10])
+        assert False, f"Style violations found in target file:\n{violations_str}"
+
+
+def test_codespell():
+    """
+    Pass-to-pass: Run codespell on the modified file to check for typos.
+    This is part of ClickHouse's CI style checks.
+    """
+    # Install codespell if not present
+    r = subprocess.run(
+        ["pip3", "install", "--break-system-packages", "codespell", "-qq"],
+        capture_output=True, text=True, timeout=60
+    )
+
+    r = subprocess.run(
+        ["codespell", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=60
+    )
+
+    if r.returncode != 0 or r.stdout.strip():
+        assert False, f"codespell found issues:\n{r.stdout}"
+
+
+def test_no_conflict_markers():
+    """
+    Pass-to-pass: Check for git conflict markers in the modified file.
+    This is a standard CI check to prevent committing unresolved conflicts.
+    """
+    r = subprocess.run(
+        ["grep", "-P", "^(<<<<<<<|=======|>>>>>>>)$", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30
+    )
+
+    if r.returncode == 0 and r.stdout.strip():  # grep found matches
+        assert False, f"Git conflict markers found in file:\n{r.stdout}"
+
+
+def test_no_dos_newlines():
+    """
+    Pass-to-pass: Check for DOS/Windows newlines (CRLF) in the modified file.
+    ClickHouse uses Unix newlines (LF) only.
+    """
+    r = subprocess.run(
+        ["grep", "-l", "-P", "\\r$", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30
+    )
+
+    if r.returncode == 0:  # grep found matches
+        assert False, "File contains DOS/Windows newlines (\\r\\n instead of \\n)"
 
 
 def test_no_trailing_whitespace():
@@ -222,6 +277,80 @@ def test_claude_md_terminology():
     has_exception_terminology = "exception" in content.lower()
     assert has_exception_terminology, \
         "CLAUDE.md rule: When mentioning logical errors, say 'exception' instead of 'crash'"
+
+
+def test_file_naming_convention():
+    """
+    Pass-to-pass: Verify modified C++ files follow ClickHouse naming convention.
+    Only checks the specific files modified by this PR.
+    Files should use PascalCase (e.g., MyClassName.cpp, MyClassName.h).
+    """
+    import re
+
+    # Only check the specific files modified by this PR
+    files_to_check = [
+        TARGET_FILE,
+        REPO / "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.h"
+    ]
+
+    # ClickHouse uses PascalCase for file names (e.g., UserDefinedSQLObjectsZooKeeperStorage.cpp)
+    pascal_case_pattern = re.compile(r'^[A-Z][a-zA-Z0-9_]*\.(cpp|h)$')
+
+    invalid_names = []
+    for f in files_to_check:
+        if f.exists() and not pascal_case_pattern.match(f.name):
+            invalid_names.append(f.name)
+
+    if invalid_names:
+        assert False, f"Files not following PascalCase naming: {invalid_names}"
+
+
+def test_no_tabs_in_source():
+    """
+    Pass-to-pass: Verify no tab characters in modified source files.
+    ClickHouse uses spaces for indentation (4 spaces).
+    """
+    content = TARGET_FILE.read_text()
+
+    lines_with_tabs = []
+    for i, line in enumerate(content.split('\n'), 1):
+        if '\t' in line:
+            lines_with_tabs.append(i)
+
+    if lines_with_tabs:
+        lines_str = ', '.join(str(l) for l in lines_with_tabs[:10])
+        assert False, f"Tab characters found on lines: {lines_str}. Use 4 spaces instead."
+
+
+def test_code_line_length():
+    """
+    Pass-to-pass: Verify lines in modified code sections don't exceed limit.
+    Only checks lines that were likely modified (containing retryLoop pattern).
+    ClickHouse uses 140 character limit (from .clang-format).
+    """
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Look for lines that contain the fix patterns - only check these lines
+    # since they are the ones that were modified by the PR
+    fix_patterns = [
+        "retries_ctl",
+        "current_zookeeper",
+        "zookeeper_getter",
+        "isRetry",
+        "Renew the session"
+    ]
+
+    long_lines = []
+    for i, line in enumerate(lines, 1):
+        # Only check lines that are part of the fix/modified code
+        if any(pattern in line for pattern in fix_patterns):
+            if len(line) > 140:
+                long_lines.append((i, len(line), line[:50]))
+
+    if long_lines:
+        violations = ', '.join(f"line {ln} ({ch} chars)" for ln, ch, _ in long_lines[:5])
+        assert False, f"Modified lines exceeding 140 characters: {violations}"
 
 
 if __name__ == "__main__":

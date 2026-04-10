@@ -56,36 +56,58 @@ checks:
   - id: test_repo_package_json_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's playground package.json is valid JSON"
+    description: "Repo playground package.json is valid JSON via node JSON.parse"
 
-  - id: test_repo_compilation_ts_parsable
+  - id: test_repo_compilation_ts_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's compilation.ts is syntactically valid JavaScript"
+    description: "Repo compilation.ts has valid JavaScript/TypeScript syntax via node --check"
 
-  - id: test_repo_config_editor_tsx_valid
+  - id: test_repo_default_store_ts_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's ConfigEditor.tsx has valid TSX structure"
+    description: "Repo defaultStore.ts has valid JavaScript/TypeScript syntax via node --check"
 
-  - id: test_repo_default_store_ts_parsable
+  - id: test_repo_prettier_check_compilation
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's defaultStore.ts is syntactically valid JavaScript"
+    description: "Repo compilation.ts passes prettier formatting check via npx prettier --check"
 
-  - id: test_repo_no_syntax_errors_in_modified_files
+  - id: test_repo_prettier_check_default_store
     type: pass_to_pass
     origin: repo_tests
-    description: "Modified files have no obvious syntax errors (balanced braces, valid structure)"
+    description: "Repo defaultStore.ts passes prettier formatting check via npx prettier --check"
+
+  - id: test_repo_prettier_check_config_editor
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo ConfigEditor.tsx passes prettier formatting check via npx prettier --check"
 
   - id: test_repo_git_status_clean
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo has no uncommitted changes at base commit"
+    description: "Repo has no uncommitted changes at base commit via git status --porcelain"
 
   - id: test_repo_node_modules_json5_available
     type: pass_to_pass
     origin: repo_tests
     description: "json5 dependency is available for repo tests"
 
-rubric: []
+rubric:
+  - rule: "Run compiler tests with `yarn snap` when modifying compiler files. Tests should pass before submitting."
+    source:
+      path: "compiler/CLAUDE.md"
+      lines: "21-36"
+      commit: "74568e8627aa43469b74f2972f427a209639d0b6"
+
+  - rule: "Format code with `yarn prettier-all` when modifying compiler files. Code must pass formatting checks."
+    source:
+      path: "compiler/CLAUDE.md"
+      lines: "45-50"
+      commit: "74568e8627aa43469b74f2972f427a209639d0b6"
+
+  - rule: "Use Sapling (`sl`) commands for version control, not git. Use `sl addremove` to track new/deleted files and `sl commit` to commit changes."
+    source:
+      path: "compiler/CLAUDE.md"
+      lines: "77-98"
+      commit: "74568e8627aa43469b74f2972f427a209639d0b6"

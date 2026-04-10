@@ -22,9 +22,21 @@ def _run_python_test(code: str, timeout: int = 60) -> subprocess.CompletedProces
 
     This ensures we're actually executing code, not just checking structure.
     """
+    # Prepend minimal mocking boilerplate - megatron-core is installed but needs some mocks
+    mocking_boilerplate = '''
+import sys
+from unittest.mock import MagicMock
+
+# Mock transformer_engine as it's not installed
+sys.modules["transformer_engine"] = MagicMock()
+sys.modules["transformer_engine"].__spec__ = None
+
+'''
+    full_code = mocking_boilerplate + code
+
     # Write code to a temp file and execute it
     script = Path(REPO) / "_eval_test.py"
-    script.write_text(code)
+    script.write_text(full_code)
     try:
         return subprocess.run(
             [sys.executable, str(script)],
@@ -78,6 +90,58 @@ def test_repo_syntax_model_provider():
     )
 
 
+# [repo_tests] pass_to_pass — Repo CI: ruff linting on modified files
+def test_repo_ruff():
+    """Repo CI: ruff check passes on modified files."""
+    # Install ruff if needed
+    r = subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "--quiet"], capture_output=True, timeout=120)
+    # Run ruff check on modified files
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "slime_plugins/mbridge/glm4moe_lite.py", "slime/backends/megatron_utils/model_provider.py"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: black formatting check on modified files
+def test_repo_black():
+    """Repo CI: black formatting check passes on modified files."""
+    # Install black if needed
+    r = subprocess.run([sys.executable, "-m", "pip", "install", "black", "--quiet"], capture_output=True, timeout=120)
+    # Run black check on modified files
+    r = subprocess.run(
+        [sys.executable, "-m", "black", "--check", "slime_plugins/mbridge/glm4moe_lite.py", "slime/backends/megatron_utils/model_provider.py"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"black check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: MTP bridge mapping tests pass
+def test_repo_mtp_bridge_mapping():
+    """Repo CI: MTP bridge mapping unit tests pass.
+
+    These tests exercise the same MTP bridge functionality that the PR adds
+    to GLM4MoELiteBridge (_convert_mtp_param, weight mappings, etc.).
+    """
+    # Install pytest if needed
+    r = subprocess.run([sys.executable, "-m", "pip", "install", "pytest", "--quiet"], capture_output=True, timeout=120)
+    # Run pytest on the MTP bridge mapping tests
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/test_qwen3_5_mtp_bridge_mapping.py", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"MTP bridge mapping tests failed:\n{r.stdout}\n{r.stderr}"
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests using subprocess.run()
 # -----------------------------------------------------------------------------
@@ -92,12 +156,7 @@ def test_rope_theta_patched():
     code = """
 import sys
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
-
-# Mock megatron/transformer_engine before import
-for mod in ['megatron', 'transformer_engine']:
-    sys.modules[mod] = MagicMock()
-    sys.modules[mod].__path__ = []
+from unittest.mock import patch
 
 sys.path.insert(0, '/workspace/slime')
 
@@ -148,11 +207,7 @@ def test_shared_mapping_dynamic_layers():
     code = """
 import sys
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
-
-for mod in ['megatron', 'transformer_engine']:
-    sys.modules[mod] = MagicMock()
-    sys.modules[mod].__path__ = []
+from unittest.mock import patch
 
 sys.path.insert(0, '/workspace/slime')
 
@@ -200,11 +255,6 @@ def test_convert_mtp_direct_names():
     code = """
 import sys
 from types import SimpleNamespace
-from unittest.mock import MagicMock
-
-for mod in ['megatron', 'transformer_engine']:
-    sys.modules[mod] = MagicMock()
-    sys.modules[mod].__path__ = []
 
 sys.path.insert(0, '/workspace/slime')
 
@@ -243,11 +293,6 @@ def test_convert_mtp_transformer_delegation():
     code = """
 import sys
 from types import SimpleNamespace
-from unittest.mock import MagicMock
-
-for mod in ['megatron', 'transformer_engine']:
-    sys.modules[mod] = MagicMock()
-    sys.modules[mod].__path__ = []
 
 sys.path.insert(0, '/workspace/slime')
 
@@ -290,11 +335,6 @@ def test_safetensor_io_type():
     code = """
 import sys
 import tempfile
-from unittest.mock import MagicMock
-
-for mod in ['megatron', 'transformer_engine']:
-    sys.modules[mod] = MagicMock()
-    sys.modules[mod].__path__ = []
 
 sys.path.insert(0, '/workspace/slime')
 
@@ -333,11 +373,7 @@ def test_weight_to_hf_shared():
     code = """
 import sys
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
-
-for mod in ['megatron', 'transformer_engine']:
-    sys.modules[mod] = MagicMock()
-    sys.modules[mod].__path__ = []
+from unittest.mock import patch
 
 sys.path.insert(0, '/workspace/slime')
 

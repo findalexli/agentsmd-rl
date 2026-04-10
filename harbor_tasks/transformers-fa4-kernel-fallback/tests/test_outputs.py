@@ -186,6 +186,87 @@ def test_compat_matrix_has_all_versions():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI tests (repo_tests) — actual CI commands that should pass
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + MODIFIED_FILES,
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_copies():
+    """Repo's check_copies.py passes (pass_to_pass).
+
+    This validates that # Copied from blocks are consistent across the codebase.
+    """
+    r = subprocess.run(
+        [sys.executable, "utils/check_copies.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_copies.py failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_dummies():
+    """Repo's check_dummies.py passes (pass_to_pass).
+
+    This validates that dummy objects are correctly defined for optional dependencies.
+    """
+    r = subprocess.run(
+        [sys.executable, "utils/check_dummies.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_dummies.py failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_doc_toc():
+    """Repo's check_doc_toc.py passes (pass_to_pass).
+
+    This validates that documentation table of contents is correctly structured.
+    """
+    r = subprocess.run(
+        [sys.executable, "utils/check_doc_toc.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_doc_toc.py failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_inits():
+    """Repo's check_inits.py passes (pass_to_pass).
+
+    This validates that __init__.py files correctly expose public APIs.
+    """
+    r = subprocess.run(
+        [sys.executable, "utils/check_inits.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_inits.py failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / copilot-instructions.md
 # ---------------------------------------------------------------------------
 

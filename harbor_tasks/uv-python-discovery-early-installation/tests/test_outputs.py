@@ -286,6 +286,22 @@ def test_repo_cargo_clippy_uv_python():
     assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — cargo test on uv-python crate
+def test_repo_cargo_test_uv_python():
+    """uv-python crate unit tests pass (pass_to_pass)."""
+    cargo_bin = _ensure_rust_installed()
+    env = {**subprocess.os.environ, "PATH": f"{cargo_bin}:{subprocess.os.environ.get('PATH', '')}"}
+    r = subprocess.run(
+        ["cargo", "test", "--package", "uv-python"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"cargo test failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md
 # ---------------------------------------------------------------------------

@@ -27,6 +27,53 @@ def test_syntax_check():
 
 
 # -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI-style checks
+# -----------------------------------------------------------------------------
+
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", "python/sglang/srt/lora/utils.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed on utils.py:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_import_utils():
+    """LoRA utils module can be imported without errors (pass_to_pass)."""
+    # Use the same mocked import approach as the other tests
+    code = '''
+# Verify we can load the module and its key functions work
+assert callable(_utils.get_normalized_target_modules), "get_normalized_target_modules not callable"
+assert callable(_utils.get_hidden_dim), "get_hidden_dim not callable"
+assert callable(_utils.get_stacked_multiply), "get_stacked_multiply not callable"
+assert callable(_utils.get_target_module_name), "get_target_module_name not callable"
+
+# Test that the dataclass and enum are importable (they're defined at module level)
+assert _utils.LoRABatchInfo is not None, "LoRABatchInfo not found"
+assert _utils.LoRAType is not None, "LoRAType not found"
+
+# Verify the key function works with basic input
+result = _utils.get_normalized_target_modules(["q_proj", "v_proj"])
+assert "qkv_proj" in result, f"Expected 'qkv_proj' in result, got {result}"
+print("PASS")
+'''
+    _run_subprocess_test(code)
+
+
+# -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral: auto_detect_lora_target_modules
 #
 # These use subprocess.run() to execute Python code that loads utils.py

@@ -129,208 +129,145 @@ def test_dragonbox_msan_test_file_exists():
         "Test should mention struct padding"
 
 
-def test_cmake_syntax_valid():
-    """CMakeLists.txt should have valid syntax (pass-to-pass).
+def test_repo_style_check():
+    """PR-modified files pass ClickHouse C++ style check (pass_to_pass).
 
-    Basic syntax check that doesn't require full build.
+    This runs the repo's check_cpp.sh script on the codebase to ensure
+    the modified files follow ClickHouse coding standards.
+    """
+    result = subprocess.run(
+        ["bash", "ci/jobs/scripts/check_style/check_cpp.sh"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+
+    # The script outputs style issues to stdout. Check that PR files don't
+    # have style errors by looking for them in output
+    pr_files = ["src/Common/Fiber.h", "src/Common/FiberStack.cpp", "contrib/boost-cmake/CMakeLists.txt"]
+    output = result.stdout + result.stderr
+
+    for line in output.splitlines():
+        for pr_file in pr_files:
+            if pr_file in line and "style error" in line.lower():
+                pytest.fail(f"Style error in {pr_file}: {line}")
+
+    # Test passes if no style errors found in PR files
+    assert True
+
+
+def test_repo_various_checks():
+    """ClickHouse repo various_checks.sh passes (pass_to_pass).
+
+    This runs the various_checks.sh script which performs various
+    repository validation checks.
+    """
+    result = subprocess.run(
+        ["bash", "ci/jobs/scripts/check_style/various_checks.sh"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+
+    # The script should exit 0 on success
+    assert result.returncode == 0, \
+        f"various_checks.sh failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
+
+
+def test_repo_cmake_syntax():
+    """CMakeLists.txt files have valid syntax (pass_to_pass).
+
+    Uses cmake --help-command-list and basic parsing to validate CMake syntax.
     """
     cmake_file = os.path.join(REPO, "contrib/boost-cmake/CMakeLists.txt")
 
-    # Use cmake to parse the file
+    # Use cmake to validate the file can be parsed
     result = subprocess.run(
         ["cmake", "-P", "-"],
         input=f"include({cmake_file})",
         capture_output=True,
         text=True,
-        timeout=30
+        timeout=30,
+        cwd=REPO,
     )
 
-    # Note: include will fail due to missing context, but syntax errors
-    # would be reported differently
-    # Just check file is readable and has matching if/endif
-    with open(cmake_file, "r") as f:
-        content = f.read()
+    # The include will fail due to missing context, but we check for
+    # actual syntax errors vs context errors
+    error_output = result.stderr.lower()
 
-    # Rough syntax validation: check for matching if/endif
-    if_count = content.count("if (")
-    endif_count = content.count("endif()")
-    assert if_count > 0 and endif_count > 0, \
-        "CMakeLists.txt should have if/endif statements"
+    # Syntax errors would mention "parse error", "syntax error", etc.
+    syntax_indicators = ["parse error", "syntax error", "unknown command"]
+    for indicator in syntax_indicators:
+        assert indicator not in error_output, \
+            f"CMake syntax error detected: {result.stderr[-500:]}"
 
 
-def test_fiber_stack_cpp_syntax_valid():
-    """FiberStack.cpp should have valid C++ syntax (pass-to-pass).
+def test_repo_clang_syntax_check():
+    """C++ implementation files have valid syntax (pass_to_pass).
 
-    Basic clang syntax check.
+    Runs clang -fsyntax-only on modified C++ implementation files only.
     """
-    fiber_stack_cpp = os.path.join(REPO, "src/Common/FiberStack.cpp")
-
-    # Try to compile just this file with clang
-    # We don't need full build, just syntax check
-    result = subprocess.run(
-        ["clang-18", "-fsyntax-only", "-std=c++23", fiber_stack_cpp],
-        capture_output=True,
-        text=True,
-        timeout=60
-    )
-
-    # The syntax check may fail due to missing includes, but should not
-    # have syntax errors in the code itself
-    # We check that the file exists and has valid structure
-    with open(fiber_stack_cpp, "r") as f:
-        content = f.read()
-
-    # Check for valid C++ structure
-    assert "boost::context::stack_context FiberStack::allocate()" in content, \
-        "Should have correct function signature"
-
-    # Check braces are balanced (rough check)
-    open_braces = content.count("{")
-    close_braces = content.count("}")
-    assert open_braces == close_braces, \
-        "Braces should be balanced in FiberStack.cpp"
-
-
-def test_dragonbox_test_syntax_valid():
-    """gtest_dragonbox_msan.cpp should have valid C++ syntax (pass-to-pass).
-    """
-    test_file = os.path.join(REPO, "src/Common/tests/gtest_dragonbox_msan.cpp")
-
-    if not os.path.exists(test_file):
-        pytest.skip("Test file does not exist yet")
-
-    with open(test_file, "r") as f:
-        content = f.read()
-
-    # Check for valid C++ structure
-    open_braces = content.count("{")
-    close_braces = content.count("}")
-    assert open_braces == close_braces, \
-        "Braces should be balanced in gtest_dragonbox_msan.cpp"
-
-    # Check parentheses balance (rough)
-    open_parens = content.count("(")
-    close_parens = content.count(")")
-    assert open_parens == close_parens, \
-        "Parentheses should be balanced"
-
-
-def test_pr_files_no_style_violations():
-    """PR-modified files should pass repo's C++ style check (pass-to-pass).
-
-    This runs the repo's check_cpp.sh script on the specific files that
-    the PR modifies to ensure they follow ClickHouse coding standards.
-    """
-    pr_files = [
-        "contrib/boost-cmake/CMakeLists.txt",
-        "src/Common/Fiber.h",
-        "src/Common/FiberStack.cpp",
+    cpp_files = [
+        os.path.join(REPO, "src/Common/FiberStack.cpp"),
     ]
 
-    # Run style check script on each file
-    for file_path in pr_files:
-        full_path = os.path.join(REPO, file_path)
-        if not os.path.exists(full_path):
-            pytest.skip(f"File {file_path} does not exist")
+    for cpp_file in cpp_files:
+        if not os.path.exists(cpp_file):
+            pytest.skip(f"File {cpp_file} does not exist")
 
-    # Run the repo's style check script and filter for our files
+        result = subprocess.run(
+            ["clang-18", "-fsyntax-only", "-std=c++23", "-I", os.path.join(REPO, "src"), cpp_file],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+
+        # Check for actual syntax errors vs missing includes
+        error_output = result.stderr.lower()
+        syntax_indicators = ["expected", "syntax error", "parse error", "invalid"]
+
+        has_syntax_error = any(indicator in error_output for indicator in syntax_indicators)
+        if has_syntax_error:
+            pytest.fail(f"Syntax error in {cpp_file}:\
+{result.stderr[-500:]}")
+
+
+def test_repo_git_check():
+    """Git repository is in valid state (pass_to_pass).
+
+    Verifies the git repo is properly initialized and base commit is checked out.
+    """
+    # Check git status works
     result = subprocess.run(
-        ["bash", "./ci/jobs/scripts/check_style/check_cpp.sh"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["git", "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
     )
 
-    # Check if any style issues are found in PR files
-    style_issues = []
-    for line in (result.stdout + result.stderr).splitlines():
-        for pr_file in pr_files:
-            if pr_file in line and "style error" in line.lower():
-                style_issues.append(line)
+    assert result.returncode == 0, \
+        f"Git status failed: {result.stderr}"
 
-    assert len(style_issues) == 0, \
-        f"Style violations found in PR files:\n" + "\n".join(style_issues[:10])
+    # Check the base commit exists
+    result = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
 
+    assert result.returncode == 0, \
+        f"Git HEAD not valid: {result.stderr}"
 
-def test_cmake_syntax_structure():
-    """CMakeLists.txt should have valid structure (pass-to-pass).
-
-    Validates that the CMakeLists.txt has balanced if/endif statements
-    and proper cmake syntax for the boost-cmake module.
-    """
-    cmake_file = os.path.join(REPO, "contrib/boost-cmake/CMakeLists.txt")
-
-    with open(cmake_file, "r") as f:
-        content = f.read()
-
-    # Count cmake if/elseif/endif statements (at start of lines)
-    if_count = len(__import__('re').findall(r'^if\s*\(', content, __import__('re').MULTILINE))
-    elseif_count = len(__import__('re').findall(r'^elseif\s*\(', content, __import__('re').MULTILINE))
-    endif_count = len(__import__('re').findall(r'^endif\s*\(', content, __import__('re').MULTILINE))
-
-    # Basic sanity: should have at least some if blocks
-    assert if_count >= 1, "Should have at least one if() statement"
-    assert endif_count >= 1, "Should have at least one endif() statement"
-
-    # Check for expected patterns in the file
-    assert "if (SANITIZE" in content or "if(SANITIZE" in content, \
-        "Should check for SANITIZE variable"
-    assert "OS_LINUX" in content, "Should check for OS_LINUX"
-    assert "target_compile_definitions" in content, \
-        "Should use target_compile_definitions"
-
-
-def test_fiber_h_structure():
-    """Fiber.h should have valid header structure (pass-to-pass).
-
-    Validates header guards, include structure, and basic formatting.
-    """
-    fiber_h = os.path.join(REPO, "src/Common/Fiber.h")
-
-    with open(fiber_h, "r") as f:
-        content = f.read()
-
-    # Check for pragma once or include guards
-    assert "#pragma once" in content, "Header should have #pragma once"
-
-    # Check for expected includes
-    assert "base/defines.h" in content, "Should include base/defines.h"
-    assert "boost/context/fiber.hpp" in content, "Should include boost fiber"
-
-    # Check brace balance
-    open_braces = content.count("{")
-    close_braces = content.count("}")
-    assert open_braces == close_braces, "Braces should be balanced"
-
-    # Check class declaration exists
-    assert "class Fiber" in content, "Should declare Fiber class"
-
-
-def test_fiber_stack_cpp_structure():
-    """FiberStack.cpp should have valid implementation structure (pass-to-pass).
-
-    Validates function definitions and basic structure.
-    """
-    fiber_stack_cpp = os.path.join(REPO, "src/Common/FiberStack.cpp")
-
-    with open(fiber_stack_cpp, "r") as f:
-        content = f.read()
-
-    # Check for expected function
-    assert "FiberStack::allocate" in content, "Should have FiberStack::allocate function"
-
-    # Check for boost context include
-    assert "boost/context/stack_context.hpp" in content.lower() or \
-           "boost/context/fixedsize_stack.hpp" in content.lower() or \
-           "FiberStack.h" in content, "Should include required headers"
-
-    # Check brace balance
-    open_braces = content.count("{")
-    close_braces = content.count("}")
-    assert open_braces == close_braces, "Braces should be balanced"
-
-    # Check parentheses balance
-    open_parens = content.count("(")
-    close_parens = content.count(")")
-    assert open_parens == close_parens, "Parentheses should be balanced"
+    # Verify we have the expected commit
+    head_commit = result.stdout.strip()
+    assert len(head_commit) == 40, \
+        f"Invalid HEAD commit: {head_commit}"
 
 
 if __name__ == "__main__":

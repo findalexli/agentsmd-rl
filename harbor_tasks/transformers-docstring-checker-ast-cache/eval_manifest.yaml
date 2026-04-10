@@ -70,6 +70,22 @@ checks:
       lines: "2"
       commit: "1f553bdc1703c78e272656ab8fb86d6494593e18"
 
+  # Repo CI-derived pass-to-pass tests
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: ruff check passes on modified file (from Makefile style target)"
+
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: ruff format check passes on modified file (from Makefile style target)"
+
+  - id: test_repo_check_docstrings_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: check_docstrings.py parses without syntax errors"
+
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
     source:

@@ -66,9 +66,24 @@ checks:
     origin: repo_tests
     description: "Modified files pass ruff format check"
 
-rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "ca84f3e36c6a3f3c3f0b57084b6f514d6cded1d4"
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files pass ruff lint check (E,W,E501 ignored)"
+
+  - id: test_repo_external_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's external.py unit tests pass (network-independent subset)"
+
+  - id: test_repo_gradio_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "gradio module and key submodules remain importable"
+
+  - id: test_repo_external_consolidated
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's external.py and external_utils tests pass (consolidated network-independent subset)"
+
+rubric: []

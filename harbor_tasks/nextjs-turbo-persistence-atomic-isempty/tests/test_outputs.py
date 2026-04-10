@@ -19,6 +19,7 @@ from pathlib import Path
 
 REPO = "/workspace/next.js"
 DB_FILE = f"{REPO}/turbopack/crates/turbo-persistence/src/db.rs"
+PERSISTENCE_SRC = f"{REPO}/turbopack/crates/turbo-persistence/src"
 
 
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -63,6 +64,130 @@ if len(lines) < 400:
 print("PASS")
 """)
     assert r.returncode == 0, f"Source check failed: {r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [static] pass_to_pass
+def test_repo_module_files_exist():
+    """All declared Rust module files exist (pass_to_pass).
+
+    Validates that the crate structure is intact and no source files are missing.
+    This catches file corruption, incomplete checkouts, or broken module paths.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+src_dir = Path("{REPO}/turbopack/crates/turbo-persistence/src")
+lib_file = src_dir / "lib.rs"
+
+if not lib_file.exists():
+    print("FAIL: lib.rs not found")
+    sys.exit(1)
+
+src = lib_file.read_text()
+
+# Extract mod declarations
+import re
+mod_decls = re.findall(r"^\\s*(?:pub\\s+)?(?:mod|pub\\s+mod)\\s+(\\w+)", src, re.MULTILINE)
+
+missing = []
+for mod in mod_decls:
+    mod_file = src_dir / f"{{mod}}.rs"
+    mod_dir_file = src_dir / mod / "mod.rs"
+    if not mod_file.exists() and not mod_dir_file.exists():
+        missing.append(mod)
+
+if missing:
+    print(f"FAIL: Missing module files: {{missing}}")
+    sys.exit(1)
+
+print(f"PASS: All {{len(mod_decls)}} module files exist")
+""")
+    assert r.returncode == 0, "Module file check failed: " + r.stdout + "\n" + r.stderr
+    assert "PASS" in r.stdout
+
+
+# [static] pass_to_pass
+def test_repo_source_integrity():
+    """Source files are not truncated/corrupted (pass_to_pass).
+
+    Validates that key source files have reasonable line counts and structure.
+    Catches truncated downloads, disk issues, or git checkout problems.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+src_dir = Path("{REPO}/turbopack/crates/turbo-persistence/src")
+files_to_check = ["lib.rs", "db.rs"]
+
+for fname in files_to_check:
+    fpath = src_dir / fname
+    if not fpath.exists():
+        print(f"FAIL: {{fname}} does not exist")
+        sys.exit(1)
+    lines = fpath.read_text().splitlines()
+    if len(lines) < 10:
+        print(f"FAIL: {{fname}} only has {{len(lines)}} lines -- likely truncated")
+        sys.exit(1)
+
+print(f"PASS: All source files have valid structure")
+""")
+    assert r.returncode == 0, "Source integrity check failed: " + r.stdout + "\n" + r.stderr
+    assert "PASS" in r.stdout
+
+
+# [static] pass_to_pass
+def test_repo_no_tabs():
+    """Source files use spaces for indentation, not tabs (pass_to_pass).
+
+    Rust standard style uses 4 spaces for indentation. This check ensures
+    the source files follow standard formatting conventions.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+src_dir = Path("{PERSISTENCE_SRC}")
+rust_files = list(src_dir.glob("*.rs"))
+
+for fpath in rust_files:
+    content = fpath.read_text()
+    if '\\t' in content:
+        print(f"FAIL: {{fpath.name}} contains tab characters")
+        sys.exit(1)
+
+print(f"PASS: All {{len(rust_files)}} Rust files use spaces for indentation")
+""")
+    assert r.returncode == 0, "Tab check failed: " + r.stdout + "\n" + r.stderr
+    assert "PASS" in r.stdout
+
+
+# [static] pass_to_pass
+def test_repo_valid_utf8():
+    """Source files are valid UTF-8 (pass_to_pass).
+
+    Validates that source files can be read as valid UTF-8 text.
+    Catches encoding issues or binary corruption.
+    """
+    r = _run_py(f"""
+import sys
+from pathlib import Path
+
+src_dir = Path("{PERSISTENCE_SRC}")
+files = list(src_dir.glob("*.rs"))
+
+for fpath in files:
+    try:
+        fpath.read_text(encoding='utf-8')
+    except UnicodeDecodeError as e:
+        print(f"FAIL: {{fpath.name}} is not valid UTF-8: {{e}}")
+        sys.exit(1)
+
+print(f"PASS: All {{len(files)}} source files are valid UTF-8")
+""")
+    assert r.returncode == 0, "UTF-8 check failed: " + r.stdout + "\n" + r.stderr
     assert "PASS" in r.stdout
 
 
@@ -213,76 +338,20 @@ print(f"PASS: found {{len(store_calls)}} store syncs at lines {{store_line_nums}
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) -- repository structure and integrity
+# Pass-to-pass (repo_tests) — Git repository integrity checks
 # ---------------------------------------------------------------------------
 
 
 # [repo_tests] pass_to_pass
-def test_repo_module_files_exist():
-    """All declared Rust module files exist (pass_to_pass).
+def test_repo_git_valid():
+    """Git repository is valid and has expected commit (pass_to_pass).
 
-    Validates that the crate structure is intact and no source files are missing.
-    This catches file corruption, incomplete checkouts, or broken module paths.
+    Verifies that the git checkout is not corrupted and the expected
+    base commit is present. This catches incomplete clones or corruption.
     """
-    r = _run_py(f"""
-import sys
-from pathlib import Path
-
-src_dir = Path("{REPO}/turbopack/crates/turbo-persistence/src")
-lib_file = src_dir / "lib.rs"
-
-if not lib_file.exists():
-    print("FAIL: lib.rs not found")
-    sys.exit(1)
-
-src = lib_file.read_text()
-
-# Extract mod declarations
-import re
-mod_decls = re.findall(r"^\s*(?:pub\s+)?(?:mod|pub\s+mod)\s+(\w+)", src, re.MULTILINE)
-
-missing = []
-for mod in mod_decls:
-    mod_file = src_dir / f"{{mod}}.rs"
-    mod_dir_file = src_dir / mod / "mod.rs"
-    if not mod_file.exists() and not mod_dir_file.exists():
-        missing.append(mod)
-
-if missing:
-    print(f"FAIL: Missing module files: {{missing}}")
-    sys.exit(1)
-
-print(f"PASS: All {{len(mod_decls)}} module files exist")
-""")
-    assert r.returncode == 0, "Module file check failed: " + r.stdout + "\n" + r.stderr
-    assert "PASS" in r.stdout
-
-
-# [repo_tests] pass_to_pass
-def test_repo_source_integrity():
-    """Source files are not truncated/corrupted (pass_to_pass).
-
-    Validates that key source files have reasonable line counts and structure.
-    Catches truncated downloads, disk issues, or git checkout problems.
-    """
-    r = _run_py(f"""
-import sys
-from pathlib import Path
-
-src_dir = Path("{REPO}/turbopack/crates/turbo-persistence/src")
-files_to_check = ["lib.rs", "db.rs"]
-
-for fname in files_to_check:
-    fpath = src_dir / fname
-    if not fpath.exists():
-        print(f"FAIL: {{fname}} does not exist")
-        sys.exit(1)
-    lines = fpath.read_text().splitlines()
-    if len(lines) < 10:
-        print(f"FAIL: {{fname}} only has {{len(lines)}} lines -- likely truncated")
-        sys.exit(1)
-
-print(f"PASS: All source files have valid structure")
-""")
-    assert r.returncode == 0, "Source integrity check failed: " + r.stdout + "\n" + r.stderr
-    assert "PASS" in r.stdout
+    r = subprocess.run(
+        ["git", "-C", REPO, "rev-parse", "--verify", "e513488d0d3bc19ae9b16b08ef43add7e4faab7c"],
+        capture_output=True, text=True, timeout=30
+    )
+    assert r.returncode == 0, f"Git commit check failed: {r.stderr}"
+    assert "e513488d0d3bc19ae9b16b08ef43add7e4faab7c" in r.stdout

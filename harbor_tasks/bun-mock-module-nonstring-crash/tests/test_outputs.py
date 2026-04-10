@@ -236,6 +236,71 @@ def test_repo_js_lint():
 
 
 # ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_lint():
+    """Repo's package.json lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/package-json-lint.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Package.json lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mock_fn_tests():
+    """Repo's mock function tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/test/mock-fn.test.js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Mock function tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mock_disposable_tests():
+    """Repo's mock disposable tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/test/mock-disposable.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Mock disposable tests failed:\n{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_mock_module_tests():
+    """Repo's mock module tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/test/mock/mock-module.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Mock module tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mock_module_resolve_log_tests():
+    """Repo's mock module resolve log tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/test/mock/mock-module-resolve-log.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO_DIR,
+    )
+    assert r.returncode == 0, f"Mock module resolve log tests failed:\n{r.stderr[-500:]}"
+
 # Static — anti-stub
 # ---------------------------------------------------------------------------
 

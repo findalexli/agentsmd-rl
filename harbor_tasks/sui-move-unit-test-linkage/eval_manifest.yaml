@@ -62,5 +62,36 @@ checks:
     origin: repo_tests
     description: external-crates/move workspace cargo check passes
 
-# No agent config rules relevant to this specific fix
-rubric: []
+  - id: test_cargo_fmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: rustfmt check passes on entire repo
+
+  - id: test_move_vm_runtime_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo check passes on move-vm-runtime crate
+
+  - id: test_move_unit_test_lib_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-unit-test library tests pass
+
+rubric:
+  - rule: "Follow existing code style for license headers. New files must start with SPDX-License-Identifier comment."
+    source:
+      path: "CLAUDE.md"
+      lines: "16-20"
+      commit: "8810914bd8a82363390cbd30eb12188b34592c87"
+
+  - rule: "Use comments to explain the WHY (non-obvious algorithms, reasoning, assumptions), not the WHAT (what code does)."
+    source:
+      path: "CLAUDE.md"
+      lines: "116-130"
+      commit: "8810914bd8a82363390cbd30eb12188b34592c87"
+
+  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or other linting suppressions - fix underlying issues instead."
+    source:
+      path: "CLAUDE.md"
+      lines: "111-114"
+      commit: "8810914bd8a82363390cbd30eb12188b34592c87"

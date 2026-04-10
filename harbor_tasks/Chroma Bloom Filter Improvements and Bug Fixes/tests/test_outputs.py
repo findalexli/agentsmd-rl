@@ -9,6 +9,7 @@ This task involves fixing several bugs in the bloom filter implementation:
 
 import subprocess
 import sys
+from pathlib import Path
 
 REPO = "/workspace/chroma"
 RUST_SEGMENT = f"{REPO}/rust/segment"
@@ -208,3 +209,108 @@ def test_bloom_filter_unit_tests():
     """Run all bloom_filter module unit tests to ensure no regressions."""
     result = run_cargo(["test", "bloom_filter::", "--", "--nocapture"])
     assert result.returncode == 0, f"Bloom filter unit tests failed:\n{result.stdout}\n{result.stderr}"
+
+
+# =============================================================================
+# Pass-to-Pass Tests - Repo CI Checks
+# These tests verify the repo's CI passes on the base commit (before the fix).
+# Note: Some tests require protoc which is not installed in the Docker image.
+# They are structured to pass when the environment is properly configured.
+# =============================================================================
+
+
+def test_cargo_fmt_check():
+    """Rust code formatting passes (pass_to_pass).
+
+    This is the repo's lint check from .github/workflows/pr.yml:
+    cargo fmt -- --check
+    """
+    result = subprocess.run(
+        ["cargo", "fmt", "--", "--check"],
+        cwd=f"{REPO}/rust",
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"cargo fmt check failed:\n{result.stderr}"
+
+
+def test_cargo_clippy_check():
+    """Rust clippy linting passes (pass_to_pass).
+
+    This is the repo's lint check from .github/workflows/pr.yml:
+    cargo clippy --all-targets --all-features --keep-going -- -D warnings
+    """
+    result = subprocess.run(
+        ["cargo", "clippy", "--all-targets", "--all-features", "--keep-going", "--", "-D", "warnings"],
+        cwd=f"{REPO}/rust",
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"cargo clippy failed:\n{result.stderr[-1000:]}"
+
+
+def test_bloom_filter_module_tests():
+    """Bloom filter module unit tests pass (pass_to_pass).
+
+    Runs the existing unit tests in the bloom_filter module:
+    - test_format_key
+    - test_insert_and_contains
+    - test_mark_deleted
+    - test_serialization_roundtrip
+    - test_needs_rebuild_stale_ratio
+    - test_needs_rebuild_over_capacity
+    """
+    result = subprocess.run(
+        ["cargo", "test", "--lib", "bloom_filter::", "--", "--nocapture"],
+        cwd=f"{REPO}/rust/segment",
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"Bloom filter unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+def test_modified_files_exist():
+    """Modified source files exist and are readable (pass_to_pass)."""
+    # Files modified by the PR
+    modified_files = [
+        f"{REPO}/rust/segment/src/bloom_filter.rs",
+        f"{REPO}/rust/segment/src/blockfile_record.rs",
+    ]
+    for filepath in modified_files:
+        assert Path(filepath).exists(), f"Modified file does not exist: {filepath}"
+        # Verify file is readable and non-empty
+        content = Path(filepath).read_text()
+        assert len(content) > 0, f"Modified file is empty: {filepath}"
+
+
+def test_bloom_filter_has_tests():
+    """Bloom filter module contains unit tests (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "-c", "#\\[test\\]", f"{REPO}/rust/segment/src/bloom_filter.rs"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, "No tests found in bloom_filter.rs"
+    test_count = int(result.stdout.strip())
+    assert test_count >= 7, f"Expected at least 7 tests, found {test_count}"
+
+
+def test_no_trailing_whitespace_rust():
+    """No trailing whitespace in modified Rust files (pass_to_pass).
+
+    Mirrors the pre-commit check from .github/workflows/pr.yml:
+    pre-commit run --all-files trailing-whitespace
+    """
+    modified_files = [
+        f"{REPO}/rust/segment/src/bloom_filter.rs",
+        f"{REPO}/rust/segment/src/blockfile_record.rs",
+    ]
+    for filepath in modified_files:
+        content = Path(filepath).read_text()
+        lines = content.split("\n")
+        for i, line in enumerate(lines, 1):
+            assert not line.endswith(" "), f"Trailing whitespace in {filepath}:{i}"
+            assert not line.endswith("\t"), f"Trailing tab in {filepath}:{i}"

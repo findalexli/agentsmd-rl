@@ -34,6 +34,8 @@ RUN git clone --filter=blob:none https://github.com/appwrite/appwrite.git && \
     cd appwrite && \
     git checkout bb078086618f85634763943b9bee5fb8e8453cbd
 
+RUN mkdir -p /workspace/task/appwrite-audit-user-types && ln -s /tests /workspace/task/appwrite-audit-user-types/tests
+
 WORKDIR /workspace/appwrite
 
 # Install PHP dependencies (composer install)

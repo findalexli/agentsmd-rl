@@ -240,7 +240,7 @@ def test_core_files_intact():
 
 # [repo_tests] pass_to_pass
 def test_repo_typecheck():
-    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    """Repo's TypeScript typecheck passes (npx tsc --noEmit)."""
     r = subprocess.run(
         ["npx", "tsc", "--noEmit"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -250,9 +250,43 @@ def test_repo_typecheck():
 
 # [repo_tests] pass_to_pass
 def test_repo_build():
-    """Repo's build passes (pass_to_pass)."""
+    """Repo's build passes (yarn build using tsup)."""
     r = subprocess.run(
         ["yarn", "build"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jest_unit():
+    """Repo's Jest unit tests pass (npx jest --config scripts/jest/main.config.js)."""
+    r = subprocess.run(
+        ["npx", "jest", "--config", "scripts/jest/main.config.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Jest unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Repo's Prettier formatting check passes (npx prettier --check)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "src/**/*.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_dist_exists():
+    """Build produces dist/index.js output file."""
+    # First build
+    r = subprocess.run(
+        ["yarn", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    # Check output exists
+    dist_file = Path(REPO) / "dist" / "index.js"
+    assert dist_file.exists(), "dist/index.js not found after build"

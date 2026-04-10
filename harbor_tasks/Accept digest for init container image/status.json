@@ -1,19 +1,89 @@
 {
-  "abandoned": false,
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-09T20:45:27.048083",
+  "total_time": 1618.54,
+  "sandbox_id": "i9oie932ungxqc99mn92i",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 4.46,
-      "notes": ""
+      "time": 300.0,
+      "notes": "Added 2 p2p tests from repo CI: (1) test_repo_schema_tests - runs the repo's own schema_tests/test_user_deployments.py (65 tests), (2) test_repo_helm_lint - runs 'helm lint' on dagster-user-deployments chart. CI commands discovered: helm lint (chart validation), pytest schema_tests/test_user_deployments.py (65 existing tests that pass on base commit). Docker build successful. Updated eval_manifest.yaml with new p2p checks and scoring (max_points: 17, passing_threshold: 12)."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 396.76,
+      "status": "ok",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 49.51,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        ".claude/coding_conventions.md",
+        "docs/CLAUDE.md",
+        "python_modules/automation/automation/dagster_dev/CLAUDE.md",
+        "python_modules/libraries/dagster-dg-cli/dagster_dg_cli/cli/api/API_CONVENTIONS.md"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 56.01
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "opus",
+      "backend": "gemini",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 54.3
     }
-  }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 186.96,
+      "at": "2026-04-09T14:31:18.164694"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 187.25,
+      "at": "2026-04-09T14:31:18.344037"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 76.73,
+      "at": "2026-04-09T14:59:08.184391"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1618.54,
+      "at": "2026-04-09T20:45:27.048083"
+    }
+  ]
 }

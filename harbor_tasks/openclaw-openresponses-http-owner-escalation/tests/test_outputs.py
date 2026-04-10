@@ -321,3 +321,31 @@ def test_no_sentinel_default():
     assert not re.search(
         r"senderIsOwner\s*(\?\?|&&|\|\|)\s*(true|false)", src
     ), "senderIsOwner uses a silent sentinel default (e.g., ?? true)"
+
+# ---------------------------------------------------------------------------
+# Enriched pass-to-pass tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Repo's formatter passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxfmt", "--check", "src/gateway/openresponses-http.ts"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+# [repo_tests] pass_to_pass
+def test_repo_parity_tests():
+    """Repo's parity tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "src/gateway/openresponses-parity.test.ts"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Parity tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

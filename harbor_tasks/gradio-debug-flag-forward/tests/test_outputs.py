@@ -182,3 +182,63 @@ def test_repo_gradio_import():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Gradio import failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_external_utils():
+    """Repo's external utils tests pass (pass_to_pass - no external deps)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_external_utils.py", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"External utils tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_reload():
+    """Repo's reload tests pass (pass_to_pass - tests config/reloading)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_reload.py", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Reload tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_modified():
+    """Modified files pass ruff linting (pass_to_pass - repo CI standard)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "gradio/routes.py", "gradio/blocks.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_utils():
+    """Repo's client utils tests pass (pass_to_pass - no external deps)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "client/python/test/test_utils.py", "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client utils tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

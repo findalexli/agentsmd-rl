@@ -20,7 +20,24 @@ agent_config:
       relevant_sections: []
 
 # Rubric for LLM-judge evaluation (soft/subjective rules)
-rubric: []
+rubric:
+  - rule: "Use relative imports without 'enterprise.' prefix in enterprise code. Example: 'from storage.database import a_session_maker' not 'from enterprise.storage.database import a_session_maker'."
+    source:
+      path: "AGENTS.md"
+      lines: "238-241"
+      commit: "732a1c19911a182653556c18c4fd1c19a38ff44a"
+
+  - rule: "Use AsyncMock for async operations and MagicMock for complex objects when mocking in tests."
+    source:
+      path: "AGENTS.md"
+      lines: "249-251"
+      commit: "732a1c19911a182653556c18c4fd1c19a38ff44a"
+
+  - rule: "Mock all external dependencies (databases, APIs, file systems) in unit tests."
+    source:
+      path: "AGENTS.md"
+      lines: "251-252"
+      commit: "732a1c19911a182653556c18c4fd1c19a38ff44a"
 
 # Checks - must map 1:1 with test_outputs.py::test_* functions
 checks:
@@ -84,22 +101,40 @@ checks:
     name: Poetry configuration valid
     description: Repo's poetry configuration passes validation (pass_to_pass)
     type: pass_to_pass
-    origin: repo_ci
+    origin: repo_tests
+
+  - id: test_repo_enterprise_poetry_check
+    name: Enterprise poetry configuration valid
+    description: Enterprise poetry configuration passes validation (pass_to_pass)
+    type: pass_to_pass
+    origin: repo_tests
 
   - id: test_repo_syntax_valid
     name: Python syntax valid
-    description: Key Python files have valid syntax (pass_to_pass)
+    description: Key Python files have valid syntax via py_compile (pass_to_pass)
     type: pass_to_pass
-    origin: repo_ci
+    origin: repo_tests
+
+  - id: test_repo_enterprise_syntax_valid
+    name: Enterprise Python syntax valid
+    description: Enterprise key Python files have valid syntax (pass_to_pass)
+    type: pass_to_pass
+    origin: repo_tests
 
   - id: test_repo_imports_resolve
     name: Package imports resolve
     description: Key package imports can be resolved after installation (pass_to_pass)
     type: pass_to_pass
-    origin: repo_ci
+    origin: repo_tests
 
-  - id: test_repo_unit_tests_basic
-    name: Basic unit tests pass
-    description: Basic unit tests pass after package installation (pass_to_pass)
+  - id: test_repo_unit_tests_utils
+    name: Utils unit tests pass
+    description: Unit tests in tests/unit/utils pass after package installation (pass_to_pass)
     type: pass_to_pass
-    origin: repo_ci
+    origin: repo_tests
+
+  - id: test_repo_unit_tests_agent_server
+    name: Agent server unit tests pass
+    description: Agent server env override tests pass (pass_to_pass)
+    type: pass_to_pass
+    origin: repo_tests

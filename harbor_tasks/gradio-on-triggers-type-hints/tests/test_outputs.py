@@ -272,15 +272,72 @@ def test_ruff_check():
 
 # [repo_tests] pass_to_pass — CI/CD type check
 def test_ty_check():
-    """Modified Python files pass ty type check (repo CI)."""
+    """Modified Python files pass ty type check (repo CI).
+
+    Note: There are pre-existing unused-type-ignore-comment warnings in the
+    base commit. We verify that no NEW errors are introduced by checking
+    that the same warning pattern exists (no new error-level diagnostics).
+    """
     subprocess.run(
         [sys.executable, "-m", "pip", "install", "-q", "ty"],
         capture_output=True, timeout=120,
     )
-    for rel in ["gradio/events.py", "gradio/renderable.py"]:
-        r = subprocess.run(
-            [sys.executable, "-m", "ty", "check", rel],
-            capture_output=True, text=True, timeout=60, cwd=REPO,
-        )
-        assert r.returncode == 0, \
-            f"ty check failed for {rel}:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+    # Run ty check on modified files
+    files = ["gradio/events.py", "gradio/renderable.py"]
+    r = subprocess.run(
+        [sys.executable, "-m", "ty", "check"] + files,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    output = r.stdout + r.stderr
+
+    # Filter for actual errors (not warnings/info/help)
+    # ty produces output like: "error[unresolved-attribute]: ..."
+    # or: "warning[unused-type-ignore-comment]: ..."
+    lines = output.splitlines()
+    error_lines = []
+    for line in lines:
+        # Skip info and help lines
+        if line.startswith("info:") or line.startswith("help:"):
+            continue
+        # Check for actual error-level diagnostics (not warnings)
+        if "error[" in line.lower():
+            error_lines.append(line)
+
+    # There should be no actual errors (warnings are pre-existing and OK)
+    assert len(error_lines) == 0, \
+        f"ty check found errors:\n{output[-1000:]}\nErrors: {error_lines}"
+
+
+# [repo_tests] pass_to_pass — CI/CD unit tests for events module
+def test_repo_pytest_events():
+    """Repo's unit tests for events module pass (pass_to_pass).
+
+    Runs selected tests from test/test_events.py that don't require
+    frontend templates or network access. Excludes test_event_data
+    which requires the full gradio frontend build.
+    """
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pytest", "pytest-asyncio", "fastapi"],
+        capture_output=True, timeout=120,
+    )
+
+    # Run specific tests that don't require frontend/network
+    test_cases = [
+        "test/test_events.py::TestEvent::test_clear_event",
+        "test/test_events.py::TestEvent::test_consecutive_events",
+        "test/test_events.py::TestEvent::test_on_listener",
+        "test/test_events.py::TestEvent::test_load_chaining",
+        "test/test_events.py::TestEvent::test_load_chaining_reuse",
+        "test/test_events.py::TestEventErrors::test_event_defined_invalid_scope",
+        "test/test_events.py::test_event_pyi_file_matches_source_code",
+    ]
+
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "-v"] + test_cases,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+
+    assert r.returncode == 0, \
+        f"pytest events tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

@@ -57,4 +57,36 @@ checks:
     origin: repo_tests
     description: Python syntax check on ci/praktika/native_jobs.py passes
 
-rubric: []
+  - id: test_repo_praktika_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Python files in ci/praktika have valid syntax
+
+  - id: test_repo_ci_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI directory structure is valid with all key files present
+
+  - id: test_repo_praktika_core_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Core praktika modules (Result, ResultTranslator, _Environment) can be imported
+
+rubric:
+  - rule: "Use Allman-style braces (opening brace on a new line) when writing C++ code. This is enforced by the style check in CI."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "145"
+      commit: "4bf498e9ee91f246ff50126e3f49427ab97c7dc3"
+
+  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "5"
+      commit: "4bf498e9ee91f246ff50126e3f49427ab97c7dc3"
+
+  - rule: "When working with a branch, do not use rebase or amend - add new commits instead. Do not commit to the master branch."
+    source:
+      path: ".claude/skills/continue-pr/SKILL.md"
+      lines: "249,252"
+      commit: "4bf498e9ee91f246ff50126e3f49427ab97c7dc3"

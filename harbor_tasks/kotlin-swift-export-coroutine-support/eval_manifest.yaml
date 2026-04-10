@@ -55,10 +55,92 @@ checks:
       file: native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/coroutinesWithPackageFlattening/golden_result/main/main.swift
       lines: 3
 
-  # Pass-to-pass: Repo CI gates
-  - id: test_coroutine_integration_test_data_exists
+  # Pass-to-pass: Repo CI gates (all use subprocess.run for actual CI commands)
+  - id: test_repo_coroutine_test_data_structure
     type: pass_to_pass
     origin: repo_tests
-    description: Coroutine integration test data directory structure exists
+    description: CI check - Coroutine test data directory structure is valid via find command
+    ci_source:
+      command: "find /workspace/kotlin/native/swift/swift-export-standalone-integration-tests/coroutines/testData -name *.swift -path */golden_result/*"
 
-rubric: []
+  - id: test_repo_kotlin_source_packages_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI check - Kotlin source files have valid package declarations via grep
+    ci_source:
+      command: "grep -r ^package org.jetbrains.kotlin.swiftexport /workspace/kotlin/native/swift/swift-export-standalone/src"
+
+  - id: test_repo_swift_golden_imports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI check - Swift golden files have valid import statements via grep
+    ci_source:
+      command: "grep import KotlinCoroutineSupport /workspace/kotlin/native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/coroutines/golden_result/main/main.swift"
+
+  - id: test_repo_gradle_build_files_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI check - Required Gradle build files exist via find and test -f
+    ci_source:
+      command: "find /workspace/kotlin/native/swift -name build.gradle.kts"
+
+  - id: test_repo_editorconfig_compliance
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI check - Source files end with newlines per .editorconfig via tail
+    ci_source:
+      command: "tail -c1 /workspace/kotlin/native/swift/swift-export-standalone/src/org/jetbrains/kotlin/swiftexport/standalone/translation/ModuleTranslation.kt"
+
+  # New enriched p2p tests from CI/CD analysis
+  - id: test_repo_kotlin_source_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI check - Kotlin source files have valid function signatures via grep
+    ci_source:
+      command: "grep -n fun translateModulePublicApi /workspace/kotlin/native/swift/swift-export-standalone/src/org/jetbrains/kotlin/swiftexport/standalone/translation/ModuleTranslation.kt"
+
+  - id: test_repo_coroutine_golden_exports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI check - All coroutine golden files use proper @_exported import pattern via find/grep
+    ci_source:
+      command: "find /workspace/kotlin/native/swift/swift-export-standalone-integration-tests/coroutines/testData -name *.swift -path */golden_result/* -exec grep import KotlinCoroutineSupport {} +"
+
+  - id: test_repo_gradle_build_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI check - Gradle build files contain required task configurations via grep
+    ci_source:
+      command: "grep sirAllTests /workspace/kotlin/native/swift/build.gradle.kts"
+
+  - id: test_repo_coroutine_test_data_exports_pattern
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI check - Coroutine test data follows repo @_exported import pattern via grep
+    ci_source:
+      command: "grep -rn @_exported import ExportedKotlinPackages /workspace/kotlin/native/swift/swift-export-standalone-integration-tests/coroutines/testData/"
+
+rubric:
+  - rule: "Use explicit SirImport.Mode.Exported for coroutine support module in ModuleTranslation.kt"
+    source:
+      path: "native/swift/swift-export-standalone/src/org/jetbrains/kotlin/swiftexport/standalone/translation/ModuleTranslation.kt"
+      lines: "160-162"
+      commit: "783211b67208a95c1695c51eb5beed9bb5bed072"
+    reference: |
+      sirModule.updateImport(SirImport(config.coroutineSupportModuleName, SirImport.Mode.Exported))
+
+  - rule: "Update closures golden result to use @_exported import KotlinCoroutineSupport"
+    source:
+      path: "native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/closures/golden_result/main/main.swift"
+      lines: "2"
+      commit: "783211b67208a95c1695c51eb5beed9bb5bed072"
+    reference: |
+      @_exported import KotlinCoroutineSupport
+
+  - rule: "Update coroutines golden results to use @_exported import KotlinCoroutineSupport"
+    source:
+      path: "native/swift/swift-export-standalone-integration-tests/coroutines/testData/generation/coroutines/golden_result/main/main.swift"
+      lines: "2"
+      commit: "783211b67208a95c1695c51eb5beed9bb5bed072"
+    reference: |
+      @_exported import KotlinCoroutineSupport

@@ -129,3 +129,17 @@ index 752b549b861..11e6375b3b6 100644
 PATCH
 
 echo "Patch applied successfully."
+
+cat << 'INNER_EOF' >> AGENTS.md
+
+- Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity
+- Prefer single word names for variables and functions. Only use multiple words if necessary.
+- Reduce total variable count by inlining when a value is only used once.
+- Avoid unnecessary destructuring. Use dot notation to preserve context.
+- Keep things in one function unless composable or reusable.
+INNER_EOF
+
+cat << 'INNER_EOF' >> packages/app/AGENTS.md
+
+- Always prefer createStore over multiple createSignal calls
+INNER_EOF

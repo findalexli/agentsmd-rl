@@ -39,22 +39,22 @@ checks:
     origin: structural
 
   # Pass-to-pass tests (repo's own CI checks)
-  - id: repo_hugocontext_package
+  - id: test_repo_hugocontext_package
     description: "Hugo's hugocontext package tests pass"
     type: pass_to_pass
     origin: repo_tests
 
-  - id: repo_hugolib_rendershortcodes
+  - id: test_repo_hugolib_rendershortcodes
     description: "Hugo's RenderShortcodes related tests pass"
     type: pass_to_pass
     origin: repo_tests
 
-  - id: repo_go_build
+  - id: test_repo_go_build
     description: "Hugo repo builds successfully"
     type: pass_to_pass
     origin: repo_tests
 
-  - id: repo_go_vet
+  - id: test_repo_go_vet
     description: "Hugo repo passes go vet"
     type: pass_to_pass
     origin: repo_tests
@@ -79,6 +79,27 @@ checks:
     type: pass_to_pass
     origin: repo_tests
 
+  # Additional CI/CD pass-to-pass tests
+  - id: test_repo_staticcheck_hugocontext
+    description: "Hugo's hugocontext package passes staticcheck"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_check_hugocontext
+    description: "Hugo's hugocontext package passes gofmt check via check.sh"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_hugolib_content_tests
+    description: "Hugo's hugolib content-related tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_markup_goldmark_internal
+    description: "Hugo's goldmark internal package tests pass"
+    type: pass_to_pass
+    origin: repo_tests
+
 # Agent config rules (programmatic)
 agent_config:
   - rule: "Never export symbols that's not needed outside of the package"
@@ -100,4 +121,33 @@ agent_config:
     check_id: hugolib_rendershortcodes_test
 
 # Soft/subjective rules (LLM-judged)
-rubric: []
+rubric:
+  - rule: "Brevity is good. This applies to code, comments and commit messages. Don't write a novel."
+    source:
+      path: "AGENTS.md"
+      lines: "1,12"
+      commit: "45e4596630b1372ab02634e4536d2b5a89452e0b"
+
+  - rule: "Don't use comments to explain the obvious. Assume maintainers are Go experts."
+    source:
+      path: "AGENTS.md"
+      lines: "2-4"
+      commit: "45e4596630b1372ab02634e4536d2b5a89452e0b"
+
+  - rule: "Use self-explanatory variable and function names. Use short variable names when the context is clear."
+    source:
+      path: "AGENTS.md"
+      lines: "4-5"
+      commit: "45e4596630b1372ab02634e4536d2b5a89452e0b"
+
+  - rule: "Assume that a similar problem has been solved before; look hard for helper functions before creating new ones."
+    source:
+      path: "AGENTS.md"
+      lines: "9"
+      commit: "45e4596630b1372ab02634e4536d2b5a89452e0b"
+
+  - rule: "Avoid global state at (almost) all cost."
+    source:
+      path: "AGENTS.md"
+      lines: "8"
+      commit: "45e4596630b1372ab02634e4536d2b5a89452e0b"

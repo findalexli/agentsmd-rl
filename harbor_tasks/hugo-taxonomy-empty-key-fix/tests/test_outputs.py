@@ -236,5 +236,38 @@ def test_repo_config_tests():
     )
 
 
+def test_repo_config_all_tests():
+    """All config package tests pass (pass_to_pass)."""
+    """Tests all config/* packages that include the taxonomy configuration code."""
+    r = subprocess.run(
+        ["go", "test", "./config/...", "-timeout", "60s"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_PATH,
+        env={**os.environ, "GOTOOLCHAIN": "auto"}
+    )
+    assert r.returncode == 0, f"Config package tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_hmaps_tests():
+    """Hmaps package tests pass (pass_to_pass)."""
+    """Tests for common/hmaps package used by the taxonomy fix in alldecoders.go."""
+    r = subprocess.run(
+        ["go", "test", "-v", "./common/hmaps", "-timeout", "60s"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_PATH,
+        env={**os.environ, "GOTOOLCHAIN": "auto"}
+    )
+    assert r.returncode == 0, f"Hmaps tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_hugolib_disablekinds_tests():
+    """Hugolib DisableKinds tests pass (pass_to_pass)."""
+    """Tests for DisableKinds functionality related to the taxonomy fix."""
+    r = subprocess.run(
+        ["go", "test", "-v", "./hugolib", "-run", "TestDisableKinds", "-timeout", "60s"],
+        capture_output=True, text=True, timeout=120, cwd=REPO_PATH,
+        env={**os.environ, "GOTOOLCHAIN": "auto"}
+    )
+    assert r.returncode == 0, f"Hugolib DisableKinds tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

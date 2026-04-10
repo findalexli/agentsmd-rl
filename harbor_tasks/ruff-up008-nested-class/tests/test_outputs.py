@@ -180,6 +180,30 @@ def test_cargo_test_ruff_linter():
     )
 
 
+# [repo_tests] pass_to_pass — CI/CD: cargo test pyupgrade module
+def test_cargo_test_pyupgrade():
+    """Repo's cargo test passes on pyupgrade module tests (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "ruff_linter", "--", "pyupgrade"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo test pyupgrade failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — CI/CD: cargo test super_call_with_parameters rule
+def test_cargo_test_super_call_with_parameters():
+    """Repo's cargo test passes on SuperCallWithParameters rule tests (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "ruff_linter", "--", "supercallwithparameters"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo test supercallwithparameters failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

@@ -34,15 +34,74 @@ checks:
     description: "Test methods for object stability should exist in test files"
 
   # Pass-to-pass tests (repo CI/tests that should continue working)
-  - id: test_compose_compiler_tests_compile
+  - id: test_compose_compiler_sources_exist
     type: pass_to_pass
     origin: repo_tests
-    description: "Compose compiler plugin compiles successfully"
+    description: "Compose compiler plugin source files exist and are valid Kotlin"
+    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
 
   - id: test_static_expression_detection_compiles
     type: pass_to_pass
     origin: repo_tests
     description: "Static expression detection tests compile"
+    file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/StaticExpressionDetectionTests.kt
+
+  # New pass-to-pass tests (kotlinc syntax validation)
+  - id: test_stability_kt_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Stability.kt has valid Kotlin syntax (kotlinc validation)"
+    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
+
+  - id: test_lowering_kt_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "AbstractComposeLowering.kt has valid Kotlin syntax (kotlinc validation)"
+    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
+
+  - id: test_composer_param_tests_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ComposerParamTransformTests.kt has valid Kotlin syntax"
+    file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/ComposerParamTransformTests.kt
+
+  - id: test_run_composable_tests_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "RunComposableTests.kt has valid Kotlin syntax"
+    file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/RunComposableTests.kt
+
+  - id: test_compose_plugin_source_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Compose compiler plugin source directory structure is valid"
+
+  - id: test_integration_tests_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Integration tests directory structure is valid"
+
+  # New pass-to-pass tests (CI-based repo tests)
+  - id: test_kotlin_analysis_dir_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Analysis directory contains expected source files (repo CI structure check)"
+
+  - id: test_kotlinc_lower_file_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "AbstractComposeLowering.kt passes kotlinc syntax validation (repo CI check)"
+    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
+
+  - id: test_kotlin_golden_file_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Golden files have valid format with Source/Transformed IR sections (repo CI check)"
+
+  - id: test_compose_test_files_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Key compose test files have valid Kotlin syntax (repo CI check)"
 
 # Agent config rules (from CLAUDE.md and AGENTS.md)
 # This PR touches the compose compiler plugin area
@@ -61,4 +120,15 @@ agent_config:
     applies: true
 
 # Rubric for LLM evaluation (subjective aspects)
-rubric: []
+rubric:
+  - rule: "Identify the code area before making changes and read area-specific docs"
+    source:
+      path: ".ai/guidelines.md"
+      lines: "40-43"
+      commit: "6030128bf5943db6bda17fb603eadcd5214064cd"
+
+  - rule: "When fixing an issue with tests, commit test data as a separate commit BEFORE the fix"
+    source:
+      path: "compiler/AGENTS.md"
+      lines: "12-14"
+      commit: "6030128bf5943db6bda17fb603eadcd5214064cd"

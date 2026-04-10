@@ -27,7 +27,7 @@ def _parse_ts_with_node(code: str, timeout: int = 30) -> dict:
 
     Returns dict with: success, error, ast (if successful)
     """
-    script = Path(REPO) / "_eval_tmp.mjs"
+    script = Path(REPO) / "_eval_tmp.cjs"
     script.write_text(code)
     try:
         result = subprocess.run(
@@ -95,7 +95,7 @@ const fs = require('fs');
 const content = fs.readFileSync('{TEST_FILE}', 'utf8');
 
 // Simple regex extraction of retry() calls
-const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{0,1}}[^}}]{{0,500}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/g;
+const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{[^}}]{{0,500}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/g;
 const matches = [];
 let match;
 while ((match = retryPattern.exec(content)) !== null) {{
@@ -123,7 +123,7 @@ def test_generate_route_types_retry_timeout():
     # Execute regex via Node to find retry timeout
     parse_code = f"""
 const block = {json.dumps(block)};
-const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{0,1}}[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/;
+const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/;
 const match = block.match(retryPattern);
 if (match) {{
     console.log(JSON.stringify({{ success: true, timeout: parseInt(match[1].replace(/_/g, '')) }}));
@@ -149,7 +149,7 @@ def test_custom_route_patterns_retry_timeout():
 
     parse_code = f"""
 const block = {json.dumps(block)};
-const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{0,1}}[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/;
+const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/;
 const match = block.match(retryPattern);
 if (match) {{
     console.log(JSON.stringify({{ success: true, timeout: parseInt(match[1].replace(/_/g, '')) }}));
@@ -232,7 +232,7 @@ def test_tsc_retry_has_extended_timeout():
     # Use Node to find all retry calls in the block and their timeouts
     parse_code = f"""
 const block = {json.dumps(block)};
-const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{0,1}}[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/g;
+const retryPattern = /retry\\s*\\(\\s*async\\s*\\(\\)\\s*=>\\s*\\{{[\\s\\S]{{0,800}}\\}}?,\\s*(\\d[\\d_]*)\\s*\\)/g;
 const matches = [];
 let match;
 while ((match = retryPattern.exec(block)) !== null) {{
@@ -317,28 +317,112 @@ def test_retry_blocks_have_assertions():
 # ---------------------------------------------------------------------------
 
 
-# [repo_tests] pass_to_pass — prettier check
-@pytest.mark.skip(reason="Installs dependencies - run in validation environment")
+# [repo_tests] pass_to_pass — prettier check (no install needed)
 def test_repo_prettier():
-    """Repo's prettier check passes on the test file (pass_to_pass)."""
-    # Install corepack/pnpm if needed
-    subprocess.run(["npm", "install", "-g", "corepack"], capture_output=True, timeout=60)
-    subprocess.run(["corepack", "enable"], capture_output=True, timeout=30)
-    # Install dependencies
-    r = subprocess.run(
-        ["pnpm", "install", "--frozen-lockfile"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
-    )
-    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
-    # Run prettier check
+    """Repo's prettier check passes on the test file (pass_to_pass).
+
+    Uses npx to run prettier without requiring full pnpm install.
+    """
     r = subprocess.run(
         ["npx", "prettier", "--check", str(TEST_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — JavaScript syntax check
+def test_repo_node_syntax_check():
+    """Test file must have valid JavaScript/TypeScript syntax (pass_to_pass).
+
+    Uses node --check to validate syntax without needing full dependency install.
+    """
+    r = subprocess.run(
+        ["node", "--check", str(TEST_FILE)],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Node syntax check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — ESLint check
+# [repo_tests] pass_to_pass — TypeScript syntax check via node parsing
+def test_repo_typescript_syntax_check():
+    """Test file must be valid TypeScript that parses without errors (pass_to_pass).
+
+    Uses Node.js to parse the file and verify no syntax errors.
+    """
+    r = subprocess.run(
+        ["node", "-e", f"require('fs').readFileSync('{TEST_FILE}', 'utf8'); console.log('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — indentation check (2 spaces)
+def test_repo_indentation():
+    """Test file must use 2-space indentation, no tabs (repo CI convention).
+
+    Verifies no tab characters (tabs are not allowed per .editorconfig convention).
+    """
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const content = fs.readFileSync('{TEST_FILE}', 'utf8');
+const lines = content.split('\\n');
+const issues = [];
+for (let i = 0; i < lines.length; i++) {{
+  const line = lines[i];
+  if (line.includes('\\t')) {{
+    issues.push('Line ' + (i+1) + ': contains tab character');
+  }}
+}}
+if (issues.length > 0) {{
+  console.log(issues.join('\\n'));
+  process.exit(1);
+}} else {{
+  console.log('OK');
+}}
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Indentation check failed (tabs found):\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — fixture directory structure check
+def test_repo_fixture_structure():
+    """Fixture directory must have required files (next.config.js, app/ or pages/, tsconfig.json).
+
+    Verifies the typed-routes fixture has the expected structure per Next.js e2e conventions.
+    """
+    fixture_dir = Path(REPO) / "test/e2e/app-dir/typed-routes"
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const path = '{fixture_dir}';
+const issues = [];
+if (!fs.existsSync(path + '/next.config.js')) {{
+  issues.push('Missing next.config.js');
+}}
+if (!fs.existsSync(path + '/app') && !fs.existsSync(path + '/pages')) {{
+  issues.push('Missing app/ or pages/ directory');
+}}
+if (!fs.existsSync(path + '/tsconfig.json')) {{
+  issues.push('Missing tsconfig.json');
+}}
+if (!fs.existsSync(path + '/typed-routes.test.ts')) {{
+  issues.push('Missing typed-routes.test.ts');
+}}
+if (issues.length > 0) {{
+  console.log(issues.join('\\n'));
+  process.exit(1);
+}} else {{
+  console.log('OK');
+}}
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Fixture structure check failed:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ESLint check (requires install, skipped by default)
 @pytest.mark.skip(reason="Installs dependencies - run in validation environment")
 def test_repo_eslint():
     """Repo's ESLint check passes on the test file (pass_to_pass)."""
@@ -357,6 +441,27 @@ def test_repo_eslint():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — TypeScript check (requires install, skipped by default)
+@pytest.mark.skip(reason="Installs dependencies - run in validation environment")
+def test_repo_typescript():
+    """Repo's TypeScript check passes (pass_to_pass)."""
+    # Install corepack/pnpm if needed
+    subprocess.run(["npm", "install", "-g", "corepack"], capture_output=True, timeout=60)
+    subprocess.run(["corepack", "enable"], capture_output=True, timeout=30)
+    # Install dependencies
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+    # Run TypeScript check
+    r = subprocess.run(
+        ["pnpm", "run", "typescript"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

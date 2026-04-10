@@ -44,6 +44,30 @@ def test_cargo_fmt():
     assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr}"
 
 
+def test_cargo_doc():
+    """Documentation builds without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "-p", "sui-display", "--no-deps"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Doc build failed:\n{r.stderr[-500:]}"
+
+
+def test_cargo_xlint():
+    """License headers are present (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "xlint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
+
+
 def test_transform_enum_no_default():
     """Transform enum no longer has #[default] on Str variant - f2p check."""
     parser_file = f"{REPO}/{DISPLAY_CRATE}/src/v2/parser.rs"

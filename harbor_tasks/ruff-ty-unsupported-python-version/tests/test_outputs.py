@@ -150,6 +150,34 @@ def test_repo_fmt():
     assert r.returncode == 0, f"Rustfmt check failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests for ty_project crate pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_project", "--lib"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_doc():
+    """Repo's documentation for ty_project crate builds without warnings (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "--no-deps", "-p", "ty_project"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "RUSTDOCFLAGS": "-D warnings"},
+    )
+    assert r.returncode == 0, f"Documentation build failed:\n{r.stderr[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -244,12 +272,16 @@ def test_no_panic_unwrap_in_validation():
 
 # [agent_config] pass_to_pass — AGENTS.md:76 @ 62a863cf518086135dfd2321c92fbc3823f95de8
 def test_imports_at_file_top():
-    """Rust imports must be at the top of the file, not locally in functions (AGENTS.md:76)."""
+    """Rust imports must be at the top of the file, not locally in functions (AGENTS.md:76).
+
+    This test only checks the deserialize_supported_python_version function
+    (the one added by the fix), not all pre-existing code in the file.
+    """
     source = OPTIONS_RS.read_text()
     lines = source.splitlines()
 
-    # Find all 'use ' statements and verify they appear before any 'fn ' or 'impl ' or 'struct '
-    # (i.e., at the top-level, not inside function bodies)
+    # Only check the deserialize_supported_python_version function
+    in_target_fn = False
     in_fn_body = False
     brace_depth = 0
     for i, line in enumerate(lines, 1):
@@ -257,20 +289,32 @@ def test_imports_at_file_top():
         if stripped.startswith("//") or stripped.startswith("#["):
             continue
 
-        # Track brace depth to detect function bodies
-        if any(stripped.startswith(kw) for kw in ["fn ", "pub fn ", "pub(crate) fn "]):
+        # Detect the start of the target function
+        if "fn deserialize_supported_python_version" in stripped:
+            in_target_fn = True
             if "{" in stripped:
                 in_fn_body = True
                 brace_depth = stripped.count("{") - stripped.count("}")
             continue
 
-        if in_fn_body:
+        if in_target_fn:
+            if not in_fn_body:
+                # Still in function signature, wait for opening brace
+                brace_depth += stripped.count("{") - stripped.count("}")
+                if brace_depth > 0:
+                    in_fn_body = True
+                continue
+
+            # Now inside the function body
             brace_depth += stripped.count("{") - stripped.count("}")
-            # Check for local use statements inside function bodies
+
+            # Check for local use statements inside the function body
             if stripped.startswith("use "):
                 assert False, (
                     f"Local import at line {i}: {stripped} — "
                     f"AGENTS.md requires imports at the top of the file"
                 )
+
+            # Exit when we close the function
             if brace_depth <= 0:
-                in_fn_body = False
+                break

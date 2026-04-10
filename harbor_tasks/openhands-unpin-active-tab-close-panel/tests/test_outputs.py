@@ -105,10 +105,11 @@ def test_repo_vitest_tests_pass():
     Pass-to-pass: The repo's own vitest tests for this component must pass.
 
     This validates the fix doesn't break existing functionality and new tests pass.
+    Source: .github/workflows/fe-unit-tests.yml runs vitest tests for PRs touching frontend.
     """
-    # Run the specific test file
+    # Run the specific test file for the modified component
     result = subprocess.run(
-        ["npm", "run", "test", "--", "-t", "ConversationTabsContextMenu"],
+        ["npm", "run", "test", "--", "__tests__/components/features/conversation/conversation-tabs-context-menu.test.tsx"],
         cwd=FRONTEND,
         capture_output=True,
         text=True,
@@ -124,6 +125,7 @@ def test_repo_lint_passes():
     Pass-to-pass: Frontend linting must pass (mandatory per AGENTS.md).
 
     AGENTS.md requires lint to pass before pushing changes.
+    Source: .github/workflows/lint.yml runs eslint and prettier on frontend.
     """
     result = subprocess.run(
         ["npm", "run", "lint"],
@@ -142,6 +144,7 @@ def test_repo_typecheck_passes():
     Pass-to-pass: Frontend typecheck must pass (mandatory per AGENTS.md).
 
     Type errors would indicate improper TypeScript usage.
+    Source: .github/workflows/lint.yml runs tsc after make-i18n.
     """
     result = subprocess.run(
         ["npm", "run", "typecheck"],
@@ -160,7 +163,7 @@ def test_repo_translation_completeness():
     Pass-to-pass: Translation completeness check must pass.
 
     All translation keys must have complete language coverage.
-    From CI workflow: lint.yml runs check-translation-completeness.
+    Source: .github/workflows/lint.yml runs check-translation-completeness.
     """
     result = subprocess.run(
         ["npm", "run", "check-translation-completeness"],
@@ -179,7 +182,7 @@ def test_repo_build():
     Pass-to-pass: Frontend build must succeed.
 
     Build errors would indicate bundling/compiling issues.
-    From CI workflow: fe-unit-tests.yml runs npm run build.
+    Source: .github/workflows/fe-unit-tests.yml runs npm run build before tests.
     """
     result = subprocess.run(
         ["npm", "run", "build"],

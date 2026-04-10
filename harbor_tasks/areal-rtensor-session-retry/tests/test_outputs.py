@@ -10,6 +10,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import asyncio
 import importlib
 import logging
+import os
+import re
 import subprocess
 import sys
 import time
@@ -59,27 +61,17 @@ sys.modules["areal.infra.rpc.serialization"] = _ser_mock
 import aiohttp
 
 
-# ---------------------------------------------------------------------------
-# Helper: load rtensor module (fresh import each time is fine since it's cached)
-# ---------------------------------------------------------------------------
-
 def _load_rtensor():
     """Import rtensor module, handling both base and patched versions."""
-    # Force reimport to pick up any patches applied during test
     if "areal.infra.rpc.rtensor" in sys.modules:
         return sys.modules["areal.infra.rpc.rtensor"]
     return importlib.import_module("areal.infra.rpc.rtensor")
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
-
 # [static] pass_to_pass
 def test_syntax_check():
     """Modified files must parse without errors."""
     import py_compile
-
     for f in ["/repo/areal/infra/rpc/rtensor.py", "/repo/areal/utils/logging.py"]:
         py_compile.compile(f, doraise=True)
 
@@ -102,6 +94,67 @@ def test_ruff_format_check():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_no_large_files():
+    """Modified files are not unreasonably large (>1000KB) — repo CI standard."""
+    max_size_kb = 1000
+    for f in ["/repo/areal/infra/rpc/rtensor.py", "/repo/areal/utils/logging.py"]:
+        size_kb = os.path.getsize(f) / 1024
+        assert size_kb <= max_size_kb, f"File {f} is too large ({size_kb:.1f}KB > {max_size_kb}KB)"
+
+
+# [repo_tests] pass_to_pass
+def test_no_private_keys():
+    """Modified files do not contain private keys — repo CI standard."""
+    key_patterns = [
+        r'-----BEGIN (RSA |DSA |EC |OPENSSH )?PRIVATE KEY-----',
+        r'-----BEGIN RSA PRIVATE KEY-----',
+        r'-----BEGIN DSA PRIVATE KEY-----',
+        r'-----BEGIN EC PRIVATE KEY-----',
+        r'-----BEGIN OPENSSH PRIVATE KEY-----',
+        r'-----BEGIN PRIVATE KEY-----',
+        r'-----BEGIN ENCRYPTED PRIVATE KEY-----',
+        r'PuTTY-User-Key-File-',
+        r'BEGIN SSH2 ENCRYPTED PRIVATE KEY',
+    ]
+    for f in ["/repo/areal/infra/rpc/rtensor.py", "/repo/areal/utils/logging.py"]:
+        content = Path(f).read_text()
+        for pattern in key_patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            assert not matches, f"Potential private key detected in {f}: {pattern}"
+
+
+# [repo_tests] pass_to_pass
+def test_no_trailing_whitespace():
+    """Modified files have no trailing whitespace — repo CI standard."""
+    for f in ["/repo/areal/infra/rpc/rtensor.py", "/repo/areal/utils/logging.py"]:
+        content = Path(f).read_text()
+        for i, line in enumerate(content.splitlines(), 1):
+            if line.rstrip() != line:
+                raise AssertionError(f"Trailing whitespace at {f}:{i}")
+
+
+# [repo_tests] pass_to_pass
+def test_files_end_with_newline():
+    """Modified files end with a newline — repo CI standard."""
+    for f in ["/repo/areal/infra/rpc/rtensor.py", "/repo/areal/utils/logging.py"]:
+        content = Path(f).read_bytes()
+        if content and not content.endswith(b'\n'):
+            raise AssertionError(f"File {f} does not end with a newline")
+
+
+# [repo_tests] pass_to_pass
+def test_python_ast_valid():
+    """Modified Python files have valid AST (repo CI syntax validation)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import ast; ast.parse(open('/repo/areal/infra/rpc/rtensor.py').read()); "
+         "ast.parse(open('/repo/areal/utils/logging.py').read()); print('AST OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST validation failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

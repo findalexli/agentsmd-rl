@@ -53,30 +53,9 @@ checks:
     origin: task_definition
 
   - id: try_load_uses_current_zookeeper
-    description: "tryLoadObject uses current_zookeeper handle"
+    description: "tryLoadObject uses the current_zookeeper handle"
     type: behavioral
     origin: task_definition
-
-agent_config:
-  - file: ".claude/CLAUDE.md"
-    lines: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks"
-    relevance: "medium"
-
-  - file: ".github/copilot-instructions.md"
-    lines: "Resource management - Opened file descriptors or sockets not closed on all paths (including error paths)"
-    relevance: "high"
-
-  - file: ".github/copilot-instructions.md"
-    lines: "Error handling & observability - Ignored return values of functions that can fail (IO, network, syscalls)"
-    relevance: "high"
-
-  - file: ".github/copilot-instructions.md"
-    lines: "Concurrency & robustness - Using non-thread-safe data structures from multiple threads"
-    relevance: "medium"
-
-  - file: ".github/copilot-instructions.md"
-    lines: "Missing logs for serious failure modes (data loss risk, query aborts, background task failures)"
-    relevance: "low"
 
   - id: test_repo_python_syntax_ci_scripts
     description: "All Python scripts in ci/ directory have valid syntax"
@@ -118,4 +97,109 @@ agent_config:
     type: pass_to_pass
     origin: repo_tests
 
-rubric: []
+  - id: test_repo_python_syntax_ci_praktika
+    description: "All Python scripts in ci/praktika/ have valid syntax"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_python_syntax_ci_jobs
+    description: "All Python scripts in ci/jobs/ have valid syntax"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_shell_script_syntax
+    description: "Shell scripts in ci/jobs/scripts/check_style have valid syntax"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_no_merge_conflict_markers
+    description: "No merge conflict markers in source files"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_no_binary_in_source_dirs
+    description: "No compiled binary files in source directories"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_target_file_no_crlf
+    description: "Target file has no CRLF line endings"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_various_checks
+    description: "Repo style various_checks.sh passes (no BOM, correct permissions, etc.)"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_ci_jobs_python_syntax
+    description: "CI job Python scripts have valid AST"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_all_workflows_yaml_valid
+    description: "All GitHub workflow YAML files are syntactically valid"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_shell_scripts_ci_valid
+    description: "Shell scripts in CI have valid syntax"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_toml_valid
+    description: "pyproject.toml is valid TOML"
+    type: pass_to_pass
+    origin: repo_tests
+
+agent_config:
+  - file: ".claude/CLAUDE.md"
+    lines: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks"
+    relevance: "medium"
+
+  - file: ".github/copilot-instructions.md"
+    lines: "Resource management - Opened file descriptors or sockets not closed on all paths (including error paths)"
+    relevance: "high"
+
+  - file: ".github/copilot-instructions.md"
+    lines: "Error handling & observability - Ignored return values of functions that can fail (IO, network, syscalls)"
+    relevance: "high"
+
+  - file: ".github/copilot-instructions.md"
+    lines: "Concurrency & robustness - Using non-thread-safe data structures from multiple threads"
+    relevance: "medium"
+
+  - file: ".github/copilot-instructions.md"
+    lines: "Missing logs for serious failure modes (data loss risk, query aborts, background task failures)"
+    relevance: "low"
+
+rubric:
+  - rule: "When writing comments or documentation, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks (e.g., `ClassName`, `function_name`)."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "3"
+      commit: "6f01023e78a9e84c588068560fda778a7c11a665"
+
+  - rule: "When writing comments or documentation, write names of functions and methods as `f` instead of `f()` (without parentheses) when referring to the function itself rather than its application."
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "5"
+      commit: "6f01023e78a9e84c588068560fda778a7c11a665"
+
+  - rule: "Resource management: Ensure opened file descriptors, sockets, or session handles (like ZooKeeper sessions) are properly managed on all paths including error paths and retry scenarios."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "82"
+      commit: "6f01023e78a9e84c588068560fda778a7c11a665"
+
+  - rule: "Error handling & observability: Always check return values of functions that can fail (IO, network, syscalls) and handle failures appropriately."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "93"
+      commit: "6f01023e78a9e84c588068560fda778a7c11a665"
+
+  - rule: "Concurrency & robustness: Use thread-safe patterns when accessing shared state; ensure session handles are refreshed appropriately in retry loops to avoid using stale/expired sessions."
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "89"
+      commit: "6f01023e78a9e84c588068560fda778a7c11a665"

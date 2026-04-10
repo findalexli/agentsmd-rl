@@ -1,0 +1,74 @@
+version: '1.0'
+description: Evaluation manifest for Superset pivot table date formatting fix
+
+checks:
+  # Fail-to-pass checks (the fix must make these pass)
+  - id: test_convert_to_number_if_numeric_function_exists
+    type: fail_to_pass
+    origin: static
+    description: convertToNumberIfNumeric helper function exists in TableRenderers.tsx
+
+  - id: test_convert_to_number_if_numeric_uses_number_cast
+    type: fail_to_pass
+    origin: static
+    description: Function uses Number() cast and Number.isNaN check
+
+  - id: test_convert_to_number_if_numeric_handles_empty_strings
+    type: fail_to_pass
+    origin: static
+    description: Function handles empty strings correctly
+
+  - id: test_col_header_uses_helper
+    type: fail_to_pass
+    origin: static
+    description: Column header uses convertToNumberIfNumeric helper
+
+  - id: test_row_header_uses_helper
+    type: fail_to_pass
+    origin: static
+    description: Row header uses convertToNumberIfNumeric helper
+
+  - id: test_no_bare_number_cast
+    type: fail_to_pass
+    origin: static
+    description: Column and row headers use convertToNumberIfNumeric helper
+
+  - id: test_no_any_types
+    type: fail_to_pass
+    origin: agent_config
+    description: Fix uses proper TypeScript types (no 'any')
+
+  # Pass-to-pass checks (should pass both before and after the fix)
+  - id: test_typescript_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript syntax validation passes
+
+  - id: test_repo_pivot_table_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo linting (oxlint) passes for pivot table plugin
+
+  - id: test_repo_pivot_table_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Pivot table unit tests (Jest) pass
+
+rubric:
+  - rule: "NO `any` types - Use proper TypeScript types for all new code"
+    source:
+      path: "AGENTS.md"
+      lines: "45-46"
+      commit: "e0a0a2254265cce88e5dfca1c3b3ca8b8e155122"
+
+  - rule: "Avoid time-specific language in code comments - Don't use words like 'now', 'currently', 'today'"
+    source:
+      path: "AGENTS.md"
+      lines: "92-93"
+      commit: "e0a0a2254265cce88e5dfca1c3b3ca8b8e155122"
+
+  - rule: "Write timeless comments that remain accurate regardless of when they're read"
+    source:
+      path: "AGENTS.md"
+      lines: "94"
+      commit: "e0a0a2254265cce88e5dfca1c3b3ca8b8e155122"

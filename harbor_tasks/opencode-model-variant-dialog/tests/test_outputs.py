@@ -31,7 +31,7 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
-_NODE_ANALYSIS = """
+_NODE_ANALYSIS = r"""
 import { readFileSync } from 'fs';
 
 const src = readFileSync('packages/opencode/src/cli/cmd/tui/app.tsx', 'utf8');
@@ -221,3 +221,91 @@ def test_prefer_const_in_variant_area():
     if m:
         assert not re.search(r"\blet\s+\w", m.group(0)), \
             "let found near variant handler — use const instead (AGENTS.md:70)"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI/CD pass_to_pass gates — ensure repo's own checks pass on base and gold
+# ---------------------------------------------------------------------------
+
+_NODE_SYNTAX_CHECK = r"""
+import { readFileSync } from 'fs';
+
+const files = [
+    'packages/opencode/src/cli/cmd/tui/app.tsx',
+    'packages/opencode/src/cli/cmd/tui/component/dialog-variant.tsx'
+];
+
+const results = {};
+
+for (const file of files) {
+    try {
+        const content = readFileSync(file, 'utf8');
+        // Check for basic TSX structural issues
+        const openTags = (content.match(/<[A-Z][a-zA-Z0-9]*/g) || []).length;
+        const closeTags = (content.match(/<\/[A-Z][a-zA-Z0-9]*/g) || []).length;
+        const selfClosing = (content.match(/\/>/g) || []).length;
+
+        // Check for unclosed braces
+        const openBraces = (content.match(/\{/g) || []).length;
+        const closeBraces = (content.match(/\}/g) || []).length;
+
+        // Check for basic import/export syntax
+        const imports = (content.match(/import\s+/g) || []).length;
+        const exports = (content.match(/export\s+/g) || []).length;
+
+        results[file] = {
+            valid: openBraces === closeBraces,
+            tags: { open: openTags, close: closeTags, selfClosing },
+            imports,
+            exports,
+            hasDialogVariantExport: content.includes('export function DialogVariant') ||
+                                   content.includes('export const DialogVariant') ||
+                                   content.includes('export default function DialogVariant')
+        };
+    } catch (e) {
+        results[file] = { error: e.message };
+    }
+}
+
+console.log(JSON.stringify(results));
+"""
+
+
+# [repo_ci] pass_to_pass — repo's typecheck equivalent
+def test_repo_tsx_syntax_valid():
+    """Repo's TSX files have valid syntax (pass_to_pass gate for typecheck)."""
+    r = _run_node(_NODE_SYNTAX_CHECK)
+    assert r.returncode == 0, f"Syntax check script failed: {r.stderr}"
+    results = json.loads(r.stdout.strip())
+
+    for file, data in results.items():
+        assert "error" not in data, f"Error reading {file}: {data.get('error')}"
+        assert data.get("valid"), f"{file} has mismatched braces - syntax error"
+
+
+# [repo_ci] pass_to_pass — repo's test equivalent for TUI module
+def test_repo_dialog_variant_exports_component():
+    """DialogVariant component is properly exported (pass_to_pass gate for tests)."""
+    r = _run_node(_NODE_SYNTAX_CHECK)
+    assert r.returncode == 0, f"Export check script failed: {r.stderr}"
+    results = json.loads(r.stdout.strip())
+
+    variant_file = 'packages/opencode/src/cli/cmd/tui/component/dialog-variant.tsx'
+    assert variant_file in results, f"{variant_file} not found in results"
+    data = results[variant_file]
+    assert data.get("hasDialogVariantExport"), \
+        f"{variant_file} does not export DialogVariant component"
+
+
+# [repo_ci] pass_to_pass — verify app.tsx structure is valid for CI
+def test_repo_app_tsx_structure():
+    """app.tsx has valid structure with imports and exports (pass_to_pass gate)."""
+    r = _run_node(_NODE_SYNTAX_CHECK)
+    assert r.returncode == 0, f"Structure check script failed: {r.stderr}"
+    results = json.loads(r.stdout.strip())
+
+    app_file = 'packages/opencode/src/cli/cmd/tui/app.tsx'
+    assert app_file in results, f"{app_file} not found in results"
+    data = results[app_file]
+    assert data.get("imports", 0) > 0, f"{app_file} has no imports"
+    assert data.get("exports", 0) > 0, f"{app_file} has no exports"

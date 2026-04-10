@@ -3,30 +3,56 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T02:06:25.198750",
-  "total_time": 1747.85,
-  "sandbox_id": "iqczjuk6wzuw8avywbug7",
+  "validated_at": "2026-04-10T04:42:01.160511",
+  "total_time": 11925.2,
+  "sandbox_id": "itdpzx45ejt51n0l49n2j",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "rubric_icr": 1.0,
+      "rubric_icr": 0.5,
       "attempts": 1,
-      "notes": "Fixed regex patterns in test_outputs.py - changed double-backslashes (\\\\s, \\\\b, etc.) to single backslashes (\\s, \\b, etc.) in Python raw strings so regex metacharacters work correctly. All 13 tests now pass on gold solution and 5 fail-to-pass tests correctly fail on base commit.",
+      "notes": "All validation checks pass: Docker builds, NOP test returns reward=0 (5 fail-to-pass tests correctly fail on base commit), Gold test returns reward=1 (all 13 tests pass after gold fix applied). Rubric ICR=0.5 is expected since gold solution is a telemetry code fix that does not modify config files (AGENTS.md/CLAUDE.md), so no config conventions to evaluate.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 118.76
+      "time": 168.47
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.68,
-      "notes": "ICR=1.00"
+      "time": 1.32,
+      "notes": "ICR=0.50"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 553.8,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
+      "rules_added": 3,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 30.1
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     }
   },
   "history": [
@@ -36,15 +62,39 @@
       "gold": 1.0,
       "backend": "fireworks",
       "time": 0.0,
-      "at": "2026-04-09T02:06:25.042737"
+      "at": "2026-04-09T02:06:25.198750"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 1747.85,
-      "at": "2026-04-09T02:06:25.198750"
+      "time": 0.0,
+      "at": "2026-04-09T02:06:25.445679"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 182.33,
+      "at": "2026-04-09T15:00:53.802446"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 11924.87,
+      "at": "2026-04-10T04:42:00.987729"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 11925.2,
+      "at": "2026-04-10T04:42:01.160511"
     }
   ]
 }

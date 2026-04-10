@@ -10,6 +10,11 @@ The encoder_cudagraph modules live at vllm/v1/worker/ but several files
 import them via the non-existent path vllm.v1.worker.gpu.mm.  These are
 GPU/CUDA-graph modules that cannot be imported on CPU, so we verify
 import paths via AST parsing.
+
+P2P CI commands tested and confirmed working in Docker:
+- ruff check (already present)
+- typos spell check
+- Python syntax check (py_compile, already present)
 """
 
 import ast
@@ -160,6 +165,33 @@ def test_repo_ruff_check():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typos():
+    """Repo's spell check (typos) passes on modified files (pass_to_pass)."""
+    # Install typos if not available
+    try:
+        subprocess.run(["typos", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "typos", "-q"],
+            capture_output=True, check=True,
+        )
+
+    files = [
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph.py",
+        f"{REPO}/vllm/v1/worker/encoder_cudagraph_defs.py",
+        f"{REPO}/vllm/v1/worker/gpu_model_runner.py",
+        f"{REPO}/vllm/model_executor/models/interfaces.py",
+        f"{REPO}/vllm/model_executor/models/qwen3_vl.py",
+        f"{REPO}/tests/v1/cudagraph/test_encoder_cudagraph.py",
+    ]
+    r = subprocess.run(
+        ["typos"] + files,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typos check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass

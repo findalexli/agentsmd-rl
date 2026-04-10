@@ -7,6 +7,7 @@ source:
   merge_commit: "7984e4ab5c9562ea847ab04a43480c27ce4a3368"
 
 checks:
+  # Fail-to-pass tests (PR diff behavioral tests)
   - id: test_cli_flags_in_common_arguments
     type: fail_to_pass
     origin: pr_diff
@@ -37,9 +38,10 @@ checks:
     origin: pr_diff
     description: "Bench file has persistent_caching: false and cache_dir: None in struct init"
 
+  # Pass-to-pass tests - static (file structure validation)
   - id: test_existing_cli_args_preserved
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Existing CLI args (log_detail, log_level, full_stats, worker_threads) still present"
 
   - id: test_key_files_not_stubbed
@@ -47,50 +49,98 @@ checks:
     origin: static
     description: "Key source files (arguments.rs, dev/mod.rs, build/mod.rs) have >=50 lines each"
 
-  # New pass_to_pass checks from repo CI/CD - static analysis (no Rust compiler in container)
+  - id: test_cargo_lock_exists
+    type: pass_to_pass
+    origin: static
+    description: "Cargo.lock file exists with valid package entries"
+
+  - id: test_turbopack_cli_src_structure
+    type: pass_to_pass
+    origin: static
+    description: "turbopack-cli src directory has main.rs, lib.rs, and arguments.rs"
+
+  - id: test_bench_file_structure
+    type: pass_to_pass
+    origin: static
+    description: "Bench files (mod.rs, small_apps.rs) exist with function definitions"
+
+  # Pass-to-pass tests - repo_tests (actual CI-style subprocess commands)
   - id: test_cargo_toml_syntax_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's Cargo.toml is valid TOML and has required [package] and [dependencies] sections"
-
-  - id: test_rust_files_parseable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Key Rust source files have valid structure with function definitions and module statements"
-
-  - id: test_common_arguments_struct_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CommonArguments struct has valid Rust structure with balanced braces"
-
-  - id: test_cli_module_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CLI module structure preserved with main.rs and lib.rs properly structured"
+    description: "Cargo.toml is valid TOML with required [package] and [dependencies] sections"
 
   - id: test_cargo_toml_has_workspace_deps
     type: pass_to_pass
     origin: repo_tests
     description: "Cargo.toml properly references workspace dependencies for key crates"
 
-  - id: test_rust_syntax_braces_balanced
+  - id: test_cargo_toml_has_lib_and_bin_targets
     type: pass_to_pass
     origin: repo_tests
-    description: "Key Rust files have balanced opening and closing braces"
+    description: "Cargo.toml has both [lib] and [[bin]] targets with proper bench settings"
 
-  - id: test_clap_derive_attributes_present
+  - id: test_cargo_toml_features_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "CommonArguments uses clap derive macro attributes (Parser derive)"
+    description: "Cargo.toml has valid feature flags configuration (default, tokio_console)"
 
-  - id: test_dev_and_build_modules_have_run_functions
+  - id: test_lib_rs_exports_required_modules
     type: pass_to_pass
     origin: repo_tests
-    description: "Dev and build modules have their main entry point functions (start_server, build)"
+    description: "lib.rs exports required modules (arguments, build, dev) as pub mod"
 
-  - id: test_arguments_has_required_common_fields
+  - id: test_main_rs_has_global_allocator_and_entry
     type: pass_to_pass
     origin: repo_tests
-    description: "CommonArguments has all required existing fields (log_detail, log_level, full_stats, worker_threads) preserved"
+    description: "main.rs has TurboMalloc global allocator and main function with tokio runtime"
 
-# No rubric rules - this task is purely code/config changes, not agent documentation updates
+  - id: test_clap_arguments_struct_derive
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Arguments and CommonArguments structs use proper clap Parser derive"
+
+  - id: test_dev_module_entry_point
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dev module has start_server function with correct signature returning Result"
+
+  - id: test_build_module_entry_point
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build module has build function with correct signature returning Result"
+
+  - id: test_git_repo_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is valid (git rev-parse --git-dir succeeds)"
+
+  - id: test_git_head_commit
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git HEAD is at a valid commit (40-char hex hash)"
+
+rubric:
+  - rule: "Before editing files in any subdirectory, read all README.md files in the directory path from the repo root to the target file's directory."
+    source:
+      path: "AGENTS.md"
+      lines: "44-54"
+      commit: "7d451fe01e7a42be4aa9dc12e13e2017c1f0483d"
+
+  - rule: "Run `cargo fmt` to format Rust code (uses ASCII order: uppercase before lowercase)."
+    source:
+      path: "AGENTS.md"
+      lines: "412-414"
+      commit: "7d451fe01e7a42be4aa9dc12e13e2017c1f0483d"
+
+  - rule: "Use `pnpm test-dev-turbo` to run development mode tests with Turbopack."
+    source:
+      path: "AGENTS.md"
+      lines: "120-122"
+      commit: "7d451fe01e7a42be4aa9dc12e13e2017c1f0483d"
+
+  - rule: "Pre-validate changes before committing by running the same commands as lint-staged: pnpm prettier and npx eslint with the correct config paths."
+    source:
+      path: "AGENTS.md"
+      lines: "360-366"
+      commit: "7d451fe01e7a42be4aa9dc12e13e2017c1f0483d"

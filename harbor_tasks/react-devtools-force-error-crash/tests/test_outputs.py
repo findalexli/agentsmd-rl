@@ -211,21 +211,21 @@ def test_repo_lint():
     """Repo's ESLint checks pass (pass_to_pass)."""
     assert _yarn_install(), "yarn install failed"
     r = subprocess.run(
-        ["node", "./scripts/tasks/eslint.js"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_reconciler_tests():
-    """Repo's react-reconciler tests pass (pass_to_pass)."""
+def test_repo_flow_check():
+    """Repo's Flow type checks pass (pass_to_pass)."""
     assert _yarn_install(), "yarn install failed"
     r = subprocess.run(
-        ["yarn", "test", "--testPathPattern=react-reconciler", "--maxWorkers=2"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"Reconciler tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Flow check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass

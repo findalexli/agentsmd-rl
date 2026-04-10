@@ -120,7 +120,7 @@ def test_pr_status_js_no_undefined_variables():
         for (const m of paramMatch) {
             const params = m[0].replace(/function\s+\w*\s*\(/, '').replace(/\)$/, '');
             params.split(',').forEach(p => {
-                const paramName = p.trim().replace(/\s*=.*$/, '').replace(/^\.\.\./, '');
+                const paramName = p.trim().replace(/\s*=.*/, '').replace(/^\.\.\./, '');
                 if (paramName) declarations.add(paramName);
             });
         }
@@ -130,7 +130,7 @@ def test_pr_status_js_no_undefined_variables():
         const destMatch = src.matchAll(destructured);
         for (const m of destMatch) {
             m[1].split(',').forEach(p => {
-                const clean = p.trim().replace(/^\w+:\s*/, '').replace(/\s*=.*$/, '');
+                const clean = p.trim().replace(/^\w+:\s*/, '').replace(/\s*=.*/, '');
                 if (clean && !clean.includes('.')) declarations.add(clean);
             });
         }
@@ -198,6 +198,179 @@ def test_pr_status_js_no_syntax_errors_strict_mode():
     assert r.returncode == 0, f"Strict mode check failed:\n{r.stderr}"
     data = json.loads(r.stdout.strip())
     assert data.get('parses_in_strict_mode') is True, f"Script has syntax errors: {data.get('error', '')}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression guards for pr-status.js
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_check_pr_status():
+    """JavaScript syntax check on pr-status.js via node --check (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--check", f"{REPO}/scripts/pr-status.js"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check_pr_status():
+    """Prettier formatting check on pr-status.js (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/scripts/pr-status.js"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pr_status_script_structure():
+    """pr-status.js must have expected structure and exports (pass_to_pass)."""
+    src = Path(SCRIPT).read_text()
+
+    # Check for key structural elements
+    assert "function exec(" in src, "exec helper function must exist"
+    assert "function execAsync(" in src, "execAsync helper function must exist"
+    assert "function execJson(" in src, "execJson helper function must exist"
+    assert "async function main(" in src, "main function must exist"
+    assert "module.exports" in src or "exports." in src, "Script must have module exports"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pr_status_no_banned_patterns():
+    """pr-status.js must not contain banned/unsafe patterns (pass_to_pass)."""
+    src = Path(SCRIPT).read_text()
+
+    # Check for eval() which is dangerous
+    assert "eval(" not in src, "Script must not use eval() for security"
+
+    # Check for console.log in async functions (should use console.error for errors)
+    # This is a basic check - the script should properly handle errors
+    assert "child_process" in src or "execSync" in src, "Script must use child_process for shell commands"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pr_status_has_required_helpers():
+    """pr-status.js must have all required helper functions (pass_to_pass)."""
+    code = textwrap.dedent(r"""
+        const fs = require('fs');
+        const src = fs.readFileSync('scripts/pr-status.js', 'utf8');
+
+        // Required helper functions
+        const requiredHelpers = [
+            'exec',
+            'execAsync',
+            'execJson',
+            'formatDuration',
+            'formatElapsedTime',
+            'sanitizeFilename',
+            'escapeMarkdownTableCell',
+            'stripTimestamps'
+        ];
+
+        const found = {};
+        for (const name of requiredHelpers) {
+            // Check for function declaration
+            const funcPattern = new RegExp('function\\s+' + name + '\\s*\\(');
+            found[name] = funcPattern.test(src);
+        }
+
+        // Check for getRunMetadata and other key data functions
+        const dataFunctions = [
+            'getRunMetadata',
+            'getAllJobs',
+            'getFailedJobs',
+            'categorizeJobs',
+            'generateReport',
+            'getFlakyTests'
+        ];
+
+        for (const name of dataFunctions) {
+            const funcPattern = new RegExp('function\\s+' + name + '\\s*\\(');
+            found[name] = funcPattern.test(src);
+        }
+
+        console.log(JSON.stringify(found));
+    """)
+    r = _run_node(code)
+    assert r.returncode == 0, f"Helper check failed:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+
+    # Verify all expected helpers exist
+    critical_helpers = ['exec', 'execAsync', 'getAllJobs', 'getFailedJobs', 'categorizeJobs']
+    for helper in critical_helpers:
+        assert data.get(helper) is True, f"Required helper {helper} not found in pr-status.js"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pr_status_uses_strict_mode_compatible_syntax():
+    """pr-status.js must use syntax compatible with strict mode (pass_to_pass)."""
+    code = textwrap.dedent(r"""
+        const fs = require('fs');
+        const src = fs.readFileSync('scripts/pr-status.js', 'utf8');
+
+        // Check for common strict mode issues
+        const issues = [];
+
+        // Check for with statements (not allowed in strict)
+        if (/\bwith\s*\(/.test(src)) {
+            issues.push("Uses 'with' statement (not allowed in strict mode)");
+        }
+
+        // Check for octal literals (not allowed in strict) - skip comments
+        const linesNoComments = src.split('\n').map(line => line.replace(/\/\/.*$/, ''));
+        const codeOnly = linesNoComments.join('\n');
+        if (/\b0[0-7]+\b/.test(codeOnly)) {
+            issues.push("Uses octal literals (not allowed in strict mode)");
+        }
+
+        // Check for duplicate parameter names would need parsing, but we can check basic patterns
+
+        // Check for proper variable declarations (no implicit globals)
+        // Look for assignments without declarations in function bodies
+        const lines = src.split('\n');
+        let inFunction = false;
+        let braceDepth = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            // Track function entry/exit
+            if (/function\s+\w+\s*\(/.test(line) || /=>\s*[{]/.test(line)) {
+                inFunction = true;
+            }
+
+            // Count braces
+            for (const char of line) {
+                if (char === '{') braceDepth++;
+                if (char === '}') braceDepth--;
+            }
+
+            if (braceDepth === 0 && inFunction) {
+                inFunction = false;
+            }
+        }
+
+        console.log(JSON.stringify({
+            issues: issues,
+            has_strict_mode_issues: issues.length > 0
+        }));
+    """)
+    r = _run_node(code)
+    assert r.returncode == 0, f"Strict mode compatibility check failed:\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+
+    assert not data.get('has_strict_mode_issues'), (
+        f"Script has strict mode compatibility issues: {data.get('issues')}"
+    )
 
 
 # ---------------------------------------------------------------------------

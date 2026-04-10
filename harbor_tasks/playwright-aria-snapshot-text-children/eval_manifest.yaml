@@ -48,4 +48,33 @@ checks:
     origin: repo_tests
     description: "Repo's package consistency check passes (npm run lint-packages)"
 
-rubric: []
+  - id: test_repo_check_deps
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's DEPS constraints check passes (npm run check-deps)"
+
+  - id: test_repo_test_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's type generation and checking passes (npm run test-types)"
+
+rubric:
+  - rule: "Code changes should be minimal and focused on the bug fix. Remove the unnecessary length check condition (if node.name.length > text.length) from textContributesInfo function."
+    source:
+      path: "packages/injected/src/ariaSnapshot.ts"
+      lines: "735-738"
+      commit: "5a56d44a6f0d94b87e044f45f432522132da557c"
+    reference: |
+      diff --git a/packages/injected/src/ariaSnapshot.ts b/packages/injected/src/ariaSnapshot.ts
+      --- a/packages/injected/src/ariaSnapshot.ts
+      +++ b/packages/injected/src/ariaSnapshot.ts
+      @@ -735,9 +735,6 @@ function textContributesInfo(node: aria.AriaNode, text: string): boolean {
+         if (!node.name)
+           return true;
+
+      -  if (node.name.length > text.length)
+      -    return false;
+      -
+         // Figure out if text adds any value. "longestCommonSubstring" is expensive, so limit strings length.
+         const substr = (text.length <= 200 && node.name.length <= 200) ? longestCommonSubstring(text, node.name) : '';
+         let filtered = text;

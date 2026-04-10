@@ -5,6 +5,7 @@ the API key's org_id when available, falling back to user.current_org_id for
 legacy API keys and cookie-based authentication.
 """
 
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -426,9 +427,9 @@ def test_distinctive_fix_lines_present():
     distinctive_patterns = [
         "# Determine org_id: prefer API key's org_id if authenticated via API key",
         "# Default fallback",
-        "if hasattr(self.user_context, 'user_auth'):",
+        "if hasattr(self.user_context, 'user_auth')",
         "user_auth = self.user_context.user_auth",
-        "if hasattr(user_auth, 'get_api_key_org_id'):",
+        "if hasattr(user_auth, 'get_api_key_org_id')",
         "api_key_org_id = user_auth.get_api_key_org_id()",
         "if api_key_org_id is not None:",
         "org_id = api_key_org_id",
@@ -443,7 +444,7 @@ def test_distinctive_fix_lines_present():
     # Most patterns should be present - allow for some variation in comments
     # but the core logic patterns must be there
     critical_patterns = [
-        "if hasattr(self.user_context, 'user_auth'):",
+        "if hasattr(self.user_context, 'user_auth')",
         "api_key_org_id = user_auth.get_api_key_org_id()",
         "if api_key_org_id is not None:",
         "org_id = api_key_org_id",
@@ -462,7 +463,7 @@ def test_repo_syntax_check():
     """Repo's Python syntax is valid (pass_to_pass).
 
     This test verifies that the modified Python file has valid syntax
-    and can be compiled without errors.
+    and can be compiled without errors. Mirrors CI lint check.
     """
     target_file = REPO / 'enterprise' / 'server' / 'utils' / 'saas_app_conversation_info_injector.py'
     r = subprocess.run(
@@ -543,6 +544,171 @@ def test_repo_class_structure():
         if isinstance(node, ast.AsyncFunctionDef) and node.name == 'save_app_conversation_info'
     ]
     assert 'save_app_conversation_info' in method_names, "Method 'save_app_conversation_info' not found"
+
+
+def test_repo_ruff_lint():
+    """Repo's modified file passes ruff linting - critical errors only (pass_to_pass).
+
+    This test verifies that the modified Python file passes ruff for critical
+    linter, matching the CI/CD lint checks.
+    """
+    target_file = REPO / 'enterprise' / 'server' / 'utils' / 'saas_app_conversation_info_injector.py'
+    ruff_config = REPO / 'dev_config' / 'python' / 'ruff.toml'
+
+    # First ensure ruff is installed
+    install_r = subprocess.run(
+        ['pip', 'install', 'ruff', '-q'],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    r = subprocess.run(
+        ['ruff', 'check', '--no-cache', '--config', str(ruff_config),  '--select', 'F', str(target_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff found syntax errors:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_enterprise_ruff_check_target():
+    """Enterprise module target file passes enterprise ruff config (pass_to_pass).
+
+    This test runs ruff check with the enterprise-specific config on the
+    modified file, matching the CI lint-enterprise-python workflow.
+    """
+    target_file = REPO / 'enterprise' / 'server' / 'utils' / 'saas_app_conversation_info_injector.py'
+    ruff_config = REPO / 'enterprise' / 'dev_config' / 'python' / 'ruff.toml'
+
+    install_r = subprocess.run(
+        ['pip', 'install', 'ruff', '-q'],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    r = subprocess.run(
+        ['ruff', 'check', '--no-cache', '--config', str(ruff_config), '--ignore', 'I', str(target_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Enterprise ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_enterprise_ruff_format():
+    """Enterprise target file passes ruff format check (pass_to_pass).
+
+    This test verifies that the modified file is properly formatted according
+    to the enterprise ruff config, matching CI format checks.
+    """
+    target_file = REPO / 'enterprise' / 'server' / 'utils' / 'saas_app_conversation_info_injector.py'
+    ruff_config = REPO / 'enterprise' / 'dev_config' / 'python' / 'ruff.toml'
+
+    install_r = subprocess.run(
+        ['pip', 'install', 'ruff', '-q'],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    r = subprocess.run(
+        ['ruff', 'format', '--no-cache', '--config', str(ruff_config), '--check', str(target_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Enterprise ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_enterprise_storage_syntax():
+    """Enterprise storage test file has valid syntax (pass_to_pass).
+
+    This test verifies that the related enterprise storage test file
+    has valid Python syntax, ensuring consistency with the modified module.
+    """
+    target_file = REPO / 'enterprise' / 'tests' / 'unit' / 'storage' / 'test_saas_sql_app_conversation_info_service.py'
+    r = subprocess.run(
+        ['python3', '-m', 'py_compile', str(target_file)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Enterprise storage test syntax check failed:\n{r.stderr}"
+
+
+def test_repo_enterprise_pytest_unit():
+    """Enterprise unit tests pass for related storage module (pass_to_pass).
+
+    This test runs a quick subset of the enterprise unit tests for the
+    storage module, verifying the modified code works correctly.
+    Mirrors the CI test-enterprise workflow.
+    """
+    # Install poetry and dependencies
+    install_r = subprocess.run(
+        ['pip', 'install', 'poetry', '-q'],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+    # Install enterprise dependencies
+    enterprise_dir = REPO / 'enterprise'
+    poetry_install = subprocess.run(
+        ['poetry', 'install', '--with', 'dev', '-q'],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=enterprise_dir,
+    )
+
+    # Run a quick test to verify the module works
+    test_path = 'tests/unit/storage/test_saas_sql_app_conversation_info_service.py::TestSaasSQLAppConversationInfoService::test_service_initialization'
+    r = subprocess.run(
+        [
+            'poetry', 'run', 'pytest',
+            test_path,
+            '-v', '--tb=short'
+        ],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=enterprise_dir,
+        env={**os.environ, 'PYTHONPATH': '..:.'}
+    )
+    assert r.returncode == 0, f"Enterprise pytest failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_import_structure():
+    """Modified file has valid import structure (pass_to_pass).
+
+    This test verifies that all imports in the modified file are
+    syntactically valid without actually importing the modules.
+    """
+    import ast
+
+    target_file = REPO / 'enterprise' / 'server' / 'utils' / 'saas_app_conversation_info_injector.py'
+    source_code = target_file.read_text()
+
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError as e:
+        pytest.fail(f"AST parsing failed: {e}")
+
+    # Collect all imports
+    imports = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imports.append(alias.name)
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ''
+            for alias in node.names:
+                imports.append(f"{module}.{alias.name}" if module else alias.name)
+
+    # Verify we found expected imports (basic sanity check)
+    assert len(imports) > 0, "No imports found in the file"
 
 
 if __name__ == '__main__':

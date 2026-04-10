@@ -96,38 +96,86 @@ checks:
   # PASS-TO-PASS tests
   - id: test_settings_importable
     type: pass_to_pass
-    origin: repo_tests
-    description: Settings module is importable and has new attributes
+    origin: static
+    description: Settings module is importable and has expected attributes (base commit has HTML_S3_PATH)
 
   - id: test_issue_module_importable
     type: pass_to_pass
-    origin: repo_tests
-    description: TestCaseIssueCatalog is importable with new methods
+    origin: static
+    description: TestCaseIssueCatalog is importable with expected methods (base commit)
 
   - id: test_python_syntax_valid
     type: pass_to_pass
-    origin: repo_tests
-    description: All modified Python files have valid syntax
+    origin: static
+    description: All modified Python files have valid syntax (py_compile check)
 
   - id: test_no_broken_imports
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Imports in modified modules work correctly
 
   - id: test_repo_python_syntax_all_modified
     type: pass_to_pass
     origin: repo_tests
-    description: Repo CI - Python syntax check on all modified files
+    description: Repo CI - Python syntax check via subprocess.run on all modified files
+
+  - id: test_repo_praktika_settings_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - praktika.settings imports correctly via subprocess.run
+
+  - id: test_repo_ci_settings_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - ci.settings.settings imports correctly via subprocess.run
 
   - id: test_repo_praktika_modules_importable
     type: pass_to_pass
     origin: repo_tests
-    description: Repo CI - All praktika modules are importable
+    description: Repo CI - praktika modules can be imported without errors
 
   - id: test_repo_settings_attrs_accessible
     type: pass_to_pass
     origin: repo_tests
-    description: Repo CI - Settings class attributes are accessible
+    description: Repo CI - Settings class attributes are accessible via subprocess import
 
-rubric: []
-# No soft/subjective rules for this task - all requirements are programmatically testable
+  - id: test_repo_praktika_cli_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - praktika CLI is functional (pip install + --help works)
+
+  - id: test_repo_modified_files_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - All modified Python files have valid AST via subprocess.run
+
+rubric:
+  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from classes and functions inside inline code blocks, such as: `ClassName` or `function_name`."
+    source:
+      path: "AGENTS.md"
+      lines: "5-6"
+      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
+
+  - rule: "When writing text such as documentation, comments, or commit messages, write names of functions and methods as `f` instead of `f()` - prefer it for mathematical purity when it refers to a function itself rather than its application."
+    source:
+      path: "AGENTS.md"
+      lines: "9-10"
+      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
+
+  - rule: "When mentioning logical errors in comments or messages, say 'exception' instead of 'crash', because they don't crash the server in the release build."
+    source:
+      path: "AGENTS.md"
+      lines: "11"
+      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
+
+  - rule: "Scan all changed lines for typos in comments, variable names, string literals, log messages, error messages, and documentation. Error messages should be clear, informative, and help the user understand what went wrong."
+    source:
+      path: ".claude/skills/review/SKILL.md"
+      lines: "96-99"
+      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
+
+  - rule: "When creating or updating a pull request, use `.github/PULL_REQUEST_TEMPLATE.md` as the PR body template. Follow the template exactly. The 'Bug Fix' category should be used only for real bug fixes, while for fixing CI reports use the 'CI Fix or Improvement' category."
+    source:
+      path: "AGENTS.md"
+      lines: "161"
+      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"

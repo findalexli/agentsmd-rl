@@ -81,4 +81,45 @@ checks:
     description: "Modified test file must have no common typos"
     command: "codespell --config .codespellrc test/registered/spec/test_standalone_speculative_decoding.py"
 
-rubric: []
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must have correctly sorted imports (isort)"
+    command: "isort --check-only --profile black test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI workflow YAML files must be valid"
+    command: "python3 -c 'import yaml; yaml.safe_load(open(\".github/workflows/lint.yml\"))'"
+
+  - id: test_repo_workflow_job_names
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI workflow job names must be unique (repo CI check)"
+    command: "python3 scripts/ci/check_workflow_job_names.py"
+
+  - id: test_repo_ci_permissions_sorted
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI permissions file must be sorted (repo CI check)"
+    command: "python3 .github/update_ci_permission.py --sort-only"
+
+rubric:
+  - rule: "Always inherit from CustomTestCase, never raw unittest.TestCase"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "12"
+      commit: "1ad6839659085732a6fe308f97141841d67f6323"
+
+  - rule: "tearDownClass must be defensive - use hasattr/null checks before accessing resources that setUpClass may not have allocated"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "15"
+      commit: "1ad6839659085732a6fe308f97141841d67f6323"
+
+  - rule: "Test classes should use class attributes for configurable thresholds (e.g., accuracy_threshold) to allow derived tests to override"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "318-325"
+      commit: "1ad6839659085732a6fe308f97141841d67f6323"

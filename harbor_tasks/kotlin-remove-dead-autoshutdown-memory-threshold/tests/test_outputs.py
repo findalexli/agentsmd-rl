@@ -165,3 +165,117 @@ def test_file_has_valid_prop_mappers():
     timeout_related = ["autoshutdownIdleSeconds", "autoshutdownUnusedSeconds"]
     for term in timeout_related:
         assert term in content, f"{term} should still exist in the file"
+
+
+# ============================================================================
+# Repo CI/CD Pass-to-Pass Tests
+# These tests verify that the repository's code structure remains valid
+# after the fix, ensuring candidate solutions don't break existing functionality.
+# ============================================================================
+
+
+def test_repo_kotlin_syntax_balanced_brackets():
+    """Repo check: Verify Kotlin file has balanced brackets and braces (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # Check balanced brackets
+    assert content.count("(") == content.count(")"), "Mismatched parentheses"
+    assert content.count("[") == content.count("]"), "Mismatched square brackets"
+    assert content.count("{") == content.count("}"), "Mismatched curly braces"
+
+
+def test_repo_kotlin_package_declaration_valid():
+    """Repo check: Verify Kotlin package declaration is present and valid (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # Should have valid package declaration
+    assert "package org.jetbrains.kotlin.daemon.common" in content, \
+        "Package declaration should be valid"
+
+
+def test_repo_kotlin_imports_valid():
+    """Repo check: Verify Kotlin imports are syntactically valid (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # Should have standard imports
+    assert any("org.jetbrains.kotlin.cli.common" in line for line in content.split('\n')), \
+        "Should import from cli.common"
+
+
+def test_repo_data_class_syntax_valid():
+    """Repo check: Verify DaemonOptions data class syntax is valid (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # Find DaemonOptions class definition - should be valid data class
+    class_match = re.search(
+        r"data\s+class\s+DaemonOptions\s*\([^)]*\)\s*:\s*OptionsGroup",
+        content,
+        re.DOTALL
+    )
+    assert class_match, "DaemonOptions should be a valid data class extending OptionsGroup"
+
+    # Should have valid property declarations
+    var_pattern = re.compile(r"var\s+\w+\s*:\s*\w+\s*=\s*[^,\n]+")
+    properties = var_pattern.findall(class_match.group(0))
+    assert len(properties) >= 5, "Should have at least 5 var properties in DaemonOptions"
+
+
+def test_repo_constant_declarations_valid():
+    """Repo check: Verify const val declarations are syntactically valid (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # Should have standard constants (minus the removed one)
+    expected_constants = [
+        "COMPILE_DAEMON_TIMEOUT_INFINITE_S",
+        "COMPILE_DAEMON_DEFAULT_IDLE_TIMEOUT_S",
+        "COMPILE_DAEMON_DEFAULT_UNUSED_TIMEOUT_S",
+    ]
+
+    for const_name in expected_constants:
+        assert const_name in content, f"Constant {const_name} should exist"
+
+
+def test_repo_propmapper_usage_valid():
+    """Repo check: Verify PropMapper class usage is valid (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # Should have PropMapper class definition or usage
+    assert "PropMapper" in content, "PropMapper should be defined or used"
+
+    # Check that PropMapper is used with proper syntax
+    # Valid patterns: PropMapper(this, ...), PropMapper(this, DaemonOptions::prop, ...)
+    mapper_usage_pattern = re.compile(r"PropMapper\([^)]*\)", re.DOTALL)
+    usages = mapper_usage_pattern.findall(content)
+
+    # Should have at least one valid PropMapper usage in mappers list
+    assert len(usages) >= 1, "Should have at least one PropMapper constructor call"
+
+
+def test_repo_file_structure_integrity():
+    """Repo check: Verify overall file structure is intact after modification (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # File should start with copyright header
+    assert content.strip().startswith("/*"), "File should start with comment block"
+    assert "Copyright" in content or "Licensed under the Apache License" in content, \
+        "Should have license header"
+
+    # Should have all major sections
+    assert "package " in content, "Should have package declaration"
+    assert "import " in content, "Should have imports"
+    assert "class " in content or "data class" in content, "Should have class declarations"
+
+    # File should end properly (no truncated content)
+    # Check last non-whitespace character is a valid ending
+    last_content = content.rstrip()[-20:]
+    assert any(c in last_content for c in ["}", ")", ";", "]"]), \
+        "File should end with valid Kotlin syntax"
+
+
+def test_repo_no_double_commas():
+    """Repo check: Verify no double commas in Kotlin code (pass_to_pass)."""
+    content = TARGET_FILE.read_text()
+
+    # Check for double commas (common syntax error)
+    assert ", ," not in content, "Double commas detected"
+    assert ",," not in content, "Adjacent commas detected"

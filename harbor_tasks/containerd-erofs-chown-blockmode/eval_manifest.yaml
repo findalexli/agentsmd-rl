@@ -31,6 +31,48 @@ behavioral_checks:
     test: "test_go_test_erofs"
     origin: "repo_tests"
 
+  - id: test_repo_make_binaries
+    name: "Make binaries"
+    description: "Repo's make binaries passes"
+    test: "test_repo_make_binaries"
+    origin: "repo_tests"
+
+  - id: test_go_test_erofs_TestErofs
+    name: "Go test erofs TestErofs"
+    description: "Repo's TestErofs unit test function runs"
+    test: "test_go_test_erofs_TestErofs"
+    origin: "repo_tests"
+
+  - id: test_go_test_erofs_TestErofsWithQuota
+    name: "Go test erofs TestErofsWithQuota"
+    description: "Repo's TestErofsWithQuota unit test function runs"
+    test: "test_go_test_erofs_TestErofsWithQuota"
+    origin: "repo_tests"
+
+  - id: test_go_test_erofs_TestErofsFsverity
+    name: "Go test erofs TestErofsFsverity"
+    description: "Repo's TestErofsFsverity unit test function runs"
+    test: "test_go_test_erofs_TestErofsFsverity"
+    origin: "repo_tests"
+
+  - id: test_go_test_erofs_TestErofsDifferWithTarIndexMode
+    name: "Go test erofs TestErofsDifferWithTarIndexMode"
+    description: "Repo's TestErofsDifferWithTarIndexMode unit test function runs"
+    test: "test_go_test_erofs_TestErofsDifferWithTarIndexMode"
+    origin: "repo_tests"
+
+  - id: test_go_mod_verify
+    name: "Go mod verify"
+    description: "Go modules are verified"
+    test: "test_go_mod_verify"
+    origin: "repo_tests"
+
+  - id: test_go_mod_tidy
+    name: "Go mod tidy"
+    description: "Go modules are tidy (no changes needed)"
+    test: "test_go_mod_tidy"
+    origin: "repo_tests"
+
   - id: test_createSnapshot_function_exists
     name: "Function exists"
     description: "createSnapshot method exists"
@@ -65,5 +107,22 @@ behavioral_checks:
 # No agent config rules found in this repository at base commit
 agent_config_checks: []
 
-# Rubric for soft/subjective evaluation (empty for this task)
-rubric: []
+# Rubric for soft/subjective evaluation
+rubric:
+  - rule: "Go files adhere to standard Go formatting and styling (go fmt, goimports)."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "39-46"
+      commit: "e809b6b8139c1b8afbb081d007ae8ce5858d46a7"
+
+  - rule: "Declare variables in the narrowest scope possible. Move variable declarations inside conditional blocks when they are only needed within that branch."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "39"
+      commit: "e809b6b8139c1b8afbb081d007ae8ce5858d46a7"
+
+  - rule: "Use clear, explanatory comments to document WHY a particular code path exists, especially when bypassing normal behavior (e.g., block mode vs non-block mode differences)."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "39"
+      commit: "e809b6b8139c1b8afbb081d007ae8ce5858d46a7"

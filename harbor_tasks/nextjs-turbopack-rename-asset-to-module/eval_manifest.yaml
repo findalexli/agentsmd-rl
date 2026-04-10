@@ -52,4 +52,25 @@ checks:
     origin: repo_tests
     description: "Repo's cargo test passes on turbopack-core crate"
 
-rubric: []
+  - id: repo_cargo_fmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Rust code passes cargo fmt --check"
+
+  - id: repo_cargo_clippy_turbopack_core
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's cargo clippy passes on turbopack-core crate"
+
+rubric:
+  - rule: "Run cargo fmt on Rust code changes. cargo fmt uses ASCII order (uppercase before lowercase)."
+    source:
+      path: "AGENTS.md"
+      lines: "414"
+      commit: "d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9"
+
+  - rule: "Before editing files in any subdirectory (e.g., turbopack/crates/*), read all README.md files in the directory path from repo root up to the target file's directory."
+    source:
+      path: "AGENTS.md"
+      lines: "46-54"
+      commit: "d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9"

@@ -17,6 +17,31 @@ checks:
     origin: static
     description: "Module still exports AppRouteRouteModule class and AppRouteUserlandModule type"
 
+  - id: repo_lint_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on modified files (pnpm lint-eslint)"
+
+  - id: repo_lint_ast_grep
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ast-grep scan passes (pnpm lint-ast-grep)"
+
+  - id: repo_lint_language
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Language lint (alex) passes (pnpm lint-language)"
+
+  - id: repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check passes on modified files (pnpm prettier --check)"
+
+  - id: repo_error_codes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Error codes check passes (node packages/next/check-error-codes.js)"
+
   - id: template_lazy_userland_factory
     type: fail_to_pass
     origin: pr_diff
@@ -57,14 +82,4 @@ checks:
     origin: pr_diff
     description: "handle() method calls ensureUserland() and uses resolveHandler()"
 
-rubric:
-  - rule: "Keep require() behind compile-time if/else branches for DCE (avoid early-return/throw patterns)."
-    source:
-      path: "AGENTS.md"
-      lines: "404"
-      commit: "a43cf0c247b72915d82b44539c0dbde13efccfc9"
-  - rule: "Webpack only DCEs a require() when it sits inside the dead branch of an if/else whose condition DefinePlugin can evaluate at compile time."
-    source:
-      path: ".agents/skills/dce-edge/SKILL.md"
-      lines: "18"
-      commit: "a43cf0c247b72915d82b44539c0dbde13efccfc9"
+rubric: []

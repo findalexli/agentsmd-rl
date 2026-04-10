@@ -322,3 +322,52 @@ def test_syntax_valid():
 
     # Should parse without errors
     ast.parse(source)
+
+def test_repo_docker_sandbox_service_main_unit_tests():
+    """Repo DockerSandboxService main unit tests pass (pass_to_pass)."""
+    deps_install = subprocess.run(
+        ['pip', 'install', 'pytest-asyncio', 'pytest', 'openhands-agent-server',
+         'openhands-sdk', 'openhands-aci', 'termcolor', '-q'],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if deps_install.returncode != 0:
+        pytest.skip(f"Failed to install dependencies: {deps_install.stderr}")
+
+    r = subprocess.run(
+        ['python', '-m', 'pytest',
+         'tests/unit/app_server/test_docker_sandbox_service.py::TestDockerSandboxService',
+         '-v', '--tb=short'],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+        env={**os.environ, 'PYTHONPATH': str(REPO)},
+    )
+    assert r.returncode == 0, f"DockerSandboxService main unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_sandbox_service_unit_tests():
+    """Repo SandboxService unit tests pass (pass_to_pass)."""
+    deps_install = subprocess.run(
+        ['pip', 'install', 'pytest-asyncio', 'pytest', 'openhands-agent-server',
+         'openhands-sdk', 'openhands-aci', 'termcolor', '-q'],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if deps_install.returncode != 0:
+        pytest.skip(f"Failed to install dependencies: {deps_install.stderr}")
+
+    r = subprocess.run(
+        ['python', '-m', 'pytest',
+         'tests/unit/app_server/test_sandbox_service.py',
+         '-v', '--tb=short'],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+        env={**os.environ, 'PYTHONPATH': str(REPO)},
+    )
+    assert r.returncode == 0, f"SandboxService unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

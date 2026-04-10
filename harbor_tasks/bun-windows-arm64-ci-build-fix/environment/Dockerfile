@@ -21,7 +21,7 @@ WORKDIR /workspace/bun
 RUN npm install -g bun
 
 # Install pytest for test runner
-RUN pip3 install --break-system-packages pytest --quiet
+RUN pip3 install --break-system-packages pytest pytest-json-ctrf --quiet
 
 # Verifier output directory
 RUN mkdir -p /logs/verifier

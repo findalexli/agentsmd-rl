@@ -51,6 +51,24 @@ def test_repo_eslint():
     assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+def test_repo_lint_packages():
+    """Repo's workspace packages are consistent (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_generate_channels():
+    """Repo's protocol channel generation works (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"generate_channels failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -235,3 +253,4 @@ def test_tracing_has_error_handling():
     content = tracing_file.read_text()
     # Check for the error handling that was added
     assert "if (!traceLegend)" in content or "Tracing is not started" in content, "Error handling for missing traceLegend must be present"
+

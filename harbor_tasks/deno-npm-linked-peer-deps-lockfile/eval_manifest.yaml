@@ -52,6 +52,45 @@ checks:
     origin: repo_tests
     description: "deno_npm passes cargo check"
 
+  - id: deno_npm_lib_tests_locked
+    type: pass_to_pass
+    origin: repo_tests
+    description: "deno_npm library tests pass with --locked flag as CI does"
+  - id: deno_npm_clippy_locked
+    type: pass_to_pass
+    origin: repo_tests
+    description: "deno_npm passes clippy linting with --locked flag as CI does"
+
+  - id: deno_lockfile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "deno_lockfile tests pass (related crate)"
+
+  - id: deno_npm_all_features
+    type: pass_to_pass
+    origin: repo_tests
+    description: "deno_npm compiles with all features enabled"
+
+
+rubric:
+  - rule: "Keep changes minimal and focused; avoid drive-by changes"
+    source:
+      path: "CLAUDE.md"
+      lines: "31-33"
+      commit: "dba93738662f4b6ad47356095f230f5be76a7908"
+
+  - rule: "Run tools/format.js and tools/lint.js before committing changes"
+    source:
+      path: "CLAUDE.md"
+      lines: "26-30"
+      commit: "dba93738662f4b6ad47356095f230f5be76a7908"
+
+  - rule: "Prioritize correctness bugs - logic errors should be the primary focus"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "139-147"
+      commit: "dba93738662f4b6ad47356095f230f5be76a7908"
+
 # Note: Rubric check disabled - requires LLM judge API key
 # The gold solution diff is verified minimal:
 # - 2 lines changed in core logic (rename + fix comparison)

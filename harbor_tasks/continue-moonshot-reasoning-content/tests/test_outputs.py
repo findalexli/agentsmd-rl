@@ -10,10 +10,10 @@ import os
 REPO = "/workspace/continue"
 MOONSHOT_PATH = os.path.join(REPO, "core/llm/llms/Moonshot.ts")
 
+
 def test_kimi_model_sets_reasoning_content_flag():
     """Test that kimi-* models set supportsReasoningContentField to true."""
-    # Build and run a test that imports Moonshot with kimi model
-    test_code = '''
+    test_code = """
 import { Moonshot } from "./core/llm/llms/Moonshot.js";
 
 const kimiModel = new Moonshot({
@@ -39,7 +39,7 @@ if (kimiK1Model.supportsReasoningContentField !== true) {
 }
 
 console.log("PASS: kimi models correctly set supportsReasoningContentField");
-'''
+"""
 
     result = subprocess.run(
         ["node", "--input-type=module", "-e", test_code],
@@ -55,7 +55,7 @@ console.log("PASS: kimi models correctly set supportsReasoningContentField");
 
 def test_non_kimi_model_unsets_reasoning_content_flag():
     """Test that non-kimi models (moonshot-v1-*) have supportsReasoningContentField set to false."""
-    test_code = '''
+    test_code = """
 import { Moonshot } from "./core/llm/llms/Moonshot.js";
 
 const moonshotModel = new Moonshot({
@@ -83,7 +83,7 @@ if (anotherMoonshotModel.supportsReasoningContentField !== false) {
 }
 
 console.log("PASS: non-kimi models correctly have supportsReasoningContentField=false");
-'''
+"""
 
     result = subprocess.run(
         ["node", "--input-type=module", "-e", test_code],
@@ -107,7 +107,6 @@ def test_moonshot_class_compiles():
         timeout=120
     )
 
-    # tsc may exit 0 even with errors in some cases, check stderr too
     error_output = result.stderr + result.stdout
     assert "error" not in error_output.lower() or result.returncode == 0, \
         f"TypeScript compilation failed:\n{error_output}"
@@ -115,7 +114,7 @@ def test_moonshot_class_compiles():
 
 def test_constructor_preserves_other_properties():
     """Test that the constructor preserves other Moonshot properties like apiBase."""
-    test_code = '''
+    test_code = """
 import { Moonshot } from "./core/llm/llms/Moonshot.js";
 
 const model = new Moonshot({
@@ -124,7 +123,6 @@ const model = new Moonshot({
     apiKey: "test-key"
 });
 
-// Check that apiBase is preserved
 if (model.apiBase !== "https://custom.moonshot.cn/v1/") {
     console.error("FAIL: apiBase should be preserved");
     console.error("Expected: https://custom.moonshot.cn/v1/");
@@ -132,7 +130,6 @@ if (model.apiBase !== "https://custom.moonshot.cn/v1/") {
     process.exit(1);
 }
 
-// Check provider name is still set
 if (model.providerName !== "moonshot") {
     console.error("FAIL: providerName should be 'moonshot'");
     console.error("Got:", model.providerName);
@@ -140,7 +137,7 @@ if (model.providerName !== "moonshot") {
 }
 
 console.log("PASS: constructor preserves other properties");
-'''
+"""
 
     result = subprocess.run(
         ["node", "--input-type=module", "-e", test_code],
@@ -156,7 +153,7 @@ console.log("PASS: constructor preserves other properties");
 
 def test_model_prefix_matching():
     """Test that only models starting with 'kimi' get reasoning_content support."""
-    test_code = '''
+    test_code = """
 import { Moonshot } from "./core/llm/llms/Moonshot.js";
 
 const testCases = [
@@ -183,7 +180,7 @@ for (const tc of testCases) {
 }
 
 console.log("PASS: all model prefix cases handled correctly");
-'''
+"""
 
     result = subprocess.run(
         ["node", "--input-type=module", "-e", test_code],
@@ -197,29 +194,115 @@ console.log("PASS: all model prefix cases handled correctly");
     assert "PASS" in result.stdout, f"Expected PASS in output, got:\n{result.stdout}"
 
 
+# =============================================================================
 # Pass-to-pass tests: Repo CI/CD checks that should pass on both base and fix
-# NOTE: These tests require the Dockerfile to have build tools (make, g++, python3-dev)
-# The Dockerfile currently fails to build due to missing make for sqlite3 compilation
+# =============================================================================
+# These tests use the repo's actual CI commands from .github/workflows/
+# CI commands found in: cli-pr-checks.yml, tidy-up-codebase.yml
+
 
 def test_repo_tsc_check():
-    """Repo's TypeScript typecheck passes in core/ directory (pass_to_pass)."""
+    """Repo's TypeScript typecheck passes in core/ directory (pass_to_pass).
+
+    CI command from .github/workflows/cli-pr-checks.yml:
+      - name: Build core
+        run: |
+          cd core
+          npm run build
+    Which internally runs: tsc -p ./tsconfig.npm.json
+    """
     r = subprocess.run(
-        ["npx", "tsc", "--noEmit"],
+        ["npm", "run", "tsc:check"],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=os.path.join(REPO, "core"),
     )
     assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
+def test_repo_build():
+    """Repo's core build passes (pass_to_pass).
+
+    CI command from .github/workflows/cli-pr-checks.yml:
+      - name: Build core
+        run: |
+          cd core
+          npm run build
+    """
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=os.path.join(REPO, "core"),
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_lint():
+    """Repo's ESLint passes in core/ directory (pass_to_pass).
+
+    CI command from .github/workflows/cli-pr-checks.yml:
+      - name: Run linting
+        run: |
+          cd extensions/cli
+          npm run lint
+    Also available in core: npm run lint (runs eslint . --ext ts)
+    """
+    r = subprocess.run(
+        ["npm", "run", "lint"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=os.path.join(REPO, "core"),
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_jest_llm():
+    """Repo's Jest tests for LLM module pass (pass_to_pass).
+
+    CI command: npm run test -- --testPathPattern=llm
+    From core/package.json: "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    """
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--testPathPattern", "llm", "--testTimeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=os.path.join(REPO, "core"),
+    )
+    assert r.returncode == 0, f"Jest LLM tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_unit_tests():
+    """Repo's unit tests for supportsFim pass (pass_to_pass).
+
+    CI command from core/llm/llms/test/supportsFim.test.ts
+    Tests provider support for FIM (fill-in-middle) functionality.
+    """
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--testPathPattern", "supportsFim", "--testTimeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=os.path.join(REPO, "core"),
+    )
+    assert r.returncode == 0, f"supportsFim tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
 def test_repo_vitest():
-    """Repo's vitest tests pass in core/ directory (pass_to_pass)."""
+    """Repo's vitest tests pass (pass_to_pass).
+
+    CI command from core/package.json: "vitest": "vitest run"
+    Runs all .test.ts files using vitest.
+    """
     r = subprocess.run(
         ["npm", "run", "vitest"],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=os.path.join(REPO, "core"),
     )
-    assert r.returncode == 0, f"Vitest failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Vitest tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

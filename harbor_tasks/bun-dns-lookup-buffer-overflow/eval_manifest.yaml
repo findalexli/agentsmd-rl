@@ -7,52 +7,74 @@ source:
   merge_commit: "de10885151f54491daaa9352b4ff07db002a7339"
 
 checks:
-  # Existing pass_to_pass checks
-  - id: zig_file_parses
+  # Pass-to-pass checks (static) — file existence and content checks
+  - id: test_dns_file_exists
     type: pass_to_pass
     origin: static
-    description: "Modified Zig file must be readable and have expected structure"
+    description: "Modified DNS file exists and is readable"
 
-  - id: lookup_function_has_real_logic
+  - id: test_zig_file_parses
+    type: pass_to_pass
+    origin: static
+    description: "Modified Zig file has expected structure"
+
+  - id: test_zig_syntax_basic
+    type: pass_to_pass
+    origin: static
+    description: "Basic Zig syntax validation - balanced braces"
+
+  - id: test_no_banned_patterns
+    type: pass_to_pass
+    origin: static
+    description: "Modified code must not contain banned patterns from ban-words.test.ts"
+
+  - id: test_lookup_function_has_real_logic
     type: pass_to_pass
     origin: static
     description: "LibInfo.lookup function must have substantial implementation"
 
-  # Repo CI checks (pass_to_pass) - from package.json and .github/workflows/format.yml
-  - id: zig_file_formatted
+  # Pass-to-pass checks (repo_tests) — actual CI commands via subprocess.run()
+  - id: test_zig_fmt_check
     type: pass_to_pass
     origin: repo_tests
-    description: "Modified Zig file must pass zig fmt --check (from package.json fmt:zig)"
-
-  - id: no_banned_patterns
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified code must not contain banned patterns from test/internal/ban-words.test.ts (from package.json banned)"
-
-  - id: zig_syntax_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Basic Zig syntax validation - balanced braces, valid function declarations"
+    description: "Repo CI: zig fmt --check on DNS file passes (from package.json fmt:zig)"
 
   # Fail-to-pass checks
-  - id: no_fixed_buffer_used
+  - id: test_no_fixed_buffer_used
     type: fail_to_pass
     origin: pr_diff
     description: "The vulnerable fixed 1024-byte buffer pattern must be removed"
 
-  - id: stack_fallback_pattern_present
+  - id: test_stack_fallback_pattern_present
     type: fail_to_pass
     origin: pr_diff
     description: "The safe stackFallback allocator pattern must be present"
 
-  - id: dynamic_allocation_with_dupeZ
+  - id: test_dynamic_allocation_with_dupeZ
     type: fail_to_pass
     origin: pr_diff
     description: "The fix must use dupeZ for dynamic allocation of the hostname"
 
-  - id: proper_cleanup_with_defer_free
+  - id: test_proper_cleanup_with_defer_free
     type: fail_to_pass
     origin: pr_diff
     description: "The fix must properly free the allocated memory with defer"
 
-rubric: []
+rubric:
+  - rule: "Memory management - In Zig code, be careful with allocators and use defer for cleanup"
+    source:
+      path: "CLAUDE.md"
+      lines: "40"
+      commit: "686eda3cb4773bb1ffe77cbdef6d0507d8fc2314"
+
+  - rule: "Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform wrappers that preserve OS error info and never use unreachable. Using std.fs, std.posix, or std.os directly is wrong in this codebase."
+    source:
+      path: "src/CLAUDE.md"
+      lines: "10-29"
+      commit: "686eda3cb4773bb1ffe77cbdef6d0507d8fc2314"
+
+  - rule: "Use std.heap.stackFallback with bun.default_allocator for dynamic allocation instead of fixed buffers when handling variable-length inputs"
+    source:
+      path: ".claude/skills/zig-system-calls/SKILL.md"
+      lines: "30-40"
+      commit: "686eda3cb4773bb1ffe77cbdef6d0507d8fc2314"

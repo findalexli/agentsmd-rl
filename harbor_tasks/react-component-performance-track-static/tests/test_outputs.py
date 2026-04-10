@@ -54,13 +54,10 @@ def test_files_exist():
 # ---------------------------------------------------------------------------
 
 
-
 def test_repo_license():
     """Repo license check passes (pass_to_pass)."""
     r = _run_shell(["./scripts/ci/check_license.sh"], timeout=30)
     assert r.returncode == 0, f"License check failed:\n{r.stderr[-500:]}"
-
-
 
 
 def test_repo_version_check():
@@ -69,6 +66,25 @@ def test_repo_version_check():
     assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_eslint():
+    """Repo ESLint check passes (pass_to_pass)."""
+    r = _run_shell(["node", "./scripts/tasks/eslint.js"], timeout=120)
+    assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_print_warnings():
+    """Repo print warnings check passes (pass_to_pass)."""
+    r = _run_shell(["./scripts/ci/test_print_warnings.sh"], timeout=30)
+    assert r.returncode == 0, f"Print warnings check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_tests_shared():
+    """Repo shared package tests pass (pass_to_pass)."""
+    r = _run_shell(
+        ["node", "./scripts/jest/jest-cli.js", "--testPathPattern=shared", "--ci"],
+        timeout=180
+    )
+    assert r.returncode == 0, f"Shared tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

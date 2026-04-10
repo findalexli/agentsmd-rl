@@ -1,7 +1,7 @@
 FROM node:22-slim
 
 RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y \
-    git curl ca-certificates build-essential tmux python3 \
+    git curl ca-certificates build-essential tmux python3 unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone repo at the base commit (before the fix)
@@ -13,5 +13,12 @@ RUN git init /workspace/opencode && \
     git checkout FETCH_HEAD
 
 RUN mkdir -p /logs/verifier
+
+# Install Bun (required for typecheck and tests)
+RUN curl -fsSL https://bun.sh/install | bash
+
+# Install turbo globally for typecheck
+RUN npm install -g turbo@2
+ENV PATH="/usr/local/bin:${PATH}"
 
 WORKDIR /workspace/opencode

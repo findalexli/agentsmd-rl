@@ -71,9 +71,17 @@ checks:
     origin: repo_tests
     description: "Repo's ruff format check passes on patches.py"
 
+  - id: repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "patches.py compiles without syntax errors"
+
+  - id: repo_ruff_check_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff check passes on prime_rl package"
+
 rubric:
-  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "c2b99e69ce31c71261f56c97fbd2ed467258f940"
+  # Note: This task is about code changes following AGENTS.md guidelines.
+  # The gold solution modifies patches.py, not AGENTS.md itself.
+  # Code style compliance is verified by test_no_unnecessary_try_except in test_outputs.py.

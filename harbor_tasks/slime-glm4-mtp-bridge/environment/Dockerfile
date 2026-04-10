@@ -19,10 +19,20 @@ WORKDIR /workspace/slime
 
 ENV PYTHONPATH="/workspace/slime"
 
-# Install CPU-only torch + mbridge + safetensors for test_outputs.py
+# Install CPU-only torch + mbridge + safetensors + transformers + megatron-core for test_outputs.py
 RUN pip install --no-cache-dir \
         torch --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir mbridge safetensors
+    pip install --no-cache-dir mbridge safetensors transformers numpy megatron-core
+
+# Create a fake transformer-engine package to satisfy megatron-core
+RUN mkdir -p /usr/local/lib/python3.12/site-packages/transformer_engine/pytorch/tensor && \
+    echo "__version__ = '2.0.0'" > /usr/local/lib/python3.12/site-packages/transformer_engine/__init__.py && \
+    echo "from unittest.mock import MagicMock\nQuantizedTensor = MagicMock" > /usr/local/lib/python3.12/site-packages/transformer_engine/pytorch/__init__.py && \
+    echo "from unittest.mock import MagicMock\nQuantizedTensor = MagicMock" > /usr/local/lib/python3.12/site-packages/transformer_engine/pytorch/tensor/__init__.py && \
+    mkdir -p /usr/local/lib/python3.12/site-packages/transformer_engine-2.0.0.dist-info && \
+    echo 'Metadata-Version: 2.1' > /usr/local/lib/python3.12/site-packages/transformer_engine-2.0.0.dist-info/METADATA && \
+    echo 'Name: transformer-engine' >> /usr/local/lib/python3.12/site-packages/transformer_engine-2.0.0.dist-info/METADATA && \
+    echo 'Version: 2.0.0' >> /usr/local/lib/python3.12/site-packages/transformer_engine-2.0.0.dist-info/METADATA
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

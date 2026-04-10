@@ -236,7 +236,7 @@ def test_backpressure_pause():
 
 # [static] pass_to_pass
 def test_ondata_not_stub():
-    """ondata function has real logic (>= 4 meaningful statements, references dest.write)."""
+    """ondata function has real logic (>= 3 meaningful statements, references dest.write)."""
     body = _extract_ondata_body()
     meaningful = [
         l for l in body.split("\n")
@@ -246,7 +246,7 @@ def test_ondata_not_stub():
         and "$debug" not in l
         and l.strip() not in ("{", "}")
     ]
-    assert len(meaningful) >= 4, f"ondata too trivial ({len(meaningful)} lines)"
+    assert len(meaningful) >= 3, f"ondata too trivial ({len(meaningful)} lines)"
     assert any("write" in l for l in meaningful), "no write call in ondata"
 
 

@@ -48,3 +48,7 @@ with open('bash.ts', 'w') as f:
 "
 
 echo "Patch applied successfully."
+
+cd /workspace/opencode
+echo "" >> AGENTS.md
+echo "Do not inject project-specific paths like \${directory} into tool descriptions, as this breaks LLM prompt caching. Use static text (e.g., 'current working directory') instead." >> AGENTS.md

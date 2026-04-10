@@ -186,3 +186,49 @@ def test_ruff_lint():
     assert r.returncode == 0, (
         f"Ruff lint failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests (repo_tests) — actual CI commands from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_ruff_format_check():
+    """Ruff format check passes on affected files (CI: make style)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--quiet"] + AFFECTED_FILES,
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"Ruff format check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_py_compile_deberta_v2():
+    """Deberta V2 model file compiles without syntax errors (CI: py_compile)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", DEBERTA],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"Python syntax check failed for deberta_v2:\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_py_compile_sew_d():
+    """SEW-D model file compiles without syntax errors (CI: py_compile)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", SEW_D],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"Python syntax check failed for sew_d:\n{r.stderr.decode()}"
+    )

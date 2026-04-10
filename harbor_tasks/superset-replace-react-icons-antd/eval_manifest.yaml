@@ -1,0 +1,98 @@
+source_pr: "https://github.com/apache/superset/pull/39184"
+base_commit: "b8b2bdedf9bca608cbf0c4f0992be30877de300d"
+merge_commit: "63cceb6a799d920aed824350a3f542487d4a747a"
+
+checks:
+  # Fail-to-pass: Dependency removal from package.json
+  - id: test_table_package_no_react_icons
+    type: fail_to_pass
+    origin: functional
+    description: Table plugin package.json must not have react-icons dependency
+
+  - id: test_pivot_package_no_react_icons
+    type: fail_to_pass
+    origin: functional
+    description: Pivot table plugin package.json must not have react-icons dependency
+
+  # Fail-to-pass: Import changes in source files
+  - id: test_table_chart_no_react_icons_import
+    type: fail_to_pass
+    origin: functional
+    description: TableChart.tsx must not import from react-icons/fa
+
+  - id: test_table_chart_imports_antd_icons
+    type: fail_to_pass
+    origin: functional
+    description: TableChart.tsx must import from @ant-design/icons
+
+  - id: test_table_chart_uses_correct_icons
+    type: fail_to_pass
+    origin: functional
+    description: TableChart.tsx SortIcon component must use antd icons correctly
+
+  - id: test_pivot_table_no_react_icons_import
+    type: fail_to_pass
+    origin: functional
+    description: TableRenderers.tsx must not import from react-icons/fa
+
+  - id: test_pivot_table_imports_antd_icons
+    type: fail_to_pass
+    origin: functional
+    description: TableRenderers.tsx must import from @ant-design/icons
+
+  - id: test_pivot_table_uses_correct_icons
+    type: fail_to_pass
+    origin: functional
+    description: Pivot table TableRenderers must use antd icons correctly
+
+  # Pass-to-pass: Repository CI tests
+  - id: test_repo_unit_tests_table_plugin
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Jest unit tests for plugin-chart-table pass
+
+  - id: test_repo_unit_tests_pivot_table_plugin
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Jest unit tests for plugin-chart-pivot-table pass
+
+  - id: test_repo_plugins_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo plugins:build (TypeScript compilation) passes
+
+rubric:
+  - id: no_any_types
+    description: No `any` types used - proper TypeScript typing
+    category: code_quality
+    source: "CLAUDE.md: Frontend Modernization - NO `any` types"
+
+  - id: proper_antd_imports
+    description: Uses @ant-design/icons for icon components
+    category: code_quality
+    source: "CLAUDE.md: Frontend Modernization - Use @superset-ui/core"
+
+  - id: functional_component_patterns
+    description: Follows functional component patterns with hooks
+    category: code_quality
+    source: "CLAUDE.md: TypeScript Frontend - Functional components with hooks"
+
+  - id: no_react_icons_reference
+    description: No references to react-icons remain in code
+    category: correctness
+    source: "CLAUDE.md: Code Standards"
+
+  - id: proper_icon_semantics
+    description: Correct icon mapping (FaSort → ColumnHeightOutlined, FaSortUp → CaretUpOutlined, FaSortDown → CaretDownOutlined)
+    category: correctness
+    source: "PR #39184: Replace react-icons with antd icons"
+
+  - id: consistent_code_style
+    description: Follows existing TypeScript formatting and style conventions
+    category: code_quality
+    source: "AGENTS.md: Code Standards"
+
+  - id: proper_import_structure
+    description: Uses destructured imports from @ant-design/icons package
+    category: code_quality
+    source: "CLAUDE.md: Code Standards"

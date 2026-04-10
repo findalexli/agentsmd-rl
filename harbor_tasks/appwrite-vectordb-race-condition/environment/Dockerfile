@@ -1,12 +1,16 @@
-FROM php:8.3-cli-slim
+FROM php:8.3-cli
 
-# Install git and python3 for testing
+# Install git, python3, and composer dependencies
 RUN apt-get update && apt-get install -y \
     git \
     python3 \
     python3-pip \
     python3-venv \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /workspace

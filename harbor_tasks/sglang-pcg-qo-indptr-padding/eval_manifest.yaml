@@ -19,13 +19,28 @@ checks:
 
   - id: test_repo_no_trailing_whitespace
     type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: Modified files have no trailing whitespace (trailing-whitespace)"
+    origin: static
+    description: "Modified files have no trailing whitespace (static check)"
 
   - id: test_repo_no_debug_statements
     type: pass_to_pass
+    origin: static
+    description: "Modified files have no debug statements (static check)"
+
+  - id: test_repo_ruff
+    type: pass_to_pass
     origin: repo_tests
-    description: "Repo CI: Modified files have no debug statements (debug-statements)"
+    description: "Repo CI: Ruff linter passes on modified files (F401, F821)"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Import sorting check passes on modified files"
+
+  - id: test_repo_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Black formatting check passes on modified files"
 
   - id: forward_context_has_num_tokens
     type: fail_to_pass
@@ -57,4 +72,33 @@ checks:
     origin: static
     description: "Modified files retain expected content and minimum size"
 
-rubric: []
+rubric:
+  - rule: "Use @debug_kernel_api decorator for custom ops and kernel entry points to enable crash debugging"
+    source:
+      path: ".claude/skills/debug-cuda-crash/SKILL.md"
+      lines: "1-30"
+      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
+
+  - rule: "Context managers modifying global state must use try/finally or yield with proper cleanup"
+    source:
+      path: ".claude/skills/debug-cuda-crash/SKILL.md"
+      lines: "233-236"
+      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
+
+  - rule: "Comments should explain invariants and design rationale, not narrate the code"
+    source:
+      path: ".claude/skills/add-sgl-kernel/SKILL.md"
+      lines: "88-91"
+      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
+
+  - rule: "Follow existing code patterns in neighboring files for consistency"
+    source:
+      path: ".claude/skills/add-jit-kernel/SKILL.md"
+      lines: "27-30"
+      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"
+
+  - rule: "Keep Python wrappers thin; perform validation in the underlying layer"
+    source:
+      path: ".claude/skills/add-sgl-kernel/SKILL.md"
+      lines: "104-112"
+      commit: "efebcab43ed851405bd41cfdf206245945dbb8ee"

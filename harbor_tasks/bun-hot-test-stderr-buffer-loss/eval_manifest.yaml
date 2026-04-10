@@ -54,22 +54,22 @@ checks:
   - id: repo_format
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's Prettier formatting check passes on the modified file"
+    description: "Repo's Prettier formatting check passes on the modified file (CI: bun run prettier)"
 
   - id: target_typescript_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: "Target file has valid TypeScript syntax and structure"
+    description: "Target file has valid TypeScript syntax (CI: tsc --noEmit on target file)"
 
   - id: repo_oxlint
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's oxlint passes on the target file with 0 errors"
+    description: "Repo's oxlint passes on the target file with 0 errors (CI: bunx oxlint)"
 
   - id: repo_typescript_project
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo's TypeScript project compiles without errors (excluding regression fixtures)"
+    description: "Repo's TypeScript project compiles without errors, excluding regression fixtures (CI: cd test && bun run typecheck)"
 
 rubric:
   - rule: "Do not write flaky tests. Unless explicitly asked, never wait for time to pass in tests. Always wait for the condition to be met instead of waiting for an arbitrary amount of time."

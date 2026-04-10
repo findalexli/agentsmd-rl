@@ -101,50 +101,92 @@ checks:
     origin: repo_tests
     description: Compose compiler source files have valid Kotlin syntax (kotlinc -parse-only)
 
-  # ========== Pass-to-pass tests: Repo structure ==========
+  # ========== Pass-to-pass tests: Repo structure (static checks) ==========
   - id: test_compose_compiler_module_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Compose compiler module source files exist and are accessible
 
   - id: test_compose_compiler_functional_test_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Compose compiler functional test file exists
 
   - id: test_compose_compiler_build_config_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Compose compiler module build.gradle.kts has required configuration
 
   - id: test_compose_compiler_source_files_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: All Compose compiler source files have valid structure
 
   - id: test_compose_compiler_test_structure_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Compose compiler test files have valid structure with @Test annotations
 
   - id: test_compose_compiler_extension_test_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: ExtensionConfigurationTest has expected test methods
 
   - id: test_compose_it_structure_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: ComposeIT.kt integration test has valid structure
 
   - id: test_repo_gradle_wrapper_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Repo Gradle wrapper exists and has valid configuration
 
-  - id: test_compose_compiler_module_gradle_builds
+  # ========== Pass-to-pass tests: Repo CI commands ==========
+  - id: test_repo_kotlin_all_files_syntax_valid
     type: pass_to_pass
     origin: repo_tests
-    description: Compose compiler module can be included in gradle build
+    description: All modified Kotlin files have valid syntax via kotlinc
 
-rubric: []
+  # ========== Pass-to-pass tests: Repo CI/CD Environment ==========
+  - id: test_repo_kotlin_compiler_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo environment has Kotlin compiler (kotlinc) available
+
+  - id: test_repo_java_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo environment has Java (JRE/JDK) available
+
+  - id: test_repo_gradle_wrapper_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Gradle wrapper scripts exist and are properly configured
+
+  - id: test_repo_kotlin_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo Kotlin source files have valid syntax verified via kotlinc
+
+  - id: test_compose_compiler_build_gradle_valid
+    type: pass_to_pass
+    origin: static
+    description: Compose compiler module build.gradle.kts has valid structure
+
+  - id: test_compose_compiler_git_repo_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Compose compiler is in a valid git repository with accessible history
+
+  - id: test_compose_compiler_settings_gradle_includes_plugin
+    type: pass_to_pass
+    origin: static
+    description: Settings.gradle properly includes the compose compiler plugin project
+
+rubric:
+  - rule: "Check area-specific docs (AGENTS.md, CLAUDE.md) before modifying code in that area"
+    source:
+      path: ".ai/guidelines.md"
+      lines: "24-42"
+      commit: "f94fe0faca67ca5a57db9421948cab80af1686b7"

@@ -141,3 +141,12 @@ def test_repo_lint_packages():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_deps():
+    """Dependency structure is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"

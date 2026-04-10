@@ -44,6 +44,36 @@ def test_file_structure():
 
 
 # ---------------------------------------------------------------------------
+# pass_to_pass (repo_tests) - Real CI commands from the React repo
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint passes on the codebase (pass_to_pass).
+
+    Runs: yarn lint
+    This is the same command CI runs to check code style.
+    """
+    r = subprocess.run(
+        ["yarn", "lint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+def test_repo_flow():
+    """Repo's Flow type checking passes for dom-node renderer (pass_to_pass).
+
+    Runs: yarn flow dom-node
+    This checks Flow types for the DOM renderer configuration.
+    """
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
+# ---------------------------------------------------------------------------
 # fail_to_pass (pr_diff) — behavioral tests via Node.js subprocess
 # ---------------------------------------------------------------------------
 

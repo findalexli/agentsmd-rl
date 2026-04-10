@@ -2,10 +2,16 @@
 set -e
 
 # Install pytest if needed
-pip install pytest mock time-machine openlineage-client -q
+pip install pytest mock time-machine -q 2>/dev/null || true
+
+# Copy test file to writable location
+cp /tests/test_outputs.py /tmp/test_outputs.py
+
+# Set up Python path for imports
+export PYTHONPATH="/workspace/airflow/providers/amazon/src:/workspace/airflow/providers/openlineage/src:/workspace/airflow/providers/common/compat/src:/workspace/airflow/airflow-core/src:/workspace/airflow/task-sdk/src:$PYTHONPATH"
 
 # Run the tests
-cd /workspace/task/tests
+cd /tmp
 python -m pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log
 
 # Extract the result

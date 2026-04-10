@@ -120,7 +120,7 @@ def test_existing_tests_pass():
 # ---------------------------------------------------------------------------
 
 def test_repo_clippy():
-    """Repo's clippy linting passes (pass_to_pass)."""
+    """Repo's clippy linting passes on markdown parser crate (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "clippy", "-p", "biome_markdown_parser", "--", "-D", "warnings"],
         cwd=REPO, capture_output=True, text=True, timeout=300
@@ -135,3 +135,43 @@ def test_repo_format():
         cwd=REPO, capture_output=True, text=True, timeout=300
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_doc():
+    """Repo's documentation builds without errors for markdown parser (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "-p", "biome_markdown_parser", "--no-deps"],
+        cwd=REPO, capture_output=True, text=True, timeout=300
+    )
+    assert r.returncode == 0, f"Documentation build failed:\n{r.stderr[-2000:]}"
+
+
+# ---------------------------------------------------------------------------
+# Additional P2P tests - related markdown crates
+# ---------------------------------------------------------------------------
+
+def test_repo_markdown_syntax_clippy():
+    """Repo's clippy linting passes on markdown syntax crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "biome_markdown_syntax", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=300
+    )
+    assert r.returncode == 0, f"Markdown syntax clippy failed:\n{r.stderr[-2000:]}"
+
+
+def test_repo_markdown_factory_clippy():
+    """Repo's clippy linting passes on markdown factory crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "biome_markdown_factory", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=300
+    )
+    assert r.returncode == 0, f"Markdown factory clippy failed:\n{r.stderr[-2000:]}"
+
+
+def test_repo_markdown_formatter_clippy():
+    """Repo's clippy linting passes on markdown formatter crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "biome_markdown_formatter", "--", "-D", "warnings"],
+        cwd=REPO, capture_output=True, text=True, timeout=300
+    )
+    assert r.returncode == 0, f"Markdown formatter clippy failed:\n{r.stderr[-2000:]}"

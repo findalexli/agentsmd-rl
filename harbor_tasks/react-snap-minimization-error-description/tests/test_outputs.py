@@ -65,6 +65,28 @@ def test_snap_builds():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo CI) - babel-plugin-react-compiler
+# ---------------------------------------------------------------------------
+
+def test_babel_plugin_lint():
+    """babel-plugin-react-compiler must pass lint checks (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "lint"],
+        capture_output=True, text=True, timeout=300, cwd=COMPILER,
+    )
+    assert r.returncode == 0, f"babel-plugin-react-compiler lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_babel_plugin_jest():
+    """babel-plugin-react-compiler Jest tests must pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "jest"],
+        capture_output=True, text=True, timeout=300, cwd=COMPILER,
+    )
+    assert r.returncode == 0, f"babel-plugin-react-compiler jest failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - core behavioral: errorsMatch
 # ---------------------------------------------------------------------------
 

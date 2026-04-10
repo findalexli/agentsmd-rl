@@ -27,12 +27,11 @@ def test_tauri_localhost_valid():
     """Test that tauri://localhost is accepted when localhost is in allowed hostnames."""
     # Use PHP to test the Origin validator
     php_code = '''
-<?php
 require_once 'vendor/autoload.php';
 
 use Appwrite\\Network\\Validator\\Origin;
 
-$validator = new Origin(['localhost'], 'tauri');
+$validator = new Origin(['localhost'], ['tauri']);
 $result = $validator->isValid('tauri://localhost');
 echo $result ? "PASS" : "FAIL";
 '''
@@ -49,12 +48,11 @@ echo $result ? "PASS" : "FAIL";
 def test_tauri_unregistered_host_invalid():
     """Test that tauri://example.com is rejected with proper error message."""
     php_code = '''
-<?php
 require_once 'vendor/autoload.php';
 
 use Appwrite\\Network\\Validator\\Origin;
 
-$validator = new Origin(['localhost'], 'tauri');
+$validator = new Origin(['localhost'], ['tauri']);
 $result = $validator->isValid('tauri://example.com');
 $description = $validator->getDescription();
 echo "Result: " . ($result ? "valid" : "invalid") . "\n";
@@ -84,10 +82,9 @@ def test_tauri_different_hosts():
 
     for allowed_hosts, origin, expected_valid in test_cases:
         hosts_str = "', '".join(allowed_hosts)
-        php_code = f'''<?php
-require_once 'vendor/autoload.php';
+        php_code = f'''require_once 'vendor/autoload.php';
 use Appwrite\\Network\\Validator\\Origin;
-$validator = new Origin(['{hosts_str}'], 'tauri');
+$validator = new Origin(['{hosts_str}'], ['tauri']);
 $result = $validator->isValid('{origin}');
 echo $result ? "VALID" : "INVALID";
 '''
@@ -106,7 +103,6 @@ echo $result ? "VALID" : "INVALID";
 def test_tauri_constant_exists():
     """Verify SCHEME_TAURI constant is defined in Platform class."""
     php_code = '''
-<?php
 require_once 'vendor/autoload.php';
 use Appwrite\\Network\\Platform;
 echo defined('Appwrite\\Network\\Platform::SCHEME_TAURI') ? "DEFINED" : "UNDEFINED";
@@ -124,11 +120,9 @@ echo defined('Appwrite\\Network\\Platform::SCHEME_TAURI') ? "DEFINED" : "UNDEFIN
 def test_tauri_platform_name():
     """Verify Tauri platform name mapping exists and is correct."""
     php_code = '''
-<?php
 require_once 'vendor/autoload.php';
 use Appwrite\\Network\\Platform;
-$names = Platform::getSchemeNames();
-echo $names[Platform::SCHEME_TAURI] ?? "NOT_FOUND";
+echo Platform::getNameByScheme(Platform::SCHEME_TAURI);
 '''
     result = subprocess.run(
         ['php', '-r', php_code],
@@ -144,22 +138,22 @@ echo $names[Platform::SCHEME_TAURI] ?? "NOT_FOUND";
 def test_other_web_platforms_still_work():
     """Ensure adding tauri doesn't break existing web platform validation."""
     php_code = '''
-<?php
 require_once 'vendor/autoload.php';
 use Appwrite\\Network\\Validator\\Origin;
+use Appwrite\\Network\\Platform;
 
 $results = [];
 
-// Test http
-$validator = new Origin(['localhost'], 'http');
+// Test http - note: http and https are web platforms that use allowedHostnames
+$validator = new Origin(['localhost'], [Platform::SCHEME_HTTP, Platform::SCHEME_HTTPS]);
 $results[] = $validator->isValid('http://localhost') ? "http_ok" : "http_fail";
 
 // Test https
-$validator = new Origin(['example.com'], 'https');
+$validator = new Origin(['example.com'], [Platform::SCHEME_HTTPS]);
 $results[] = $validator->isValid('https://example.com') ? "https_ok" : "https_fail";
 
-// Test chrome extension
-$validator = new Origin(['abc123'], 'chrome-extension');
+// Test chrome extension - chrome-extension is a web platform, so allowedHostnames should contain the extension ID
+$validator = new Origin(['abc123'], [Platform::SCHEME_CHROME_EXTENSION]);
 $results[] = $validator->isValid('chrome-extension://abc123') ? "chrome_ok" : "chrome_fail";
 
 echo implode("|", $results);
@@ -215,3 +209,70 @@ def test_unit_tests_network_p2p():
     )
     assert result.returncode == 0, \
         f"Network unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+def test_phpstan_network_p2p():
+    """Repo's PHPStan static analysis passes on Network directory (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpstan', 'analyse', '-c', 'phpstan.neon',
+         '--memory-limit=512M', 'src/Appwrite/Network/', '--no-progress'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, \
+        f"PHPStan analysis failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_pint_lint_network_p2p():
+    """Repo's Pint lint check passes on Network directory (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/pint', '--test', '--config', 'pint.json',
+         'src/Appwrite/Network/'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"Pint lint check failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_composer_audit_p2p():
+    """Repo's composer dependencies pass security audit (pass_to_pass)."""
+    result = subprocess.run(
+        ['composer', 'audit', '--no-interaction'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, \
+        f"Composer audit failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_cors_unit_tests_p2p():
+    """Repo's CORS unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpunit', 'tests/unit/Network/CorsTest.php'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"CORS unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_email_validator_unit_tests_p2p():
+    """Repo's Email validator unit tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ['php', 'vendor/bin/phpunit', 'tests/unit/Network/Validators/EmailTest.php'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"Email validator unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"

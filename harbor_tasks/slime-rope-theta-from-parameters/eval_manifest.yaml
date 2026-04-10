@@ -52,9 +52,36 @@ checks:
     origin: repo_tests
     description: "Repo CI: slime_plugins/mbridge module files have valid Python syntax"
 
-  - id: test_repo_import_structure
+  - id: test_repo_ruff_check_mbridge
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo CI: slime_plugins/mbridge package structure is valid"
+    description: "Repo CI: ruff linting passes on modified mbridge files"
 
-rubric: []
+  - id: test_repo_black_format_mbridge
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: black format check passes on modified mbridge files"
+
+  - id: test_repo_isort_check_mbridge
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: isort import order check passes on modified mbridge files"
+
+rubric:
+  - rule: "Follow existing import style: organize imports as STDLIB, THIRDPARTY, FIRSTPARTY (slime/slime_plugins) sections per pyproject.toml isort config."
+    source:
+      path: "pyproject.toml"
+      lines: "9-19"
+      commit: "73a1f4d935baf1619bf764eadd199a77cecf55cf"
+
+  - rule: "When adding __init__ to a class that inherits from a bridge class, always call super().__init__ to preserve parent initialization."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "54-67"
+      commit: "73a1f4d935baf1619bf764eadd199a77cecf55cf"
+
+  - rule: "Use defensive attribute access with getattr defaults for optional config fields (e.g., getattr(config, 'field', None) or {})."
+    source:
+      path: ".claude/skills/add-rollout-function/SKILL.md"
+      lines: "96-99"
+      commit: "73a1f4d935baf1619bf764eadd199a77cecf55cf"

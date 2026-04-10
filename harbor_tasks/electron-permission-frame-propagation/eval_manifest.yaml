@@ -108,4 +108,46 @@ checks:
     type: "pass_to_pass"
     origin: "repo_tests"
 
-rubric: []
+  - id: "cpplint"
+    description: "Modified C++ files must pass cpplint style checks (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
+  - id: "header_guards_follow_convention_p2p"
+    description: "Header guards must follow Electron's naming convention (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "static"
+
+  - id: "modified_files_exist"
+    description: "All modified files must exist and be readable (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "static"
+
+  - id: "serial_delegate_has_can_request_port_permission"
+    description: "ElectronSerialDelegate must have CanRequestPortPermission method (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "static"
+
+  - id: "web_contents_permission_helper_structure"
+    description: "WebContentsPermissionHelper must have expected class structure (pass_to_pass)"
+    type: "pass_to_pass"
+    origin: "static"
+
+rubric:
+  - rule: "Follow Chromium coding style for all C++ code, enforced by clang-format and clang-tidy"
+    source:
+      path: "CLAUDE.md"
+      lines: "93"
+      commit: "821b738db0a64c863e8371e7141564cef70d56b8"
+
+  - rule: "C++ header guards must follow Electron convention: #ifndef ELECTRON_SHELL_BROWSER_*_H_"
+    source:
+      path: ".github/copilot-instructions.md"
+      lines: "60-61"
+      commit: "821b738db0a64c863e8371e7141564cef70d56b8"
+
+  - rule: "When modifying permission checks, propagate the requesting RenderFrameHost through all related functions to ensure correct origin verification"
+    source:
+      path: "CLAUDE.md"
+      lines: "93-96"
+      commit: "821b738db0a64c863e8371e7141564cef70d56b8"

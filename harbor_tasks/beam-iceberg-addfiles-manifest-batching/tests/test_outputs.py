@@ -114,6 +114,7 @@ def test_repo_checkstyle():
     )
 
 
+
 # [repo_tests] pass_to_pass
 def test_repo_unit_tests():
     """Repo's unit tests for iceberg module pass (pass_to_pass)."""
@@ -129,6 +130,66 @@ def test_repo_unit_tests():
     )
     assert r.returncode == 0, (
         f"Unit tests failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's Gradle build for iceberg module passes (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "./gradlew",
+            ":sdks:java:io:iceberg:build",
+            "-PdisableSpotlessCheck=true",
+            "-PdisableCheckStyle=true",
+            "--no-daemon",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"Build failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_addfiles_unit_test():
+    """Unit tests for AddFiles (modified class) pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "./gradlew",
+            ":sdks:java:io:iceberg:test",
+            "--tests",
+            "org.apache.beam.sdk.io.iceberg.AddFilesTest",
+            "--no-daemon",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"AddFilesTest failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_schema_transform_unit_test():
+    """Unit tests for IcebergWriteSchemaTransformProvider pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "./gradlew",
+            ":sdks:java:io:iceberg:test",
+            "--tests",
+            "org.apache.beam.sdk.io.iceberg.IcebergWriteSchemaTransformProviderTest",
+            "--no-daemon",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, (
+        f"IcebergWriteSchemaTransformProviderTest failed:\n{r.stderr.decode()[-1000:]}"
     )
 
 
@@ -155,14 +216,29 @@ def test_manifest_creation_stage():
     )
 
     # Also verify via compilation that a manifest-related inner class exists
-    _ensure_compiled()
+    # Use clean build to ensure new inner classes are compiled (Gradle may skip
+    # compilation if old .class files have newer timestamps than modified source)
+    r = subprocess.run(
+        [
+            "./gradlew",
+            ":sdks:java:io:iceberg:clean",
+            ":sdks:java:io:iceberg:compileJava",
+            "--no-daemon",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Compilation failed:\n{r.stderr.decode()[-3000:]}"
+
     build_dir = (
         Path(REPO)
         / "sdks/java/io/iceberg/build/classes/java/main"
         / "org/apache/beam/sdk/io/iceberg"
     )
     if build_dir.exists():
-        class_files = [f.name for f in build_dir.glob("AddFiles\$*.class")]
+        # Use ?* pattern to match inner classes (the $ character doesn't work well with glob)
+        class_files = [f.name for f in build_dir.glob("AddFiles?*.class") if f.name != "AddFiles.class"]
         has_manifest_class = any(
             "Manifest" in f or "Create" in f for f in class_files
         )

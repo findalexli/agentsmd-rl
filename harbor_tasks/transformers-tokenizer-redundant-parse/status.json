@@ -3,50 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T03:08:10.917103",
-  "total_time": 5453.84,
-  "sandbox_id": "i182n0kvo2iksh6yvftz6",
+  "validated_at": "2026-04-09T14:54:35.223963",
+  "total_time": 1584.21,
+  "sandbox_id": "i7bgwg7y8nn1lf36vod8b",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09",
-      "status": "completed",
-      "ci_commands_found": [
-        "ruff check",
-        "ruff format --check",
-        "python utils/check_inits.py",
-        "python utils/check_dummies.py",
-        "python -c 'from transformers.tokenization_utils_tokenizers import TokenizersBackend'"
-      ],
-      "tests_added": [
-        {
-          "id": "ruff_format",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Modified file passes ruff formatting check (CI: make style)"
-        },
-        {
-          "id": "check_inits",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Repository init files are consistent (CI: check_inits.py)"
-        },
-        {
-          "id": "check_dummies",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Repository dummy files are consistent (CI: check_dummies.py)"
-        },
-        {
-          "id": "module_import",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Modified module can be imported without errors"
-        }
-      ],
-      "notes": "Docker build successful. Added 4 p2p tests from repo CI/CD: ruff format check, check_inits.py, check_dummies.py, and module import test. All p2p tests pass on base commit. Fail-to-pass tests fail as expected before gold patch."
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 120.25,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -70,14 +39,14 @@
       "notes": "All four validation checks passed: (1) Docker build successful, (2) NOP test reward=0 - tests correctly fail on buggy base code, (3) Gold test reward=1 - all 12 tests pass after gold fix, (4) Rubric check: eval_manifest.yaml has reasonable rubric rules that the gold solution follows.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 68.72
+      "time": 75.85
     },
     "rubric_judge": {
-      "status": "pass",
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.84,
-      "notes": "ICR=1.00"
+      "time": 3.13,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -96,6 +65,22 @@
       "backend": "fireworks",
       "time": 5453.84,
       "at": "2026-04-09T03:08:10.917103"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1583.94,
+      "at": "2026-04-09T14:54:35.060692"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1584.21,
+      "at": "2026-04-09T14:54:35.223963"
     }
   ]
 }

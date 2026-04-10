@@ -245,29 +245,28 @@ def test_repo_ruff_check():
 # [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
 def test_repo_pytest_cancel_tests():
     """Repo's cancel-related tests pass (pass_to_pass)."""
-    # Install test dependencies if needed
     import sys
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-q", "requests", "websockets", "httpx", "pytest-asyncio"],
+        [sys.executable, "-m", "pip", "install", "-q", "hypothesis", "pytest-asyncio"],
         capture_output=True, timeout=60,
     )
     r = subprocess.run(
-        ["python", "-m", "pytest", "test/test_blocks.py::TestCancel::test_cancel_function", "-v", "--tb=short"],
+        ["python", "-m", "pytest", "test/test_blocks.py::TestCancel", "-v", "--tb=short"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
     )
     assert r.returncode == 0, f"Cancel tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass — from .github/workflows/test-python.yml
-def test_repo_pytest_cancel_multiple_blocks():
-    """Repo's cancel multiple blocks test passes (pass_to_pass)."""
+def test_repo_safe_aclose_iterator():
+    """Repo's safe_aclose_iterator tests pass (pass_to_pass)."""
     import sys
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-q", "requests", "websockets", "httpx", "pytest-asyncio"],
+        [sys.executable, "-m", "pip", "install", "-q", "hypothesis", "pytest-asyncio"],
         capture_output=True, timeout=60,
     )
     r = subprocess.run(
-        ["python", "-m", "pytest", "test/test_blocks.py::TestCancel::test_cancel_function_with_multiple_blocks", "-v", "--tb=short"],
+        ["python", "-m", "pytest", "test/test_utils.py::TestSafeAcloseIterator", "-v", "--tb=short"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
     )
-    assert r.returncode == 0, f"Cancel multiple blocks test failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    assert r.returncode == 0, f"safe_aclose_iterator tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

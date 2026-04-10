@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T04:12:32.729475",
-  "total_time": 0.0,
-  "sandbox_id": "iihf282lrbeqxi191buaw",
-  "backend": "fireworks",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-10T04:54:13.059623",
+  "total_time": 12657.15,
+  "sandbox_id": "io9xgh421ilyn9nvvqkyz",
+  "backend": "gemini",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -32,14 +32,21 @@
       "notes": "Fixed Dockerfile to use openjdk-21-jdk (Debian trixie doesn't have openjdk-17-jdk). Fixed tests/test_outputs.py: (1) Fixed test_mappers_list_structure regex to properly handle nested braces in Kotlin code, (2) Fixed test_kotlin_file_compiles to check for kotlinc availability before trying to run it. All 4 validation checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=0.0 - no rules defined).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 629.18
+      "time": 3.51
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.73,
+      "time": 1.31,
       "notes": "ICR=1.00"
+    },
+    "p2p_enrichment": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 5.29,
+      "notes": ""
     }
   },
   "history": [
@@ -50,6 +57,38 @@
       "backend": "fireworks",
       "time": 0.0,
       "at": "2026-04-09T04:12:32.729475"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T14:38:58.079749"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0.0,
+      "at": "2026-04-09T14:38:58.246145"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 190.11,
+      "at": "2026-04-09T15:01:01.578480"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "gemini",
+      "time": 12657.15,
+      "at": "2026-04-10T04:54:13.059623"
     }
   ]
 }

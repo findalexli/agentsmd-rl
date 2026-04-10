@@ -244,3 +244,65 @@ def test_not_stub():
     assert found, (
         "image_processing_utils_fast not found as string literal in __init__.py AST"
     )
+# [repo_tests] pass_to_pass — CI-derived checks
+def test_repo_check_dummies():
+    """Repo's check_dummies.py utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_dummies.py failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_inits():
+    """Repo's check_inits.py utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_inits.py failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_image_processing_backends_import():
+    """image_processing_backends module imports without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "from transformers.image_processing_backends import TorchvisionBackend; print(TorchvisionBackend)"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"image_processing_backends import failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_divide_to_patches_importable():
+    """divide_to_patches function is importable from image_transforms (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "from transformers.image_transforms import divide_to_patches; print('divide_to_patches:', callable(divide_to_patches))"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"divide_to_patches import failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_modified_files_parse_ast():
+    """Modified Python files parse without AST errors (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python", "-c",
+            "import ast; ast.parse(open('src/transformers/__init__.py').read()); ast.parse(open('src/transformers/image_processing_backends.py').read()); print('AST OK')"
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"AST parsing failed:\n{r.stderr[-500:]}"

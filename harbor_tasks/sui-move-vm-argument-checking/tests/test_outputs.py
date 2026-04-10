@@ -49,6 +49,26 @@ def run_cargo_test_move_vm_runtime(timeout=600):
     return result
 
 
+def run_cargo_xlint(timeout=300):
+    """Run cargo xlint for license checks."""
+    cmd = ["cargo", "xlint"]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=REPO)
+    return result
+
+
+def run_cargo_test_function_arg_tests(timeout=600):
+    """Run cargo test for function_arg_tests module specifically."""
+    cmd = [
+        "cargo", "test",
+        "-p", "move-vm-runtime",
+        "--lib",
+        "--", "function_arg_tests",
+        "--nocapture"
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=MOVE_CRATES)
+    return result
+
+
 def test_compilation():
     """Verify move-vm-runtime compiles successfully (p2p)."""
     result = run_cargo_check()
@@ -71,6 +91,18 @@ def test_repo_cargo_test_move_vm_runtime():
     """Repo's cargo test on move-vm-runtime --lib passes (pass_to_pass)."""
     result = run_cargo_test_move_vm_runtime(timeout=120)
     assert result.returncode == 0, f"cargo test failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_cargo_xlint():
+    """Repo's cargo xlint (license check) passes (pass_to_pass)."""
+    result = run_cargo_xlint(timeout=120)
+    assert result.returncode == 0, f"cargo xlint failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_function_arg_tests():
+    """Repo's function_arg_tests module passes (pass_to_pass)."""
+    result = run_cargo_test_function_arg_tests(timeout=120)
+    assert result.returncode == 0, f"function_arg_tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
 
 
 def test_argument_count_mismatch_0_expected_1_got():

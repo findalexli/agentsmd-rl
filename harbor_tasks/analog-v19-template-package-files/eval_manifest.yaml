@@ -1,36 +1,57 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "analogjs/analog"
+  repo: analogjs/analog
   pr: 1756
-  base_commit: "3f475f278250ab3c2b5da22f03d9e2b7ccbf6000"
-  merge_commit: "6b7380dd2e2a955fa45b57fa565081a0a6c08291"
-
+  base_commit: 3f475f278250ab3c2b5da22f03d9e2b7ccbf6000
+  merge_commit: 6b7380dd2e2a955fa45b57fa565081a0a6c08291
 checks:
-  - id: package_json_valid
-    type: pass_to_pass
-    origin: static
-    description: "package.json must be valid JSON with a files array"
+- id: package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: package.json must be valid JSON with a files array
+- id: template_angular_v19_in_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: template-angular-v19 must be listed in package.json files array
+- id: template_angular_v19_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: template-angular-v19 directory must exist in the filesystem
+- id: other_templates_still_present
+  type: pass_to_pass
+  origin: static
+  description: Other template entries should not be removed from files array
+- id: template_files_non_empty
+  type: pass_to_pass
+  origin: static
+  description: template-angular-v19 directory must contain actual template files
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: 'Repo CI: All package.json files must be valid JSON'
+- id: test_repo_create_analog_package_has_files_array
+  type: pass_to_pass
+  origin: static
+  description: 'Repo CI: create-analog package.json must have a files array'
+- id: test_repo_all_templates_exist_on_filesystem
+  type: pass_to_pass
+  origin: static
+  description: 'Repo CI: All templates in files array must exist on filesystem'
+- id: test_repo_templates_have_required_files
+  type: pass_to_pass
+  origin: static
+  description: 'Repo CI: All template directories must contain required files'
+- id: test_repo_npm_pack_dry_run_succeeds
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: npm pack --dry-run must succeed'
+- id: test_repo_prettier_check_create_analog
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: prettier --check passes on create-analog files'
+- id: test_repo_node_check_index_js
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: node --check passes on create-analog index.js'
+rubric: []
 
-  - id: template_angular_v19_in_files
-    type: fail_to_pass
-    origin: pr_diff
-    description: "template-angular-v19 must be listed in package.json files array"
-
-  - id: template_angular_v19_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "template-angular-v19 directory must exist in the filesystem"
-
-  - id: other_templates_still_present
-    type: pass_to_pass
-    origin: static
-    description: "Other template entries should not be removed from files array"
-
-  - id: template_files_non_empty
-    type: pass_to_pass
-    origin: static
-    description: "template-angular-v19 directory must contain actual template files"
-
-rubric:
-  []

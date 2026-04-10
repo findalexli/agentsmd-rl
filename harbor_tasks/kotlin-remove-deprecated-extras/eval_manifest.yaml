@@ -113,4 +113,27 @@ checks:
     origin: repo_tests
     description: "KotlinToolingVersionTest passes"
 
-rubric: []
+rubric:
+  - rule: "Remove deprecated APIs that are scheduled for removal (marked with @Deprecated level = DeprecationLevel.ERROR). Do not leave dead code."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "60-68"
+      commit: "95085a77af52e78028044f0ea5404803232ad697"
+
+  - rule: "When removing deprecated code, update all usages in tests to use the replacement non-deprecated APIs."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "64"
+      commit: "95085a77af52e78028044f0ea5404803232ad697"
+
+  - rule: "Remove unused imports when removing code that was the sole consumer of those imports."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "1-10"
+      commit: "95085a77af52e78028044f0ea5404803232ad697"
+
+  - rule: "Remove @Suppress annotations that were suppressing deprecation warnings for APIs that are being removed."
+    source:
+      path: ".ai/guidelines.md"
+      lines: "1-10"
+      commit: "95085a77af52e78028044f0ea5404803232ad697"

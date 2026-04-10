@@ -350,5 +350,189 @@ def test_repo_ruff_critical():
     assert r.returncode == 0, f"Ruff critical checks failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_ruff_format():
+    """Ruff format check passes on install_airflow_and_providers.py (pass_to_pass)."""
+    # First install ruff
+    install_r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert install_r.returncode == 0, f"Failed to install ruff: {install_r.stderr}"
+
+    # Run ruff format check
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_imports():
+    """Ruff import checks (I) pass on install_airflow_and_providers.py (pass_to_pass)."""
+    # First install ruff
+    install_r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert install_r.returncode == 0, f"Failed to install ruff: {install_r.stderr}"
+
+    # Run ruff import checks
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--select", "I", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff import checks failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_shellcheck_scripts():
+    """Shell scripts in in_container pass shellcheck (pass_to_pass)."""
+    # Find shell scripts in the in_container directory
+    shell_scripts = list((REPO / "scripts" / "in_container").glob("*.sh"))
+
+    if not shell_scripts:
+        pytest.skip("No shell scripts found to check")
+
+    # Install shellcheck if available
+    install_r = subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=30,
+    )
+    # Try to install shellcheck, but don't fail if it doesn't work
+    subprocess.run(
+        ["apt-get", "install", "-y", "shellcheck", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    # Check if shellcheck is available
+    check_r = subprocess.run(
+        ["which", "shellcheck"],
+        capture_output=True, text=True, timeout=10,
+    )
+    if check_r.returncode != 0:
+        pytest.skip("shellcheck not available")
+
+    # Run shellcheck on each script (only fail on errors/warnings, not info)
+    for script in shell_scripts[:3]:  # Limit to first 3 scripts to save time
+        r = subprocess.run(
+            ["shellcheck", "--severity=warning", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"shellcheck failed for {script}:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_yaml_lint():
+    """Basic YAML linting passes on workflow files (pass_to_pass)."""
+    # Install yamllint
+    install_r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "yamllint", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert install_r.returncode == 0, f"Failed to install yamllint: {install_r.stderr}"
+
+    # Run yamllint on a simple workflow file
+    workflow_file = REPO / ".github" / "workflows" / "basic-tests.yml"
+    if not workflow_file.exists():
+        pytest.skip("Workflow file not found")
+
+    r = subprocess.run(
+        [sys.executable, "-m", "yamllint", "-c", str(REPO / "yamllint-config.yml"), str(workflow_file)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"yamllint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# =============================================================================
+# New Pass-to-Pass Tests (CI/CD repo_tests)
+# These run actual CI commands found in the repo's CI configuration
+# =============================================================================
+
+
+def test_repo_scripts_pytest():
+    """Repo's scripts CI prek tests pass (pass_to_pass)."""
+    # Install required dependencies for scripts tests
+    install_r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pytest", "python-dateutil",
+         "pyyaml", "rich", "rich-click", "packaging", "tabulate",
+         "jsonschema", "astor", "requests", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert install_r.returncode == 0, f"Failed to install dependencies: {install_r.stderr}"
+
+    # Run the scripts tests (CI checks from basic-tests.yml)
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "scripts/tests/ci/prek/",
+         "-v", "--tb=short", "-x"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Scripts tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_common_prek_utils():
+    """Repo's common_prek_utils tests pass (pass_to_pass)."""
+    # Install required dependencies
+    install_r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pytest", "python-dateutil",
+         "pyyaml", "rich", "rich-click", "packaging", "tabulate",
+         "jsonschema", "astor", "requests", "libcst", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert install_r.returncode == 0, f"Failed to install dependencies: {install_r.stderr}"
+
+    # Run the common_prek_utils tests specifically (core CI utilities)
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest",
+         "scripts/tests/ci/prek/test_common_prek_utils.py",
+         "-v", "--tb=short", "-x"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Common prek utils tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_py_compile():
+    """Python syntax check via py_compile passes on target file (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+def test_repo_ruff_full():
+    """Ruff full check passes on install_airflow_and_providers.py (pass_to_pass)."""
+    # Install ruff
+    install_r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert install_r.returncode == 0, f"Failed to install ruff: {install_r.stderr}"
+
+    # Run full ruff check (excluding line-length and ambiguous variable names)
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check",
+         "--select", "E,W,F,I",
+         "--ignore", "E501,E741",
+         str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_ruff_format_full():
+    """Ruff format check passes on install_airflow_and_providers.py (pass_to_pass)."""
+    # Install ruff
+    install_r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert install_r.returncode == 0, f"Failed to install ruff: {install_r.stderr}"
+
+    # Run ruff format check
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

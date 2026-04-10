@@ -231,3 +231,95 @@ def test_repo_ruff_imports():
         timeout=60,
     )
     assert r.returncode == 0, f"Ruff import check failed:\n{r.stdout}{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pre-commit hook pass_to_pass gates
+# ---------------------------------------------------------------------------
+
+def _ensure_precommit():
+    """Ensure pre-commit is installed for repo CI/CD checks."""
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "pre_commit", "--version"],
+            capture_output=True,
+            timeout=30,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--break-system-packages", "pre-commit"],
+            capture_output=True,
+            timeout=120,
+            check=True,
+        )
+
+
+# [repo_tests] pass_to_pass — .pre-commit-config.yaml: trailing-whitespace
+def test_repo_trailing_whitespace():
+    """Repo's trailing whitespace check passes on modified file (pass_to_pass)."""
+    _ensure_precommit()
+    # Create minimal pre-commit config for trailing-whitespace hook
+    precommit_config = """
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        files: \\.py$
+"""
+    config_path = "/tmp/trailing_ws_config.yaml"
+    Path(config_path).write_text(precommit_config)
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "--config", config_path, "trailing-whitespace", "--files", f"{REPO}/{TARGET}"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — .pre-commit-config.yaml: end-of-file-fixer
+def test_repo_end_of_file():
+    """Repo's end-of-file check passes on modified file (pass_to_pass)."""
+    _ensure_precommit()
+    precommit_config = """
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+        files: \\.py$
+"""
+    config_path = "/tmp/eof_config.yaml"
+    Path(config_path).write_text(precommit_config)
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "--config", config_path, "end-of-file-fixer", "--files", f"{REPO}/{TARGET}"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"End-of-file check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — .pre-commit-config.yaml: detect-private-key
+def test_repo_no_private_keys():
+    """Repo's private key detection check passes on modified file (pass_to_pass)."""
+    _ensure_precommit()
+    precommit_config = """
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+        files: \\.py$
+"""
+    config_path = "/tmp/private_key_config.yaml"
+    Path(config_path).write_text(precommit_config)
+    r = subprocess.run(
+        [sys.executable, "-m", "pre_commit", "run", "--config", config_path, "detect-private-key", "--files", f"{REPO}/{TARGET}"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Private key detection check failed:\n{r.stdout}{r.stderr}"

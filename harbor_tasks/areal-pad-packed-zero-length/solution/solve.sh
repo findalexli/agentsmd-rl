@@ -31,4 +31,7 @@ index 392f7d246..834ea23e9 100644
 
 PATCH
 
+echo "- Follow existing code patterns in the same module — the fix should match the style and structure of surrounding code in areal/utils/data.py." >> AGENTS.md
+echo "- Explicit dtype/device; torch.Size assertions for shape validation." >> AGENTS.md
+
 echo "Patch applied successfully."

@@ -13,44 +13,132 @@ files:
     description: DbtEventIterator class with fetch_row_counts, fetch_column_metadata, and with_insights methods
 
 # There are no agent config rules that are programmatically testable
-# The root CLAUDE.md contains general development guidance (run make ruff, etc.)
-# but no specific rules relevant to this typing fix
+# Rubric rules are based on coding_conventions.md type annotation guidelines
 agent_config: []
 
-rubric: []
+rubric:
+  - rule: "Use specific, accurate type annotations - not generic types like Iterator when a more precise type (DbtEventIterator[DbtDagsterEventType]) is available"
+    source:
+      path: ".claude/coding_conventions.md"
+      lines: "22-25"
+      commit: "f44352a8a384296e999c33df60bb785bd69953c4"
+  - rule: "All Python code must pass pyright type checking with zero errors"
+    source:
+      path: ".claude/coding_conventions.md"
+      lines: "25"
+      commit: "f44352a8a384296e999c33df60bb785bd69953c4"
+  - rule: "Use builtin types for annotations (list, dict, set, tuple) instead of typing module variants, and prefer modern generic syntax"
+    source:
+      path: ".claude/coding_conventions.md"
+      lines: "23-24"
+      commit: "f44352a8a384296e999c33df60bb785bd69953c4"
 
 checks:
-  - id: component_iterator_return_type
+  # ===========================================================================
+  # PASS_TO_PASS TESTS - Repo CI commands (origin: repo_tests)
+  # These run actual CI commands that the repo uses
+  # ===========================================================================
+  - id: test_ruff_check_component
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter check passes on component.py
+    weight: 1
+    function: test_ruff_check_component
+
+  - id: test_ruff_check_iterator
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter check passes on dbt_event_iterator.py
+    weight: 1
+    function: test_ruff_check_iterator
+
+  - id: test_component_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax check passes on component.py
+    weight: 1
+    function: test_component_py_compile
+
+  - id: test_iterator_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax check passes on dbt_event_iterator.py
+    weight: 1
+    function: test_iterator_py_compile
+
+  # ===========================================================================
+  # PASS_TO_PASS TESTS - Static checks (origin: static)
+  # These verify static properties of the code
+  # ===========================================================================
+  - id: test_dagster_dbt_package_structure
+    type: pass_to_pass
+    origin: static
+    description: dagster-dbt package has expected directory structure
+    weight: 1
+    function: test_dagster_dbt_package_structure
+
+  - id: test_pyproject_toml_exists
+    type: pass_to_pass
+    origin: static
+    description: dagster-dbt pyproject.toml exists and is valid
+    weight: 1
+    function: test_pyproject_toml_exists
+
+  - id: test_component_ast_valid
+    type: pass_to_pass
+    origin: static
+    description: component.py has valid AST with DbtProjectComponent class
+    weight: 1
+    function: test_component_ast_valid
+
+  - id: test_iterator_ast_valid
+    type: pass_to_pass
+    origin: static
+    description: dbt_event_iterator.py has valid AST with DbtEventIterator class
+    weight: 1
+    function: test_iterator_ast_valid
+
+  - id: test_dbt_event_iterator_has_event_type_alias
+    type: pass_to_pass
+    origin: static
+    description: DbtDagsterEventType TypeAlias is defined in dbt_event_iterator.py
+    weight: 1
+    function: test_dbt_event_iterator_has_event_type_alias
+
+  # ===========================================================================
+  # FAIL_TO_PASS TESTS - Specific tests for the type annotation fix
+  # ===========================================================================
+  - id: test_component_iterator_return_type
     description: _get_dbt_event_iterator returns DbtEventIterator[DbtDagsterEventType]
     weight: 2
     function: test_component_iterator_return_type
 
-  - id: iterator_fetch_row_counts_return_type
+  - id: test_iterator_fetch_row_counts_return_type
     description: fetch_row_counts returns DbtEventIterator[DbtDagsterEventType]
     weight: 1
     function: test_iterator_fetch_row_counts_return_type
 
-  - id: iterator_fetch_column_metadata_return_type
+  - id: test_iterator_fetch_column_metadata_return_type
     description: fetch_column_metadata returns DbtEventIterator[DbtDagsterEventType]
     weight: 1
     function: test_iterator_fetch_column_metadata_return_type
 
-  - id: iterator_with_insights_return_type
+  - id: test_iterator_with_insights_return_type
     description: with_insights returns DbtEventIterator[DbtDagsterEventType]
     weight: 1
     function: test_iterator_with_insights_return_type
 
-  - id: component_imports_event_types
+  - id: test_component_imports_event_types
     description: component.py imports DbtEventIterator and DbtDagsterEventType
     weight: 1
     function: test_component_imports_event_types
 
-  - id: imports_are_callable
+  - id: test_imports_are_callable
     description: The imports work at runtime
     weight: 1
     function: test_imports_are_callable
 
-  - id: dbt_dagster_event_type_is_type_alias
+  - id: test_dbt_dagster_event_type_is_type_alias
     description: DbtDagsterEventType is properly defined as TypeAlias
     weight: 1
     function: test_dbt_dagster_event_type_is_type_alias
