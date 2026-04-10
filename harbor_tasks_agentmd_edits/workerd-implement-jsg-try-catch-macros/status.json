@@ -1,21 +1,53 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:45:45.850764",
-  "total_time": 5679.08,
-  "sandbox_id": "itrhjguavcysw701rwtfr",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:09:15.525629",
+  "total_time": 1638.28,
+  "sandbox_id": "ivl8x6l6oq9kz2pyjo9q8",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 61.89,
+      "notes": "Added 4 new pass_to_pass repo_tests checks: test_repo_python_lint (ruff check on tools/update_node_version.py), test_repo_shellcheck_build_script (shellcheck -S error on build-releases.sh), test_repo_git_clone_valid (git log verification), test_repo_jsg_module_exists (file existence and size check). CI commands tested: ruff, shellcheck, git, ls. All 7 p2p tests pass on base commit. 6 f2p tests fail as expected (PR changes not yet applied)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 293.47,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP test reward=0 (6 f2p tests correctly fail on base), Gold test reward=1 (all 13 tests pass after patch), Rubric ICR=1.0. Fixed rubric rule in eval_manifest.yaml: changed target from non-existent CLAUDE.md to actual src/workerd/jsg/README.md with correct line numbers for the JSG_TRY/JSG_CATCH documentation.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 182.72
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.59,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +58,14 @@
       "backend": "fireworks",
       "time": 5679.08,
       "at": "2026-04-09T07:45:45.850764"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1638.28,
+      "at": "2026-04-10T13:09:15.525629"
     }
   ]
 }

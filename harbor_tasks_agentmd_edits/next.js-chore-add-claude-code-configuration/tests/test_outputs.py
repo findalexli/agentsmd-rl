@@ -101,6 +101,41 @@ def test_claude_md_has_testing_commands():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — real CI commands that should pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_git_status_clean():
+    """Repo has no uncommitted changes (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"], capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Only check for actual file changes, ignore untracked files
+    lines = [line for line in r.stdout.strip().split("\n") if line and not line.startswith("??")]
+    assert len(lines) == 0, f"Repo has uncommitted changes:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_package_json():
+    """Repo's package.json files are properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "package.json", "pnpm-workspace.yaml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_alex_lint():
+    """Repo's markdown files pass alex linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "alex", "."], capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # alex returns 0 on success (warnings don't fail the command, only errors do)
+    assert r.returncode == 0, f"Alex lint failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub and structural checks
 # ---------------------------------------------------------------------------
 

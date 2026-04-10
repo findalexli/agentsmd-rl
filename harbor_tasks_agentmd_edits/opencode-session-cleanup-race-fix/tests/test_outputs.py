@@ -214,7 +214,7 @@ def test_typescript_syntax_valid():
                 timeout=60
             )
             # TypeScript might have errors from other files, but syntax parse should work
-            # Just check that tsc didn't crash with syntax errors on our file
+            # Just check that tsc did not crash with syntax errors on our file
 
 
 def test_cleanupSession_signature_correct():
@@ -237,3 +237,54 @@ def test_cleanupSession_signature_correct():
         "cleanupSession must accept sessionID"
     assert "directory" in signature or "sdk" in signature, \
         "cleanupSession must accept directory or sdk parameter"
+
+
+# =============================================================================
+# Repo CI Pass-to-Pass Tests
+# These tests run actual CI commands to ensure the repo is in a working state.
+# =============================================================================
+
+
+def test_repo_typecheck():
+    """
+    Repo TypeScript typecheck passes (pass_to_pass).
+    Runs bun turbo typecheck to verify all packages compile.
+    """
+    r = subprocess.run(
+        ["bun", "turbo", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+def test_repo_app_unit_tests():
+    """
+    Repo app package unit tests pass (pass_to_pass).
+    Runs bun run test:unit in packages/app to verify unit tests.
+    """
+    r = subprocess.run(
+        ["bun", "run", "test:unit"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+def test_repo_app_typecheck():
+    """
+    Repo app package typecheck passes (pass_to_pass).
+    Runs bun run typecheck in packages/app for targeted type checking.
+    """
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"App typecheck failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"

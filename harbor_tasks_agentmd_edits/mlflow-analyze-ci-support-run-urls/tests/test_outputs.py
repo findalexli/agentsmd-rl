@@ -45,7 +45,7 @@ def _extract_regex_patterns(source: str) -> dict[str, str]:
 def test_syntax_check():
     """analyze_ci.py must parse without syntax errors."""
     r = subprocess.run(
-        ["python3", "-c", f"import py_compile; py_compile.compile('{ANALYZE_CI}', doraise=True)"],
+        ["python3", "-c", f"import py_compile; py_compile.compile(\"{ANALYZE_CI}\", doraise=True)"],
         capture_output=True, text=True, timeout=30,
     )
     assert r.returncode == 0, f"Syntax error:\n{r.stderr}"
@@ -113,7 +113,7 @@ def test_resolve_urls_dispatches_run_pattern():
 
 # [pr_diff] fail_to_pass
 def test_help_text_mentions_run_url():
-    """Help text or error messages must mention 'run URL' or 'workflow run' as a valid format."""
+    """Help text or error messages must mention run URL or workflow run as a valid format."""
     source = ANALYZE_CI.read_text()
     # Check that the argparse help or error messages explicitly mention run URLs
     # as a distinct format (not just "job URL" which also contains "runs")
@@ -125,7 +125,7 @@ def test_help_text_mentions_run_url():
             has_run_url_mention = True
             break
     assert has_run_url_mention, (
-        "Code should mention 'run URL' or 'workflow run URL' in help text or error messages"
+        "Code should mention run URL or workflow run URL in help text or error messages"
     )
 
 
@@ -149,6 +149,42 @@ def test_skill_md_documents_run_urls():
     assert has_bare_run_url, (
         "SKILL.md must have a bare run URL example (actions/runs/N without /job/)"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_analyze_ci():
+    """Ruff linting passes on analyze_ci.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.15.2", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", str(ANALYZE_CI)],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clint_tests():
+    """Clint linter tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "packaging", "pytest", "tomli", "typing_extensions", "-e", ".", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/dev/clint",
+    )
+    assert r.returncode == 0, f"Failed to install clint: {r.stderr}"
+
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "tests/", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/dev/clint",
+    )
+    assert r.returncode == 0, f"Clint tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -180,13 +216,13 @@ def test_analyze_ci_module_structure():
     async_funcs = {node.name for node in ast.walk(tree) if isinstance(node, ast.AsyncFunctionDef)}
     required_async = {"resolve_urls", "cmd_analyze_async"}
     for func in required_async:
-        assert func in async_funcs, f"Required async function '{func}' missing"
+        assert func in async_funcs, f"Required async function {func} missing"
 
     # Check for required regular functions
     funcs = {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)}
     required_funcs = {"register", "run"}
     for func in required_funcs:
-        assert func in funcs, f"Required function '{func}' missing"
+        assert func in funcs, f"Required function {func} missing"
 
 
 # [repo_tests] pass_to_pass

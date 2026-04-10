@@ -1,21 +1,53 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:45:02.015234",
-  "total_time": 5804.25,
-  "sandbox_id": "idsumqyqokyzf2nyp87bg",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:36:40.702107",
+  "total_time": 1863.89,
+  "sandbox_id": "itahysyh1axbd995wrswk",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 207.49,
+      "notes": "Added 3 pass_to_pass tests with origin=repo_tests: (1) test_repo_ruff_check - runs 'ruff check products/llm_analytics/ products/posthog_ai/' to lint Python files in modified directories, (2) test_repo_python_compile - uses py_compile to verify all Python files compile successfully, (3) test_repo_all_skills_frontmatter - validates all SKILL.md files in products/ have valid YAML frontmatter with 'name' and 'description' fields. All tests verified passing at base commit. Docker image built successfully."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 338.67,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "judge_score": 1.0,
+      "attempts": 1,
+      "notes": "All validations passed. Fixed rubric rules that were checking files not modified by this PR (AGENTS.md) and making incorrect judgments about SKILL.md completeness. The config_edits verification correctly validates the gold solution with a 1.0 score.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 263.38
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +58,14 @@
       "backend": "glm",
       "time": 5804.25,
       "at": "2026-04-09T07:45:02.015234"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1863.89,
+      "at": "2026-04-10T12:36:40.702107"
     }
   ]
 }

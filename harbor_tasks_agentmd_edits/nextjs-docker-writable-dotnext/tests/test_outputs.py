@@ -87,6 +87,47 @@ def test_standalone_copy_intact():
         assert ".next/static" in content, f"Missing .next/static COPY in {df_path}"
 
 
+# [repo_tests] pass_to_pass
+def test_dockerfile_lint():
+    """Repo's Dockerfile passes dockerfilelint validation (pass_to_pass)."""
+    # Install dockerfilelint
+    r = subprocess.run(
+        ["npm", "install", "-g", "dockerfilelint"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Run dockerfilelint on both Dockerfiles
+    for df_path in [DOCKERFILE, DOCKERFILE_BUN]:
+        r = subprocess.run(
+            ["dockerfilelint", df_path],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"dockerfilelint failed for {df_path}:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_dockerfile_hadolint():
+    """Repo's Dockerfile passes hadolint validation (pass_to_pass)."""
+    # Download hadolint binary
+    hadolint_path = "/tmp/hadolint"
+    r = subprocess.run(
+        ["curl", "-sL", "-o", hadolint_path,
+         "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to download hadolint: {r.stderr}"
+
+    r = subprocess.run(["chmod", "+x", hadolint_path], capture_output=True, text=True, timeout=10)
+    assert r.returncode == 0, f"Failed to chmod hadolint: {r.stderr}"
+
+    # Run hadolint on both Dockerfiles
+    for df_path in [DOCKERFILE, DOCKERFILE_BUN]:
+        r = subprocess.run(
+            [hadolint_path, df_path],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"hadolint failed for {df_path}:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

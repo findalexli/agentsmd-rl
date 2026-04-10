@@ -51,6 +51,38 @@ def test_script_syntax_valid():
     assert r.returncode == 0, f"Syntax error in pr-status.js:\n{r.stderr}"
 
 
+def test_pr_status_script_exists():
+    """pr-status.js script must exist (pass_to_pass)."""
+    script_path = Path(f"{REPO}/scripts/pr-status.js")
+    assert script_path.exists(), "scripts/pr-status.js must exist"
+    assert script_path.stat().st_size > 0, "scripts/pr-status.js must not be empty"
+
+
+def test_skill_files_exist():
+    """Skill documentation files must exist (pass_to_pass)."""
+    skill_md = Path(f"{REPO}/.agents/skills/pr-status-triage/SKILL.md")
+    workflow_md = Path(f"{REPO}/.agents/skills/pr-status-triage/workflow.md")
+    assert skill_md.exists(), "SKILL.md must exist"
+    assert workflow_md.exists(), "workflow.md must exist"
+    assert skill_md.stat().st_size > 0, "SKILL.md must not be empty"
+    assert workflow_md.stat().st_size > 0, "workflow.md must not be empty"
+
+
+def test_pr_status_has_core_functions():
+    """pr-status.js must contain replyToThread and resolveThread functions (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "const src = require('fs').readFileSync('/workspace/next.js/scripts/pr-status.js', 'utf8'); " +
+         "if (!src.includes('function replyToThread')) { console.error('replyToThread not found'); process.exit(1); } " +
+         "if (!src.includes('function resolveThread')) { console.error('resolveThread not found'); process.exit(1); } " +
+         "console.log('OK');"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pr-status.js missing required functions:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -77,66 +109,68 @@ def test_reply_and_resolve_subcommand_usage():
 
 def test_subcommand_calls_reply_and_resolve():
     """reply-and-resolve-thread handler must invoke both replyToThread and resolveThread."""
-    # Verify the handler code calls both functions with a mock gh that logs calls
+    # First create the mock gh script in Python to avoid shell escaping issues
+    import tempfile, os
+    mock_gh_dir = tempfile.mkdtemp(prefix='mock-gh-')
+    mock_gh_path = os.path.join(mock_gh_dir, 'gh')
+    calls_log_path = os.path.join(mock_gh_dir, 'calls.json')
+
+    mock_script = f'''#!/bin/bash
+echo "$@" >> "{calls_log_path}"
+if [[ "$*" == *"graphql"* ]] && [[ "$*" != *"mutation"* ]]; then
+  echo '{{"data":{{"node":{{"pullRequest":{{"number":1}},"comments":{{"nodes":[{{"databaseId":123}}]}}}}}}}}'
+elif [[ "$*" == *"/replies"* ]]; then
+  echo '{{"html_url":"https://github.com/vercel/next.js/pull/1#discussion_r1"}}'
+else
+  echo '{{"data":{{"resolveReviewThread":{{"thread":{{"isResolved":true}}}}}}}}'
+fi
+'''
+    with open(mock_gh_path, 'w') as f:
+        f.write(mock_script)
+    os.chmod(mock_gh_path, 0o755)
+    # Create empty calls file
+    open(calls_log_path, 'w').close()
+
+    # Now run Node test that references these paths
     result = _run_node(
-        """
+        f'''
 const fs = require('fs');
-const child_process = require('child_process');
 const path = require('path');
 
-// Create a temp directory for our mock gh
-const tmpDir = fs.mkdtempSync('/tmp/mock-gh-');
-const ghPath = path.join(tmpDir, 'gh');
-const callsPath = path.join(tmpDir, 'gh_calls.json');
-
-// Write a mock gh that logs calls and returns valid JSON
-fs.writeFileSync(ghPath, `#!/bin/bash
-echo "$@" >> ${callsPath}
-if [[ "$*" == *"graphql"* ]] && [[ "$*" != *"mutation"* ]]; then
-  echo '{"data":{"node":{"pullRequest":{"number":1},"comments":{"nodes":[{"databaseId":123}]}}}}'
-elif [[ "$*" == *"/replies"* ]]; then
-  echo '{"html_url":"https://github.com/vercel/next.js/pull/1#discussion_r1"}'
-else
-  echo '{"data":{"resolveReviewThread":{"thread":{"isResolved":true}}}}'
-fi
-`);
-fs.chmodSync(ghPath, 0o755);
+const ghPath = '{mock_gh_path}';
+const callsPath = '{calls_log_path}';
+const ghDir = '{mock_gh_dir}';
 
 // Patch process.argv and PATH, then require the script
 process.argv = ['node', 'scripts/pr-status.js', 'reply-and-resolve-thread', 'PRRT_test123', 'Done -- fixed'];
-process.env.PATH = tmpDir + ':' + process.env.PATH;
+process.env.PATH = ghDir + ':' + process.env.PATH;
 
 // Prevent actual process.exit from killing the test process
-const originalExit = process.exit;
 let exitCode = 0;
-process.exit = (code) => { exitCode = code; };
+process.exit = (code) => {{ exitCode = code; }};
 
-try {
+try {{
   require('./scripts/pr-status.js');
-} catch (e) {
+}} catch (e) {{
   // Script might throw after process.exit mock
-}
+}}
 
 // Read the calls log
-const calls = fs.readFileSync(callsPath, 'utf8').trim().split('\\n');
+const calls = fs.readFileSync(callsPath, 'utf8').trim().split('\\n').filter(x => x);
 
 // Verify both functions were called:
-// 1. replyToThread should call gh with graphql lookup + REST reply
-// 2. resolveThread should call gh with resolve mutation
-const allCalls = calls.join('\\n');
-
 const hasGraphQLLookup = calls.some(c => c.includes('graphql') && c.includes('query'));
 const hasRestReply = calls.some(c => c.includes('/replies'));
 const hasResolve = calls.some(c => c.includes('resolve'));
 
-console.log(JSON.stringify({
+console.log(JSON.stringify({{
   totalCalls: calls.length,
   hasGraphQLLookup,
   hasRestReply,
   hasResolve,
   calls: calls
-}));
-"""
+}}));
+'''
     )
     assert result.returncode == 0, f"Test script failed:\n{result.stderr}"
 
@@ -168,9 +202,15 @@ def test_reply_to_thread_uses_rest_not_graphql_mutation():
     assert "/repos/" in func_body and "/replies" in func_body, (
         "replyToThread should use REST API endpoint /repos/.../replies"
     )
-    # Must NOT contain the old GraphQL mutation name
-    assert "addPullRequestReviewThreadReply" not in func_body, (
-        "replyToThread should NOT use the old GraphQL mutation addPullRequestReviewThreadReply"
+    # Must NOT use the old GraphQL mutation (but it can be mentioned in comments)
+    # Check the actual code by removing comments before checking
+    import re
+    # Remove single-line comments from func_body for mutation check
+    func_body_no_comments = re.sub(r'//.*$', '', func_body, flags=re.MULTILINE)
+    # Also remove multi-line comments
+    func_body_no_comments = re.sub(r'/\*.*?\*/', '', func_body_no_comments, flags=re.DOTALL)
+    assert "addPullRequestReviewThreadReply" not in func_body_no_comments, (
+        "replyToThread should NOT use the old GraphQL mutation addPullRequestReviewThreadReply in code logic"
     )
 
 

@@ -9,6 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified and new TypeScript files parse without errors
+- id: test_repo_mime_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for @remix-run/mime pass
+- id: test_builtin_detect_mime_type
+  type: pass_to_pass
+  origin: repo_tests
+  description: Built-in extension mappings still resolve correctly
 - id: registers_custom_extension
   type: fail_to_pass
   origin: pr_diff
@@ -29,6 +37,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: defineMimeType accepts an array of extensions
+- id: readme_documents_define_mime_type
+  type: fail_to_pass
+  origin: config_edit
+  description: README.md must document the defineMimeType API
+- id: changeset_file_exists
+  type: fail_to_pass
+  origin: agent_config
+  description: A changeset file must exist for the new defineMimeType feature
 rubric:
 - rule: README documentation for defineMimeType should be consistent with the style
     of existing API documentation sections in the same file

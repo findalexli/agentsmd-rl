@@ -3,63 +3,19 @@
   "verdict": "fail",
   "nop_reward": -1.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-09T04:04:22.258698",
-  "total_time": 8825.45,
-  "sandbox_id": "ig0yc0u8g768wxb7xku56",
+  "validated_at": "2026-04-10T12:26:24.538835",
+  "total_time": 2650.62,
+  "sandbox_id": "inhekx6agiuwr1pby5wyz",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "docker_build_success": false,
-      "docker_build_error": "Missing 'unzip' dependency for bun install - Dockerfile needs 'apt-get install -y unzip'",
-      "ci_commands_discovered": [
-        {
-          "command": "bun turbo typecheck",
-          "source": "package.json scripts.typecheck -> turbo.json",
-          "ci_workflow": ".github/workflows/typecheck.yml",
-          "description": "TypeScript type checking across all packages"
-        },
-        {
-          "command": "bun turbo test",
-          "source": "package.json (root) scripts.test (echoes warning)",
-          "ci_workflow": ".github/workflows/test.yml",
-          "description": "Unit tests via turbo (runs 'bun test --timeout 30000' in packages)"
-        },
-        {
-          "command": "bun test --timeout 30000",
-          "source": "packages/opencode/package.json scripts.test",
-          "description": "Opencode package unit tests (bun test runner)"
-        },
-        {
-          "command": "tsgo --noEmit",
-          "source": "packages/opencode/package.json scripts.typecheck",
-          "description": "Fast TypeScript typecheck using tsgo for opencode package"
-        }
-      ],
-      "tests_added": [
-        {
-          "id": "test_repo_typecheck",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "implementation": "def test_repo_typecheck() runs 'bun turbo typecheck' with 120s timeout"
-        },
-        {
-          "id": "test_repo_opencode_package_tests",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "implementation": "def test_repo_opencode_package_tests() runs 'bun test --timeout 30000 packages/opencode/test/cli/tui/' with fallback to full package tests"
-        }
-      ],
-      "eval_manifest_updated": true,
-      "notes": [
-        "Docker build fails due to missing 'unzip' package required by bun installer",
-        "Per instructions, did NOT modify Dockerfile - validate agent should fix this",
-        "Added 2 new pass_to_pass tests based on repo's actual CI pipeline:",
-        "  1. test_repo_typecheck - runs bun turbo typecheck (CI gate from .github/workflows/typecheck.yml)",
-        "  2. test_repo_opencode_package_tests - runs bun test for opencode package (from .github/workflows/test.yml)",
-        "These p2p tests ensure candidate solutions don't break existing repo CI checks"
-      ]
+      "status": "error",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1077.33,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -79,6 +35,21 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 834.58
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 40.88,
+      "notes": ""
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.28,
+      "notes": "",
+      "precision": 1.0
     }
   },
   "history": [
@@ -97,6 +68,14 @@
       "backend": "fireworks",
       "time": 8825.45,
       "at": "2026-04-09T04:04:22.258698"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 2650.62,
+      "at": "2026-04-10T12:26:24.538835"
     }
   ]
 }

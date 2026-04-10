@@ -53,6 +53,49 @@ def test_makefile_style_target_exists():
     assert r.returncode == 0, f"style target missing: {r.stderr}"
 
 
+def test_makefile_typing_target_exists():
+    """Makefile has 'typing' target (pass_to_pass)."""
+    r = subprocess.run(
+        ["make", "-n", "typing"],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"typing target missing: {r.stderr}"
+
+
+def test_makefile_check_repo_target_exists():
+    """Makefile has 'check-repo' target (pass_to_pass)."""
+    r = subprocess.run(
+        ["make", "-n", "check-repo"],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"check-repo target missing: {r.stderr}"
+
+
+def test_makefile_fix_repo_target_exists():
+    """Makefile has 'fix-repo' target (pass_to_pass)."""
+    r = subprocess.run(
+        ["make", "-n", "fix-repo"],
+        capture_output=True, text=True, timeout=30, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"fix-repo target missing: {r.stderr}"
+
+
+def test_utils_scripts_syntax():
+    """Utility scripts compile without syntax errors (pass_to_pass)."""
+    utils_dir = REPO / "utils"
+    scripts = [
+        "check_types.py", "custom_init_isort.py", "sort_auto_mappings.py",
+        "check_copies.py", "check_doc_toc.py", "check_dummies.py",
+        "check_modular_conversion.py", "check_inits.py",
+    ]
+    for script in scripts:
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(utils_dir / script)],
+            capture_output=True, text=True, timeout=30, cwd=str(REPO),
+        )
+        assert r.returncode == 0, f"Syntax error in {script}:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # fail_to_pass: behavioral tests (subprocess)
 # ---------------------------------------------------------------------------

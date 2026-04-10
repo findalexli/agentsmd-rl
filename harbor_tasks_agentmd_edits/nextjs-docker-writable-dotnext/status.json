@@ -3,24 +3,26 @@
   "verdict": "fail",
   "nop_reward": -1.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:23:26.889088",
-  "total_time": 18694.8,
-  "sandbox_id": "i5v5occ5o593lkectcgwu",
+  "validated_at": "2026-04-10T12:57:33.504294",
+  "total_time": 5385.93,
+  "sandbox_id": "i3jknp67axmk6opgj2bew",
   "backend": "fireworks",
   "pipeline": "agents",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "config_edit_precision": 0.2,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 494.92,
-      "notes": ""
-    },
-    "p2p_enrichment": {
-      "status": "error",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 146.24,
+      "time": 494.92,
+      "notes": "Added dockerfilelint and hadolint CI tests as repo_tests p2p gates. CI commands tested: dockerfilelint (npm install -g dockerfilelint, exit 0), hadolint (curl download, exit 0)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 275.34,
       "notes": ""
     },
     "improve": {
@@ -34,6 +36,36 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 1.55
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "CLAUDE.md",
+        ".claude/skills/update-docs/SKILL.md"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 0,
+      "rejection_reasons": "",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 77.04
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 37.1,
+      "notes": "",
+      "precision": 0.2
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 39.09,
+      "notes": "precision was 0.20, fixing hallucinated rules"
     }
   },
   "history": [
@@ -60,6 +92,14 @@
       "backend": "fireworks",
       "time": 18694.8,
       "at": "2026-04-09T14:23:26.889088"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 5385.93,
+      "at": "2026-04-10T12:57:33.504294"
     }
   ]
 }

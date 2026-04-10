@@ -48,6 +48,12 @@ def test_syntax_check():
 
 def test_repo_eslint():
     """Repo's ESLint check passes (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
     r = subprocess.run(
         ["npm", "run", "eslint"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -57,6 +63,12 @@ def test_repo_eslint():
 
 def test_repo_lint_packages():
     """Repo's package consistency check passes (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
     r = subprocess.run(
         ["npm", "run", "lint-packages"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -66,11 +78,62 @@ def test_repo_lint_packages():
 
 def test_repo_build():
     """Repo's build passes (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
     r = subprocess.run(
         ["npm", "run", "build"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint_tests():
+    """Repo's test linting passes (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_test_types():
+    """Repo's TypeScript type checking passes (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "test-types"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test types failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_generate_channels():
+    """Repo's channel generation passes (pass_to_pass)."""
+    # Install dependencies first
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Generate channels failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

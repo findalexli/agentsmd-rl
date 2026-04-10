@@ -183,7 +183,7 @@ def test_descriptor_extends_options():
 
     # Check it has listener but NOT a nested options property
     desc_match = re.search(
-        r"interface\s+Descriptor<[^>]+>[^{]*\{([^}]+)\}",
+        r"interface\s+Descriptor<[^>]+>[^{]*\{([^}]+)",
         content,
     )
     if desc_match:
@@ -219,6 +219,10 @@ def test_builtin_interactions_use_this():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_readme_no_capture_listenwith():
+    """README should not import capture or listenWith."""
+    readme_md = Path(PKG) / "README.md"
+    content = readme_md.read_text()
 
     # Should NOT show capture or listenWith as importable functions
     import_lines = [
@@ -237,6 +241,10 @@ def test_builtin_interactions_use_this():
 
 
 # [config_edit] fail_to_pass
+def test_readme_this_context():
+    """README should show this: Interaction pattern for custom interactions."""
+    readme_md = Path(PKG) / "README.md"
+    content = readme_md.read_text()
 
     # Custom interaction example should use this context
     assert "this: Interaction" in content or "this.target" in content, \
@@ -246,6 +254,11 @@ def test_builtin_interactions_use_this():
 
 
 # [config_edit] fail_to_pass
+def test_changelog_unreleased():
+    """CHANGELOG should document breaking changes in Unreleased section."""
+    changelog_md = Path(PKG) / "CHANGELOG.md"
+    content = changelog_md.read_text()
+    content_lower = content.lower()
 
     # Must have an Unreleased section
     assert "## unreleased" in content_lower, \
@@ -268,6 +281,10 @@ def test_builtin_interactions_use_this():
 # ---------------------------------------------------------------------------
 
 # [agent_config] pass_to_pass
+def test_type_exports_use_type_keyword():
+    """All type exports should use 'type' keyword per AGENTS.md."""
+    index_ts = Path(PKG) / "src" / "index.ts"
+    content = index_ts.read_text()
 
     # All type exports should use 'type' keyword
     type_names = ["Dispatched", "EventListeners", "EventsContainer",
@@ -281,8 +298,31 @@ def test_builtin_interactions_use_this():
 
 
 # [agent_config] pass_to_pass
+def test_changelog_heading_format():
+    """Changelog uses '## Unreleased' heading format per AGENTS.md."""
+    changelog_md = Path(PKG) / "CHANGELOG.md"
+    content = changelog_md.read_text()
 
     # If there's an unreleased section, it must use exact heading format
     if "unreleased" in content.lower():
         assert "## Unreleased" in content, \
             "AGENTS.md requires '## Unreleased' heading (not '## HEAD' or other variants)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's pnpm typecheck passes for interaction package (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/interaction", "typecheck"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Typecheck failed:\n{r.stdout}\n{r.stderr}"
+    )

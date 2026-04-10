@@ -28,6 +28,18 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
+def _ensure_node_modules():
+    """Ensure node_modules is installed."""
+    node_modules = Path(REPO) / "node_modules"
+    if not node_modules.exists():
+        r = subprocess.run(
+            ["yarn", "install", "--frozen-lockfile"],
+            capture_output=True, text=True, timeout=300, cwd=REPO,
+        )
+        if r.returncode != 0:
+            raise RuntimeError(f"yarn install failed: {r.stderr[-1000:]}")
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -98,6 +110,44 @@ def test_repo_syntax_devtools_app_html():
                 capture_output=True, text=True, timeout=30,
             )
             assert r.returncode == 0, f"app.html inline script {i} has syntax errors: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_devtools_modified():
+    """Repo: ESLint passes on modified devtools files."""
+    _ensure_node_modules()
+    r = subprocess.run(
+        [
+            "node", "./scripts/tasks/eslint.js",
+            "packages/react-devtools-core/src/backend.js",
+            "packages/react-devtools-core/src/standalone.js",
+            "packages/react-devtools/preload.js",
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on devtools files:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_devtools():
+    """Repo: Flow type checking passes for dom-node renderer (covers devtools)."""
+    _ensure_node_modules()
+    r = subprocess.run(
+        ["yarn", "flow", "dom-node"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow type check failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_devtools():
+    """Repo: Prettier formatting check passes."""
+    _ensure_node_modules()
+    r = subprocess.run(
+        ["node", "./scripts/prettier/index.js", "check-changed"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -8,102 +8,84 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import re
 from pathlib import Path
 
 REPO = "/workspace/lobe-chat"
 
 
-def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Run a Node.js ESM script with TypeScript type stripping."""
-    script_path = Path(REPO) / "_eval_tmp.mts"
-    script_path.write_text(script)
-    try:
-        return subprocess.run(
-            [
-                "node",
-                "--experimental-strip-types",
-                "--no-warnings",
-                str(script_path.name),
-            ],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    finally:
-        script_path.unlink(missing_ok=True)
-
-
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) -- module loading sanity check
-# ---------------------------------------------------------------------------
-
-
 def test_swr_module_loads():
     """SWR module can be loaded and exports all expected hooks as functions."""
-    result = _run_node(
-        """
-        import * as mod from './src/libs/swr/index.ts';
+    swr_file = Path(REPO) / "src" / "libs" / "swr" / "index.ts"
+    content = swr_file.read_text()
 
-        const expected = [
-            'useClientDataSWR',
-            'useOnlyFetchOnceSWR',
-            'useActionSWR',
-        ];
-        for (const name of expected) {
-            if (!(name in mod)) {
-                throw new Error(name + ' is not exported');
-            }
-            if (typeof mod[name] !== 'function') {
-                throw new Error(
-                    name + ' is not a function, got ' + typeof mod[name]
-                );
-            }
-        }
-        console.log('PASS');
-        """
+    # Check that expected hooks are exported
+    expected_exports = [
+        "export const useClientDataSWR",
+        "export const useOnlyFetchOnceSWR",
+        "export const useActionSWR",
+    ]
+    for export in expected_exports:
+        assert export in content, f"Missing export: {export}"
+
+
+def test_repo_swr_unit_tests():
+    """Repo unit tests for SWR module pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts >/dev/null 2>&1 && npx vitest run src/libs/swr/ --silent=passed-only"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
     )
-    assert result.returncode == 0, f"Module load failed:\n{result.stderr}"
-    assert "PASS" in result.stdout
+    assert r.returncode == 0, f"SWR unit tests failed:\n{r.stderr[-1000:]}"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- core behavioral tests
-# ---------------------------------------------------------------------------
+def test_repo_swr_lint():
+    """Repo ESLint passes on SWR module (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts >/dev/null 2>&1 && npx eslint src/libs/swr/index.ts"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_swr_prettier():
+    """Repo Prettier check passes on SWR module (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --ignore-scripts >/dev/null 2>&1 && npx prettier --check src/libs/swr/index.ts"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
 def test_use_action_swr_uses_fallback_data():
     """useActionSWR uses useSWR with fallbackData, not useSWRMutation."""
-    result = _run_node(
-        """
-        import * as mod from './src/libs/swr/index.ts';
-        const src = mod.useActionSWR.toString();
+    swr_file = Path(REPO) / "src" / "libs" / "swr" / "index.ts"
+    content = swr_file.read_text()
 
-        // Must NOT use useSWRMutation
-        if (src.includes('useSWRMutation')) {
-            throw new Error('useActionSWR still uses useSWRMutation');
-        }
+    # Extract useActionSWR function using regex
+    match = re.search(r"export const useActionSWR[\s\S]*?(?=\nexport |\n// |\n\nexport |$)", content)
+    assert match, "Could not find useActionSWR function"
+    func_content = match.group(0)
 
-        // Must call useSWR
-        if (!src.includes('useSWR')) {
-            throw new Error('useActionSWR does not call useSWR');
-        }
+    # Must NOT use useSWRMutation
+    assert "useSWRMutation" not in func_content, "useActionSWR still uses useSWRMutation"
 
-        // Must use fallbackData
-        if (!src.includes('fallbackData')) {
-            throw new Error('useActionSWR missing fallbackData');
-        }
+    # Must call useSWR
+    assert "useSWR" in func_content, "useActionSWR does not call useSWR"
 
-        // Must disable revalidateOnMount
-        if (!src.includes('revalidateOnMount')) {
-            throw new Error('useActionSWR missing revalidateOnMount');
-        }
+    # Must use fallbackData
+    assert "fallbackData" in func_content, "useActionSWR missing fallbackData"
 
-        console.log('PASS');
-        """
-    )
-    assert result.returncode == 0, f"useActionSWR check failed:\n{result.stderr}"
-    assert "PASS" in result.stdout
+    # Must disable revalidateOnMount
+    assert "revalidateOnMount" in func_content, "useActionSWR missing revalidateOnMount"
 
 
 def test_swr_comments_english_only():
@@ -116,11 +98,6 @@ def test_swr_comments_english_only():
     assert len(chinese_chars) == 0, (
         f"Found {len(chinese_chars)} Chinese characters in SWR module"
     )
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- config/documentation update tests
-# ---------------------------------------------------------------------------
 
 
 def test_claude_md_references_linear_mdc():

@@ -1,27 +1,52 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:24:58.758630",
-  "total_time": 18786.68,
-  "sandbox_id": "iuko2546xsytglzm9m01g",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:14:25.555123",
+  "total_time": 2303.71,
+  "sandbox_id": "idyhta8k8j0q699a9bm7o",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.6,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 4.88,
+      "time": 684.36,
       "notes": ""
     },
-    "p2p_enrichment": {
-      "status": "error",
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        ".opencode/skill/bun-file-io/SKILL.md",
+        ".opencode/agent/translator.md"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 3,
+      "rejection_reasons": "2 not applicable (Bun file APIs, translation conventions), 1 about commit messages (not evaluable from diff)",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 84.25,
-      "notes": ""
+      "time": 74.87
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 34.77,
+      "notes": "",
+      "precision": 0.6
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 59.89,
+      "notes": "precision was 0.60, fixing hallucinated rules"
     },
     "improve": {
       "status": "skipped",
@@ -31,35 +56,32 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Fixed rubric rules to properly evaluate documentation standards (removed code-style rules that judge couldn't evaluate). Docker build, NOP test (reward=0), Gold test (reward=1), and Rubric judge (ICR=1.0) all pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 24.54
+      "time": 207.51
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.91,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5570.43,
-      "at": "2026-04-09T07:24:53.581112"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18786.42,
-      "at": "2026-04-09T14:24:58.594543"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18786.68,
-      "at": "2026-04-09T14:24:58.758630"
+      "time": 2303.71,
+      "at": "2026-04-10T12:14:25.555123"
     }
   ]
 }

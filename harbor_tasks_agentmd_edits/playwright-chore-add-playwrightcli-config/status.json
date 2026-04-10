@@ -1,31 +1,84 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:24:54.771221",
-  "total_time": 5654.66,
-  "sandbox_id": "ig0kndvg62f51ctsl3v2y",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:20:01.631904",
+  "total_time": 1862.64,
+  "sandbox_id": "i6e1ofddvr08fm9968ntn",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.5,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 101.31,
+      "time": 296.38,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "packages/playwright/src/mcp/terminal/SKILL.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 0,
+      "rejection_reasons": "",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 45.96
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 23.37,
+      "notes": "",
+      "precision": 0.5
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 14.45,
+      "notes": "precision was 0.50, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test file: changed .mjs to .cjs extension in _run_node() and test_repo_ts_syntax() to fix ES module compatibility issues with Node.js 22. The repo uses ESM and .mjs files were being treated as ES modules where require() is not available.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 226.26
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.4,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5654.66,
-      "at": "2026-04-09T07:24:54.771221"
+      "time": 1862.64,
+      "at": "2026-04-10T12:20:01.631904"
     }
   ]
 }

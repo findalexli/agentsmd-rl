@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pnpm globally (needed for MCP CI tests)
+RUN npm install -g pnpm
+
 # Clone repo at base commit (shallow — monorepo is large)
 RUN git clone --filter=blob:none https://github.com/PostHog/posthog.git /workspace/posthog && \
     cd /workspace/posthog && \

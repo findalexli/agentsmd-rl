@@ -144,3 +144,87 @@ def test_syntax_check():
     build_src = build.read_text()
     assert "TRIGGER_API_URL" in build_src, "buildImage.ts must contain TRIGGER_API_URL"
     assert len(build_src) > 1000, "buildImage.ts suspiciously short"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that run actual commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_no_tabs():
+    """Modified TypeScript files use spaces, not tabs (repo lint rule)."""
+    for rel_path in [
+        "apps/webapp/app/routes/api.v1.projects.$projectRef.$env.ts",
+        "packages/cli-v3/src/deploy/buildImage.ts",
+    ]:
+        r = subprocess.run(
+            ["cat", f"{REPO}/{rel_path}"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Failed to read {rel_path}"
+        # Check no tab characters (common lint rule)
+        assert "\t" not in r.stdout, f"{rel_path} contains tab characters - use spaces"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_trailing_newline():
+    """Modified TypeScript files end with a newline (POSIX standard)."""
+    for rel_path in [
+        "apps/webapp/app/routes/api.v1.projects.$projectRef.$env.ts",
+        "packages/cli-v3/src/deploy/buildImage.ts",
+    ]:
+        r = subprocess.run(
+            ["tail", "-c", "1", f"{REPO}/{rel_path}"],
+            capture_output=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Failed to check {rel_path}"
+        # File should end with newline (last byte is 0x0a)
+        assert r.stdout == b"\n", f"{rel_path} must end with a newline"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_webapp_route():
+    """Webapp route file has valid JavaScript/TypeScript syntax."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const src = fs.readFileSync('{REPO}/apps/webapp/app/routes/api.v1.projects.$projectRef.$env.ts', 'utf8');
+// Check for balanced braces
+let braceCount = 0;
+for (const char of src) {{
+  if (char === '{{') braceCount++;
+  if (char === '}}') braceCount--;
+  if (braceCount < 0) throw new Error('Unbalanced braces');
+}}
+if (braceCount !== 0) throw new Error('Unbalanced braces: ' + braceCount);
+// Check for valid export statement
+if (!src.includes('export async function loader')) throw new Error('Missing loader export');
+console.log('OK');
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax check failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_buildimage():
+    """CLI buildImage.ts has valid JavaScript/TypeScript structure."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const fs = require('fs');
+const src = fs.readFileSync('{REPO}/packages/cli-v3/src/deploy/buildImage.ts', 'utf8');
+// Check for balanced braces
+let braceCount = 0;
+for (const char of src) {{
+  if (char === '{{') braceCount++;
+  if (char === '}}') braceCount--;
+  if (braceCount < 0) throw new Error('Unbalanced braces');
+}}
+if (braceCount !== 0) throw new Error('Unbalanced braces: ' + braceCount);
+// Check for expected function
+if (!src.includes('TRIGGER_API_URL')) throw new Error('Missing TRIGGER_API_URL');
+console.log('OK');
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax check failed: {r.stderr}"

@@ -75,7 +75,7 @@ def test_eslint_ignores_repos():
     """eslint.config.mjs must include .repos/ and .lalph/ in ignore patterns."""
     result = _run_node_extract(
         "const content = require('fs').readFileSync('eslint.config.mjs','utf8');"
-        "const m = content.match(/ignores:\\s*\\[([\\s\\S]*?)\\]/);"
+        "const m = content.match(/ignores:\\s*\[([\s\S]*?)\]/);"
         "if (!m) throw new Error('No ignores array found');"
         "if (!m[1].includes('.repos')) throw new Error('.repos not in ignores');"
         "if (!m[1].includes('.lalph')) throw new Error('.lalph not in ignores');"
@@ -145,7 +145,7 @@ def test_ai_chat_jsdoc_import_pattern():
     """packages/ai/ai/src/Chat.ts JSDoc must use 'effect/Effect' import and Chat.Chat service access."""
     result = _run_node_extract(
         r"const content = require('fs').readFileSync('packages/ai/ai/src/Chat.ts','utf8');"
-        r"const exampleMatch = content.match(/@example[\s\S]*?```ts([\s\S]*?)```/);"
+        r"const exampleMatch = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/);"
         r"if (!exampleMatch) throw new Error('No @example found in Chat.ts');"
         r"const example = exampleMatch[1];"
         r"if (!example.includes(\"import * as Effect from 'effect/Effect'\")) {"
@@ -163,16 +163,16 @@ def test_ai_aierror_jsdoc_import_patterns():
     """packages/ai/ai/src/AiError.ts JSDoc must use 'effect/Effect' and 'effect/Option' imports."""
     result = _run_node_extract(
         r"const content = require('fs').readFileSync('packages/ai/ai/src/AiError.ts','utf8');"
-        r"const examples = content.match(/@example[\s\S]*?```ts([\s\S]*?)```/g);"
+        r"const examples = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/g);"
         r"if (!examples) throw new Error('No @examples found in AiError.ts');"
-        r"const firstEx = examples[0].match(/```ts([\s\S]*?)```/)[1];"
+        r"const firstEx = examples[0].match(/\`\`\`ts([\s\S]*?)\`\`\`/)[1];"
         r"if (!firstEx.includes(\"import * as Effect from 'effect/Effect'\")) {"
         r"  throw new Error('AiError.ts first example missing Effect import');"
         r"}"
         r"if (!firstEx.includes(\"import * as Option from 'effect/Option'\")) {"
         r"  throw new Error('AiError.ts first example missing Option import');"
         r"}"
-        r"const secondEx = examples[1].match(/```ts([\s\S]*?)```/)[1];"
+        r"const secondEx = examples[1].match(/\`\`\`ts([\s\S]*?)\`\`\`/)[1];"
         r"if (!secondEx.includes('Effect.Effect<string, AiError.MalformedInput>')) {"
         r"  throw new Error('AiError.ts second example missing proper return type');"
         r"}"
@@ -185,7 +185,7 @@ def test_ai_embeddingmodel_jsdoc_import_pattern():
     """packages/ai/ai/src/EmbeddingModel.ts JSDoc must use 'effect/Effect' and EmbeddingModel.EmbeddingModel."""
     result = _run_node_extract(
         r"const content = require('fs').readFileSync('packages/ai/ai/src/EmbeddingModel.ts','utf8');"
-        r"const exampleMatch = content.match(/@example[\s\S]*?```ts([\s\S]*?)```/);"
+        r"const exampleMatch = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/);"
         r"if (!exampleMatch) throw new Error('No @example found in EmbeddingModel.ts');"
         r"const example = exampleMatch[1];"
         r"if (!example.includes(\"import * as Effect from 'effect/Effect'\")) {"
@@ -206,7 +206,7 @@ def test_ai_languagemodel_jsdoc_import_pattern():
     """packages/ai/ai/src/LanguageModel.ts JSDoc must use 'effect/Effect' and LanguageModel.LanguageModel."""
     result = _run_node_extract(
         r"const content = require('fs').readFileSync('packages/ai/ai/src/LanguageModel.ts','utf8');"
-        r"const exampleMatch = content.match(/@example[\s\S]*?```ts([\s\S]*?)```/);"
+        r"const exampleMatch = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/);"
         r"if (!exampleMatch) throw new Error('No @example found in LanguageModel.ts');"
         r"const example = exampleMatch[1];"
         r"if (!example.includes(\"import * as Effect from 'effect/Effect'\")) {"
@@ -224,7 +224,7 @@ def test_ai_telemetry_jsdoc_updated():
     """packages/ai/ai/src/Telemetry.ts JSDoc must use 'effect/Effect' and options.response.length."""
     result = _run_node_extract(
         r"const content = require('fs').readFileSync('packages/ai/ai/src/Telemetry.ts','utf8');"
-        r"const exampleMatch = content.match(/@example[\s\S]*?```ts([\s\S]*?)```/);"
+        r"const exampleMatch = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/);"
         r"if (!exampleMatch) throw new Error('No @example found in Telemetry.ts');"
         r"const example = exampleMatch[1];"
         r"if (!example.includes(\"import * as Effect from 'effect/Effect'\")) {"
@@ -259,7 +259,7 @@ def test_eslint_standard_ignores():
     """eslint.config.mjs must still include standard ignore patterns (dist, build, docs, md)."""
     result = _run_node_extract(
         "const content = require('fs').readFileSync('eslint.config.mjs','utf8');"
-        "const m = content.match(/ignores:\\s*\\[([\\s\\S]*?)\\]/);"
+        "const m = content.match(/ignores:\\s*\[([\s\S]*?)\]/);"
         "if (!m) throw new Error('No ignores found');"
         "for (const p of ['**/dist', '**/build', '**/docs', '**/*.md']) {"
         "  if (!m[1].includes(p)) throw new Error(p + ' missing from ignores');"
@@ -273,3 +273,78 @@ def test_gitignore_repos_added():
     """.gitignore must include .repos/ directory."""
     content = (REPO / ".gitignore").read_text()
     assert ".repos/" in content or ".repos" in content, ".gitignore should include .repos/"
+
+
+# ─── P2P: Repo CI tests (origin: repo_tests) ───────────────────────────────────
+
+
+def test_repo_lint():
+    """Repo's eslint passes on the codebase (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm lint"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript type checking passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm check"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_circular():
+    """Repo's circular dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm circular"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Circular dependency check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_type_tests():
+    """Repo's type tests (tstyche) pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm test-types --target 5.8"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_ai_chat_tests():
+    """AI Chat package unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm vitest run packages/ai/ai/test/Chat.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"AI Chat tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_ai_languagemodel_tests():
+    """AI LanguageModel package unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm vitest run packages/ai/ai/test/LanguageModel.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"AI LanguageModel tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

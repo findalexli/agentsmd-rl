@@ -78,7 +78,7 @@ content = open('pyproject.toml').read()
 assert '/en/intro.html' in content, (
     "pyproject.toml Documentation URL missing /en/ prefix"
 )
-# Verify the old broken URL without /en/ is gone
+# Verify the old broken URL is gone
 remaining = content.replace('/en/intro.html', '')
 assert 'AReaL/intro.html' not in remaining, (
     "pyproject.toml still contains old Documentation URL without /en/ prefix"
@@ -104,3 +104,93 @@ def test_alloc_mode_compiles():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Syntax error: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check_alloc_mode():
+    """Repo's ruff linter passes on modified alloc_mode.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff==0.14.9"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "areal/api/alloc_mode.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_check_alloc_mode():
+    """Repo's ruff format check passes on modified alloc_mode.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff==0.14.9"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/api/alloc_mode.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_toml_valid():
+    """pyproject.toml is valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import tomllib
+with open('pyproject.toml', 'rb') as f:
+    tomllib.load(f)
+print('pyproject.toml valid')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_alloc_mode_ast_parse():
+    """areal/api/alloc_mode.py has valid Python AST (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import ast
+with open('areal/api/alloc_mode.py') as f:
+    ast.parse(f.read())
+print('alloc_mode.py AST valid')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parsing failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mdformat_readme():
+    """README.md formatting passes mdformat check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "mdformat==0.7.17", "mdformat-gfm", "mdformat-tables", "mdformat-frontmatter"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["mdformat", "--check", "README.md"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"mdformat check failed for README.md:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mdformat_contributing():
+    """CONTRIBUTING.md formatting passes mdformat check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "mdformat==0.7.17", "mdformat-gfm", "mdformat-tables", "mdformat-frontmatter"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["mdformat", "--check", "CONTRIBUTING.md"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"mdformat check failed for CONTRIBUTING.md:\n{r.stderr[-500:]}"

@@ -173,6 +173,102 @@ def test_part_pattern_tests_pass():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_split_tests_pass():
+    """Split module test suite passes (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "node", "--disable-warning=ExperimentalWarning", "--test",
+            "./packages/route-pattern/src/lib/route-pattern/split.test.ts",
+        ],
+        capture_output=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert result.returncode == 0, (
+        f"Split tests failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_parse_tests_pass():
+    """Parse module test suite passes (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "node", "--disable-warning=ExperimentalWarning", "--test",
+            "./packages/route-pattern/src/lib/route-pattern/parse.test.ts",
+        ],
+        capture_output=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert result.returncode == 0, (
+        f"Parse tests failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_href_tests_pass():
+    """Href module test suite passes (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "node", "--disable-warning=ExperimentalWarning", "--test",
+            "./packages/route-pattern/src/lib/route-pattern/href.test.ts",
+        ],
+        capture_output=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert result.returncode == 0, (
+        f"Href tests failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_trie_matcher_tests_pass():
+    """TrieMatcher test suite passes (pass_to_pass)."""
+    result = subprocess.run(
+        [
+            "node", "--disable-warning=ExperimentalWarning", "--test",
+            "./packages/route-pattern/src/lib/trie-matcher.test.ts",
+        ],
+        capture_output=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert result.returncode == 0, (
+        f"TrieMatcher tests failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_typecheck_pass():
+    """Route-pattern package typechecks (pass_to_pass)."""
+    result = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True,
+        timeout=120,
+        cwd=str(REPO / "packages" / "route-pattern"),
+    )
+    assert result.returncode == 0, (
+        f"Typecheck failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_lint_pass():
+    """Repo linting passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True,
+        timeout=180,
+        cwd=str(REPO),
+    )
+    assert result.returncode == 0, (
+        f"Lint failed:\n{result.stdout.decode()}\n{result.stderr.decode()}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / AGENTS.md
 # ---------------------------------------------------------------------------

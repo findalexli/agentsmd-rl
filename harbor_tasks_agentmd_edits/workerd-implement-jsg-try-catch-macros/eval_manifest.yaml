@@ -45,12 +45,27 @@ checks:
   type: pass_to_pass
   origin: static
   description: jsg.h does not contain js.tryCatch lambda calls
+- id: repo_python_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python tools pass ruff linting
+- id: repo_shellcheck_build_script
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts pass shellcheck validation
+- id: repo_git_clone_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid with expected commit history
+- id: repo_jsg_module_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: JSG module source files exist in expected locations
 rubric:
-- rule: Proactively suggest updates to the documentation when it is missing or out
-    of date, but do not make edits without confirming accuracy.
+- rule: Add documentation alongside code changes, including clear usage examples for new APIs.
   source:
-    path: CLAUDE.md
-    lines: '128'
+    path: src/workerd/jsg/README.md
+    lines: '2552-2580'
     commit: bca5351754a7d3ee0568971d57435859bc3a71e6
 config_edits:
 - path: src/workerd/jsg/README.md

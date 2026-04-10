@@ -5,6 +5,14 @@ source:
   base_commit: 8304f1e2acdd9a5264a323f15d132bb7f2015a9f
   merge_commit: 06c54dde739207546332da34ff2b1702f6750023
 checks:
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI ruff linter check passes on modified files
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI ruff format check passes on modified files
 - id: syntax_check
   type: pass_to_pass
   origin: static
@@ -47,7 +55,29 @@ checks:
   type: pass_to_pass
   origin: static
   description: set_proc_title() is not a stub - has real implementation logic
-rubric: []
+rubric:
+- rule: 'When adding new functionality that affects runtime behavior, corresponding
+    SKILL.md documentation must be updated to reflect the changes (per AGENTS.md:
+    ''When you make changes to the codebase, check if any skills need to be updated
+    to stay accurate'')'
+  source:
+    path: AGENTS.md
+    lines: 37-40
+    commit: 8304f1e2acdd9a5264a323f15d132bb7f2015a9f
+- rule: Code should use minimal try/except blocks - let errors propagate rather than
+    catching them silently. Only catch exceptions for intentional fault tolerance
+    (retries, robustness). Process utilities should not have broad exception handlers
+    that hide bugs.
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 8304f1e2acdd9a5264a323f15d132bb7f2015a9f
+- rule: Git dependency pins in pyproject.toml must use a 7-character commit hash for
+    the rev field
+  source:
+    path: AGENTS.md
+    lines: '34'
+    commit: 8304f1e2acdd9a5264a323f15d132bb7f2015a9f
 config_edits:
 - path: skills/monitor-run/SKILL.md
   tier: 1

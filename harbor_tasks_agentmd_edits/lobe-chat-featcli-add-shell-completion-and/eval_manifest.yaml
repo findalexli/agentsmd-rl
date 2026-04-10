@@ -57,7 +57,37 @@ checks:
   type: pass_to_pass
   origin: static
   description: The completion utils have meaningful implementation, not stubs
-rubric: []
+rubric:
+- rule: 'CLI command files must export a register function named register{Name}Command(program:
+    Command) that follows the pattern in .agents/skills/cli/SKILL.md'
+  source:
+    path: .agents/skills/cli/SKILL.md
+    lines: 95-100
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: CLI commands must be registered in apps/cli/src/index.ts by importing the
+    register function and calling it with the program instance
+  source:
+    path: .agents/skills/cli/SKILL.md
+    lines: 117-125
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: CLI command tests must be created alongside the command file as <name>.test.ts
+    in the same directory
+  source:
+    path: .agents/skills/cli/SKILL.md
+    lines: 127-130
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: Type imports must use import type { ... } syntax (separate statement), not
+    inline import { type ... } syntax
+  source:
+    path: .agents/skills/typescript/SKILL.md
+    lines: 31-36
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: Tests should prefer vi.spyOn over vi.mock for more targeted and maintainable
+    mocking
+  source:
+    path: .agents/skills/testing/SKILL.md
+    lines: 35-45
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
 config_edits:
 - path: apps/cli/README.md
   tier: 2

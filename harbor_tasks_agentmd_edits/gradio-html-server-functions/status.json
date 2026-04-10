@@ -1,28 +1,52 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:11:15.536636",
-  "total_time": 5748.2,
-  "sandbox_id": "iimei1160ljt9mkko8tul",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:42:28.742453",
+  "total_time": 1711.77,
+  "sandbox_id": "i39az4m8rzts743t57p7e",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 0.5,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 6.23,
-      "notes": ""
+      "notes": "Added 3 repo_tests p2p gates: test_repo_html_lint (ruff check), test_repo_html_format (ruff format --check), test_repo_html_tests (pytest test/components/test_html.py)"
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2.14,
+      "time": 414.18,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed Dockerfile to install gradio and all dependencies. Fixed solve.sh to correctly apply the gold patch.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 658.01
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 13.54,
+      "notes": "ICR=0.50"
     }
   },
   "history": [
@@ -33,6 +57,14 @@
       "backend": "fireworks",
       "time": 5748.2,
       "at": "2026-04-09T07:11:15.536636"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1711.77,
+      "at": "2026-04-10T11:42:28.742453"
     }
   ]
 }

@@ -122,6 +122,26 @@ def test_repo_build_translations():
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_type_generation():
+    """Repo's type generation for test fields works (pass_to_pass)."""
+    _setup_pnpm()
+    # Install dependencies first
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    if r.returncode != 0:
+        print(f"Skipping: pnpm install failed: {r.stderr[-500:]}")
+        return
+    
+    r = subprocess.run(
+        ["pnpm", "dev:generate-types", "fields"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Type generation failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - core behavioral tests for CLAUDE.md content
 # ---------------------------------------------------------------------------

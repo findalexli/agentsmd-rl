@@ -38,10 +38,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: isCompressibleMimeType and mimeTypeToContentType still work for builtins
-- id: repo_mime_lib_tests_pass
+- id: test_repo_detect_mime_type_tests_pass
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's own mime library unit tests pass (38 tests in src/lib/)
+  description: detect-mime-type.ts unit tests pass (15 tests)
+- id: test_repo_is_compressible_mime_type_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: is-compressible-mime-type.ts unit tests pass (7 tests)
+- id: test_repo_mime_type_to_content_type_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: mime-type-to-content-type.ts unit tests pass (7 tests)
 rubric:
 - rule: Use `let` for locals, `const` only at module scope; never use `var`
   source:
@@ -62,10 +70,10 @@ config_edits:
 - path: packages/mime/README.md
   tier: 2
   gold_added: "### `defineMimeType(definition)`\n\nRegisters or overrides a MIME type\
-    \ for one or more file extensions.\n\n```ts\nimport { defineMimeType } from '@remix-run/mime'\n\
-    \ndefineMimeType({\n  extensions: ['myformat'],\n  mimeType: 'application/x-myformat',\n\
-    })\n```\n\nYou can also optionally configure the charset and whether the MIME\
-    \ type is compressible:\n\n```ts\ndefineMimeType({\n  extensions: ['myformat'],\n\
-    \  mimeType: 'application/x-myformat',\n  compressible: true,\n  charset: 'utf-8',\n\
-    })\n```"
+    \ for one or more file extensions.\n\n```ts\nimport { defineMimeType } from '\
+    @remix-run/mime'\n\ndefineMimeType({\n  extensions: ['myformat'],\n  mimeType:\
+    \ 'application/x-myformat',\n})\n```\n\nYou can also optionally configure the\
+    \ charset and whether the MIME type is compressible:\n\n```ts\ndefineMimeType({\n\
+    \  extensions: ['myformat'],\n  mimeType: 'application/x-myformat',\n  compressible:\
+    \ true,\n  charset: 'utf-8',\n})\n```"
   gold_removed: ''

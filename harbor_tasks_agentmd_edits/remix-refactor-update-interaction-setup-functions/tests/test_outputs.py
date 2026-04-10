@@ -47,31 +47,64 @@ def test_interaction_setup_type_exported():
 # Pass-to-pass (repo_tests) — repository CI/CD checks
 # ---------------------------------------------------------------------------
 
-def test_repo_typecheck():
-    """Repo TypeScript typecheck passes (pass_to_pass)."""
+def test_repo_lint():
+    """Repo lint check passes on interaction package (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/remix/packages/interaction && npx tsgo --noEmit"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["bash", "-c",
+         "corepack enable && corepack prepare pnpm@10.26.0 --activate && "
+         "cd /workspace/remix && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm eslint packages/interaction/src --max-warnings=0"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_typecheck():
+    """Repo TypeScript typecheck passes on interaction package (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "corepack enable && corepack prepare pnpm@10.26.0 --activate && "
+         "cd /workspace/remix && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm --filter @remix-run/interaction typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_build():
-    """Repo build command passes (pass_to_pass)."""
+    """Repo build command passes on interaction package (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/remix/packages/interaction && npx tsgo -p tsconfig.build.json"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["bash", "-c",
+         "corepack enable && corepack prepare pnpm@10.26.0 --activate && "
+         "cd /workspace/remix && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm --filter @remix-run/interaction build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
 
-def test_repo_lint():
-    """Repo lint check passes on interaction package (pass_to_pass)."""
+def test_repo_format_check():
+    """Repo format check passes on interaction package (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/remix/packages/interaction && npx eslint src --max-warnings=0"],
+        ["bash", "-c",
+         "corepack enable && corepack prepare pnpm@10.26.0 --activate && "
+         "cd /workspace/remix && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm prettier --check packages/interaction/src"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_changeset_validate():
+    """Repo changeset validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "corepack enable && corepack prepare pnpm@10.26.0 --activate && "
+         "cd /workspace/remix && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm changes:validate"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changeset validation failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

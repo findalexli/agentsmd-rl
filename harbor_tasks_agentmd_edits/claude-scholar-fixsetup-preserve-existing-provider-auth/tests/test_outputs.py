@@ -177,13 +177,17 @@ def test_repo_bash_syntax():
         f"{REPO}/skills/hook-development/examples/validate-bash.sh",
         f"{REPO}/skills/hook-development/examples/validate-write.sh",
         f"{REPO}/skills/hook-development/examples/load-context.sh",
+        f"{REPO}/skills/agent-identifier/scripts/validate-agent.sh",
+        f"{REPO}/skills/skill-improver/scripts/backup-skill.sh",
+        f"{REPO}/skills/skill-improver/scripts/verify-update.sh",
+        f"{REPO}/skills/skill-quality-reviewer/scripts/extract-yaml.sh",
     ]
     for script in scripts:
         r = subprocess.run(
             ["bash", "-n", script],
             capture_output=True, text=True, timeout=30,
         )
-        assert r.returncode == 0, f"Bash syntax error in {script}:\\n{r.stderr}"
+        assert r.returncode == 0, f"Bash syntax error in {script}:\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -193,7 +197,7 @@ def test_repo_hook_linter():
         ["bash", f"{REPO}/skills/hook-development/scripts/hook-linter.sh", SETUP_SH],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Hook linter failed:\\n{r.stdout}\\n{r.stderr}"
+    assert r.returncode == 0, f"Hook linter failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -209,4 +213,57 @@ def test_repo_node_syntax():
             ["node", "--check", script],
             capture_output=True, text=True, timeout=30,
         )
-        assert r.returncode == 0, f"Node.js syntax error in {script}:\\n{r.stderr}"
+        assert r.returncode == 0, f"Node.js syntax error in {script}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_js_modules():
+    """All JavaScript modules must load without errors (pass_to_pass)."""
+    modules = [
+        f"{REPO}/scripts/lib/package-manager.js",
+        f"{REPO}/scripts/lib/utils.js",
+    ]
+    for module in modules:
+        r = subprocess.run(
+            ["node", "-e", f"require('{module}'); console.log('OK')"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Node.js module load failed for {module}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_skill_backup():
+    """Skill backup script must work with actual skill (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", f"{REPO}/skills/skill-improver/scripts/backup-skill.sh", f"{REPO}/skills/git-workflow"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Skill backup failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_extract_yaml():
+    """Skill YAML extraction script must work with actual skill (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", f"{REPO}/skills/skill-quality-reviewer/scripts/extract-yaml.sh", f"{REPO}/skills/git-workflow"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"YAML extraction failed:\n{r.stdout}\n{r.stderr}"
+    # Verify it extracted expected fields
+    assert "name:" in r.stdout, f"Expected 'name:' field in output:\n{r.stdout}"
+    assert "description:" in r.stdout, f"Expected 'description:' field in output:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """All Python files must have valid syntax (pass_to_pass)."""
+    scripts = [
+        f"{REPO}/utils/platform_utils.py",
+        f"{REPO}/scripts/codex_hook_emulation.py",
+    ]
+    for script in scripts:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", script],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Python syntax error in {script}:\n{r.stderr}"

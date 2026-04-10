@@ -45,15 +45,23 @@ checks:
 - id: test_repo_prettier_formatting
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's TypeScript files follow Prettier formatting
+  description: Repo CI - Prettier formatting check on connection-string.ts and test files
 - id: test_repo_typescript_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's TypeScript source files have valid syntax
-- id: test_repo_test_file_structure
+  description: Repo CI - TypeScript syntax validation via tsx
+- id: test_repo_connection_string_imports
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's test files have valid structure and imports
+  description: Repo CI - connection-string.ts can be imported and exports parseConnectionString
+- id: test_repo_test_file_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Test files follow Prettier formatting
+- id: test_repo_parse_connection_string_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - parseConnectionString function executes and parses basic connection strings
 rubric:
 - rule: Documentation examples should be consistent with the code style used in existing
     README examples
@@ -129,8 +137,8 @@ config_edits:
 - path: packages/adapter-mssql/README.md
   tier: 2
   gold_added: "### 2. Instantiate Prisma Client using the driver adapter\n\nYou can\
-    \ also instantiate the adapter with a [JDBC](https://learn.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver15)\
-    \ connection string:\n\n```ts\nimport { PrismaMssql } from '@prisma/adapter-mssql'\n\
+    \ also instantiate the adapter with a [JDBC](https://learn.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver15\
+    ) connection string:\n\n```ts\nimport { PrismaMssql } from '@prisma/adapter-mssql'\n\
     import { PrismaClient } from '@prisma/client'\n\nconst adapter = new PrismaMssql('sqlserver://localhost:1433;database=testdb;user=sa;password=mypassword;encrypt=true')\n\
     const prisma = new PrismaClient({ adapter })\n```\n\n### 3. Entra ID Authentication\
     \ (formerly Azure Active Directory)\n\nEntra ID authentication is supported by\

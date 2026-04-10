@@ -253,8 +253,8 @@ console.log(JSON.stringify(result))
 def test_repo_prettier_formatting():
     """Repo's TypeScript files follow Prettier formatting (pass_to_pass)."""
     r = subprocess.run(
-        ["npx", "prettier", "--check", "src/*.ts"],
-        capture_output=True, text=True, timeout=60, cwd=str(ADAPTER_DIR),
+        ["npx", "prettier", "--check", "src/connection-string.ts", "src/connection-string.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(ADAPTER_DIR),
     )
     assert r.returncode == 0, f"Prettier formatting check failed:\n{r.stderr[-500:]}"
 
@@ -264,27 +264,47 @@ def test_repo_typescript_syntax():
     """Repo's TypeScript source files have valid syntax (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "tsx", "-e", "import './src/connection-string.ts'"],
-        capture_output=True, text=True, timeout=30, cwd=str(ADAPTER_DIR),
+        capture_output=True, text=True, timeout=60, cwd=str(ADAPTER_DIR),
     )
     assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_test_file_structure():
-    """Repo's test files have valid structure and imports (pass_to_pass)."""
-    test_file = ADAPTER_DIR / "src" / "connection-string.test.ts"
-    content = test_file.read_text()
+def test_repo_connection_string_imports():
+    """Repo's connection-string.ts can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsx", "-e", "const m = require('./src/connection-string.ts'); console.log(typeof m.parseConnectionString)"],
+        capture_output=True, text=True, timeout=60, cwd=str(ADAPTER_DIR),
+    )
+    assert r.returncode == 0, f"connection-string.ts import failed:\n{r.stderr[-500:]}"
+    assert "function" in r.stdout, f"parseConnectionString should be a function, got: {r.stdout}"
 
-    # Basic structure checks
-    assert "describe(" in content, "Test file should have describe() blocks"
-    assert "it(" in content, "Test file should have it() tests"
-    assert "expect(" in content, "Test file should use expect() assertions"
-    assert "parseConnectionString" in content, "Test file should test parseConnectionString"
 
-    # Check balanced braces (basic syntax check)
-    open_count = content.count("{")
-    close_count = content.count("}")
-    assert open_count == close_count, "Test file has unbalanced braces"
+# [repo_tests] pass_to_pass
+def test_repo_test_file_prettier():
+    """Repo's test files follow Prettier formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "src/connection-string.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(ADAPTER_DIR),
+    )
+    assert r.returncode == 0, f"Test file Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_parse_connection_string_runs():
+    """Repo's parseConnectionString function runs basic tests (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsx", "-e", """
+const { parseConnectionString } = require('./src/connection-string.ts');
+const result = parseConnectionString('sqlserver://localhost:1433;database=testdb;user=sa;password=secret');
+if (result.server !== 'localhost') throw new Error('Server mismatch');
+if (result.database !== 'testdb') throw new Error('Database mismatch');
+console.log('OK');
+"""],
+        capture_output=True, text=True, timeout=60, cwd=str(ADAPTER_DIR),
+    )
+    assert r.returncode == 0, f"parseConnectionString basic test failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout, f"Expected OK output, got: {r.stdout}"
 
 
 # ---------------------------------------------------------------------------

@@ -9,6 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified Python files must parse without errors
+- id: test_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI ruff linter passes on modified files
+- id: test_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI ruff format check passes on modified files
 - id: apply_edits_single
   type: fail_to_pass
   origin: pr_diff
@@ -50,18 +58,12 @@ checks:
     lines: '85'
     commit: 209f5d790aaee15baaf509ee15268edd932f5f23
 rubric:
-- rule: Config update is consistent with the style of the existing SKILL.md documentation
+- rule: Config update is consistent with the style of the existing SKILL.md documentation and code changes follow AGENTS.md schema annotation requirements (help_text on serializer fields)
   source:
     path: products/llm_analytics/skills/skills-store/SKILL.md
     lines: 1-100
     commit: 209f5d790aaee15baaf509ee15268edd932f5f23
-- rule: When touching a viewset or serializer, ensure schema annotations are present
-    — help_text on serializer fields flow into generated frontend types and MCP tool
-    schemas
-  source:
-    path: AGENTS.md
-    lines: '85'
-    commit: 209f5d790aaee15baaf509ee15268edd932f5f23
+  reference: 'SKILL.md documents the incremental edits feature with markdown formatting consistent with existing documentation. Code changes add help_text to all new serializer fields (old, new, prompt, edits, base_version) per AGENTS.md requirements.'
 config_edits:
 - path: products/llm_analytics/skills/skills-store/SKILL.md
   tier: 1

@@ -223,6 +223,11 @@ console.log('OK: core tools present [' + tools.join(', ') + ']');
 
 def test_repo_check_engines_override():
     """Repo check-engines-override script passes (pass_to_pass)."""
+    # Enable corepack first to get pnpm
+    subprocess.run(["corepack", "enable"], check=True, cwd=REPO)
+    subprocess.run(["corepack", "prepare", "pnpm@9.14.4", "--activate"], check=True, cwd=REPO)
+    # Install dependencies first
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, timeout=300, cwd=REPO)
     r = subprocess.run(
         ["pnpm", "run", "check-engines-override"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -232,8 +237,13 @@ def test_repo_check_engines_override():
 
 def test_repo_prettier_cli():
     """Repo prettier check passes on CLI files (pass_to_pass)."""
+    # Enable corepack first to get pnpm
+    subprocess.run(["corepack", "enable"], check=True, cwd=REPO)
+    subprocess.run(["corepack", "prepare", "pnpm@9.14.4", "--activate"], check=True, cwd=REPO)
+    # Install dependencies first
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, timeout=300, cwd=REPO)
     r = subprocess.run(
-        ["pnpm", "prettier", "--check", "packages/cli/src"],
+        ["pnpm", "exec", "prettier", "--check", "packages/cli/src"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
@@ -241,6 +251,12 @@ def test_repo_prettier_cli():
 
 def test_repo_eslint_cli_modified():
     """Repo eslint passes on modified CLI files (pass_to_pass)."""
+    # Enable corepack first to get pnpm
+    subprocess.run(["corepack", "enable"], check=True, cwd=REPO)
+    subprocess.run(["corepack", "prepare", "pnpm@9.14.4", "--activate"], check=True, cwd=REPO)
+    # Install dependencies first
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, timeout=300, cwd=REPO)
+
     # Check MCP.ts at either location (base or fix)
     mcp_path = os.path.join(REPO, "packages/cli/src/mcp/MCP.ts")
     if not os.path.exists(mcp_path):
@@ -248,7 +264,7 @@ def test_repo_eslint_cli_modified():
     bin_path = os.path.join(REPO, "packages/cli/src/bin.ts")
 
     r = subprocess.run(
-        ["pnpm", "eslint", mcp_path, bin_path],
+        ["pnpm", "exec", "eslint", mcp_path, bin_path],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"

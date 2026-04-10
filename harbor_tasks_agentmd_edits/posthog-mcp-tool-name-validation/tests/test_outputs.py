@@ -9,9 +9,29 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import subprocess
+import shutil
 from pathlib import Path
 
 REPO = "/workspace/posthog"
+
+
+def _ensure_deps():
+    """Ensure pnpm is available and dependencies are installed."""
+    # Install pnpm if not available
+    if not shutil.which("pnpm"):
+        r = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, text=True, timeout=120)
+        if r.returncode != 0:
+            raise RuntimeError(f"Failed to install pnpm: {r.stderr}")
+
+    # Check if node_modules exists
+    if not (Path(REPO) / "node_modules").exists():
+        # Install dependencies
+        r = subprocess.run(
+            ["pnpm", "--filter=@posthog/mcp...", "--filter=./products/*", "install", "--frozen-lockfile"],
+            capture_output=True, text=True, timeout=300, cwd=REPO,
+        )
+        if r.returncode != 0:
+            raise RuntimeError(f"Failed to install dependencies: {r.stderr[-500:]}")
 
 
 def _read(relpath: str) -> str:
@@ -49,6 +69,7 @@ def test_syntax_check():
 
 def test_repo_typecheck():
     """MCP package TypeScript typecheck passes (pass_to_pass)."""
+    _ensure_deps()
     r = subprocess.run(
         ["pnpm", "typecheck"],
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
@@ -58,6 +79,7 @@ def test_repo_typecheck():
 
 def test_repo_lint_tool_names():
     """MCP tool name linting passes (pass_to_pass)."""
+    _ensure_deps()
     r = subprocess.run(
         ["pnpm", "lint-tool-names"],
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
@@ -67,11 +89,22 @@ def test_repo_lint_tool_names():
 
 def test_repo_unit_tests():
     """MCP unit tests pass (pass_to_pass)."""
+    _ensure_deps()
     r = subprocess.run(
         ["pnpm", "test", "run"],
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_build():
+    """MCP package build passes (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "build"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

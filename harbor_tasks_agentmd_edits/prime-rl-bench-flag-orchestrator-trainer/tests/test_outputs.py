@@ -212,6 +212,46 @@ def test_repo_ruff_check():
     assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+def test_repo_configs_valid():
+    """All TOML config files are valid (pass_to_pass)."""
+    # Install tomli if needed
+    subprocess.run(
+        ["pip", "install", "-q", "tomli"],
+        capture_output=True,
+    )
+    r = subprocess.run(
+        [
+            "python", "-c",
+            "import tomllib; from pathlib import Path; errors=[]; "
+            "[(lambda f: (open(f,'rb').close() if True else None) or tomllib.load(open(f,'rb')))(f) "
+            "or None for d in ['configs/trainer','configs/orchestrator','configs/inference','configs/eval'] "
+            "for f in Path(d).glob('*.toml')]; print('All TOML configs valid')"
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config validation failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_pyproject_valid():
+    """pyproject.toml is valid and parseable (pass_to_pass)."""
+    # Install tomli if needed
+    subprocess.run(
+        ["pip", "install", "-q", "tomli"],
+        capture_output=True,
+    )
+    r = subprocess.run(
+        ["python", "-c", "import tomllib; tomllib.load(open('pyproject.toml', 'rb')); print('pyproject.toml valid')"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # -----------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # -----------------------------------------------------------------------------

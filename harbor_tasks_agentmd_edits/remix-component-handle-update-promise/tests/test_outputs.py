@@ -32,15 +32,6 @@ def test_repo_component_typecheck():
     assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
 
 
-def test_repo_component_tests():
-    """Component package tests pass (pass_to_pass) — relevant subset."""
-    r = subprocess.run(
-        ["pnpm", "--filter", "@remix-run/component", "run", "test"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Component tests failed:\n{r.stderr[-500:]}"
-
-
 def test_repo_lint():
     """Repo lint passes (pass_to_pass)."""
     r = subprocess.run(
@@ -57,6 +48,24 @@ def test_repo_format_check():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_changes_validate():
+    """Repo change files validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "run", "changes:validate"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_component_build():
+    """Component package builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/component", "run", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Component build failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

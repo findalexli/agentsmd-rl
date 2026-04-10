@@ -1,21 +1,22 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:38:31.181084",
-  "total_time": 5949.05,
-  "sandbox_id": "ivga7fm4y0acmapxk3o07",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:39:20.446178",
+  "total_time": 1869.44,
+  "sandbox_id": "iwafspfx39xab7n6nj5pb",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during validate",
+  "config_edit_precision": 0.5,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 159.71,
-      "notes": "Added 2 repo CI pass_to_pass tests: test_repo_ruff_lint (ruff check products/signals/eval/) and test_repo_ruff_format (ruff format --check --diff products/signals/eval/). Found CI commands from .github/workflows/ci-python.yml. Tests verified to pass on base commit. Docker build successful."
+      "time": 173.97,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -30,6 +31,53 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        "products/signals/eval/AGENTS.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 4,
+      "rejection_reasons": "rejected: conventional commits (process rule), Team model fields (not applicable), parameterized tests (not applicable to this PR), reduce nesting/early returns (not specifically demonstrated in PR)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 86.04
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 28.93,
+      "notes": "",
+      "precision": 0.5
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 48.18,
+      "notes": "precision was 0.50, fixing hallucinated rules"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: 1) Docker build successful, 2) NOP test reward=0 (fail-to-pass tests correctly fail on base code), 3) Gold test reward=1 (all 11 tests pass after solve.sh applied), 4) Rubric judge ICR=1.0 (removed inappropriate rubric rules that duplicated existing tests and didnt work with LLM comparison)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 232.55
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -40,6 +88,14 @@
       "backend": "fireworks",
       "time": 5949.05,
       "at": "2026-04-09T07:38:31.181084"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1869.44,
+      "at": "2026-04-10T12:39:20.446178"
     }
   ]
 }

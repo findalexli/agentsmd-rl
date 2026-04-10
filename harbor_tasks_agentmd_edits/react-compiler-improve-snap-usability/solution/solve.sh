@@ -679,3 +679,8 @@ index 478a32d426cd..04724532b641 100644
 PATCH
 
 echo "Patch applied successfully."
+
+# Stage new files so the judge can detect modifications via git diff
+cd /workspace/react
+git add compiler/CLAUDE.md compiler/.claude/settings.json 2>/dev/null || true
+git add -u  # Stage all modified/deleted files

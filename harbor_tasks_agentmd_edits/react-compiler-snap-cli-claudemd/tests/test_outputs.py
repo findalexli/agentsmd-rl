@@ -26,11 +26,20 @@ def _node(script: str, timeout: int = 15) -> subprocess.CompletedProcess:
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
+def test_snap_installs():
+    """Snap package dependencies install successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Yarn install failed:\n{r.stderr[-500:]}"
+
+
 def test_snap_typescript_compiles():
     """Snap package TypeScript compiles without errors (pass_to_pass)."""
     r = subprocess.run(
-        ["yarn", "tsc", "--noEmit"],
-        capture_output=True, text=True, timeout=60, cwd=REPO + "/compiler/packages/snap",
+        ["yarn", "workspace", "snap", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
     )
     assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-500:]}"
 
@@ -42,6 +51,15 @@ def test_snap_builds():
         capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
     )
     assert r.returncode == 0, f"Snap build failed:\n{r.stderr[-500:]}"
+
+
+def test_snap_prettier_check():
+    """Snap package source files follow prettier formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "prettier", "--check", "packages/snap/src/**/*.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO + "/compiler",
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
 def test_typescript_files_parseable():

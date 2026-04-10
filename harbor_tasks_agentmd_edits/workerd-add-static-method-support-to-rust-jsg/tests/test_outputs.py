@@ -17,9 +17,18 @@ REPO = "/workspace/workerd"
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
+def _ensure_rustfmt():
+    """Ensure rustfmt is installed (needed in Docker where each run is fresh)."""
+    subprocess.run(
+        ["rustup", "component", "add", "rustfmt"],
+        capture_output=True, timeout=120,
+    )
+
+
 # [static] pass_to_pass
 def test_rust_syntax_valid():
     """Modified .rs files must parse without rustfmt errors."""
+    _ensure_rustfmt()
     rs_files = [
         Path(REPO) / "src/rust/jsg-macros/lib.rs",
         Path(REPO) / "src/rust/jsg/v8.rs",
@@ -28,10 +37,72 @@ def test_rust_syntax_valid():
         assert f.exists(), f"File not found: {f}"
         r = subprocess.run(
             ["rustfmt", "--check", "--edition", "2021", str(f)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, text=True, timeout=30, cwd=REPO,
         )
         # rustfmt --check exits 1 if formatting differs; we only care about parse errors (exit 2+)
         assert r.returncode != 2, f"rustfmt parse error in {f.name}:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass gates (repo_tests) — CI checks that must pass before and after fix
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - rustfmt config exists and is valid
+def test_rustfmt_config_valid():
+    """rustfmt.toml config file exists and is valid (pass_to_pass)."""
+    config_path = Path(REPO) / "src/rust/rustfmt.toml"
+    assert config_path.exists(), "rustfmt.toml not found"
+    content = config_path.read_text()
+    assert "group_imports" in content, "rustfmt.toml missing group_imports setting"
+    assert "imports_granularity" in content, "rustfmt.toml missing imports_granularity setting"
+
+
+# [repo_tests] pass_to_pass - jsg-macros lib.rs has valid syntax
+def test_jsg_macros_syntax():
+    """jsg-macros lib.rs can be parsed by rustfmt without parse errors (pass_to_pass)."""
+    _ensure_rustfmt()
+    lib_rs = Path(REPO) / "src/rust/jsg-macros/lib.rs"
+    assert lib_rs.exists(), "lib.rs not found"
+    r = subprocess.run(
+        ["rustfmt", "--check", "--edition", "2021", str(lib_rs)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # Exit code 2 indicates syntax/parse errors
+    assert r.returncode != 2, f"jsg-macros/lib.rs has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - jsg v8.rs has valid syntax
+def test_jsg_v8_syntax():
+    """jsg v8.rs can be parsed by rustfmt without parse errors (pass_to_pass)."""
+    _ensure_rustfmt()
+    v8_rs = Path(REPO) / "src/rust/jsg/v8.rs"
+    assert v8_rs.exists(), "v8.rs not found"
+    r = subprocess.run(
+        ["rustfmt", "--check", "--edition", "2021", str(v8_rs)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode != 2, f"jsg/v8.rs has syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - jsg ffi.c++ has valid syntax
+def test_jsg_ffi_cpp_syntax():
+    """jsg ffi.c++ exists and has valid C++ syntax (pass_to_pass)."""
+    ffi_cpp = Path(REPO) / "src/rust/jsg/ffi.c++"
+    assert ffi_cpp.exists(), "ffi.c++ not found"
+    content = ffi_cpp.read_text()
+    # Check for basic C++ syntax indicators
+    assert "#include" in content, "ffi.c++ missing includes"
+    assert "namespace" in content or "::workerd::" in content, "ffi.c++ missing namespace patterns"
+
+
+# [repo_tests] pass_to_pass - jsg ffi.h has valid syntax
+def test_jsg_ffi_h_syntax():
+    """jsg ffi.h exists and has valid C++ header syntax (pass_to_pass)."""
+    ffi_h = Path(REPO) / "src/rust/jsg/ffi.h"
+    assert ffi_h.exists(), "ffi.h not found"
+    content = ffi_h.read_text()
+    assert "#pragma once" in content or "#ifndef" in content, "ffi.h missing header guard"
+    assert "namespace" in content, "ffi.h missing namespace"
 
 
 # ---------------------------------------------------------------------------

@@ -1,19 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:56:05.972023",
-  "total_time": 1674.96,
-  "sandbox_id": "isp7nr52olob204g9qpr6",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:22:32.141415",
+  "total_time": 515.1,
+  "sandbox_id": "ir9zd4qezeb8qjc1x6vp4",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 110.89,
+      "time": 217.83,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,16 +33,42 @@
       "notes": "tests look good"
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 3,
+      "rejection_reasons": "2 rules about typing/dataclasses not applicable (PR doesn't modify dataclasses), 1 rule about import ordering already covered by repo_tests",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 13.58,
-      "notes": ""
+      "time": 43.13
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed 2 bugs in test_outputs.py: (1) Line 98: child.iter.elts -> dec.args[1].elts (undefined variable), (2) Line 201-202: Added skip for tmp_path fixture code in test_grpo_uses_backend_config_path. Adjusted rubric rule 2 about YAML configs to be more accurate (model/dataset paths may be hardcoded as in existing configs).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.64
+      "time": 204.32
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 25.68,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.62,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +95,14 @@
       "backend": "fireworks",
       "time": 1674.96,
       "at": "2026-04-09T14:56:05.972023"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 515.1,
+      "at": "2026-04-10T11:22:32.141415"
     }
   ]
 }

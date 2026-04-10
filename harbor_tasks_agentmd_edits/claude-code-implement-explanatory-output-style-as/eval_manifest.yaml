@@ -33,7 +33,33 @@ checks:
   type: pass_to_pass
   origin: static
   description: README must document the plugin purpose and usage
-rubric: []
+- id: test_repo_security_guidance_plugin_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Security-guidance plugin manifest JSON is syntactically valid (python3
+    json module)
+- id: test_repo_security_guidance_hooks_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Security-guidance hooks configuration JSON is syntactically valid (python3
+    json module)
+- id: test_repo_security_guidance_hook_script_valid_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: Security-guidance hook script has valid Python syntax (python3 -m py_compile)
+rubric:
+- rule: New plugins must include a plugin.json manifest in the .claude-plugin/ directory
+    for plugin metadata
+  source:
+    path: plugins/README.md
+    lines: 82-86
+    commit: 4dc23d0275ff615ba1dccbdd76ad2b12a3ede591
+- rule: New plugins must include a comprehensive README.md documenting the plugin's
+    purpose, usage, and structure
+  source:
+    path: plugins/README.md
+    lines: '94'
+    commit: 4dc23d0275ff615ba1dccbdd76ad2b12a3ede591
 config_edits:
 - path: plugins/explanatory-output-style/README.md
   tier: 2
@@ -60,8 +86,12 @@ config_edits:
     \ generally, this SessionStart hook pattern is roughly equivalent to\nCLAUDE.md,\
     \ but it is more flexible and allows for distribution through plugins.\n\nNote:\
     \ Output styles that involve tasks besides software development, are better\n\
-    expressed as\n[subagents](https://docs.claude.com/en/docs/claude-code/sub-agents),\
+    \ expressed as\n[subagents](https://docs.claude.com/en/docs/claude-code/sub-agents),\
     \ not as\nSessionStart hooks. Subagents change the system prompt while SessionStart\
     \ hooks\nadd to the default system prompt.\n\n## Managing changes\n\n- Disable\
-    \ the plugin - ke"
+    \ the plugin - keep the code installed on your device\n- Uninstall the plugin\
+    \ - remove the code from your device\n- Update the plugin - create a local copy\
+    \ of this plugin to personalize this\n  plugin\n  - Hint: Ask Claude to read\n\
+    \    https://docs.claude.com/en/docs/claude-code/plugins.md and set it up for\n\
+    \  you!"
   gold_removed: ''

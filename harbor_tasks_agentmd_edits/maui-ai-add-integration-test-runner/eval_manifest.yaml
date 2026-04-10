@@ -1,99 +1,124 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "dotnet/maui"
+  repo: dotnet/maui
   pr: 33654
-  base_commit: "71e5c2f595d7cc104adc18753a646e9c557c10da"
-  merge_commit: "c11d2143dd162560aae745161a04eff1bbd5e5ac"
-
+  base_commit: 71e5c2f595d7cc104adc18753a646e9c557c10da
+  merge_commit: c11d2143dd162560aae745161a04eff1bbd5e5ac
 checks:
-  # --- Gates (pass_to_pass) ---
-  - id: csharp_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "BaseBuildTest.cs has balanced delimiters and valid C# structure"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "SetUpNuGetPackages has real file I/O operations, not a stub"
-
-  # --- Repo CI/CD tests (pass_to_pass) ---
-  - id: global_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "global.json is valid JSON with required SDK configuration"
-
-  - id: csproj_files_valid_xml
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All .csproj files are valid XML"
-
-  - id: directory_build_props_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Directory.Build.props is valid XML"
-
-  - id: directory_build_targets_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Directory.Build.targets is valid XML"
-
-  - id: github_workflows_valid_yaml
-    type: pass_to_pass
-    origin: repo_tests
-    description: "GitHub workflow files have valid YAML syntax"
-
-  - id: build_scripts_executable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Build scripts exist and have correct structure"
-
-  - id: nuget_config_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "NuGet.config is valid XML with required package sources"
-
-  # --- Code behavior (fail_to_pass) ---
-  - id: msbuild_isolation_files
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BaseBuildTest.cs creates valid Directory.Build.props and .targets XML to prevent MSBuild inheritance"
-
-  - id: skill_md_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "run-integration-tests SKILL.md exists with valid frontmatter and all test categories"
-
-  - id: run_script_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Run-IntegrationTests.ps1 exists with ValidateSet categories and workflow parameters"
-
-  # --- Config/documentation updates (fail_to_pass) ---
-  - id: copilot_instructions_lists_integration_skill
-    type: fail_to_pass
-    origin: pr_diff
-    description: "copilot-instructions.md lists the run-integration-tests skill with categories"
-
-  - id: integration_instructions_references_skill
-    type: fail_to_pass
-    origin: pr_diff
-    description: "integration-tests.instructions.md references the run-integration-tests skill"
-
-  - id: copilot_instructions_skill_numbering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Skill numbering is sequential (run-integration-tests=8, try-fix=9)"
-
+- id: csharp_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: BaseBuildTest.cs has balanced delimiters and valid C# structure
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: SetUpNuGetPackages has real file I/O operations, not a stub
+- id: global_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: global.json is valid JSON with required SDK configuration
+- id: csproj_files_valid_xml
+  type: pass_to_pass
+  origin: repo_tests
+  description: All .csproj files are valid XML
+- id: directory_build_props_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Directory.Build.props is valid XML
+- id: directory_build_targets_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Directory.Build.targets is valid XML
+- id: nuget_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: NuGet.config is valid XML with required package sources
+- id: build_scripts_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts exist and have correct structure
+- id: git_repo_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is in a clean state with no uncommitted changes
+- id: git_no_merge_conflicts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository contains no merge conflict markers
+- id: solution_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Solution file Microsoft.Maui.sln exists and is readable
+- id: test_utils_csproj_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Integration tests project file is valid XML
+- id: github_workflows_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: GitHub Actions workflow files exist and are readable
+- id: basebuildtest_cs_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: BaseBuildTest.cs exists and contains required methods
+- id: editorconfig_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: EditorConfig file exists and has valid content
+- id: gitattributes_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: .gitattributes file exists with required settings
+- id: msbuild_isolation_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: BaseBuildTest.cs creates valid Directory.Build.props and .targets XML
+    to prevent MSBuild inheritance
+- id: skill_md_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: run-integration-tests SKILL.md exists with valid frontmatter and all
+    test categories
+- id: run_script_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Run-IntegrationTests.ps1 exists with ValidateSet categories and workflow
+    parameters
+- id: copilot_instructions_lists_integration_skill
+  type: fail_to_pass
+  origin: pr_diff
+  description: copilot-instructions.md lists the run-integration-tests skill with
+    categories
+- id: integration_instructions_references_skill
+  type: fail_to_pass
+  origin: pr_diff
+  description: integration-tests.instructions.md references the run-integration-tests
+    skill
+- id: copilot_instructions_skill_numbering
+  type: fail_to_pass
+  origin: pr_diff
+  description: Skill numbering is sequential (run-integration-tests=8, try-fix=9)
 rubric:
-  - rule: "Skill documentation follows the existing format in copilot-instructions.md (Purpose, Trigger phrases, Categories)"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "249-260"
-      commit: "71e5c2f595d7cc104adc18753a646e9c557c10da"
-  - rule: "PowerShell script uses consistent error handling with \$ErrorActionPreference and try/catch"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15-20"
-      commit: "71e5c2f595d7cc104adc18753a646e9c557c10da"
+- rule: Skill documentation follows the existing format in copilot-instructions.md
+    (Purpose, Trigger phrases, Categories)
+  source:
+    path: .github/copilot-instructions.md
+    lines: 249-260
+    commit: 71e5c2f595d7cc104adc18753a646e9c557c10da
+- rule: SKILL.md files MUST include YAML frontmatter with name, description, and metadata
+    (author, version)
+  source:
+    path: .github/skills/pr-build-status/SKILL.md
+    lines: 1-8
+    commit: 71e5c2f595d7cc104adc18753a646e9c557c10da
+- rule: Skill scripts MUST be placed in .github/skills/<skill-name>/scripts/ directory
+  source:
+    path: .github/skills/pr-build-status/SKILL.md
+    lines: 28-32
+    commit: 71e5c2f595d7cc104adc18753a646e9c557c10da
+- rule: 'New SKILL.md files MUST include standard markdown sections: ''## Tools Required'',
+    ''## When to Use'', and ''## Scripts'''
+  source:
+    path: .github/skills/pr-build-status/SKILL.md
+    lines: 14-29
+    commit: 71e5c2f595d7cc104adc18753a646e9c557c10da

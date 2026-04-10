@@ -66,6 +66,54 @@ def test_turbo_jsonc_valid():
     assert '"tasks"' in content, "turbo.jsonc missing tasks section"
 
 
+# [repo_tests] pass_to_pass - CI command
+def test_turbo_validate_config():
+    """Validate turbo.jsonc configuration with turbo CLI (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "turbo@2.8.9", "--version"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Turbo CLI failed: {r.stderr}"
+    assert "2.8.9" in r.stdout, f"Expected turbo 2.8.9, got: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass - CI command
+def test_package_scripts_structure():
+    """Root package.json has expected scripts structure (pass_to_pass)."""
+    code = """
+import { readFileSync } from 'fs';
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
+const scripts = pkg.scripts || {};
+const expectedScripts = ['build', 'clean', 'dev', 'lint', 'test-unit'];
+const hasExpected = expectedScripts.every(s => s in scripts);
+console.log(JSON.stringify({hasExpected, availableScripts: Object.keys(scripts).slice(0, 10)}));
+"""
+    r = _run_node_json_extract(code)
+    assert r.returncode == 0, f"Failed to check root package.json scripts: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("hasExpected") is True, f"Missing expected scripts. Available: {data.get('availableScripts')}"
+
+
+# [repo_tests] pass_to_pass - CI command
+def test_next_swc_package_structure():
+    """packages/next-swc/package.json has expected structure (pass_to_pass)."""
+    code = """
+import { readFileSync } from 'fs';
+const pkg = JSON.parse(readFileSync('./packages/next-swc/package.json', 'utf8'));
+const scripts = pkg.scripts || {};
+const hasBuildNativeAuto = 'build-native-auto' in scripts;
+const hasClean = 'clean' in scripts;
+const hasRustCheck = 'rust-check-fmt' in scripts;
+console.log(JSON.stringify({hasBuildNativeAuto, hasClean, hasRustCheck, scriptCount: Object.keys(scripts).length}));
+"""
+    r = _run_node_json_extract(code)
+    assert r.returncode == 0, f"Failed to check next-swc package.json: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("hasBuildNativeAuto") is True, "Missing build-native-auto script in next-swc"
+    assert data.get("hasClean") is True, "Missing clean script in next-swc"
+    assert data.get("hasRustCheck") is True, "Missing rust-check-fmt script in next-swc"
+
+
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # -----------------------------------------------------------------------------

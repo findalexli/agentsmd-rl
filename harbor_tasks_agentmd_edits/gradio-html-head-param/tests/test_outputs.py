@@ -81,6 +81,16 @@ def test_repo_html_tests():
     assert r.returncode == 0, f"HTML component tests failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_html_syntax():
+    """Repo's html.py parses without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import ast; ast.parse(open('gradio/components/html.py').read()); print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
+    assert "OK" in r.stdout
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - code behavior
 # ---------------------------------------------------------------------------
@@ -88,7 +98,7 @@ def test_repo_html_tests():
 
 def test_head_param_in_init():
     """HTML.__init__ must accept a head parameter before server_functions."""
-    r = _run_py("""
+    r = _run_py(r"""
 import ast
 from pathlib import Path
 
@@ -126,7 +136,7 @@ if not found:
 
 def test_head_stored_as_attribute():
     """HTML.__init__ must store head as self.head."""
-    r = _run_py("""
+    r = _run_py(r"""
 import ast
 from pathlib import Path
 
@@ -161,7 +171,7 @@ for node in ast.walk(tree):
 
 def test_publish_format_uses_self_head():
     """_to_publish_format must use self.head as fallback for the head key."""
-    r = _run_py("""
+    r = _run_py(r"""
 from pathlib import Path
 
 source = Path("gradio/components/html.py").read_text()
@@ -173,7 +183,7 @@ assert idx != -1, "_to_publish_format method not found"
 # Get the method body (up to next def at same indent)
 method_start = idx
 after = source[idx:]
-end_idx = after.find("\\ndef push_to_hub(")
+end_idx = after.find("\ndef push_to_hub(")
 if end_idx == -1:
     end_idx = len(after)
 method_source = after[:end_idx]
@@ -194,7 +204,7 @@ print("PASS")
 
 def test_push_to_hub_uses_self_head():
     """push_to_hub must pass self.head as fallback when head is not provided."""
-    r = _run_py("""
+    r = _run_py(r"""
 from pathlib import Path
 
 source = Path("gradio/components/html.py").read_text()
@@ -204,7 +214,7 @@ assert idx != -1, "push_to_hub method not found"
 
 # Get method body
 after = source[idx:]
-method_source = after[:after.find("\\n\\ndef ", 1) if "\\n\\ndef " in after else len(after)]
+method_source = after[:after.find("\n\ndef ", 1) if "\n\ndef " in after else len(after)]
 
 assert "self.head" in method_source, (
     "push_to_hub must reference self.head"

@@ -1,79 +1,62 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "block/goose"
+  repo: block/goose
   pr: 8142
-  base_commit: "f6fdbbdd7e75e7758c4ceced46fd65fb1fc76a42"
-  merge_commit: "830b77c9f1ece80d14a434aef7f097d25e7c6fd0"
-
+  base_commit: f6fdbbdd7e75e7758c4ceced46fd65fb1fc76a42
+  merge_commit: 830b77c9f1ece80d14a434aef7f097d25e7c6fd0
 checks:
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (static) — syntax / compilation
-  # ---------------------------------------------------------------------------
-  - id: rust_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified Rust files compile without errors"
-
-  - id: typescript_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files have no syntax errors"
-
-  # ---------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral changes
-  # ---------------------------------------------------------------------------
-  - id: log_level_upgraded_to_warn
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Extensions config save failure logs at warn level, not debug"
-
-  - id: stale_todo_comment_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Stale TODO comment in experiments.rs has been removed"
-
-  - id: dead_file_interruption_handler_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dead code file InterruptionHandler.tsx has been removed"
-
-  - id: dead_file_use_recipe_manager_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dead code file useRecipeManager.ts hook has been removed"
-
-  - id: debug_console_log_removed_from_app
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Debug console.log statements removed from App.tsx"
-
-  - id: dead_file_waveform_visualizer_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dead code file WaveformVisualizer.tsx has been removed"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — regression
-  # ---------------------------------------------------------------------------
-  - id: rust_tests_still_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Core Rust tests still pass after cleanup"
-
-  - id: rust_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust code passes cargo fmt --check"
-
-  - id: rust_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust code passes cargo clippy"
-
-  - id: rust_check_minimal
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust code compiles with cargo check"
-
-rubric: []
+- id: rust_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files compile without errors
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have no syntax errors
+- id: log_level_upgraded_to_warn
+  type: fail_to_pass
+  origin: pr_diff
+  description: Extensions config save failure logs at warn level, not debug
+- id: stale_todo_comment_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stale TODO comment in experiments.rs has been removed
+- id: dead_file_interruption_handler_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dead code file InterruptionHandler.tsx has been removed
+- id: dead_file_use_recipe_manager_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dead code file useRecipeManager.ts hook has been removed
+- id: debug_console_log_removed_from_app
+  type: fail_to_pass
+  origin: pr_diff
+  description: Debug console.log statements removed from App.tsx
+- id: dead_file_waveform_visualizer_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dead code file WaveformVisualizer.tsx has been removed
+- id: rust_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core Rust tests still pass after cleanup
+- id: rust_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code passes cargo fmt --check
+- id: rust_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code passes cargo clippy
+- id: rust_check_minimal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code compiles with cargo check
+rubric:
+- rule: Debug console.log statements should be removed from production UI code (clean
+    up existing logs per AGENTS.md)
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: f6fdbbdd7e75e7758c4ceced46fd65fb1fc76a42

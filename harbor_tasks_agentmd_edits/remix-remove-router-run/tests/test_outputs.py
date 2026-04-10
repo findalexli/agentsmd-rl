@@ -108,3 +108,55 @@ def test_remaining_router_tests_pass():
         timeout=120,
     )
     assert result.returncode == 0, f"Tests failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's linter passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["pnpm", "lint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Lint failed:\n{result.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's format check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["pnpm", "format:check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Format check failed:\n{result.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_changes_validate():
+    """Repo's change files validation passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["pnpm", "changes:validate"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Changes validation failed:\n{result.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_fetch_router_all_tests_pass():
+    """All fetch-router package tests pass via pnpm (pass_to_pass)."""
+    result = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/fetch-router", "run", "test"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert result.returncode == 0, f"Fetch-router tests failed:\n{result.stderr[-500:]}"

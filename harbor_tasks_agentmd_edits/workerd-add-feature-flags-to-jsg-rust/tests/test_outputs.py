@@ -241,3 +241,98 @@ def test_lib_rs_module_declaration():
         "lib.rs must declare pub mod feature_flags"
     assert re.search(r"pub\s+use\s+feature_flags::FeatureFlags", content), \
         "lib.rs must re-export FeatureFlags"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_rust_syntax_valid():
+    """Modified Rust files have valid syntax (pass_to_pass)."""
+    # Simpler check: verify braces are balanced
+    validator = """
+import sys
+from pathlib import Path
+
+files = [\"/workspace/workerd/src/rust/jsg/lib.rs\"]
+
+for path in files:
+    content = Path(path).read_text()
+    brace_depth = 0
+    for ch in content:
+        if ch == \"{\":
+            brace_depth += 1
+        elif ch == \"}\":
+            brace_depth -= 1
+            if brace_depth < 0:
+                print(f\"Unbalanced brace in {path}\")
+                sys.exit(1)
+    if brace_depth != 0:
+        print(f\"Unclosed braces in {path}: depth {brace_depth}\")
+        sys.exit(1)
+    print(f\"OK: {path}\")
+
+print(\"All Rust files valid\")
+"""
+    r = subprocess.run(
+        ["python3", "-c", validator],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Rust syntax check failed: {r.stderr} {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_trailing_whitespace():
+    """Modified files have no trailing whitespace (pass_to_pass)."""
+    files = [
+        "src/rust/jsg/lib.rs",
+        "src/rust/jsg/BUILD.bazel",
+        "src/workerd/io/worker.c++",
+        "src/rust/AGENTS.md",
+        "src/rust/jsg/README.md",
+    ]
+    for f in files:
+        path = Path(REPO) / f
+        if not path.exists():
+            continue
+        r = subprocess.run(
+            ["grep", "-n", "[[:space:]]$", str(path)],
+            capture_output=True, text=True,
+        )
+        assert r.returncode != 0, f"Trailing whitespace found in {f}: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_crlf():
+    """Modified files use Unix line endings (pass_to_pass)."""
+    files = [
+        "src/rust/jsg/lib.rs",
+        "src/rust/jsg/BUILD.bazel",
+        "src/rust/AGENTS.md",
+        "src/rust/jsg/README.md",
+    ]
+    for f in files:
+        path = Path(REPO) / f
+        if not path.exists():
+            continue
+        content = path.read_bytes()
+        if b"\r\n" in content:
+            raise AssertionError(f"CRLF line endings found in {f}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jsg_build_bazel_valid():
+    """jsg BUILD.bazel has valid structure (pass_to_pass)."""
+    # Check BUILD.bazel has proper structure
+    build_path = Path(REPO) / "src" / "rust" / "jsg" / "BUILD.bazel"
+    content = build_path.read_text()
+
+    # Must have wd_rust_crate rule
+    assert "wd_rust_crate(" in content, "BUILD.bazel must have wd_rust_crate rule"
+    # Must have proper cxx_bridge
+    assert "cxx_bridge" in content, "BUILD.bazel must reference cxx_bridge"
+    # Check balanced parentheses
+    open_count = content.count("(")
+    close_count = content.count(")")
+    assert open_count == close_count, f"Unbalanced parentheses: {open_count} vs {close_count}"
+    # Check balanced brackets
+    open_bracket = content.count("[")
+    close_bracket = content.count("]")
+    assert open_bracket == close_bracket, f"Unbalanced brackets: {open_bracket} vs {close_bracket}"

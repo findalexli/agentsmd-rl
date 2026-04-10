@@ -1,31 +1,60 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:45:28.701395",
-  "total_time": 5702.05,
-  "sandbox_id": "ihspgvc0h4udaul12z2u5",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:29:19.621836",
+  "total_time": 1733.49,
+  "sandbox_id": "ing0ls5btj25hmu78k47i",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
+      "notes": "Added 3 new pass_to_pass repo_tests:\n1. test_repo_bash_syntax_verify_script - runs 'bash -n' on the verification script\n2. test_repo_python_syntax_check_scripts - runs 'python3 -m py_compile' on CI helper scripts (.github/scripts/check-idor-model-coverage.py, .github/scripts/check-operator-parity.py)\n3. test_repo_workflow_yaml_validates - validates workflow YAML files (ci-e2e-playwright.yml, ci-frontend.yml) using yaml.safe_load\n\nCI commands verified in Docker:\n- 'bash -n <script>' for shell script syntax validation (exit 0 on valid scripts)\n- 'python3 -m py_compile <file>' for Python syntax validation (exit 0 on valid Python)\n- 'yaml.safe_load()' via PyYAML for YAML validation (no exception on valid YAML)\n\nThe p2p tests with origin: repo_tests all use subprocess.run() to execute real CI commands."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 43.07,
+      "time": 306.69,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "judge_icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build successful; NOP test reward=0 (tests correctly fail on base commit); Gold test reward=1 (14/14 tests pass); Rubric judge ICR=1.0 (added reference field to rubric rule for style comparison)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 179.74
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 17.81,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5702.05,
-      "at": "2026-04-09T07:45:28.701395"
+      "time": 1733.49,
+      "at": "2026-04-10T12:29:19.621836"
     }
   ]
 }

@@ -29,6 +29,46 @@ def test_syntax_check():
     assert r.returncode == 0, f"run.sh has syntax errors:\n{r.stderr.decode()}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm lint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's TypeScript build passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_check():
+    """Repo's build-check (typecheck examples) passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm build && pnpm -r build-check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build-check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm build && pnpm test -- --run"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests for the skill scripts
 # ---------------------------------------------------------------------------

@@ -148,6 +148,32 @@ def test_repo_eslint_pages_handler():
     assert r.returncode == 0, f"ESLint failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_eslint_modified_files():
+    """Repo's ESLint check passes on all modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--config", "eslint.cli.config.mjs",
+         "packages/next/src/server/render-result.ts",
+         "packages/next/src/server/send-payload.ts",
+         "packages/next/src/server/route-modules/pages/pages-handler.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_modified_files():
+    """Repo's Prettier check passes on all modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check",
+         "packages/next/src/server/render-result.ts",
+         "packages/next/src/server/send-payload.ts",
+         "packages/next/src/server/route-modules/pages/pages-handler.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

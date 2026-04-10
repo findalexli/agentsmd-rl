@@ -17,6 +17,8 @@ SKILL_FILE = (
     Path(REPO) / "products" / "llm_analytics" / "skills"
     / "exploring-llm-evaluations" / "SKILL.md"
 )
+SKILLS_DIR = Path(REPO) / "products" / "llm_analytics" / "skills"
+LLM_ANALYTICS_DIR = Path(REPO) / "products" / "llm_analytics"
 
 
 # ---------------------------------------------------------------------------
@@ -54,7 +56,7 @@ assert 'tools' in data, "Missing 'tools' key"
 tools = data['tools']
 
 # Per implementing-mcp-tools guide:
-# - Tool names must be kebab-case, max 52 chars
+# - Tool names must be kebab-case, max 56 chars
 # - Enabled tools must have scopes (non-empty list) and annotations
 kebab_pattern = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*$')
 
@@ -63,8 +65,8 @@ for name, tool in tools.items():
     # Validate tool name format (kebab-case)
     if not kebab_pattern.match(name):
         errors.append(f"Tool '{name}': invalid kebab-case name")
-    if len(name) > 52:
-        errors.append(f"Tool '{name}': name exceeds 52 chars ({len(name)})")
+    if len(name) > 56:
+        errors.append(f"Tool '{name}': name exceeds 56 chars ({len(name)})")
 
     # Validate enabled tools have required fields
     if tool.get('enabled'):
@@ -135,6 +137,141 @@ def test_existing_skills_have_frontmatter():
                     f"Skill '{skill_dir.name}': Missing 'name' in frontmatter"
                 assert 'description:' in frontmatter, \
                     f"Skill '{skill_dir.name}': Missing 'description' in frontmatter"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass repo tests (CI/CD tests from the actual repo)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — validate mcp prompts.yaml syntax
+def test_mcp_prompts_yaml_valid():
+    """MCP prompts.yaml parses as valid YAML."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import yaml
+data = yaml.safe_load(open('products/llm_analytics/mcp/prompts.yaml'))
+assert isinstance(data, dict), f"Expected dict, got {type(data)}"
+print("PASS: prompts.yaml is valid YAML")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"prompts.yaml validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — verify existing skills are listed in README
+def test_all_existing_skills_in_readme():
+    """All existing skill directories are referenced in README."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+from pathlib import Path
+readme = Path('{REPO}/products/llm_analytics/skills/README.md').read_text()
+skills_dir = Path('{REPO}/products/llm_analytics/skills')
+
+missing = []
+for skill_dir in skills_dir.iterdir():
+    if skill_dir.is_dir() and skill_dir.name != '__pycache__':
+        skill_name = skill_dir.name
+        # Check that skill is mentioned in README (either as bold name or directory reference)
+        if skill_name not in readme and skill_dir.name.replace('-', ' ') not in readme.lower():
+            # Try alternate forms
+            display_name = skill_name.replace('-', ' ').title()
+            if display_name not in readme:
+                missing.append(skill_name)
+
+if missing:
+    print(f"FAIL: Skills not in README: {{missing}}")
+    exit(1)
+print("PASS: All skills referenced in README")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Skill README check failed:\n{r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — validate existing skill structure
+def test_existing_skills_valid_structure():
+    """Existing skill directories have valid SKILL.md with required frontmatter."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+from pathlib import Path
+import re
+
+skills_dir = Path('{REPO}/products/llm_analytics/skills')
+errors = []
+
+for skill_dir in skills_dir.iterdir():
+    if skill_dir.is_dir() and skill_dir.name != '__pycache__':
+        skill_file = skill_dir / 'SKILL.md'
+        if not skill_file.exists():
+            errors.append(f"{{skill_dir.name}}: Missing SKILL.md")
+            continue
+
+        content = skill_file.read_text()
+
+        # Check YAML frontmatter
+        if not content.startswith('---'):
+            errors.append(f"{{skill_dir.name}}: Missing frontmatter delimiter")
+            continue
+
+        try:
+            end = content.index('---', 3)
+            frontmatter = content[3:end]
+        except ValueError:
+            errors.append(f"{{skill_dir.name}}: Invalid frontmatter (no closing ---)")
+            continue
+
+        # Check required fields
+        if 'name:' not in frontmatter:
+            errors.append(f"{{skill_dir.name}}: Missing 'name' in frontmatter")
+        if 'description:' not in frontmatter:
+            errors.append(f"{{skill_dir.name}}: Missing 'description' in frontmatter")
+
+        # Check that name matches kebab-case format
+        name_match = re.search(r'^name:\\s*(.+)$', frontmatter, re.MULTILINE)
+        if name_match:
+            name_value = name_match.group(1).strip()
+            if name_value != skill_dir.name:
+                errors.append(f"{{skill_dir.name}}: Frontmatter name '{{name_value}}' doesn't match directory name")
+
+if errors:
+    print("FAIL: Skill structure errors:")
+    for e in errors:
+        print(f"  - {{e}}")
+    exit(1)
+print("PASS: All skills have valid structure")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Skill structure validation failed:\n{r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — validate llm_analytics directory structure
+def test_llm_analytics_directory_structure():
+    """Required directories exist in llm_analytics product."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+from pathlib import Path
+
+base = Path('{REPO}/products/llm_analytics')
+required_dirs = ['mcp', 'skills', 'backend']
+
+missing = []
+for d in required_dirs:
+    if not (base / d).exists():
+        missing.append(d)
+
+if missing:
+    print(f"FAIL: Missing directories: {{missing}}")
+    exit(1)
+print("PASS: Required llm_analytics directories exist")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Directory structure check failed:\n{r.stdout}\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

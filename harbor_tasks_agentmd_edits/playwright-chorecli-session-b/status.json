@@ -1,20 +1,34 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:42:17.553359",
-  "total_time": 6428.89,
-  "sandbox_id": "i84cdb9pwhpffky0zlad8",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:28:30.460813",
+  "total_time": 2289.74,
+  "sandbox_id": "ioperqqli1gd8mpmk0h53",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 973.9,
+      "status": "completed",
+      "notes": "Added 3 new repo_tests CI gates: test_repo_npm_run_build (npm run build), test_repo_npm_run_eslint (eslint on terminal files), test_repo_npm_run_test_mcp_cli_help (MCP cli-help tests). Docker image builds successfully. CI commands verified working in container.",
+      "ci_commands_found": [
+        "npm run build - builds the playwright packages",
+        "npm run eslint -- packages/playwright/src/mcp/terminal/*.ts - lints terminal source files",
+        "npx playwright test --config=tests/mcp/playwright.config.ts cli-help.spec.ts - runs MCP cli-help tests"
+      ],
+      "tests_added": [
+        "test_repo_npm_run_build",
+        "test_repo_npm_run_eslint",
+        "test_repo_npm_run_test_mcp_cli_help"
+      ]
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 701.48,
       "notes": ""
     },
     "improve": {
@@ -23,16 +37,34 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.83,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile to add npm ci to install dependencies. All 4 validation checks pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 331.21
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 6.98,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6428.89,
-      "at": "2026-04-09T07:42:17.553359"
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2289.74,
+      "at": "2026-04-10T12:28:30.460813"
     }
   ]
 }

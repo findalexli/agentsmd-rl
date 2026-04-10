@@ -156,7 +156,6 @@ def test_press_tool_still_exported():
 def test_press_sequentially_submit_unchanged():
     """pressSequentially with submit:true should still waitForCompletion + setIncludeSnapshot."""
     src = KEYBOARD_TS.read_text()
-    # Extract the entire pressSequentially tool definition
     ps_match = re.search(
         r"const pressSequentially\s*=\s*defineTabTool\(\{[\s\S]*?handle:\s*async\s*\([^)]*\)\s*=>\s*\{([\s\S]*?)\n\s*\},\n\}\);",
         src,
@@ -170,7 +169,29 @@ def test_press_sequentially_submit_unchanged():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD regression checks
+# Pass-to-pass (static) — file structure regression checks
+# ---------------------------------------------------------------------------
+
+def test_keyboard_file_structure():
+    """Keyboard.ts has valid structure with required exports (pass_to_pass)."""
+    content = KEYBOARD_TS.read_text()
+    assert "import { z }" in content, "Missing z import"
+    assert "import { defineTabTool }" in content, "Missing defineTabTool import"
+    assert "const press = defineTabTool" in content, "Missing press tool definition"
+    assert "const pressSequentially = defineTabTool" in content, "Missing pressSequentially tool definition"
+    assert "export default" in content, "Missing default export"
+
+
+def test_skill_md_structure():
+    """SKILL.md has valid structure with required sections (pass_to_pass)."""
+    content = SKILL_MD.read_text()
+    assert "## Core workflow" in content, "Missing Core workflow section"
+    assert "## Commands" in content, "Missing Commands section"
+    assert "name: playwright-cli" in content, "Missing header frontmatter"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD regression checks (actual subprocess tests)
 # ---------------------------------------------------------------------------
 
 def test_repo_npm_install():
@@ -182,21 +203,57 @@ def test_repo_npm_install():
     assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
 
 
-def test_repo_keyboard_file_valid():
-    """Keyboard.ts has valid structure with required exports (pass_to_pass)."""
-    content = KEYBOARD_TS.read_text()
-    # Check for required imports
-    assert "import { z }" in content, "Missing z import"
-    assert "import { defineTabTool }" in content, "Missing defineTabTool import"
-    assert "const press = defineTabTool" in content, "Missing press tool definition"
-    assert "const pressSequentially = defineTabTool" in content, "Missing pressSequentially tool definition"
-    assert "export default" in content, "Missing default export"
+def test_repo_eslint_keyboard():
+    """ESLint passes on keyboard.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "--include=dev"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "packages/playwright/src/mcp/browser/tools/keyboard.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed: {r.stderr[-500:]}"
 
 
-def test_repo_skill_md_valid():
-    """SKILL.md has valid structure with required sections (pass_to_pass)."""
-    content = SKILL_MD.read_text()
-    # Check for required sections
-    assert "## Core workflow" in content, "Missing Core workflow section"
-    assert "## Commands" in content, "Missing Commands section"
-    assert "name: playwright-cli" in content, "Missing header frontmatter"
+def test_repo_build():
+    """Repo build succeeds (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "--include=dev"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed: {r.stderr[-500:]}"
+
+
+def test_repo_check_deps():
+    """Repo dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "--include=dev"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-deps failed: {r.stderr[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Repo package linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "--include=dev"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed: {r.stderr[-500:]}"

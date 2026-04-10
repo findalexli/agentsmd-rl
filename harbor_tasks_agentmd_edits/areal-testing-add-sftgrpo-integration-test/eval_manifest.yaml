@@ -57,7 +57,35 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: YAML configs are syntactically valid
-rubric: []
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python formatting passes on modified files (ruff format --check)
+- id: repo_clang_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ source files are properly formatted (clang-format)
+- id: repo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: JSON reference files are syntactically valid
+- id: repo_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified test files can be parsed and have test functions
+rubric:
+- rule: Tests parametrized for multiple backends (fsdp/megatron) must use @pytest.mark.parametrize
+    decorator, not ad-hoc loops
+  source:
+    path: AGENTS.md
+    lines: '261'
+    commit: d64f8688833cd73648a1b06932f1fbec542694e3
+- rule: New YAML configs must use Hydra-friendly dotted names (e.g., ${experiment_name})
+    for variable substitution; model/dataset paths may be hardcoded as in existing configs
+  source:
+    path: AGENTS.md
+    lines: 130-131
+    commit: d64f8688833cd73648a1b06932f1fbec542694e3
 config_edits:
 - path: examples/experimental/proxy/README.md
   tier: 2

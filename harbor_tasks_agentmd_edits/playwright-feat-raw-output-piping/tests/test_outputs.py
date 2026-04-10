@@ -257,3 +257,47 @@ def test_not_stub():
     # Must have section filtering logic (not trivial)
     assert "filter" in serialize_body or "section" in serialize_body, \
         "serialize must have section filtering logic"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI commands that must pass at base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mcp_tests():
+    """Repo MCP tests pass (pass_to_pass) — most relevant to PR #40010."""
+    r = subprocess.run(
+        ["npm", "run", "test-mcp"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP tests failed:\n{r.stderr[-500:]}"

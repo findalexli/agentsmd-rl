@@ -9,6 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified pages-handler.ts must parse without TypeScript errors
+- id: repo_eslint_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on pages-handler.ts
+- id: repo_prettier_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting passes on pages-handler.ts
+- id: repo_eslint_render_result
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on render-result.ts
+- id: repo_node_syntax_check_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js syntax check passes on pages-handler.ts
+- id: repo_alex_linting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Language linting (alex) passes on repo docs
 - id: no_buffer_from_in_data_request
   type: fail_to_pass
   origin: pr_diff
@@ -33,15 +53,27 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: AGENTS.md should NOT show incorrect bare '--args' without separator
-rubric: []
+rubric:
+- rule: When editing core Next.js files (`packages/next/**`), run `pnpm --filter=next
+    build` before running tests.
+  source:
+    path: AGENTS.md
+    lines: 370-373
+    commit: fb85660ab1f70e294465af0074dc7c941e3540ca
 config_edits:
 - path: AGENTS.md
   tier: 1
   gold_added: "# Use --args for non-interactive mode (forward args to the script using\
-    \ `--`)\n# Format: pnpm new-test -- --args <appDir> <name> <type>\npnpm new-test\
-    \ -- --args true my-feature e2e\n  -- **Quick smoke testing with toy apps**: For\
-    \ fast feedback, generate a minimal test fixture with `pnpm new-test -- --args\
-    \ true <name> e2e`, then run the dev server directly with `node packages/next/dist/bin/next\
+    \ `--`)\n# Format: pnpm new-test -- --args <appDir> <name> <type>\n# appDir: true/false\
+    \ (is this for app directory?)\n# name: test name (e.g. \"my-feature\")\n# type: e2e\
+    \ | production | development | unit\n\n# When editing core Next.js files (packages/next/**),\
+    \ run the build first:\npnpm --filter=next build\n\n# Then create the test\npnpm\
+    \ new-test -- --args true my-feature e2e\n```\n\n**Analyzing test output efficiently:**\n\
+    \nNever re-run the same test suite with different grep filters. Capture output once\
+    \ to a file, then read from it:\n\n```bash\n# Run once, save everything\npnpm test-dev-turbo\
+    \ test/development/ 2>&1 | tee /tmp/test.log\n  -- **Quick smoke testing with toy\
+    \ apps**: For fast feedback, generate a minimal test fixture with `pnpm new-test\
+    \ -- --args true <name> e2e`, then run the dev server directly with `node packages/next/dist/bin/next\
     \ dev --port <port>` and `curl --max-time 10`. This avoids the overhead of the\
     \ full test harness and gives immediate feedback on hangs/crashes."
   gold_removed: '# Use --args for non-interactive mode

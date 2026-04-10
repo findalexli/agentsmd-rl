@@ -24,8 +24,13 @@ import os
 import sys
 import importlib.util
 
-spec = importlib.util.spec_from_file_location("profiling", "{REPO}/gradio/profiling.py")
+# Need to set up the module properly for dataclass to work
+sys.modules['gradio'] = type(sys)('gradio')
+sys.modules['gradio'].__dict__['__dict__'] = {{}}
+
+spec = importlib.util.spec_from_file_location("gradio.profiling", "{REPO}/gradio/profiling.py")
 mod = importlib.util.module_from_spec(spec)
+sys.modules['gradio.profiling'] = mod
 spec.loader.exec_module(mod)
 
 {test_code}
@@ -263,6 +268,10 @@ def test_repo_python_syntax():
 def test_repo_ruff_check():
     """Ruff lint check passes on modified files (pass_to_pass)."""
     r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
         ["python", "-m", "ruff", "check", "gradio/profiling.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
@@ -272,6 +281,10 @@ def test_repo_ruff_check():
 # [repo_tests] pass_to_pass
 def test_repo_ruff_format():
     """Ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
     r = subprocess.run(
         ["python", "-m", "ruff", "format", "--check", "gradio/profiling.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -286,3 +299,72 @@ def test_repo_benchmark_readme_exists():
     assert readme.exists(), "Benchmark README not found"
     content = readme.read_text()
     assert "Profiling" in content or "Benchmark" in content, "README missing expected content"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_profiling_importable():
+    """Profiling module can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import sys
+import importlib.util
+
+# Set up parent module for dataclass to work
+sys.modules['gradio'] = type(sys)('gradio')
+sys.modules['gradio'].__dict__['__dict__'] = {{}}
+
+spec = importlib.util.spec_from_file_location('gradio.profiling', '{REPO}/gradio/profiling.py')
+mod = importlib.util.module_from_spec(spec)
+sys.modules['gradio.profiling'] = mod
+spec.loader.exec_module(mod)
+print('OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Profiling module import failed:\n{r.stderr}"
+    assert "OK" in r.stdout, "Profiling module import did not complete successfully"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_profiling_has_trace_functions():
+    """Profiling module has expected trace functions (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import sys
+import importlib.util
+
+# Set up parent module for dataclass to work
+sys.modules['gradio'] = type(sys)('gradio')
+sys.modules['gradio'].__dict__['__dict__'] = {{}}
+
+spec = importlib.util.spec_from_file_location('gradio.profiling', '{REPO}/gradio/profiling.py')
+mod = importlib.util.module_from_spec(spec)
+sys.modules['gradio.profiling'] = mod
+spec.loader.exec_module(mod)
+assert hasattr(mod, 'trace_phase'), 'trace_phase not found'
+assert hasattr(mod, 'RequestTrace'), 'RequestTrace not found'
+print('OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Profiling functions check failed:\n{r.stderr}"
+    assert "OK" in r.stdout, "Profiling functions check did not complete successfully"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_syntax_errors():
+    """All Python files in modified directories have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import ast
+import sys
+files = ['{REPO}/gradio/profiling.py']
+for fpath in files:
+    with open(fpath) as f:
+        ast.parse(f.read(), filename=fpath)
+print('OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+    assert "OK" in r.stdout, "Syntax check did not complete successfully"

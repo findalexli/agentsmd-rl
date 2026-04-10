@@ -203,8 +203,29 @@ console.log('PASS')
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_mime_unit_tests():
+    """Repo's unit tests for @remix-run/mime pass (pass_to_pass)."""
+    # Run node --test on the mime package test files
+    test_files = [
+        f"{REPO}/packages/mime/src/lib/detect-content-type.test.ts",
+        f"{REPO}/packages/mime/src/lib/detect-mime-type.test.ts",
+        f"{REPO}/packages/mime/src/lib/is-compressible-mime-type.test.ts",
+        f"{REPO}/packages/mime/src/lib/mime-type-to-content-type.test.ts",
+    ]
+    for test_file in test_files:
+        r = subprocess.run(
+            ["node", "--disable-warning=ExperimentalWarning", "--test", test_file],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Test {test_file} failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_builtin_detect_mime_type():
-    """Built-in extension mappings still resolve correctly."""
+    """Built-in extension mappings still resolve correctly (pass_to_pass)."""
     r = _run_ts('''
 import { detectMimeType } from './packages/mime/src/index.ts'
 

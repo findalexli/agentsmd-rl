@@ -47,11 +47,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'Repo CI: documentation build passes (docusaurus build)'
+- id: test_documentation_verify_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: documentation verify-build passes (checks goose-docs-map.md
+    exists)'
 - id: test_existing_markdown_valid
   type: pass_to_pass
   origin: static
   description: Pre-existing markdown files still parse correctly after changes
-rubric: []
+rubric:
+- rule: Documentation must always use lowercase 'goose' (never 'Goose') when referring
+    to the product name
+  source:
+    path: documentation/AGENTS.md
+    lines: 5-10
+    commit: e2d174ac1d4ed3304d9949f04572803467d343cb
 config_edits:
 - path: documentation/docs/tutorials/playwright-skill.md
   tier: 1

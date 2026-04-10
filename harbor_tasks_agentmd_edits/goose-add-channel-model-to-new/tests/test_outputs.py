@@ -163,6 +163,43 @@ def test_go_build_succeeds():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands from repo
+# ---------------------------------------------------------------------------
+
+
+def test_repo_go_vet():
+    """Go vet passes on all packages (pass_to_pass)."""
+    r = _run(["go", "vet", "-composites=false", "./..."], timeout=120)
+    assert r.returncode == 0, f"go vet failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_gofmt():
+    """Go code is properly formatted (pass_to_pass)."""
+    r = _run(["gofmt", "-l", "."], timeout=60, cwd=REPO)
+    # gofmt -l returns 0 but prints files that need formatting
+    if r.stdout.strip():
+        assert False, f"gofmt found unformatted files:\n{r.stdout[:500]}"
+
+
+def test_repo_unit_tests():
+    """Main package unit tests pass (pass_to_pass)."""
+    r = _run(["go", "test", "-v", "./..."], timeout=300)
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_channel_tests():
+    """Channel model tests pass (pass_to_pass)."""
+    r = _run(["go", "test", "-v", "./model/channel/..."], timeout=120)
+    assert r.returncode == 0, f"Channel tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_declfilter_tests():
+    """Declfilter package tests pass (pass_to_pass)."""
+    r = _run(["go", "test", "-v", "./declfilter/..."], timeout=60)
+    assert r.returncode == 0, f"Declfilter tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + syntax checks
 # ---------------------------------------------------------------------------
 
@@ -203,7 +240,7 @@ if content.count("func ") < 10:
     sys.exit(1)
 
 # Check for actual logic (not just pass/panic)
-non_trivial = ["for ", "if ", "switch ", "select"]
+non_trivial = ["for ", "if ", "switch ", "select "]
 found_logic = any(kw in content for kw in non_trivial)
 if not found_logic:
     print("FAIL: No control flow found, likely a stub")

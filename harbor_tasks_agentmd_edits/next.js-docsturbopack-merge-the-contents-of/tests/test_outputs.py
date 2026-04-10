@@ -81,7 +81,7 @@ def test_vc_readme_has_cells_content():
         "Recomputability",
         "Dependency Tracking",
         "cell counter",
-        "Invalidat",
+        "invalidat",
         "TaskOutput",
         "TaskCell",
         "[`Vc<T>`]",

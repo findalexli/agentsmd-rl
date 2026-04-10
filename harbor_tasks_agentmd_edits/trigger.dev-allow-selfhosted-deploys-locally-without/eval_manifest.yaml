@@ -22,6 +22,25 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files exist and contain valid structure
+
+# Pass-to-pass checks using repo CI commands (subprocess.run)
+- id: test_repo_no_tabs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files use spaces not tabs
+- id: test_repo_trailing_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files end with newline (POSIX standard)
+- id: test_repo_node_syntax_webapp_route
+  type: pass_to_pass
+  origin: repo_tests
+  description: Webapp route file has valid JS/TS structure
+- id: test_repo_node_syntax_buildimage
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI buildImage.ts has valid JS/TS structure
+
 rubric:
 - rule: CONTRIBUTING.md build instructions are clear and follow the style of surrounding
     steps

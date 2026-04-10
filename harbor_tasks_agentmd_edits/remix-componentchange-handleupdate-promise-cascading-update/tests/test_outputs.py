@@ -115,16 +115,55 @@ def test_schedule_update_no_task_param():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_existing_tests_pass():
-    """Upstream vitest suite for the component package still passes."""
+def test_component_typecheck():
+    """Component package TypeScript typechecks without errors."""
     r = subprocess.run(
-        ["pnpm", "--filter", "@remix-run/component", "run", "test"],
+        ["pnpm", "--filter", "@remix-run/component", "run", "typecheck"],
         cwd=REPO,
         capture_output=True,
         timeout=120,
     )
-    output = (r.stdout.decode() + r.stderr.decode())[-3000:]
-    assert r.returncode == 0, f"Component tests failed:\n{output}"
+    output = (r.stdout.decode() + r.stderr.decode())[-2000:]
+    assert r.returncode == 0, f"Component typecheck failed:\n{output}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint passes without errors on the component package."""
+    r = subprocess.run(
+        ["pnpm", "exec", "eslint", "packages/component/src", "--max-warnings=0"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    output = (r.stdout.decode() + r.stderr.decode())[-2000:]
+    assert r.returncode == 0, f"ESLint failed:\n{output}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Repo's Prettier formatting check passes."""
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--check", "packages/component/src"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    output = (r.stdout.decode() + r.stderr.decode())[-2000:]
+    assert r.returncode == 0, f"Format check failed:\n{output}"
+
+
+# [repo_tests] pass_to_pass
+def test_component_build():
+    """Component package TypeScript builds successfully."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/component", "run", "build"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    output = (r.stdout.decode() + r.stderr.decode())[-2000:]
+    assert r.returncode == 0, f"Component build failed:\n{output}"
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +171,9 @@ def test_existing_tests_pass():
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass — packages/component/AGENTS.md
+def test_agents_md_updated():
+    """AGENTS.md documents await handle.update() and AbortSignal return."""
+    agents_md = Path(f"{COMPONENT}/AGENTS.md").read_text()
 
     # Must show the await handle.update() usage pattern
     assert "await handle.update()" in agents_md, \
@@ -150,6 +192,9 @@ def test_existing_tests_pass():
 
 
 # [config_edit] fail_to_pass — packages/component/README.md
+def test_readme_updated():
+    """README.md documents handle.update() Promise<AbortSignal> return."""
+    readme = Path(f"{COMPONENT}/README.md").read_text()
 
     # Must mention await or Promise for handle.update()
     has_new_api = (

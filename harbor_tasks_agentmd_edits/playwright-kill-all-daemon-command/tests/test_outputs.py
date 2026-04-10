@@ -128,7 +128,7 @@ def test_repo_build():
     """Repo's build command passes (pass_to_pass)."""
     r = subprocess.run(
         ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
@@ -141,3 +141,61 @@ def test_repo_eslint_playwright_core():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — eslint on terminal source files (modified code)
+def test_repo_eslint_terminal():
+    """Repo's ESLint on modified terminal source files passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "packages/playwright/src/mcp/terminal/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — build generates valid CLI entry point
+def test_repo_build_generates_cli():
+    """Build generates playable CLI that can show help (pass_to_pass)."""
+    # First build the project
+    r1 = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r1.returncode == 0, f"Build failed:\n{r1.stderr[-500:]}"
+    # Then verify CLI can run
+    cli_js = Path(REPO) / "packages" / "playwright" / "lib" / "mcp" / "terminal" / "cli.js"
+    assert cli_js.exists(), f"Compiled CLI entry point not found at {cli_js}"
+    r2 = subprocess.run(
+        ["node", str(cli_js), "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r2.returncode == 0, f"CLI --help failed:\n{r2.stderr[-500:]}"
+    assert "session-list" in r2.stdout, f"CLI help should mention session-list:\n{r2.stdout[:500]}"
+
+
+# [repo_tests] pass_to_pass — lint-packages workspace check
+def test_repo_lint_packages():
+    """Repo's workspace package consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — build generates help.json for CLI
+def test_repo_build_generates_help():
+    """Build generates CLI help.json file (pass_to_pass)."""
+    # First build the project
+    r1 = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r1.returncode == 0, f"Build failed:\n{r1.stderr[-500:]}"
+    # Verify help.json was generated
+    help_json = Path(REPO) / "packages" / "playwright" / "lib" / "mcp" / "terminal" / "help.json"
+    assert help_json.exists(), f"Generated CLI help.json not found at {help_json}"
+    # Verify it's valid JSON
+    content = help_json.read_text()
+    help_data = json.loads(content)
+    assert "commands" in help_data or "sections" in help_data, f"help.json should contain commands or sections"

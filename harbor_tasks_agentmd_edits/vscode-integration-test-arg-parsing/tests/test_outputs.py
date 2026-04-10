@@ -31,7 +31,7 @@ def test_syntax_check():
         )
 
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_all_shell_scripts_syntax():
     """All repo shell scripts must parse without syntax errors."""
     scripts = [
@@ -76,6 +76,39 @@ def test_shell_script_executability():
             assert mode & stat.S_IXUSR, f"{script} should be executable"
 
 
+# [repo_tests] pass_to_pass
+def test_node_syntax_integration_tests():
+    """Node.js can parse modified JS test files (node --check)."""
+    files = [
+        "test/integration/electron/testrunner.js",
+    ]
+    for filepath in files:
+        r = subprocess.run(
+            ["node", "--check", filepath],
+            cwd=REPO, capture_output=True, timeout=30,
+        )
+        assert r.returncode == 0, (
+            f"{filepath} has syntax errors:\n{r.stderr.decode()}"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_node_syntax_css_html_tests():
+    """Node.js can parse CSS and HTML server test index files."""
+    files = [
+        "extensions/css-language-features/server/test/index.js",
+        "extensions/html-language-features/server/test/index.js",
+    ]
+    for filepath in files:
+        r = subprocess.run(
+            ["node", "--check", filepath],
+            cwd=REPO, capture_output=True, timeout=30,
+        )
+        assert r.returncode == 0, (
+            f"{filepath} has syntax errors:\n{r.stderr.decode()}"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -103,7 +136,7 @@ def test_help_lists_available_suites():
     out = r.stdout.decode()
     # Check for a representative sample of suite names
     for suite in ["api-folder", "git", "typescript", "emmet", "css", "html"]:
-        assert suite in out, f"--help should list suite \047{suite}\047"
+        assert suite in out, f"--help should list suite '{suite}'"
 
 
 # [pr_diff] fail_to_pass
@@ -128,7 +161,7 @@ def test_invalid_suite_exits_error():
         "Should exit non-zero for invalid suite filter"
     )
     assert "no suites match" in combined.lower(), (
-        f"Should report \047no suites match\047 for invalid filter. Got:\n{combined}"
+        f"Should report 'no suites match' for invalid filter. Got:\n{combined}"
     )
 
 

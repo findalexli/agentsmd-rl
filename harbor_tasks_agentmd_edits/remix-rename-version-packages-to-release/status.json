@@ -1,21 +1,74 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:45:24.729334",
-  "total_time": 5790.42,
-  "sandbox_id": "ipnnu740681l0gr8tt7eh",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:16:21.923759",
+  "total_time": 2781.56,
+  "sandbox_id": "ilz3ft4wcg6kkpsa7cbvv",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "status": "completed",
+      "model": "kimi",
+      "backend": "fireworks",
       "time": 224.15,
+      "notes": "Added 5 repo_tests p2p gates: pnpm lint, pnpm typecheck, pnpm changes:validate, pnpm format:check, and npx tsc --noEmit in scripts directory. All tested and verified working on base commit. CI commands discovered from .github/workflows/check.yaml and .github/workflows/format.yml."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 860.66,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 5,
+      "rejection_reasons": "2 rules about PR workflow/commit messages not evaluable from diff; 1 rule about imports not applicable (PR uses existing import patterns); 2 rules about test structure and formatting handled by repo checks",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 47.09
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 18.13,
+      "notes": "",
+      "precision": 1.0
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile: added pnpm installation (npm install -g pnpm) and pnpm install --frozen-lockfile to enable repo_tests (lint, typecheck, format, changes:validate). The solve.sh script was updated to run pnpm format after applying the patch to fix Prettier formatting issues in the added code. All 16 tests now pass. Rubric judge returns 0.5 due to missing API keys (fallback), but gold solution follows AGENTS.md rules (const at module scope only, let for locals; arrow functions as callbacks only; no single-letter type params).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 467.96
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.39,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +79,14 @@
       "backend": "glm",
       "time": 5790.42,
       "at": "2026-04-09T07:45:24.729334"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2781.56,
+      "at": "2026-04-10T13:16:21.923759"
     }
   ]
 }

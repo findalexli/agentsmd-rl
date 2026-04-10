@@ -43,6 +43,57 @@ def test_shared_utils_valid_syntax():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI commands that actually run repo code
+# ---------------------------------------------------------------------------
+
+
+def test_repo_script_files_exist():
+    """All PowerShell script files must exist at their declared paths (pass_to_pass)."""
+    result = subprocess.run(
+        ["pwsh", "-NoProfile", "-Command",
+         f"Test-Path '{SHARED_UTILS}' && Test-Path '{HOST_APP}' && "
+         f"Test-Path '{REVIEW_PR}' && Test-Path '{START_EMULATOR}' && "
+         f"Test-Path '{ANDROID_CAKE}'"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Script files missing: {result.stderr}"
+
+
+def test_repo_git_works():
+    """Git commands must work in the repo (pass_to_pass)."""
+    result = subprocess.run(
+        ["git", "status", "--short"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"git status failed: {result.stderr}"
+
+
+def test_repo_ps_file_info():
+    """PowerShell Get-ChildItem must work on script directories (pass_to_pass)."""
+    result = subprocess.run(
+        ["pwsh", "-NoProfile", "-Command",
+         f"Get-ChildItem '{REPO}/.github/scripts' -Filter '*.ps1' | Measure-Object | "
+         f"Select-Object -ExpandProperty Count"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"PowerShell file listing failed: {result.stderr}"
+    count = result.stdout.strip()
+    assert int(count) > 0, f"Expected PowerShell files, got count: {count}"
+
+
+def test_repo_test_script_syntax():
+    """Test-EstablishBrokenBaseline.ps1 must have valid PowerShell syntax (pass_to_pass)."""
+    test_script = f"{REPO}/.github/scripts/tests/Test-EstablishBrokenBaseline.ps1"
+    result = subprocess.run(
+        ["pwsh", "-NoProfile", "-Command",
+         f"Get-Command '{test_script}' -ErrorAction Stop | Out-Null; 'SYNTAX_OK'"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Test script syntax error: {result.stderr}"
+    assert "SYNTAX_OK" in result.stdout, f"Test script validation failed: {result.stdout}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass — code behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -84,7 +135,7 @@ def test_review_pr_tree_restore():
     content = REVIEW_PR.read_text()
     assert "git checkout HEAD -- ." in content, \
         "Review-PR.ps1 must restore tracked files with git checkout HEAD -- ."
-    # Must appear more than once (at least phase 1→2 and phase 2→3)
+    # Must appear more than once (at least phase 1->2 and phase 2->3)
     count = content.count("git checkout HEAD -- .")
     assert count >= 2, f"Expected >= 2 tree restorations, got {count}"
 

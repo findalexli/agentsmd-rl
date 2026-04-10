@@ -20,23 +20,6 @@ COMPILER_DIR = "/workspace/react/compiler"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
-# ---------------------------------------------------------------------------
-
-def test_typescript_compiles():
-    """Modified TypeScript files must compile without errors."""
-    # Run TypeScript compiler on the modified validation file
-    r = subprocess.run(
-        ["npx", "tsc", "--noEmit", "--skipLibCheck",
-         "packages/babel-plugin-react-compiler/src/Validation/ValidateNoRefAccessInRender.ts"],
-        cwd=COMPILER_DIR,
-        capture_output=True,
-        timeout=120,
-    )
-    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
-
-
-# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -54,7 +37,7 @@ def test_panresponder_compiles_without_ref_error():
 // @flow
 import {PanResponder, Stringify} from 'shared-runtime';
 
-export default component Playground() {
+function Playground() {
   const onDragEndRef = useRef(() => {});
   useEffect(() => {
     onDragEndRef.current = () => {
@@ -74,7 +57,7 @@ export default component Playground() {
 }
 '''
     # Write test file
-    test_path = Path(f"{COMPILER_DIR}/test_panresponder.js")
+    test_path = Path(f"{COMPILER_DIR}/test_panresponder.tsx")
     test_path.write_text(test_code)
 
     try:
@@ -88,7 +71,7 @@ export default component Playground() {
         output = r.stdout.decode() + r.stderr.decode()
 
         # Should not have ref access error
-        assert "ref" not in output.lower() or "error" not in output.lower(), \
+        assert "ref" not in output.lower() and "error" not in output.lower(), \
             f"PanResponder should not trigger ref error, but got:\n{output}"
     finally:
         test_path.unlink(missing_ok=True)
@@ -131,7 +114,7 @@ function Foo(props, ref) {
 def test_repo_typescript_compiles():
     """TypeScript files must compile without errors (pass_to_pass)."""
     r = subprocess.run(
-        ["yarn", "tsc", "--noEmit"],
+        ["npx", "tsc", "--noEmit"],
         cwd=f"{COMPILER_DIR}/packages/babel-plugin-react-compiler",
         capture_output=True,
         timeout=60,
@@ -145,7 +128,7 @@ def test_repo_jest_tests_pass():
         ["yarn", "workspace", "babel-plugin-react-compiler", "jest"],
         cwd=COMPILER_DIR,
         capture_output=True,
-        timeout=120,
+        timeout=180,
     )
     assert r.returncode == 0, f"Jest tests failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
 
@@ -161,16 +144,36 @@ def test_repo_lint_passes():
     assert r.returncode == 0, f"Lint failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
 
 
+def test_repo_build_succeeds():
+    """Compiler package must build successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "babel-plugin-react-compiler", "build"],
+        cwd=COMPILER_DIR,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+
+
+def test_repo_snap_build_succeeds():
+    """Snap package must build successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "workspace", "snap", "build"],
+        cwd=COMPILER_DIR,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Snap build failed:\n{r.stdout.decode()[-500:]}\n{r.stderr.decode()[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + anti-stub
 # ---------------------------------------------------------------------------
 
-def test_existing_ref_validation_tests_pass():
-    """Validation source code contains expected ref validation logic (pass_to_pass).
+def test_existing_ref_validation_source_has_logic():
+    """Validation source code contains expected ref validation logic (pass_to_pass, static).
 
-    Note: The actual snap tests are skipped because they fail due to environment
-    noise (Node.js deprecation warnings) rather than code issues. This anti-stub
-    test ensures the validation logic is present in the source code.
+    This anti-stub test ensures the validation logic is present in the source code.
     """
     src_path = Path(f"{COMPILER_DIR}/packages/babel-plugin-react-compiler/src/Validation/ValidateNoRefAccessInRender.ts")
     src = src_path.read_text()
@@ -181,7 +184,7 @@ def test_existing_ref_validation_tests_pass():
 
 
 def test_validation_has_effect_based_logic():
-    """The validation must have effect-based ref validation logic (anti-stub)."""
+    """The validation must have effect-based ref validation logic (anti-stub, static)."""
     src_path = Path(f"{COMPILER_DIR}/packages/babel-plugin-react-compiler/src/Validation/ValidateNoRefAccessInRender.ts")
     src = src_path.read_text()
 

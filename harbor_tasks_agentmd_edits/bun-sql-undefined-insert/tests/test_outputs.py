@@ -69,11 +69,13 @@ def test_sqlite_omits_undefined_columns():
     """SQLite SQL helper must omit undefined columns from INSERT statements."""
     content = SQLITE_SQL.read_text()
     # Check that the undefined-filtering logic is present
-    assert "hasDefinedValue" in content or "typeof columnValue === \"undefined\"" in content, \
-        "Must check for defined values before including columns"
-    # Check that it builds columns list dynamically
-    assert "definedColumns" in content and "columnsSql" in content, \
-        "Must use dynamic column building"
+    # The gold solution uses buildDefinedColumnsAndQuery helper and checks typeof columnValue
+    assert "buildDefinedColumnsAndQuery" in content and "definedColumns" in content, \
+        "Must use buildDefinedColumnsAndQuery helper for filtering undefined values"
+    # Check for undefined value handling (either === or == comparison)
+    assert "typeof columnValue === \"undefined\"" in content or "typeof columnValue == \"undefined\"" in content or \
+           "typeof value === \"undefined\"" in content, \
+        "Must check for undefined values in columns"
 
 
 def test_shared_helper_checks_all_items():
@@ -228,3 +230,32 @@ def test_repo_sql_postgres_transpiles():
         env=env,
     )
     assert r.returncode == 0, f"postgres.ts transpile failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_sql_errors_transpiles():
+    """SQL errors.ts transpiles without errors (pass_to_pass)."""
+    env = _setup_bun_env()
+    ERRORS_SQL = REPO / "src" / "js" / "internal" / "sql" / "errors.ts"
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--outfile=/dev/null", str(ERRORS_SQL)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"errors.ts transpile failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_internal_int_from_float():
+    """Internal int_from_float test passes (pass_to_pass)."""
+    env = _setup_bun_env()
+    r = subprocess.run(
+        ["bun", "test", "test/internal/int_from_float.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"int_from_float test failed:\n{r.stderr[-500:]}"

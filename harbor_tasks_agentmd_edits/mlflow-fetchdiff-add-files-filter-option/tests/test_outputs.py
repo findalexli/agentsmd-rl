@@ -25,8 +25,12 @@ def _import_fetch_diff():
     """Import fetch_diff module, mocking non-stdlib dependencies."""
     if "skills" not in sys.modules:
         skills_mod = types.ModuleType("skills")
-        skills_mod.__path__ = []
+        skills_mod.__path__ = [f"{REPO}/.claude/skills/src/skills"]
         sys.modules["skills"] = skills_mod
+    if "skills.commands" not in sys.modules:
+        commands_mod = types.ModuleType("skills.commands")
+        commands_mod.__path__ = [f"{REPO}/.claude/skills/src/skills/commands"]
+        sys.modules["skills.commands"] = commands_mod
     if "skills.github" not in sys.modules:
         github_mock = types.ModuleType("skills.github")
         github_mock.GitHubClient = MagicMock
@@ -81,6 +85,7 @@ SAMPLE_DIFF = (
 def test_syntax_check():
     """Modified files must parse without errors."""
     import py_compile
+
     py_compile.compile(
         f"{REPO}/.claude/skills/src/skills/commands/fetch_diff.py",
         doraise=True,
@@ -130,11 +135,15 @@ def test_register_adds_files_argument():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
     register(subparsers)
-    args = parser.parse_args([
-        "fetch-diff",
-        "https://github.com/foo/bar/pull/1",
-        "--files", "*.py", "*.ts",
-    ])
+    args = parser.parse_args(
+        [
+            "fetch-diff",
+            "https://github.com/foo/bar/pull/1",
+            "--files",
+            "*.py",
+            "*.ts",
+        ]
+    )
     assert args.files == ["*.py", "*.ts"]
 
 
@@ -172,3 +181,70 @@ def test_filter_diff_no_patterns_unchanged():
     assert "src/main.py" in result
     assert "src/utils.ts" in result
     assert "docs/guide.md" in result
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff linter check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff==0.15.2"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    target = f"{REPO}/.claude/skills/src/skills/commands/fetch_diff.py"
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", target],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff==0.15.2"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    target = f"{REPO}/.claude/skills/src/skills/commands/fetch_diff.py"
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", target],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mypy():
+    """Mypy type check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "mypy", "aiohttp", "pydantic", "claude-agent-sdk", "tiktoken", "typing_extensions"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, f"Failed to install mypy deps: {r.stderr}"
+
+    target = f"{REPO}/.claude/skills/src/skills/commands/fetch_diff.py"
+    r = subprocess.run(
+        ["python", "-m", "mypy", target],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Mypy check failed:\n{r.stdout}\n{r.stderr}"

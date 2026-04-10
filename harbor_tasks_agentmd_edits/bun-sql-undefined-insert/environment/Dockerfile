@@ -5,8 +5,12 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux python3 python3-pip && \
+        git curl ca-certificates build-essential tmux python3 python3-pip unzip && \
     rm -rf /var/lib/apt/lists/*
+
+# Install Bun runtime
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
 
 # Clone bun repo at base commit
 RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun && \
@@ -18,7 +22,7 @@ RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/b
 WORKDIR /workspace/bun
 
 # Install Python deps for test runner
-RUN pip install --break-system-packages --no-cache-dir pytest
+RUN pip install --break-system-packages --no-cache-dir pytest pytest-json-ctrf
 
 # Verifier output directory
 RUN mkdir -p /logs/verifier

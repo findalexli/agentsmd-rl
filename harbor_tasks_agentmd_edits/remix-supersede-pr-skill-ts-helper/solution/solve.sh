@@ -34,7 +34,11 @@ AGENTSEOF
 cat > skills/supersede-pr/SKILL.md <<'SKILLEOF'
 ---
 name: supersede-pr
-description: Safely replace one GitHub pull request with another. Use when a user says a PR supersedes/replaces an older PR, asks to auto-close a superseded PR, or needs guaranteed closure behavior after merge. This skill explicitly closes the superseded PR with gh CLI and verifies final PR states instead of relying on closing keywords.
+description: Safely replace one GitHub pull request with another. Use when a user
+  says a PR supersedes/replaces an older PR, asks to auto-close a superseded PR,
+  or needs guaranteed closure behavior after merge. This skill explicitly closes
+  the superseded PR with gh CLI and verifies final PR states instead of relying
+  on closing keywords.
 ---
 
 # Supersede PR
@@ -42,49 +46,73 @@ description: Safely replace one GitHub pull request with another. Use when a use
 ## Overview
 
 Use this skill to handle PR supersession end-to-end.
+
 Do not rely on `Closes #<number>` to close another PR. GitHub closing keywords close issues, not pull requests.
 
 ## Workflow
 
 1. Identify PR numbers and target repo.
+
 - Capture `old_pr` (the superseded PR) and `new_pr` (the replacement PR).
+
 - Resolve the repo with `gh repo view --json nameWithOwner -q .nameWithOwner` when not provided.
 
+
 1. Create or update the replacement PR first.
+
 - Open/push the replacement branch.
+
 - Open the new PR.
+
 - Include a traceable link in the PR body such as `Supersedes #<old_pr>`.
 
+
 1. Close the superseded PR explicitly.
+
 - Run:
+
 ```bash
 ./skills/supersede-pr/scripts/close_superseded_pr.ts <old_pr> <new_pr>
 ```
+
 - This adds a comment (`Superseded by #<new_pr>.`) and closes the old PR.
 
+
 1. Verify states.
+
 - Confirm the superseded PR is closed:
+
 ```bash
 gh pr view <old_pr> --json state,url
 ```
+
 - Confirm the replacement PR status/checks:
+
 ```bash
 gh pr checks <new_pr>
 ```
 
+
 ## Rules
 
 1. Do not use `Closes #<old_pr>` when `<old_pr>` is a pull request.
+
 - Use `Closes/Fixes` only for issues.
+
 - Use `Supersedes #<old_pr>` or `Refs #<old_pr>` for PR-to-PR linkage.
 
+
 1. Prefer explicit closure over implied automation.
+
 - Always run the close command when the user asks to supersede a PR.
+
 - Treat closure as incomplete until `gh pr view <old_pr>` returns `CLOSED`.
+
 
 ## Script
 
 Use the bundled script for deterministic closure:
+
 - `scripts/close_superseded_pr.ts`
 SKILLEOF
 
@@ -251,13 +279,18 @@ interface:
   display_name: "Supersede PR"
   short_description: "Close superseded pull requests safely"
   default_prompt: "Use $supersede-pr to replace a PR and close the superseded PR safely."
+
 YAMLEOF
 
 # --- skills/make-pr/SKILL.md ---
 cat > skills/make-pr/SKILL.md <<'SKILLEOF'
 ---
 name: make-pr
-description: Create GitHub pull requests with clear, reviewer-friendly descriptions. Use when asked to open or prepare a PR, especially when the PR needs strong context, related links, and feature usage examples. This skill enforces concise PR structure, avoids redundant sections like validation/testing, and creates the PR with gh CLI.
+description: Create GitHub pull requests with clear, reviewer-friendly descriptions.
+  Use when asked to open or prepare a PR, especially when the PR needs strong
+  context, related links, and feature usage examples. This skill enforces concise
+  PR structure, avoids redundant sections like validation/testing, and creates
+  the PR with gh CLI.
 ---
 
 # Make PR
@@ -270,30 +303,43 @@ Keep headings sparse and focus on the problem/feature explanation, context links
 ## Workflow
 
 1. Gather context from branch diff and related work.
+
 - Capture what changed, why it changed, and who it affects.
 - Find related issues/PRs and include links when relevant.
 
+
 1. Draft the PR body with minimal structure.
+
 - Start with 1-2 short introductory paragraphs.
 - In those intro paragraphs, include clear bullets describing:
   - the feature and/or issue addressed
   - key behavior/API changes
   - expected impact
-- If the change is extensive, expand to up to 3-4 paragraphs and include background context with related links.
+- If the change is extensive, expand to up to 3-4 paragraphs and include
+  background context with related links.
+
 
 1. Add required usage examples for feature work.
+
 - If the PR introduces a new feature, include a comprehensive usage snippet.
 - If it replaces or improves an older approach, include before/after examples.
 
+
 1. Exclude redundant sections.
-- Do not include `Validation`, `Testing`, or other process sections that are already implicit in PR workflow.
+
+- Do not include `Validation`, `Testing`, or other process sections that are
+  already implicit in PR workflow.
 - Do not add boilerplate sections that do not help review.
 
+
 1. Create the PR.
+
 - Save the body to a temporary file and run:
+
 ```bash
 gh pr create --base main --head <branch> --title "<title>" --body-file <file>
 ```
+
 
 ## Body Template
 
@@ -306,7 +352,8 @@ Use this as a base and fill with concrete repo-specific details:
 - <What changed in behavior or API>
 - <Why this is needed now>
 
-<Optional additional context paragraph(s), up to 3-4 total for large changes, including links to related PRs/issues.>
+<Optional additional context paragraph(s), up to 3-4 total for large changes,
+including links to related PRs/issues.>
 ```
 SKILLEOF
 
@@ -316,6 +363,16 @@ interface:
   display_name: "Make PR"
   short_description: "Create high-quality GitHub pull requests"
   default_prompt: "Use $make-pr to draft and create a GitHub pull request with clear context and examples."
+
 YAMLEOF
+
+# Install dependencies and run Prettier to fix formatting
+corepack enable 2>/dev/null || true
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm install --frozen-lockfile >/dev/null 2>&1 || true
+  if [ -f node_modules/.bin/prettier ] || npx prettier --version >/dev/null 2>&1; then
+    npx prettier --write skills/supersede-pr/SKILL.md skills/make-pr/SKILL.md skills/supersede-pr/agents/openai.yaml skills/make-pr/agents/openai.yaml skills/supersede-pr/scripts/close_superseded_pr.ts 2>/dev/null || true
+  fi
+fi
 
 echo "Patch applied successfully."

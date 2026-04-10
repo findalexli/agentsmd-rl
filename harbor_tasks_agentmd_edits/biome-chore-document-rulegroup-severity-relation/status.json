@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:13:47.604005",
-  "total_time": 6017.39,
-  "sandbox_id": "iu359gh9kyz4qm5gh9s63",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:23:36.273385",
+  "total_time": 579.22,
+  "sandbox_id": "i4rbvovuhr714mbasgpww",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -18,18 +19,60 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 97.23,
+      "time": 254.69,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        ".claude/agents/biome-lint-engineer.md",
+        ".claude/agents/cst-parser-engineer.md",
+        ".claude/agents/ir-formatter-engineer.md"
+      ],
+      "rules_added": 0,
+      "rules_rejected": 0,
+      "rejection_reasons": "Config files contain general guidance (development commands, architecture overview, agent responsibilities) but no specific evaluable coding conventions that apply to the Rust struct refactoring and documentation changes in this PR",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.64,
-      "notes": ""
+      "time": 39.08
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.27,
+      "notes": "",
+      "precision": 1.0
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh by converting from git patch to Python script. Also fixed test_repo_git_commit_correct to check if base commit is ancestor of HEAD (not exact match), since gold fix creates a new commit. All 4 checks pass: docker build, NOP reward=0, Gold reward=1, rubric ICR=1.0.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 257.02
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -40,6 +83,14 @@
       "backend": "glm",
       "time": 6017.39,
       "at": "2026-04-09T07:13:47.604005"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 579.22,
+      "at": "2026-04-10T11:23:36.273385"
     }
   ]
 }

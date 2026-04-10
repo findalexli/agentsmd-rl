@@ -7,11 +7,13 @@ source:
   merge_commit: "92dcf444055fdc6379cfd469f0d1adaab6886e55"
 
 checks:
+  # ---- Static pass_to_pass gates ----
   - id: yaml_valid_syntax
     type: pass_to_pass
     origin: static
     description: "tools.yaml parses as valid YAML without errors"
 
+  # ---- repo_tests pass_to_pass gates (existing) ----
   - id: test_tools_yaml_schema
     type: pass_to_pass
     origin: repo_tests
@@ -27,6 +29,38 @@ checks:
     origin: repo_tests
     description: "Existing SKILL.md files have valid frontmatter with name and description"
 
+  # ---- New repo_tests pass_to_pass gates (CI/CD from repo) ----
+  - id: test_no_evaluation_summary_enabled
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Baseline: llm-analytics-evaluation-summary-create is NOT enabled at base commit"
+
+  - id: test_mcp_prompts_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "MCP prompts.yaml parses as valid YAML"
+
+  - id: test_all_existing_skills_in_readme
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All existing skill directories are referenced in README"
+
+  - id: test_existing_skills_valid_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing skill directories have valid SKILL.md with required frontmatter"
+
+  - id: test_enabled_tools_count
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Verify the expected number of tools are enabled at base commit"
+
+  - id: test_llm_analytics_directory_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Required directories exist in llm_analytics product (mcp, skills, backend)"
+
+  # ---- Fail-to-pass gates (pr_diff) ----
   - id: tool_enabled_in_yaml
     type: fail_to_pass
     origin: pr_diff
@@ -47,6 +81,7 @@ checks:
     origin: pr_diff
     description: "Skills README lists the exploring-llm-evaluations skill"
 
+  # ---- Fail-to-pass gates (agent_config) ----
   - id: tool_has_required_yaml_fields
     type: fail_to_pass
     origin: agent_config
@@ -65,4 +100,24 @@ checks:
       lines: "42-49"
       commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
 
-rubric: []
+rubric:
+  - rule: "MCP tool names enabled in tools.yaml must follow kebab-case format with max 52 characters"
+    source:
+      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
+      lines: "75-79"
+      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
+  - rule: "Enabled MCP tools must include scopes and annotations (readOnly, destructive, idempotent) per YAML schema"
+    source:
+      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
+      lines: "127-132"
+      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
+  - rule: "Skill documents must have frontmatter with name (lowercase kebab-case) and description fields"
+    source:
+      path: ".agents/skills/writing-skills/SKILL.md"
+      lines: "43-49"
+      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
+  - rule: "Skill documents should follow the directory structure products/{product}/skills/{skill-name}/SKILL.md"
+    source:
+      path: ".agents/skills/writing-skills/SKILL.md"
+      lines: "51-62"
+      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"

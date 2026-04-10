@@ -3,40 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T03:40:14.973032",
-  "total_time": 7378.04,
-  "sandbox_id": "igspa6rbjvspd8cavbbkv",
+  "validated_at": "2026-04-10T11:46:59.101787",
+  "total_time": 1483.01,
+  "sandbox_id": "id8fnmods4y77kmeot9yf",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 1.0,
   "nodes": {
-    "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All core validations passed: Docker build OK, NOP test correctly returns 0 (5 fail-to-pass tests fail on buggy base), Gold test returns 1 (all 10 tests pass after applying solve.sh patch). Rubric judge requires ANTHROPIC_API_KEY which is not available; returns 0.5 as fallback error value.",
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 197.24
-    },
-    "p2p_enrichment": {
-      "ci_commands_discovered": [
-        "ruff check --output-format=concise .claude/skills/",
-        "ruff format --check .claude/skills/",
-        "mypy .claude/skills/ (with --ignore-missing-imports for claude_agent_sdk)"
-      ],
-      "ci_source": [
-        ".github/workflows/lint.yml",
-        ".pre-commit-config.yaml",
-        "pyproject.toml (mypy config)"
-      ],
-      "p2p_tests_added": [
-        "test_repo_ruff_check - Ruff linting passes on .claude/skills",
-        "test_repo_ruff_format - Ruff format check passes on .claude/skills",
-        "test_repo_mypy - Mypy type checking passes on .claude/skills"
-      ],
-      "notes": "Added repo CI tests as pass_to_pass gates. The .claude/skills directory is explicitly configured for mypy type checking in pyproject.toml. Ruff is the primary linter used in the mlflow repo."
+      "time": 179.67,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -56,8 +35,18 @@
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.75,
+      "time": 5.46,
       "notes": "ICR=1.00"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All core validations passed: Docker build OK, NOP test correctly returns 0 (5 fail-to-pass tests fail on buggy base), Gold test returns 1 (all 10 tests pass after applying solve.sh patch). Rubric judge requires API key for ICR calculation (no agent diff to evaluate in task directory).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 83.84
     }
   },
   "history": [
@@ -66,16 +55,8 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T03:40:14.802464"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 7378.04,
-      "at": "2026-04-09T03:40:14.973032"
+      "time": 1483.01,
+      "at": "2026-04-10T11:46:59.101787"
     }
   ]
 }

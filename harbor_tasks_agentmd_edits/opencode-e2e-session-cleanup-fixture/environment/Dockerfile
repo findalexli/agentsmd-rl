@@ -8,8 +8,8 @@ RUN apt-get update && \
         git curl ca-certificates build-essential python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone repo at base commit (shallow for large monorepo)
-RUN git clone --depth=100 https://github.com/anomalyco/opencode.git /workspace/opencode && \
+# Clone repo at base commit (full clone to ensure commit is reachable)
+RUN git clone https://github.com/anomalyco/opencode.git /workspace/opencode && \
     cd /workspace/opencode && \
     git checkout 28bb16ca2a374439973d4f3f4b71d72f7fdae9cd && \
     git config user.email "agent@test" && \

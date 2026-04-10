@@ -179,3 +179,64 @@ def test_python_syntax_ai_proxy_service():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from .github/workflows/python-tools-ci.yml
+def test_python_syntax_credits_service():
+    """Python files in credits-service have valid syntax."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "cd /workspace/lotti/services/credits-service && "
+            "find . -name '*.py' -exec python3 -m py_compile {} +"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from .github/workflows/python-tools-ci.yml
+def test_mypy_matrix_provisioner():
+    """Python type checking passes for matrix_provisioner (mypy)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install -q mypy 2>/dev/null; "
+            "cd /workspace/lotti/tools/matrix_provisioner && "
+            "mypy . --ignore-missing-imports"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MyPy type check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from .github/workflows/python-tools-ci.yml
+def test_flake8_matrix_provisioner():
+    """Python linting passes for matrix_provisioner (flake8)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install -q flake8 2>/dev/null; "
+            "cd /workspace/lotti/tools/matrix_provisioner && "
+            "flake8 . --max-line-length=100"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flake8 lint check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from .github/workflows/python-tools-ci.yml
+def test_isort_matrix_provisioner():
+    """Python import sorting is valid for matrix_provisioner (isort)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install -q isort 2>/dev/null; "
+            "cd /workspace/lotti/tools/matrix_provisioner && "
+            "isort --check ."
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+

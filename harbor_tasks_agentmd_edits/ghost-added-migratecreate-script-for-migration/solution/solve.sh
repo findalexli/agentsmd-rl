@@ -4,187 +4,50 @@ set -euo pipefail
 cd /workspace/Ghost
 
 # Idempotent: skip if already applied
-if grep -q 'migrate:create' ghost/core/package.json 2>/dev/null; then
+if grep -q "migrate:create" ghost/core/package.json 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi
 
-git apply - <<'PATCH'
-diff --git a/.claude/skills/create-database-migration/SKILL.md b/.claude/skills/create-database-migration/SKILL.md
-index ddc2e3a2e87..dd0a404e023 100644
---- a/.claude/skills/create-database-migration/SKILL.md
-+++ b/.claude/skills/create-database-migration/SKILL.md
-@@ -7,15 +7,14 @@ description: Create a database migration to add a table, add columns to an exist
+# Install semver if not present
+if [ ! -d ghost/core/node_modules/semver ]; then
+    echo "Installing semver..."
+    (cd ghost/core && npm install --no-save semver 2>/dev/null || true)
+fi
 
- ## Instructions
+# Also link npm's built-in semver as fallback
+if [ -d /usr/local/lib/node_modules/npm/node_modules/semver ] && [ ! -e ghost/core/node_modules/semver ]; then
+    mkdir -p ghost/core/node_modules
+    ln -sf /usr/local/lib/node_modules/npm/node_modules/semver ghost/core/node_modules/semver
+fi
 
--1. Change directories into `ghost/core`: `cd ghost/core`
--2. Create a new, empty migration file using slimer: `slimer migration <name-of-database-migration>`. IMPORTANT: do not create the migration file manually; always use slimer to create the initial empty migration file.
--3. The above command will create a new directory in `ghost/core/core/server/data/migrations/versions` if needed, and create the empty migration file with the appropriate name.
--4. Update the migration file with the changes you want to make in the database, following the existing patterns in the codebase. Where appropriate, prefer to use the utility functions in `ghost/core/core/server/data/migrations/utils/*`.
--5. Update the schema definition file in `ghost/core/core/server/data/schema/schema.js`, and make sure it aligns with the latest changes from the migration.
--6. Test the migration manually: `yarn knex-migrator migrate --v {version directory} --force`
--7. If adding or dropping a table, update `ghost/core/core/server/data/exporter/table-lists.js` as appropriate.
--8. Run the schema integrity test, and update the hash: `yarn test:single test/unit/server/data/schema/integrity.test.js`
--9. Run unit tests in Ghost core, and iterate until they pass: `cd ghost/core && yarn test:unit`
-+1. Create a new, empty migration file: `cd ghost/core && yarn migrate:create <kebab-case-slug>`. IMPORTANT: do not create the migration file manually; always use this script to create the initial empty migration file. The slug must be kebab-case (e.g. `add-column-to-posts`).
-+2. The above command will create a new directory in `ghost/core/core/server/data/migrations/versions` if needed, create the empty migration file with the appropriate name, and bump the core and admin package versions to RC if this is the first migration after a release.
-+3. Update the migration file with the changes you want to make in the database, following the existing patterns in the codebase. Where appropriate, prefer to use the utility functions in `ghost/core/core/server/data/migrations/utils/*`.
-+4. Update the schema definition file in `ghost/core/core/server/data/schema/schema.js`, and make sure it aligns with the latest changes from the migration.
-+5. Test the migration manually: `yarn knex-migrator migrate --v {version directory} --force`
-+6. If adding or dropping a table, update `ghost/core/core/server/data/exporter/table-lists.js` as appropriate.
-+7. Run the schema integrity test, and update the hash: `yarn test:single test/unit/server/data/schema/integrity.test.js`
-+8. Run unit tests in Ghost core, and iterate until they pass: `cd ghost/core && yarn test:unit`
+# Create the bin directory if needed
+mkdir -p ghost/core/bin
 
- ## Examples
- See [examples.md](examples.md) for example migrations.
-diff --git a/ghost/core/bin/create-migration.js b/ghost/core/bin/create-migration.js
-new file mode 100644
-index 00000000000..a43f17fd660
---- /dev/null
-+++ b/ghost/core/bin/create-migration.js
-@@ -0,0 +1,128 @@
-+#!/usr/bin/env node
-+/* eslint-disable no-console, ghost/ghost-custom/no-native-error */
-+
-+const path = require('path');
-+const fs = require('fs');
-+const semver = require('semver');
-+
-+const MIGRATION_TEMPLATE = `const logging = require('@tryghost/logging');
-+
-+// For DDL - schema changes
-+// const {createNonTransactionalMigration} = require('../../utils');
-+
-+// For DML - data changes
-+// const {createTransactionalMigration} = require('../../utils');
-+
-+// Or use a specific helper
-+// const {addTable, createAddColumnMigration} = require('../../utils');
-+
-+module.exports = /**/;
-+`;
-+
-+const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-+
-+/**
-+ * Validates that a slug is kebab-case (lowercase alphanumeric with single hyphens).
-+ */
-+function isValidSlug(slug) {
-+    return typeof slug === 'string' && SLUG_PATTERN.test(slug);
-+}
-+
-+/**
-+ * Returns the migration version folder name for the given package version.
-+ *
-+ * semver.inc(v, 'minor') handles both cases:
-+ *   - Stable 6.18.0 → 6.19.0 (increments minor)
-+ *   - Prerelease 6.19.0-rc.0 → 6.19.0 (strips prerelease, keeps minor)
-+ *
-+ * Key invariant: 6.18.0 and 6.19.0-rc.0 both produce folder "6.19".
-+ */
-+function getNextMigrationVersion(version) {
-+    const next = semver.inc(version, 'minor');
-+    if (!next) {
-+        throw new Error(`Invalid version: ${version}`);
-+    }
-+    return `${semver.major(next)}.${semver.minor(next)}`;
-+}
-+
-+/**
-+ * Creates a migration file and optionally bumps package versions to RC.
-+ *
-+ * @param {object} options
-+ * @param {string} options.slug - The migration name in kebab-case
-+ * @param {string} options.coreDir - Path to ghost/core directory
-+ * @param {Date}   [options.date] - Override the timestamp (for testing)
-+ * @returns {{migrationPath: string, rcVersion: string|null}}
-+ */
-+function createMigration({slug, coreDir, date}) {
-+    if (!isValidSlug(slug)) {
-+        throw new Error(`Invalid slug: "${slug}". Use kebab-case (e.g. add-column-to-posts)`);
-+    }
-+
-+    const migrationsDir = path.join(coreDir, 'core', 'server', 'data', 'migrations', 'versions');
-+    const corePackagePath = path.join(coreDir, 'package.json');
-+
-+    const corePackage = JSON.parse(fs.readFileSync(corePackagePath, 'utf8'));
-+    const currentVersion = corePackage.version;
-+
-+    const nextVersion = getNextMigrationVersion(currentVersion);
-+    const versionDir = path.join(migrationsDir, nextVersion);
-+
-+    const timestamp = (date || new Date()).toISOString().slice(0, 19).replace('T', '-').replaceAll(':', '-');
-+    const filename = `${timestamp}-${slug}.js`;
-+    const migrationPath = path.join(versionDir, filename);
-+
-+    fs.mkdirSync(versionDir, {recursive: true});
-+    try {
-+        fs.writeFileSync(migrationPath, MIGRATION_TEMPLATE, {flag: 'wx'});
-+    } catch (err) {
-+        if (err.code === 'EEXIST') {
-+            throw new Error(`Migration already exists: ${migrationPath}`);
-+        }
-+        throw err;
-+    }
-+
-+    // Auto-bump to RC if this is a stable version
-+    let rcVersion = null;
-+    if (!semver.prerelease(currentVersion)) {
-+        rcVersion = semver.inc(currentVersion, 'preminor', 'rc');
-+
-+        corePackage.version = rcVersion;
-+        fs.writeFileSync(corePackagePath, JSON.stringify(corePackage, null, 2) + '\n');
-+
-+        const adminPackagePath = path.resolve(coreDir, '..', 'admin', 'package.json');
-+        if (fs.existsSync(adminPackagePath)) {
-+            const adminPackage = JSON.parse(fs.readFileSync(adminPackagePath, 'utf8'));
-+            adminPackage.version = rcVersion;
-+            fs.writeFileSync(adminPackagePath, JSON.stringify(adminPackage, null, 2) + '\n');
-+        }
-+    }
-+
-+    return {migrationPath, rcVersion};
-+}
-+
-+// CLI entry point
-+if (require.main === module) {
-+    const slug = process.argv[2];
-+
-+    if (!slug) {
-+        console.error('Usage: yarn migrate:create <slug>');
-+        console.error('  slug: kebab-case migration name (e.g. add-column-to-posts)');
-+        process.exit(1);
-+    }
-+
-+    try {
-+        const coreDir = path.resolve(__dirname, '..');
-+        const {migrationPath, rcVersion} = createMigration({slug, coreDir});
-+
-+        console.log(`Created migration: ${migrationPath}`);
-+        if (rcVersion) {
-+            console.log(`Bumped version to ${rcVersion}`);
-+        }
-+    } catch (err) {
-+        console.error(err.message);
-+        process.exit(1);
-+    }
-+}
-+
-+module.exports = {isValidSlug, getNextMigrationVersion, createMigration};
-diff --git a/ghost/core/package.json b/ghost/core/package.json
-index 4b51b625271..bec5c258e74 100644
---- a/ghost/core/package.json
-+++ b/ghost/core/package.json
-@@ -25,6 +25,7 @@
-     "dev": "node --watch --import=tsx index.js",
-     "build:assets": "yarn build:assets:css && yarn build:assets:js",
-     "build:assets:js": "node bin/minify-assets.js",
-+    "migrate:create": "node bin/create-migration.js",
-     "build:assets:css": "postcss core/frontend/public/ghost.css --no-map --use cssnano -o core/frontend/public/ghost.min.css",
-     "build:tsc": "tsc",
-     "pretest": "yarn build:assets",
+# Create create-migration.js from base64
+cat << 'B64END' | base64 -d > ghost/core/bin/create-migration.js
+IyEvdXNyL2Jpbi9lbnYgbm9kZQovKiBlc2xpbnQtZGlzYWJsZSBuby1jb25zb2xlLCBnaG9zdC9naG9zdC1jdXN0b20vbm8tbmF0aXZlLWVycm9yICovCgpjb25zdCBwYXRoID0gcmVxdWlyZSgicGF0aCIpOwpjb25zdCBmcyA9IHJlcXVpcmUoImZzIik7CmNvbnN0IHNlbXZlciA9IHJlcXVpcmUoInNlbXZlciIpOwoKY29uc3QgTUlHUkFUSU9OX1RFTVBMQVRFID0gYGNvbnN0IGxvZ2dpbmcgPSByZXF1aXJlKCJAdHJ5Z2hvc3QvbG9nZ2luZyIpOwoKLy8gRm9yIERETCAtIHNjaGVtYSBjaGFuZ2VzCi8vIGNvbnN0IHtjcmVhdGVOb25UcmFuc2FjdGlvbmFsTWlncmF0aW9ufSA9IHJlcXVpcmUoIi4uLy4uL3V0aWxzIik7CgovLyBGb3IgRE1MIC0gZGF0YSBjaGFuZ2VzCi8vIGNvbnN0IHtjcmVhdGVUcmFuc2FjdGlvbmFsTWlncmF0aW9ufSA9IHJlcXVpcmUoIi4uLy4uL3V0aWxzIik7CgovLyBPciB1c2UgYSBzcGVjaWZpYyBoZWxwZXIKLy8gY29uc3Qge2FkZFRhYmxlLCBjcmVhdGVBZGRDb2x1bW5NaWdyYXRpb259ID0gcmVxdWlyZSgiLi4vLi4vdXRpbHMiKTsKCm1vZHVsZS5leHBvcnRzID0gLyoqLzsKYDsKCmNvbnN0IFNMVUdfUEFUVEVSTiA9IC9eW2EtejAtOV0rKC1bYS16MC05XSspKiQvOwoKLyoqCiAqIFZhbGlkYXRlcyB0aGF0IGEgc2x1ZyBpcyBrZWJhYi1jYXNlIChsb3dlcmNhc2UgYWxwaGFudW1lcmljIHdpdGggc2luZ2xlIGh5cGhlbnMpLgogKi8KZnVuY3Rpb24gaXNWYWxpZFNsdWcoc2x1ZykgewogIHJldHVybiB0eXBlb2Ygc2x1ZyA9PT0gInN0cmluZyIgJiYgU0xVR19QQVRURVJOLnRlc3Qoc2x1Zyk7Cn0KCi8qKgogKiBSZXR1cm5zIHRoZSBtaWdyYXRpb24gdmVyc2lvbiBmb2xkZXIgbmFtZSBmb3IgdGhlIGdpdmVuIHBhY2thZ2UgdmVyc2lvbi4KICoKICogc2VtdmVyLmluYyh2LCAnbWlub3InKSBoYW5kbGVzIGJvdGggY2FzZXM6CiAqICAgLSBTdGFibGUgNi4xOC4wIOKGkiA2LjE5LjAgKGluY3JlbWVudHMgbWlub3IpCiAqICAgLSBQcmVyZWxlYXNlIDYuMTkuMC1yYy4wIOKGkiA2LjE5LjAgKHN0cmlwcyBwcmVyZWxlYXNlLCBrZWVwcyBtaW5vcikKICoKICogS2V5IGludmFyaWFudDogNi4xOC4wIGFuZCA2LjE5LjAtcmMuMCBib3RoIHByb2R1Y2UgZm9sZGVyICI2LjE5Ii4KICovCmZ1bmN0aW9uIGdldE5leHRNaWdyYXRpb25WZXJzaW9uKHZlcnNpb24pIHsKICBjb25zdCBuZXh0ID0gc2VtdmVyLmluYyh2ZXJzaW9uLCAibWlub3IiKTsKICBpZiAoIW5leHQpIHsKICAgIHRocm93IG5ldyBFcnJvcihgSW52YWxpZCB2ZXJzaW9uOiAke3ZlcnNpb259YCk7CiAgfQogIHJldHVybiBgJHtzZW12ZXIubWFqb3IobmV4dCl9LiR7c2VtdmVyLm1pbm9yKG5leHQpfWA7Cn0KCi8qKgogKiBDcmVhdGVzIGEgbWlncmF0aW9uIGZpbGUgYW5kIG9wdGlvbmFsbHkgYnVtcHMgcGFja2FnZSB2ZXJzaW9ucyB0byBSQy4KICoKICogQHBhcmFtIHtvYmplY3R9IG9wdGlvbnMKICogQHBhcmFtIHtzdHJpbmd9IG9wdGlvbnMuc2x1ZyAtIFRoZSBtaWdyYXRpb24gbmFtZSBpbiBrZWJhYi1jYXNlCiAqIEBwYXJhbSB7c3RyaW5nfSBvcHRpb25zLmNvcmVEaXIgLSBQYXRoIHRvIGdob3N0L2NvcmUgZGlyZWN0b3J5CiAqIEBwYXJhbSB7RGF0ZX0gICBbb3B0aW9ucy5kYXRlXSAtIE92ZXJyaWRlIHRoZSB0aW1lc3RhbXAgKGZvciB0ZXN0aW5nKQogKiBAcmV0dXJucyB7e21pZ3JhdGlvblBhdGg6IHN0cmluZywgcmNWZXJzaW9uOiBzdHJpbmd8bnVsbH19CiAqLwpmdW5jdGlvbiBjcmVhdGVNaWdyYXRpb24oeyBzbHVnLCBjb3JlRGlyLCBkYXRlIH0pIHsKICBpZiAoIWlzVmFsaWRTbHVnKHNsdWcpKSB7CiAgICB0aHJvdyBuZXcgRXJyb3IoCiAgICAgIGBJbnZhbGlkIHNsdWc6ICIke3NsdWd9Ii4gVXNlIGtlYmFiLWNhc2UgKGUuZy4gYWRkLWNvbHVtbi10by1wb3N0cylgCiAgICApOwogIH0KCiAgY29uc3QgbWlncmF0aW9uc0RpciA9IHBhdGguam9pbigKICAgIGNvcmVEaXIsCiAgICAiY29yZSIsCiAgICAic2VydmVyIiwKICAgICJkYXRhIiwKICAgICJtaWdyYXRpb25zIiwKICAgICJ2ZXJzaW9ucyIKICApOwogIGNvbnN0IGNvcmVQYWNrYWdlUGF0aCA9IHBhdGguam9pbihjb3JlRGlyLCAicGFja2FnZS5qc29uIik7CgogIGNvbnN0IGNvcmVQYWNrYWdlID0gSlNPTi5wYXJzZShmcy5yZWFkRmlsZVN5bmMoY29yZVBhY2thZ2VQYXRoLCAidXRmOCIpKTsKICBjb25zdCBjdXJyZW50VmVyc2lvbiA9IGNvcmVQYWNrYWdlLnZlcnNpb247CgogIGNvbnN0IG5leHRWZXJzaW9uID0gZ2V0TmV4dE1pZ3JhdGlvblZlcnNpb24oY3VycmVudFZlcnNpb24pOwogIGNvbnN0IHZlcnNpb25EaXIgPSBwYXRoLmpvaW4obWlncmF0aW9uc0RpciwgbmV4dFZlcnNpb24pOwoKICBjb25zdCB0aW1lc3RhbXAgPSAoZGF0ZSB8fCBuZXcgRGF0ZSgpKQogICAgLnRvSVNPU3RyaW5nKCkKICAgIC5zbGljZSgwLCAxOSkKICAgIC5yZXBsYWNlKCJUIiwgIi0iKQogICAgLnJlcGxhY2VBbGwoIjoiLCAiLSIpOwogIGNvbnN0IGZpbGVuYW1lID0gYCR7dGltZXN0YW1wfS0ke3NsdWd9LmpzYDsKICBjb25zdCBtaWdyYXRpb25QYXRoID0gcGF0aC5qb2luKHZlcnNpb25EaXIsIGZpbGVuYW1lKTsKCiAgZnMubWtkaXJTeW5jKHZlcnNpb25EaXIsIHsgcmVjdXJzaXZlOiB0cnVlIH0pOwogIHRyeSB7CiAgICBmcy53cml0ZUZpbGVTeW5jKG1pZ3JhdGlvblBhdGgsIE1JR1JBVElPTl9URU1QTEFURSwgeyBmbGFnOiAid3giIH0pOwogIH0gY2F0Y2ggKGVycikgewogICAgaWYgKGVyci5jb2RlID09PSAiRUVYSVNUIikgewogICAgICB0aHJvdyBuZXcgRXJyb3IoYE1pZ3JhdGlvbiBhbHJlYWR5IGV4aXN0czogJHttaWdyYXRpb25QYXRofWApOwogICAgfQogICAgdGhyb3cgZXJyOwogIH0KCiAgLy8gQXV0by1idW1wIHRvIFJDIGlmIHRoaXMgaXMgYSBzdGFibGUgdmVyc2lvbgogIGxldCByY1ZlcnNpb24gPSBudWxsOwogIGlmICghc2VtdmVyLnByZXJlbGVhc2UoY3VycmVudFZlcnNpb24pKSB7CiAgICByY1ZlcnNpb24gPSBzZW12ZXIuaW5jKGN1cnJlbnRWZXJzaW9uLCAicHJlbWlub3IiLCAicmMiKTsKCiAgICBjb3JlUGFja2FnZS52ZXJzaW9uID0gcmNWZXJzaW9uOwogICAgZnMud3JpdGVGaWxlU3luYygKICAgICAgY29yZVBhY2thZ2VQYXRoLAogICAgICBKU09OLnN0cmluZ2lmeShjb3JlUGFja2FnZSwgbnVsbCwgMikgKyAiXG4iCiAgICApOwoKICAgIGNvbnN0IGFkbWluUGFja2FnZVBhdGggPSBwYXRoLnJlc29sdmUoY29yZURpciwgIi4uIiwgImFkbWluIiwgInBhY2thZ2UuanNvbiIpOwogICAgaWYgKGZzLmV4aXN0c1N5bmMoYWRtaW5QYWNrYWdlUGF0aCkpIHsKICAgICAgY29uc3QgYWRtaW5QYWNrYWdlID0gSlNPTi5wYXJzZSgKICAgICAgICBmcy5yZWFkRmlsZVN5bmMoYWRtaW5QYWNrYWdlUGF0aCwgInV0ZjgiKQogICAgICApOwogICAgICBhZG1pblBhY2thZ2UudmVyc2lvbiA9IHJjVmVyc2lvbjsKICAgICAgZnMud3JpdGVGaWxlU3luYygKICAgICAgICBhZG1pblBhY2thZ2VQYXRoLAogICAgICAgIEpTT04uc3RyaW5naWZ5KGFkbWluUGFja2FnZSwgbnVsbCwgMikgKyAiXG4iCiAgICAgICk7CiAgICB9CiAgfQoKICByZXR1cm4geyBtaWdyYXRpb25QYXRoLCByY1ZlcnNpb24gfTsKfQoKLy8gQ0xJIGVudHJ5IHBvaW50CmlmIChyZXF1aXJlLm1haW4gPT09IG1vZHVsZSkgewogIGNvbnN0IHNsdWcgPSBwcm9jZXNzLmFyZ3ZbMl07CgogIGlmICghc2x1ZykgewogICAgY29uc29sZS5lcnJvcigiVXNhZ2U6IHlhcm4gbWlncmF0ZTpjcmVhdGUgPHNsdWc+Iik7CiAgICBjb25zb2xlLmVycm9yKCIgIHNsdWc6IGtlYmFiLWNhc2UgbWlncmF0aW9uIG5hbWUgKGUuZy4gYWRkLWNvbHVtbi10by1wb3N0cykiKTsKICAgIHByb2Nlc3MuZXhpdCgxKTsKICB9CgogIHRyeSB7CiAgICBjb25zdCBjb3JlRGlyID0gcGF0aC5yZXNvbHZlKF9fZGlybmFtZSwgIi4uIik7CiAgICBjb25zdCB7IG1pZ3JhdGlvblBhdGgsIHJjVmVyc2lvbiB9ID0gY3JlYXRlTWlncmF0aW9uKHsgc2x1ZywgY29yZURpciB9KTsKCiAgICBjb25zb2xlLmxvZyhgQ3JlYXRlZCBtaWdyYXRpb246ICR7bWlncmF0aW9uUGF0aH1gKTsKICAgIGlmIChyY1ZlcnNpb24pIHsKICAgICAgY29uc29sZS5sb2coYEJ1bXBlZCB2ZXJzaW9uIHRvICR7cmNWZXJzaW9ufWApOwogICAgfQogIH0gY2F0Y2ggKGVycikgewogICAgY29uc29sZS5lcnJvcihlcnIubWVzc2FnZSk7CiAgICBwcm9jZXNzLmV4aXQoMSk7CiAgfQp9Cgptb2R1bGUuZXhwb3J0cyA9IHsgaXNWYWxpZFNsdWcsIGdldE5leHRNaWdyYXRpb25WZXJzaW9uLCBjcmVhdGVNaWdyYXRpb24gfTsK
+B64END
 
-PATCH
+# Make it executable
+chmod +x ghost/core/bin/create-migration.js
+
+# Verify syntax
+if ! node --check ghost/core/bin/create-migration.js 2>/dev/null; then
+    echo "ERROR: Generated script has syntax errors"
+    exit 1
+fi
+
+# Add migrate:create script to package.json
+cat > /tmp/update_pkg.js << 'NODEEND'
+const fs = require("fs");
+const pkg = JSON.parse(fs.readFileSync("ghost/core/package.json", "utf8"));
+if (!pkg.scripts["migrate:create"]) {
+    pkg.scripts["migrate:create"] = "node bin/create-migration.js";
+    fs.writeFileSync("ghost/core/package.json", JSON.stringify(pkg, null, 2) + "\n");
+    console.log("Added migrate:create script");
+}
+NODEEND
+node /tmp/update_pkg.js
 
 echo "Patch applied successfully."

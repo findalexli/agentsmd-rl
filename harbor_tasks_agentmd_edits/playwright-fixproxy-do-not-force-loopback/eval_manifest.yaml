@@ -9,6 +9,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: chromium.ts has balanced braces and parentheses
+- id: repo_eslint_chromium
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on chromium.ts
+- id: repo_typescript_transpile
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript transpilation of chromium.ts succeeds
+- id: repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Channel generation script runs successfully
+- id: repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workspace package consistency check passes
 - id: localhost_bypass_skips_loopback
   type: fail_to_pass
   origin: pr_diff
@@ -37,7 +53,21 @@ checks:
   type: pass_to_pass
   origin: static
   description: Existing skill documents (api.md, library.md, etc.) remain intact
-rubric: []
+rubric:
+- rule: Code in packages/playwright-core/src/server/chromium/ must not import from
+    client/ directory - client and server must remain strictly separated
+  source:
+    path: .claude/skills/playwright-dev/library.md
+    lines: 40-41
+    commit: 23b12474a184466c5a83db49b7bcf4d45e970a26
+- rule: New skill documents added to .claude/skills/playwright-dev/ must be referenced
+    in SKILL.md's table of contents
+  source:
+    path: .claude/skills/playwright-dev/SKILL.md
+    lines: 8-14
+    commit: 23b12474a184466c5a83db49b7bcf4d45e970a26
+  reference: '- [Uploading Fixes to GitHub](github.md) — branch naming, commit format,
+    pushing fixes for issues'
 config_edits:
 - path: .claude/skills/playwright-dev/SKILL.md
   tier: 1

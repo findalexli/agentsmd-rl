@@ -77,7 +77,7 @@ src = open('/workspace/bun/scripts/build/bun.ts').read()
 # On base: const depOrderOnly = [...depOutputs, ...codegen.cppAll]
 # On fix:  const codegenOrderOnly = codegen.cppAll  (depOutputs NOT mixed in)
 mixed = re.search(
-    r'const\\s+\\w+\\s*=\\s*\\[.*?depOutputs.*?codegen\\.cppAll.*?\\]',
+    r'const\\s+\\w+\\s*=\\s*\\[.*?\bdepOutputs\b.*?\bcodegen\\.cppAll.*?\\]',
     src, re.DOTALL
 )
 assert not mixed, (
@@ -211,7 +211,7 @@ def test_repo_build_script_imports():
             imp = match.group(1) or match.group(2)
             if imp:
                 # Resolve relative to the file
-                if imp.endswith('.ts'):
+                if imp.endswith('.ts') or imp.endswith('.mjs'):
                     target = f.parent / imp
                 else:
                     target = f.parent / (imp + '.ts')
@@ -223,30 +223,79 @@ def test_repo_build_script_imports():
         assert False, "Missing import targets:\n" + "\n".join(missing[:20])
 
 
-# [repo_tests] pass_to_pass — JSON config files are valid
+# [repo_tests] pass_to_pass — JSON config files are valid JSONC
 def test_repo_json_configs_valid():
-    """JSON configuration files are syntactically valid (pass_to_pass)."""
-    import json
+    """JSON configuration files are syntactically valid JSONC (pass_to_pass).
 
-    json_files = [
-        f"{REPO}/tsconfig.json",
-        f"{REPO}/tsconfig.base.json",
-        f"{REPO}/.prettierrc",
-        f"{REPO}/oxlint.json",
-        f"{REPO}/scripts/build/tsconfig.json",
-    ]
+    Configs use JSONC format (JSON with comments). This test validates
+    them using Python's json module after stripping comments.
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+import re
+import sys
 
-    errors = []
-    for path_str in json_files:
-        path = Path(path_str)
-        if path.exists():
-            try:
-                json.loads(path.read_text())
-            except json.JSONDecodeError as e:
-                errors.append(f"{path.name}: {e}")
+def load_jsonc(path):
+    with open(path) as f:
+        content = f.read()
+    # Remove single-line comments but preserve strings
+    lines = []
+    for line in content.splitlines():
+        in_str = False
+        escape = False
+        result = []
+        for char in line:
+            if escape:
+                result.append(char)
+                escape = False
+                continue
+            if char == '\\\\':
+                result.append(char)
+                escape = True
+                continue
+            if char == '"' and not in_str:
+                in_str = True
+                result.append(char)
+                continue
+            if char == '"' and in_str:
+                in_str = False
+                result.append(char)
+                continue
+            if not in_str and char == '/' and len(result) > 0 and result[-1] == '/':
+                result.pop()
+                break
+            result.append(char)
+        lines.append(''.join(result))
+    content = '\\n'.join(lines)
+    content = re.sub(r'/\\*.*?\\*/', '', content, flags=re.DOTALL)
+    return json.loads(content)
 
-    if errors:
-        assert False, "Invalid JSON files:\n" + "\n".join(errors)
+files = [
+    '/workspace/bun/tsconfig.json',
+    '/workspace/bun/tsconfig.base.json',
+    '/workspace/bun/.prettierrc',
+    '/workspace/bun/oxlint.json',
+    '/workspace/bun/scripts/build/tsconfig.json',
+]
+errors = []
+for f in files:
+    try:
+        load_jsonc(f)
+    except Exception as e:
+        errors.append(f'{f}: {e}')
+
+if errors:
+    print('JSONC validation failed:')
+    for e in errors:
+        print(f'  {e}')
+    sys.exit(1)
+else:
+    print('All JSONC files valid')
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"JSONC validation failed:\n{r.stderr or r.stdout}"
 
 
 # [repo_tests] pass_to_pass — Git repository integrity
@@ -331,3 +380,52 @@ def test_repo_build_scripts_structure():
     assert 'n.rule("cxx"' in compile_ts, "compile.ts must define cxx rule"
     assert 'n.rule("cc"' in compile_ts, "compile.ts must define cc rule"
     assert 'n.rule("pch"' in compile_ts, "compile.ts must define pch rule"
+
+
+# [repo_tests] pass_to_pass — TypeScript config files are valid JSONC
+def test_repo_tsconfig_valid_jsonc():
+    """TypeScript config files are syntactically valid JSONC (pass_to_pass).
+
+    CI uses these configs for type checking; they must be valid JSON with
+    comments (JSONC format). This test validates them using Python's json
+    module after stripping comments.
+    """
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+import re
+import sys
+
+def load_jsonc(path):
+    '''Load JSON with comments (JSONC format).'''
+    with open(path) as f:
+        content = f.read()
+    # Remove single-line comments
+    content = re.sub(r'//.*$', '', content, flags=re.MULTILINE)
+    # Remove multi-line comments
+    content = re.sub(r'/\\*.*?\\*/', '', content, flags=re.DOTALL)
+    return json.loads(content)
+
+files = [
+    '/workspace/bun/tsconfig.json',
+    '/workspace/bun/tsconfig.base.json',
+    '/workspace/bun/scripts/build/tsconfig.json'
+]
+errors = []
+for f in files:
+    try:
+        load_jsonc(f)
+    except Exception as e:
+        errors.append(f'{f}: {e}')
+
+if errors:
+    print('JSONC validation failed:')
+    for e in errors:
+        print(f'  {e}')
+    sys.exit(1)
+else:
+    print('All JSONC files valid')
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"JSONC validation failed:\n{r.stderr or r.stdout}"

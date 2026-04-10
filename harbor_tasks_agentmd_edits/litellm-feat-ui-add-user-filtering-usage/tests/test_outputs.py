@@ -17,7 +17,7 @@ UI = REPO / "ui" / "litellm-dashboard"
 
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a Node.js script in the UI directory and return the result."""
-    script_path = UI / "_eval_tmp.mjs"
+    script_path = UI / "_eval_tmp.js"  # Use .js not .mjs to avoid ES module issues
     script_path.write_text(script)
     try:
         return subprocess.run(
@@ -27,6 +27,23 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
         )
     finally:
         script_path.unlink(missing_ok=True)
+
+
+def _ensure_npm_and_deps():
+    """Enable npm via corepack and install dependencies if needed."""
+    # Enable npm via corepack
+    subprocess.run(
+        ["corepack", "enable", "npm"],
+        capture_output=True, text=True, timeout=30,
+        cwd=UI,
+    )
+    # Install dependencies if node_modules doesn't exist
+    if not (UI / "node_modules").exists():
+        subprocess.run(
+            ["npm", "install", "--legacy-peer-deps"],
+            capture_output=True, text=True, timeout=300,
+            cwd=UI,
+        )
 
 
 # --- Code behavior tests (fail_to_pass) ---
@@ -116,3 +133,29 @@ def test_tsconfig_valid_json():
         'console.log("PASS");\n'
     )
     assert result.returncode == 0, f"tsconfig.json invalid: {result.stdout}{result.stderr}"
+
+
+def test_repo_entity_usage_tests():
+    """Repo's EntityUsage component tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/EntityUsage/EntityUsage.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"EntityUsage tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_usage_view_select_tests():
+    """Repo's UsageViewSelect component tests pass (pass_to_pass)."""
+    _ensure_npm_and_deps()  # Enable npm and install deps
+    r = subprocess.run(
+        ["npm", "run", "test", "--", "--run",
+         "src/components/UsagePage/components/UsageViewSelect/UsageViewSelect.test.tsx"],
+        capture_output=True, text=True, timeout=600,
+        cwd=UI,
+    )
+    assert r.returncode == 0, f"UsageViewSelect tests failed:\n{r.stderr[-500:]}"
+
+

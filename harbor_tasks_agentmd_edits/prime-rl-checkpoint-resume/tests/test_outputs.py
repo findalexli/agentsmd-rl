@@ -27,6 +27,43 @@ def _run_python(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — run actual CI commands
+# ---------------------------------------------------------------------------
+
+
+def test_repo_unit_config():
+    """Repo's unit tests for config modules pass (pass_to_pass)."""
+    deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli"
+    r = subprocess.run(
+        f"pip install -q {deps} 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"PYTHONPATH=/workspace/prime-rl/src python -m pytest "
+        f"tests/unit/training/test_config.py tests/unit/training/orchestrator/test_config.py -v 2>&1",
+        capture_output=True, text=True, shell=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Config unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_import_training_modules():
+    """Training and orchestrator modules can be imported (pass_to_pass)."""
+    deps = "loguru datasets pydantic-settings typer pyyaml tomli"
+    script = f"""
+import sys
+sys.path.insert(0, '/workspace/prime-rl/src')
+import subprocess
+subprocess.run(['pip', 'install', '-q', '{deps}'], capture_output=True)
+from zeroband.training.config import TrainingConfig
+from zeroband.training.orchestrator.config import OrchestratorConfig
+print('TrainingConfig and OrchestratorConfig imported successfully')
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Import test failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 

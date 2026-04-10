@@ -8,31 +8,49 @@ checks:
 - id: syntax_check
   type: pass_to_pass
   origin: static
-  description: Modified Dart file has balanced braces and parentheses
+  description: "Modified Dart file has balanced braces and parentheses"
 - id: skip_loading_on_reload_in_when
   type: fail_to_pass
   origin: pr_diff
-  description: recordAsync.when() includes skipLoadingOnReload: true as a named parameter
+  description: "recordAsync.when() includes skipLoadingOnReload: true as a named parameter"
 - id: readme_documents_reload_behavior
   type: fail_to_pass
   origin: pr_diff
-  description: Feature README documents the skip-loading-on-reload behavior
+  description: "Feature README documents the skip-loading-on-reload behavior"
 - id: when_call_still_has_loading_error_data
   type: pass_to_pass
   origin: static
   description: The .when() call retains loading, error, and data callbacks
+- id: test_mypy_ai_proxy_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python type checking passes for ai-proxy-service (mypy)
+- id: test_python_syntax_ai_proxy_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python files in ai-proxy-service have valid syntax
+- id: test_python_syntax_credits_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python files in credits-service have valid syntax
+- id: test_mypy_matrix_provisioner
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python type checking passes for matrix_provisioner (mypy)
+- id: test_flake8_matrix_provisioner
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python linting passes for matrix_provisioner (flake8)
+- id: test_isort_matrix_provisioner
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python import sorting is valid for matrix_provisioner (isort)
 rubric:
 - rule: Documentation update is consistent with the architecture-first style of the
     existing projects README
   source:
-    path: AGENTS.md
-    lines: 135-137
-    commit: 33bd45088097cadb36fbc6930f611513cef0ba2e
-- rule: The skipLoadingOnReload parameter is placed logically within the .when() call,
-    before the named callbacks
-  source:
-    path: lib/features/projects/ui/pages/project_details_page.dart
-    lines: 47-48
+    path: lib/features/projects/README.md
+    lines: 1-50
     commit: fda7c15b3cd6b88a3d9d258d458ce202f4b025c8
 - rule: README explains previous content stays mounted during reloads
   source:
@@ -51,7 +69,16 @@ rubric:
     commit: fda7c15b3cd6b88a3d9d258d458ce202f4b025c8
 - rule: Feature README uses architecture-first style per AGENTS.md
   source:
-    path: AGENTS.md
-    lines: 135-137
-    commit: 33bd45088097cadb36fbc6930f611513cef0ba2e
-- rule: The .when() call retains loading, error, and data callbacks
+    path: lib/features/projects/README.md
+    lines: 1-50
+    commit: fda7c15b3cd6b88a3d9d258d458ce202f4b025c8
+- rule: Feature READMEs must be updated alongside code changes to match actual runtime behavior
+  source:
+    path: lib/features/projects/README.md
+    lines: 250-260
+    commit: fda7c15b3cd6b88a3d9d258d458ce202f4b025c8
+- rule: Maintain feature READMEs and update them alongside code changes
+  source:
+    path: lib/features/projects/README.md
+    lines: 250-260
+    commit: fda7c15b3cd6b88a3d9d258d458ce202f4b025c8

@@ -4,16 +4,23 @@ set -euo pipefail
 cd /workspace/next.js
 
 # Idempotent: skip if already applied
-if [ -f "turbopack/crates/turbo-tasks/src/vc/README.md" ]; then
-    if grep -q "Value cells represent the pending result" "turbopack/crates/turbo-tasks/src/vc/README.md" 2>/dev/null; then
+if [ -f turbopack/crates/turbo-tasks/src/vc/README.md ]; then
+    if grep -q "Value cells represent the pending result" turbopack/crates/turbo-tasks/src/vc/README.md 2>/dev/null; then
         echo "Patch already applied."
         exit 0
     fi
 fi
 
-# Create the new README.md file first
-cat > turbopack/crates/turbo-tasks/src/vc/README.md <<'README_EOF'
-**Value cells** represent the pending result of a computation, similar to a cell in a spreadsheet. When a `Vc`'s contents change, the change is propagated by invalidating dependent tasks.
+#!/usr/bin/env python3
+import re
+import os
+
+REPO = "/workspace/next.js"
+CRATE_PATH = f"{REPO}/turbopack/crates/turbo-tasks"
+
+# Create the vc/README.md file
+vc_readme_path = f"{CRATE_PATH}/src/vc/README.md"
+readme_content = '''**Value cells** represent the pending result of a computation, similar to a cell in a spreadsheet. When a `Vc`'s contents change, the change is propagated by invalidating dependent tasks.
 
 In order to get a reference to the pointed value, you need to `.await` the [`Vc<T>`] to get a [`ReadRef<T>`][`ReadRef`]:
 
@@ -104,9 +111,9 @@ This means that `Vc` often uses the same in-memory representation as a `Resolved
 
 |                 | Representation                     | Equality        | Downcasting                | Strong Consistency     | Collectibles      | [Non-Local]  |
 |-----------------|------------------------------------|-----------------|----------------------------|------------------------|-------------------|--------------|
-| [`Vc`]          | [One of many][RawVc]               | ❌ [Broken][eq] | ⚠️  After resolution        | ❌ Eventual            | ❌ No             | ❌ [No][loc] |
-| [`ResolvedVc`]  | [Task Id + Type Id + Cell Id][rtc] | ✅ Yes\*        | ✅ [Yes, cheaply][resolve] | ❌ Eventual            | ❌ No             | ✅ Yes       |
-| [`OperationVc`] | [Task Id][rto]                     | ✅ Yes\*        | ⚠️  After resolution        | ✅ [Supported][strong] | ✅ [Yes][collect] | ✅ Yes       |
+| [`Vc`]          | [One of many][RawVc]               | :x: [Broken][eq] | :warning:  After resolution        | :x: Eventual            | :x: No             | :x: [No][loc] |
+| [`ResolvedVc`]  | [Task Id + Type Id + Cell Id][rtc] | :white_check_mark: Yes\*        | :white_check_mark: [Yes, cheaply][resolve] | :x: Eventual            | :x: No             | :white_check_mark: Yes       |
+| [`OperationVc`] | [Task Id][rto]                     | :white_check_mark: Yes\*        | :warning:  After resolution        | :white_check_mark: [Supported][strong] | :white_check_mark: [Yes][collect] | :white_check_mark: Yes       |
 
 *\* see the type's documentation for details*
 
@@ -162,85 +169,191 @@ We prevent potentially-local `Vc`s from escaping the lifetime of a function usin
 [`State`]: crate::State
 [book-cells]: https://turbopack-rust-docs.vercel.sh/turbo-engine/cells.html
 [collectibles]: crate::CollectiblesSource
-README_EOF
+'''
 
-# Apply the remaining patches using sed commands
+with open(vc_readme_path, 'w') as f:
+    f.write(readme_content)
+print("Created vc/README.md")
 
 # Update .alexrc - add "dirty" to allowed words
-sed -i 's/"dead",/"dead",\n    "dirty",/' .alexrc
+alexrc_path = f"{REPO}/.alexrc"
+if os.path.exists(alexrc_path):
+    with open(alexrc_path, 'r') as f:
+        content = f.read()
+    if '"dirty"' not in content:
+        content = content.replace('"dead",', '"dead",\n    "dirty",')
+        with open(alexrc_path, 'w') as f:
+            f.write(content)
+        print("Updated .alexrc")
 
 # Update turbopack/crates/turbo-tasks/README.md - merge Cells into Vc description
-sed -i 's/- \*\*\[Cells\]\[book-cells\]:\*\* The locations associated with tasks where values are stored. The contents of a cell can change after the reexecution of a function due to invalidation./- \*\*\[`Vc`s ("Value Cells")\]\[`Vc`\]:\*\* References to locations associated with tasks where values are stored. The contents of a cell can change after the reexecution of a function due to invalidation. A [`Vc`] can be read to get [a read-only reference][crate::ReadRef] to the stored data, representing a snapshot of that cell at that point in time./' turbopack/crates/turbo-tasks/README.md
+readme_path = f"{CRATE_PATH}/README.md"
+if os.path.exists(readme_path):
+    with open(readme_path, 'r') as f:
+        content = f.read()
 
-# Remove the old separate bullet points from README.md
-sed -i '/-\*\*\[`Vc`s ("Value Cells")\]\[`Vc`\]:\*\* A reference to a cell or a return value of a function./d' turbopack/crates/turbo-tasks/README.md
-sed -i '/^A \[`Vc`\] can be read to get/d' turbopack/crates/turbo-tasks/README.md
+    # Replace old Cells bullet with merged Vc description
+    old_cells = '- **[Cells][book-cells]:** The locations associated with tasks where values are stored. The contents of a cell can change after the reexecution of a function due to invalidation.'
+    new_cells = '- **[`Vc`s ("Value Cells")][`Vc`]:** References to locations associated with tasks where values are stored. The contents of a cell can change after the reexecution of a function due to invalidation. A [`Vc`] can be read to get [a read-only reference][crate::ReadRef] to the stored data, representing a snapshot of that cell at that point in time.'
+
+    if old_cells in content:
+        content = content.replace(old_cells, new_cells)
+        print("Merged Cells into Vc description in README.md")
+
+    # Remove old separate Vc bullet if it exists
+    content = re.sub(r'-\*\*\[`Vc`s?[^*]*\]\[\`Vc\`\]:\*\*[^\n]*\n', '', content)
+    content = re.sub(r'A \[\`Vc\`\] can be read to get[^\n]*\n', '', content)
+
+    with open(readme_path, 'w') as f:
+        f.write(content)
 
 # Update lib.rs - improve Vc description in value macro docs
-sed -i 's/A \[`Vc`\] represents a (potentially lazy) memoized computation. Each \[`Vc`\]\'s value is placed/A [`Vc`] represents the result of a computation. Each [`Vc`]'"'"'s value is placed/' turbopack/crates/turbo-tasks/src/lib.rs
-sed -i 's/into a cell associated with the current \[`TaskId`\]. That \[`Vc`\] object can be `await`ed to get/into a cell\n\/\/\/ associated with the current [`TaskId`]. That [`Vc`] object can be `await`ed to get/' turbopack/crates/turbo-tasks/src/lib.rs
+lib_rs_path = f"{CRATE_PATH}/src/lib.rs"
+if os.path.exists(lib_rs_path):
+    with open(lib_rs_path, 'r') as f:
+        content = f.read()
 
-# Update lib.rs - serialization documentation (bincode instead of serde)
-sed -i 's/Affects serialization via \[`serde::Serialize`\] and \[`serde::Deserialize`\]. Serialization is/Affects serialization via [`bincode::Encode`] and [`bincode::Decode`]. Serialization is required/' turbopack/crates/turbo-tasks/src/lib.rs
-sed -i 's/required for filesystem cache of tasks./required\n\/\/\/ for the filesystem cache of tasks./' turbopack/crates/turbo-tasks/src/lib.rs
-sed -i 's/- \*\*`"auto"` \*\*(default)\*\*:\*\* Derives the serialization traits and enables serialization./- *\*`"auto"` *(default)*:** Derives the bincode traits and enables serialization./' turbopack/crates/turbo-tasks/src/lib.rs
-sed -i 's/- \*\*`"custom"`:\*\* Prevents deriving the serialization traits, but still enables serialization/- *\*`"custom"`:** Prevents deriving the bincode traits, but still enables serialization/' turbopack/crates/turbo-tasks/src/lib.rs
-sed -i 's/(you must manually implement \[`serde::Serialize`\] and \[`serde::Deserialize`\])./(you must manually implement [`bincode::Encode`] and [`bincode::Decode`])./' turbopack/crates/turbo-tasks/src/lib.rs
+    # Fix Vc description
+    content = content.replace(
+        "A [`Vc`] represents a (potentially lazy) memoized computation. Each [`Vc`]'s value is placed",
+        "A [`Vc`] represents the result of a computation. Each [`Vc`]'s value is placed"
+    )
+    content = content.replace(
+        "into a cell associated with the current [`TaskId`]. That [`Vc`] object can be `await`ed to get",
+        "into a cell\n/// associated with the current [`TaskId`]. That [`Vc`] object can be `await`ed to get"
+    )
 
-# Update lib.rs - shared flag documentation
-sed -i 's/Makes the `cell()` method public so everyone can use it./This flag makes the macro-generated `.cell()` method public so everyone can use it./' turbopack/crates/turbo-tasks/src/lib.rs
+    # Fix serialization documentation (bincode instead of serde)
+    content = content.replace(
+        'Affects serialization via [`serde::Serialize`] and [`serde::Deserialize`]. Serialization is',
+        'Affects serialization via [`bincode::Encode`] and [`bincode::Decode`]. Serialization is required'
+    )
+    content = content.replace(
+        'required for filesystem cache of tasks.',
+        'required\n/// for the filesystem cache of tasks.'
+    )
+    content = content.replace(
+        '- **`"auto"` **(default)**:** Derives the serialization traits and enables serialization.',
+        '- *\*`"auto"` *(default)*:** Derives the bincode traits and enables serialization.'
+    )
+    content = content.replace(
+        '- **`"custom"`:** Prevents deriving the serialization traits, but still enables serialization',
+        '- *\*`"custom"`:** Prevents deriving the bincode traits, but still enables serialization'
+    )
+    content = content.replace(
+        '(you must manually implement [`serde::Serialize`] and [`serde::Deserialize`]).',
+        '(you must manually implement [`bincode::Encode`] and [`bincode::Decode`]).'
+    )
 
-# Add the additional documentation for non-transparent types
-if ! grep -q "Non-transparent types are given a .cell() method" turbopack/crates/turbo-tasks/src/lib.rs; then
-    sed -i '/This flag makes the macro-generated/a\/\/\/\n\/\/\/ Non-transparent types are given a `.cell()` method. That method returns a `Vc` of the type.\n\/\/\/\n\/\/\/ This option does not apply to wrapper types that use `transparent`. Those use the public\n\/\/\/ [`Vc::cell`] function for construction.' turbopack/crates/turbo-tasks/src/lib.rs
-fi
+    # Fix shared flag documentation
+    content = content.replace(
+        'Makes the `cell()` method public so everyone can use it.',
+        'This flag makes the macro-generated `.cell()` method public so everyone can use it.'
+    )
+
+    # Add the additional documentation for non-transparent types
+    if 'Non-transparent types are given a' not in content:
+        content = content.replace(
+            'This flag makes the macro-generated `.cell()` method public so everyone can use it.',
+            'This flag makes the macro-generated `.cell()` method public so everyone can use it.\n///\n/// Non-transparent types are given a `.cell()` method. That method returns a `Vc` of the type.\n///\n/// This option does not apply to wrapper types that use `transparent`. Those use the public\n/// [`Vc::cell`] function for construction.'
+        )
+
+    with open(lib_rs_path, 'w') as f:
+        f.write(content)
+    print("Updated lib.rs")
 
 # Update raw_vc.rs - fix Vc links
-sed -i 's/\/\/\/ A type-erased representation of \[`Vc`\]\[crate::Vc\]./\/\/\/ A type-erased representation of [`Vc`]./' turbopack/crates/turbo-tasks/src/raw_vc.rs
-sed -i 's/\/\/\/ required to support \[`Vc`\]\[crate::Vc\]./\/\/\/ required to support [`Vc`]./' turbopack/crates/turbo-tasks/src/raw_vc.rs
-sed -i 's/\/\/\/ \/\/\/ This type is heavily used within the \[`Backend`\]/\/\/\/ [`Vc`]: crate::Vc\n\/\/\/ \/\/\/ This type is heavily used within the [`Backend`]/' turbopack/crates/turbo-tasks/src/raw_vc.rs
+raw_vc_path = f"{CRATE_PATH}/src/raw_vc.rs"
+if os.path.exists(raw_vc_path):
+    with open(raw_vc_path, 'r') as f:
+        content = f.read()
 
-# Add Vc link to LocalOutput variant docs
-sed -i 's/\/\/\/ for a fallback runtime assertion./\/\/\/ for a fallback runtime assertion.\n\/\/\/\n\/\/\/ [`Vc`]: crate::Vc/' turbopack/crates/turbo-tasks/src/raw_vc.rs
+    content = content.replace(
+        '/// A type-erased representation of [`Vc`][crate::Vc].',
+        '/// A type-erased representation of [`Vc`].'
+    )
+    content = content.replace(
+        '/// required to support [`Vc`][crate::Vc].',
+        '/// required to support [`Vc`].'
+    )
+
+    # Add Vc link before Backend reference
+    if '/// [`Vc`]: crate::Vc' not in content:
+        content = content.replace(
+            '/// This type is heavily used within the [`Backend`][crate::backend::Backend]',
+            '/// [`Vc`]: crate::Vc\n    /// This type is heavily used within the [`Backend`][crate::backend::Backend]'
+        )
+
+    # Add Vc link to LocalOutput variant docs - find the right place
+    # Looking for the end of LocalOutput docs
+    local_output_section = content.find('LocalOutput(ExecutionId, LocalTaskId, TaskPersistence),')
+    if local_output_section != -1:
+        # Find the line before LocalOutput
+        section_start = content.rfind('/// ', 0, local_output_section)
+        if section_start != -1:
+            # Check if we already added the link
+            before_local = content[section_start:local_output_section]
+            if '[`Vc`]: crate::Vc' not in before_local:
+                # Add the link before LocalOutput
+                content = content.replace(
+                    '/// for a fallback runtime assertion.\n    LocalOutput(ExecutionId, LocalTaskId, TaskPersistence),',
+                    '/// for a fallback runtime assertion.\n    ///\n    /// [`Vc`]: crate::Vc\n    LocalOutput(ExecutionId, LocalTaskId, TaskPersistence),'
+                )
+
+    with open(raw_vc_path, 'w') as f:
+        f.write(content)
+    print("Updated raw_vc.rs")
 
 # Update resolved.rs - add Reading a ResolvedVc section
-sed -i 's/\/\/\/ 3. Given a \[`Vc`\], use \[`.to_resolved().await?`\]\[Vc::to_resolved\]./\/\/\/ 3. Given a [`Vc`], use [`.to_resolved().await?`][Vc::to_resolved].\n\/\/\/\n\/\/\/\n\/\/\/ ## Reading a `ResolvedVc`\n\/\/\/\n\/\/\/ Even though a `Vc` may be resolved as a `ResolvedVc`, we must still use `.await?` to read it'"'"'s\n\/\/\/ value, as the value could be invalidated or cache-evicted./' turbopack/crates/turbo-tasks/src/vc/resolved.rs
+resolved_path = f"{CRATE_PATH}/src/vc/resolved.rs"
+if os.path.exists(resolved_path):
+    with open(resolved_path, 'r') as f:
+        content = f.read()
+
+    if '## Reading a `ResolvedVc`' not in content:
+        content = content.replace(
+            '/// 3. Given a [`Vc`], use [`.to_resolved().await?`][Vc::to_resolved].',
+            '/// 3. Given a [`Vc`], use [`.to_resolved().await?`][Vc::to_resolved].\n///\n///\n/// ## Reading a `ResolvedVc`\n///\n/// Even though a `Vc` may be resolved as a `ResolvedVc`, we must still use `.await?` to read it\'s\n/// value, as the value could be invalidated or cache-evicted.'
+        )
+        with open(resolved_path, 'w') as f:
+            f.write(content)
+        print("Updated resolved.rs")
 
 # Update mod.rs - replace inline docs with include_str! and fix typo
-# First, find and replace the doc comment with include_str!
-sed -i 's/\/\/\/ A "Value Cell" (`Vc` for short) is a reference to a memoized computation result stored on the/#[doc = include_str!("README.md")]/' turbopack/crates/turbo-tasks/src/vc/mod.rs
+mod_rs_path = f"{CRATE_PATH}/src/vc/mod.rs"
+if os.path.exists(mod_rs_path):
+    with open(mod_rs_path, 'r') as f:
+        content = f.read()
 
-# The above doesn't fully work - need to remove all the old inline docs
-# Let's use a Python script for this complex modification
-python3 << 'PYEOF'
-import re
+    # Find and replace the old doc comment block
+    old_doc_pattern = r'/// A "Value Cell" \(`Vc` for short\) is a reference to a memoized computation result stored on the\n/// heap.*?\[collectibles\]: crate::CollectiblesSource\n'
 
-mod_rs_path = "turbopack/crates/turbo-tasks/src/vc/mod.rs"
-content = open(mod_rs_path).read()
+    if re.search(old_doc_pattern, content, re.DOTALL):
+        content = re.sub(old_doc_pattern, '#[doc = include_str!("README.md")]\n', content, flags=re.DOTALL)
+        print("Replaced old doc comment with include_str!")
+    elif '#[doc = include_str!("README.md")]' not in content:
+        print("WARNING: Could not find old doc pattern in mod.rs")
 
-# Find the old doc comment block (from /// A "Value Cell" to the last line before #[must_use])
-old_doc_pattern = r'/// A "Value Cell" \(`Vc` for short\) is a reference to a memoized computation result stored on the\n/// heap.*?\[collectibles\]: crate::CollectiblesSource\n'
+    # Fix the typo
+    content = content.replace(
+        "already had a `ResolvedVc<Box<dyn MyTrait>>.  So this function has a looser type constraint",
+        "already had a `ResolvedVc<Box<dyn MyTrait>>`. So this function has a looser type constraint"
+    )
 
-new_doc = '#[doc = include_str!("README.md")]\n'
+    with open(mod_rs_path, 'w') as f:
+        f.write(content)
+    print("Fixed typo in mod.rs")
 
-if re.search(old_doc_pattern, content, re.DOTALL):
-    content = re.sub(old_doc_pattern, new_doc, content, flags=re.DOTALL)
-    print("Replaced old doc comment with include_str!")
-else:
-    # Check if already replaced
-    if '#[doc = include_str!("README.md")]' in content:
-        print("Already has include_str!")
-    else:
-        print("WARNING: Could not find old doc pattern")
-
-# Fix the typo: ResolvedVc<Box<dyn MyTrait>>.  -> ResolvedVc<Box<dyn MyTrait>>`. So
-content = content.replace(
-    "already had a `ResolvedVc<Box<dyn MyTrait>>.  So this function has a looser type constraint",
-    "already had a `ResolvedVc<Box<dyn MyTrait>>`. So this function has a looser type constraint"
+# Run cargo fmt to fix formatting
+import subprocess
+result = subprocess.run(
+    ["cargo", "fmt"],
+    cwd=f"{CRATE_PATH}",
+    capture_output=True, text=True
 )
+if result.returncode == 0:
+    print("Ran cargo fmt successfully")
+else:
+    print(f"cargo fmt output: {result.stderr}")
 
-open(mod_rs_path, 'w').write(content)
-print("Fixed typo in mod.rs")
-PYEOF
-
-echo "Patch applied successfully."
+print("All patches applied successfully.")

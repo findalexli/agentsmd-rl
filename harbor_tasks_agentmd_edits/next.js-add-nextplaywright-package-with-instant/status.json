@@ -3,44 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T03:40:12.558083",
-  "total_time": 7375.62,
-  "sandbox_id": "izj45ye4u096iawvb506j",
+  "validated_at": "2026-04-10T11:49:54.758956",
+  "total_time": 1600.81,
+  "sandbox_id": "i8oyy4zo9kp7vc5foo6kt",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "completed_at": "2026-04-09T10:35:00Z",
-      "ci_commands_discovered": [
-        "package.json scripts: test-types (tsc), typescript (tsc --noEmit)",
-        "package.json scripts: lint, lint-typescript (turbo run typescript)",
-        "package.json scripts: prettier-check, lint-eslint",
-        "Note: Cannot run CI commands because node_modules not installed in Docker image"
-      ],
-      "tests_added": [
-        {
-          "id": "repo_package_json_valid",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Repo root package.json must be valid and define workspaces"
-        },
-        {
-          "id": "existing_packages_have_valid_structure",
-          "type": "pass_to_pass",
-          "origin": "repo_tests",
-          "description": "Existing packages in monorepo must have valid structure"
-        }
-      ],
-      "notes": [
-        "Docker image uses shallow clone without node_modules, so runtime CI commands (tsc, eslint, prettier) cannot be executed",
-        "Added static structure-validation tests instead:",
-        "  - test_repo_package_json_valid: Validates root package.json has workspaces and required scripts",
-        "  - test_existing_packages_have_valid_structure: Validates core next package structure",
-        "Both new p2p tests pass on base commit (verified)",
-        "Existing test_root_tsconfig_valid_json continues to pass",
-        "Total p2p tests: 3 (1 original + 2 new)"
-      ]
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 257.0,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -61,16 +36,16 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed Dockerfile to install TypeScript globally for test_package_compiles test. All 4 validation checks pass.",
+      "notes": "All 4 validation checks passed. Docker build succeeds, NOP test returns reward=0 (tests correctly fail on base commit), Gold test returns reward=1 (13/13 tests pass). Rubric judge requires API keys (GEMINI_API_KEY or ANTHROPIC_API_KEY) to run LLM evaluation; previous run showed ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 202.73
+      "time": 125.78
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.76,
+      "time": 4.53,
       "notes": "ICR=1.00"
     }
   },
@@ -90,6 +65,14 @@
       "backend": "fireworks",
       "time": 7375.62,
       "at": "2026-04-09T03:40:12.558083"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1600.81,
+      "at": "2026-04-10T11:49:54.758956"
     }
   ]
 }

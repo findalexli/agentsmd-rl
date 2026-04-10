@@ -30,6 +30,77 @@ def test_syntax_check():
     assert "jobs" in data, "Workflow YAML should have a jobs key"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's Python scripts pass ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "scripts/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python scripts are properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--diff", "scripts/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shellcheck_scripts():
+    """Repo's shell scripts pass shellcheck (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "shellcheck-py", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Find shell scripts and run shellcheck
+    r = subprocess.run(
+        ["bash", "-c", f"find {REPO}/scripts -name '*.sh' -type f | head -20 | xargs shellcheck --shell bash --severity warning"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"shellcheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_validate_pyproject():
+    """Repo's pyproject.toml is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "validate-pyproject", "packaging", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["validate-pyproject", f"{REPO}/pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"validate-pyproject failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typos():
+    """Repo has no typos (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "typos", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["typos"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"typos check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — CI workflow changes
 # ---------------------------------------------------------------------------
@@ -95,16 +166,19 @@ def test_script_rejects_invalid_action():
     script = Path(REPO) / "scripts" / "apply-ci-snapshots.sh"
     assert script.exists(), "scripts/apply-ci-snapshots.sh should exist"
 
+    # Use a shell command to create mock binaries and run the test
+    cmd = f"""
+    tmpbin=$(mktemp -d)
+    for cmd in gh cargo-insta git; do
+        echo '#!/bin/sh' > "$tmpbin/$cmd"
+        echo 'exit 0' >> "$tmpbin/$cmd"
+        chmod +x "$tmpbin/$cmd"
+    done
+    export PATH="$tmpbin:$PATH"
+    bash '{script}' 12345 badaction 2>&1
+    """
     r = subprocess.run(
-        ["bash", "-c", f"""
-            tmpbin=$(mktemp -d)
-            for cmd in gh cargo-insta git; do
-                printf '#!/bin/sh\\nexit 0\\n' > "$tmpbin/$cmd"
-                chmod +x "$tmpbin/$cmd"
-            done
-            export PATH="$tmpbin:$PATH"
-            bash '{script}' 12345 badaction 2>&1
-        """],
+        ["bash", "-c", cmd],
         capture_output=True, text=True, timeout=10,
     )
     assert r.returncode != 0, "Script should exit non-zero for invalid action"
@@ -121,10 +195,12 @@ def test_script_detects_missing_tools():
     script = Path(REPO) / "scripts" / "apply-ci-snapshots.sh"
     assert script.exists(), "scripts/apply-ci-snapshots.sh should exist"
 
+    # Use a minimal PATH that has bash but not gh, cargo-insta, or git
+    minimal_path = "/bin:/usr/bin"
     r = subprocess.run(
         ["bash", str(script), "12345"],
         capture_output=True, text=True, timeout=10,
-        env={"PATH": "/nonexistent", "HOME": "/tmp"},
+        env={"PATH": minimal_path, "HOME": "/tmp"},
     )
     assert r.returncode != 0, "Script should exit non-zero when tools are missing"
     combined = r.stdout + r.stderr

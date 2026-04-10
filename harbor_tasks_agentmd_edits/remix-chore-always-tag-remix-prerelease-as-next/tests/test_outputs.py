@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import subprocess
+import re
 from pathlib import Path
 
 REPO = Path("/workspace/remix")
@@ -33,7 +34,7 @@ def test_changes_validate():
     """Repo's changes:validate passes (pass_to_pass). Validates prerelease.json format."""
     # changes:validate checks that change files and prerelease.json follow the correct format
     r = subprocess.run(
-        ['node', './scripts/changes-validate.ts'],
+        ["node", "./scripts/changes-validate.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"changes:validate failed: {r.stderr[-500:] or r.stdout[-500:]}"
@@ -43,11 +44,11 @@ def test_changes_validate():
 def test_repo_lint():
     """ESLint passes on modified files (pass_to_pass)."""
     files = [
-        REPO / 'scripts' / 'utils' / 'changes.ts',
-        REPO / 'scripts' / 'publish.ts',
+        REPO / "scripts" / "utils" / "changes.ts",
+        REPO / "scripts" / "publish.ts",
     ]
     r = subprocess.run(
-        ['npx', 'eslint', '--max-warnings=0'] + [str(f) for f in files],
+        ["npx", "eslint", "--max-warnings=0"] + [str(f) for f in files],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed: {r.stderr[-500:] or r.stdout[-500:]}"
@@ -91,30 +92,28 @@ def test_changes_ts_reads_channel_field():
     """changes.ts readRemixPrereleaseConfig must validate 'channel', not 'tag'."""
     source = (REPO / "scripts" / "utils" / "changes.ts").read_text()
     # Interface must use 'channel'
-    assert "channel: string" in source, \
-        "RemixPrereleaseConfig interface must define 'channel: string'"
+    assert "channel: string" in source,         "RemixPrereleaseConfig interface must define 'channel: string'"
     # Validation must check for 'channel' key
-    assert "'channel' in obj" in source, \
-        "readRemixPrereleaseConfig must check 'channel' in obj"
+    assert "'channel' in obj" in source,         "readRemixPrereleaseConfig must check 'channel' in obj"
     # Must read obj.channel
-    assert "obj.channel" in source, \
-        "readRemixPrereleaseConfig must read obj.channel"
+    assert "obj.channel" in source,         "readRemixPrereleaseConfig must read obj.channel"
     # Must return config with channel key
-    assert "config: { channel:" in source, \
-        "readRemixPrereleaseConfig must return { channel: ... }"
+    assert "config: { channel:" in source,         "readRemixPrereleaseConfig must return { channel: ... }"
 
 
 # [pr_diff] fail_to_pass
 def test_publish_uses_next_dist_tag():
     """publish.ts must always publish remix prereleases with '--tag next'."""
     source = (REPO / "scripts" / "publish.ts").read_text()
-    assert "--tag next" in source, \
-        "publish.ts must include '--tag next' for prerelease publishing"
-    assert "remixPrereleaseChannel" in source, \
-        "publish.ts must use remixPrereleaseChannel variable (renamed from tag)"
-    # Must NOT interpolate the channel as the npm tag
-    assert "${remixPrerelease" not in source, \
-        "publish.ts must not use channel value as npm dist-tag"
+    assert "--tag next" in source,         "publish.ts must include '--tag next' for prerelease publishing"
+    assert "remixPrereleaseChannel" in source,         "publish.ts must use remixPrereleaseChannel variable (renamed from tag)"
+    # Must NOT interpolate the channel as the npm tag in the publish command
+    # Check that the pnpm publish command uses --tag next, not --tag ${variable}
+    publish_lines = [line for line in source.split("\n") if "pnpm publish --filter remix" in line]
+    assert publish_lines, "Must have pnpm publish command for remix"
+    for line in publish_lines:
+        assert "--tag next" in line, f"Publish command must use --tag next: {line}"
+        assert "${remixPrerelease" not in line, f"Publish command must not interpolate channel: {line}"
 
 
 # ---------------------------------------------------------------------------
@@ -125,12 +124,10 @@ def test_publish_uses_next_dist_tag():
 def test_agents_md_documents_channel_and_next():
     """AGENTS.md must describe 'channel' field and explain npm dist-tag is always 'next'."""
     content = (REPO / "AGENTS.md").read_text()
-    # Must mention the channel field
-    assert '"channel"' in content, \
-        "AGENTS.md must mention the 'channel' field for prerelease config"
+    # Must mention the channel field (can be backticks or quotes)
+    assert "channel" in content,         "AGENTS.md must mention the 'channel' field for prerelease config"
     # Must explain that dist-tag is always "next"
-    assert '"next"' in content, \
-        "AGENTS.md must explain that npm dist-tag is always 'next'"
+    assert '"next"' in content,         "AGENTS.md must explain that npm dist-tag is always 'next'"
 
 
 # [pr_diff] fail_to_pass
@@ -138,11 +135,9 @@ def test_contributing_md_uses_channel():
     """CONTRIBUTING.md must show 'channel' in prerelease.json example and docs."""
     content = (REPO / "CONTRIBUTING.md").read_text()
     # The JSON example must use "channel"
-    assert '"channel": "alpha"' in content, \
-        "CONTRIBUTING.md must show prerelease.json example with 'channel' field"
+    assert '"channel": "alpha"' in content,         "CONTRIBUTING.md must show prerelease.json example with 'channel' field"
     # The section header must say "channels" not "tags"
-    assert "prerelease channels" in content.lower(), \
-        "CONTRIBUTING.md must reference 'prerelease channels' (not 'tags')"
+    assert "prerelease channels" in content.lower(),         "CONTRIBUTING.md must reference 'prerelease channels' (not 'tags')"
 
 
 # ---------------------------------------------------------------------------
@@ -155,9 +150,6 @@ def test_not_stub():
     changes_src = (REPO / "scripts" / "utils" / "changes.ts").read_text()
     publish_src = (REPO / "scripts" / "publish.ts").read_text()
     # readRemixPrereleaseConfig should have multiple statements
-    assert "obj.channel.trim()" in changes_src, \
-        "readRemixPrereleaseConfig must validate channel (trim check)"
-    assert "semver.inc" in changes_src, \
-        "getNextVersion must use semver for version calculation"
-    assert "pnpm publish" in publish_src, \
-        "publish script must have real publish commands"
+    assert "obj.channel.trim()" in changes_src,         "readRemixPrereleaseConfig must validate channel (trim check)"
+    assert "semver.inc" in changes_src,         "getNextVersion must use semver for version calculation"
+    assert "pnpm publish" in publish_src,         "publish script must have real publish commands"

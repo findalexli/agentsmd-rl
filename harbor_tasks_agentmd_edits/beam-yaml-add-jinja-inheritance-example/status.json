@@ -1,26 +1,27 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:56:47.395652",
-  "total_time": 1716.39,
-  "sandbox_id": "idj1z3aw7exr8vfcx4b2r",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:25:00.866064",
+  "total_time": 663.82,
+  "sandbox_id": "i1vpate7pk7ue8nuqow58",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 0.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 165.19,
-      "notes": ""
+      "notes": "Added 9 p2p repo_tests: yamllint on combine_sum_minimal.yaml, wordcount_minimal.yaml, combine_count_minimal.yaml; Python syntax checks on input_data.py, examples_test.py, examples/__init__.py, testing/__init__.py; Jinja2 template syntax checks on wordCountInclude.yaml and wordCountImport.yaml"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 137.45,
+      "time": 530.6,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK; NOP test reward=0 (4 fail-to-pass tests correctly fail on base commit); Gold test reward=1 (13/13 tests pass after solve.sh); Rubric judge: gold solution files have proper Apache license headers and follow conventions.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 6.21
+      "time": 85.42
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 8.61,
+      "notes": "ICR=0.00"
     }
   },
   "history": [
@@ -60,6 +73,14 @@
       "backend": "fireworks",
       "time": 1716.39,
       "at": "2026-04-09T14:56:47.395652"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 663.82,
+      "at": "2026-04-10T11:25:00.866064"
     }
   ]
 }

@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:55:52.647297",
-  "total_time": 1661.63,
-  "sandbox_id": "il94xml7lpn6b4uw8g42c",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:34:03.915452",
+  "total_time": 1206.9,
+  "sandbox_id": "imq5u13mmqbe6sv58vydw",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.66,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "failed",
@@ -17,10 +19,10 @@
       "notes": "Docker build failed: golang:1.25-slim image does not exist (Go 1.25 not yet released). The validation agent will need to fix the Dockerfile. No CI commands discovered."
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 5.91,
+      "time": 203.93,
       "notes": ""
     },
     "improve": {
@@ -31,16 +33,48 @@
       "notes": "tests look good"
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md (created by PR)"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 0,
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.98,
-      "notes": ""
+      "time": 95.74
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile: changed FROM golang 1.23-slim to 1.23. Fixed tests: added GOTOOLCHAIN=auto to Go commands. All 4 checks pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.87
+      "time": 792.84
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 26.69,
+      "notes": "",
+      "precision": 0.66
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 63.57,
+      "notes": "precision was 0.66, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.33,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +101,14 @@
       "backend": "fireworks",
       "time": 1661.63,
       "at": "2026-04-09T14:55:52.647297"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1206.9,
+      "at": "2026-04-10T11:34:03.915452"
     }
   ]
 }

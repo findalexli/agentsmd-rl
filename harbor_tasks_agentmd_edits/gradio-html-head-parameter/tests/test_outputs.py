@@ -65,17 +65,18 @@ def test_head_stored_as_instance_attribute():
 
 
 def test_head_in_api_info():
-    """head attribute is returned in api_info() serialization."""
+    """head attribute is used in the component code (e.g., _to_publish_format)."""
     content = Path(f"{REPO}/gradio/components/html.py").read_text()
 
-    # The PR adds head to the returned api_info dict
-    # Check for pattern like 'return {"head": self.head, ...}' or similar
-    has_head_in_api = (
+    # The PR adds head parameter and uses it in _to_publish_format
+    has_head_usage = (
         '"head": self.head' in content or
-        "'head': self.head" in content
+        '"head": head or self.head' in content or
+        "'head': self.head" in content or
+        "'head': head or self.head" in content
     )
-    assert has_head_in_api, (
-        "head not included in api_info() return value. Expected head to be returned from api_info()"
+    assert has_head_usage, (
+        "head not used in component code. Expected self.head to be used in _to_publish_format or similar"
     )
 
 
@@ -135,28 +136,28 @@ def test_head_parameter_functional():
     result = subprocess.run(
         [
             "python3", "-c",
-            """
+            '''
 import gradio as gr
 
 # Test 1: Create HTML with head parameter
 html_comp = gr.HTML(
     value="<div>Test</div>",
-    head='<script src="https://example.com/lib.js"></script>'
+    head=\'\'\'<script src="https://example.com/lib.js"></script>\'\'\'
 )
 
 # Verify the head is stored
-assert hasattr(html_comp, 'head'), "HTML component missing head attribute"
-assert html_comp.head == '<script src="https://example.com/lib.js"></script>', \
+assert hasattr(html_comp, \'head\'), "HTML component missing head attribute"
+assert html_comp.head == \'\'\'<script src="https://example.com/lib.js"></script>\'\'\', \\
     f"head not stored correctly: {html_comp.head}"
 
 # Verify head appears in api_info
 api_info = html_comp.api_info()
-assert 'head' in api_info, "head not in api_info"
-assert api_info['head'] == '<script src="https://example.com/lib.js"></script>', \
-    f"head in api_info incorrect: {api_info.get('head')}"
+assert \'head\' in api_info, "head not in api_info"
+assert api_info[\'head\'] == \'\'\'<script src="https://example.com/lib.js"></script>\'\'\', \\
+    f"head in api_info incorrect: {api_info.get(\'head\')}"
 
 print("All head parameter tests passed!")
-"""
+'''
         ],
         cwd=REPO,
         capture_output=True,
@@ -186,3 +187,30 @@ def test_repo_html_component_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"HTML component tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_component_props_tests():
+    """Repo's component property tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/test_component_props.py", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Component props tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_related_component_tests():
+    """Repo's related component tests (button, markdown, label) pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_button.py", "test/components/test_markdown.py", "test/components/test_label.py", "-v"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Related component tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_html_head_test_exists():
+    """Repo's HTML tests include head parameter test (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pytest", "test/components/test_html.py::TestToPublishFormat::test_head_included", "-v"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTML head test failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

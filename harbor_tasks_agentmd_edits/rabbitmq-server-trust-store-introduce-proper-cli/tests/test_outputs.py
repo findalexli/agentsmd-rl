@@ -37,6 +37,162 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
+def test_trust_store_module_exports():
+    """rabbit_trust_store.erl exports required console interface functions (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import re, sys
+src = open("/workspace/rabbitmq-server/deps/rabbitmq_trust_store/src/rabbit_trust_store.erl").read()
+exports = re.findall(r"-export\\(\\[([^\\]]+)\\]\\)", src, re.DOTALL)
+export_text = " ".join(exports)
+required = ["mode/0", "refresh/0", "list/0"]
+for func in required:
+    if func not in export_text:
+        print(f"FAIL: missing export {func}", file=sys.stderr)
+        sys.exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Export check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_trust_store_behaviour_declaration():
+    """rabbit_trust_store.erl has required behaviour declaration (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+src = open("/workspace/rabbitmq-server/deps/rabbitmq_trust_store/src/rabbit_trust_store.erl").read()
+if "-behaviour(gen_server)." not in src:
+    print("FAIL: missing -behaviour(gen_server) declaration", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Behaviour check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_trust_store_src_structure():
+    """Trust store src directory contains expected core modules (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import pathlib, sys
+src = pathlib.Path("/workspace/rabbitmq-server/deps/rabbitmq_trust_store/src")
+required_modules = [
+    "rabbit_trust_store.erl",
+    "rabbit_trust_store_app.erl",
+    "rabbit_trust_store_sup.erl",
+]
+for mod in required_modules:
+    if not (src / mod).exists():
+        print(f"FAIL: required module {mod} not found", file=sys.stderr)
+        sys.exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Structure check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_readme_exists_and_has_content():
+    """README.md exists and has minimum content (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import pathlib, sys
+readme = pathlib.Path("/workspace/rabbitmq-server/deps/rabbitmq_trust_store/README.md")
+if not readme.exists():
+    print("FAIL: README.md not found", file=sys.stderr)
+    sys.exit(1)
+content = readme.read_text()
+if len(content) < 100:
+    print("FAIL: README.md is too short", file=sys.stderr)
+    sys.exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"README check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_makefile_exists():
+    """Makefile exists and defines required variables (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import pathlib, sys
+mf = pathlib.Path("/workspace/rabbitmq-server/deps/rabbitmq_trust_store/Makefile")
+if not mf.exists():
+    print("FAIL: Makefile not found", file=sys.stderr)
+    sys.exit(1)
+content = mf.read_text()
+required_vars = ["PROJECT = rabbitmq_trust_store", "DEPS ="]
+for var in required_vars:
+    if var not in content:
+        print(f"FAIL: Makefile missing '{var}'", file=sys.stderr)
+        sys.exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Makefile check failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests (pass_to_pass, repo_tests) — real CI commands
+# ---------------------------------------------------------------------------
+
+def test_trust_store_erlc_syntax():
+    """Erlang syntax check for rabbit_trust_store.erl using erlc (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store
+erlc +syntax_check src/rabbit_trust_store.erl 2>&1
+""",
+        shell=True, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"erlc syntax check failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_cli_command_modules_syntax():
+    """Erlang syntax check for CLI command modules (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store/src
+for f in Elixir.*Command.erl; do
+    if [ -f "$f" ]; then
+        erlc +syntax_check "$f" 2>&1 || exit 1
+    fi
+done
+echo "PASS"
+""",
+        shell=True, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"CLI command module syntax check failed:\n{r.stderr}"
+
+
+def test_trust_store_core_modules_syntax():
+    """Erlang syntax check for all core trust store modules (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store/src
+for f in rabbit_trust_store_*.erl; do
+    erlc +syntax_check "$f" 2>&1 || exit 1
+done
+echo "PASS"
+""",
+        shell=True, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Core module syntax check failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -131,7 +287,7 @@ def test_list_certificates_map_keys():
 import re, sys
 src = open("/workspace/rabbitmq-server/deps/rabbitmq_trust_store/src/rabbit_trust_store.erl").read()
 func_match = re.search(
-    r"list_certificates\(\).*?(?=\n-spec|\n[a-z_]+\(|\n%%\s+\S|\Z)",
+    r"list_certificates\\(\\).*?(?=\\n-spec|\\n[a-z_]+\\(|\\n%%\\s+\\S|\\Z)",
     src, re.DOTALL)
 if not func_match:
     print("FAIL: list_certificates function body not found", file=sys.stderr)

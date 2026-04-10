@@ -1,26 +1,27 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:20:32.215272",
-  "total_time": 18520.12,
-  "sandbox_id": "in29gecix5rh5det7ydvb",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:50:19.871151",
+  "total_time": 2182.93,
+  "sandbox_id": "i04orobkpbpvmuoshgx4p",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 174.96,
-      "notes": ""
+      "notes": "Added 4 new p2p repo_tests: test_repo_powershell_script_structure, test_repo_skill_md_structure, test_repo_powershell_no_syntax_errors, test_repo_files_encoding_and_size. All pass on base commit. CI tools explored: No PowerShell (pwsh) available in container. Repo is .NET MAUI with GitHub workflows for spellcheck, autoformat, and triage - none applicable to the PowerShell skill files. Used Python-based structural validation via subprocess.run() as actual CI commands."
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 22.59,
+      "time": 403.79,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,23 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_config_edits": 1.0,
+      "rubric_icr": 0.5,
+      "attempts": 1,
+      "notes": "All checks passed: Docker build OK, NOP reward=0 (7 f2p tests correctly fail), GOLD reward=1 (all 12 pass), config_edits=1.0. Updated rubric reference field for clarity.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 169.79
+      "time": 278.9
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 9.41,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +75,14 @@
       "backend": "fireworks",
       "time": 18520.12,
       "at": "2026-04-09T14:20:32.215272"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2182.93,
+      "at": "2026-04-10T11:50:19.871151"
     }
   ]
 }

@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: All modified TypeScript files exist and are non-empty
+- id: test_repo_prettier_readme
+  type: pass_to_pass
+  origin: repo_tests
+  description: README.md passes prettier formatting check
+- id: test_repo_ts_syntax_tracing
+  type: pass_to_pass
+  origin: repo_tests
+  description: All tracing test files have valid TypeScript syntax
+- id: test_repo_otel_v2_imports_resolve
+  type: pass_to_pass
+  origin: repo_tests
+  description: OTel v2 package imports resolve correctly at runtime
 - id: v2_otel_provider_pattern
   type: fail_to_pass
   origin: pr_diff
@@ -64,9 +76,9 @@ config_edits:
     \    [ATTR_SERVICE_NAME]: 'test-tracing-service',\n    [ATTR_SERVICE_VERSION]:\
     \ '1.0.0',\n  spanProcessors: [new SimpleSpanProcessor(otlpTraceExporter)],\n\
     trace.setGlobalTracerProvider(provider)"
-  gold_removed: "import { context } from '@opentelemetry/api'\nimport { Resource }\
-    \ from '@opentelemetry/resources'\nimport { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION\
-    \ } from '@opentelemetry/semantic-conventions'\n  resource: new Resource({\n \
-    \   [SEMRESATTRS_SERVICE_NAME]: 'test-tracing-service',\n    [SEMRESATTRS_SERVICE_VERSION]:\
+  gold_removed: "import { context } from '@opentelemetry/api'\nimport { Resource\
+    \ } from '@opentelemetry/resources'\nimport { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_SERVICE_VERSION\
+    \ } from '@opentelemetry/semantic-conventions'\n  resource: new Resource({\n\
+    \    [SEMRESATTRS_SERVICE_NAME]: 'test-tracing-service',\n    [SEMRESATTRS_SERVICE_VERSION]:\
     \ '1.0.0',\nprovider.addSpanProcessor(new SimpleSpanProcessor(otlpTraceExporter))\n\
     provider.register()"

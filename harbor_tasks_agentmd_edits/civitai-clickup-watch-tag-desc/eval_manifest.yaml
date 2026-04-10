@@ -13,6 +13,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's modified .mjs files parse as valid JavaScript
+- id: repo_eslint_clickup
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on clickup skill modified .mjs files
+- id: repo_clickup_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickUp skill modules can be imported without runtime errors
 - id: help_lists_new_commands
   type: fail_to_pass
   origin: pr_diff
@@ -58,158 +66,23 @@ rubric:
     lines: 59-60
     commit: 15503613a51260aff05d281110c5937163ee73fd
   reference: '| `watch <task> <user>` | Notify user via @mention comment (watchers
-    not supported in API) |
-
-    | `tag <task> "tag_name"` | Add a tag to task |
-
-    | `description <task> "text"` | Update task description (markdown supported) |
-
-    ### Notify Users (Watch)
-
-
-    ```bash
-
-    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers
-    directly)
-
-    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen
-
-
-    # Notify by email
-
-    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com
-
-    ```
-
-
-    ##'
+    not supported in API) |'
 - rule: SKILL.md documents the tag command for adding tags to tasks
   source:
     path: .claude/skills/clickup/SKILL.md
     lines: 60-61
     commit: 15503613a51260aff05d281110c5937163ee73fd
-  reference: '| `watch <task> <user>` | Notify user via @mention comment (watchers
-    not supported in API) |
-
-    | `tag <task> "tag_name"` | Add a tag to task |
-
-    | `description <task> "text"` | Update task description (markdown supported) |
-
-    ### Notify Users (Watch)
-
-
-    ```bash
-
-    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers
-    directly)
-
-    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen
-
-
-    # Notify by email
-
-    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com
-
-    ```
-
-
-    ##'
+  reference: '| `tag <task> "tag_name"` | Add a tag to task |'
 - rule: SKILL.md documents the description command with markdown support
   source:
     path: .claude/skills/clickup/SKILL.md
     lines: 61-62
     commit: 15503613a51260aff05d281110c5937163ee73fd
-  reference: '| `watch <task> <user>` | Notify user via @mention comment (watchers
-    not supported in API) |
-
-    | `tag <task> "tag_name"` | Add a tag to task |
-
-    | `description <task> "text"` | Update task description (markdown supported) |
-
-    ### Notify Users (Watch)
-
-
-    ```bash
-
-    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers
-    directly)
-
-    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen
-
-
-    # Notify by email
-
-    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com
-
-    ```
-
-
-    ##'
+  reference: '| `description <task> "text"` | Update task description (markdown supported)
+    |'
 config_edits:
 - path: .claude/skills/clickup/SKILL.md
   tier: 1
   gold_added: '| `watch <task> <user>` | Notify user via @mention comment (watchers
-    not supported in API) |
-
-    | `tag <task> "tag_name"` | Add a tag to task |
-
-    | `description <task> "text"` | Update task description (markdown supported) |
-
-    ### Notify Users (Watch)
-
-
-    ```bash
-
-    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers
-    directly)
-
-    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen
-
-
-    # Notify by email
-
-    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com
-
-    ```
-
-
-    ### Add Tags
-
-
-    ```bash
-
-    # Add a tag to a task
-
-    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "DevOps"
-
-    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "bug"
-
-    ```
-
-
-    ### Update Description
-
-
-    ```bash
-
-    # Update task description with markdown
-
-    node .claude/skills/clickup/query.mjs description 86a1b2c3d "## Summary
-
-    This is a **bold** statement.
-
-
-    - Item 1
-
-    - Item 2
-
-
-    See [documentation](https://example.com) for more info."
-
-    ```
-
-
-    - **Collaboration**: View recent comments for context, add watchers
-
-    - **Task organization**: Add tags to categorize tasks'
+    not supported in API) |\n\n    | `tag <task> "tag_name"` | Add a tag to task |\n\n    | `description <task> "text"` | Update task description (markdown supported) |\n\n    ### Notify Users (Watch)\n\n\n    ```bash\n\n    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers\n    directly)\n\n    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen\n\n\n    # Notify by email\n\n    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com\n\n    ```\n\n\n    ### Add Tags\n\n\n    ```bash\n\n    # Add a tag to a task\n\n    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "DevOps"\n\n    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "bug"\n\n    ```\n\n\n    ### Update Description\n\n\n    ```bash\n\n    # Update task description with markdown\n\n    node .claude/skills/clickup/query.mjs description 86a1b2c3d "## Summary\n\n    This is a **bold** statement.\n\n\n    - Item 1\n\n    - Item 2\n\n\n    See [documentation](https://example.com) for more info."\n\n    ```\n\n\n    - **Collaboration**: View recent comments for context, add watchers\n\n    - **Task organization**: Add tags to categorize tasks'
   gold_removed: '- **Collaboration**: View recent comments for context'

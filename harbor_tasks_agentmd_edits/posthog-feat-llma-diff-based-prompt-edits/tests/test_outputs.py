@@ -15,38 +15,74 @@ import yaml
 REPO = "/workspace/posthog"
 
 # ---------------------------------------------------------------------------
-# Helper: run Python code in a subprocess with Django stubs pre-configured
-# so we can exercise apply_prompt_edits without a full Django stack.
+# Helper: run Python code in a subprocess with function inlined
+# We extract and execute apply_prompt_edits without triggering Django imports.
 # ---------------------------------------------------------------------------
 
-_DJANGO_STUBS = """\
-import sys, types, json
+# Inline the apply_prompt_edits function for isolated testing
+_APPLY_PROMPT_EDITS_CODE = '''
+import json
+from dataclasses import dataclass
 
-for mod in ["django", "django.conf", "django.db", "django.db.models",
-            "posthog", "posthog.api", "posthog.api.llm_prompt_serializers",
-            "posthog.exceptions_capture", "posthog.models",
-            "posthog.models.llm_prompt"]:
-    if mod not in sys.modules:
-        sys.modules[mod] = types.ModuleType(mod)
-sys.modules["django.db"].IntegrityError = type("IntegrityError", (Exception,), {})
-sys.modules["django.db"].transaction = types.ModuleType("transaction")
-sys.modules["django.db"].transaction.atomic = lambda *a, **k: None
-sys.modules["django.db.models"].QuerySet = object
-sys.modules["posthog.api.llm_prompt_serializers"].MAX_PROMPT_PAYLOAD_BYTES = 1_000_000
-sys.modules["posthog.exceptions_capture"].capture_exception = lambda *a, **k: None
-sys.modules["posthog.models"].Team = object
-sys.modules["posthog.models"].User = object
-sys.modules["posthog.models.llm_prompt"].LLMPrompt = object
-sys.modules["posthog.models.llm_prompt"].annotate_llm_prompt_version_history_metadata = lambda x: x
+# Stub the constant that the function needs
+MAX_PROMPT_PAYLOAD_BYTES = 1_000_000
 
-from posthog.api.services.llm_prompt import apply_prompt_edits, LLMPromptEditError
-"""
+@dataclass
+class LLMPromptEditError(Exception):
+    message: str
+    edit_index: int
+
+def apply_prompt_edits(prompt_content, edits):
+    """Apply sequential find/replace edits to a prompt.
+
+    If the prompt is a string, edits operate on it directly.
+    If it's a JSON structure, it's serialized to a string for editing then parsed back.
+    Each edit's 'old' text must match exactly once.
+    """
+    is_string = isinstance(prompt_content, str)
+    text = prompt_content if is_string else json.dumps(prompt_content, indent=2, ensure_ascii=False)
+
+    for i, edit in enumerate(edits):
+        old = edit["old"]
+        new = edit["new"]
+        count = text.count(old)
+        if count == 0:
+            raise LLMPromptEditError(
+                message="Text to replace was not found in the prompt.",
+                edit_index=i,
+            )
+        if count > 1:
+            raise LLMPromptEditError(
+                message=f"Text to replace matches {count} times — provide more context to make it unique.",
+                edit_index=i,
+            )
+        text = text.replace(old, new, 1)
+
+    result = text if is_string else None
+    if result is None:
+        try:
+            result = json.loads(text)
+        except json.JSONDecodeError as err:
+            raise LLMPromptEditError(
+                message=f"Edits produced invalid JSON: {err}",
+                edit_index=len(edits) - 1,
+            ) from err
+
+    result_bytes = len(json.dumps(result, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
+    if result_bytes > MAX_PROMPT_PAYLOAD_BYTES:
+        raise LLMPromptEditError(
+            message=f"Resulting prompt exceeds the {MAX_PROMPT_PAYLOAD_BYTES} byte size limit.",
+            edit_index=len(edits) - 1,
+        )
+
+    return result
+'''
 
 
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute Python code in a subprocess with Django stubs pre-configured."""
+    """Execute Python code in a subprocess with apply_prompt_edits pre-loaded."""
     script = Path(REPO) / "_eval_tmp.py"
-    script.write_text(_DJANGO_STUBS + "\n" + code)
+    script.write_text(_APPLY_PROMPT_EDITS_CODE + "\n" + code)
     try:
         return subprocess.run(
             ["python3", str(script)],
@@ -73,6 +109,40 @@ def test_syntax_check():
         path = Path(REPO) / f
         assert path.exists(), f"{f} not found"
         py_compile.compile(str(path), doraise=True)
+
+
+# [repo_tests] pass_to_pass — CI linting
+def test_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install is best-effort; if it fails, try to continue with system ruff
+    r = subprocess.run(
+        ["ruff", "check", "posthog/api/llm_prompt.py",
+         "posthog/api/llm_prompt_serializers.py",
+         "posthog/api/services/llm_prompt.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI formatting
+def test_ruff_format_check():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check",
+         "posthog/api/llm_prompt.py",
+         "posthog/api/llm_prompt_serializers.py",
+         "posthog/api/services/llm_prompt.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

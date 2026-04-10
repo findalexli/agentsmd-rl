@@ -5,6 +5,18 @@ source:
   base_commit: 8c99ff19b8e03ab21cec344d8b2f1d149d4040c7
   merge_commit: bb03b6c12704f594236c583b8dd9aec417cbf121
 checks:
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes on modified MCP files
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace packages are consistent
+- id: test_repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo generate_channels script runs without error
 - id: typescript_syntax
   type: pass_to_pass
   origin: static
@@ -49,7 +61,17 @@ checks:
   type: pass_to_pass
   origin: static
   description: SKILL.md still documents tracing-start and tracing-stop
-rubric: []
+rubric:
+- rule: When adding new CLI commands in the 'devtools' category, the SKILL.md documentation
+    must include examples of the new commands in the DevTools section
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 97-106
+    commit: 8c99ff19b8e03ab21cec344d8b2f1d149d4040c7
+  reference: 'playwright-cli video-start
+
+
+    playwright-cli video-stop video.webm'
 config_edits:
 - path: packages/playwright/src/mcp/terminal/SKILL.md
   tier: 1

@@ -51,6 +51,34 @@ def test_syntax_check():
         )
 
 
+def test_modified_dart_files_exist():
+    """Modified Dart source files exist and are non-empty (pass_to_pass)."""
+    for rel in [
+        "lib/features/journal/ui/widgets/list_cards/modern_task_card.dart",
+        "lib/features/tasks/ui/header/task_due_date_wrapper.dart",
+    ]:
+        path = Path(f"{REPO}/{rel}")
+        assert path.exists(), f"{rel}: file not found"
+        content = path.read_text()
+        assert len(content) > 0, f"{rel}: file is empty"
+        assert "class " in content, f"{rel}: no class definitions found"
+
+
+def test_test_files_exist_for_modified():
+    """Test files exist for the modified Dart components (pass_to_pass)."""
+    for rel in [
+        "test/features/journal/ui/widgets/list_cards/modern_task_card_test.dart",
+        "test/features/tasks/ui/header/task_due_date_wrapper_test.dart",
+    ]:
+        path = Path(f"{REPO}/{rel}")
+        assert path.exists(), f"{rel}: test file not found"
+        content = path.read_text()
+        assert len(content) > 0, f"{rel}: test file is empty"
+        assert "testWidgets" in content or "test(" in content or "group(" in content, (
+            f"{rel}: no test definitions found"
+        )
+
+
 def _ensure_yaml():
     """Ensure pyyaml is installed."""
     try:

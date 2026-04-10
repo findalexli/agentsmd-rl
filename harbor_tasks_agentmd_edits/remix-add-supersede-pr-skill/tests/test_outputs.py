@@ -107,3 +107,46 @@ def test_existing_code_style_preserved():
     content = AGENTS_MD.read_text()
     assert "Prefer `let`" in content, "let/const rule should be preserved"
     assert "never use `var`" in content, "no-var rule should be preserved"
+
+
+def test_repo_typescript_syntax():
+    """Repo's TypeScript scripts have valid syntax (pass_to_pass)."""
+    # Check syntax of existing repo scripts using node --check
+    scripts = [
+        REPO / "scripts/changes-validate.ts",
+        REPO / "scripts/changes-preview.ts",
+    ]
+    for script in scripts:
+        if script.exists():
+            r = subprocess.run(
+                ["node", "--check", str(script)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=REPO,
+            )
+            assert r.returncode == 0, f"Syntax check failed for {script.name}"
+
+
+def test_repo_scripts_formatted():
+    """Repo's TypeScript scripts follow prettier formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "scripts/*.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_agents_md_formatted():
+    """AGENTS.md follows prettier formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "AGENTS.md"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"AGENTS.md prettier check failed"

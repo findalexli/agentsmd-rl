@@ -20,7 +20,7 @@ WORKDIR /workspace/prime-rl
 ENV PYTHONPATH="/workspace/prime-rl"
 
 # Install minimal deps needed by test_outputs.py
-RUN pip install --no-cache-dir 'setproctitle>=1.3.0'
+RUN pip install --no-cache-dir 'setproctitle>=1.3.0' 'ruff>=0.12.1'
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

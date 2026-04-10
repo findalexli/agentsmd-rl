@@ -9,6 +9,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: PowerShell script and SKILL.md files exist
+- id: repo_powershell_script_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell script has valid structure with param block and required functions
+- id: repo_skill_md_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has valid documentation structure with required sections
+- id: repo_powershell_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell script has no obvious syntax errors (balanced braces, comments)
+- id: repo_files_encoding_and_size
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo files are valid UTF-8, non-empty, and have reasonable size
 - id: script_param_defaults
   type: fail_to_pass
   origin: pr_diff
@@ -43,12 +59,14 @@ checks:
   description: SKILL.md documents Approved (Not Merged), Agent Reviewed, Ready To
     Review, and Assignees column
 rubric:
-- rule: Documentation updates are consistent with the style and formatting of the
-    existing SKILL.md
+- rule: SKILL.md documentation file is modified with substantial additions (new priority
+    categories, parameter table updates, and usage examples)
   source:
     path: .github/skills/find-reviewable-pr/SKILL.md
     lines: 1-20
     commit: 48dae02e3e04dce551396f747f234bf3e30801ec
+  reference: Documentation was updated with 9 priority categories including Approved,
+    Ready To Review, and Agent Reviewed, plus new parameter defaults and usage examples
 config_edits:
 - path: .github/skills/find-reviewable-pr/SKILL.md
   tier: 1

@@ -129,6 +129,10 @@ async function listTopLevelEntries() {
     ...new Set(
       files.map((f) => f.replace(rootPrefix, \"\"))
         .map((file) => {
+          // Handle git quotePath - remove surrounding quotes if present
+          if (file.startsWith('"') && file.includes('\\\\')) {
+            file = file.slice(1, -1); // Remove surrounding quotes
+          }
           const sepIndex = file.indexOf(SEPARATOR);
           return sepIndex === -1 ? file : file.substring(0, sepIndex);
         }),
@@ -206,6 +210,10 @@ async function listTopLevelEntries() {
     ...new Set(
       files.map((f) => f.replace(rootPrefix, \"\"))
         .map((file) => {
+          // Handle git quotePath - remove surrounding quotes if present
+          if (file.startsWith('"') && file.includes('\\\\')) {
+            file = file.slice(1, -1); // Remove surrounding quotes
+          }
           const sepIndex = file.indexOf(SEPARATOR);
           return sepIndex === -1 ? file : file.substring(0, sepIndex);
         }),
@@ -354,6 +362,59 @@ def test_repo_clippy():
         timeout=120,
     )
     assert r.returncode == 0, f"clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_lock_valid():
+    """Cargo.lock is valid and consistent with workspace (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--locked", "-p", "deno_bench_util"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"cargo check --locked failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_ls_files():
+    """Git repository has expected top-level entries (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-files"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"git ls-files failed:\n{r.stderr}"
+
+    files = r.stdout.strip().split("\n")
+    # Check that expected top-level directories exist in git ls-files
+    top_level_dirs = set()
+    for f in files:
+        if "/" in f:
+            top_level_dirs.add(f.split("/")[0])
+
+    # Key directories should be present
+    assert "cli" in top_level_dirs, "cli directory not found in git ls-files"
+    assert "ext" in top_level_dirs, "ext directory not found in git ls-files"
+    assert "runtime" in top_level_dirs, "runtime directory not found in git ls-files"
+    assert "tests" in top_level_dirs, "tests directory not found in git ls-files"
+    assert "tools" in top_level_dirs, "tools directory not found in git ls-files"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_test_bench_util():
+    """deno_bench_util unit tests pass on base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--locked", "--lib", "-p", "deno_bench_util"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"cargo test for deno_bench_util failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

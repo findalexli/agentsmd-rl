@@ -26,6 +26,18 @@ checks:
   origin: repo_tests
   description: 'Repo: react-devtools app.html inline JavaScript parses without syntax
     errors'
+- id: test_repo_eslint_devtools_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo: ESLint passes on modified devtools files'
+- id: test_repo_flow_devtools
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo: Flow type checking passes for dom-node renderer'
+- id: test_repo_prettier_devtools
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo: Prettier formatting check passes'
 - id: path_prefix_uri_construction
   type: fail_to_pass
   origin: pr_diff
@@ -53,7 +65,30 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: react-devtools README documents REACT_DEVTOOLS_CLIENT_* env vars
-rubric: []
+rubric:
+- rule: Use `/verify` command to validate all changes before finishing, and `/fix`
+    to lint and format code
+  source:
+    path: .claude/instructions.md
+    lines: 31-42
+    commit: bd76b456c127222f59888953348d40cf8f03e3a0
+- rule: Error messages in packages/ directory must have corresponding error codes
+    (react-internal/prod-error-codes ESLint rule)
+  source:
+    path: .eslintrc.js
+    lines: 311-318
+    commit: bd76b456c127222f59888953348d40cf8f03e3a0
+- rule: JavaScript files must include @flow annotation for Flow type checking
+  source:
+    path: packages/react-devtools-core/src/backend.js
+    lines: '7'
+    commit: bd76b456c127222f59888953348d40cf8f03e3a0
+- rule: Type definitions must use Flow type syntax (e.g., `type ConnectOptions = {...}`,
+    `?$ReadOnlyArray<string>`)
+  source:
+    path: packages/react-devtools-core/src/backend.js
+    lines: 33-47
+    commit: bd76b456c127222f59888953348d40cf8f03e3a0
 config_edits:
 - path: packages/react-devtools-core/README.md
   tier: 2

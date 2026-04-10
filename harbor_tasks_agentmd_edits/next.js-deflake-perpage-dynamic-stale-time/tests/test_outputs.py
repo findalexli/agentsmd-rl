@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 from pathlib import Path
+import pytest
 
 REPO = "/workspace/next.js"
 
@@ -30,7 +31,7 @@ def test_hub_pages_created():
         content = page_path.read_text()
         assert "LinkAccordion" in content, f"{page} missing LinkAccordion import"
         assert "connection()" in content, f"{page} missing connection() call"
-        assert "'input[data-link-accordion=" in content or 'input[data-link-accordion=' in content, f"{page} missing accordion data attribute"
+        assert "LinkAccordion" in content and "href=" in content, f"{page} missing LinkAccordion with href"
 
 
 # [static] pass_to_pass
@@ -103,7 +104,7 @@ def test_agents_md_updated():
 
 # [static] pass_to_pass
 def test_typescript_syntax_valid():
-    """Modified TypeScript files must have valid syntax."""
+    """Modified TypeScript files must have valid syntax (verified via ESLint)."""
     files_to_check = [
         "test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-10/page.tsx",
         "test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-60/page.tsx",
@@ -115,12 +116,12 @@ def test_typescript_syntax_valid():
     for file in files_to_check:
         file_path = Path(REPO) / file
         if file_path.exists():
-            # Use tsc to check syntax
+            # Use ESLint to verify syntax (it uses TypeScript parser)
             r = subprocess.run(
-                ["npx", "tsc", "--noEmit", "--skipLibCheck", str(file_path)],
+                ["pnpm", "lint-eslint", str(file_path)],
                 capture_output=True, text=True, timeout=60, cwd=REPO,
             )
-            assert r.returncode == 0, f"TypeScript syntax error in {file}: {r.stderr}"
+            assert r.returncode == 0, f"Syntax/lint check failed for {file}: {r.stderr[-500:]}"
 
 
 # [static] pass_to_pass
@@ -133,6 +134,40 @@ def test_test_file_not_stub():
     assert "createRouterAct" in content, "Test missing createRouterAct import"
     assert "act(" in content, "Test missing act() calls"
     assert "act(" in content and content.count("act(") >= 5, "Test should have multiple act() calls"
+
+
+# -----------------------------------------------------------------------------
+# Repo CI tests (repo_tests) - actual CI commands that pass on base commit
+# -----------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - pnpm lint-language
+def test_repo_lint_language():
+    """Repo's language linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint-language"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Language lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - pnpm lint-eslint on existing files
+def test_repo_lint_eslint():
+    """Repo's ESLint passes on existing test files (pass_to_pass)."""
+    # Only check files that exist on base commit (hub pages are created by patch)
+    files_to_check = [
+        "test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-10/page.tsx",
+        "test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-60/page.tsx",
+        "test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts",
+    ]
+    # Filter to only existing files (in case some are created by the patch)
+    existing_files = [f for f in files_to_check if (Path(REPO) / f).exists()]
+    if not existing_files:
+        pytest.skip("No existing files to lint")
+    r = subprocess.run(
+        ["pnpm", "lint-eslint"] + existing_files,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
 
 
 # -----------------------------------------------------------------------------

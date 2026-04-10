@@ -3,29 +3,30 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T06:31:53.127192",
-  "total_time": 8599.68,
-  "sandbox_id": "itni5txy88oi2f4n08ko1",
+  "validated_at": "2026-04-10T13:00:14.386739",
+  "total_time": 2210.63,
+  "sandbox_id": "ig2h50ace3qljtzu9xz7q",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 1.0,
   "rubric_icr": 1.0,
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed solve.sh to apply PR changes correctly. Main issues: 1) Used git apply which failed due to line offset mismatch in package.json. Fixed by using patch --fuzz=3. 2) Added pnpm format step to ensure new files pass format check. 3) Used proper template literals without escaping in heredocs. All 11 tests now pass (6 pass-to-pass + 5 fail-to-pass).",
+      "attempts": 1,
+      "notes": "All core validations pass. Docker build succeeds, NOP test correctly returns 0 (tests fail on buggy code), Gold test returns 1 (all 11 tests pass after fix). Rubric judge command in instructions does not work for container-based environments - the judge expects a local git repo but the repo is inside Docker.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1307.53
+      "time": 398.56
     },
     "p2p_enrichment": {
-      "status": "completed",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 7.76,
-      "notes": "Added 5 repo CI/CD pass_to_pass tests: test_repo_lint (pnpm lint), test_repo_typecheck (pnpm typecheck), test_repo_changes_validate (pnpm changes:validate), test_repo_format_check (pnpm format:check), test_repo_build (pnpm build). Docker build successful with 'pnpm install --frozen-lockfile' added. All 5 p2p tests pass on base commit. 5 fail_to_pass tests correctly fail (PR not applied)."
+      "time": 491.49,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -45,8 +46,29 @@
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.78,
+      "time": 1.41,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 6,
+      "rejection_reasons": "3 rules not applicable to TypeScript files (test structure, demos, changes/releases); 3 rules too generic or process-related",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 84.3
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 13.18,
+      "notes": "",
+      "precision": 1.0
     }
   },
   "history": [
@@ -65,6 +87,14 @@
       "backend": "fireworks",
       "time": 8599.68,
       "at": "2026-04-09T06:31:53.127192"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2210.63,
+      "at": "2026-04-10T13:00:14.386739"
     }
   ]
 }

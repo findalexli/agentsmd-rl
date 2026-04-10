@@ -53,24 +53,37 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Prettier format check passes (pnpm format:check)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build passes (pnpm build)
 rubric:
-- rule: New code uses let for local variables, const only at module scope (per AGENTS.md
-    Code Style)
-  source:
-    path: AGENTS.md
-    lines: '24'
-    commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
 - rule: Documentation updates are consistent with the style of existing README and
     CONTRIBUTING sections
   source:
     path: README.md
     lines: 1-10
     commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
-- rule: New script uses .ts extensions in relative imports per AGENTS.md
-  source:
-    path: AGENTS.md
-    lines: '23'
-    commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
+  reference: |
+    ## Installation
+
+    ```sh
+    npm install remix
+
+    # Or, just install a single package
+    npm install @remix-run/fetch-router
+    ```
+
+    If you want to play around with the bleeding edge, we also build the latest `main`
+    branch every night into a `nightly` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    ```sh
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+    # Or, just install a single package
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"
+    ```
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2

@@ -267,3 +267,59 @@ def test_repo_existing_bin_syntax():
         capture_output=True, timeout=15,
     )
     assert r.returncode == 0, f"Syntax error in minify-assets.js:\n{r.stderr.decode()}"
+
+# [repo_tests] pass_to_pass
+def test_repo_migration_utils_syntax():
+    """Migration utils files have no syntax errors (pass_to_pass)."""
+    utils_dir = Path(REPO) / "ghost" / "core" / "core" / "server" / "data" / "migrations" / "utils"
+    files = ["index.js", "migrations.js", "permissions.js", "schema.js", "settings.js", "tables.js"]
+    for f in files:
+        script = utils_dir / f
+        r = subprocess.run(
+            ["node", "--check", str(script)],
+            capture_output=True, timeout=15,
+        )
+        assert r.returncode == 0, f"Syntax error in {f}:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_migration_structure():
+    """Migration directories follow expected structure (pass_to_pass)."""
+    r = subprocess.run(
+        ['node', '-e',
+         'const fs = require("fs"); const path = require("path");'
+         'const versionsDir = path.join("ghost/core/core/server/data/migrations/versions");'
+         'const items = fs.readdirSync(versionsDir);'
+         'const dirs = items.filter(i => fs.statSync(path.join(versionsDir, i)).isDirectory());'
+         'const versionDirs = dirs.filter(d => /^\\d+\\.\\d+$/.test(d));'
+         'console.log(JSON.stringify({count: versionDirs.length, sample: versionDirs.slice(0, 3)}));'],
+        cwd=REPO,
+        capture_output=True, text=True, timeout=15,
+    )
+    assert r.returncode == 0, f"Failed to check migration structure: {r.stderr}"
+    result = json.loads(r.stdout)
+    assert result["count"] > 0, "No versioned migration directories found"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_migration_utils_exist():
+    """Unit test file for migration utils exists and is valid JS (pass_to_pass)."""
+    test_file = Path(REPO) / "ghost" / "core" / "test" / "unit" / "server" / "data" / "migrations" / "utils.test.js"
+    assert test_file.exists(), f"Migration utils test file not found at {test_file}"
+    r = subprocess.run(
+        ["node", "--check", str(test_file)],
+        capture_output=True, timeout=15,
+    )
+    assert r.returncode == 0, f"Syntax error in utils.test.js:\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_migration_version_consistency_test():
+    """Migration version consistency test exists and is valid JS (pass_to_pass)."""
+    test_file = Path(REPO) / "ghost" / "core" / "test" / "unit" / "server" / "data" / "migrations" / "version-consistency.test.js"
+    assert test_file.exists(), f"Version consistency test file not found at {test_file}"
+    r = subprocess.run(
+        ["node", "--check", str(test_file)],
+        capture_output=True, timeout=15,
+    )
+    assert r.returncode == 0, f"Syntax error in version-consistency.test.js:\n{r.stderr.decode()}"

@@ -9,6 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: TypeScript files in packages/interaction compile without errors
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm typecheck passes for interaction package
 - id: removed_exports
   type: fail_to_pass
   origin: pr_diff
@@ -28,7 +32,7 @@ checks:
 - id: on_no_signal_overload
   type: fail_to_pass
   origin: pr_diff
-  description: "on() function simplified \u2014 no AbortSignal overload"
+  description: on() function simplified — no AbortSignal overload
 - id: interaction_setup_this_context
   type: fail_to_pass
   origin: pr_diff
@@ -45,45 +49,69 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Built-in interactions (form, keys, popover, press) use this context
+- id: test_readme_no_capture_listenwith
+  type: fail_to_pass
+  origin: config_edit
+  description: README should not import capture or listenWith
+- id: test_readme_this_context
+  type: fail_to_pass
+  origin: config_edit
+  description: 'README should show this: Interaction pattern for custom interactions'
+- id: test_changelog_unreleased
+  type: fail_to_pass
+  origin: config_edit
+  description: CHANGELOG should document breaking changes in Unreleased section
+- id: test_type_exports_use_type_keyword
+  type: pass_to_pass
+  origin: agent_config
+  description: All type exports should use 'type' keyword per AGENTS.md
+- id: test_changelog_heading_format
+  type: pass_to_pass
+  origin: agent_config
+  description: Changelog uses '## Unreleased' heading format per AGENTS.md
 rubric:
-- rule: Code changes are consistent with the style of the surrounding codebase (let
-    not var, single quotes, no semicolons, .ts extensions in imports)
-  source:
-    path: AGENTS.md
-    lines: 16-20
-    commit: 90016e313b24a05c5862a853a3b518290d9017ba
-- rule: README examples are clear, correct, and follow existing documentation style
-  source:
-    path: packages/interaction/README.md
-    lines: 1-10
-    commit: 90016e313b24a05c5862a853a3b518290d9017ba
-- rule: CHANGELOG entries are well-formatted with code examples showing before/after
-  source:
-    path: CONTRIBUTING.md
-    lines: 36-42
-    commit: 90016e313b24a05c5862a853a3b518290d9017ba
-- rule: README.md updated to remove capture/listenWith and show new descriptor pattern
-  source:
-    path: packages/interaction/README.md
-    lines: 36-145
-    commit: e3f244b484622a0f6be1b1f215a4153474e96806
-- rule: 'README.md shows this: Interaction pattern for custom interactions'
-  source:
-    path: packages/interaction/README.md
-    lines: 215-240
-    commit: e3f244b484622a0f6be1b1f215a4153474e96806
-- rule: CHANGELOG.md documents breaking changes in Unreleased section
-  source:
-    path: packages/interaction/CHANGELOG.md
-    lines: 4-78
-    commit: e3f244b484622a0f6be1b1f215a4153474e96806
-- rule: Type-only imports use 'import type' syntax per AGENTS.md
-  source:
-    path: AGENTS.md
-    lines: '16'
-    commit: 90016e313b24a05c5862a853a3b518290d9017ba
 - rule: Changelog uses '## Unreleased' heading format per AGENTS.md
   source:
     path: AGENTS.md
     lines: 24-25
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: Type-only exports use 'export type' syntax (e.g., 'export type { ContainerOptions,
+    Interaction }') per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: Type-only imports use 'import type' syntax and are separate from value imports
+    per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: All imports and exports include '.ts' extensions per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: Variables use 'let' for locals and 'const' only at module scope; never use
+    'var' per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: Classes use native fields (omit 'public') and '#private' for private members;
+    no TypeScript accessibility modifiers per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: 'Code formatting follows Prettier conventions: printWidth 100, no semicolons,
+    single quotes, spaces not tabs per AGENTS.md'
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: Changelog entry includes a human-friendly description of the change per CONTRIBUTING.md
+  source:
+    path: CONTRIBUTING.md
+    lines: '46'
     commit: 90016e313b24a05c5862a853a3b518290d9017ba

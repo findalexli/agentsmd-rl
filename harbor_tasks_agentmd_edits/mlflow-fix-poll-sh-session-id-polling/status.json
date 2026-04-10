@@ -3,29 +3,77 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T03:35:38.166533",
-  "total_time": 7101.2,
-  "sandbox_id": "ixuws0zrtvebtr7u3ysea",
+  "validated_at": "2026-04-10T11:50:37.433796",
+  "total_time": 1689.45,
+  "sandbox_id": "i8z77r7mk4zcnda69q5gt",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
   "rubric_icr": 1.0,
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
+      "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. NOP test correctly fails on buggy base code (4 fail-to-pass tests fail). Gold test passes all 9 tests after patch applied. Rubric judge ICR=1.0.",
+      "notes": "All validation checks passed. NOP test correctly fails on buggy base code (4 fail-to-pass tests fail). Gold test passes all 11 tests after patch applied. Rubric judge returns ICR=1.0 (config_edits match gold). Docker builds successfully.",
+      "validated_at": "2026-04-10T18:50:00",
+      "verifier": "manual",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 45.75
+      "time": 141.32
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.7,
+      "time": 0.15,
       "notes": "ICR=1.00"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 233.67,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        ".claude/skills/copilot/SKILL.md",
+        ".claude/skills/copilot/poll.sh"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 4,
+      "rejection_reasons": "2 rules from CLAUDE.md (Python code style, docstrings) don't apply to bash changes; 2 rules (commit workflow, DCO sign-off) are process rules not evaluable from diff",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 32.82
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 37.92,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 20.52,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     }
   },
   "history": [
@@ -44,6 +92,14 @@
       "backend": "fireworks",
       "time": 7101.2,
       "at": "2026-04-09T03:35:38.166533"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1689.45,
+      "at": "2026-04-10T11:50:37.433796"
     }
   ]
 }

@@ -17,8 +17,11 @@ RUN git clone --filter=blob:none https://github.com/anomalyco/opencode.git /work
 
 WORKDIR /workspace/opencode
 
+# Install dependencies
+RUN bun install
+
 # Install minimal deps for pytest
-RUN pip3 install --no-cache-dir pytest
+RUN pip3 install --no-cache-dir --break-system-packages pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

@@ -1,4 +1,4 @@
-version: '2.0'
+version: "2.0"
 source:
   repo: mlflow/mlflow
   pr: 21331
@@ -41,6 +41,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: SKILL.md has valid markdown structure with Usage and Examples sections
+- id: repo_ruff_check_analyze_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on analyze_ci.py
+- id: repo_clint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clint linter tests pass
 rubric:
 - rule: SKILL.md update follows the style of existing usage and examples sections
   source:
@@ -50,12 +58,12 @@ rubric:
 config_edits:
 - path: .claude/skills/analyze-ci/SKILL.md
   tier: 1
-  gold_added: '# Analyze all failed jobs in a workflow run
+  gold_added: "# Analyze all failed jobs in a workflow run
 
     uv run skills analyze-ci <run_url>
 
 
     # Analyze a specific workflow run
 
-    uv run skills analyze-ci https://github.com/mlflow/mlflow/actions/runs/22626454465'
-  gold_removed: ''
+    uv run skills analyze-ci https://github.com/mlflow/mlflow/actions/runs/22626454465"
+  gold_removed: ""

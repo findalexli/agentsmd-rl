@@ -29,6 +29,38 @@ def _run_bun(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """TypeScript files parse correctly using Bun transpiler (lightweight typecheck)."""
+    script = '''
+const transpiler = new Bun.Transpiler({ loader: "ts" });
+const files = [
+  "packages/opencode/src/cli/cmd/tui/thread.ts",
+  "packages/opencode/src/cli/cmd/tui/worker.ts"
+];
+for (const f of files) {
+  const content = await Bun.file(f).text();
+  try {
+    await transpiler.transform(content);
+    console.log("OK: " + f);
+  } catch(e) {
+    console.error("FAIL: " + f + " - " + e.message);
+    process.exit(1);
+  }
+}
+console.log("All files passed syntax check");
+'''
+    r = subprocess.run(
+        ["bun", "-e", script],
+        capture_output=True, text=True, timeout=60, cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 

@@ -62,14 +62,54 @@ def test_repo_fmt():
     assert r.returncode == 0, f"Formatting check failed:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass — repo's lib and integration tests for prqlc pass
-def test_repo_prqlc_tests():
-    """Repo's prqlc lib and integration tests pass (pass_to_pass)."""
+# [repo_tests] pass_to_pass — repo's lib tests for prqlc pass
+def test_repo_prqlc_lib_tests():
+    """Repo's prqlc lib tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--lib", "--tests"],
+        ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--lib", "--quiet"],
         cwd=REPO, capture_output=True, text=True, timeout=120,
     )
-    assert r.returncode == 0, f"prqlc tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"prqlc lib tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo's integration tests for prqlc pass
+def test_repo_prqlc_integration_tests():
+    """Repo's prqlc integration tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--test", "integration", "--quiet"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"prqlc integration tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — gen_query unit tests (covers modified file)
+def test_repo_gen_query_tests():
+    """Repo's gen_query unit tests pass (pass_to_pass) — covers modified gen_query.rs."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--lib", "--", "gen_query"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"gen_query tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — distinct_on integration tests (related to PR)
+def test_repo_distinct_on_tests():
+    """Repo's DISTINCT ON integration tests pass (pass_to_pass) — covers the bug fix area."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "prqlc", "--no-default-features", "--features=default", "--", "sql::test_distinct_on"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"DISTINCT ON tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — prqlc-parser checks (dependency of modified code)
+def test_repo_prqlc_parser_check():
+    """Repo's prqlc-parser crate compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "prqlc-parser"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"prqlc-parser check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

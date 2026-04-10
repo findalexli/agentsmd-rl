@@ -64,7 +64,7 @@ checks:
 - id: permissions_file_not_stub
   type: pass_to_pass
   origin: static
-  description: Permissions.windows.cs has real implementation, not just stubs
+  description: Permissions file has real implementation, not just stubs
 - id: repo_permissions_file_parses
   type: pass_to_pass
   origin: repo_tests
@@ -80,6 +80,11 @@ checks:
   origin: repo_tests
   description: Permissions file has no NotImplementedException stubs (real implementation
     only)
+- id: permissions_file_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Permissions.windows.cs follows repo formatting rules (dotnet
+    format check)
 - id: config_copilot_instructions_updated
   type: fail_to_pass
   origin: agent_config
@@ -88,7 +93,18 @@ checks:
     path: .github/copilot-instructions.md
     lines: 200-213
     commit: 260770c977f376c9b0190c03ed1a41920725f079
-rubric: []
+rubric:
+- rule: 'C# code changes must follow the dotnet format command: `dotnet format Microsoft.Maui.sln
+    --no-restore --exclude Templates/src --exclude-diagnostics CA1822`'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 93-99
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- rule: Code changes must update XML documentation for public APIs when applicable
+  source:
+    path: .github/copilot-instructions.md
+    lines: 191-194
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
 config_edits:
 - path: .github/copilot-instructions.md
   tier: 1

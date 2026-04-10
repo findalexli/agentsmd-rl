@@ -73,10 +73,52 @@ def test_cargo_test_lib():
         ["cargo", "test", "-p", "turbo-persistence", "--lib"],
         cwd=REPO,
         capture_output=True,
-        timeout=300,
+        timeout=600,
     )
     assert r.returncode == 0, (
         f"cargo test failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_tests():
+    """Test code compiles for turbo-persistence (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--tests", "-p", "turbo-persistence"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo check --tests failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_benches():
+    """Benchmark code compiles for turbo-persistence (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--benches", "-p", "turbo-persistence"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo check --benches failed:\n{r.stderr.decode()[-1000:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_doc():
+    """Documentation builds for turbo-persistence (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "doc", "-p", "turbo-persistence", "--no-deps"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"cargo doc failed:\n{r.stderr.decode()[-1000:]}"
     )
 
 

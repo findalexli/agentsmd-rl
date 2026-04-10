@@ -1,66 +1,29 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:20:00.693896",
-  "total_time": 5781.84,
-  "sandbox_id": "iq1x4xxlqb8bhvxghxr0d",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:03:30.666077",
+  "total_time": 2973.78,
+  "sandbox_id": "idsd06uijs7hwut8gxq15",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.66,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "docker_build_failed",
-      "note": "Dockerfile is missing 'unzip' package needed for bun installation. Cannot add p2p tests until Docker builds successfully.",
-      "discovered_ci_commands": [
-        "bun run lint:ts - lints TypeScript files (eslint src/ tests/)",
-        "bun run type-check - TypeScript type checking (tsgo --noEmit)",
-        "bun run type-check:tsc - Alternative type check (tsc --noEmit)",
-        "bun run test-app - Run vitest tests (excludes packages/)"
-      ],
-      "potential_p2p_tests": [
-        {
-          "id": "repo_lint_ts",
-          "command": "bun run lint:ts",
-          "description": "TypeScript linting passes (pass_to_pass)"
-        },
-        {
-          "id": "repo_typecheck",
-          "command": "bun run type-check:tsc",
-          "description": "TypeScript typecheck passes (pass_to_pass)"
-        },
-        {
-          "id": "repo_agent_tracing_test",
-          "command": "cd packages/agent-tracing && npx vitest run src/utils/reconstruct.test.ts",
-          "description": "agent-tracing unit tests pass (pass_to_pass)"
-        }
-      ],
-      "files_discovered": {
-        "github_workflows": [
-          ".github/workflows/claude.yml",
-          ".github/workflows/claude-auto-testing.yml",
-          ".github/workflows/claude-auto-e2e-testing.yml"
-        ],
-        "package_json_scripts": [
-          "test",
-          "test-app",
-          "lint",
-          "lint:ts",
-          "type-check",
-          "type-check:tsc"
-        ],
-        "agent_tracing_tests": [
-          "packages/agent-tracing/src/utils/reconstruct.test.ts"
-        ]
-      }
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1479.01,
+      "notes": ""
     },
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 212.54,
-      "notes": ""
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "Added 4 repo_tests p2p gates verified passing in Docker"
     },
     "improve": {
       "status": "skipped",
@@ -68,6 +31,54 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".agents/skills/agent-tracing/SKILL.md",
+        ".agents/skills/typescript/SKILL.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 3,
+      "rejection_reasons": "1 rule about error handling had no explicit config source; 2 rules about logging/console.error not applicable (project uses existing log pattern in this file)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 141.48
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 21.84,
+      "notes": "",
+      "precision": 0.66
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 34.85,
+      "notes": "precision was 0.66, fixing hallucinated rules"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP reward=0 (tests fail correctly on base), Gold reward=1 (all 10 tests pass), Rubric judge needs git repo in container (known limitation). Tests verify: file-store partial fallback, partialToSnapshot defaults, error handler resilience with individual try-catch for each infra call, SKILL.md updated to document inspect command for partials.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 349.41
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.79,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -78,6 +89,14 @@
       "backend": "glm",
       "time": 5781.84,
       "at": "2026-04-09T07:20:00.693896"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2973.78,
+      "at": "2026-04-10T12:03:30.666077"
     }
   ]
 }

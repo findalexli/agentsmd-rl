@@ -8,7 +8,7 @@ checks:
 - id: claude_md_exists
   type: pass_to_pass
   origin: static
-  description: CLAUDE.md must exist as a regular file (not a symlink)
+  description: CLAUDE.md must exist as a regular file (not symlink)
 - id: agents_md_is_symlink
   type: pass_to_pass
   origin: static
@@ -29,6 +29,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's translations package builds successfully
+- id: test_repo_type_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type generation for test fields works
 - id: claude_md_has_project_structure
   type: fail_to_pass
   origin: pr_diff
@@ -70,7 +74,37 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: .gitignore patterns for .claude files are correctly formatted
-rubric: []
+rubric:
+- rule: CLAUDE.md must include a 'Project Structure' section with 'Key Directories'
+    and 'Architecture Notes' subsections documenting the Payload monorepo organization
+  source:
+    path: AGENTS.md
+    lines: 5-36
+    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
+- rule: 'CLAUDE.md must document PR title format following Conventional Commits: ''<type>(<scope>):
+    <title>'' with specific valid types (build, chore, ci, docs, examples, feat, fix,
+    perf, refactor, revert, style, templates, test)'
+  source:
+    path: AGENTS.md
+    lines: 103-122
+    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
+- rule: CLAUDE.md must document that PR titles must start with a lowercase letter
+  source:
+    path: AGENTS.md
+    lines: '111'
+    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
+- rule: CLAUDE.md must include a 'Test Structure' subsection showing the directory
+    pattern with config.ts, int.spec.ts, e2e.spec.ts, and payload-types.ts files
+  source:
+    path: AGENTS.md
+    lines: 77-90
+    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
+- rule: '.gitignore must include patterns for local AI agent files: .claude/commands/*.local.md
+    and .claude/artifacts'
+  source:
+    path: .gitignore
+    lines: 19-23
+    commit: fdea8d8457fafe59be4b877a52a00990a735fd38
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -93,28 +127,28 @@ config_edits:
     \ - GraphQL API layer\n  - `packages/translations` - i18n translations\n- `test/`\
     \ - Test suites organized by feature area. Each directory contains a granular\
     \ Payload config and test files\n- `docs/` - Documentation (deployed to payloadcms.com)\n\
-    - `tools/` - Monorepo tooling\n- `templates/` - Production-ready project templates\n\
-    - `examples/` - Example implementations\n\n### Architecture Notes\n\n- Payload\
+    \ - `tools/` - Monorepo tooling\n- `templates/` - Production-ready project templates\n\
+    \ - `examples/` - Example implementations\n\n### Architecture Notes\n\n- Payload\
     \ 3.x is built as a Next.js native CMS that installs directly in `/app` folder\n\
-    - UI is built with React Server Components (RSC)\n- Database adapters use Drizzle\
+    \ - UI is built with React Server Components (RSC)\n- Database adapters use Drizzle\
     \ ORM under the hood\n- Packages use TypeScript with strict mode and path mappings\
     \ defined in `tsconfig.base.json`\n- Source files are in `src/`, compiled outputs\
     \ go to `dist/`\n- Monorepo uses pnpm workspaces and Turbo for builds\n\n## Build\
-    \ Commands\n\n- `pnpm install` - Install all dependencies (pnpm required - run\
-    \ `corepack enable` first)\n- `pnpm build` or `pnpm build:core` - Build core packages\
-    \ (excludes plugins and storage adapters)\n- `pnpm build:all` - Build all packages\n\
-    - `pnpm build:<directory_name>` - Build specific package (e.g. `pnpm build:db-mongodb`,\
-    \ `pnpm build:ui`)\n\n## Development\n\n### Running Dev Server\n\n- `pnpm dev`\
-    \ - Start dev server with default config (`test/_community/config.ts`)\n- `pnpm\
-    \ dev <directory_name>` - Start dev server with specific test config (e.g. `pnpm\
-    \ dev fields` loads `test/fields/config.ts`)\n- `pnpm dev:postgres` - Run dev\
-    \ server with Postgres\n- `pnpm dev:memorydb` - Run dev server with in-memory\
+    \ Commands\n\n- `pnpm install` - Install all dependencies (pnpm required - run\n\
+    \   `corepack enable` first)\n- `pnpm build` or `pnpm build:core` - Build core\
+    \ packages (excludes plugins and storage adapters)\n- `pnpm build:all` - Build\
+    \ all packages\n - `pnpm build:<directory_name>` - Build specific package (e.g.\
+    \ `pnpm build:db-mongodb`, `pnpm build:ui`)\n\n## Development\n\n### Running Dev\
+    \ Server\n\n- `pnpm dev` - Start dev server with default config (`test/_community/config.ts`)\n\
+    - `pnpm dev <directory_name>` - Start dev server with specific test config (e.g.\
+    \ `pnpm dev fields` loads `test/fields/config.ts`)\n- `pnpm dev:postgres` - Run\
+    \ dev server with Postgres\n- `pnpm dev:memorydb` - Run dev server with in-memory\
     \ MongoDB\n\n### Development Environment\n\n- Auto-login is enabled by default\
     \ with credentials: `dev@payloadcms.com` / `test`\n- To disable: pass `--no-auto-login`\
     \ flag or set `PAYLOAD_PUBLIC_DISABLE_AUTO_LOGIN=false`\n- Default database is\
     \ MongoDB (in-memory). Switch to Postgres with `PAYLOAD_DATABASE=postgres`\n-\
     \ Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm docker:restart`\n\
-    \n## Testing\n\n### Running Tests\n\n- `pnpm test` - Run all tests (integration\
+    \ \n## Testing\n\n### Running Tests\n\n- `pnpm test` - Run all tests (integration\
     \ + components + e2e)\n- `pnpm test:int` - Run integration tests (MongoDB, recommended\
     \ for"
   gold_removed: ''

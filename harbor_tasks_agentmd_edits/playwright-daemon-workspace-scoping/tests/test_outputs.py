@@ -32,6 +32,73 @@ def test_install_browser_command_exists():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI tests (pass_to_pass, repo_tests)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build script compiles successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "ci"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    if r.returncode != 0:
+        # npm ci might fail on some systems, but we can still try building
+        pass
+
+    r = subprocess.run(
+        ["node", "utils/build/build.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_terminal():
+    """ESLint passes on terminal code (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "ci"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    if r.returncode != 0:
+        pass  # Continue anyway
+
+    r = subprocess.run(
+        ["./node_modules/.bin/eslint", "packages/playwright/src/mcp/terminal/*.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cli_help():
+    """CLI help command works (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "ci"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    if r.returncode != 0:
+        pass
+
+    # Build the CLI first
+    r = subprocess.run(
+        ["node", "utils/build/build.js"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    if r.returncode != 0:
+        pass  # Try anyway
+
+    # Test that CLI help works
+    r = subprocess.run(
+        ["node", "packages/playwright/lib/mcp/terminal/cli.js", "--help"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"CLI help failed:\n{r.stderr[-500:]}"
+    assert "playwright-cli" in r.stdout or "Usage" in r.stdout or "Commands" in r.stdout, \
+        f"CLI help output unexpected:\n{r.stdout[:500]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) -- code behavioral tests
 # ---------------------------------------------------------------------------
 

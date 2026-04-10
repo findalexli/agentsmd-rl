@@ -178,3 +178,91 @@ def test_script_help_works():
     )
     assert r.returncode == 0, f"Script --help failed:\n{r.stderr}"
     assert "usage:" in r.stdout.lower(), "Help output should contain 'usage:'"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff():
+    """Ruff linter passes on fetch-zulip-web-public-messages (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", str(FETCH_SCRIPT)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff found issues:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black():
+    """Black format check passes on fetch-zulip-web-public-messages (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "black", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "black", "--check", str(FETCH_SCRIPT)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort():
+    """isort import order check passes on fetch-zulip-web-public-messages (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "isort", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "isort", "--check", str(FETCH_SCRIPT)],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bandit():
+    """Bandit security linter passes on fetch-zulip-web-public-messages (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "bandit", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        [sys.executable, "-m", "bandit", "-r", str(FETCH_SCRIPT), "-ll", "-ii"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Bandit returns 0 when no issues found, 1 when issues found
+    assert r.returncode == 0, f"Bandit found security issues:\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_script_imports_cleanly():
+    """fetch-zulip-web-public-messages imports without errors (pass_to_pass)."""
+    # Test that the script can be imported as a module without side effects
+    test_code = """
+import importlib.util
+from importlib.machinery import SourceFileLoader
+import sys
+
+# Prevent sys.exit on import
+sys.exit = lambda x: None
+
+script = '/workspace/zulip/.claude/skills/fetch-zulip-messages/fetch-zulip-web-public-messages'
+loader = SourceFileLoader('fetch_test_module', script)
+spec = importlib.util.spec_from_loader('fetch_test_module', loader)
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+# Verify key functions exist
+assert hasattr(mod, 'parse_zulip_url'), "Missing parse_zulip_url function"
+assert hasattr(mod, 'fetch_messages'), "Missing fetch_messages function"
+assert hasattr(mod, 'main'), "Missing main function"
+print("SUCCESS: Script imports cleanly")
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", test_code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Script import test failed:\n{r.stderr}\n{r.stdout}"

@@ -192,3 +192,25 @@ console.log(JSON.stringify({ actual }));
     assert result.returncode == 0, f"Script failed: {result.stderr}"
     data = json.loads(result.stdout.strip())
     assert data["actual"] == 12345, f"Provider maxOutput: expected 12345, got {data['actual']}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests — pass_to_pass gates using repo's actual test suite
+# ---------------------------------------------------------------------------
+
+def test_repo_model_runtime_tests():
+    """Repo's model-runtime package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && corepack prepare pnpm@10.20.0 --activate && cd /workspace/lobe-chat && pnpm install --no-frozen-lockfile && cd packages/model-runtime && pnpm test -- --run 2>&1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Model-runtime tests failed: {r.stdout[-500:]}"
+
+
+def test_repo_agent_tools_engine_tests():
+    """Repo's AgentToolsEngine tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && corepack prepare pnpm@10.20.0 --activate && cd /workspace/lobe-chat && pnpm install --no-frozen-lockfile && node_modules/.bin/vitest run --silent=passed-only src/server/modules/Mecha/AgentToolsEngine 2>&1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AgentToolsEngine tests failed: {r.stdout[-500:]}"

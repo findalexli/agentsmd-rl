@@ -324,6 +324,33 @@ def test_program_still_handles_open_close():
 # the base commit AND after the gold fix is applied.
 # ---------------------------------------------------------------------------
 
+def test_repo_npm_run_build():
+    """Repo CI check: npm run build succeeds (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm run build failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_npm_run_eslint():
+    """Repo CI check: npm run eslint passes on terminal files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "packages/playwright/src/mcp/terminal/*.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_npm_run_test_mcp_cli_help():
+    """Repo CI check: MCP cli-help tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "playwright", "test", "--config=tests/mcp/playwright.config.ts", "cli-help.spec.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP cli-help tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 def test_modified_typescript_files_have_balanced_braces():
     """Repo CI check: Modified TypeScript files have balanced braces (pass_to_pass)."""
     for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS]:

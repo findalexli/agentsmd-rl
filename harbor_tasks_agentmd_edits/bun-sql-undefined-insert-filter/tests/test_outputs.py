@@ -45,6 +45,28 @@ def test_syntax_check():
         assert depth == 0, f"{filepath} has unbalanced braces (depth={depth})"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_oxlint():
+    """Repo's oxlint passes on modified SQL files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint", "src/js/internal/sql/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed: {r.stdout[-1000:]} {r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier():
+    """Repo's prettier check passes on modified SQL files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "src/js/internal/sql/shared.ts",
+         "src/js/internal/sql/sqlite.ts", "src/js/internal/sql/mysql.ts",
+         "src/js/internal/sql/postgres.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed: {r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -55,15 +77,24 @@ def test_undefined_filtering_behavior():
     """Extracted buildDefinedColumnsAndQuery filters undefined columns correctly."""
     text = Path(SHARED_TS).read_text()
 
-    # Find the function
-    start = text.find("function buildDefinedColumnsAndQuery")
-    assert start != -1, "buildDefinedColumnsAndQuery not found in shared.ts"
-
-    # Extract function body by tracking brace depth
+    # Find and extract the function
+    match = re.search(
+        r"function buildDefinedColumnsAndQuery[^{]*\{[^}]+\}\s*\{",
+        text,
+        re.DOTALL
+    )
+    assert match, "buildDefinedColumnsAndQuery not found in shared.ts"
+    
+    start = match.start()
+    
+    # Extract full function body by tracking braces from the actual body start
+    # The regex matched up to the opening brace after the return type
+    body_start = match.end() - 1  # Position of the actual function body opening brace
+    
     depth = 0
     in_func = False
     end = start
-    for i in range(start, len(text)):
+    for i in range(body_start, len(text)):
         if text[i] == "{":
             depth += 1
             in_func = True
@@ -85,10 +116,12 @@ def test_undefined_filtering_behavior():
         "escapeIdentifier",
         func_body,
     )
+    # Handle multiline return type annotation with re.DOTALL
     func_body = re.sub(
-        r"\):\s*\{\s*definedColumns:\s*\(keyof T\)\[\];\s*columnsSql:\s*string\s*\}\s*\{",
+        r"\):\s*\{[^}]+definedColumns[^}]+columnsSql[^}]+\}\s*\{",
         ") {",
         func_body,
+        flags=re.DOTALL,
     )
     func_body = re.sub(
         r"const definedColumns:\s*\(keyof T\)\[\]\s*=",

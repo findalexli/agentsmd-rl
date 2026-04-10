@@ -44,18 +44,47 @@ checks:
   type: pass_to_pass
   origin: static
   description: All adapter classes and factory functions remain exported
+- id: test_repo_data_table_mysql_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: MySQL adapter typecheck passes
+- id: test_repo_data_table_mysql_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: MySQL adapter unit tests pass
+- id: test_repo_data_table_postgres_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Postgres adapter typecheck passes
+- id: test_repo_data_table_postgres_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Postgres adapter unit tests pass
+- id: test_repo_data_table_sqlite_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: SQLite adapter typecheck passes
+- id: test_repo_data_table_sqlite_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: SQLite adapter unit tests pass
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo lint check passes
 rubric:
 - rule: README updates are consistent with the style of the existing documentation
   source:
-    path: .agents/skills/write-readme/SKILL.md
-    lines: 1-10
+    path: packages/data-table-mysql/README.md
+    lines: 1-50
     commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
-- rule: Adapter types that wrap a single driver type should be replaced with the driver
-    type directly
+  reference: "- **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool` and `PoolConnection` instances\n\nImport any driver-specific types you need directly from `mysql2/promise`."
+- rule: READMEs instruct users to import driver-specific types directly from driver packages
   source:
-    path: AGENTS.md
-    lines: '12'
+    path: packages/data-table-postgres/README.md
+    lines: 1-50
     commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
+  reference: "Import any driver-specific types you need directly from `pg`."
 config_edits:
 - path: packages/data-table-mysql/README.md
   tier: 2

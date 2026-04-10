@@ -9,6 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files parse without errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files
 - id: trace_phase_sync_records_timing
   type: fail_to_pass
   origin: pr_diff
@@ -46,12 +54,7 @@ checks:
   type: pass_to_pass
   origin: static
   description: RequestTrace.set_phase accumulates values across multiple calls
-rubric:
-- rule: Be consistent with the style of the surrounding code.
-  source:
-    path: AGENTS.md
-    lines: '45'
-    commit: 835e4bd1adcaf5716283fa379e909f916a032b8a
+rubric: []
 config_edits:
 - path: scripts/benchmark/README.md
   tier: 2
@@ -63,8 +66,8 @@ config_edits:
     \                          # Copy of the benchmark runner script (for reproducibility)\n\
     ├── run_params.json                    # Job parameters (branch, commit, apps,\
     \ tiers, etc.)\n└── {app_stem}/                        # One directory per app\
-    \ (e.g. \"echo_text\")\n    └── {timestamp}/                   # e.g. \"20260330_142500\"\
-    \n        ├── summary.json               # Overall results: app name, timestamp,\
+    \ (e.g. \"echo_text\")\n    └── {timestamp}/                   # e.g. \"20260330_142500\"\n\
+    \        ├── summary.json               # Overall results: app name, timestamp,\
     \ all tier results\n        ├── summary_table.txt          # Human-readable table\
     \ (client/server p50/p90/p99, success%)\n        ├── tier_1/\n        │   ├──\
     \ client_latencies.jsonl  # One JSON object per request (client-side timing)\n\
@@ -72,10 +75,11 @@ config_edits:
     \    ├── tier_10/\n        │   ├── client_latencies.jsonl\n        │   └── traces.jsonl\n\
     \        └── tier_100/\n            ├── client_latencies.jsonl\n            └──\
     \ traces.jsonl\n```\n\nFor A/B tests, both branches share the same `{run_name}`\
-    \ prefix:\n├── main/\n│   ├── runner.py\n│   ├── run_params.json\n│   └── {app_stem}/{timestamp}/...\n\
-    └── {compare_branch}/\n    ├── runner.py\n    ├── run_params.json\n    └── {app_stem}/{timestamp}/...\n\
-    The `tier_{N}` directories are created for each value in `--tiers` (default `1,10,100`),\
-    \ and each app passed via `--apps` gets its own `{app_stem}/` directory."
+    \ prefix:\n├── main/\n│   ├── runner.py\n│   ├── run_params.json\n│   └──\
+    \ {app_stem}/{timestamp}/...\n└── {compare_branch}/\n    ├── runner.py\n    ├──\
+    \ run_params.json\n    └── {app_stem}/{timestamp}/...\nThe `tier_{N}` directories\
+    \ are created for each value in `--tiers` (default `1,10,100`), and each app\
+    \ passed via `--apps` gets its own `{app_stem}/` directory."
   gold_removed: "This submits two identical jobs (one per branch) to HF Jobs. Results\
     \ are uploaded to a shared HF bucket path for easy comparison:\n  main/\n    run_params.json\n\
     \    runner.py              # exact runner script used\n    echo_text/summary.json\n\

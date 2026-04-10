@@ -215,14 +215,65 @@ def test_existing_table_tests_pass():
             "node",
             "--experimental-strip-types",
             "--test",
-            "./packages/data-table/src/lib/table.test.ts",
+            "./src/lib/table.test.ts",
         ],
-        cwd=REPO,
+        cwd=f"{REPO}/packages/data-table",
         capture_output=True,
         text=True,
         timeout=60,
     )
     assert r.returncode == 0, f"Table tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_table_operators_tests_pass():
+    """Table operators tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node",
+            "--experimental-strip-types",
+            "--test",
+            "./src/lib/operators.test.ts",
+        ],
+        cwd=f"{REPO}/packages/data-table",
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Operators tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_table_inflection_tests_pass():
+    """Table inflection tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node",
+            "--experimental-strip-types",
+            "--test",
+            "./src/lib/inflection.test.ts",
+        ],
+        cwd=f"{REPO}/packages/data-table",
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Inflection tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_database_tests_pass():
+    """Database tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node",
+            "--experimental-strip-types",
+            "--test",
+            "./src/lib/database.test.ts",
+        ],
+        cwd=f"{REPO}/packages/data-table",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Database tests failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_create_table_basic():
@@ -308,3 +359,54 @@ console.log('PASS')
 """
     )
     assert r.returncode == 0, f"Anti-stub check failed:\n{r.stderr}\n{r.stdout}"
+
+
+def test_repo_type_safety_tests_pass():
+    """Type safety tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node",
+            "--experimental-strip-types",
+            "--test",
+            "./src/lib/type-safety.test.ts",
+        ],
+        cwd=f"{REPO}/packages/data-table",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Type safety tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_data_schema_schema_tests_pass():
+    """Data-schema schema tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node",
+            "--experimental-strip-types",
+            "--test",
+            "./src/lib/schema.test.ts",
+        ],
+        cwd=f"{REPO}/packages/data-schema",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Data-schema schema tests failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_data_schema_checks_tests_pass():
+    """Data-schema checks tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "node",
+            "--experimental-strip-types",
+            "--test",
+            "./src/lib/checks.test.ts",
+        ],
+        cwd=f"{REPO}/packages/data-schema",
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Data-schema checks tests failed:\n{r.stdout}\n{r.stderr}"

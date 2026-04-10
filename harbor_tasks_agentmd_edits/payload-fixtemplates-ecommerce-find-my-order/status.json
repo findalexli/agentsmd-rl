@@ -3,33 +3,37 @@
   "verdict": "fail",
   "nop_reward": -1.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:43:16.293826",
-  "total_time": 5746.52,
-  "sandbox_id": "i9tkn2iok7t8zkb0erbb4",
-  "backend": "glm",
+  "validated_at": "2026-04-10T12:28:05.482214",
+  "total_time": 2396.84,
+  "sandbox_id": "i9oxom7p8qbtacg59ynx5",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "model": "worker",
-      "backend": "local",
-      "time": 300.0,
-      "notes": "Added 5 CI/CD pass_to_pass tests: test_tsconfig_valid (validates tsconfig.json files), test_package_json_valid (validates package.json files), test_eslint_config_valid (validates eslint configs exist), test_modified_files_typescript_syntax (syntax validation for modified files), test_ecommerce_build_config (validates next.config.js and tailwind.config.mjs). Repo uses pnpm with turbo for builds. CI commands found: pnpm lint, pnpm build:plugin-ecommerce, pnpm typecheck. Tests added as static validation since dependencies are not installed in the Docker image."
-    },
-    "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 210.33,
-      "notes": ""
-    },
-    "improve": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 528.93,
-      "notes": "no subprocess.run (grep-only tests)"
+      "time": 311.06,
+      "notes": ""
+    },
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "worker",
+      "backend": "local",
+      "time": 180.0,
+      "notes": "Fixed previous rate limit issue. Added subprocess.run() based tests."
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 867.45
     }
   },
   "history": [
@@ -40,6 +44,14 @@
       "backend": "glm",
       "time": 5746.52,
       "at": "2026-04-09T07:43:16.293826"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 2396.84,
+      "at": "2026-04-10T12:28:05.482214"
     }
   ]
 }

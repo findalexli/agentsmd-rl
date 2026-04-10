@@ -70,31 +70,42 @@ def test_enum_values_renamed():
     assert "agentos_railway" in member_names, "Missing agentos_railway member"
 
 
+def _get_map_from_ast(tree, map_name):
+    """Helper to extract dict values from either Assign or AnnAssign nodes."""
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == map_name:
+                    if isinstance(node.value, ast.Dict):
+                        return node.value
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id == map_name:
+                if isinstance(node.value, ast.Dict):
+                    return node.value
+    return None
+
+
 # [pr_diff] fail_to_pass
 def test_template_name_map_updated():
     """TEMPLATE_TO_NAME_MAP values must use short names without -template suffix."""
     operator_py = Path(REPO) / "libs" / "agno_infra" / "agno" / "infra" / "operator.py"
     tree = ast.parse(operator_py.read_text())
-    # Find the TEMPLATE_TO_NAME_MAP assignment and extract string values
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "TEMPLATE_TO_NAME_MAP":
-                    assert isinstance(node.value, ast.Dict), "TEMPLATE_TO_NAME_MAP is not a dict"
-                    values = []
-                    for v in node.value.values:
-                        assert isinstance(v, ast.Constant), f"Expected string constant, got {type(v)}"
-                        values.append(v.value)
-                    assert len(values) == 3, f"Expected 3 entries, got {len(values)}"
-                    for val in values:
-                        assert not val.endswith("-template"), (
-                            f"TEMPLATE_TO_NAME_MAP value '{val}' still has '-template' suffix"
-                        )
-                    assert "agentos-docker" in values
-                    assert "agentos-aws" in values
-                    assert "agentos-railway" in values
-                    return
-    assert False, "TEMPLATE_TO_NAME_MAP not found in operator.py"
+    dict_node = _get_map_from_ast(tree, "TEMPLATE_TO_NAME_MAP")
+    
+    assert dict_node is not None, "TEMPLATE_TO_NAME_MAP not found in operator.py"
+    
+    values = []
+    for v in dict_node.values:
+        assert isinstance(v, ast.Constant), f"Expected string constant, got {type(v)}"
+        values.append(v.value)
+    assert len(values) == 3, f"Expected 3 entries, got {len(values)}"
+    for val in values:
+        assert not val.endswith("-template"), (
+            f"TEMPLATE_TO_NAME_MAP value '{val}' still has '-template' suffix"
+        )
+    assert "agentos-docker" in values
+    assert "agentos-aws" in values
+    assert "agentos-railway" in values
 
 
 # [pr_diff] fail_to_pass
@@ -116,17 +127,14 @@ def test_repo_urls_unchanged():
     """TEMPLATE_TO_REPO_MAP must still point to original GitHub URLs (unchanged)."""
     operator_py = Path(REPO) / "libs" / "agno_infra" / "agno" / "infra" / "operator.py"
     tree = ast.parse(operator_py.read_text())
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == "TEMPLATE_TO_REPO_MAP":
-                    assert isinstance(node.value, ast.Dict)
-                    urls = [v.value for v in node.value.values if isinstance(v, ast.Constant)]
-                    assert "https://github.com/agno-agi/agentos-docker-template" in urls
-                    assert "https://github.com/agno-agi/agentos-aws-template" in urls
-                    assert "https://github.com/agno-agi/agentos-railway-template" in urls
-                    return
-    assert False, "TEMPLATE_TO_REPO_MAP not found in operator.py"
+    dict_node = _get_map_from_ast(tree, "TEMPLATE_TO_REPO_MAP")
+    
+    assert dict_node is not None, "TEMPLATE_TO_REPO_MAP not found in operator.py"
+    
+    urls = [v.value for v in dict_node.values if isinstance(v, ast.Constant)]
+    assert "https://github.com/agno-agi/agentos-docker-template" in urls
+    assert "https://github.com/agno-agi/agentos-aws-template" in urls
+    assert "https://github.com/agno-agi/agentos-railway-template" in urls
 
 
 # [pr_diff] fail_to_pass
@@ -209,6 +217,13 @@ def test_template_repo_map_keys_match_enum():
                             if isinstance(k, ast.Attribute):
                                 keys.add(k.attr)
                         return keys
+            elif isinstance(node, ast.AnnAssign):
+                if isinstance(node.target, ast.Name) and node.target.id == map_name:
+                    keys = set()
+                    for k in node.value.keys:
+                        if isinstance(k, ast.Attribute):
+                            keys.add(k.attr)
+                    return keys
         return set()
 
     repo_keys = _get_map_key_attrs(op_tree, "TEMPLATE_TO_REPO_MAP")
@@ -237,3 +252,88 @@ def test_no_fstring_without_vars():
                             f"Line {node.lineno}: f-string in {call.func.id}() "
                             "with no variables — use a plain string"
                         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_agno_infra_ruff_check():
+    """Repo's ruff linter passes on agno_infra (pass_to_pass)."""
+    # Install dev dependencies first
+    install = subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/libs/agno_infra[dev]", "-q"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert install.returncode == 0, f"Failed to install dev dependencies: {install.stderr}"
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/libs/agno_infra"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_agno_infra_mypy():
+    """Repo's mypy typecheck passes on agno_infra (pass_to_pass)."""
+    # Install dev dependencies first
+    install = subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/libs/agno_infra[dev]", "-q"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert install.returncode == 0, f"Failed to install dev dependencies: {install.stderr}"
+    r = subprocess.run(
+        ["mypy", f"{REPO}/libs/agno_infra", "--config-file", f"{REPO}/libs/agno_infra/pyproject.toml"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Mypy check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_agno_infra_validate_script():
+    """Repo's validate script passes on agno_infra (pass_to_pass)."""
+    # Install dev dependencies first
+    install = subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/libs/agno_infra[dev]", "-q"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert install.returncode == 0, f"Failed to install dev dependencies: {install.stderr}"
+    r = subprocess.run(
+        ["bash", f"{REPO}/libs/agno_infra/scripts/validate.sh"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Validate script failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_agno_infra_modules_importable():
+    """Modified agno_infra modules can be imported successfully (pass_to_pass)."""
+    # Install both agno and agno_infra first
+    install_result = subprocess.run(
+        ["pip", "install", "-e", f"{REPO}/libs/agno[dev]", "-e", f"{REPO}/libs/agno_infra[dev]", "-q"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert install_result.returncode == 0, f"Failed to install dependencies: {install_result.stderr}"
+
+    # Test importing enums module
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import sys; sys.path.insert(0, '{REPO}/libs/agno_infra'); "
+         "from agno.infra.enums import InfraStarterTemplate; "
+         "print('Enums import OK')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Failed to import enums module: {r.stderr}"
+    assert "Enums import OK" in r.stdout
+
+    # Test importing operator module (requires agno)
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import sys; sys.path.insert(0, '{REPO}/libs/agno_infra'); "
+         "from agno.infra.operator import TEMPLATE_TO_NAME_MAP, TEMPLATE_TO_REPO_MAP; "
+         "print('Operator import OK')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Failed to import operator module: {r.stderr}"
+    assert "Operator import OK" in r.stdout

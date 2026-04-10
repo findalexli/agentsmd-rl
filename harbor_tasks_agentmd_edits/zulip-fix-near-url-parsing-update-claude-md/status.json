@@ -3,9 +3,9 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T06:27:41.922434",
-  "total_time": 6665.98,
-  "sandbox_id": "i80klcivqyx3ap0rt1gi6",
+  "validated_at": "2026-04-10T13:36:32.574400",
+  "total_time": 566.93,
+  "sandbox_id": "i5eqvyqkep9hd6o625mz0",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 1.0,
@@ -15,17 +15,60 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed test_outputs.py: _load_fetch_module() was using spec_from_file_location which returns None for files without .py extension. Changed to use SourceFileLoader with spec_from_loader to properly load the fetch-zulip-web-public-messages script. All 10 tests now pass with reward=1 after gold fix applied.",
+      "notes": "All checks passed: Docker build OK, NOP reward=0 (4 f2p tests fail on base), Gold reward=1 (15 tests pass), ICR=1.00. Fixed rubric: removed 2 unreasonable rules (style/consistency without reference, comment placement), fixed Rule 2 path from SKILL.md to CLAUDE.md. 1 config edits, 1 rubric rules",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 212.72
+      "time": 250.38
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.69,
+      "time": 3.34,
       "notes": "ICR=1.00"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 184.76,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        ".claude/CLAUDE.md",
+        ".claude/skills/fetch-zulip-messages/SKILL.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 0,
+      "rejection_reasons": "",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 54.53
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 23.89,
+      "notes": "",
+      "precision": 0.66
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 42.8,
+      "notes": "precision was 0.66, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     }
   },
   "history": [
@@ -42,8 +85,32 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 6665.98,
+      "time": 73.03,
       "at": "2026-04-09T06:27:41.922434"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1194.62,
+      "at": "2026-04-10T13:02:41.442676"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1462.27,
+      "at": "2026-04-10T13:27:05.414894"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 566.93,
+      "at": "2026-04-10T13:36:32.574400"
     }
   ]
 }

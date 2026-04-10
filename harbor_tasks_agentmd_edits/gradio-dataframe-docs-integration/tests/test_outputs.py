@@ -361,3 +361,63 @@ def test_repo_client_builds():
     combined_output = stdout + stderr
     error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
     assert returncode == 0, f"Client build failed:\n{error_msg}"
+
+
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass).
+
+    CI Command: pnpm test:run
+    Source: .github/workflows/tests-js.yml
+    """
+    returncode, stdout, stderr = _run_pnpm_command(
+        ["test:run"],
+        timeout=300
+    )
+    combined_output = stdout + stderr
+    error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
+    assert returncode == 0, f"Unit tests failed:\n{error_msg}"
+
+
+def test_repo_client_unit_tests():
+    """Repo's @gradio/client unit tests pass (pass_to_pass).
+
+    CI Command: pnpm --filter @gradio/client test
+    Source: .github/workflows/tests-js.yml
+    """
+    returncode, stdout, stderr = _run_pnpm_command(
+        ["--filter", "@gradio/client", "test"],
+        timeout=120
+    )
+    combined_output = stdout + stderr
+    error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
+    assert returncode == 0, f"Client unit tests failed:\n{error_msg}"
+
+
+def test_repo_dataframe_builds():
+    """Repo's @gradio/dataframe package builds successfully (pass_to_pass).
+
+    CI Command: pnpm --filter @gradio/dataframe build
+    Source: package.json build scripts pattern
+    """
+    returncode, stdout, stderr = _run_pnpm_command(
+        ["--filter", "@gradio/dataframe", "build"],
+        timeout=120
+    )
+    combined_output = stdout + stderr
+    error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
+    assert returncode == 0, f"Dataframe build failed:\n{error_msg}"
+
+
+def test_repo_wasm_builds():
+    """Repo's @gradio/wasm package builds successfully (pass_to_pass).
+
+    CI Command: pnpm --filter @gradio/wasm build
+    Source: .github/workflows/tests-js.yml
+    """
+    returncode, stdout, stderr = _run_pnpm_command(
+        ["--filter", "@gradio/wasm", "build"],
+        timeout=120
+    )
+    combined_output = stdout + stderr
+    error_msg = combined_output[-500:] if len(combined_output) > 500 else combined_output
+    assert returncode == 0, f"WASM build failed:\n{error_msg}"

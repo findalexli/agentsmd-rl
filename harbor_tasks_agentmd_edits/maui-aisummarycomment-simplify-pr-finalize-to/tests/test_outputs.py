@@ -55,7 +55,7 @@ def test_reviewnumber_parameter_removed():
     # In the new version, this parameter should not exist
     src = SCRIPT_PATH.read_text()
     # Check that ReviewNumber is NOT in the param block
-    param_match = re.search(r'param\((.*?)\)', src, re.DOTALL)
+    param_match = re.search(r'param\((.*?)\n\)', src, re.DOTALL)
     if param_match:
         param_block = param_match.group(1)
         assert "$ReviewNumber" not in param_block, (
@@ -68,7 +68,7 @@ def test_reviewnumber_parameter_removed():
 def test_reviewdescription_parameter_removed():
     """ReviewDescription parameter is removed from the script."""
     src = SCRIPT_PATH.read_text()
-    param_match = re.search(r'param\((.*?)\)', src, re.DOTALL)
+    param_match = re.search(r'param\((.*?)\n\)', src, re.DOTALL)
     if param_match:
         param_block = param_match.group(1)
         assert "$ReviewDescription" not in param_block, (
@@ -87,7 +87,7 @@ def test_titleissues_parameter_added():
         "The PR adds TitleIssues for direct title issue specification"
     )
     # Check it's in the param block
-    param_match = re.search(r'param\((.*?)\)', src, re.DOTALL)
+    param_match = re.search(r'param\((.*?)\n\)', src, re.DOTALL)
     if param_match:
         param_block = param_match.group(1)
         assert "$TitleIssues" in param_block, (
@@ -192,11 +192,17 @@ def test_powershell_script_parses():
 # [repo_tests] pass_to_pass
 def test_powershell_no_parse_errors():
     """PowerShell script has no parse-time errors (pass_to_pass)."""
+    # ParseFile signature: ParseFile(fileName, out Token[] tokens, out ParseError[] errors)
+    cmd = (
+        f"$tokens = @(); $errors = @(); "
+        f"$null = [System.Management.Automation.Language.Parser]::ParseFile('{SCRIPT_PATH}', [ref]$tokens, [ref]$errors); "
+        f"if ($errors.Count -gt 0) {{ Write-Host $errors; exit 1 }} else {{ exit 0 }}"
+    )
     r = subprocess.run(
-        ["pwsh", "-Command", f"$errors = @(); $null = [System.Management.Automation.Language.Parser]::ParseFile('{SCRIPT_PATH}', [ref]$errors, [ref]$null); if ($errors.Count -gt 0) {{ Write-Host $errors; exit 1 }} else {{ exit 0 }}"],
+        ["pwsh", "-Command", cmd],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"PowerShell parse errors found:\n{r.stderr}"
+    assert r.returncode == 0, f"PowerShell parse errors found:\n{r.stdout}{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

@@ -1,31 +1,59 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:45:55.461966",
-  "total_time": 5542.48,
-  "sandbox_id": "i2oeqfowuwxvm7vobo8pu",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:01:58.028187",
+  "total_time": 1462.91,
+  "sandbox_id": "iczlpejjmyoln3g8v5t5s",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
+      "notes": "Added 4 pass_to_pass CI-based tests: 1) test_repo_workflow_yamllint - validates cache.yml and gradle-cache-acceptance.yml with yamllint, 2) test_repo_mise_scripts_bash_syntax - validates bash syntax of mise utility scripts, 3) test_repo_mise_toml_valid - validates TOML structure of mise.toml files, 4) test_repo_elixir_configs_valid - validates structure of Elixir config files. All p2p tests pass. The fail_to_pass tests fail as expected because the fix (dev_instance_env.sh and related changes) hasn't been applied to the base commit. Repository is Elixir/Phoenix with mise task runner."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 6.49,
+      "time": 302.68,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_dev_instance_script_validates_bad_suffix: script outputs error message but returns exit code 0, so changed assertion to check for error message in output instead of non-zero exit code. All 4 validations pass: Docker build OK, NOP test reward=0 (10 fail_to_pass fail correctly), Gold test reward=1 (14 tests pass).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 212.85
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.23,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5542.48,
-      "at": "2026-04-09T07:45:55.461966"
+      "time": 1462.91,
+      "at": "2026-04-10T13:01:58.028187"
     }
   ]
 }

@@ -1,45 +1,51 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "cline/cline"
+  repo: cline/cline
   pr: 8292
-  base_commit: "9fc9785aa2ab3985ae5030330566499d26fb6192"
-  merge_commit: "99c85710e95e4fb40ac7aadda59cdc37c41ed37e"
-
+  base_commit: 9fc9785aa2ab3985ae5030330566499d26fb6192
+  merge_commit: 99c85710e95e4fb40ac7aadda59cdc37c41ed37e
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "HistoryView.tsx has valid JSX structure with balanced tags"
-
-  - id: test_repo_biome_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Biome linting passes on src/ and webview-ui/src/"
-
-  - id: test_repo_biome_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Biome format check passes on src/ and webview-ui/src/"
-
-  - id: filters_outside_radio_group
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Workspace and Favorites filters are outside VSCodeRadioGroup"
-
-  - id: independent_filter_container
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Workspace and Favorites are in a separate flex div container"
-
-  - id: claude_md_documents_package_json
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md documents checking package.json for available scripts"
-
-  - id: sort_options_in_radio_group
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Sort options (Newest, Oldest, Most Relevant) remain in VSCodeRadioGroup"
-
-rubric: []
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: HistoryView.tsx has valid JSX structure with balanced tags
+- id: test_repo_biome_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Biome linting passes on src/ and webview-ui/src/
+- id: test_repo_biome_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Biome format check passes on src/ and webview-ui/src/
+- id: test_repo_protos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Proto generation succeeds (npm run protos)
+- id: test_repo_compile_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test compilation succeeds (npm run compile-tests)
+- id: filters_outside_radio_group
+  type: fail_to_pass
+  origin: pr_diff
+  description: Workspace and Favorites filters are outside VSCodeRadioGroup
+- id: independent_filter_container
+  type: fail_to_pass
+  origin: pr_diff
+  description: Workspace and Favorites are in a separate flex div container
+- id: claude_md_documents_package_json
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md documents checking package.json for available scripts
+- id: sort_options_in_radio_group
+  type: pass_to_pass
+  origin: pr_diff
+  description: Sort options (Newest, Oldest, Most Relevant) remain in VSCodeRadioGroup
+rubric:
+- rule: CLAUDE.md additions should be high-signal tribal knowledge, not obvious patterns
+    or standard practices—only document nuanced, non-obvious discoveries that required
+    multiple files to understand or user intervention
+  source:
+    path: CLAUDE.md
+    lines: 1-15
+    commit: 9fc9785aa2ab3985ae5030330566499d26fb6192

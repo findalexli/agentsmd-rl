@@ -12,11 +12,19 @@ checks:
   - id: all_shell_scripts_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: All repo shell scripts parse without syntax errors
+    description: All repo shell scripts parse without syntax errors (bash -n)
   - id: shell_script_executability
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Shell scripts referenced in CI are executable
+  - id: node_syntax_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Node.js can parse modified JS test files (node --check)
+  - id: node_syntax_css_html_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Node.js can parse CSS and HTML server test index files
   - id: help_shows_suite_option
     type: fail_to_pass
     origin: pr_diff

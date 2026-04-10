@@ -1,71 +1,54 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "remix-run/remix"
+  repo: remix-run/remix
   pr: 11045
-  base_commit: "3921f065331f6b28e0c29750f1e757a4e09feebc"
-  merge_commit: "2fa272cdd372dea3382ddc23fb63f2ca1d32b063"
-
+  base_commit: 3921f065331f6b28e0c29750f1e757a4e09feebc
+  merge_commit: 2fa272cdd372dea3382ddc23fb63f2ca1d32b063
 checks:
-  # Behavioral: type benchmark files created
-  - id: type_benchmark_files_exist
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bench/types/ directory contains at least 3 type benchmark .ts files"
-
-  - id: type_benchmarks_use_attest
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Type benchmark files use @ark/attest bench() with .types() assertions, covering href and params"
-
-  # Behavioral: runtime benchmarks reorganized
-  - id: runtime_benchmarks_moved_to_src
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Existing .bench.ts files moved from bench/ root to bench/src/"
-
-  # Behavioral: package.json updates
-  - id: bench_package_json_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bench/package.json has bench:types script and @ark/attest devDependency"
-
-  - id: attest_moved_from_parent_package
-    type: fail_to_pass
-    origin: pr_diff
-    description: "@ark/attest removed from route-pattern/package.json devDependencies"
-
-  # Behavioral: README documentation
-  - id: readme_documents_type_benchmarks
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bench/README.md distinguishes runtime vs type benchmarks with src/ and types/ refs"
-
-  # Regression checks
-  - id: existing_bench_deps_maintained
-    type: pass_to_pass
-    origin: static
-    description: "Existing bench dependencies (vitest, path-to-regexp) still present"
-
-  - id: route_pattern_package_json_valid
-    type: pass_to_pass
-    origin: static
-    description: "route-pattern/package.json core fields preserved (name, exports)"
-
-  # Repo CI/CD tests (pass_to_pass)
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes for route-pattern"
-
-  - id: test_repo_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests pass for route-pattern"
-
-  - id: test_repo_bench
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's benchmark tests pass"
-
+- id: type_benchmark_files_exist
+  type: fail_to_pass
+  origin: pr_diff
+  description: bench/types/ directory contains at least 3 type benchmark .ts files
+- id: type_benchmarks_use_attest
+  type: fail_to_pass
+  origin: pr_diff
+  description: Type benchmark files use @ark/attest bench() with .types() assertions,
+    covering href and params
+- id: runtime_benchmarks_moved_to_src
+  type: fail_to_pass
+  origin: pr_diff
+  description: Existing .bench.ts files moved from bench/ root to bench/src/
+- id: bench_package_json_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: bench/package.json has bench:types script and @ark/attest devDependency
+- id: attest_moved_from_parent_package
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@ark/attest removed from route-pattern/package.json devDependencies'
+- id: readme_documents_type_benchmarks
+  type: fail_to_pass
+  origin: pr_diff
+  description: bench/README.md distinguishes runtime vs type benchmarks with src/
+    and types/ refs
+- id: existing_bench_deps_maintained
+  type: pass_to_pass
+  origin: static
+  description: Existing bench dependencies (vitest, path-to-regexp) still present
+- id: route_pattern_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: route-pattern/package.json core fields preserved (name, exports)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes for route-pattern
+- id: test_repo_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests pass for route-pattern
+- id: test_repo_bench
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's benchmark tests pass
 rubric: []

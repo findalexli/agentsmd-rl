@@ -1,28 +1,51 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:20:06.140655",
-  "total_time": 5843.97,
-  "sandbox_id": "iwtr5z20321d2k4jgwcx3",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:08:10.875490",
+  "total_time": 3254.01,
+  "sandbox_id": "i7wcsgirxntpru993t6fm",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 220.15,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 815.45,
       "notes": ""
     },
-    "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 215.7,
-      "notes": ""
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CONTRIBUTING.md",
+        "js/README.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 0,
+      "rejection_reasons": "No CLAUDE.md, AGENTS.md, or SKILL.md files found. Rules extracted from CONTRIBUTING.md and js/README.md documentation standards.",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 77.33
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 17.95,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 56.75,
+      "notes": "precision was 0.00, fixing hallucinated rules"
     },
     "improve": {
       "status": "skipped",
@@ -30,16 +53,34 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_score": 1.0,
+      "attempts": 1,
+      "notes": "Fixed 3 issues: 1) Changed Playwright test to use Python instead of Node.js (avoid ES module issues), 2) Fixed nth-child tests to only check row striping patterns (not .pinned-column patterns), 3) Added prettier formatting to solve.sh",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1698.41
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.16,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 5843.97,
-      "at": "2026-04-09T07:20:06.140655"
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3254.01,
+      "at": "2026-04-10T12:08:10.875490"
     }
   ]
 }

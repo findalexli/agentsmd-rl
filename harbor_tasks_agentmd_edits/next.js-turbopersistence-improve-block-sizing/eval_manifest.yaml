@@ -17,6 +17,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: turbo-persistence unit tests pass (excluding slow integration tests)
+- id: cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbo-persistence code is properly formatted
+- id: cargo_doc_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbo-persistence doc tests pass
+- id: cargo_check_benches
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbo-persistence benchmarks compile without errors
 - id: max_small_value_size_reduced
   type: fail_to_pass
   origin: pr_diff
@@ -75,55 +87,5 @@ rubric:
 config_edits:
 - path: turbopack/crates/turbo-persistence/README.md
   tier: 2
-  gold_added: 'Therefore there are these value types:
-
-    - INLINE: Values ≤ 8 bytes stored directly in key blocks within `*.sst` files.
-
-    - SMALL: Values 9–4096 bytes packed into shared value blocks within `*.sst` files.
-
-    - MEDIUM: Values 4097 bytes – 64 MB stored in dedicated value blocks within `*.sst`
-    files.
-
-    - BLOB: Values > 64 MB stored in separate `*.blob` files.
-
-    ### Value type trade-offs
-
-
-    |                       | Inline            | Small                                           |
-    Medium                                | Blob                                      |
-
-    | --------------------- | ----------------- | -----------------------------------------------
-    | ------------------------------------- | -----------------------------------------
-    |
-
-    | Size                  | ≤ 8 B             | 9 B .. 4 kB                                     |
-    4 kB .. 64 MB                         | > 64 MB                                   |
-
-    | Compression unit      | key block         | shared value block (≥ 8 kB)                     |
-    dedicated value block                 | separate file                             |
-
-    | Compression unit size | ≤ 16 kB           | 8 kB .. 12 kB                                   |
-    4 kB .. 64 MB                         | > 64 MB                                   |
-
-    | Access cost           | no extra overhead | decompress shared block (~8 kB)                 |
-    decompress value size                 | open separate file, decompress value size
-    |
-
-    | Storage overhead      | 0                 | 8 B in key block + 8 B per ~8 kB
-    in block table | 2 B in key block + 8 B in block table | 4 B in key block + 4
-    B in blob header     |
-
-    | Compaction            | re-compressed     | re-compressed                                   |
-    copied compressed                     | pointer copied                            |
-
-
-    Small value blocks are emitted once they accumulate at least `MIN_SMALL_VALUE_BLOCK_SIZE`
-    (8 kB) of data. This means actual block sizes range from 8 kB up to 8 kB + `MAX_SMALL_VALUE_SIZE`
-    (4 kB) = 12 kB. This provides a good balance between compression efficiency (blocks
-    ≥ 4 kB don''t need a compression dictionary) and access cost (only ~8–12 kB needs
-    to be decompressed per lookup).'
-  gold_removed: 'Therefore there are there value types:
-
-    - INLINE: Small values that are stored directly in the `*.sst` files.
-
-    - BLOB: Large values that are stored in `*.blob` files.'
+  gold_added: 'Therefore there are these value types:\n\n    - INLINE: Values ≤ 8 bytes stored directly in key blocks within *.sst files.\n\n    - SMALL: Values 9–4096 bytes packed into shared value blocks within *.sst files.\n\n    - MEDIUM: Values 4097 bytes – 64 MB stored in dedicated value blocks within *.sst files.\n\n    - BLOB: Values > 64 MB stored in separate *.blob files.\n\n    ### Value type trade-offs\n\n\n    |                       | Inline            | Small                                           | Medium                                | Blob                                      |\n\n    | --------------------- | ----------------- | ----------------------------------------------- | ------------------------------------- | ----------------------------------------- |\n\n    | Size                  | ≤ 8 B             | 9 B .. 4 kB                                     | 4 kB .. 64 MB                         | > 64 MB                                   |\n\n    | Compression unit      | key block         | shared value block (≥ 8 kB)                     | dedicated value block                 | separate file                             |\n\n    | Compression unit size | ≤ 16 kB           | 8 kB .. 12 kB                                   | 4 kB .. 64 MB                         | > 64 MB                                   |\n\n    | Access cost           | no extra overhead | decompress shared block (~8 kB)                 | decompress value size                 | open separate file, decompress value size |\n\n    | Storage overhead      | 0                 | 8 B in key block + 8 B per ~8 kB in block table | 2 B in key block + 8 B in block table | 4 B in key block + 4 B in blob header     |\n\n    | Compaction            | re-compressed     | re-compressed                                   | copied compressed                     | pointer copied                            |\n\n\n    Small value blocks are emitted once they accumulate at least MIN_SMALL_VALUE_BLOCK_SIZE (8 kB) of data. This means actual block sizes range from 8 kB up to 8 kB + MAX_SMALL_VALUE_SIZE (4 kB) = 12 kB. This provides a good balance between compression efficiency (blocks ≥ 4 kB don''t need a compression dictionary) and access cost (only ~8–12 kB needs to be decompressed per lookup).'
+  gold_removed: 'Therefore there are there value types:\n\n    - INLINE: Small values that are stored directly in the *.sst files.\n\n    - BLOB: Large values that are stored in *.blob files.'

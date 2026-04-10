@@ -21,70 +21,88 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's lint for route-pattern passes (pnpm run lint)
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's format check passes (pnpm run format:check at root)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build for route-pattern passes (pnpm run build)
 - id: key_only_and_key_equals_match_equivalently
   type: fail_to_pass
   origin: pr_diff
-  description: Pattern '?q=' must match URL with just '?q' (key present, no value)
+  description: Pattern \?q= must match URL with just \?q (key present, no value)
 - id: plus_decoded_as_space
   type: fail_to_pass
   origin: pr_diff
-  description: parseSearch must decode '+' as space, consistent with URLSearchParams
+  description: parseSearch must decode "+" as space, consistent with URLSearchParams
 - id: serialize_key_only_includes_equals
   type: fail_to_pass
   origin: pr_diff
-  description: Serializing a key-only constraint (?q) must produce 'q=' with equals
+  description: Serializing a key-only constraint (?q) must produce "q=" with equals
     sign
 rubric:
-- rule: Documentation update is consistent with the style of the existing README
-  source:
-    path: packages/route-pattern/README.md
-    lines: 1-10
-    commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
 - rule: Code examples in the README are accurate and runnable
   source:
     path: AGENTS.md
-    lines: '14'
+    lines: '21'
     commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
-- rule: README.md must mention URLSearchParams consistency for search param parsing
+- rule: Type imports must use 'import type { X }' syntax separate from value imports,
+    and include '.ts' extensions
   source:
-    path: packages/route-pattern/README.md
-    lines: '64'
-    commit: ed39106b15827744b72c7f7416434668747b975d
-  reference: '**Search params** narrow matches using "?key", "?key=", or "?key=value".     Parsing
-    and serialization follow "URLSearchParams" ():      and  are the same constraint
-    (stored as an empty  in :     key must be present; empty value is OK), and spaces
-    use  /  like in     real query strings.\nnew RoutePattern(''search?q'') // same
-    constraint as ?q=     — key must be present\n// More constrained search params
-    = more specific     ( and  tie)'
-- rule: README.md must not present ?q= as a separate 'any value' constraint
+    path: AGENTS.md
+    lines: '27'
+    commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
+- rule: Local variables must use 'let' (not 'const' or 'var')
   source:
-    path: packages/route-pattern/README.md
-    lines: 64-69
-    commit: ed39106b15827744b72c7f7416434668747b975d
-  reference: '**Search params** narrow matches using "?key", "?key=", or "?key=value".     Parsing
-    and serialization follow "URLSearchParams" ():      and  are the same constraint
-    (stored as an empty  in :     key must be present; empty value is OK), and spaces
-    use  /  like in     real query strings.\nnew RoutePattern(''search?q'') // same
-    constraint as ?q=     — key must be present\n// More constrained search params
-    = more specific     ( and  tie)'
+    path: AGENTS.md
+    lines: '30'
+    commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
+- rule: Type parameters must use descriptive lowercase names (e.g., 'source', 'pattern')
+    not single uppercase letters
+  source:
+    path: AGENTS.md
+    lines: '36'
+    commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
+- rule: Non-JSDoc comments should only be added when code is doing something surprising
+    or non-obvious
+  source:
+    path: AGENTS.md
+    lines: '37'
+    commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
 config_edits:
 - path: packages/route-pattern/README.md
   tier: 2
-  gold_added: '**Search params** narrow matches using `?key`, `?key=`, or `?key=value`.
-    Parsing and serialization follow `URLSearchParams` (`application/x-www-form-urlencoded`):
-    `?key` and `?key=` are the same constraint (stored as an empty `Set` in `ast.search`:
-    key must be present; empty value is OK), and spaces use `+` / `%20` like in real
+  gold_added: '**Search params** narrow matches using "?key", "?key=", or "?key=value".
+
+    Parsing and serialization follow "URLSearchParams" ():
+
+    "?key" and "?key=" are the same constraint (stored as an empty "Set" in "ast":
+
+    key must be present; empty value is OK), and spaces use "+" / "%20" like in real
+
     query strings.
+
 
     new RoutePattern(''search?q'') // same constraint as ?q= — key must be present
 
-    // More constrained search params = more specific (`?q` and `?q=` tie)'
-  gold_removed: '**Search params** narrow matches using `?key` or `?key=value`:
+
+    // More constrained search params = more specific ( and  tie)
+
+    '
+  gold_removed: '**Search params** narrow matches using "?key" or "?key=value":
+
 
     new RoutePattern(''search?q'') // requires ?q in URL
 
+
     new RoutePattern(''search?q='') // requires ?q with any value
 
-    router.add(''search?q='', ''has-q-with-value'')
 
-    // More constrained search params = more specific'
+    router.add(''search?q='', "has-q-with-value'')
+
+
+    // More constrained search params = more specific
+
+    '

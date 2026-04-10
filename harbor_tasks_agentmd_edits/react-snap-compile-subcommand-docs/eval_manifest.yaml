@@ -8,6 +8,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files have no obvious syntax errors
+- id: test_repo_tsc_check_babel_plugin
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes for babel-plugin-react-compiler
+- id: test_repo_tsc_check_snap
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes for snap package
+- id: test_repo_tsc_build_snap
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript build succeeds for snap package
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo linter passes for babel-plugin-react-compiler
+- id: test_repo_jest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Jest tests pass for babel-plugin-react-compiler
 - id: constants_evaluate_with_babel_plugin_exports
   type: fail_to_pass
   origin: pr_diff
@@ -56,10 +76,10 @@ rubric:
 config_edits:
 - path: compiler/.claude/agents/investigate-error.md
   tier: 1
-  gold_added: Execute `yarn snap -d -p <fixture-name>` to compile the fixture with
+  gold_added: Execute \x60yarn snap -d -p <fixture-name>\x60 to compile the fixture with
     full debug output. This shows the state of the program after each compilation
-    pass. You can also use `yarn snap compile -d <path-to-fixture>`.
-  gold_removed: Execute `yarn snap -d -p <fixture-name>` to compile the fixture with
+    pass. You can also use \x60yarn snap compile -d <path-to-fixture>\x60.
+  gold_removed: Execute \x60yarn snap -d -p <fixture-name>\x60 to compile the fixture with
     full debug output. This shows the state of the program after each compilation
     pass.
 - path: compiler/CLAUDE.md
@@ -67,11 +87,11 @@ config_edits:
   gold_added: '## Compiling Arbitrary Files
 
 
-    Use `yarn snap compile` to compile any file (not just fixtures) with the React
+    Use \x60yarn snap compile\x60 to compile any file (not just fixtures) with the React
     Compiler:
 
 
-    ```bash
+    \x60\x60\x60bash
 
     # Compile a file and see the output
 
@@ -80,22 +100,22 @@ config_edits:
 
     # Compile with debug logging to see the state after each compiler pass
 
-    # This is an alternative to `yarn snap -d -p <pattern>` when you don''t have a
+    # This is an alternative to \x60yarn snap -d -p <pattern>\x60 when you don''t have a
     fixture file yet
 
     yarn snap compile --debug <path>
 
-    ```
+    \x60\x60\x60
 
 
     ## Minimizing Test Cases
 
 
-    Use `yarn snap minimize` to automatically reduce a failing test case to its minimal
+    Use \x60yarn snap minimize\x60 to automatically reduce a failing test case to its minimal
     reproduction:
 
 
-    ```bash
+    \x60\x60\x60bash
 
     # Minimize a file that causes a compiler error
 
@@ -106,7 +126,7 @@ config_edits:
 
     yarn snap minimize --update <path>
 
-    ```'
+    \x60\x60\x60'
   gold_removed: ''
 - path: compiler/packages/babel-plugin-react-compiler/docs/passes/README.md
   tier: 2

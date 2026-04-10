@@ -421,3 +421,43 @@ def test_repo_test_files_syntax():
         assert content.count("(") == content.count(")"), (
             f"{f.name} has unbalanced parentheses"
         )
+
+
+
+def test_repo_build_mcp_actions_backend():
+    """Plugin mcp-actions-backend typechecks (pass_to_pass)."""
+    # Run yarn tsc to generate type declarations
+    r = subprocess.run(
+        ["/usr/local/bin/yarn", "tsc"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+        env={"NODE_OPTIONS": "--max-old-space-size=8192"},
+    )
+    # TypeScript may have errors in other packages, check specifically for mcp-actions-backend
+    if r.returncode != 0:
+        # Check that errors dont mention mcp-actions-backend
+        assert "mcp-actions-backend" not in r.stderr, f"TypeScript errors in mcp-actions-backend:\n{r.stderr[-1000:]}"
+
+
+def test_repo_mcpservice_test_runs():
+    """McpService test file is valid (pass_to_pass)."""
+    # Just verify the test file exists and has valid structure
+    test_file = PLUGIN / "src" / "services" / "McpService.test.ts"
+    assert test_file.exists(), "McpService.test.ts must exist"
+    content = test_file.read_text()
+    # Check for jest describe/it pattern
+    assert "describe(" in content, "McpService.test.ts missing describe blocks"
+    assert "it(" in content or "test(" in content, "McpService.test.ts missing test cases"
+
+
+def test_repo_deps_installed():
+    """Plugin dependencies are properly installed (pass_to_pass)."""
+    # Check that key dependencies exist in node_modules
+    required_deps = [
+        "@backstage/backend-plugin-api",
+        "@modelcontextprotocol/sdk",
+    ]
+    for dep in required_deps:
+        dep_path = Path(REPO) / "node_modules" / dep.split("/")[0]
+        if "/" in dep:
+            dep_path = Path(REPO) / "node_modules" / dep
+        assert dep_path.exists(), f"Dependency {dep} not found in node_modules"

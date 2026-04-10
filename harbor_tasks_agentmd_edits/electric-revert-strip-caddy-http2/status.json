@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:56:37.306498",
-  "total_time": 1706.3,
-  "sandbox_id": "im7jbfb2jtd4czp6fbt6k",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:28:20.499960",
+  "total_time": 863.47,
+  "sandbox_id": "izvzw8mccq6yeqg4tk5ba",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.66,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -17,17 +19,24 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 9.36,
+      "time": 286.87,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 41.12,
+      "time": 74.97,
+      "configs_found": [
+        "AGENTS.md",
+        "examples/tanstack-db-web-starter/AGENTS.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 2,
+      "rejection_reasons": "Rejected process rules (IDE setup, PR workflow); kept only code/doc conventions relevant to the Vite plugin and documentation changes",
       "notes": ""
     },
     "improve": {
@@ -38,9 +47,37 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh to use @/* path alias for imports. Adjusted rubric rules to be evaluable by judge (2 rules about documentation changes that were actually made).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 5.79
+      "time": 419.57
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 19.92,
+      "notes": "",
+      "precision": 0.66
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 34.56,
+      "notes": "precision was 0.66, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.02,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +104,14 @@
       "backend": "fireworks",
       "time": 1706.3,
       "at": "2026-04-09T14:56:37.306498"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 863.47,
+      "at": "2026-04-10T11:28:20.499960"
     }
   ]
 }

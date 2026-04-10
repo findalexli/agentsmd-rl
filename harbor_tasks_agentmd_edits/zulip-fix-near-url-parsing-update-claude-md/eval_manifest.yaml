@@ -45,7 +45,43 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: fetch-zulip-web-public-messages --help runs without error
-rubric: []
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on fetch-zulip-web-public-messages
+- id: test_repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: Black format check passes on fetch-zulip-web-public-messages
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: isort import order check passes on fetch-zulip-web-public-messages
+- id: test_repo_bandit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bandit security linter passes on fetch-zulip-web-public-messages
+- id: test_repo_script_imports_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch-zulip-web-public-messages imports without errors
+rubric:
+- rule: CLAUDE.md must include a "Zulip Chat Links" section documenting that agents
+    should use the /fetch-zulip-messages skill for Zulip URLs, not WebFetch
+  source:
+    path: .claude/CLAUDE.md
+    lines: 378-383
+    commit: 305c52c35a7dad3e6c9bde470e8f717186abaae5
+  reference: '## Zulip Chat Links
+
+
+    When you encounter a Zulip narrow URL (e.g., from `chat.zulip.org` in a
+
+    GitHub issue, PR, or user message), use the `/fetch-zulip-messages` skill
+
+    to read the conversation. Do not use `WebFetch` — it cannot access Zulip
+
+    message content.'
 config_edits:
 - path: .claude/CLAUDE.md
   tier: 1

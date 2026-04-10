@@ -123,6 +123,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'Repo CI: MCP generated TypeScript files must have valid syntax'
+- id: test_mcp_unit_schema_snapshots
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP unit test - tool schema snapshots'
+- id: test_mcp_unit_schema_ajv
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP unit test - AJV schema validation'
+- id: test_mcp_unit_tool_name_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP unit test - tool name validation'
+- id: test_mcp_unit_tool_filtering
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP unit test - tool filtering'
+- id: test_mcp_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP TypeScript typecheck'
+- id: test_mcp_lint_tool_names
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP lint tool names'
+- id: test_mcp_tool_inputs_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: MCP tool-inputs.json must be valid JSON'
 rubric:
 - rule: SKILL.md description should include trigger terms and when to use it, per
     the writing-skills guide
@@ -139,7 +167,7 @@ rubric:
 config_edits:
 - path: products/llm_analytics/skills/README.md
   tier: 2
-  gold_added: "- **exploring-llm-evaluations** — how to manage and investigate LLM\
+  gold_added: "- **exploring-llm-evaluations** \u2014 how to manage and investigate LLM\
     \ analytics\n  evaluations (both `hog` and `llm_judge` types), run them on specific\
     \ generations,\n  query individual results, and generate AI-powered summaries\
     \ of pass/fail/N/A patterns."
@@ -147,7 +175,7 @@ config_edits:
 - path: products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md
   tier: 1
   gold_added: "---\nname: exploring-llm-evaluations\ndescription: >\n  Investigate\
-    \ LLM analytics evaluations of both types — `hog` (deterministic\n  code-based)\
+    \ LLM analytics evaluations of both types \u2014 `hog` (deterministic\n  code-based)\
     \ and `llm_judge` (LLM-prompt-based). Find existing evaluations,\n  inspect their\
     \ configuration, run them against specific generations, query\n  individual pass/fail\
     \ results, and generate AI-powered summaries of patterns\n  across many runs.\
@@ -155,18 +183,18 @@ config_edits:
     \ failure modes, compare results across filters,\n  dry-run a Hog evaluator, prototype\
     \ a new LLM-judge prompt, or manage the\n  evaluation lifecycle (create, update,\
     \ enable/disable, delete).\n---\n\n# Exploring LLM evaluations\n\nPostHog evaluations\
-    \ score `$ai_generation` events. Each evaluation is one of two types,\nboth first-class:\n\
-    \n- **`hog`** — deterministic Hog code that returns `true`/`false` (and optionally\
+    \ score `$ai_generation` events. Each evaluation is one of two types,\nboth first-class:\
+    \n\n- **`hog`** \u2014 deterministic Hog code that returns `true`/`false` (and optionally\
     \ N/A).\n  Best for objective rule-based checks: format validation (JSON parses,\
     \ schema matches),\n  length limits, keyword presence/absence, regex patterns,\
     \ structural assertions, latency\n  thresholds, cost guards. Cheap, fast, reproducible\
-    \ — no LLM call per run. Prefer this\n  when the criterion can be expressed as\
-    \ code.\n- **`llm_judge`** — an LLM scores generations against a prompt you write.\
+    \ \u2014 no LLM call per run. Prefer this\n  when the criterion can be expressed as\
+    \ code.\n- **`llm_judge`** \u2014 an LLM scores generations against a prompt you write.\
     \ Best for\n  subjective or fuzzy checks: tone, helpfulness, hallucination detection,\
     \ off-topic\n  drift, instruction-following. Costs an LLM call per run and requires\
     \ AI data\n  processing approval at the org level.\n\nResults from both types\
     \ land in ClickHouse as `$ai_evaluation` events with the same\nschema, so the\
-    \ read/query/summary workflows are identical regardless of evaluator type —\n\
+    \ read/query/summary workflows are identical regardless of evaluator type \u2014\n\
     the only thing that changes is whether `$ai_evaluation_reasoning` was written\
     \ by Hog\ncode or by an LLM.\n\nThis skill covers the full lifecycle: list/inspect/manage\
     \ evaluation configs (Hog or\nLLM judge), run them on specific generations, query\
@@ -177,10 +205,10 @@ config_edits:
     \ |\n| `posthog:evaluations-get`                         | List/search evaluation\
     \ configs (filter by name, enabled flag)  |\n| `posthog:evaluation-get`      \
     \                    | Get a single evaluation config by UUID                \
-    \         |\n| `posthog:evaluation-create`                       | Create a new\
-    \ `llm_judge` or `hog` evaluation                   |\n| `posthog:evaluation-update`\
+    \         |\n| `posthog:evaluation-create`                       | Create a new `llm_judge`\
+    \ or `hog` evaluation                   |\n| `posthog:evaluation-update`\
     \                       | Update an existing evaluation (name, prompt, enabled,\
-    \ …)       |\n| `posthog:evaluation-delete`                       | Soft-delete\
+    \ \u2026)       |\n| `posthog:evaluation-delete`                       | Soft-delete\
     \ an evaluation                                      |\n| `posthog:evaluation-run`\
     \                          | Run an evaluation against a specific `$ai_generation`\
     \ event    |\n| `posthog:evaluation-test-hog`                     "

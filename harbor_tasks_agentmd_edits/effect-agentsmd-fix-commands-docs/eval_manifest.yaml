@@ -74,7 +74,42 @@ checks:
   type: pass_to_pass
   origin: static
   description: .gitignore includes .repos/ directory
-rubric: []
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI lint check passes (pnpm lint)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript type checking passes (pnpm check)
+- id: test_repo_circular
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo circular dependency check passes (pnpm circular)
+- id: test_repo_type_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo type tests pass (pnpm test-types --target 5.8)
+- id: test_repo_ai_chat_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: AI Chat package unit tests pass (pnpm vitest run packages/ai/ai/test/Chat.test.ts)
+- id: test_repo_ai_languagemodel_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: AI LanguageModel package unit tests pass (pnpm vitest run packages/ai/ai/test/LanguageModel.test.ts)
+rubric:
+- rule: Code must not import from barrel packages ('effect', '@effect/platform', '@effect/sql');
+    use specific module paths like 'effect/Effect' instead
+  source:
+    path: eslint.config.mjs
+    lines: 144-155
+    commit: 5487cfb65a69a308e7c0b29ae666c8a9ddcab159
+- rule: Agents must verify JSDoc examples compile by running `pnpm docgen`
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 5487cfb65a69a308e7c0b29ae666c8a9ddcab159
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -91,7 +126,7 @@ config_edits:
     access the repository here:
 
 
-    \`.repos/effect-v4\`'
+    `.repos/effect-v4`'
   gold_removed: '- Always run tests after making changes: `pnpm test <test_file.ts>`
 
     run the file with `node scratchpad/your-file.ts`.'

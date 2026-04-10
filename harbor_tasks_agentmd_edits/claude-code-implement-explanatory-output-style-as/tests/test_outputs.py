@@ -164,3 +164,48 @@ def test_readme_documents_usage():
     assert "# Explanatory" in content or "explanatory" in content.lower(), "Missing plugin name in README"
     assert "SessionStart" in content or "hook" in content.lower(), "Missing hook reference"
     assert "educational" in content.lower() or "insight" in content.lower(), "Missing educational content reference"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands that validate existing plugins
+# ---------------------------------------------------------------------------
+
+# Existing plugin paths for pass-to-pass testing
+EXISTING_PLUGIN_DIR = f"{REPO}/plugins/security-guidance"
+
+
+def test_repo_security_guidance_plugin_json_valid():
+    """Security-guidance plugin manifest JSON is syntactically valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{EXISTING_PLUGIN_DIR}/.claude-plugin/plugin.json'))"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"plugin.json is not valid JSON: {result.stderr}"
+
+
+def test_repo_security_guidance_hooks_json_valid():
+    """Security-guidance hooks configuration JSON is syntactically valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", f"import json; json.load(open('{EXISTING_PLUGIN_DIR}/hooks/hooks.json'))"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"hooks.json is not valid JSON: {result.stderr}"
+
+
+def test_repo_security_guidance_hook_script_valid_python():
+    """Security-guidance hook script has valid Python syntax (pass_to_pass)."""
+    script_path = f"{EXISTING_PLUGIN_DIR}/hooks/security_reminder_hook.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"security_reminder_hook.py has Python syntax errors: {result.stderr}"

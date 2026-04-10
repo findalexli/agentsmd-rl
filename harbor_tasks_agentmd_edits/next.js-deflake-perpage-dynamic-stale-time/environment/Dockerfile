@@ -18,12 +18,13 @@ RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspac
 
 WORKDIR /workspace/next.js
 
-# Pre-fetch some dependencies for faster agent builds (optional, helps with pnpm install later)
-# Note: We don't run full install here to keep image size reasonable
-# The test code itself doesn't need the full Next.js build
+# Install pnpm with the version required by the project
+RUN npm install -g pnpm@9.6.0
 
-# Install TypeScript globally for syntax checking
-RUN npm install -g typescript
+# Install dependencies needed for lint checks (frozen lockfile for consistency)
+# Using --filter=next to only install the next package and its dependencies
+# This keeps the image size reasonable while enabling lint commands
+RUN pnpm install --frozen-lockfile 2>&1 || pnpm install 2>&1
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

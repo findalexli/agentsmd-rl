@@ -180,3 +180,48 @@ def test_fetch_router_readme_still_has_content():
     assert "router.fetch" in content, "README must still document router.fetch"
     assert "## Features" in content, "README must still have Features section"
     assert "## Usage" in content, "README must still have Usage section"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI commands from the repo
+# ---------------------------------------------------------------------------
+
+def _setup_repo():
+    """Enable corepack and install dependencies."""
+    subprocess.run(["corepack", "enable"], check=True, cwd=REPO)
+    # Install dependencies if not already present
+    if not Path(f"{REPO}/node_modules/.modules.yaml").exists():
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            check=True, cwd=REPO, capture_output=True, timeout=300
+        )
+
+
+def test_repo_unit_tests():
+    """Repo's unit tests for fetch-router pass (pass_to_pass)."""
+    _setup_repo()
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/fetch-router", "test"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_lint():
+    """Repo's linter passes on fetch-router source (pass_to_pass)."""
+    _setup_repo()
+    r = subprocess.run(
+        ["pnpm", "lint", "--", "packages/fetch-router/src"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes for fetch-router (pass_to_pass)."""
+    _setup_repo()
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/fetch-router", "typecheck"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"

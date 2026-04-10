@@ -49,6 +49,55 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass — regression (repo_tests)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "typecheck"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_changes_validate():
+    """Change files validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "changes:validate"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "format:check"], capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_tsc():
+    """Scripts directory TypeScript compilation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"], capture_output=True, text=True, timeout=600, cwd=f"{REPO}/scripts",
+    )
+    assert r.returncode == 0, f"Scripts TypeScript check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -175,7 +224,7 @@ def test_contributing_md_references_release_pr():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — regression
+# Fail-to-pass (pr_diff) - cleanup
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass

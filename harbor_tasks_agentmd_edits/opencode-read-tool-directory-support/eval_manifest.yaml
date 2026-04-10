@@ -17,6 +17,14 @@ checks:
     path: .opencode/skill/bun-file-io/SKILL.md
     lines: '28'
     commit: e3471526f4c71b2c4ee00117e125e179da01e6e2
+- id: repo_read_tool_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for read tool module pass
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck on modified file passes
 - id: stat_based_existence
   type: fail_to_pass
   origin: pr_diff
@@ -42,21 +50,21 @@ checks:
   origin: pr_diff
   description: edit.txt references the new colon-based line number format
 rubric:
-- rule: Prefer promise .catch(...) over try/catch when possible.
+- rule: Document that Bun.file().exists() returns false for directories in SKILL.md
   source:
     path: .opencode/skill/bun-file-io/SKILL.md
-    lines: '39'
-    commit: e3471526f4c71b2c4ee00117e125e179da01e6e2
-- rule: Keep things in one function unless composable or reusable
+    reference: "NOTE: Bun.file(...).exists() will return false if the value is a directory."
+- rule: Update read.txt to describe directory reading capability
   source:
-    path: AGENTS.md
-    lines: '11'
-    commit: e3471526f4c71b2c4ee00117e125e179da01e6e2
+    path: packages/opencode/src/tool/read.txt
+    reference: "directory"
+- rule: Update edit.txt to reference the new colon-based line format
+  source:
+    path: packages/opencode/src/tool/edit.txt
+    reference: "colon"
 config_edits:
 - path: .opencode/skill/bun-file-io/SKILL.md
   tier: 1
-  gold_added: 'NOTE: Bun.file(...).exists() will return `false` if the value is a
-    directory.
-
-    Use Filesystem.exists(...) instead if path can be file or directory'
-  gold_removed: ''
+  gold_added: "NOTE: Bun.file(...).exists() will return false if the value is a directory.
+    Use Filesystem.exists(...) instead if path can be file or directory"
+  gold_removed: ""

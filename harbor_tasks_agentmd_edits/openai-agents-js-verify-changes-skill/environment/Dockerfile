@@ -17,5 +17,8 @@ RUN git clone --filter=blob:none https://github.com/openai/openai-agents-js.git 
 
 WORKDIR /workspace/openai-agents-js
 
+# Install dependencies so eslint and other tools are available
+RUN corepack enable && pnpm install
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

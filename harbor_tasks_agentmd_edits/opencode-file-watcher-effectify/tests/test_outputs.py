@@ -8,11 +8,40 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
 
 REPO = "/workspace/opencode"
+
+# Ensure bun is available for repo_tests
+_BUN_PATH = "/root/.bun/bin/bun"
+_BUN_INSTALLED = False
+
+def _ensure_bun():
+    """Install bun if not already available."""
+    global _BUN_INSTALLED
+    if _BUN_INSTALLED:
+        return _BUN_PATH
+    if Path(_BUN_PATH).exists():
+        _BUN_INSTALLED = True
+        return _BUN_PATH
+    # Install bun
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, timeout=120
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "unzip"],
+        capture_output=True, timeout=120
+    )
+    subprocess.run(
+        "curl -fsSL https://bun.sh/install | bash",
+        shell=True, capture_output=True, timeout=180
+    )
+    _BUN_INSTALLED = True
+    return _BUN_PATH
 
 WATCHER = Path(REPO) / "packages/opencode/src/file/watcher.ts"
 INSTANCES = Path(REPO) / "packages/opencode/src/effect/instances.ts"
@@ -332,3 +361,89 @@ def test_not_stub():
     assert len(lines) >= 80, f"Only {len(lines)} lines — file appears gutted"
     for req in ["FileWatcherService", "FileWatcher", "subscribe", "Bus.publish"]:
         assert req in content, f"Missing required identifier: {req}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """TypeScript typecheck passes for opencode package (pass_to_pass)."""
+    bun = _ensure_bun()
+    # Install dependencies first
+    r = subprocess.run(
+        [bun, "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+    # Run typecheck from packages/opencode
+    r = subprocess.run(
+        [bun, "run", "typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_tests():
+    """File module tests pass (pass_to_pass)."""
+    bun = _ensure_bun()
+    r = subprocess.run(
+        [bun, "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        [bun, "test", "test/file/"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"File tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pty_tests():
+    """PTY module tests pass (pass_to_pass)."""
+    bun = _ensure_bun()
+    r = subprocess.run(
+        [bun, "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        [bun, "test", "test/pty/"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"PTY tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bun_tests():
+    """Bun module tests pass (pass_to_pass)."""
+    bun = _ensure_bun()
+    r = subprocess.run(
+        [bun, "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        [bun, "test", "test/bun.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Bun tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_project_tests():
+    """Project module tests pass (pass_to_pass)."""
+    bun = _ensure_bun()
+    r = subprocess.run(
+        [bun, "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun install failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        [bun, "test", "test/project/project.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Project tests failed:\n{r.stderr[-1000:]}"

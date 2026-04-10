@@ -8,6 +8,8 @@ RUN apt-get update && \
         git curl ca-certificates tmux && \
     rm -rf /var/lib/apt/lists/*
 
+RUN pip install pytest
+
 # Clone repo at base commit (monorepo — use blob filter)
 RUN git clone --filter=blob:none https://github.com/dotnet/maui.git /workspace/maui && \
     cd /workspace/maui && \

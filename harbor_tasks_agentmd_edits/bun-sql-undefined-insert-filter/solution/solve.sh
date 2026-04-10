@@ -407,4 +407,8 @@ index d92db49229f..763b9d4fb28 100644
 
 PATCH
 
+# Format the modified files with prettier
+cd /workspace/bun && npx prettier --write src/js/internal/sql/mysql.ts src/js/internal/sql/postgres.ts src/js/internal/sql/shared.ts src/js/internal/sql/sqlite.ts 2>/dev/null || true
+
+
 echo "Patch applied successfully."

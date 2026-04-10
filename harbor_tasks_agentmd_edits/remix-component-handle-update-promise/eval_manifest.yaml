@@ -9,10 +9,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Component package TypeScript typecheck passes
-- id: test_repo_component_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Component package tests pass
 - id: test_repo_lint
   type: pass_to_pass
   origin: repo_tests
@@ -21,10 +17,19 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo format check passes
+- id: test_repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo change files validation passes
+- id: test_repo_component_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component package builds successfully
 - id: handle_update_returns_promise
   type: fail_to_pass
   origin: pr_diff
-  description: handle.update() returns Promise<AbortSignal> — TypeScript type check
+  description: "handle.update() returns Promise<AbortSignal> \u2014 TypeScript type\
+    \ check"
 - id: cascading_update_guard
   type: fail_to_pass
   origin: pr_diff
@@ -51,46 +56,3 @@ rubric:
     path: packages/component/AGENTS.md
     lines: 1-10
     commit: 649aecadeb54fc3027a2b6a85020dd31421b5327
-config_edits:
-- path: packages/component/AGENTS.md
-  tier: 1
-  gold_added: "### `handle.update()`\nSchedules a component update and returns a promise\
-    \ that resolves with an `AbortSignal` after\nthe update completes.\nWaiting for\
-    \ the update:\n        async click() {\n          await handle.update()\n    \
-    \      stopButton.focus()\n**Pattern: await `handle.update()` when showing loading\
-    \ state before async work:**\nWhen you need to show loading UI before async work\
-    \ starts, set loading state, call\n`await handle.update()`, and use the returned\
-    \ signal for async APIs.\nfunction GoodAsyncExample(handle: Handle) {\n  async\
-    \ function load() {\n    let signal = await handle.update()\n    let response\
-    \ = await fetch('/api/data', { signal })\n    if (signal.aborted) return\n  }\n\
-    \  return () => <button on={{ click: load }}>{loading ? 'Loading...' : 'Load data'}</button>"
-  gold_removed: "### `handle.update(task?)`\nSchedules a component update. Optionally\
-    \ accepts a task to run after the update completes.\nWith a task:\n        click()\
-    \ {\n          handle.update(() => {\n            // Task runs after update completes\n\
-    \            stopButton.focus()\n          })\n**Pattern: Use `handle.update(task)`\
-    \ when you need to show loading state before async work:**\nThe task's signal\
-    \ is aborted when the component re-renders. If you call `handle.update()` before\
-    \ your async work completes, the re-render will abort the signal you're using\
-    \ for the async operation. When you need to update state (like showing a loading\
-    \ indicator) before starting async work, move the async work into a new task via\
-    \ `handle.update(task)`:\n// Bad: Calling handle.update() before async work in\
-    \ the same task\nfunction BadAsyncExample(handle: Handle) {\n  handle.queueTask(async\
-    \ (signal) => {\n    handle.update() // This triggers a re-render, which aborts\
-    \ signal!\n\n    let response = await fetch('/api/data', { signal }) //"
-- path: packages/component/README.md
-  tier: 2
-  gold_added: "- **`handle.update()`** - Schedule an update and await completion to\
-    \ get an `AbortSignal`.\n### `handle.update()`\nSchedule an update and optionally\
-    \ await completion to coordinate post-update work.\nYou can await the update before\
-    \ doing DOM work:\n          async click() {\n            await handle.update()\n\
-    \            // Focus the enabled button after update completes\n            stopButton.focus()\n\
-    \          async click() {\n            await handle.update()\n            //\
-    \ Focus the enabled button after update completes\n            playButton.focus()"
-  gold_removed: "- **`handle.update(task?)`** - Schedule an update. Optionally provide\
-    \ a task to run after the update.\n### `handle.update(task?)`\nSchedule an update.\
-    \ Optionally provide a task to run after the update completes.\nYou can pass a\
-    \ task to run after the update:\n          click: () => {\n            handle.update(()\
-    \ => {\n              // Focus the enabled button after update completes\n   \
-    \           stopButton.focus()\n            })\n          click: () => {\n   \
-    \         handle.update(() => {\n              // Focus the enabled button after\
-    \ update completes\n              playButton.focus()\n            })"

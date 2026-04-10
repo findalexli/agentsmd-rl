@@ -210,3 +210,25 @@ console.log('PASS');
 """)
     assert r.returncode == 0, f"Sidebar validation failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+def test_repo_verify_links():
+    """Repo link verification passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/verify-links.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Link verification failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_lockfile_no_duplicates():
+    """Repo lockfile has no duplicate dependencies (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "scripts/verify-lockfile-duplicates.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lockfile verification failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

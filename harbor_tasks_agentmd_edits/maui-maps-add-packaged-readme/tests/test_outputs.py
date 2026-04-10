@@ -25,7 +25,7 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / structural checks
+# Gates (pass_to_pass, static) -- syntax / structural checks
 # ---------------------------------------------------------------------------
 
 
@@ -46,11 +46,12 @@ def test_csproj_existing_properties_intact():
 
 
 # ---------------------------------------------------------------------------
-# Repo CI Gates (pass_to_pass, repo_tests) — project structure validation
+# Repo CI Gates (pass_to_pass, static) -- project structure validation
+# These are static checks (file reading), not subprocess commands.
 # ---------------------------------------------------------------------------
 
 
-# [repo_tests] pass_to_pass — validate project references resolve
+# [static] pass_to_pass -- validate project references resolve
 def test_repo_csproj_project_references_valid():
     """All ProjectReference paths in csproj must resolve to existing files (pass_to_pass)."""
     import os
@@ -70,7 +71,7 @@ def test_repo_csproj_project_references_valid():
                 assert resolved.exists(), f"ProjectReference does not exist: {include_path} (resolved: {resolved})"
 
 
-# [repo_tests] pass_to_pass — validate project file structure matches SDK style
+# [static] pass_to_pass -- validate project file structure matches SDK style
 def test_repo_csproj_sdk_style_structure():
     """csproj must follow SDK-style format with proper TargetFrameworks (pass_to_pass)."""
     tree = ET.parse(str(CSPROJ))
@@ -88,7 +89,7 @@ def test_repo_csproj_sdk_style_structure():
     for prop_group in root.iter():
         if prop_group.tag.endswith("}PropertyGroup") or "PropertyGroup" in prop_group.tag:
             for child in prop_group:
-                tag_name = child.tag.split("}")[-1] if "}" in elem.tag else child.tag
+                tag_name = child.tag.split("}")[-1] if "}" in child.tag else child.tag
                 if tag_name == "TargetFrameworks":
                     found_tf = True
                 if tag_name == "AssemblyName":
@@ -101,7 +102,7 @@ def test_repo_csproj_sdk_style_structure():
     assert found_package, "csproj must have PackageId defined"
 
 
-# [repo_tests] pass_to_pass — validate no duplicate item includes
+# [static] pass_to_pass -- validate no duplicate item includes
 def test_repo_csproj_no_duplicate_includes():
     """csproj must not have duplicate Include entries for the same file (pass_to_pass)."""
     tree = ET.parse(str(CSPROJ))
@@ -117,7 +118,7 @@ def test_repo_csproj_no_duplicate_includes():
             includes[key] = True
 
 
-# [repo_tests] pass_to_pass — validate PublicAPI files exist for all target platforms
+# [static] pass_to_pass -- validate PublicAPI files exist for all target platforms
 def test_repo_public_api_files_complete():
     """PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt must exist for all target frameworks (pass_to_pass)."""
     public_api_dir = CSPROJ.parent / "PublicAPI"
@@ -142,7 +143,7 @@ def test_repo_public_api_files_complete():
         assert shipped_content.startswith("#nullable enable"), f"PublicAPI.Shipped.txt for {platform} missing #nullable enable header"
 
 
-# [repo_tests] pass_to_pass — validate csproj package metadata for NuGet compliance
+# [static] pass_to_pass -- validate csproj package metadata for NuGet compliance
 def test_repo_csproj_package_metadata():
     """csproj must have required NuGet package metadata (IsPackable, PackageId, PackageTags) (pass_to_pass)."""
     tree = ET.parse(str(CSPROJ))
@@ -156,7 +157,7 @@ def test_repo_csproj_package_metadata():
     for prop_group in root.iter():
         if prop_group.tag.endswith("}PropertyGroup") or "PropertyGroup" in prop_group.tag:
             for child in prop_group:
-                tag_name = child.tag.split("}")[-1] if "}" in elem.tag else child.tag
+                tag_name = child.tag.split("}")[-1] if "}" in child.tag else child.tag
                 if tag_name == "IsPackable":
                     found_is_packable = True
                     text = (child.text or "").strip()
@@ -179,7 +180,7 @@ def test_repo_csproj_package_metadata():
     assert found_description, "csproj must have Description defined"
 
 
-# [repo_tests] pass_to_pass — validate project file naming conventions
+# [static] pass_to_pass -- validate project file naming conventions
 def test_repo_csproj_file_naming():
     """csproj file name must match expected pattern Controls.Maps.csproj (pass_to_pass)."""
     assert CSPROJ.name == "Controls.Maps.csproj", f"csproj file name mismatch: expected Controls.Maps.csproj, got {CSPROJ.name}"
@@ -187,7 +188,37 @@ def test_repo_csproj_file_naming():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — csproj packaging tests (subprocess)
+# Repo CI Gates (pass_to_pass, repo_tests) -- git-based validation
+# These use subprocess.run() with actual git commands.
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass -- validate csproj file is tracked by git
+def test_repo_csproj_tracked_by_git():
+    """csproj file must be tracked by git (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-files", "src/Controls/Maps/src/Controls.Maps.csproj"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
+    assert r.stdout.strip(), "csproj file not tracked by git"
+
+
+# [repo_tests] pass_to_pass -- validate git status is clean on base commit
+def test_repo_git_status_clean():
+    """Repo must have clean git status at base commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    # Allow untracked files but no modified/staged changes at base commit
+    modified_or_staged = [line for line in r.stdout.splitlines() if line and not line.startswith("?")]
+    assert not modified_or_staged, f"Repo has unexpected modifications: {modified_or_staged}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) -- csproj packaging tests (subprocess)
 # ---------------------------------------------------------------------------
 
 
@@ -275,8 +306,10 @@ for elem in root.iter():
 assert none_include, 'No None item referencing README found in csproj'
 
 # Simulate $(MSBuildThisFileDirectory) resolution: strip the property, keep the relative path
-# $(MSBuildThisFileDirectory)..\\README.md -> ../README.md relative to csproj dir
+# $(MSBuildThisFileDirectory)..\\\\README.md -> ../README.md relative to csproj dir
 rel_path = none_include.replace('$(MSBuildThisFileDirectory)', '')
+# Convert Windows backslashes to forward slashes for cross-platform compatibility
+rel_path = rel_path.replace('\\\\', '/')
 resolved = (csproj_dir / rel_path).resolve()
 assert resolved.exists(), f'None Include path resolves to {resolved} but file does not exist'
 assert resolved.name == 'README.md', f'Expected README.md, got {resolved.name}'
@@ -287,7 +320,7 @@ print('PASS')
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — README content tests
+# Fail-to-pass (pr_diff) -- README content tests
 # ---------------------------------------------------------------------------
 
 
@@ -336,11 +369,11 @@ def test_readme_links_to_docs():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from copilot-instructions.md
+# Config-derived (agent_config) -- rules from copilot-instructions.md
 # ---------------------------------------------------------------------------
 
 
-# [agent_config] fail_to_pass — .github/copilot-instructions.md:162 @ base
+# [agent_config] fail_to_pass -- .github/copilot-instructions.md:162 @ base
 def test_readme_follows_doc_patterns():
     """README follows existing code documentation patterns (section structure, examples).
     Per .github/copilot-instructions.md: 'Follow existing code documentation patterns'

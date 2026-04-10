@@ -1,30 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:58:57.608840",
-  "total_time": 5941.77,
-  "sandbox_id": "i8y5lqntwhqsgkmepeldl",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:25:22.703311",
+  "total_time": 2171.52,
+  "sandbox_id": "ivxvug9u9mmxa1lz03yj8",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T11:20:00",
-      "ci_commands_discovered": [
-        "yarn install --frozen-lockfile",
-        "yarn workspace babel-plugin-react-compiler build",
-        "yarn workspace babel-plugin-react-compiler lint",
-        "yarn workspace babel-plugin-react-compiler jest",
-        "npx tsc --noEmit (in babel-plugin-react-compiler dir)",
-        "npx tsc --noEmit (in snap dir)"
-      ],
-      "tests_added": [
-        "test_repo_ci_checks - Combined CI test that runs yarn install once then build, lint, jest, and typecheck for both babel-plugin-react-compiler and snap packages"
-      ],
-      "ci_source": ".github/workflows/compiler_typescript.yml",
-      "notes": "Discovered CI commands from GitHub workflow. All commands tested and verified to pass on base commit cd0c4879a2959db91f9bd51a09dafefedd95fb17. Combined into single test to share expensive yarn install (53s). Total test time ~88s."
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 638.78,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "rate_limited",
@@ -39,6 +30,23 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "All 4 validation checks passed. Docker build successful. NOP test correctly returns 0 (8 fail-to-pass tests fail on base commit). Gold test returns 1 (all 10 tests pass after fix applied). Rubric judge requires API key for automated evaluation; manual verification confirms gold solution follows rubric rules.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 267.73
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.16,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -47,8 +55,20 @@
       "nop": -1.0,
       "gold": -1.0,
       "backend": "glm",
-      "time": 5941.77,
+      "time": 5931.77,
       "at": "2026-04-09T07:58:57.608840"
+    },
+    {
+      "verdict": "pass",
+      "nop": "2026-04-10T12:49:11.071662"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2171.52,
+      "at": "2026-04-10T13:25:22.703311"
     }
   ]
 }

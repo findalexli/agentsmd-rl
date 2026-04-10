@@ -14,6 +14,36 @@ REPO = "/workspace/opencode"
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — repo CI tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes via bun run typecheck (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_storage_tests():
+    """Storage-related unit tests pass (json-migration.test.ts) (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--timeout", "30000", "test/storage/json-migration.test.ts"],
+        cwd=f"{REPO}/packages/opencode",
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Storage tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
@@ -21,13 +51,17 @@ REPO = "/workspace/opencode"
 def test_typescript_syntax():
     """Modified TypeScript files must parse without errors."""
     db_file = Path(REPO) / "packages/opencode/src/storage/db.ts"
+    
+    # Use bun's transpiler to check for syntax errors (faster and more reliable than tsc for single files)
+    # Bun can parse TypeScript syntax without full type checking
     result = subprocess.run(
-        ["bun", "tsc", "--noEmit", "--skipLibCheck", str(db_file)],
-        cwd=REPO,
+        ["bun", "run", "typecheck"],
+        cwd=f"{REPO}/packages/opencode",
         capture_output=True,
-        timeout=60,
+        text=True,
+        timeout=120,
     )
-    assert result.returncode == 0, f"TypeScript syntax error:\n{result.stderr.decode()}"
+    assert result.returncode == 0, f"TypeScript syntax/type error:\n{result.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

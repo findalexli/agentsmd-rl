@@ -165,4 +165,14 @@ This SessionStart hook pattern is roughly equivalent to CLAUDE.md, but it is mor
 Learning by doing is more effective than passive observation. This plugin transforms your interaction with Claude from "watch and learn" to "build and understand," ensuring you develop practical skills through hands-on coding of meaningful logic.
 EOF
 
+# Create or update .gitignore to ignore .DS_Store
+if [ -f ".gitignore" ]; then
+    # Append if not already present
+    if ! grep -q "\.DS_Store" .gitignore; then
+        echo ".DS_Store" >> .gitignore
+    fi
+else
+    echo ".DS_Store" > .gitignore
+fi
+
 echo "Patch applied successfully."

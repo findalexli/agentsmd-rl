@@ -9,6 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files have balanced braces
+- id: test_repo_oxlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI oxlint passes on modified SQL files
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI prettier check passes on modified SQL files
 - id: undefined_filtering_behavior
   type: fail_to_pass
   origin: pr_diff
@@ -43,7 +51,7 @@ config_edits:
     \ // Can specify any type here for resolution value\n### Nested/complex object\
     \ equality\n\nPrefer usage of `.toEqual` rather than many `.toBe` assertions for\
     \ nested or complex objects.\n\n<example>\n\nBAD (try to avoid doing this):\n\n\
-    ```ts\nexpect(result).toHaveLength(3);\nexpect(result[0].optional).toBe(null);\n\
+    \ ```ts\nexpect(result).toHaveLength(3);\nexpect(result[0].optional).toBe(null);\n\
     expect(result[1].optional).toBe(\"middle-value\"); // CRITICAL: middle item's\
     \ value must be preserved\nexpect(result[2].optional).toBe(null);\n```\n\n**GOOD\
     \ (always prefer this):**\n\n```ts\nexpect(result).toEqual([\n  { optional: null\

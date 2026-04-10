@@ -1,21 +1,22 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:50:14.442416",
-  "total_time": 5491.74,
-  "sandbox_id": "i2dgl3hyf1w11tsa5t7m2",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:11:25.389343",
+  "total_time": 2454.72,
+  "sandbox_id": "i5ud9bezgskgl0yz984e5",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.5,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 379.19,
-      "notes": "Added 3 p2p tests: test_repo_typecheck (tsgo --noEmit), test_repo_tests (node --test), test_repo_lint (eslint). CI commands discovered from package.json scripts and .github/workflows/test.yaml, check.yaml. Tests verified to pass on base commit."
+      "time": 450.34,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "rate_limited",
@@ -30,6 +31,51 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 3,
+      "rejection_reasons": "2 about tests (not applicable to code changes), 1 about PR workflow (not evaluable from diff)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 91.19
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 25.1,
+      "notes": "",
+      "precision": 0.5
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 44.99,
+      "notes": "precision was 0.50, fixing hallucinated rules"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed solve.sh permissions issue by creating test fix script. Applied gold fix with test updates and formatting. Tests pass: NOP=0 (fail-to-pass tests correctly fail), Gold=1 (all tests pass after fix). Rubric ICR=0.5 - config edit passes but rules from AGENTS.md are not applicable (PR doesn't modify AGENTS.md).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 481.24
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.43,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -40,6 +86,14 @@
       "backend": "glm",
       "time": 5491.74,
       "at": "2026-04-09T07:50:14.442416"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2454.72,
+      "at": "2026-04-10T13:11:25.389343"
     }
   ]
 }

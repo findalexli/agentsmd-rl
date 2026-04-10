@@ -35,30 +35,38 @@ checks:
   origin: pr_diff
   description: Makefile includes rabbit_exchange_type_modulus_hash in parallel CT
     test sets
+# pass_to_pass checks (repo_tests) — CI validation via subprocess
+- id: test_repo_parallel_ct_sanity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Parallel CT test set 5 is configured in Makefile
+- id: test_repo_no_old_sharding_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git tracks the old sharding module state (will not exist after fix)
+- id: test_repo_rabbit_exchange_types_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core exchange type modules exist in repository
+- id: test_repo_makefile_has_parallel_ct_sets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Makefile has parallel CT test set configuration
+# pass_to_pass checks (static) — structural validation
 - id: erlang_module_well_formed
   type: pass_to_pass
   origin: static
   description: Core exchange module has valid Erlang module structure
 rubric:
-- rule: Only add very important comments, both in tests and in the implementation
-  source:
-    path: CLAUDE.md
-    lines: '108'
-    commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
 - rule: Config update is consistent with the style of the existing README documentation
   source:
     path: deps/rabbitmq_sharding/README.md
     lines: 1-10
     commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
-- rule: Comments placed above the line they refer to, not inline
-  source:
-    path: CLAUDE.md
-    lines: '111'
-    commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
 config_edits:
 - path: deps/rabbitmq_sharding/README.md
   tier: 2
-  gold_added: 'RabbitMQ provides a built-in exchange type, `"x-modulus-hash"`, that
+  gold_added: 'RabbitMQ provides a built-in exchange type, "x-modulus-hash", that
     will use
 
     across a number of regular queues (shards). This exchange type is available
@@ -86,6 +94,6 @@ config_edits:
     are routed to _at most_ one queue (a subset).
 
 
-    The plugin provides a new exchange type, `"x-modulus-hash"`, that will use
+    The plugin provides a new exchange type, "x-modulus-hash", that will use
 
     across a number of regular queues (shards).'

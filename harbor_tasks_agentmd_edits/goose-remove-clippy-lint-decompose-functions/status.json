@@ -1,21 +1,22 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:35:51.526765",
-  "total_time": 5703.41,
-  "sandbox_id": "iezos8uhvx632b2lnwemp",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:18:32.214283",
+  "total_time": 3875.4,
+  "sandbox_id": "izzk8vyg5mmlq7jtlldbo",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 5.55,
-      "notes": ""
+      "notes": "Added 3 new repo_tests p2p gates: test_repo_cargo_clippy_goose, test_repo_cargo_clippy_goose_cli, test_repo_cargo_check_workspace_lib"
     },
     "improve": {
       "status": "skipped",
@@ -25,11 +26,51 @@
       "notes": "tests look good"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 341.18,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2288.29,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        ".github/copilot-instructions.md",
+        "documentation/AGENTS.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 3,
+      "rejection_reasons": "3 rules rejected: PR workflow/process rules not evaluable from diff (commit message, branch naming), 1 about documentation naming not applicable to code changes",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 197.06
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 22.3,
+      "notes": "",
+      "precision": 1.0
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build succeeded. NOP test returned reward=0 (expected - base code correctly fails). Gold test returned reward=1 (all 12 tests pass after solve.sh applied). Rubric judge requires LLM API keys (GEMINI_API_KEY or ANTHROPIC_API_KEY) which are not available in this environment.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 811.31
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 5.12,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -40,6 +81,14 @@
       "backend": "fireworks",
       "time": 5703.41,
       "at": "2026-04-09T07:35:51.526765"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3875.4,
+      "at": "2026-04-10T12:18:32.214283"
     }
   ]
 }

@@ -19,9 +19,20 @@ RUN git init /workspace/expo && \
 
 WORKDIR /workspace/expo
 
-# Install @babel/core in babel-preset-expo dir for behavioral testing
-RUN cd packages/babel-preset-expo && \
-    npm install --no-save @babel/core@"^7.26.0" 2>&1 | tail -3
+# Install @babel/core and other deps in a temp location outside workspace,
+# then copy to the babel-preset-expo directory for testing
+RUN mkdir -p /tmp/babel-install && cd /tmp/babel-install && \
+    echo '{"name": "temp", "version": "1.0.0"}' > package.json && \
+    npm install @babel/core@"^7.26.0" @babel/generator @babel/helper-module-imports resolve-from \
+        @babel/plugin-proposal-decorators @babel/plugin-proposal-export-default-from \
+        @babel/plugin-syntax-export-default-from @babel/plugin-transform-class-static-block \
+        @babel/plugin-transform-export-namespace-from @babel/plugin-transform-flow-strip-types \
+        @babel/plugin-transform-modules-commonjs @babel/plugin-transform-object-rest-spread \
+        @babel/plugin-transform-parameters @babel/plugin-transform-private-methods \
+        @babel/plugin-transform-private-property-in-object @babel/plugin-transform-runtime \
+        @babel/preset-react @babel/preset-typescript debug 2>&1 | tail -3 && \
+    mkdir -p /workspace/expo/packages/babel-preset-expo/node_modules && \
+    cp -r node_modules/* /workspace/expo/packages/babel-preset-expo/node_modules/
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

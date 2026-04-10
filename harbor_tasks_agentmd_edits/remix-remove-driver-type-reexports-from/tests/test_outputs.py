@@ -268,3 +268,70 @@ def test_adapter_classes_still_exported():
     sqlite_src = Path(f"{REPO}/packages/data-table-sqlite/src/index.ts").read_text()
     assert "createSqliteDatabaseAdapter" in sqlite_src
     assert "SqliteDatabaseAdapter" in sqlite_src
+
+
+# ---------------------------------------------------------------------------
+# pass_to_pass (repo_tests) — repo CI checks
+# ---------------------------------------------------------------------------
+
+def test_repo_data_table_mysql_typecheck():
+    """MySQL adapter typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @remix-run/data-table-mysql run typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MySQL typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_mysql_test():
+    """MySQL adapter unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @remix-run/data-table-mysql run test"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MySQL tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_postgres_typecheck():
+    """Postgres adapter typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @remix-run/data-table-postgres run typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Postgres typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_postgres_test():
+    """Postgres adapter unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @remix-run/data-table-postgres run test"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Postgres tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_sqlite_typecheck():
+    """SQLite adapter typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @remix-run/data-table-sqlite run typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SQLite typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_sqlite_test():
+    """SQLite adapter unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @remix-run/data-table-sqlite run test"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SQLite tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint():
+    """Repo lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm run lint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"

@@ -67,13 +67,41 @@ checks:
     description: "AGENTS.md documents Effect.callback pattern"
 
   # -------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests / static) — regression + anti-stub
+  # Pass-to-pass (repo_tests) — regression tests using actual CI commands
   # -------------------------------------------------------------------------
-  - id: existing_tests_pass
+  - id: repo_typecheck
     type: pass_to_pass
     origin: repo_tests
-    description: "Existing permission tests still pass after changes"
+    description: "TypeScript type checking passes (bun run typecheck)"
 
+  - id: repo_file_ignore
+    type: pass_to_pass
+    origin: repo_tests
+    description: "File ignore tests pass - file module related"
+
+  - id: repo_project_state
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Project state tests pass - Instance.state lifecycle related"
+
+  - id: repo_permission_service
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Permission service tests pass - Effect service pattern related"
+
+  - id: repo_effect_zod
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Effect-zod integration tests pass - Effect patterns related"
+
+  - id: repo_util_timeout
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Timeout util tests pass - async utilities related"
+
+  # -------------------------------------------------------------------------
+  # Pass-to-pass (static) — anti-stub check
+  # -------------------------------------------------------------------------
   - id: not_stub
     type: pass_to_pass
     origin: static
@@ -101,21 +129,24 @@ checks:
       commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
 
 rubric:
-  # Soft rules for LLM judge
-  - rule: "FileWatcherService follows the same patterns as QuestionService, PermissionService, and ProviderAuthService"
+  # Simplified rules with reference content for LLM judge
+  - rule: "FileWatcherService follows the same patterns as QuestionService, PermissionService, and ProviderAuthService - extends ServiceMap.Service, has static readonly layer using Layer.effect, uses Effect.gen"
     source:
       path: "packages/opencode/src/effect/instances.ts"
       lines: "1-30"
       commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+    reference: "FileWatcherService extends ServiceMap.Service<FileWatcherService, FileWatcherService.Service>() with static readonly layer = Layer.effect(FileWatcherService, Effect.gen(function* () { ... }))"
 
-  - rule: "Instance.bind documentation explains both when to use it (native addons) and when not needed (setTimeout, EventEmitter, etc.)"
+  - rule: "AGENTS.md documents Instance-scoped Effect services pattern with 4 steps: 1) Define ServiceMap.Service with static layer, 2) Add to InstanceServices union, 3) Use InstanceContext inside layer, 4) Call via runPromiseInstance"
     source:
       path: "packages/opencode/AGENTS.md"
       lines: "46-77"
       commit: "9e740d9947e6a4c61680c8dd00cb1fd11adf12af"
+    reference: "Instance-scoped Effect services section with LayerMap, FileWatcherService, QuestionService, PermissionService, ProviderAuthService examples"
 
-  - rule: "Code is consistent with existing Effect patterns in the codebase"
+  - rule: "AGENTS.md documents Instance.bind with when to use it (native C/C++ addons like @parcel/watcher, node-pty) and when not needed (setTimeout, Promise.then, EventEmitter.on, Effect fibers)"
     source:
       path: "packages/opencode/AGENTS.md"
       lines: "1-50"
       commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
+    reference: "Instance.bind captures ALS context for native callbacks. Use it for native C/C++ addons. Don't need it for setTimeout, Promise.then, EventEmitter.on, or Effect fibers."

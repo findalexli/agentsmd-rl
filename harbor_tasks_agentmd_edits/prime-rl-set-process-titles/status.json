@@ -3,19 +3,53 @@
   "verdict": "fail",
   "nop_reward": -1.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:29:57.315464",
-  "total_time": 5575.74,
-  "sandbox_id": "iedkq3zax47j4a26yyvrs",
+  "validated_at": "2026-04-10T12:44:01.497389",
+  "total_time": 2003.31,
+  "sandbox_id": "it4jkhac0yeuzj6lxipoa",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 8.79,
+      "notes": "Added 2 pass_to_pass repo_tests: test_repo_ruff_check (ruff check --config=pyproject.toml) and test_repo_ruff_format (ruff format --check). These run the repo's actual CI style checks from .github/workflows/style.yaml on the 8 modified Python files. Updated Dockerfile to include ruff>=0.12.1. All 4 p2p tests pass. 6 fail_to_pass tests fail as expected (they test the PR fix)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 443.26,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 62.68,
+      "notes": ""
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 27.1,
+      "notes": "",
+      "precision": 1.0
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 245.18
     }
   },
   "history": [
@@ -26,6 +60,14 @@
       "backend": "fireworks",
       "time": 5575.74,
       "at": "2026-04-09T07:29:57.315464"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 2003.31,
+      "at": "2026-04-10T12:44:01.497389"
     }
   ]
 }

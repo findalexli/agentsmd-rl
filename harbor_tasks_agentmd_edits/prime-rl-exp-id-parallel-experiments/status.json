@@ -1,32 +1,29 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:48:14.611415",
-  "total_time": 5991.92,
-  "sandbox_id": "ifho1dalx032txx2skibf",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:41:57.095084",
+  "total_time": 1941.36,
+  "sandbox_id": "ivdy0c6iwvfa1vsu5g7se",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "ci_commands_found": [
-        "ruff check (from .github/workflows/style.yaml)",
-        "pytest tests -m 'not gpu' (from .github/workflows/cpu_tests.yaml)"
-      ],
-      "tests_added": [
-        "test_syntax_check (pass_to_pass) - verifies modified Python files parse",
-        "test_ruff_lint (pass_to_pass) - runs repo's ruff lint on modified files"
-      ],
-      "notes": "Added lightweight p2p tests that work without full dependency install. Full pytest suite requires vllm/torch which exceeds disk space during Docker build."
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 568.39,
+      "notes": ""
     },
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 398.64,
-      "notes": ""
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "Enrichment completed: Added 2 new repo_tests p2p tests (bash_syntax, pyproject_toml_valid)"
     },
     "improve": {
       "status": "skipped",
@@ -34,6 +31,42 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [],
+      "rules_added": 0,
+      "rules_rejected": 0,
+      "rejection_reasons": "No agent config files (CLAUDE.md, AGENTS.md, SKILL.md, .cursorrules, etc.) found in repo",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 51.81
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.21,
+      "notes": "",
+      "precision": 1.0
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP test reward=0 (11 fail-to-pass tests correctly fail on base code), Gold test reward=1 (15 tests pass after solve.sh applied), Rubric judge=1.0 (empty rubric)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 79.69
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -44,6 +77,14 @@
       "backend": "glm",
       "time": 5991.92,
       "at": "2026-04-09T07:48:14.611415"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1941.36,
+      "at": "2026-04-10T12:41:57.095084"
     }
   ]
 }

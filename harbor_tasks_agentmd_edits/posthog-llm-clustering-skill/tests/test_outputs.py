@@ -303,6 +303,61 @@ def test_skill_md_consistent_style():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+def test_repo_python_syntax():
+    """Repo Python files compile without syntax errors (pass_to_pass)."""
+    files_to_check = [
+        f"{REPO}/products/llm_analytics/__init__.py",
+        f"{REPO}/products/llm_analytics/backend/__init__.py",
+    ]
+    for filepath in files_to_check:
+        if Path(filepath).exists():
+            r = subprocess.run(
+                [sys.executable, "-m", "py_compile", filepath],
+                capture_output=True, text=True, timeout=30,
+            )
+            assert r.returncode == 0, f"Syntax error in {filepath}: {r.stderr}"
+
+
+def test_repo_yaml_parses():
+    """tools.yaml parses correctly via subprocess + pyyaml (pass_to_pass)."""
+    # Install pyyaml and test YAML parsing in one subprocess
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import subprocess
+import sys
+# First install pyyaml
+result = subprocess.run([sys.executable, "-m", "pip", "install", "pyyaml", "--quiet", "--break-system-packages"], capture_output=True)
+# Then parse YAML
+import yaml
+with open("{REPO}/products/llm_analytics/mcp/tools.yaml") as f:
+    data = yaml.safe_load(f)
+assert "tools" in data, "Missing tools key"
+print("YAML valid")
+"""],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"YAML parsing failed: {r.stderr}"
+
+
+def test_repo_clustering_tests_syntax():
+    """Clustering test files have valid Python syntax (pass_to_pass)."""
+    test_files = [
+        f"{REPO}/products/llm_analytics/backend/api/test/test_clustering_job.py",
+        f"{REPO}/products/llm_analytics/backend/api/test/test_clustering_config.py",
+    ]
+    for filepath in test_files:
+        if Path(filepath).exists():
+            r = subprocess.run(
+                [sys.executable, "-m", "py_compile", filepath],
+                capture_output=True, text=True, timeout=30,
+            )
+            assert r.returncode == 0, f"Syntax error in {filepath}: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Imports (for pytest)
 # ---------------------------------------------------------------------------
 

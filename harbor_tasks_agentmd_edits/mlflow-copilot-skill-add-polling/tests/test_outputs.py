@@ -17,6 +17,84 @@ REPO = "/workspace/mlflow"
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_bash_syntax_poll():
+    """poll.sh passes bash syntax check (pass_to_pass)."""
+    poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
+    r = subprocess.run(
+        ["bash", "-n", str(poll_sh)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"bash -n failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_valid_skill():
+    """SKILL.md frontmatter is valid YAML (pass_to_pass)."""
+    skill_md = Path(REPO) / ".claude" / "skills" / "copilot" / "SKILL.md"
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import yaml; f=open('{skill_md}'); c=f.read(); "
+         f"y=c.split('---')[1]; yaml.safe_load(y); print('YAML valid')"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"YAML validation failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_skill_has_name():
+    """SKILL.md frontmatter has required 'name' field (pass_to_pass)."""
+    skill_md = Path(REPO) / ".claude" / "skills" / "copilot" / "SKILL.md"
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import yaml; f=open('{skill_md}'); c=f.read(); "
+         f"y=c.split('---')[1]; d=yaml.safe_load(y); "
+         f"assert 'name' in d, 'Missing name'; print('Has name')"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"name check failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_skill_has_allowed_tools():
+    """SKILL.md frontmatter has required 'allowed-tools' field (pass_to_pass)."""
+    skill_md = Path(REPO) / ".claude" / "skills" / "copilot" / "SKILL.md"
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import yaml; f=open('{skill_md}'); c=f.read(); "
+         f"y=c.split('---')[1]; d=yaml.safe_load(y); "
+         f"assert 'allowed-tools' in d, 'Missing allowed-tools'; print('Has allowed-tools')"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"allowed-tools check failed: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_poll_is_executable():
+    """poll.sh has executable permissions (pass_to_pass)."""
+    poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
+    r = subprocess.run(
+        ["test", "-x", str(poll_sh)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, "poll.sh is not executable"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_poll_fails_without_args():
+    """poll.sh exits non-zero when called without arguments (pass_to_pass)."""
+    poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
+    r = subprocess.run(
+        ["bash", str(poll_sh)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode != 0, "poll.sh should fail without arguments"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / YAML validity
 # ---------------------------------------------------------------------------
 

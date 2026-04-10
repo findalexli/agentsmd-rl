@@ -242,32 +242,89 @@ def test_repo_ruff_format():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_syntax_pyproject():
-    """pyproject.toml is valid TOML (pass_to_pass)."""
-    import tomllib
-
-    pyproject_path = Path(f"{REPO}/pyproject.toml")
-    content = pyproject_path.read_bytes()
-    try:
-        tomllib.loads(content.decode("utf-8"))
-    except Exception as e:
-        raise AssertionError(f"pyproject.toml is not valid TOML: {e}")
+def test_repo_pyproject_toml_syntax():
+    """Repo's pyproject.toml has valid TOML syntax (pass_to_pass)."""
+    r = _run_in_repo(
+        ["python3", "-c", "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"],
+        timeout=30,
+    )
+    assert r.returncode == 0, f"pyproject.toml has invalid TOML syntax:\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_configs_syntax():
-    """All config files in configs/ directory have valid TOML syntax (pass_to_pass)."""
-    import tomllib
+def test_repo_configs_toml_syntax():
+    """All config TOML files in configs/ have valid syntax (pass_to_pass)."""
+    script = '''
+import tomllib
+from pathlib import Path
+import sys
 
-    configs_dir = Path(f"{REPO}/configs")
-    invalid_configs = []
+configs_dir = Path("configs")
+invalid = []
 
-    for config_file in configs_dir.rglob("*.toml"):
-        try:
-            content = config_file.read_bytes()
-            tomllib.loads(content.decode("utf-8"))
-        except Exception as e:
-            invalid_configs.append(f"{config_file}: {e}")
+for config_file in configs_dir.rglob("*.toml"):
+    try:
+        tomllib.load(open(config_file, "rb"))
+    except Exception as e:
+        invalid.append(f"{config_file}: {e}")
 
-    if invalid_configs:
-        raise AssertionError(f"Invalid config files found:\n" + "\n".join(invalid_configs))
+if invalid:
+    print("Invalid config files:")
+    for i in invalid:
+        print(i)
+    sys.exit(1)
+else:
+    print("All config files have valid TOML syntax")
+'''
+    r = _run_in_repo(
+        ["python3", "-c", script],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Config TOML syntax check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_entrypoint_parse():
+    """Inference entrypoint (server.py) parses as valid Python (pass_to_pass)."""
+    r = _run_in_repo(
+        ["python3", "-c", "import ast; ast.parse(open('src/prime_rl/inference/server.py').read())"],
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Entrypoint file has Python syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_inference_config_parse():
+    """Inference config file parses as valid Python (pass_to_pass)."""
+    r = _run_in_repo(
+        ["python3", "-c", "import ast; ast.parse(open('src/prime_rl/configs/inference.py').read())"],
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Inference config file has Python syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_entrypoint_valid():
+    """pyproject.toml has valid entrypoint reference format (pass_to_pass)."""
+    script = '''
+import tomllib
+import re
+
+with open("pyproject.toml", "rb") as f:
+    config = tomllib.load(f)
+
+scripts = config.get("project", {}).get("scripts", {})
+entry_pattern = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*\\.[a-zA-Z_][a-zA-Z0-9_]*:[a-zA-Z_][a-zA-Z0-9_]*$")
+
+for name, ref in scripts.items():
+    if not entry_pattern.match(ref):
+        print(f"Invalid entrypoint format: {name} = {ref}")
+        exit(1)
+
+print("All entrypoint references have valid format")
+'''
+    r = _run_in_repo(
+        ["python3", "-c", script],
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Entrypoint format check failed:\n{r.stdout}\n{r.stderr}"

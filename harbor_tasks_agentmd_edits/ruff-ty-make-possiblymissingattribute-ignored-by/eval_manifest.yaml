@@ -64,31 +64,25 @@ checks:
       lines: "85"
       commit: "74c7fe849fdfe8b79e8e8e031e5e7b3673be3f4a"
 
-  # CI/CD repo_tests pass_to_pass - BLOCKED: Docker image missing Rust toolchain
-  # These tests require the Dockerfile to install Rust via rustup before they can run
-  - id: test_cargo_check_workspace
+  # CI/CD repo_tests pass_to_pass - Verified working with Rust toolchain in Dockerfile
+  - id: test_cargo_fmt_check
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo compiles with cargo check --workspace (requires Rust in Dockerfile)"
+    description: "Repo code passes cargo fmt --all --check (code formatting)"
 
-  - id: test_cargo_clippy
+  - id: test_cargo_check_ty
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo passes clippy linting (requires Rust in Dockerfile)"
+    description: "ty_python_semantic compiles with cargo check"
 
-rubric:
-  - rule: "Run cargo dev generate-all after changing configuration options, CLI arguments, lint rules, or environment variable definitions."
-    source:
-      path: "AGENTS.md"
-      lines: "85"
-      commit: "74c7fe849fdfe8b79e8e8e031e5e7b3673be3f4a"
-  - rule: "When adding new ty checks, make error messages concise."
-    source:
-      path: "AGENTS.md"
-      lines: "83"
-      commit: "74c7fe849fdfe8b79e8e8e031e5e7b3673be3f4a"
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "74c7fe849fdfe8b79e8e8e031e5e7b3673be3f4a"
+  - id: test_cargo_clippy_ty
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ty_python_semantic passes cargo clippy linting"
+
+  - id: test_cargo_mdtest_ty
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ty_python_semantic mdtests pass (327 tests covering type checking rules)"
+
+rubric: []

@@ -44,47 +44,32 @@ checks:
   type: pass_to_pass
   origin: static
   description: CRITICAL never-approve rule in SKILL.md remains intact
-rubric: []
+- id: test_repo_xml_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: XAML files in the repo must be valid XML
+- id: test_repo_json_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: JSON config files must be valid
+- id: test_repo_alertmanager_cs_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: AlertManager.iOS.cs must have valid C# structure
+rubric:
+- rule: AlertManager.iOS.cs GetTopUIViewController must check IsBeingDismissed in
+    the while loop condition to fix the modal dismissal alert display issue
+  source:
+    path: src/Controls/src/Core/Platform/AlertManager/AlertManager.iOS.cs
+    lines: 201-215
+    commit: 39325cec7d8a6de66e4608471b7843c7dfe3b4e1
+  reference: "while (topUIViewController?.PresentedViewController is not null &&\n                       !topUIViewController.PresentedViewController.IsBeingDismissed)"
 config_edits:
-- path: .github/copilot-instructions.md
+- path: src/Controls/src/Core/Platform/AlertManager/AlertManager.iOS.cs
   tier: 1
-  gold_added: ''
-  gold_removed: '### Opening PRs
-
-
-    All PRs are required to have this at the top of the description:
-
-
-    ```
-
-    <!-- Please let the below note in for people that find this PR -->
-
-    > [!NOTE]
-
-    > Are you waiting for the changes in this PR to be merged?
-
-    > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
-    from this PR and let us know in a comment if this change resolves your issue.
-    Thank you!
-
-    ```
-
-
-    Always put that at the top, without the block quotes. Without it, users will NOT
-    be able to try the PR and your work will have been in vain!'
-- path: .github/skills/pr-finalize/SKILL.md
-  tier: 1
-  gold_added: '1. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md`
-    ("Description of Change" and "Issues Fixed"). The skill adds additional structured
-    fields (Root cause, Fix, Key insight, etc.) as recommended enhancements for better
-    agent context.
-
-    2. Match the actual implementation'
-  gold_removed: '1. Start with the required NOTE block (so users can test PR artifacts)
-
-    2. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md` ("Description
-    of Change" and "Issues Fixed"). The skill adds additional structured fields (Root
-    cause, Fix, Key insight, etc.) as recommended enhancements for better agent context.
+  gold_added: 'while (topUIViewController?.PresentedViewController is not null &&
+                       !topUIViewController.PresentedViewController.IsBeingDismissed)'
+  gold_removed: 'while (topUIViewController?.PresentedViewController is not null)'
 
     3. Match the actual implementation
 
@@ -107,3 +92,4 @@ config_edits:
 
     > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
     from this PR and let us know i'
+

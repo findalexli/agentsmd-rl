@@ -1,137 +1,73 @@
-version: '2.0'
+version: "2.0"
 source:
   repo: PostHog/posthog
   pr: 53163
   base_commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
   merge_commit: 3cce0ef6d910d304d205b9b4654952b3fdc0678f
 checks:
-- id: syntax_check
-  type: pass_to_pass
-  origin: static
-  description: Modified Python file parses without errors
-- id: test_repo_ruff_check
-  type: pass_to_pass
-  origin: repo_tests
-  description: Ruff lint check passes on products/tasks/backend/models.py
-- id: test_repo_python_syntax
-  type: pass_to_pass
-  origin: repo_tests
-  description: All Python files in products/tasks/backend parse without syntax errors
-- id: test_repo_ast_valid
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified Python file has valid AST structure
-- id: test_repo_no_obvious_errors
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified file doesn't contain obvious error patterns (FIXME, NotImplementedError,
-    etc.)
-- id: create_and_run_accepts_sandbox_env_id
-  type: fail_to_pass
-  origin: pr_diff
-  description: create_and_run accepts sandbox_environment_id keyword argument defaulting
-    to None
-- id: invalid_sandbox_env_id_raises_valueerror
-  type: fail_to_pass
-  origin: pr_diff
-  description: create_and_run validates sandbox_environment_id via SandboxEnvironment.objects.filter
-    and raises ValueError if invalid
-- id: sandbox_env_id_stored_in_extra_state
-  type: fail_to_pass
-  origin: pr_diff
-  description: Valid sandbox_environment_id is stored as string in extra_state dict
-    for downstream consumption
-- id: team_filter_in_sandbox_lookup
-  type: fail_to_pass
-  origin: agent_config
-  description: 'SandboxEnvironment lookup filters by team per AGENTS.md rule: always
-    filter querysets by team_id'
-  source:
-    path: AGENTS.md
-    lines: '87'
-    commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
-- id: docs_parameter_table_includes_sandbox_env_id
-  type: fail_to_pass
-  origin: pr_diff
-  description: Handbook Parameters section documents sandbox_environment_id with SandboxEnvironment
-    reference
-- id: docs_include_usage_example
-  type: fail_to_pass
-  origin: pr_diff
-  description: Handbook includes code example showing SandboxEnvironment creation
-    and passing ID to create_and_run
-- id: not_stub
-  type: pass_to_pass
-  origin: static
-  description: create_and_run has substantive sandbox_environment_id logic, not just
-    a parameter declaration
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: Modified Python file parses without errors
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff lint check passes on products/tasks/backend/models.py
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Python files in products/tasks/backend parse without syntax errors
+  - id: test_repo_ast_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified Python file has valid AST structure
+  - id: test_repo_no_obvious_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified file does not contain obvious error patterns (FIXME, NotImplementedError, etc.)
+  - id: test_repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes on products/tasks/backend/models.py and constants.py
+  - id: test_repo_constants_importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: DEFAULT_TRUSTED_DOMAINS constant is importable from constants module
+  - id: create_and_run_accepts_sandbox_env_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: create_and_run accepts sandbox_environment_id keyword argument defaulting to None
+  - id: invalid_sandbox_env_id_raises_valueerror
+    type: fail_to_pass
+    origin: pr_diff
+    description: create_and_run validates sandbox_environment_id via SandboxEnvironment.objects.filter and raises ValueError if invalid
+  - id: sandbox_env_id_stored_in_extra_state
+    type: fail_to_pass
+    origin: pr_diff
+    description: Valid sandbox_environment_id is stored as string in extra_state dict for downstream consumption
+  - id: team_filter_in_sandbox_lookup
+    type: fail_to_pass
+    origin: agent_config
+    description: "SandboxEnvironment lookup filters by team per AGENTS.md rule: always filter querysets by team_id"
+    source:
+      path: AGENTS.md
+      lines: "87"
+      commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
+  - id: docs_parameter_table_includes_sandbox_env_id
+    type: fail_to_pass
+    origin: pr_diff
+    description: Handbook Parameters section documents sandbox_environment_id with SandboxEnvironment reference
+  - id: docs_include_usage_example
+    type: fail_to_pass
+    origin: pr_diff
+    description: Handbook includes code example showing SandboxEnvironment creation and passing ID to create_and_run
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: create_and_run has substantive sandbox_environment_id logic, not just a parameter declaration
 rubric:
-- rule: Documentation update is consistent with the style of existing parameter descriptions
-    in the handbook
-  source:
-    path: docs/published/handbook/engineering/ai/sandboxed-agents.md
-    lines: 70-82
-    commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
-config_edits:
-- path: docs/published/handbook/engineering/ai/sandboxed-agents.md
-  tier: 1
-  gold_added: "| Parameter                | Required | Description               \
-    \                                                 |\n| ------------------------\
-    \ | -------- | --------------------------------------------------------------------------\
-    \ |\n| `team`                   | Yes      | The team this task belongs to   \
-    \                                           |\n| `title`                  | Yes\
-    \      | Human-readable task title                                           \
-    \       |\n| `description`            | Yes      | Detailed description of what\
-    \ the agent should do                           |\n| `origin_product`        \
-    \ | Yes      | Which product created this task (see `Task.OriginProduct` choices)\
-    \         |\n| `user_id`                | Yes      | User ID — used for feature\
-    \ flag validation and creating the scoped API key |\n| `repository`          \
-    \   | Yes      | GitHub repo in `org/repo` format (e.g., `posthog/posthog-js`)\
-    \              |\n| `posthog_mcp_scopes`     | No       | Scope preset or explicit\
-    \ scope list (default: `\"full\"`)                    |\n| `create_pr`       \
-    \       | No       | Whether the agent should create a PR (default: `True`)  \
-    \                   |\n| `mode`                   | No       | Execution mode\
-    \ (default: `\"background\"`)                                   |\n| `slack_thread_context`\
-    \   | No       | Slack thread context for agents triggered from Slack        \
-    \               |\n| `start_workflow`         | No       | Whether to start the\
-    \ Temporal workflow immediately (default: `True`)       |\n| `sandbox_environment_id`\
-    \ | No       | ID of a `SandboxEnvironment` to apply network restrictions (see\
-    \ below)     |\nTo apply network restrictions from your product code,\ncreate\
-    \ a `SandboxEnvironment` and pass its ID to `Task.create_and_run`:\n\n```python\n\
-    from products.tasks.backend.models import SandboxEnvironment, Task\n\n# 1. Create\
-    \ an environment (once, or look up an existing one)\nenv = SandboxEnvironment.objects.create(\n\
-    \    team=team,\n    created_by=user,\n    name=\"Restricted agent env\",\n  \
-    \  network_access_level=\"custom\",  # \"full\" | \"trusted\" | \"custom\"\n \
-    \   allowed_domains=[\"github.com\", \"api.example.com\"],\n    include_default_domains=True,\
-    \  # merge GitHub, npm, PyPI defaults\n)\n\n# 2. Pass its ID when creating the\
-    \ task\ntask = Task.create_and_run(\n    team=team,\n    title=\"My restricted\
-    \ task\",\n    description=\"...\",\n    origin_product=Task.OriginProduct.YOUR_PRODUCT,\n\
-    \    user_id=user.id,\n    repository=\"org/repo\",\n    sandbox_environment_id=str(env.id),\n\
-    )\n```\n\nThe temporal workflow resolves the allowed domains at execution time\
-    \ from the environment,\nso updates to the environment take effect on the next\
-    \ run.\nDomain restrictions are enforced at the syscall level by `agentsh` via\
-    \ ptrace —\nthe agent cannot bypass them through proxy settings or DNS tricks.\n\
-    \nEnvironments can also be managed via the REST API (`SandboxEnvironmentViewSet`)\n\
-    or the PostHog Code settings UI."
-  gold_removed: '| Parameter              | Required | Description                                                                |
-
-    | ---------------------- | -------- | --------------------------------------------------------------------------
-    |
-
-    | `team`                 | Yes      | The team this task belongs to                                              |
-
-    | `title`                | Yes      | Human-readable task title                                                  |
-
-    | `description`          | Yes      | Detailed description of what the agent should
-    do                           |
-
-    | `origin_product`       | Yes      | Which product created this task (see `Task.OriginProduct`
-    choices)         |
-
-    | `user_id`              | Yes      | User ID — used for feature flag validation
-    and creating the scoped API key |
-
-    | `repository`           | Yes      | GitHub repo in `org/repo` format (e.g.,
-    `posthog/posthog-js`)              |
-
-    | `posthog_mcp_scopes`   | No       | Scope preset or explicit scope list (defau'
+  - rule: Documentation update in handbook is consistent with existing parameter table style
+    source:
+      path: docs/published/handbook/engineering/ai/sandboxed-agents.md
+      lines: 70-82
+      commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313

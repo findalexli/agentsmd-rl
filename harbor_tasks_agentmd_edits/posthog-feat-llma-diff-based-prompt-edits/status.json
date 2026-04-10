@@ -1,31 +1,59 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:35:53.504563",
-  "total_time": 5969.99,
-  "sandbox_id": "ix2f2xjzdznd7sq1awi1n",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:33:36.600692",
+  "total_time": 1989.17,
+  "sandbox_id": "iqb833rkwu8pk0lgceady",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 474.96,
+      "status": "completed",
+      "notes": "Added 2 new pass_to_pass tests with origin: repo_tests: 1) test_ruff_check - runs 'ruff check' on modified Python files, 2) test_ruff_format_check - runs 'ruff format --check' on modified files. Both tests use subprocess.run() to execute real CI commands. Verified they pass at base commit. CI commands tested: ruff check (passes), ruff format --check (passes). Modified files covered: posthog/api/llm_prompt.py, posthog/api/llm_prompt_serializers.py, posthog/api/services/llm_prompt.py. Repo uses pytest for Django tests but requires full database setup which is not feasible in this environment."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 302.28,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py to inline apply_prompt_edits function instead of importing from posthog which requires Django. Fixed eval_manifest.yaml rubric rule to include reference text and merged rules.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 391.48
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 18.2,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 5969.99,
-      "at": "2026-04-09T07:35:53.504563"
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1989.17,
+      "at": "2026-04-10T12:33:36.600692"
     }
   ]
 }

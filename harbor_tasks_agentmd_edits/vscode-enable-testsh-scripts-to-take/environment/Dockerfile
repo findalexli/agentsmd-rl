@@ -6,7 +6,8 @@ ENV LANG=C.UTF-8
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         git curl ca-certificates build-essential python3 python3-pip tmux && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    pip3 install --break-system-packages pytest
 
 # Clone vscode at the pre-fix base commit (shallow snapshot for speed)
 ARG BASE_COMMIT=73b0fb29377f401a4e2b792b9065e77b9fa19e9e

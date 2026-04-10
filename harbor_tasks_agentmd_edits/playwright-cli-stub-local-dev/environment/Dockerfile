@@ -17,5 +17,8 @@ RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /wo
 
 WORKDIR /workspace/playwright
 
+# Install dependencies required for build and typecheck
+RUN npm ci
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

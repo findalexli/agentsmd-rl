@@ -49,7 +49,45 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's goose-cli crate compiles with cargo check
-rubric: []
+- id: test_repo_cargo_clippy_goose
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's goose crate passes cargo clippy linting
+- id: test_repo_cargo_clippy_goose_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's goose-cli crate passes cargo clippy linting
+- id: test_repo_cargo_check_workspace_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's workspace library code compiles with cargo check
+rubric:
+- rule: Error handling should not add context that duplicates what the error already
+    states (e.g., avoid .context("Failed to X") when the error message already indicates
+    failure)
+  source:
+    path: AGENTS.md
+    lines: '86'
+    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
+- rule: Self-evident operations must not have comments that restate what the code
+    does (e.g., // Initialize, // Return result), getters/setters, constructors, or
+    standard Rust idioms should not be commented
+  source:
+    path: AGENTS.md
+    lines: 95-96
+    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
+- rule: Comments should only explain why not what - prefer clear names over comments,
+    only comment for complex algorithms, non-obvious business logic
+  source:
+    path: AGENTS.md
+    lines: 81-83
+    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
+- rule: Avoid overly defensive code - trust Rust type system instead of adding unnecessary
+    checks
+  source:
+    path: AGENTS.md
+    lines: '87'
+    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
 config_edits:
 - path: .github/copilot-instructions.md
   tier: 1

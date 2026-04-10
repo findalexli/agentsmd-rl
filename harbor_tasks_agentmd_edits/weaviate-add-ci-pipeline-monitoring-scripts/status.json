@@ -1,21 +1,80 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:53:57.759074",
-  "total_time": 5759.54,
-  "sandbox_id": "i3yc9jbr306uk2s2beubw",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:35:20.208334",
+  "total_time": 1302.95,
+  "sandbox_id": "ip8m4oaqdtcedq0cg2jmh",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 424.9,
+      "notes": "Added 5 new repo_tests pass_to_pass gates: test_repo_go_build (GOTOOLCHAIN=auto go build), test_repo_linter_error_groups (tools/linter_error_groups.sh), test_repo_linter_go_routines (tools/linter_go_routines.sh), test_repo_linter_waitgroups (tools/linter_waitgroups_done.sh), test_repo_ci_scripts_syntax (bash -n CI scripts). All verified passing on base commit."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 561.64,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 2,
+      "rejection_reasons": "Go-specific conventions (goroutines, logging, allocation) not applicable to shell script PR",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 34.47
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 25.24,
+      "notes": "",
+      "precision": 0.16
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 25.35,
+      "notes": "precision was 0.16, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build OK, NOP test reward=0 (8 fail-to-pass tests correctly fail), Gold test reward=1 (14 tests pass), rubric rules verified against gold solution.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 251.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.7,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +85,22 @@
       "backend": "glm",
       "time": 5759.54,
       "at": "2026-04-09T07:53:57.759074"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 2018.06,
+      "at": "2026-04-10T13:13:37.086973"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1302.95,
+      "at": "2026-04-10T13:35:20.208334"
     }
   ]
 }

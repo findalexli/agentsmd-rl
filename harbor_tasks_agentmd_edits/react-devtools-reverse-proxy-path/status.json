@@ -1,30 +1,22 @@
 {
   "schema_version": 2,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-09T04:13:09.840352",
-  "total_time": 9353.07,
-  "sandbox_id": "iwo4yas7dho2xollsv3fk",
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-10T13:41:29.025776",
+  "total_time": 1670.5,
+  "sandbox_id": "ieoyin7uz12ecmkmxkttd",
   "backend": "fireworks",
   "pipeline": "agents",
-  "rubric_icr": 1.0,
+  "error": "rate limited during rubric_fix",
+  "config_edit_precision": 0.25,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "ci_commands_found": [
-        "yarn lint (requires node_modules - not used)",
-        "yarn test (requires node_modules - not used)",
-        "yarn prettier-check (requires node_modules - not used)",
-        "yarn flow (requires node_modules - not used)"
-      ],
-      "tests_added": [
-        "test_repo_syntax_devtools_core_backend - node --check on backend.js",
-        "test_repo_syntax_devtools_core_standalone - node --check on standalone.js",
-        "test_repo_syntax_devtools_preload - node --check on preload.js",
-        "test_repo_syntax_devtools_app_html - node --check on inline scripts in app.html"
-      ],
-      "notes": "The React repo's CI commands (lint, test, flow, prettier) all require node_modules installation which is not present in the base Docker image. Used node --check as a lightweight syntax validation pass-to-pass gate for all modified JS files."
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1006.55,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -46,7 +38,7 @@
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All four validation checks passed: Docker build succeeded, NOP test returned reward=0 (6 fail-to-pass tests correctly failed on buggy base), Gold test returned reward=1 (all 11 tests passed after fix), Rubric judge returned ICR=1.0 (empty rubric). The task is valid.",
+      "notes": "All validation checks passed: Docker build succeeded, NOP test returned reward=0 (6 fail-to-pass tests correctly failed on buggy base), Gold test returned reward=1 (all 14 tests passed after fix), Rubric judge returned ICR=1.0 (empty rubric). The task is valid.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 97.58
@@ -57,6 +49,36 @@
       "backend": "fireworks",
       "time": 0.69,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        ".claude/instructions.md",
+        ".eslintrc.js"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 3,
+      "rejection_reasons": "Rejected: 1) 'Builds are handled by CI' - process rule not evaluable from diff, 2) 'Use yarn only' - package manager convention not verifiable from diff, 3) 'Run /test for tests' - testing is already covered by separate test checks",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 110.57
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 31.61,
+      "notes": "",
+      "precision": 0.25
+    },
+    "rubric_fix": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 32.38,
+      "notes": "precision was 0.25, fixing hallucinated rules"
     }
   },
   "history": [
@@ -75,6 +97,30 @@
       "backend": "fireworks",
       "time": 9353.07,
       "at": "2026-04-09T04:13:09.840352"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1658.98,
+      "at": "2026-04-10T12:46:21.667127"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1634.42,
+      "at": "2026-04-10T13:13:37.721844"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1670.5,
+      "at": "2026-04-10T13:41:29.025776"
     }
   ]
 }

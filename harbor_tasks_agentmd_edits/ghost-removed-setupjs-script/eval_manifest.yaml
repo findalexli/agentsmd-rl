@@ -5,6 +5,18 @@ source:
   base_commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
   merge_commit: 18d19b4124ab54f507b977c82d8424dbeba20fee
 checks:
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has valid git structure and HEAD commit
+- id: test_repo_package_json_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json has valid schema with required fields
+- id: test_repo_gitmodules_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: .gitmodules file exists and is valid
 - id: test_package_json_valid
   type: pass_to_pass
   origin: static
@@ -30,14 +42,18 @@ checks:
   origin: pr_diff
   description: docs/README.md must use yarn reset:data instead of knex-migrator
 rubric:
-- rule: Documentation updates are consistent with the style and tone of existing docs/README.md
-    content
+- rule: docs/README.md must use concise command descriptions (e.g., "Install dependencies and initialize submodules" not "This installs dependencies...")
   source:
     path: docs/README.md
-    lines: 1-10
+    lines: 30-35
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
-- rule: "CLAUDE.md mandates yarn — setup script must not use npm"
+- rule: docs/README.md yarn dev description must mention both backend services and frontend dev servers
   source:
-    path: CLAUDE.md
-    lines: '5'
+    path: docs/README.md
+    lines: 38-42
+    commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+- rule: package.json setup script must use yarn not npm
+  source:
+    path: package.json
+    lines: '"setup"'
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787

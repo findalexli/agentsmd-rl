@@ -13,58 +13,31 @@ checks:
   type: pass_to_pass
   origin: static
   description: import.meta transform plugin converts import.meta to globalThis.__ExpoImportMetaRegistry
+- id: test_repo_preset_loads
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's babel-preset-expo can be loaded with its dependencies
+- id: test_repo_import_meta_transform
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo import.meta transform works with the preset
+- id: test_repo_build_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build files have valid syntax
 - id: error_message_stable_name
   type: fail_to_pass
   origin: pr_diff
-  description: Error message references stable 'transformImportMeta' option name
+  description: Error message references stable transformImportMeta option name
+- id: test_readme_stable_option_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: README documents transformImportMeta with default true
+- id: test_typescript_types_use_stable_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypeScript definitions use transformImportMeta
 rubric:
-- rule: Preset enables import.meta transform by default for all environments, not
-    just server
-  reference: '# packages/babel-preset-expo/README.md
-
-    ### `transformImportMeta`
-
-    Enable transform that converts `import.meta` to `globalThis.__ExpoImportMetaRegistry`.
-    Defaults to `true`.
-
-    > **Note:** If the JavaScript engine supports `import.meta` natively, this transformation
-    may interfere with the native implementation.'
-- rule: README.md documents the option as 'transformImportMeta' with default true
-  source:
-    path: packages/babel-preset-expo/README.md
-    lines: 155-160
-    commit: 3676cbae5c809f45cf3063f69416de0a5fbad090
-  reference: '### `transformImportMeta`
-
-    Enable transform that converts `import.meta` to `globalThis.__ExpoImportMetaRegistry`.
-    Defaults to `true`.
-
-    > **Note:** If the JavaScript engine supports `import.meta` natively, this transformation
-    may interfere with the native implementation.'
-- rule: TypeScript type definition uses 'transformImportMeta' instead of 'unstable_transformImportMeta'
-  reference: '# packages/babel-preset-expo/README.md
-
-    ### `transformImportMeta`
-
-    Enable transform that converts `import.meta` to `globalThis.__ExpoImportMetaRegistry`.
-    Defaults to `true`.
-
-    > **Note:** If the JavaScript engine supports `import.meta` natively, this transformation
-    may interfere with the native implementation.'
-config_edits:
-- path: packages/babel-preset-expo/README.md
-  tier: 2
-  gold_added: '### `transformImportMeta`
-
-    Enable transform that converts `import.meta` to `globalThis.__ExpoImportMetaRegistry`.
-    Defaults to `true`.
-
-    > **Note:** If the JavaScript engine supports `import.meta` natively, this transformation
-    may interfere with the native implementation.'
-  gold_removed: '### `unstable_transformImportMeta`
-
-    Enable that transform that converts `import.meta` to `globalThis.__ExpoImportMetaRegistry`,
-    defaults to `false` in client bundles and `true` for server bundles.
-
-    > **Note:** Use this option at your own risk. If the JavaScript engine supports
-    `import.meta` natively, this transformation may interfere with the native implementation.'
+- rule: Preset enables import.meta transform by default for all environments
+  reference: 'README.md'
+config_edits: []

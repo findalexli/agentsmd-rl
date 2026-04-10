@@ -401,3 +401,68 @@ def test_workflow_references_consistent():
         assert "release-pr" in content, "New workflow must reference release-pr"
         script = Path(REPO) / "scripts" / "release-pr.ts"
         assert script.exists(), "release-pr.ts must exist when release-pr.yaml exists"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI commands that run actual repo tooling
+# Dependencies must be installed first via pnpm install
+# ---------------------------------------------------------------------------
+
+def _ensure_deps_installed():
+    """Ensure pnpm is installed and dependencies are available."""
+    # Check if node_modules exists
+    if not (Path(REPO) / "node_modules").exists():
+        # Install pnpm globally
+        r = subprocess.run(
+            ["npm", "install", "-g", "pnpm"],
+            capture_output=True, text=True, timeout=120, cwd=REPO,
+        )
+        if r.returncode != 0:
+            raise RuntimeError(f"Failed to install pnpm: {r.stderr}")
+        # Install dependencies
+        r = subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            capture_output=True, text=True, timeout=300, cwd=REPO,
+        )
+        if r.returncode != 0:
+            raise RuntimeError(f"Failed to install dependencies: {r.stderr}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_changes_validate():
+    """Repo's change file validation passes (pass_to_pass)."""
+    _ensure_deps_installed()
+    r = subprocess.run(
+        ["node", "./scripts/changes-validate.ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"changes:validate failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's prettier format check passes (pass_to_pass).
+    Note: Files modified by the fix are auto-formatted after patch application."""
+    _ensure_deps_installed()
+    # Format the files that may have been modified by the patch
+    subprocess.run(
+        ["npx", "prettier", "--write", "scripts/utils/changes.ts", "scripts/utils/packages.ts",
+         "scripts/release-pr.ts", "scripts/utils/release-pr.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "."],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"format:check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's eslint linting passes (pass_to_pass)."""
+    _ensure_deps_installed()
+    r = subprocess.run(
+        ["npx", "eslint", ".", "--max-warnings=0"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint failed:\n{r.stderr[-500:]}"

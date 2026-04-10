@@ -17,16 +17,52 @@ REPO = "/workspace/biome"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — compilation check
+# Gates (pass_to_pass, repo_tests) — actual CI commands from the repo
 # ---------------------------------------------------------------------------
 
 def test_cargo_check():
-    """Modified crates compile without errors."""
+    """Modified crates compile without errors (pass_to_pass)."""
     r = subprocess.run(
         ["cargo", "check", "--package", "biome_html_formatter"],
-        capture_output=True, text=True, timeout=180,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    assert r.returncode == 0, f"Cargo check failed: {r.stderr}"
+    assert r.returncode == 0, f"Cargo check failed: {r.stderr[-500:]}"
+
+
+def test_cargo_clippy():
+    """Clippy lints pass for modified crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--package", "biome_html_formatter", "--", "--deny", "warnings"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Clippy failed: {r.stderr[-500:]}"
+
+
+def test_cargo_fmt():
+    """Code formatting passes for all files (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--", "--check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed: {r.stderr[-500:]}"
+
+
+def test_cargo_test_lib():
+    """Unit tests for modified crate pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "biome_html_formatter", "--lib"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed: {r.stderr[-500:]}"
+
+
+def test_cargo_test_quick():
+    """Quick test target for html_formatter passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--package", "biome_html_formatter", "--test", "quick_test"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Quick test failed: {r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -222,14 +258,10 @@ def test_prettier_compare_skill_created():
     assert skill_path.exists(), "prettier-compare/SKILL.md must exist"
     content = skill_path.read_text()
 
-    assert "name: prettier-compare" in content, \
-        "SKILL.md must have correct frontmatter name"
-    assert "prettier-compare" in content, \
-        "Skill must reference prettier-compare"
-    assert "--rebuild" in content, \
-        "Skill must document --rebuild flag"
-    assert "bun" in content, \
-        "Skill must reference bun command"
+    assert "name: prettier-compare" in content,         "SKILL.md must have correct frontmatter name"
+    assert "prettier-compare" in content,         "Skill must reference prettier-compare"
+    assert "--rebuild" in content,         "Skill must document --rebuild flag"
+    assert "bun" in content,         "Skill must reference bun command"
 
 
 # ---------------------------------------------------------------------------
@@ -242,10 +274,8 @@ def test_element_list_not_stub():
 
     # Count the number of css_display checks - should be multiple
     block_like_checks = content.count("is_block_like()")
-    assert block_like_checks >= 2, \
-        f"element_list.rs should have at least 2 is_block_like() checks (has {block_like_checks})"
+    assert block_like_checks >= 2,         f"element_list.rs should have at least 2 is_block_like() checks (has {block_like_checks})"
 
     # Must have hard_line_break() calls for the new logic
     hard_breaks = content.count("hard_line_break()")
-    assert hard_breaks >= 3, \
-        f"element_list.rs should have at least 3 hard_line_break() calls (has {hard_breaks})"
+    assert hard_breaks >= 3,         f"element_list.rs should have at least 3 hard_line_break() calls (has {hard_breaks})"

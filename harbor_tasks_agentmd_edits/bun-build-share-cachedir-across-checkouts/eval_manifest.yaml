@@ -8,46 +8,40 @@ checks:
 - id: test_source_files_exist
   type: pass_to_pass
   origin: static
-  description: Modified source files (config.ts, download.ts, clean.ts, CLAUDE.md)
-    exist
 - id: test_cachedir_branches_on_ci
   type: fail_to_pass
   origin: pr_diff
-  description: resolveConfig() defaults cacheDir to shared build-cache for local builds,
-    <buildDir>/cache for CI
 - id: test_download_pid_unique_temps
   type: fail_to_pass
   origin: pr_diff
-  description: downloadWithRetry and fetchPrebuilt use process.pid in temp paths for
-    concurrent safety
 - id: test_clean_cache_preset
   type: fail_to_pass
   origin: pr_diff
-  description: clean.ts defines a 'cache' preset targeting the shared build cache
-    directory
 - id: test_claudemd_documents_shared_cache
   type: fail_to_pass
   origin: agent_config
-  description: scripts/build/CLAUDE.md Gotchas section documents shared cache and
-    that rm -rf build/ doesn't clear it locally
-  source:
-    path: scripts/build/CLAUDE.md
-    lines: 223-235
-    commit: 485ec522a22b469b336aece8276b507a71665a87
 - id: test_cachedir_explicit_override_preserved
   type: pass_to_pass
   origin: pr_diff
-  description: Explicit cacheDir override still takes precedence over CI/local defaults
 - id: test_config_imports_homedir
   type: pass_to_pass
   origin: static
-  description: config.ts imports homedir from node:os for shared cache path resolution
+- id: test_repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_typescript_types_basic
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_build_script_runnable
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
-- rule: Code comments follow the existing pattern of explaining WHY, not just WHAT
+- rule: CLAUDE.md Gotchas section documents that build/ directory doesn't include the shared cache
   source:
     path: scripts/build/CLAUDE.md
-    lines: 16-18
-    commit: 485ec522a22b469b336aece8276b507a71665a87
+    lines: 223-240
+    commit: 0d09afea645d2ecd0998fb8f5867536b264fed45
+  reference: "rm -rf build/ doesn't clear the cache locally"
 config_edits:
 - path: scripts/build/CLAUDE.md
   tier: 1

@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:35:48.063649",
-  "total_time": 5688.62,
-  "sandbox_id": "icsez7c7axxqr2d5ygmhw",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:37:56.661103",
+  "total_time": 2733.79,
+  "sandbox_id": "ifppt647vx6ghr8t49ek1",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 428.34,
-      "notes": "Added 3 pass_to_pass tests: test_repo_tsc (npm run tsc), test_repo_check_deps (npm run check-deps), test_repo_lint_packages (npm run lint-packages). Skipped ESLint (OOM), build (takes too long), and full test suites (require browsers/GPU). CI commands discovered from package.json and verified working on base commit."
+      "time": 220.86,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "rate_limited",
@@ -30,6 +30,23 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile to add npm ci and npm run build. Fixed judge.py to properly detect new files in rubric source paths by prefixing content lines with + for proper diff format. All 4 checks pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1169.47
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.3,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -40,6 +57,14 @@
       "backend": "fireworks",
       "time": 5688.62,
       "at": "2026-04-09T07:35:48.063649"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2733.79,
+      "at": "2026-04-10T12:37:56.661103"
     }
   ]
 }

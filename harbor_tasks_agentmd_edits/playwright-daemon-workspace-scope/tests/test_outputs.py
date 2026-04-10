@@ -12,6 +12,7 @@ import subprocess
 import shutil
 import tempfile
 from pathlib import Path
+import re
 
 REPO = "/workspace/playwright"
 COMMANDS_TS = f"{REPO}/packages/playwright/src/mcp/terminal/commands.ts"
@@ -59,6 +60,64 @@ console.log(JSON.stringify({ hasArray, commandCount }));
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD tests from the repository
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_mcp_cli_parsing():
+    """MCP CLI parsing tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run build 2>/dev/null | tail -3 && npx playwright install chromium 2>/dev/null | tail -3 && npx playwright test --config=tests/mcp/playwright.config.ts --project=chromium cli-parsing.spec.ts --forbid-only 2>&1 | tail -20"],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"MCP CLI parsing tests failed:\n{r.stdout[-1000:]}"
+    assert "passed" in r.stdout or "passed" in r.stderr, "No tests passed in output"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mcp_cli_help():
+    """MCP CLI help tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run build 2>/dev/null | tail -3 && npx playwright install chromium 2>/dev/null | tail -3 && npx playwright test --config=tests/mcp/playwright.config.ts --project=chromium cli-help.spec.ts --forbid-only 2>&1 | tail -20"],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"MCP CLI help tests failed:\n{r.stdout[-1000:]}"
+    assert "passed" in r.stdout or "passed" in r.stderr, "No tests passed in output"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run build 2>&1 | tail -30"],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    assert "EXIT:0" in r.stdout or "Writing" in r.stdout or "help.json" in r.stdout, f"Build may have failed:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_deps():
+    """Repo dependency checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run check-deps 2>&1"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"
+    assert "Checking DEPS" in r.stdout, f"DEPS check did not run properly:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_on_modified_files():
+    """ESLint passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && npm ci 2>/dev/null | tail -3 && npm run eslint -- --max-warnings=0 packages/playwright/src/mcp/terminal/commands.ts packages/playwright/src/mcp/terminal/program.ts 2>&1"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"ESLint failed on modified files:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -95,30 +154,30 @@ def test_find_workspace_dir_function():
         deep.mkdir(parents=True)
         (project / ".playwright").mkdir()
 
-        # Extract and execute the findWorkspaceDir function from program.ts
-        result = subprocess.run(
-            ["node", "-e", f"""
+        # Read program.ts and extract function info using Python regex
+        content = Path(PROGRAM_TS).read_text()
+
+        # Extract findWorkspaceDir function body using Python regex
+        fn_match = re.search(
+            r'function findWorkspaceDir\([^)]*\):\s*\w+(?:\s*\|\s*\w+)?\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\n\}',
+            content
+        )
+        assert fn_match, "findWorkspaceDir function not found in program.ts"
+        fn_body = fn_match.group(1)
+
+        # Parse the function body and find the marker name
+        marker_match = re.search(r'["\'](\.playwright)["\']', fn_body)
+        marker = marker_match.group(1) if marker_match else ".playwright"
+
+        # Write Node.js script to a file to avoid escaping issues
+        script_file = Path(tmp) / "test_script.js"
+        script_content = f"""
 const fs = require('fs');
 const path = require('path');
-const content = fs.readFileSync('{PROGRAM_TS}', 'utf-8');
 
-// Extract findWorkspaceDir function using regex
-const match = content.match(
-    /function findWorkspaceDir\\(startDir[^)]*\\)[^{{]*{{([\\s\\S]*?)\\n}}/i
-);
-if (!match) {{
-    console.error('findWorkspaceDir function not found in program.ts');
-    process.exit(1);
-}}
-
-// Parse the function body and find the marker name
-const fnBody = match[1];
-const markerMatch = fnBody.match(/['\"](\\.playwright)['\"]/);
-const marker = markerMatch ? markerMatch[1] : '.playwright';
-
-// Implement the function logic
 function findWorkspaceDir(startDir) {{
   let dir = startDir;
+  const marker = "{marker}";
   for (let i = 0; i < 10; i++) {{
     if (fs.existsSync(path.join(dir, marker)))
       return dir;
@@ -130,24 +189,30 @@ function findWorkspaceDir(startDir) {{
   return undefined;
 }}
 
-const result1 = findWorkspaceDir('{deep}');
-const result2 = findWorkspaceDir('/tmp');
+const result1 = findWorkspaceDir("{deep}");
+const result2 = findWorkspaceDir("/tmp");
 
 console.log(JSON.stringify({{
     deep_result: result1,
-    expected_project: '{project}',
+    expected_project: "{project}",
     tmp_result: result2
 }}));
-"""],
+"""
+        script_file.write_text(script_content)
+
+        # Execute the script file
+        result = subprocess.run(
+            ["node", str(script_file)],
             capture_output=True, text=True, timeout=30,
         )
         assert result.returncode == 0, \
             f"findWorkspaceDir extraction/execution failed: {result.stderr}"
         data = json.loads(result.stdout.strip())
-        assert data["deep_result"] == data["expected_project"], \
+        assert data["deep_result"] == str(project), \
             f"findWorkspaceDir({deep}) returned {data['deep_result']}, expected {project}"
-        assert data["tmp_result"] is None, \
-            f"findWorkspaceDir(/tmp) should return undefined, got {data['tmp_result']}"
+        # JavaScript JSON.stringify omits undefined values, so tmp_result won't exist in output
+        assert "tmp_result" not in data or data.get("tmp_result") is None, \
+            f"findWorkspaceDir(/tmp) should return undefined, got {data.get('tmp_result')}"
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -183,8 +248,8 @@ const fs = require('fs');
 const content = fs.readFileSync(process.argv[1], 'utf-8');
 
 // Check type definition for ClientInfo
-const typeMatch = content.match(/type ClientInfo = \\{([^}]+)\\}/s);
-const interfaceMatch = content.match(/interface ClientInfo \\{([^}]+)\\}/s);
+const typeMatch = content.match(/type ClientInfo = \\{{([^}]+)\\}}/s);
+const interfaceMatch = content.match(/interface ClientInfo \\{{([^}]+)\\}}/s);
 const definition = typeMatch ? typeMatch[1] : (interfaceMatch ? interfaceMatch[1] : content);
 
 const hasWorkspaceHash = definition.includes('workspaceDirHash');

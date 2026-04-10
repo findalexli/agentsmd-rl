@@ -1,28 +1,84 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:20:13.791113",
-  "total_time": 5847.1,
-  "sandbox_id": "ipwva4ks5j0rbvz95mo54",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:50:19.325923",
+  "total_time": 1813.47,
+  "sandbox_id": "ienx672xn012ata9p8swx",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.25,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 225.29,
-      "notes": ""
-    },
-    "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 117.75,
+      "time": 225.29,
+      "notes": "Added 6 pass_to_pass repo_tests based on CI commands: test_repo_bash_syntax_poll (bash -n), test_repo_yaml_valid_skill (python3 yaml.safe_load), test_repo_skill_has_name (python3 yaml validation), test_repo_skill_has_allowed_tools (python3 yaml validation), test_repo_poll_is_executable (test -x), test_repo_poll_fails_without_args (bash invocation). All tests verified to pass with reward=1."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 240.21,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        ".claude/rules/github-actions.md",
+        ".claude/skills/copilot/SKILL.md",
+        ".claude/skills/README.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 3,
+      "rejection_reasons": "Rejected rules about: 1) Python-specific conventions (irrelevant to bash PR), 2) DCO sign-off requirements (process rule not evaluable from diff), 3) PR workflow conventions (not evaluable from code diff)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 60.85
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 33.76,
+      "notes": "",
+      "precision": 0.25
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 35.38,
+      "notes": "precision was 0.25, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Removed invalid rubric rule about CLAUDE.md comments (gold solution does not modify CLAUDE.md). Docker build succeeded, NOP test gives reward=0 (base commit lacks poll.sh), gold test gives reward=1 (all 13 tests pass after fix), rubric ICR=1.00.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 87.91
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 12.75,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -33,6 +89,14 @@
       "backend": "glm",
       "time": 5847.1,
       "at": "2026-04-09T07:20:13.791113"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1813.47,
+      "at": "2026-04-10T11:50:19.325923"
     }
   ]
 }

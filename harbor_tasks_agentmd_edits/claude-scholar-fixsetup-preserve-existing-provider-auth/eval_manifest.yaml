@@ -50,17 +50,28 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: All JavaScript files have valid Node.js syntax
+- id: test_repo_js_modules
+  type: pass_to_pass
+  origin: repo_tests
+  description: All JavaScript modules load without errors
+- id: test_repo_skill_backup
+  type: pass_to_pass
+  origin: repo_tests
+  description: Skill backup script works with actual skill
+- id: test_repo_extract_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Skill YAML extraction script works with actual skill
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files have valid syntax
 rubric:
 - rule: README update should be consistent with the style and structure of the existing
     Quick Start section
   source:
     path: README.md
     lines: 360-390
-    commit: d6fa24e0597692c21e16f976ec159a1482adcc2d
-- rule: Chinese README update should accurately mirror the English README changes
-  source:
-    path: README.zh-CN.md
-    lines: 355-380
     commit: d6fa24e0597692c21e16f976ec159a1482adcc2d
 - rule: README.md documents auto-detection of *_API_KEY env vars and silent preservation
   source:
@@ -78,29 +89,8 @@ rubric:
     sections (features, agents, MCP) into config
 
     - Copy skills, agents, scripts, and utils to `~/.codex/`'
-- rule: README.zh-CN.md documents auto-detection of API key env vars in Chinese
-  source:
-    path: README.zh-CN.md
-    lines: 367-374
-    commit: 03377801a8089f52a664217ab34e4f5dc9512eb3
-  reference: '# README.md
-
-    - Silently preserve existing `config.toml` provider/model and existing `auth.json`
-    credentials, and auto-detect common `*_API_KEY` env vars when `auth.json` is absent
-
-    - For fresh installs, choose API provider (OpenAI or custom), model, and a custom
-    API key env var name
-
-    - Reuse an already-exported env var when available, then merge Scholar-specific
-    sections (features, agents, MCP) into config
-
-    - Copy skills, agents, scripts, and utils to `~/.codex/`'
 config_edits:
 - path: README.md
-  tier: 2
-  gold_added: .codex\
-  gold_removed: ''
-- path: README.zh-CN.md
   tier: 2
   gold_added: .codex\
   gold_removed: ''

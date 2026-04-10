@@ -40,12 +40,27 @@ checks:
     path: AGENTS.md
     lines: 100-102
     commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
-rubric:
-- rule: Code follows single-word variable naming preference from the style guide
-  source:
-    path: AGENTS.md
-    lines: 19-32
-    commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes
+- id: repo_unit_tests_keybind
+  type: pass_to_pass
+  origin: repo_tests
+  description: Keybind unit tests pass - fast, reliable subset
+- id: repo_unit_tests_account_repo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Account repo unit tests pass - tests account database operations
+- id: repo_unit_tests_account_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Account service unit tests pass - tests account service layer
+- id: repo_unit_tests_storage_db
+  type: pass_to_pass
+  origin: repo_tests
+  description: Storage/db unit tests pass - tests database layer used by account module
+rubric: []
 config_edits:
 - path: packages/opencode/AGENTS.md
   tier: 1
@@ -106,5 +121,10 @@ config_edits:
 
 
     - In `Effect.gen/fn`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
-    MyError(...))` for direct early-failure branches.'
+    MyError(...))` for direct early-failure branches.
+
+    ## Naming
+
+    - Prefer single word variable names where possible (e.g., `pid`, `cfg`, `err`, `opts`, `dir`).
+    - Multi-word names are allowed only when a single word would be unclear or ambiguous.'
   gold_removed: ''

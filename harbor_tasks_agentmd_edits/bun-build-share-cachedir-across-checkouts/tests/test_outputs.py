@@ -224,3 +224,41 @@ if (!hasHomedirImport) {
     assert r.returncode == 0, f"Script error: {r.stderr}"
     result = json.loads(r.stdout.strip())
     assert result.get("pass"), f"homedir import check failed: {result.get('error', r.stdout)}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI/CD gates
+# ---------------------------------------------------------------------------
+
+def test_repo_typescript_syntax():
+    """Modified TypeScript files have valid syntax (pass_to_pass)."""
+    files = [
+        "scripts/build/config.ts",
+        "scripts/build/download.ts",
+        "scripts/build/clean.ts",
+        "scripts/build/configure.ts",
+    ]
+    for f in files:
+        r = subprocess.run(
+            ["node", "--check", f],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax error in {f}:\\n{r.stderr}"
+
+
+def test_repo_typescript_types_basic():
+    """scripts/build TypeScript has no type errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["tsc", "--noEmit", "--project", "scripts/build/tsconfig.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript type errors:\\n{r.stderr[-500:]}"
+
+
+def test_repo_build_script_runnable():
+    """Build entry point script is syntactically valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--experimental-strip-types", "--check", "scripts/build.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert "SyntaxError" not in r.stderr, f"Syntax error in build.ts: {r.stderr}"

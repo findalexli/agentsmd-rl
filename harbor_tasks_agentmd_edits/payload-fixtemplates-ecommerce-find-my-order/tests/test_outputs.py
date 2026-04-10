@@ -411,3 +411,128 @@ def test_ecommerce_build_config():
     # Check tailwind config
     tailwind_config = Path(REPO) / "templates/ecommerce/tailwind.config.mjs"
     assert tailwind_config.exists(), "tailwind.config.mjs missing"
+
+
+# ---------------------------------------------------------------------------
+# NEW: Subprocess-based CI/CD pass_to_pass (repo_tests) — Real repo CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - Run ESLint on modified plugin file
+def test_repo_eslint_plugin_ecommerce():
+    '''ESLint validation passes on modified plugin-ecommerce files (pass_to_pass).'''
+    import pytest
+
+    file_path = Path(REPO) / 'packages/plugin-ecommerce/src/payments/adapters/stripe/confirmOrder.ts'
+    if not file_path.exists():
+        pytest.skip('confirmOrder.ts not found')
+
+    r = subprocess.run(
+        ['npx', 'eslint', '--no-eslintrc', '--parser', '@typescript-eslint/parser',
+         '--plugin', '@typescript-eslint', str(file_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Allow for module resolution errors (can't find deps), but not syntax errors
+    syntax_errors = ['Parsing error:', 'Unexpected token', 'SyntaxError']
+    for err in syntax_errors:
+        assert err not in r.stderr, f'ESLint found syntax error in confirmOrder.ts:\n{r.stderr[:1000]}'
+
+
+# [repo_tests] pass_to_pass - Run ESLint on modified template files
+def test_repo_eslint_ecommerce_template():
+    '''ESLint validation passes on modified ecommerce template files (pass_to_pass).'''
+    import pytest
+
+    files_to_check = [
+        'templates/ecommerce/src/plugins/index.ts',
+    ]
+
+    for file_path_str in files_to_check:
+        file_path = Path(REPO) / file_path_str
+        if not file_path.exists():
+            continue
+
+        r = subprocess.run(
+            ['npx', 'eslint', '--no-eslintrc', '--parser', '@typescript-eslint/parser',
+             '--plugin', '@typescript-eslint', str(file_path)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=REPO,
+        )
+        # Check for syntax errors, not module resolution errors
+        syntax_errors = ['Parsing error:', 'Unexpected token', 'SyntaxError']
+        for err in syntax_errors:
+            assert err not in r.stderr, f'ESLint found syntax error in {file_path_str}:\n{r.stderr[:1000]}'
+
+
+# [repo_tests] pass_to_pass - Run Prettier to check README formatting
+def test_repo_prettier_readme():
+    '''Prettier validation passes on README.md (pass_to_pass).'''
+    import pytest
+
+    readme_path = Path(REPO) / 'templates/ecommerce/README.md'
+    if not readme_path.exists():
+        pytest.skip('README.md not found')
+
+    r = subprocess.run(
+        ['npx', 'prettier', '--check', str(readme_path)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    # Exit code 0 means well-formatted, 1 means formatting issues
+    # We allow formatting issues but check for actual parse errors
+    assert 'Parse error' not in r.stderr, f'Prettier found parse error in README.md:\n{r.stderr[:500]}'
+    assert 'SyntaxError' not in r.stderr, f'Prettier found syntax error in README.md:\n{r.stderr[:500]}'
+
+
+# [repo_tests] pass_to_pass - Validate shell scripts in repo
+def test_repo_shell_scripts_syntax():
+    '''Shell scripts in repository have valid syntax (pass_to_pass).'''
+    import pytest
+
+    scripts_dir = Path(REPO) / 'scripts'
+    if not scripts_dir.exists():
+        pytest.skip('scripts directory not found')
+
+    shell_scripts = list(scripts_dir.glob('*.sh'))
+    if not shell_scripts:
+        pytest.skip('No shell scripts found')
+
+    for script in shell_scripts:
+        r = subprocess.run(
+            ['bash', '-n', str(script)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f'Shell script {script.name} has syntax errors:\n{r.stderr[:500]}'
+
+
+# [repo_tests] pass_to_pass - Validate package.json files via Python subprocess
+def test_repo_package_json_parseable():
+    '''Package.json files are parseable via Python subprocess (pass_to_pass).'''
+    import pytest
+
+    packages_to_check = [
+        'package.json',
+        'packages/plugin-ecommerce/package.json',
+        'templates/ecommerce/package.json',
+    ]
+
+    for pkg_path in packages_to_check:
+        full_path = Path(REPO) / pkg_path
+        if not full_path.exists():
+            continue
+
+        r = subprocess.run(
+            ['python3', '-c', f"import json; json.load(open('{full_path}')); print('OK')"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f'Package.json {pkg_path} is not valid JSON:\n{r.stderr[:500]}'

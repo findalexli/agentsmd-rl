@@ -9,6 +9,38 @@ checks:
   type: pass_to_pass
   origin: static
   description: All .erl files in trust_store/src have valid module declarations
+- id: test_trust_store_module_exports
+  type: pass_to_pass
+  origin: static
+  description: rabbit_trust_store.erl exports required console interface functions
+- id: test_trust_store_behaviour_declaration
+  type: pass_to_pass
+  origin: static
+  description: rabbit_trust_store.erl has required gen_server behaviour declaration
+- id: test_trust_store_src_structure
+  type: pass_to_pass
+  origin: static
+  description: Trust store src directory contains expected core modules
+- id: test_readme_exists_and_has_content
+  type: pass_to_pass
+  origin: static
+  description: README.md exists and has minimum content
+- id: test_makefile_exists
+  type: pass_to_pass
+  origin: static
+  description: Makefile exists and defines required variables
+- id: test_trust_store_erlc_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Erlang syntax check for rabbit_trust_store.erl using erlc
+- id: test_cli_command_modules_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Erlang syntax check for CLI command modules
+- id: test_trust_store_core_modules_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Erlang syntax check for all core trust store modules
 - id: list_command_module
   type: fail_to_pass
   origin: pr_diff
@@ -47,11 +79,6 @@ rubric:
     path: deps/rabbitmq_trust_store/README.md
     lines: 1-10
     commit: 95cfcbac9099290f72f99665a8b9ba7f63a8c266
-- rule: CLI command modules follow the same patterns as other RabbitMQ CLI commands
-  source:
-    path: CLAUDE.md
-    lines: 37-38
-    commit: 95cfcbac9099290f72f99665a8b9ba7f63a8c266
 config_edits:
 - path: deps/rabbitmq_trust_store/README.md
   tier: 2
@@ -78,4 +105,5 @@ config_edits:
     \ from Source\n\nSee [Plugin Development guide](https://www.rabbitmq.com/plugin-development.html).\n\
     \nTL;DR: running\n\n    make dist\n\nwill build the plugin and put build artifacts\
     \ under the `./plugins` directory.\n(c) 2007-2024 Broadcom. The term \"Broadcom\"\
-    \ refers to Broadcom Inc. and/or its s"
+    \ refers to Broadcom Inc. and/or its subsidiaries. All rights reserved.\nReleased\
+    \ under the MPL, the same license as RabbitMQ."

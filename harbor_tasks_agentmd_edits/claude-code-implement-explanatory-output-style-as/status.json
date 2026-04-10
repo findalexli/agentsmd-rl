@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:55:48.657663",
-  "total_time": 1657.64,
-  "sandbox_id": "i3aq7shoqhosix62fwfh3",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:22:25.072434",
+  "total_time": 508.02,
+  "sandbox_id": "ifiq89oz2uja6eoeg6vg8",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.4,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -17,18 +19,24 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2.45,
+      "time": 251.01,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "plugins/README.md",
+        "plugins/security-guidance/hooks/hooks.json"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 0,
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.61,
-      "notes": ""
+      "time": 64.77
     },
     "improve": {
       "status": "skipped",
@@ -38,9 +46,36 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All checks pass: Docker build OK, NOP reward=0 (tests fail on base commit as expected), Gold reward=1 (all tests pass after solve.sh), Rubric judge returns 1.0 with LLM (2 valid rules about plugin.json and README.md). Removed 3 hallucinated/redundant rubric rules per feedback.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.6
+      "time": 118.56
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 23.27,
+      "notes": "",
+      "precision": 0.4
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 31.49,
+      "notes": "precision was 0.40, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.84,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -57,7 +92,7 @@
       "nop": -1.0,
       "gold": -1.0,
       "backend": "fireworks",
-      "time": 1657.02,
+      "time": 2026.04,
       "at": "2026-04-09T14:55:48.139041"
     },
     {
@@ -67,6 +102,14 @@
       "backend": "fireworks",
       "time": 1657.64,
       "at": "2026-04-09T14:55:48.657663"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 508.02,
+      "at": "2026-04-10T11:22:25.072434"
     }
   ]
 }

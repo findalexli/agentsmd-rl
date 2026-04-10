@@ -238,3 +238,148 @@ def test_skill_name_convention():
     for ch in name:
         assert ch in "abcdefghijklmnopqrstuvwxyz0123456789-", \
             f"Skill name must be lowercase kebab-case, found '{ch}'"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests (pass-to-pass, repo_tests)
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_llm_analytics():
+    """Ruff linting passes on llm_analytics module (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["ruff", "check", "products/llm_analytics/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile_clustering():
+    """Python syntax validation on clustering module (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "products/llm_analytics/backend/api/clustering.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_tools_valid():
+    """tools.yaml is valid YAML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import yaml; yaml.safe_load(open('products/llm_analytics/mcp/tools.yaml')); print('Valid YAML')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """package.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import json; json.load(open('package.json')); print('Valid JSON')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"JSON validation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile_clustering_tests():
+    """Python syntax validation on clustering test files (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile",
+         "products/llm_analytics/backend/api/test/test_clustering_job.py",
+         "products/llm_analytics/backend/api/test/test_clustering_config.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check on tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_pyproject():
+    """Ruff configuration in pyproject.toml is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["ruff", "check", "pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check on pyproject.toml failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_excludes_present():
+    """pyproject.toml ruff excludes skill scripts as expected (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install ruff:\n{r.stderr[-500:]}"
+    # Check that the exclude path is configured
+    r = subprocess.run(
+        ["python", "-c",
+         "import tomllib; f=open('pyproject.toml', 'rb'); d=tomllib.load(f); " +
+         "excludes=d.get('tool',{}).get('ruff',{}).get('exclude',[]); " +
+         "assert 'products/*/skills/*/scripts' in excludes, 'Exclude pattern not found'; " +
+         "print('Exclude pattern verified')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff excludes check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clustering_models_syntax():
+    """Python syntax validation on clustering models (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile",
+         "products/llm_analytics/backend/models/clustering_job.py",
+         "products/llm_analytics/backend/models/clustering_config.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check on clustering models failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tools_yaml_structure():
+    """tools.yaml has expected clustering tool entries (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import yaml; " +
+         "d=yaml.safe_load(open('products/llm_analytics/mcp/tools.yaml')); " +
+         "tools=d.get('tools',{}); " +
+         "assert 'llm-analytics-clustering-jobs-list' in tools, 'list tool not found'; " +
+         "assert 'llm-analytics-clustering-jobs-retrieve' in tools, 'retrieve tool not found'; " +
+         "print('Clustering tools present')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"tools.yaml structure check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clustering_api_syntax():
+    """Python syntax validation on clustering API init (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "products/llm_analytics/backend/api/__init__.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check on clustering API init failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_llm_analytics_models_syntax():
+    """Python syntax validation on llm_analytics models (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile",
+         "products/llm_analytics/backend/models/__init__.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check on llm_analytics models failed:\n{r.stderr[-500:]}"

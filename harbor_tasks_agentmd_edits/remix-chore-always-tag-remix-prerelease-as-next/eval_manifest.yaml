@@ -12,12 +12,12 @@ checks:
 - id: test_changes_validate
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's changes:validate passes - validates change files and prerelease.json
-    format
+  description: Repo CI check - changes:validate passes, validates change files and
+    prerelease.json format
 - id: test_repo_lint
   type: pass_to_pass
   origin: repo_tests
-  description: ESLint passes on modified scripts (changes.ts, publish.ts)
+  description: Repo CI check - ESLint passes on modified scripts (changes.ts, publish.ts)
 - id: prerelease_json_uses_channel
   type: fail_to_pass
   origin: pr_diff
@@ -43,7 +43,23 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified functions have real logic, not just pass/return
-rubric: []
+rubric:
+- rule: Local variables should use 'let', not 'const' (const only at module scope)
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 40a755c50f40ed444a928363beddd75e6edc1f52
+- rule: Type imports must use 'import type { X }' syntax (separate from value imports)
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: 40a755c50f40ed444a928363beddd75e6edc1f52
+- rule: Functions should use regular function declarations/expressions, not arrow
+    functions (arrow functions only as callbacks)
+  source:
+    path: AGENTS.md
+    lines: 25-26
+    commit: 40a755c50f40ed444a928363beddd75e6edc1f52
 config_edits:
 - path: AGENTS.md
   tier: 1

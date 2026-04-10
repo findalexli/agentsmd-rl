@@ -152,3 +152,23 @@ def test_repo_ngbot_verify():
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"NgBot verify failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_config():
+    """Repo's config files are properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm prettier --check package.json pnpm-workspace.yaml renovate.json .github/workflows/ci.yml .github/workflows/pr.yml .pullapprove.yml"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier config check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_buildifier():
+    """Repo's Bazel files are properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && ./node_modules/.bin/buildifier -mode=check MODULE.bazel BUILD.bazel REPO.bazel packages.bzl"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Buildifier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

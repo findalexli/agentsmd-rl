@@ -17,6 +17,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's client node tests pass
+- id: test_repo_client_typescript
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client TypeScript compiles without errors
 - id: package_json_exports_download_command
   type: fail_to_pass
   origin: pr_diff
@@ -71,32 +75,37 @@ rubric:
     commit: 30bf54c187478cdafa70037f088e353f5629a995
 - rule: README documentation should be comprehensive and include code examples for
     each utility function.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 30bf54c187478cdafa70037f088e353f5629a995
 config_edits:
 - path: js/tootils/README.md
   tier: 2
   gold_added: "# `@gradio/tootils`\n\nUnit testing utilities for Gradio Svelte components.\
     \ Built on top of `@testing-library/dom` and `vitest`.\n\n## `render`\n\nMounts\
     \ a Gradio component into the DOM with all required shared props (dispatcher,\
-    \ i18n, theme, etc.) pre-configured. Returns query helpers, event utilities, and\
-    \ lifecycle controls.\n\n```ts\nimport { render } from \"@self/tootils\";\nimport\
-    \ MyComponent from \"./Index.svelte\";\n\nconst result = await render(MyComponent,\
-    \ {\n  value: \"hello\",\n  label: \"My input\"\n});\n```\n\n### Signature\n\n\
-    ```ts\nfunction render(\n  Component,\n  props?,\n  options?: { container?: HTMLElement\
-    \ }\n): Promise<RenderResult>\n```\n\n#### `Component`\n\nThe Svelte component\
-    \ to mount. Accepts either a component constructor directly or a module with a\
-    \ `default` export.\n\n#### `props`\n\nComponent props, excluding `gradio` and\
-    \ `loading_status` (which are provided automatically). You can override `loading_status`\
-    \ if needed:\n\n```ts\nawait render(MyComponent, {\n  value: \"hello\",\n  loading_status:\
-    \ { status: \"pending\", /* ... */ }\n});\n```\n\nProps listed in `allowed_shared_props`\
-    \ (from `@gradio/utils`) are separated out and passed via `shared_props`. All\
-    \ other props are passed as component-level props.\n\n#### `options.container`\n\
-    \nThe parent DOM element to mount into. Defaults to `document.body`.\n\n### Return\
-    \ value\n\n`render` returns a promise that resolves to an object combining `@testing-library/dom`\
-    \ query helpers with Gradio-specific utilities:\n\n#### DOM queries\n\nAll `@testing-library/dom`\
-    \ query functions are bound to the container and available directly on the result:\n\
-    \n```ts\nconst { getByText, getByLabelText, queryByRole } = await render(MyComponent,\
-    \ {\n  label: \"Name\"\n});\n\nconst input = getByLabelText(\"Name\");\n```\n\n\
-    See the [@testing-library/dom docs](https://testing-library.com/docs/queries/about)\
+    \ i18n, theme, etc.) pre-configured. Returns query helpers, event utilities,\
+    \ and lifecycle controls.\n\n```ts\nimport { render } from \"@self/tootils\";\n\
+    import MyComponent from \"./Index.svelte\";\n\nconst result = await render(MyComponent,\
+    \ {\n  value: \"hello\",\n  label: \"My input\"\n});\n```\n\n###\
+    \ Signature\n\n```ts\nfunction render(\n  Component,\n  props?,\n  options?: { container?:\
+    \ HTMLElement\ }\n): Promise<RenderResult>\n```\n\n#### `Component`\n\nThe\
+    \ Svelte component\n to mount. Accepts either a component constructor directly\
+    \ or a module with a\ndefault` export.\n\n#### `props`\n\nComponent props, excluding\
+    \ `gradio` and `loading_status` (which are provided automatically). You can\
+    \ override `loading_status`\nif needed:\n\n```ts\nawait render(MyComponent, {\n\
+    \  value: \"hello\",\n  loading_status: { status: \"pending\", /* ... */ }\n});\n```\n\
+    \nProps listed in `allowed_shared_props` (from `@gradio/utils`) are separated\
+    \ out and passed via `shared_props`. All\nother props are passed as component-level\
+    \ props.\n\n#### `options.container`\n\nThe parent DOM element to mount into. Defaults\
+    \ to `document.body`.\n\n### Return value\n\n`render` returns a promise that resolves\
+    \ to an object combining `@testing-library/dom`\nquery helpers with Gradio-specific\
+    \ utilities:\n\n#### DOM queries\n\nAll `@testing-library/dom` query functions\
+    \ are bound to the container and available directly on the result:\n\n```ts\nconst\
+    \ { getByText, getByLabelText, queryByRole } = await render(MyComponent, {\n\
+    \  label: \"Name\"\n});\n\nconst input = getByLabelText(\"Name\");\n```\n\
+    \nSee the [@testing-library/dom docs](https://testing-library.com/docs/queries/about)\
     \ for the full list.\n\n#### `container`\n\nThe root DOM element the component\
     \ was mounted into.\n\n#### `component`\n\nThe mounted Svelte component instance.\n\
     \n#### `listen`\n\nCreates a `vi.fn()` mock that "

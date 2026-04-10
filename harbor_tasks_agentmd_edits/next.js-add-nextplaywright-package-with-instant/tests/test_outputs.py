@@ -44,7 +44,7 @@ def test_root_tsconfig_valid_json():
     assert "compilerOptions" in data, "tsconfig.json must have compilerOptions"
 
 
-# [repo_ci] pass_to_pass - validates monorepo structure
+# [static] pass_to_pass - validates monorepo structure (file read only)
 def test_repo_package_json_valid():
     """Repo root package.json must be valid and define workspaces (pass_to_pass)."""
     root_pkg_json = Path(REPO) / "package.json"
@@ -60,7 +60,7 @@ def test_repo_package_json_valid():
     assert "typescript" in scripts, "package.json must have typescript script"
 
 
-# [repo_ci] pass_to_pass - validates existing packages structure
+# [static] pass_to_pass - validates existing packages structure (file read only)
 def test_existing_packages_have_valid_structure():
     """Existing packages in monorepo must have valid structure (pass_to_pass)."""
     packages_dir = Path(REPO) / "packages"
@@ -77,6 +77,21 @@ def test_existing_packages_have_valid_structure():
         stripped = _strip_json_comments(raw)
         data = json.loads(stripped)
         assert "compilerOptions" in data, "packages/next/tsconfig.json must have compilerOptions"
+
+
+# [repo_tests] pass_to_pass - runs actual CI command
+def test_repo_tsconfig_valid():
+    """Repo TypeScript config is valid via tsc --showConfig (pass_to_pass)."""
+    r = subprocess.run(
+        ["tsc", "--showConfig"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"tsc --showConfig failed:\n{r.stderr}"
+    # Verify output contains expected config
+    assert "compilerOptions" in r.stdout, "tsc --showConfig output must contain compilerOptions"
 
 
 # -----------------------------------------------------------------------------

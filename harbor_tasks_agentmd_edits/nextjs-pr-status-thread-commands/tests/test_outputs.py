@@ -24,6 +24,52 @@ def test_repo_syntax_check():
     assert r.returncode == 0, f"Syntax error in scripts/pr-status.js:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo JavaScript files follow Prettier formatting (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "scripts/pr-status.js"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_alex_skill_md():
+    """SKILL.md passes alex language linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "alex", ".agents/skills/pr-status-triage/SKILL.md"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"alex check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pr_status_main():
+    """pr-status.js main command runs without crashing (pass_to_pass)."""
+    # The script needs a PR number or auto-detects from git
+    # It will fail gracefully without a PR, but should not crash with syntax/module errors
+    r = subprocess.run(
+        ["node", "scripts/pr-status.js"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    # The script should either succeed or fail gracefully (not crash)
+    # Check that there's no syntax/module error
+    stderr_lower = r.stderr.lower()
+    assert "syntax" not in stderr_lower and "module" not in stderr_lower, (
+        f"pr-status.js crashed with syntax/module error:\n{r.stderr}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code behavioral tests
 # ---------------------------------------------------------------------------

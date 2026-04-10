@@ -3,22 +3,23 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T14:55:56.827493",
-  "total_time": 1665.82,
-  "sandbox_id": "iou4konqohtdf95bxsujm",
+  "validated_at": "2026-04-10T11:32:12.032592",
+  "total_time": 1095.02,
+  "sandbox_id": "ixbbov8golda3wcyhen5r",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.38,
   "rubric_icr": 1.0,
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "Fixed Dockerfile: Added unzip and Bun runtime installation (curl -fsSL https://bun.sh/install | bash). Added pytest-json-ctrf plugin for --ctrf flag support. All 4 checks now pass: Docker build succeeds, NOP test returns reward=0 (12 f2p tests fail correctly), Gold test returns reward=1 (17/17 tests pass), Rubric judge ICR=1.0.",
+      "attempts": 2,
+      "notes": "Fixed Dockerfile: Added unzip and Bun runtime installation. Added pytest-json-ctrf plugin. Fixed test_outputs.py: Updated test_sqlite_omits_undefined_columns to match actual gold implementation (uses buildDefinedColumnsAndQuery helper with typeof columnValue === undefined check). Removed overly strict rubric rules that did not apply to this PR. All 4 checks now pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.8
+      "time": 387.12
     },
     "rubric_judge": {
       "status": "pass",
@@ -28,18 +29,27 @@
       "notes": "ICR=1.00"
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 4.58,
+      "time": 501.36,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "src/js/CLAUDE.md",
+        "test/CLAUDE.md",
+        ".claude/skills/writing-bundler-tests/SKILL.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 2,
+      "rejection_reasons": "2 rules rejected: 1) Branch naming convention (process rule, not evaluable from diff), 2) Promise.withResolvers typing (not directly applicable to this SQL code PR)",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.6,
-      "notes": ""
+      "time": 87.4
     },
     "improve": {
       "status": "skipped",
@@ -47,6 +57,21 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 50.53,
+      "notes": "",
+      "precision": 0.38
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 36.06,
+      "notes": "precision was 0.38, fixing hallucinated rules"
     }
   },
   "history": [
@@ -81,6 +106,14 @@
       "backend": "fireworks",
       "time": 1665.82,
       "at": "2026-04-09T14:55:56.827493"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1095.02,
+      "at": "2026-04-10T11:32:12.032592"
     }
   ]
 }

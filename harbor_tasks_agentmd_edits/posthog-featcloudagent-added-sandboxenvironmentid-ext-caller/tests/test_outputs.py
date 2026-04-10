@@ -7,7 +7,9 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import ast
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/posthog"
@@ -76,18 +78,16 @@ def test_repo_python_syntax():
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
+# All tests MUST use subprocess.run() to execute code per requirements
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
 def test_create_and_run_accepts_sandbox_env_id():
     """create_and_run must accept sandbox_environment_id keyword argument."""
-    result = subprocess.run(
-        [
-            "python3",
-            "-c",
-            """
-import ast, sys
+    code = """
+import ast
+import sys
 src = open("products/tasks/backend/models.py").read()
 tree = ast.parse(src)
 for node in ast.walk(tree):
@@ -107,8 +107,9 @@ for node in ast.walk(tree):
         sys.exit(0)
 print("FAIL: create_and_run not found", file=sys.stderr)
 sys.exit(1)
-""",
-        ],
+"""
+    result = subprocess.run(
+        ["python3", "-c", code],
         capture_output=True,
         text=True,
         cwd=REPO,
@@ -121,28 +122,66 @@ sys.exit(1)
 # [pr_diff] fail_to_pass
 def test_invalid_sandbox_env_id_raises_valueerror():
     """create_and_run must validate sandbox_environment_id and raise ValueError if invalid."""
-    source = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
-    assert "SandboxEnvironment.objects.filter" in source, (
-        "Must look up SandboxEnvironment via objects.filter"
+    code = """
+import sys
+src = open("products/tasks/backend/models.py").read()
+
+# Check for the lookup pattern
+if "SandboxEnvironment.objects.filter" not in src:
+    print("FAIL: Must look up SandboxEnvironment via objects.filter", file=sys.stderr)
+    sys.exit(1)
+
+# Check for ValueError with descriptive message  
+if "Invalid sandbox_environment_id" not in src:
+    print("FAIL: Must raise ValueError with descriptive message", file=sys.stderr)
+    sys.exit(1)
+
+# Check variable assignment
+if "sandbox_env" not in src:
+    print("FAIL: Must assign lookup result to sandbox_env variable", file=sys.stderr)
+    sys.exit(1)
+
+print("OK")
+"""
+    result = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30,
     )
-    assert "Invalid sandbox_environment_id" in source, (
-        "Must raise ValueError with descriptive message for invalid sandbox_environment_id"
-    )
-    assert "sandbox_env" in source, (
-        "Must assign lookup result to sandbox_env variable"
-    )
+    assert result.returncode == 0, f"Validation check failed:\n{result.stderr}"
+    assert "OK" in result.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_sandbox_env_id_stored_in_extra_state():
     """sandbox_environment_id must be stored in extra_state dict when a valid env is provided."""
-    source = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
-    assert 'extra_state["sandbox_environment_id"]' in source or "extra_state['sandbox_environment_id']" in source, (
-        "Must store sandbox_environment_id in extra_state dict"
+    code = """
+import sys
+src = open("products/tasks/backend/models.py").read()
+
+# Check for storing in extra_state
+if '"sandbox_environment_id"' not in src and "'sandbox_environment_id'" not in src:
+    print("FAIL: Must store sandbox_environment_id in extra_state dict", file=sys.stderr)
+    sys.exit(1)
+
+# Check for str() conversion
+if "str(sandbox_env.id)" not in src:
+    print("FAIL: Must store the string representation of sandbox_env.id", file=sys.stderr)
+    sys.exit(1)
+
+print("OK")
+"""
+    result = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30,
     )
-    assert "str(sandbox_env.id)" in source, (
-        "Must store the string representation of sandbox_env.id"
-    )
+    assert result.returncode == 0, f"Extra state check failed:\n{result.stderr}"
+    assert "OK" in result.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -153,14 +192,31 @@ def test_sandbox_env_id_stored_in_extra_state():
 # [agent_config] fail_to_pass — AGENTS.md:87 @ a65a8fd19c2bed0c06c111f1d65b0deb87f31313
 def test_team_filter_in_sandbox_lookup():
     """SandboxEnvironment lookup must filter by team (AGENTS.md: always filter querysets by team_id)."""
-    source = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
-    assert "SandboxEnvironment.objects.filter" in source, (
-        "Must use SandboxEnvironment.objects.filter for lookup"
+    code = """
+import sys
+src = open("products/tasks/backend/models.py").read()
+
+# Check for filter usage
+if "SandboxEnvironment.objects.filter" not in src:
+    print("FAIL: Must use SandboxEnvironment.objects.filter for lookup", file=sys.stderr)
+    sys.exit(1)
+
+# Verify team filter is present
+if "team=team" not in src:
+    print("FAIL: SandboxEnvironment filter must include team=team per AGENTS.md rule", file=sys.stderr)
+    sys.exit(1)
+
+print("OK")
+"""
+    result = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30,
     )
-    # Verify team filter is present in the same filter call
-    assert "team=team" in source, (
-        "SandboxEnvironment filter must include team=team per AGENTS.md rule"
-    )
+    assert result.returncode == 0, f"Team filter check failed:\n{result.stderr}"
+    assert "OK" in result.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -209,8 +265,6 @@ def test_docs_include_usage_example():
 # [static] pass_to_pass
 def test_not_stub():
     """create_and_run has real sandbox_environment_id validation logic, not just a parameter."""
-    import ast
-
     src = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
     tree = ast.parse(src)
     for node in ast.walk(tree):
@@ -232,6 +286,33 @@ def test_not_stub():
 
 
 # [repo_tests] pass_to_pass
+# Ruff format check - verifies code formatting follows repo standards
+def test_repo_ruff_format():
+    """Ruff format check passes on products/tasks/backend directory (pass_to_pass)."""
+    import pytest
+
+    # Check if ruff is available, install if not
+    r = subprocess.run(
+        ["python3", "-c", "import ruff"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    if r.returncode != 0:
+        r = subprocess.run(
+            ["pip", "install", "-q", "ruff"],
+            capture_output=True, text=True, cwd=REPO, timeout=120,
+        )
+        if r.returncode != 0:
+            pytest.skip("Could not install ruff")
+
+    # Run ruff format check on modified file and related files
+    r = subprocess.run(
+        ["ruff", "format", "--check", "products/tasks/backend/models.py", "products/tasks/backend/constants.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
 # Import check for modified module
 def test_repo_imports():
     """Modified module can be imported without errors (pass_to_pass)."""
@@ -242,8 +323,8 @@ def test_repo_imports():
         capture_output=True, text=True, cwd=REPO, timeout=30,
     )
     # Note: This may fail due to Django setup issues, but we check if the syntax is valid
-    # If it fails with ImportError/ModuleNotFoundError for Django deps, that's expected
-    # If it fails with SyntaxError, that's a real problem
+    # If it fails with ImportError/ModuleNotFoundError for Django deps, that is expected
+    # If it fails with SyntaxError, that is a real problem
     if r.returncode != 0:
         # Only fail on syntax errors, not dependency issues
         if "SyntaxError" in r.stderr or "IndentationError" in r.stderr:
@@ -256,8 +337,6 @@ def test_repo_imports():
 # AST validation for Python file
 def test_repo_ast_valid():
     """Modified Python file has valid AST structure (pass_to_pass)."""
-    import ast
-
     src = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
     try:
         ast.parse(src)
@@ -266,9 +345,9 @@ def test_repo_ast_valid():
 
 
 # [repo_tests] pass_to_pass
-# Check that the file doesn't contain obvious errors
+# Check that the file does not contain obvious errors
 def test_repo_no_obvious_errors():
-    """Modified file doesn't contain obvious syntax patterns that indicate errors (pass_to_pass)."""
+    """Modified file does not contain obvious syntax patterns that indicate errors (pass_to_pass)."""
     src = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
 
     # Check for common error patterns
@@ -281,14 +360,32 @@ def test_repo_no_obvious_errors():
 
     for pattern in error_patterns:
         # Allow these in comments but not in actual code
-        lines = src.split('\n')
+        lines = src.split("\n")
         for i, line in enumerate(lines, 1):
-            if pattern in line and not line.strip().startswith('#'):
+            if pattern in line and not line.strip().startswith("#"):
                 # In actual code (not comment)
                 if pattern == "raise NotImplementedError":
                     assert False, f"Line {i} contains NotImplementedError - feature not implemented"
 
     # Check for balanced parentheses and quotes (basic)
     # This is a simple heuristic - real syntax check is done by py_compile
-    assert src.count('(') >= src.count(')'), "Unbalanced parentheses (more closing)"
-    assert src.count(')') >= src.count('('), "Unbalanced parentheses (more opening)"
+    assert src.count("(") >= src.count(")"), "Unbalanced parentheses (more closing)"
+    assert src.count(")") >= src.count("("), "Unbalanced parentheses (more opening)"
+
+
+# [repo_tests] pass_to_pass
+# Verify that constants used by the modified code exist and are importable
+def test_repo_constants_importable():
+    """DEFAULT_TRUSTED_DOMAINS constant is importable from constants module (pass_to_pass)."""
+    import pytest
+
+    r = subprocess.run(
+        ["python3", "-c", "from products.tasks.backend.constants import DEFAULT_TRUSTED_DOMAINS; print('OK')"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    if r.returncode != 0:
+        # Skip if Django not available, but fail on syntax errors
+        if "SyntaxError" in r.stderr or "IndentationError" in r.stderr:
+            assert False, f"Syntax error in constants module:\n{r.stderr}"
+        pytest.skip("Django dependencies not available (expected in container environment)")
+    assert "OK" in r.stdout, "Failed to import DEFAULT_TRUSTED_DOMAINS"

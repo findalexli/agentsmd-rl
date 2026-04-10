@@ -25,7 +25,7 @@ SKILL_MD = Path(REPO) / "packages/playwright/src/mcp/terminal/SKILL.md"
 
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute a JavaScript snippet via Node in the repo directory."""
-    tmp = Path(REPO) / "_eval_tmp.mjs"
+    tmp = Path(REPO) / "_eval_tmp.cjs"  # Use .cjs for CommonJS mode
     tmp.write_text(script)
     try:
         return subprocess.run(
@@ -48,6 +48,74 @@ def test_syntax_check():
         assert len(content) > 200, f"{ts_file.name}: file too short"
         assert content.count("{") == content.count("}"), \
             f"Unbalanced braces in {ts_file.name}"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — Repo CI tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo workspace packages are consistent (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ts_syntax():
+    """Modified TypeScript files have valid syntax (balanced braces/parens) (pass_to_pass)."""
+    script = """
+const fs = require('fs');
+const files = [
+  'packages/playwright/src/mcp/terminal/command.ts',
+  'packages/playwright/src/mcp/terminal/commands.ts',
+  'packages/playwright/src/mcp/terminal/helpGenerator.ts',
+  'packages/playwright/src/mcp/terminal/program.ts',
+  'packages/playwright/src/mcp/browser/config.ts'
+];
+let allOk = true;
+for (const f of files) {
+  const src = fs.readFileSync(f, 'utf8');
+  const open = (src.match(/\\{/g) || []).length;
+  const close = (src.match(/\\}/g) || []).length;
+  const openParen = (src.match(/\\(/g) || []).length;
+  const closeParen = (src.match(/\\)/g) || []).length;
+  if (open !== close || openParen !== closeParen) {
+    console.log('FAIL: ' + f + ' braces: ' + open + '/' + close + ', parens: ' + openParen + '/' + closeParen);
+    allOk = false;
+  }
+}
+process.exit(allOk ? 0 : 1);
+"""
+    tmp = Path(REPO) / "_syntax_check.cjs"  # Use .cjs for CommonJS mode
+    tmp.write_text(script)
+    try:
+        r = subprocess.run(
+            ["node", str(tmp)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stdout}\n{r.stderr}"
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """package.json files are valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('OK');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Root package.json invalid:\n{r.stderr}"
+
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('packages/playwright/package.json', 'utf8')); console.log('OK');"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Playwright package.json invalid:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

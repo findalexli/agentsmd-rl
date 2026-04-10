@@ -26,7 +26,29 @@ def test_poll_sh_syntax():
         ["bash", "-n", str(script)],
         capture_output=True, text=True, timeout=10,
     )
-    assert r.returncode == 0, f"Syntax error in poll.sh:\n{r.stderr}"
+    assert r.returncode == 0, f"Syntax error in poll.sh:\\n{r.stderr}"
+
+
+# [static] pass_to_pass
+def test_skill_yaml_frontmatter():
+    """SKILL.md must have valid YAML frontmatter with required fields (pass_to_pass)."""
+    # Install pyyaml if not available
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "pyyaml"],
+        capture_output=True, timeout=60,
+    )
+    import yaml
+    content = (Path(REPO) / ".claude/skills/copilot/SKILL.md").read_text()
+    assert content.startswith("---"), "SKILL.md missing YAML frontmatter start"
+    parts = content.split("---", 2)
+    assert len(parts) >= 3, "SKILL.md frontmatter not properly closed"
+    frontmatter = parts[1]
+    data = yaml.safe_load(frontmatter)
+    assert isinstance(data, dict), "SKILL.md frontmatter is not a valid YAML mapping"
+    assert "name" in data, "SKILL.md missing 'name' field"
+    assert "description" in data, "SKILL.md missing 'description' field"
+    assert "allowed-tools" in data, "SKILL.md missing 'allowed-tools' field"
+    assert isinstance(data["allowed-tools"], list), "SKILL.md 'allowed-tools' is not a list"
 
 
 # ---------------------------------------------------------------------------
@@ -46,7 +68,7 @@ def test_copilot_skill_ruff():
         [sys.executable, "-m", "ruff", "check", "--output-format=concise", str(skill_dir)],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Ruff check failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -68,6 +90,22 @@ def test_copilot_files_exist():
     assert "#!/usr/bin/env bash" in poll_content, "poll.sh missing shebang"
     assert "set -euo pipefail" in poll_content, "poll.sh missing set options"
     assert "name: copilot" in skill_content, "SKILL.md missing name"
+
+
+# [repo_tests] pass_to_pass
+def test_poll_sh_shellcheck():
+    """poll.sh passes shellcheck linting (pass_to_pass)."""
+    # Install shellcheck if not available
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "shellcheck-py"],
+        capture_output=True, timeout=60,
+    )
+    poll_sh = Path(REPO) / ".claude/skills/copilot/poll.sh"
+    r = subprocess.run(
+        ["shellcheck", str(poll_sh)],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"shellcheck failed:\\n{r.stdout[-500:]}\\n{r.stderr[-500:]}"
 
 
 # [static] pass_to_pass

@@ -27,7 +27,7 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — XML well-formedness
+# Gates (pass_to_pass, static) - XML well-formedness
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -46,7 +46,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code changes, verified via subprocess
+# Fail-to-pass (pr_diff) - code changes, verified via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -263,7 +263,7 @@ print("PASS")
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
+# Pass-to-pass (static) - anti-stub
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -287,12 +287,12 @@ def test_status_bar_still_applies_insets():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD validation
+# Pass-to-pass (static) - file validation
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_kotlin_files_valid():
-    """Modified Kotlin files must have valid syntax (pass_to_pass)."""
+    """Modified Kotlin files must have valid syntax (balanced braces/parens, package declarations)."""
     kotlin_files = [
         "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/experience/splashscreen/legacy/singletons/SplashScreen.kt",
         "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/experience/splashscreen/legacy/singletons/SplashScreenStatusBar.kt",
@@ -316,9 +316,9 @@ def test_kotlin_files_valid():
         assert open_parens == close_parens, f"{rel}: unbalanced parentheses ({open_parens} vs {close_parens})"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_splash_screen_kt_structure():
-    """SplashScreen.kt must have required object structure (pass_to_pass)."""
+    """SplashScreen.kt must have required object structure."""
     splash_kt = Path(REPO) / (
         "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
         "experience/splashscreen/legacy/singletons/SplashScreen.kt"
@@ -331,9 +331,9 @@ def test_splash_screen_kt_structure():
     assert "SingletonModule" in content, "Missing SingletonModule interface"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_splash_screen_status_bar_kt_structure():
-    """SplashScreenStatusBar.kt must have required object structure (pass_to_pass)."""
+    """SplashScreenStatusBar.kt must have required object structure."""
     status_bar_kt = Path(REPO) / (
         "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
         "experience/splashscreen/legacy/singletons/SplashScreenStatusBar.kt"
@@ -343,3 +343,17 @@ def test_splash_screen_status_bar_kt_structure():
     assert "object SplashScreenStatusBar" in content, "Missing SplashScreenStatusBar object declaration"
     assert "import android.app.Activity" in content, "Missing Activity import"
     assert "import androidx.core.view.ViewCompat" in content, "Missing ViewCompat import"
+
+
+# [static] pass_to_pass
+def test_experience_activity_utils_structure():
+    """ExperienceActivityUtils.kt must have setTranslucent function."""
+    utils_kt = Path(REPO) / (
+        "apps/expo-go/android/expoview/src/main/java/host/exp/exponent/"
+        "utils/ExperienceActivityUtils.kt"
+    )
+    content = utils_kt.read_text()
+    # Check for required structure
+    assert "object ExperienceActivityUtils" in content, "Missing ExperienceActivityUtils object declaration"
+    assert "fun setTranslucent(" in content, "Missing setTranslucent function"
+    assert "@UiThread" in content, "Missing @UiThread annotation"

@@ -27,6 +27,26 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script.unlink(missing_ok=True)
 
 
+def _ensure_pnpm_and_deps() -> None:
+    """Ensure pnpm is installed globally and dependencies are installed."""
+    # Check if pnpm is available
+    result = subprocess.run(
+        ["which", "pnpm"],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        subprocess.run(
+            ["npm", "install", "-g", "pnpm@10.32.1"],
+            capture_output=True, text=True, check=True
+        )
+    # Check if node_modules exists in repo
+    if not (REPO / "node_modules").exists():
+        subprocess.run(
+            ["pnpm", "install", "--frozen-lockfile"],
+            capture_output=True, text=True, timeout=300, cwd=str(REPO), check=True
+        )
+
+
 # ---------------------------------------------------------------------------
 # pass_to_pass / static
 # ---------------------------------------------------------------------------
@@ -51,38 +71,72 @@ def test_files_exist_and_nonempty():
 
 def test_repo_typecheck():
     """Repo TypeScript typecheck passes (pass_to_pass)."""
+    _ensure_pnpm_and_deps()
     r = subprocess.run(
         ["pnpm", "typecheck"],
-        capture_output=True, text=True, timeout=180, cwd=str(REPO),
+        capture_output=True, text=True, timeout=300, cwd=str(REPO),
     )
     assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
 
 
 def test_repo_lint():
     """Repo ESLint passes (pass_to_pass)."""
+    _ensure_pnpm_and_deps()
     r = subprocess.run(
         ["pnpm", "lint"],
-        capture_output=True, text=True, timeout=120, cwd=str(REPO),
+        capture_output=True, text=True, timeout=180, cwd=str(REPO),
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
 
 
 def test_repo_format():
     """Repo Prettier format check passes (pass_to_pass)."""
+    _ensure_pnpm_and_deps()
     r = subprocess.run(
         ["pnpm", "format:check"],
-        capture_output=True, text=True, timeout=60, cwd=str(REPO),
+        capture_output=True, text=True, timeout=120, cwd=str(REPO),
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
 
 
 def test_repo_bookstore_tests():
     """Bookstore demo tests pass (pass_to_pass)."""
+    _ensure_pnpm_and_deps()
     r = subprocess.run(
         ["pnpm", "test"],
-        capture_output=True, text=True, timeout=120, cwd=str(DEMO),
+        capture_output=True, text=True, timeout=180, cwd=str(DEMO),
     )
     assert r.returncode == 0, f"Bookstore tests failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
+def test_repo_bookstore_handler_tests():
+    """Bookstore handler tests (books, cart) pass (pass_to_pass)."""
+    _ensure_pnpm_and_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "app/books.test.ts", "app/cart.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=str(DEMO),
+    )
+    assert r.returncode == 0, f"Bookstore handler tests failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
+def test_repo_bookstore_auth_tests():
+    """Bookstore auth tests (middleware) pass (pass_to_pass)."""
+    _ensure_pnpm_and_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "app/auth.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=str(DEMO),
+    )
+    assert r.returncode == 0, f"Bookstore auth tests failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
+
+
+def test_repo_bookstore_account_tests():
+    """Bookstore account handler tests pass (pass_to_pass)."""
+    _ensure_pnpm_and_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "app/account.test.ts"],
+        capture_output=True, text=True, timeout=180, cwd=str(DEMO),
+    )
+    assert r.returncode == 0, f"Bookstore account tests failed:\n{r.stderr[-500:] or r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

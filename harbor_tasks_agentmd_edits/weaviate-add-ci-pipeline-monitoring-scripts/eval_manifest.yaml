@@ -44,7 +44,40 @@ checks:
   origin: static
   description: CLAUDE.md preserves existing Build & Run, Testing, Architecture, Code
     Conventions sections
-rubric: []
+- id: repo_go_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Go code compiles successfully with GOTOOLCHAIN=auto go build
+- id: repo_linter_error_groups
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo error groups custom linter passes (tools/linter_error_groups.sh)
+- id: repo_linter_go_routines
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo go routines custom linter passes (tools/linter_go_routines.sh)
+- id: repo_linter_waitgroups
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo waitgroups custom linter passes (tools/linter_waitgroups_done.sh)
+- id: repo_ci_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All CI shell scripts have valid bash syntax
+rubric:
+- rule: When adding the new CI / Pipeline Monitoring section to CLAUDE.md, it must
+    match the existing format shown in lines 29-60 (using Markdown headers and fenced
+    bash code blocks)
+  source:
+    path: CLAUDE.md
+    lines: 29-60
+    commit: 57d1e03321fd1648889b5c3fae5261cf5a7a0217
+- rule: CLAUDE.md must be updated to include a new 'CI / Pipeline Monitoring' section
+    that documents how to use the monitor_docker.sh and monitor_pr.sh scripts
+  source:
+    path: CLAUDE.md
+    lines: N/A
+    commit: 57d1e03321fd1648889b5c3fae5261cf5a7a0217
 config_edits:
 - path: CLAUDE.md
   tier: 1

@@ -287,4 +287,9 @@ index f37ca8270..2a2265d70 100644
 
 PATCH
 
+
+# Rebuild the snap package to pick up PanResponder type provider
+cd /workspace/react/compiler
+yarn workspace snap build || true
+
 echo "Patch applied successfully."

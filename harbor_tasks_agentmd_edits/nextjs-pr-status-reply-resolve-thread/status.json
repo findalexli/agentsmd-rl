@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:24:02.780211",
-  "total_time": 18730.7,
-  "sandbox_id": "i4x5edbnc50sv046xivsb",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:00:25.978029",
+  "total_time": 1875.25,
+  "sandbox_id": "iou4dsj4126a5w2vzeqvv",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -17,10 +18,10 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 78.73,
+      "time": 342.5,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py: (1) test_subcommand_calls_reply_and_resolve - refactored mock script creation to use Python tempfile instead of inline Node.js template literals with escape issues; (2) test_reply_to_thread_uses_rest_not_graphql_mutation - added comment stripping before checking for mutation name to avoid false positives from explanatory comments. All 4 validation checks pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 100.71
+      "time": 227.33
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.87,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +73,14 @@
       "backend": "fireworks",
       "time": 18730.7,
       "at": "2026-04-09T14:24:02.780211"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1875.25,
+      "at": "2026-04-10T12:00:25.978029"
     }
   ]
 }

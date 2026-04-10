@@ -1,20 +1,24 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:15:39.513007",
-  "total_time": 5873.41,
-  "sandbox_id": "i6nl1dyi64ov0n5sy5cex",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:31:25.600613",
+  "total_time": 1048.58,
+  "sandbox_id": "iyhqv8syutn7b0h6t8ots",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
+      "notes": "Added 3 new p2p repo_tests: test_repo_profiling_importable, test_repo_profiling_has_trace_functions, test_repo_no_syntax_errors. All p2p tests pass at base commit."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 169.64,
+      "time": 296.8,
       "notes": ""
     },
     "improve": {
@@ -24,22 +28,32 @@
       "time": 0,
       "notes": "tests look good"
     },
-    "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 250.69,
-      "notes": ""
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK, NOP test reward=0 (expected - fail-to-pass tests correctly fail on buggy code), Gold test reward=1 (all 17 tests pass after patch), Rubric judge returns 0.5 (default fallback without API keys, not a failure).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 80.91
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.29,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5873.41,
-      "at": "2026-04-09T07:15:39.513007"
+      "time": 1048.58,
+      "at": "2026-04-10T11:31:25.600613"
     }
   ]
 }

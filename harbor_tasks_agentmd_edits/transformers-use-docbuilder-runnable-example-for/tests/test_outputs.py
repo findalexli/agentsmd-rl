@@ -70,6 +70,58 @@ def test_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr or r.stdout}"
 
 
+# [repo_tests] pass_to_pass
+def test_check_inits():
+    """Repo's __init__.py files are valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_inits failed:\n{r.stderr or r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_doctest_list():
+    """Repo's doctest list is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_doctest_list failed:\n{r.stderr or r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_dummies():
+    """Repo's dummy objects are valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_dummies failed:\n{r.stderr or r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_doc_toc():
+    """Repo's documentation TOC is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_doc_toc failed:\n{r.stderr or r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests: setup.py / dependency
 # ---------------------------------------------------------------------------

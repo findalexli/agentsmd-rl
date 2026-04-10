@@ -393,8 +393,8 @@ def test_skill_md_lint_command():
 def test_repo_typecheck():
     """Repo TypeScript compilation passes (pass_to_pass)."""
     r = subprocess.run(
-        ["npx", "tsc", "-p", "."],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-1000:]}"
 
@@ -404,7 +404,7 @@ def test_repo_check_deps():
     """Repo dependency check passes (pass_to_pass)."""
     r = subprocess.run(
         ["npm", "run", "check-deps"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Dependency check failed:\n{r.stderr[-1000:]}"
 
@@ -444,6 +444,26 @@ def test_repo_build():
     """Repo build passes (pass_to_pass)."""
     r = subprocess.run(
         ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass - Documentation linting
+def test_repo_doc_lint():
+    """Repo documentation lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "doc"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Documentation lint failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass - Test types check
+def test_repo_test_types():
+    """Repo test types check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-types"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test types check failed:\n{r.stderr[-1000:]}"

@@ -76,6 +76,59 @@ def test_skill_md_structure():
     assert "version:" in frontmatter, "SKILL.md frontmatter must have 'version:'"
 
 
+# [repo_tests] pass_to_pass
+def test_skill_md_yaml_valid():
+    """SKILL.md YAML frontmatter must be parseable (pass_to_pass gate)."""
+    # Install pyyaml first, then parse YAML
+    r = subprocess.run(
+        ["bash", "-c",
+         "pip3 install pyyaml -q 2>/dev/null && python3 -c \"" +
+         "import yaml; f=open('" + str(SKILL_MD) + "'); c=f.read(); " +
+         "fm=c.split('---')[1] if c.startswith('---') else ''; " +
+         "d=yaml.safe_load(fm); " +
+         "assert 'name' in d and 'description' in d, 'Missing required fields'\""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML parsing failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_init_script_syntax():
+    """init-triage-session.ps1 must have valid PowerShell syntax (pass_to_pass gate)."""
+    r = subprocess.run(
+        ["pwsh", "-Command",
+         "$e=$null; $t=$null; [System.Management.Automation.Language.Parser]::ParseFile('" +
+         str(INIT_SCRIPT) + "', [ref]$t, [ref]$e); exit ($e ? 1 : 0)"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"PowerShell syntax error in init-triage-session.ps1: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_query_script_syntax():
+    """query-issues.ps1 must have valid PowerShell syntax (pass_to_pass gate)."""
+    r = subprocess.run(
+        ["pwsh", "-Command",
+         "$e=$null; $t=$null; [System.Management.Automation.Language.Parser]::ParseFile('" +
+         str(QUERY_SCRIPT) + "', [ref]$t, [ref]$e); exit ($e ? 1 : 0)"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"PowerShell syntax error in query-issues.ps1: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_record_script_syntax():
+    """record-triage.ps1 must have valid PowerShell syntax (pass_to_pass gate)."""
+    r = subprocess.run(
+        ["pwsh", "-Command",
+         "$e=$null; $t=$null; [System.Management.Automation.Language.Parser]::ParseFile('" +
+         str(Path(REPO) / ".github/skills/issue-triage/scripts/record-triage.ps1") +
+         "', [ref]$t, [ref]$e); exit ($e ? 1 : 0)"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"PowerShell syntax error in record-triage.ps1: {r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests with subprocess execution
 # ---------------------------------------------------------------------------

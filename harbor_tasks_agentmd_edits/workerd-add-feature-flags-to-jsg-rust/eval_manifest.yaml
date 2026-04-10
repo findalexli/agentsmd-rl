@@ -9,6 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified Rust files are syntactically valid (balanced delimiters)
+- id: lib_rs_module_declaration
+  type: pass_to_pass
+  origin: static
+  description: lib.rs declares and re-exports feature_flags module
+- id: test_repo_rust_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Rust files have valid syntax
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no trailing whitespace
+- id: test_repo_no_crlf
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files use Unix line endings
+- id: test_repo_jsg_build_bazel_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: jsg BUILD.bazel has valid structure
 - id: feature_flags_module_exists
   type: fail_to_pass
   origin: pr_diff
@@ -61,10 +81,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: feature_flags.rs has real validation logic and unit tests
-- id: lib_rs_module_declaration
-  type: pass_to_pass
-  origin: static
-  description: lib.rs declares and re-exports feature_flags module
 rubric:
 - rule: AGENTS.md feature flags convention should be consistent with existing convention
     formatting (bold key, colon, description)

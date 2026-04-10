@@ -16,6 +16,56 @@ REPO = "/workspace/prime-rl"
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — CI linting / formatting checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    files_to_check = [
+        "src/prime_rl/utils/process.py",
+        "src/prime_rl/entrypoints/inference.py",
+        "src/prime_rl/entrypoints/rl.py",
+        "src/prime_rl/entrypoints/sft.py",
+        "src/prime_rl/orchestrator/env_server/env_server.py",
+        "src/prime_rl/orchestrator/orchestrator.py",
+        "src/prime_rl/trainer/rl/train.py",
+        "src/prime_rl/trainer/sft/train.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml"] + files_to_check,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    files_to_check = [
+        "src/prime_rl/utils/process.py",
+        "src/prime_rl/entrypoints/inference.py",
+        "src/prime_rl/entrypoints/rl.py",
+        "src/prime_rl/entrypoints/sft.py",
+        "src/prime_rl/orchestrator/env_server/env_server.py",
+        "src/prime_rl/orchestrator/orchestrator.py",
+        "src/prime_rl/trainer/rl/train.py",
+        "src/prime_rl/trainer/sft/train.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml"] + files_to_check,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
@@ -77,7 +127,7 @@ def test_set_proc_title_sets_correct_title():
     # Run a subprocess that calls set_proc_title and checks the result
     test_script = """
 import sys
-sys.path.insert(0, '/workspace/prime-rl')
+sys.path.insert(0, '/workspace/prime-rl/src')
 
 from prime_rl.utils.process import set_proc_title
 import setproctitle

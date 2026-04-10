@@ -11,6 +11,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 import json
 import re
@@ -111,6 +112,36 @@ def _get_section(text: str, heading: str, next_heading: str = "## ") -> str | No
     pat = rf"{re.escape(heading)}\s*\n(.*?)(?={re.escape(next_heading)}|\Z)"
     m = re.search(pat, text, re.DOTALL)
     return m.group(1) if m else None
+
+
+def _install_node_and_npm():
+    """Install nodejs and npm via apt-get."""
+    subprocess.run(["apt-get", "update", "-qq"], capture_output=True, text=True, timeout=60)
+    subprocess.run(["apt-get", "install", "-y", "-qq", "nodejs", "npm"],
+                   capture_output=True, text=True, timeout=120)
+    r = subprocess.run(["which", "node"], capture_output=True, text=True)
+    return r.returncode == 0
+
+
+def _install_typescript():
+    """Install TypeScript locally in /tmp."""
+    r = subprocess.run(["npm", "install", "typescript@5.5.4"], cwd="/tmp",
+                       capture_output=True, text=True, timeout=120)
+    return r.returncode == 0
+
+
+def _install_prettier():
+    """Install prettier locally in /tmp."""
+    r = subprocess.run(["npm", "install", "prettier"], cwd="/tmp",
+                       capture_output=True, text=True, timeout=120)
+    return r.returncode == 0
+
+
+def _install_markdownlint():
+    """Install markdownlint-cli locally in /tmp."""
+    r = subprocess.run(["npm", "install", "markdownlint-cli"], cwd="/tmp",
+                       capture_output=True, text=True, timeout=120)
+    return r.returncode == 0
 
 
 # ---------------------------------------------------------------------------
@@ -312,12 +343,21 @@ def test_compile_opts_docs_updated():
         "implicitInputs doc must mention dep outputs / lib*.a invalidation signal"
 
     # orderOnlyInputs must mention codegen or redirect
-    m = re.search(r"orderOnlyInputs.*?(?=\n\s*/\*\*|\n\s*\})", text, re.DOTALL)
+    # Capture the JSDoc comment block before orderOnlyInputs, not just the declaration line
+    m = re.search(r"/\*\*.*?\*/\s*\n\s*orderOnlyInputs\?", text, re.DOTALL)
     if m:
         section = m.group(0)
         assert "codegen" in section.lower() or \
                re.search(r"implicitInputs instead", section), \
             "orderOnlyInputs doc must redirect dep outputs to implicitInputs"
+    else:
+        # Fallback: try capturing the orderOnlyInputs line and context after it
+        m = re.search(r"orderOnlyInputs.*?(?=\n\s*/\*\*|\n\s*\})", text, re.DOTALL)
+        if m:
+            section = m.group(0)
+            assert "codegen" in section.lower() or \
+                   re.search(r"implicitInputs instead", section), \
+                "orderOnlyInputs doc must redirect dep outputs to implicitInputs"
 
 
 def test_not_stub():
@@ -352,47 +392,154 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — repo CI/CD tests
+# Pass-to-pass — repo CI/CD tests (real CI commands via subprocess.run)
 # ---------------------------------------------------------------------------
 
 
+def _install_node_via_apt():
+    """Install nodejs and npm via apt-get."""
+    subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "nodejs", "npm"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(["which", "node"], capture_output=True, text=True)
+    return r.returncode == 0
+
+
 def test_repo_build_scripts_parseable():
-    """Build scripts are syntactically valid TypeScript (pass_to_pass)."""
-    assert _NODE_OK, "Node.js is required for syntax validation"
+    """Build scripts pass TypeScript syntax validation via tsc API (pass_to_pass).
 
-    for ts_file in [BUN_TS, COMPILE_TS]:
-        code = r"""
+    Origin: repo_tests - Runs actual TypeScript compiler parser via subprocess.
+    """
+    # Install node if needed
+    if subprocess.run(["which", "node"], capture_output=True).returncode != 0:
+        assert _install_node_via_apt(), "Failed to install nodejs"
+
+    # Install TypeScript locally (in /tmp so it persists for the test)
+    subprocess.run(
+        ["npm", "install", "--prefix", "/tmp", "typescript@5.5.4"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Run syntax check using TypeScript compiler API via subprocess
+    check_script = """
+const ts = require('typescript');
 const fs = require('fs');
-const text = fs.readFileSync('%s', 'utf8');
+const files = [
+    '/workspace/bun/scripts/build/bun.ts',
+    '/workspace/bun/scripts/build/compile.ts'
+];
+let allOk = true;
+for (const file of files) {
+    const content = fs.readFileSync(file, 'utf8');
+    // Parse only - don't type check (we only care about syntax errors)
+    const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const diagnostics = sourceFile.parseDiagnostics || [];
+    if (diagnostics.length > 0) {
+        console.log(file + ': SYNTAX_ERROR');
+        allOk = false;
+    } else {
+        console.log(file + ': OK');
+    }
+}
+process.exit(allOk ? 0 : 1);
+"""
+    env = os.environ.copy()
+    env["NODE_PATH"] = "/tmp/node_modules"
+    r = subprocess.run(
+        ["node", "-e", check_script],
+        capture_output=True, text=True, timeout=60, cwd=REPO, env=env
+    )
+    assert r.returncode == 0, f"TypeScript syntax check failed:\n{r.stdout}\n{r.stderr}"
 
-// Basic structural validation for TypeScript files
-const checks = {
-    hasImports: /import\s*\{/.test(text) || /import\s+\w+\s+from/.test(text),
-    hasExports: /export\s+(function|const|interface|class|type)/.test(text),
-    balancedBraces: (text.match(/\{/g) || []).length === (text.match(/\}/g) || []).length,
-    balancedParens: (text.match(/\(/g) || []).length === (text.match(/\)/g) || []).length,
-    noUnclosedComments: !/\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\//.test(text.replace(/\/\*[\s\S]*?\*\//g, ''))
-};
 
-console.log(JSON.stringify({pass: Object.values(checks).every(Boolean), checks, file: '%s'}));
-""" % (str(ts_file).replace('\\', '/'), ts_file.name)
+def test_repo_typescript_prettier_check():
+    """Build scripts pass prettier format check (pass_to_pass).
 
-        r = _run_node(code, timeout=30)
-        assert r.returncode == 0, f"Node.js error parsing {ts_file.name}: {r.stderr}"
-        result = json.loads(r.stdout.strip().split('\n')[-1])
-        assert result["pass"], f"{ts_file.name} failed syntax checks: {result.get('checks', {})}"
+    Origin: repo_tests - Matches CI format workflow (format.yml).
+    """
+    # Install node if needed
+    if subprocess.run(["which", "node"], capture_output=True).returncode != 0:
+        assert _install_node_via_apt(), "Failed to install nodejs"
+
+    # Install prettier locally
+    subprocess.run(
+        ["npm", "install", "-g", "prettier"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Check bun.ts with prettier (matching CI command from format.yml)
+    r = subprocess.run(
+        ["prettier", "--check", "--parser", "typescript", "scripts/build/bun.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"bun.ts prettier check failed:\n{r.stderr}"
+
+    # Check compile.ts with prettier
+    r = subprocess.run(
+        ["prettier", "--check", "--parser", "typescript", "scripts/build/compile.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert r.returncode == 0, f"compile.ts prettier check failed:\n{r.stderr}"
 
 
-def test_repo_claude_md_valid():
-    """CLAUDE.md is valid markdown with expected sections (pass_to_pass)."""
-    text = CLAUDE_MD.read_text()
+def test_repo_markdownlint_check():
+    """CLAUDE.md passes markdownlint with MD013 disabled (pass_to_pass).
 
-    # Check for required sections
-    required_sections = ["## Ninja primer", "## Gotchas", "## Iterating"]
-    for section in required_sections:
-        assert section in text, f"CLAUDE.md missing section: {section}"
+    Origin: repo_tests - Runs markdownlint CLI via subprocess.
+    """
+    # Install node if needed
+    if subprocess.run(["which", "node"], capture_output=True).returncode != 0:
+        assert _install_node_via_apt(), "Failed to install nodejs"
 
-    # Check markdown structure
-    assert text.count("#") > 5, "CLAUDE.md should have multiple headings"
-    assert "```" in text, "CLAUDE.md should have code blocks"
-    assert len(text.split('\n')) > 50, "CLAUDE.md should have substantial content"
+    # Install markdownlint-cli locally
+    subprocess.run(
+        ["npm", "install", "-g", "markdownlint-cli"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Create config to disable MD013 (line length rule)
+    config = {"MD013": False}
+    config_path = Path(REPO) / "_markdownlint_config.json"
+    config_path.write_text(json.dumps(config))
+
+    try:
+        # Run markdownlint with config file (more reliable than --disable flag)
+        r = subprocess.run(
+            ["markdownlint", "-c", str(config_path), "scripts/build/CLAUDE.md"],
+            capture_output=True, text=True, timeout=60, cwd=REPO
+        )
+        assert r.returncode == 0, f"CLAUDE.md markdownlint check failed:\n{r.stderr}"
+    finally:
+        config_path.unlink(missing_ok=True)
+
+
+def test_repo_git_tracks_modified_files():
+    """Modified source files are tracked by git and have valid content (pass_to_pass).
+
+    Origin: repo_tests - Uses git commands via subprocess to verify repo state.
+    """
+    # Check files exist
+    for f in [BUN_TS, COMPILE_TS, CLAUDE_MD]:
+        assert f.exists(), f"{f} does not exist"
+        assert f.stat().st_size > 0, f"{f} is empty"
+
+    # Check git status of modified files
+    for rel_path in ["scripts/build/bun.ts", "scripts/build/compile.ts", "scripts/build/CLAUDE.md"]:
+        r = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", rel_path],
+            capture_output=True, text=True, timeout=30, cwd=REPO
+        )
+        assert r.returncode == 0, f"{rel_path} is not tracked by git"
+
+    # Verify files have valid structure (typescript and markdown)
+    r = subprocess.run(
+        ["git", "check-attr", "text", "scripts/build/bun.ts"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    # git check-attr returns 0 even if no attrs set, just verify command works
+    assert r.returncode == 0, "git check-attr failed"

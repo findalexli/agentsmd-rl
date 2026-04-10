@@ -15,6 +15,14 @@ REPO = "/workspace/playwright"
 CHROMIUM_TS = f"{REPO}/packages/playwright-core/src/server/chromium/chromium.ts"
 
 
+def _run_in_repo(cmd: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
+    """Run a command in the repo directory."""
+    return subprocess.run(
+        cmd,
+        capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute a Node.js script in the repo directory."""
     return subprocess.run(
@@ -74,32 +82,38 @@ process.exit(hasLoopback ? 1 : 0);
 
 def _eval_bypass_logic_v2(bypass_value: str) -> subprocess.CompletedProcess:
     """
-    Simplified standalone test of the bypass logic - simulates both implementations.
-    This is more reliable than extracting code and tests the semantic behavior.
+    Simulates the actual chromium.ts proxy bypass logic.
+
+    The real code structure is:
+    1. const proxyBypassRules = [];
+    2. if (options.socksProxyPort) proxyBypassRules.push('<-loopback>');  // not in test path
+    3. if (proxy.bypass) proxyBypassRules.push(...user rules);
+    4. const bypassesLoopback = proxyBypassRules.some(rule => ...);  // THE FIX
+    5. if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !bypassesLoopback)
+         proxyBypassRules.push('<-loopback>');
+
+    The test path doesn't use socksProxyPort, so step 2 is skipped.
     """
     return _run_node(f"""
 const fs = require('fs');
 const src = fs.readFileSync('{CHROMIUM_TS}', 'utf8');
 
-// Check if the fix is present: bypassesLoopback variable
+// Check if the fix is present: bypassesLoopback variable with proper check
 const hasFix = src.includes('const bypassesLoopback') &&
                src.includes("rule === 'localhost'") &&
                src.includes("rule === '127.0.0.1'") &&
                src.includes("rule === '::1'");
 
-// Simulate the proxy bypass logic
+// Simulate the CORRECT proxy bypass logic (matching actual chromium.ts structure)
 function simulateBypassLogic(proxyBypass) {{
   const proxyBypassRules = [];
 
-  // Add the default <-loopback> if env var not set
-  if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK)
-    proxyBypassRules.push('<-loopback>');
-
-  // Add user bypass rules
+  // Step 1: Add user bypass rules (only if proxyBypass is provided)
   if (proxyBypass)
     proxyBypassRules.push(...proxyBypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
 
-  // Check if we should force-add <-loopback>
+  // Step 2: Check if bypasses loopback (THE FIX)
+  // After the fix, this checks for localhost/127.0.0.1/::1 in addition to <-loopback>
   let bypassesLoopback;
   if (hasFix) {{
     // Fixed logic: recognize localhost, 127.0.0.1, ::1 as loopback addresses
@@ -111,7 +125,7 @@ function simulateBypassLogic(proxyBypass) {{
     bypassesLoopback = proxyBypassRules.includes('<-loopback>');
   }}
 
-  // Add <-loopback> if needed
+  // Step 3: Add <-loopback> ONLY if not already bypassing loopback
   if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !bypassesLoopback)
     proxyBypassRules.push('<-loopback>');
 
@@ -146,6 +160,86 @@ if (parens !== 0) {{ console.error('Unbalanced parens: ' + parens); process.exit
 console.log('OK');
 """)
     assert result.returncode == 0, f"Syntax check failed: {result.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - actual CI commands that run in Docker
+# ---------------------------------------------------------------------------
+
+def test_repo_eslint_chromium():
+    """ESLint passes on chromium.ts (pass_to_pass)."""
+    r = _run_in_repo(
+        ["npm", "ci", "--workspaces=false"],
+        timeout=300,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[-500:]}"
+
+    r = _run_in_repo(
+        ["npm", "run", "eslint", "--", "--max-warnings=0", CHROMIUM_TS],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"ESLint failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+
+
+def test_repo_typescript_transpile():
+    """TypeScript transpilation of chromium.ts succeeds (pass_to_pass)."""
+    r = _run_in_repo(
+        ["npm", "ci", "--workspaces=false"],
+        timeout=300,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[-500:]}"
+
+    script = """
+const ts = require('typescript');
+const src = require('fs').readFileSync('packages/playwright-core/src/server/chromium/chromium.ts', 'utf8');
+const result = ts.transpileModule(src, {
+    compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        noEmit: true,
+        target: ts.ScriptTarget.ES2020
+    }
+});
+if (result.diagnostics && result.diagnostics.length > 0) {
+    console.error('TypeScript errors:', result.diagnostics);
+    process.exit(1);
+}
+console.log('TypeScript transpile OK');
+"""
+    r = _run_in_repo(
+        ["node", "-e", script],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"TypeScript transpile failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_generate_channels():
+    """Channel generation script runs successfully (pass_to_pass)."""
+    r = _run_in_repo(
+        ["npm", "ci", "--workspaces=false"],
+        timeout=300,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[-500:]}"
+
+    r = _run_in_repo(
+        ["node", "utils/generate_channels.js"],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"generate_channels failed:\\n{r.stderr[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Workspace package consistency check passes (pass_to_pass)."""
+    r = _run_in_repo(
+        ["npm", "ci", "--workspaces=false"],
+        timeout=300,
+    )
+    assert r.returncode == 0, f"npm ci failed: {r.stderr[-500:]}"
+
+    r = _run_in_repo(
+        ["npm", "run", "lint-packages"],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

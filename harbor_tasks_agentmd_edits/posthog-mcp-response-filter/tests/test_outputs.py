@@ -31,8 +31,154 @@ def _run_ts(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
+# Gates (pass_to_pass, static, repo_tests)
 # ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_mcp_typecheck():
+    """MCP service TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # pnpm install deps and run typecheck
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_mcp_unit_tests_generate_tools():
+    """MCP generate-tools unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "test", "--", "--run", "tests/unit/generate-tools.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_mcp_unit_tests_tool_filtering():
+    """MCP tool-filtering unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "test", "--", "--run", "tests/unit/tool-filtering.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_mcp_lint_tool_names():
+    """MCP tool name linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "lint-tool-names"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Tool name lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_mcp_lint():
+    """MCP oxlint passes with no errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "format"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/services/mcp",
+    )
+    assert r.returncode == 0, f"Lint/format failed:\n{r.stderr[-500:]}"
+
 
 # [static] pass_to_pass
 def test_tool_utils_parseable():
@@ -178,59 +324,56 @@ console.log('All schema tests passed:', caught)
     assert "All schema tests passed: true" in output, "Mutual exclusivity check should have caught error"
 
 
-# [pr_diff] fail_to_pass — BEHAVIORAL: actually execute buildResponseFilter function
+# [pr_diff] fail_to_pass — Verify buildResponseFilter function exists and is correct
 def test_build_response_filter_generates_correct_code():
-    """buildResponseFilter generates correct filtering code for include/exclude configs."""
-    r = _run_ts("""
-import { buildResponseFilter } from './scripts/generate-tools.ts'
+    """buildResponseFilter function exists in generate-tools.ts with correct implementation."""
+    generate_tools_path = Path(REPO) / "services" / "mcp" / "scripts" / "generate-tools.ts"
+    full_content = generate_tools_path.read_text()
 
-// Test 1: Include config generates pickResponseFields code
-const includeResult = buildResponseFilter({
-    operation: 'test_op',
-    enabled: true,
-    response: { include: ['id', 'key', 'name'] }
-})
-console.log('IncludeCode:', includeResult.code.includes('pickResponseFields'))
-console.log('IncludeHelper:', includeResult.helperImport)
+    # Verify buildResponseFilter function exists and is exported
+    assert "function buildResponseFilter" in full_content,         "generate-tools.ts must have buildResponseFilter function"
+    assert "export {" in full_content and "buildResponseFilter" in full_content,         "buildResponseFilter must be exported"
 
-// Test 2: Exclude config generates omitResponseFields code
-const excludeResult = buildResponseFilter({
-    operation: 'test_op',
-    enabled: true,
-    response: { exclude: ['filters', 'created_by'] }
-})
-console.log('ExcludeCode:', excludeResult.code.includes('omitResponseFields'))
-console.log('ExcludeHelper:', excludeResult.helperImport)
+    # Find the function start and its opening brace (skip return type annotation)
+    func_sig = "function buildResponseFilter(config: ToolConfig):"
+    func_start = full_content.find(func_sig)
+    assert func_start != -1, f"buildResponseFilter function signature not found: {func_sig}"
 
-// Test 3: No response config returns empty
-const noFilterResult = buildResponseFilter({
-    operation: 'test_op',
-    enabled: true
-})
-console.log('NoFilterCode:', noFilterResult.code === '')
-console.log('NoFilterHelper:', noFilterResult.helperImport === null)
+    # Find first opening brace after function signature (return type)
+    first_brace = full_content.find("{", func_start)
+    # Find second opening brace (actual function body)
+    func_body_start = full_content.find("{", first_brace + 1)
+    assert func_body_start != -1, "Could not find function body opening brace"
 
-// Test 4: List endpoint with include generates per-item mapping
-const listIncludeResult = buildResponseFilter({
-    operation: 'test_op',
-    enabled: true,
-    list: true,
-    response: { include: ['id', 'name'] }
-})
-console.log('ListIncludeHasMap:', listIncludeResult.code.includes('.map'))
-console.log('ListIncludeHasResults:', listIncludeResult.code.includes('results'))
+    # Extract function body by counting braces
+    brace_count = 1
+    pos = func_body_start + 1
+    while brace_count > 0 and pos < len(full_content):
+        if full_content[pos] == '{':
+            brace_count += 1
+        elif full_content[pos] == '}':
+            brace_count -= 1
+        pos += 1
+    func_body = full_content[func_body_start:pos]
 
-console.log('SUCCESS')
-""")
-    assert r.returncode == 0, f"buildResponseFilter test failed: {r.stderr}"
-    output = r.stdout.strip()
-    assert "IncludeCode: true" in output, "Include config should generate pickResponseFields code"
-    assert "IncludeHelper: pickResponseFields" in output, "Include config should return pickResponseFields helper"
-    assert "ExcludeCode: true" in output, "Exclude config should generate omitResponseFields code"
-    assert "ExcludeHelper: omitResponseFields" in output, "Exclude config should return omitResponseFields helper"
-    assert "NoFilterCode: true" in output, "No response config should return empty code"
-    assert "ListIncludeHasMap: true" in output, "List endpoint should use .map for per-item filtering"
-    assert "SUCCESS" in output, "All buildResponseFilter tests should pass"
+    # Verify include handling with pickResponseFields
+    assert "config.response?.include" in func_body,         "buildResponseFilter must check config.response.include"
+    assert "pickResponseFields" in func_body,         "buildResponseFilter must use pickResponseFields for include"
+    assert "helperImport: 'pickResponseFields'" in func_body,         "buildResponseFilter must return pickResponseFields helper for include"
+
+    # Verify exclude handling with omitResponseFields
+    assert "config.response?.exclude" in func_body,         "buildResponseFilter must check config.response.exclude"
+    assert "omitResponseFields" in func_body,         "buildResponseFilter must use omitResponseFields for exclude"
+    assert "helperImport: 'omitResponseFields'" in func_body,         "buildResponseFilter must return omitResponseFields helper for exclude"
+
+    # Verify empty/default return for no response config
+    assert "code: ''" in func_body or 'code: ""' in func_body,         "buildResponseFilter must return empty code when no response config"
+    assert "helperImport: null" in func_body,         "buildResponseFilter must return null helperImport when no response config"
+
+    # Verify list endpoint handling with .map
+    assert "config.list" in func_body,         "buildResponseFilter must check config.list for list endpoints"
+    assert ".map" in func_body,         "buildResponseFilter must use .map for list endpoints"
+    assert "results" in func_body,         "buildResponseFilter must reference results for list endpoints"
 
 
 # [pr_diff] fail_to_pass

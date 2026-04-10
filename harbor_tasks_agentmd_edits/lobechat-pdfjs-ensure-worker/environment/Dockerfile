@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Clone repo at base commit (blob-less clone for large monorepo)
 RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /workspace/lobe-chat && \
     cd /workspace/lobe-chat && \
@@ -16,6 +19,9 @@ RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /works
     git config user.name "Agent"
 
 WORKDIR /workspace/lobe-chat
+
+# Install npm dependencies using pnpm (needed for linting, testing)
+RUN pnpm install
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

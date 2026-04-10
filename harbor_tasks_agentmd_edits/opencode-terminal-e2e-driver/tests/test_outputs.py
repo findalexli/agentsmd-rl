@@ -140,7 +140,8 @@ def test_terminal_probe_not_stub():
 
     # Count function implementations with actual logic (not just pass/empty)
     # The probe has multiple methods: init, connect, render, settle, focus, step, control, drop
-    assert content.count("set(") >= 3 or "terminals[id]" in content, \
+    # set() is called in init() and focus(); state[id] is used directly in other methods
+    assert content.count("set(") >= 2 or "state[id]" in content, \
         "terminalProbe must have real implementation with state management"
     assert "rendered:" in content and "settled:" in content, \
         "TerminalProbeState must track rendered and settled state"
@@ -156,3 +157,33 @@ def test_run_terminal_not_stub():
     assert "page.keyboard.type" in content, "runTerminal must type via keyboard"
     assert "page.keyboard.press" in content and "Enter" in content, "runTerminal must press Enter"
     assert "terminalHas" in content or "poll" in content, "runTerminal must poll for output"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks from the repository
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (bun typecheck in packages/app)."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        cwd=f"{REPO}/packages/app",
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit test suite passes (bun test:ci in packages/app)."""
+    r = subprocess.run(
+        ["bun", "test:ci"],
+        cwd=f"{REPO}/packages/app",
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

@@ -262,3 +262,37 @@ def test_finish_reason_queued_interrupt_defined():
     content = event_path.read_text()
     assert "queued_message_interrupt" in content, \
         "Event types must define queued_message_interrupt finish reason"
+
+
+def test_repo_eslint_operation_slice():
+    """Repo's ESLint passes on operation slice directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+set -e
+export PATH="/root/.bun/bin:$PATH"
+apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+curl -fsSL https://bun.sh/install | bash 2>&1 | tail -3
+cd /workspace/lobe-chat
+timeout 180 bun install --frozen-lockfile 2>&1 | tail -3
+timeout 30 bunx eslint src/store/chat/slices/operation/ --quiet 2>&1
+"""],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+def test_repo_eslint_chat_input():
+    """Repo's ESLint passes on ChatInput component (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+set -e
+export PATH="/root/.bun/bin:$PATH"
+apt-get update -qq && apt-get install -y -qq unzip 2>/dev/null
+curl -fsSL https://bun.sh/install | bash 2>&1 | tail -3
+cd /workspace/lobe-chat
+timeout 180 bun install --frozen-lockfile 2>&1 | tail -3
+timeout 30 bunx eslint src/features/Conversation/ChatInput/ --quiet 2>&1
+"""],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

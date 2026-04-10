@@ -127,6 +127,38 @@ def test_no_std_debug_assert():
         )
 
 
+# [repo_ci] pass_to_pass — validate file structure and basic formatting
+def test_zig_file_structure():
+    """Modified Zig files must have valid structure (valid UTF-8, no tabs, proper line endings)."""
+    modified_files = [
+        WATCHER_ZIG,
+        HOT_RELOADER_ZIG,
+        VM_ZIG,
+        FS_ZIG,
+        SYS_ZIG,
+        Path(REPO) / "src" / "bun.js.zig",
+        Path(REPO) / "src" / "bundler" / "bundle_v2.zig",
+        Path(REPO) / "src" / "cli" / "test_command.zig",
+    ]
+    
+    for filepath in modified_files:
+        # File must exist and be readable
+        assert filepath.exists(), f"{filepath.name} does not exist"
+        
+        # Read as bytes to check for tabs and null bytes
+        raw = filepath.read_bytes()
+        
+        # No null bytes (indicates binary corruption)
+        assert b'\x00' not in raw, f"{filepath.name} contains null bytes"
+        
+        # No tabs (Zig convention uses spaces)
+        assert b'\t' not in raw, f"{filepath.name} contains tab characters - use spaces"
+        
+        # Must end with newline (POSIX standard)
+        if len(raw) > 0:
+            assert raw.endswith(b'\n'), f"{filepath.name} must end with a newline"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

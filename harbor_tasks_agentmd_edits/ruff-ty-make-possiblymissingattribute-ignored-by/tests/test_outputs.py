@@ -186,3 +186,50 @@ def test_agents_md_generate_all_instruction():
     content = (Path(REPO) / "AGENTS.md").read_text()
     assert "cargo dev generate-all" in content, \
         "AGENTS.md should instruct running cargo dev generate-all after lint rule changes"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD commands that actually run
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_cargo_fmt_check():
+    """Repo code passes cargo fmt --all --check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_ty():
+    """ty_python_semantic compiles with cargo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_python_semantic"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+        env={**subprocess.os.environ, "LIBCLANG_PATH": "/usr/lib/x86_64-linux-gnu"},
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_clippy_ty():
+    """ty_python_semantic passes cargo clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "ty_python_semantic", "--all-targets", "--all-features", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+        env={**subprocess.os.environ, "LIBCLANG_PATH": "/usr/lib/x86_64-linux-gnu"},
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_mdtest_ty():
+    """ty_python_semantic mdtests pass - covers type checking rules including possibly-missing-attribute (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--test", "mdtest"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+        env={**subprocess.os.environ, "LIBCLANG_PATH": "/usr/lib/x86_64-linux-gnu"},
+    )
+    assert r.returncode == 0, f"cargo test mdtest failed:\n{r.stderr[-500:]}"

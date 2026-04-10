@@ -32,6 +32,47 @@ def test_syntax_check():
     ast.parse(source, filename=str(init_file))
 
 
+# [repo_tests] pass_to_pass
+def test_repo_introspection():
+    """Repo's introspection unit test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "src/pyodide/internal/test_introspection.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Introspection test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyodide_syntax():
+    """All pyodide Python files compile without syntax errors (pass_to_pass)."""
+    pyodide_dir = Path(REPO) / "src/pyodide"
+    py_files = [
+        "create_vendor_zip.py",
+        "make_snapshots.py",
+        "tool_utils.py",
+        "upload_bundles.py",
+        "internal/introspection.py",
+        "internal/test_introspection.py",
+        "internal/workers-api/src/asgi.py",
+        "internal/workers-api/src/workers/__init__.py",
+        "internal/workers-api/src/workers/_workers.py",
+        "internal/workers-api/src/workers/workflows.py",
+    ]
+    for rel_path in py_files:
+        file_path = pyodide_dir / rel_path
+        if file_path.exists():
+            r = subprocess.run(
+                ["python3", "-m", "py_compile", str(file_path)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            assert r.returncode == 0, f"Syntax error in {rel_path}:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

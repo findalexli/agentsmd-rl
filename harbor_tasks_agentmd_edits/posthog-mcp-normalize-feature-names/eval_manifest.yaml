@@ -11,6 +11,21 @@ checks:
     origin: static
     description: JSON schema files must be valid JSON
 
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo MCP unit tests pass - 247 tests covering all MCP functionality
+
+  - id: test_repo_tool_filtering_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo tool-filtering unit tests pass - 37 tests specifically for feature filtering
+
+  - id: test_repo_lint_tool_names
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo lint-tool-names check passes
+
   - id: schema_feature_names_use_underscores
     type: fail_to_pass
     origin: agent_config
@@ -40,14 +55,3 @@ checks:
     origin: static
     description: Tool definitions have required fields (feature, category, description)
 
-rubric:
-  - rule: Feature names in YAML/JSON tool definitions should use snake_case_name matching the product folder name
-    source:
-      path: .agents/skills/implementing-mcp-tools/SKILL.md
-      lines: "84"
-      commit: 283294a8e1c595e5762fa55a8d18b844c4667f2c
-  - rule: README documentation should be consistent with the style of existing documentation sections
-    source:
-      path: services/mcp/README.md
-      lines: "258-280"
-      commit: 283294a8e1c595e5762fa55a8d18b844c4667f2c

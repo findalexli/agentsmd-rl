@@ -13,6 +13,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: program.ts install function has real logic, not stubs
+- id: test_repo_typescript_syntax_program_ts
+  type: pass_to_pass
+  origin: repo_tests
+  description: program.ts has valid TypeScript syntax
+- id: test_repo_typescript_syntax_cli_misc
+  type: pass_to_pass
+  origin: repo_tests
+  description: cli-misc.spec.ts has valid TypeScript syntax
+- id: test_repo_workspace_consistent
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace packages are consistent
+- id: test_repo_eslint_modified_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified program.ts
 - id: console_output_emoji_format
   type: fail_to_pass
   origin: pr_diff
@@ -44,8 +60,8 @@ rubric:
     path: packages/playwright/src/skill/SKILL.md
     lines: 1-20
     commit: 0f542ecb2d37ec5bcf4e987d20ac379ccdba9033
-- rule: Console output formatting (emoji + backticks) is consistent across all messages
-    in the install flow
+- rule: Console output formatting uses emoji status prefixes (✅ for success, ❌ for
+    errors) and wraps paths in backticks where appropriate
   source:
     path: packages/playwright/src/mcp/terminal/program.ts
     lines: 573-640

@@ -1,38 +1,104 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:23:27.709711",
-  "total_time": 5924.24,
-  "sandbox_id": "im4lzy9p39ox7wxoy2kfm",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:22:26.114167",
+  "total_time": 4109.3,
+  "sandbox_id": "ijqkvb151wxbpq138o4kg",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.5,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 418.64,
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1779.9,
       "notes": ""
     },
-    "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 424.38,
-      "notes": ""
+    "p2p_enrichment_v2": {
+      "status": "completed",
+      "ci_commands_found": [
+        "npm install (frontend)",
+        "npm run type:check (frontend)",
+        "npm run lint (frontend)",
+        "npm run test:unit (backend - requires DB)",
+        "npm run test:e2e (backend - requires DB)"
+      ],
+      "ci_commands_added": [
+        "test_repo_frontend_typecheck - runs npm run type:check in frontend/",
+        "test_repo_frontend_lint - runs npm run lint in frontend/"
+      ],
+      "ci_commands_skipped": [
+        "Backend tests - require postgres/redis containers",
+        "Backend lint/typecheck - requires native build deps (make, python)",
+        "npm version check - container has npm 10.9.7, not 11.10.0"
+      ]
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "backend/CLAUDE.md",
+        "frontend/CLAUDE.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 0,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 84.45
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 20.29,
+      "notes": "",
+      "precision": 0.5
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 30.85,
+      "notes": "precision was 0.50, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile to add pytest and pytest-json-ctrf. Fixed solve.sh to use sed/node instead of corrupt patch.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1488.61
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 10.07,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 5924.24,
-      "at": "2026-04-09T07:23:27.709711"
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4109.3,
+      "at": "2026-04-10T12:22:26.114167"
     }
   ]
 }

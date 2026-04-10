@@ -33,6 +33,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Git repo has no uncommitted changes on base commit
+- id: test_repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts pass shellcheck validation
+- id: test_repo_terraform_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Terraform files have valid structure with proper blocks
+- id: test_repo_terraform_naming
+  type: pass_to_pass
+  origin: repo_tests
+  description: Terraform files follow repository naming conventions
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Terraform files have no trailing whitespace
+- id: test_repo_readme_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: README.md follows repository markdown conventions
 - id: test_prometheus_env_configured
   type: fail_to_pass
   origin: pr_diff
@@ -72,16 +92,27 @@ checks:
     lines: 26-46
     commit: 67c3183913af13afa3c98d219f8882e278cdea0b
 rubric:
-- rule: README observability documentation is consistent with the style of existing
-    sections
+- rule: README observability documentation follows the repository's documentation style
   source:
     path: examples/terraform/envoy-ratelimiter/README.md
     lines: 1-40
     commit: 67c3183913af13afa3c98d219f8882e278cdea0b
-- rule: deploy.sh follows shell script conventions used elsewhere in the repo
+- rule: deploy.sh includes Apache License 2.0 header as required by Apache Beam policy
   source:
     path: .agent/skills/license-compliance/SKILL.md
     lines: 26-46
+    commit: 67c3183913af13afa3c98d219f8882e278cdea0b
+- rule: enable_metrics variable defaults to true for Prometheus metrics export
+  source:
+    path: examples/terraform/envoy-ratelimiter/variables.tf
+    commit: 67c3183913af13afa3c98d219f8882e278cdea0b
+- rule: Prometheus environment variables are configured for native metrics
+  source:
+    path: examples/terraform/envoy-ratelimiter/ratelimit.tf
+    commit: 67c3183913af13afa3c98d219f8882e278cdea0b
+- rule: PodMonitoring resource is defined for Google Cloud Monitoring integration
+  source:
+    path: examples/terraform/envoy-ratelimiter/ratelimit.tf
     commit: 67c3183913af13afa3c98d219f8882e278cdea0b
 config_edits:
 - path: examples/terraform/envoy-ratelimiter/README.md

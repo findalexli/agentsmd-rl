@@ -1,19 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:27:01.643139",
-  "total_time": 18909.58,
-  "sandbox_id": "ig5xhy7ml3p1lu94xvzbq",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:44:23.686754",
+  "total_time": 1826.72,
+  "sandbox_id": "imwda3d0rdnudy2uxvoak",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 318.1,
+      "time": 233.88,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py to match what the gold patch actually removes - the test was too strict checking for '$testsContent' anywhere in the script, but the patch only removes the variable assignment, not all references to it. Docker build, NOP test (0), Gold test (1), and Rubric judge (1.0) all pass now.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 270.66
+      "time": 176.66
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 8.28,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +73,14 @@
       "backend": "fireworks",
       "time": 18909.58,
       "at": "2026-04-09T14:27:01.643139"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1826.72,
+      "at": "2026-04-10T11:44:23.686754"
     }
   ]
 }

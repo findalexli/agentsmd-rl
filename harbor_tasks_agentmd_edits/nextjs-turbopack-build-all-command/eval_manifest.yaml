@@ -15,16 +15,32 @@ checks:
   description: next-swc package.json is valid JSON with scripts
 - id: lerna_json_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: lerna.json is valid JSON with required fields
 - id: turbo_json_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Root turbo.json is valid JSON with tasks defined
 - id: next_package_json_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: packages/next/package.json is valid JSON with required fields
+- id: packages_directory_structure
+  type: pass_to_pass
+  origin: static
+  description: Packages directory has expected structure with core packages
+- id: git_repo_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and at expected commit
+- id: node_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js version meets minimum requirement
+- id: pnpm_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm is available and at expected version
 - id: build_all_script_via_node
   type: fail_to_pass
   origin: pr_diff

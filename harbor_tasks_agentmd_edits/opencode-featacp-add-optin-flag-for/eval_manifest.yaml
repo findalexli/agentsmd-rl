@@ -7,8 +7,20 @@ source:
 checks:
 - id: typescript_parseable
   type: pass_to_pass
-  origin: static
-  description: Modified TypeScript files are syntactically valid
+  origin: repo_tests
+  description: Modified TypeScript files are syntactically valid (node --check)
+- id: flag_exports_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: flag.ts has valid export syntax that Node.js can parse
+- id: registry_exports_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: registry.ts has valid export syntax that Node.js can parse
+- id: opencode_package_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: opencode package.json is valid JSON and has required fields
 - id: flag_constant_defined
   type: fail_to_pass
   origin: pr_diff
@@ -38,7 +50,13 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified code has real conditional logic, not stubs
-rubric: []
+rubric:
+- rule: Documentation should clearly explain the feature purpose and usage
+  source:
+    path: packages/opencode/src/acp/README.md
+    lines: 44-53
+    commit: d8c25bfeb44771cc3a3ba17bf8de6ad2add9de2c
+  reference: "### Question Tool Opt-In\n\nACP excludes QuestionTool by default.\n\nOPENCODE_ENABLE_QUESTION_TOOL=1 opencode acp\n\nEnable this only for ACP clients that support interactive question prompts."
 config_edits:
 - path: packages/opencode/src/acp/README.md
   tier: 2

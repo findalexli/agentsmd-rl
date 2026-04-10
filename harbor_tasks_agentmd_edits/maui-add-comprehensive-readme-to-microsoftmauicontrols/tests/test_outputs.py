@@ -172,79 +172,70 @@ def test_readme_valid_markdown():
 
 
 # [repo_tests] pass_to_pass - CI/CD gate
-def test_repo_csproj_syntax_valid():
-    """Repo's Controls.NuGet.csproj has valid MSBuild XML structure (pass_to_pass)."""
-    tree = ET.parse(CSPROJ)
-    root = tree.getroot()
-    # Verify it is a valid SDK-style project
-    assert root.tag.endswith('Project') or root.tag == 'Project', "Root element should be <Project>"
-    # Verify it has essential MSBuild elements
-    found_property_group = False
-    found_item_group = False
-    for child in root:
-        tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
-        if tag == 'PropertyGroup':
-            found_property_group = True
-        if tag == 'ItemGroup':
-            found_item_group = True
-    assert found_property_group, "No PropertyGroup found in .csproj"
-    assert found_item_group, "No ItemGroup found in .csproj"
+def test_repo_csproj_msbuild_parseable():
+    """Repo's Controls.NuGet.csproj is parseable by MSBuild CLI (pass_to_pass).
+
+    Uses dotnet msbuild to verify the project file can be parsed and evaluated.
+    This is a real CI command that validates MSBuild syntax without requiring
+    the full .NET 10 SDK or workloads.
+    """
+    r = subprocess.run(
+        ["dotnet", "msbuild", CSPROJ, "-getProperty:IsPackable,PackageId"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MSBuild failed to parse .csproj:\n{r.stderr[-500:]}"
+    # Verify valid JSON output with expected properties
+    assert '"IsPackable"' in r.stdout or "IsPackable" in r.stdout, \
+        "MSBuild output missing IsPackable property"
 
 
 # [repo_tests] pass_to_pass - CI/CD gate
-def test_repo_project_references_valid():
-    """Repo's Controls.NuGet.csproj has valid project references (pass_to_pass)."""
-    tree = ET.parse(CSPROJ)
-    root = tree.getroot()
-    # Find ProjectReference elements and verify they point to existing files
-    found_refs = False
-    for item_group in root.iter():
-        tag = item_group.tag.split('}')[-1] if '}' in item_group.tag else item_group.tag
-        if tag == 'ItemGroup':
-            for child in item_group:
-                child_tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
-                if child_tag == 'ProjectReference':
-                    found_refs = True
-                    include = child.get('Include', '')
-                    if include:
-                        # Resolve relative path from project directory
-                        proj_dir = Path(CSPROJ).parent
-                        ref_path = proj_dir / include
-                        # Note: Do not assert existence since the fix may add files
-                        # Just verify the path format is valid
-                        assert '..' in include or '.csproj' in include,                             f"Invalid project reference: {include}"
+def test_repo_project_references_msbuild():
+    """Repo's Controls.NuGet.csproj has valid project references per MSBuild (pass_to_pass).
+
+    Uses dotnet msbuild -getItem to retrieve evaluated ProjectReference items.
+    This validates the project references are correctly specified.
+    """
+    r = subprocess.run(
+        ["dotnet", "msbuild", CSPROJ, "-getItem:ProjectReference"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MSBuild failed to get ProjectReferences:\n{r.stderr[-500:]}"
+    # Verify we have project references
+    assert '"ProjectReference"' in r.stdout or "ProjectReference" in r.stdout, \
+        "No ProjectReference items found in .csproj"
 
 
 # [repo_tests] pass_to_pass - CI/CD gate
-def test_repo_readme_packaging_valid():
-    """Repo's README.md packaging configuration is valid MSBuild (pass_to_pass)."""
-    tree = ET.parse(CSPROJ)
-    root = tree.getroot()
-    # Check that if PackageReadmeFile exists, it is valid
-    for prop_group in root.iter():
-        tag = prop_group.tag.split('}')[-1] if '}' in prop_group.tag else prop_group.tag
-        if tag == 'PropertyGroup':
-            for child in prop_group:
-                child_tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
-                if child_tag == 'PackageReadmeFile':
-                    assert child.text, "PackageReadmeFile element should not be empty"
-                    assert child.text.endswith('.md'), "PackageReadmeFile should reference a .md file"
+def test_repo_nuget_properties_msbuild():
+    """Repo's Controls.NuGet.csproj has required NuGet metadata via MSBuild (pass_to_pass).
+
+    Uses dotnet msbuild to verify essential NuGet packaging properties are defined.
+    This is a real CI command equivalent to checking package configuration.
+    """
+    r = subprocess.run(
+        ["dotnet", "msbuild", CSPROJ, "-getProperty:IsPackable,PackageId,Description"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MSBuild failed to get NuGet properties:\n{r.stderr[-500:]}"
+    # Verify properties are present and non-empty
+    assert '"IsPackable"' in r.stdout, "IsPackable property not found"
+    assert '"PackageId"' in r.stdout, "PackageId property not found"
+    assert '"Description"' in r.stdout, "Description property not found"
 
 
 # [repo_tests] pass_to_pass - CI/CD gate
-def test_repo_nuget_metadata_present():
-    """Repo's Controls.NuGet.csproj has required NuGet metadata properties (pass_to_pass)."""
-    tree = ET.parse(CSPROJ)
-    root = tree.getroot()
-    # Essential NuGet package metadata properties
-    essential_props = ['PackageId', 'Description', 'IsPackable']
-    found_props = set()
-    for prop_group in root.iter():
-        tag = prop_group.tag.split('}')[-1] if '}' in prop_group.tag else prop_group.tag
-        if tag == 'PropertyGroup':
-            for child in prop_group:
-                child_tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
-                if child_tag in essential_props:
-                    found_props.add(child_tag)
-    for prop in essential_props:
-        assert prop in found_props, f"Required NuGet property '{prop}' not found in .csproj"
+def test_repo_csproj_preprocess_valid():
+    """Repo's Controls.NuGet.csproj preprocesses without errors (pass_to_pass).
+
+    Uses dotnet msbuild -preprocess to fully expand the project file.
+    This validates all imports, SDK references, and property evaluations work correctly.
+    """
+    r = subprocess.run(
+        ["dotnet", "msbuild", CSPROJ, "-preprocess", "-nologo"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MSBuild preprocess failed:\n{r.stderr[-500:]}"
+    # Verify output contains essential elements of a valid preprocessed project
+    assert "<Project" in r.stdout, "Preprocessed output missing <Project> element"
+    assert "</Project>" in r.stdout, "Preprocessed output missing closing </Project>"

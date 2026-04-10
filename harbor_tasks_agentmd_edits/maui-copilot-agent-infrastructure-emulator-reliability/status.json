@@ -1,26 +1,27 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:19:00.574465",
-  "total_time": 18428.47,
-  "sandbox_id": "iwkcaklr70h358q28p736",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:46:50.241196",
+  "total_time": 1973.28,
+  "sandbox_id": "i1r79axg2l3s228gsx97f",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 184.71,
-      "notes": ""
+      "notes": "Added 4 p2p repo_tests: repo_script_files_exist (pwsh Test-Path), repo_git_works (git status), repo_ps_file_info (Get-ChildItem), repo_test_script_syntax (Get-Command). All p2p tests pass on base commit."
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 141.45,
+      "time": 391.01,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,46 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: 1) Docker build succeeded, 2) NOP test reward=0 (9 f2p tests correctly fail on base), 3) Gold test reward=1 (all 15 tests pass after fix), 4) Rubric: Fixed YAML syntax error in eval_manifest.yaml (unquoted colon in rule string). Gold solution contains all 5 rubric requirements verified via manual inspection.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 22.62
+      "time": 176.9
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        ".github/copilot-instructions.md",
+        ".github/agents/pr/PLAN-TEMPLATE.md",
+        ".github/agents/pr/SHARED-RULES.md",
+        ".github/agents/pr/post-gate.md",
+        ".github/skills/try-fix/SKILL.md"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 0,
+      "rejection_reasons": "N/A - all applicable conventions were added",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 121.18
+    },
+    "rubric_validate": {
+      "status": "error",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.31,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 9.05,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +98,14 @@
       "backend": "fireworks",
       "time": 18428.47,
       "at": "2026-04-09T14:19:00.574465"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1973.28,
+      "at": "2026-04-10T11:46:50.241196"
     }
   ]
 }

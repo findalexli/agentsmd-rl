@@ -1,33 +1,33 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:55:48.941011",
-  "total_time": 1657.93,
-  "sandbox_id": "i2ujbkzv141r3skwj9sdu",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:26:05.838022",
+  "total_time": 728.79,
+  "sandbox_id": "ibgidfnkg3k9kgb2exrb0",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 232.62,
-      "notes": ""
-    },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2.38,
+      "time": 315.1,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.66,
+      "time": 68.28,
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 0,
       "notes": ""
     },
     "improve": {
@@ -38,9 +38,36 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh - original had corrupt patch format. Rewrote it to create files directly using cat heredocs instead of git apply. All 10 tests now pass on gold container. NOP correctly returns 0, Gold correctly returns 1.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.61
+      "time": 265.8
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 26.22,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 29.4,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +94,14 @@
       "backend": "fireworks",
       "time": 1657.93,
       "at": "2026-04-09T14:55:48.941011"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 728.79,
+      "at": "2026-04-10T11:26:05.838022"
     }
   ]
 }

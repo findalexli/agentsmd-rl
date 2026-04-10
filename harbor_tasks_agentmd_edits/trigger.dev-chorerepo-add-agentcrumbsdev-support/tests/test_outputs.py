@@ -37,6 +37,46 @@ def test_package_json_valid():
     assert "dependencies" in pkg, "package.json must have dependencies"
 
 
+# [repo_tests] pass_to_pass
+def test_webapp_lint():
+    """Webapp linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && corepack prepare pnpm@10.23.0 --activate && pnpm install --frozen-lockfile && pnpm run lint --filter webapp"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_webapp_typecheck():
+    """Webapp TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && corepack prepare pnpm@10.23.0 --activate && pnpm install --frozen-lockfile && pnpm run generate && pnpm run typecheck --filter webapp"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_webapp_unit_tests_simple():
+    """Webapp simple unit tests pass (pass_to_pass) - tests that don't need Docker."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && corepack prepare pnpm@10.23.0 --activate && pnpm install --frozen-lockfile && pnpm run generate && cd apps/webapp && npx vitest run test/detectbadJsonStrings.test.ts test/calculateNextSchedule.test.ts test/validateGitBranchName.test.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_webapp_build():
+    """Webapp build succeeds (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && corepack prepare pnpm@10.23.0 --activate && pnpm install --frozen-lockfile && pnpm run generate && pnpm run build --filter webapp"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code / build config changes
 # ---------------------------------------------------------------------------

@@ -9,6 +9,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: shared-utils.ps1 sources without syntax errors in PowerShell
+- id: repo_script_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: All PowerShell script files exist at their declared paths
+- id: repo_git_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git commands work in the repo
+- id: repo_ps_file_info
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell Get-ChildItem works on script directories
+- id: repo_test_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test-EstablishBrokenBaseline.ps1 has valid PowerShell syntax
 - id: write_warn_executes
   type: fail_to_pass
   origin: pr_diff
@@ -52,7 +68,43 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: try-fix SKILL.md warns against git add of state files in CustomAgentLogsTmp
-rubric: []
+rubric:
+- rule: PowerShell scripts in .github/scripts/ should use the shared Write-Warn helper
+    function from shared-utils.ps1 instead of the built-in Write-Warning cmdlet for
+    consistent logging
+  source:
+    path: .github/scripts/shared/shared-utils.ps1
+    lines: 10-30
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+- rule: Agent instruction files (PLAN-TEMPLATE.md, SHARED-RULES.md, post-gate.md) must
+    reference claude-opus-4.6 (not 4.5) in the multi-model try-fix configuration table
+  source:
+    path: .github/agents/pr/SHARED-RULES.md
+    lines: 130-139
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+- rule: post-gate.md must include 'Stop on Environment Blockers' section with explicit
+    rules about stopping when try-fix cannot run due to missing Appium drivers, device/emulator
+    unavailability, or missing platform tools
+  source:
+    path: .github/agents/pr/post-gate.md
+    lines: 18-26
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+- rule: "post-gate.md must document mandatory cleanup steps between try-fix attempts:
+    git checkout HEAD -- . followed by git clean -fd --exclude=CustomAgentLogsTmp/"
+  source:
+    path: .github/agents/pr/post-gate.md
+    lines: 72-85
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+- rule: try-fix SKILL.md must warn against using git add or git commit for state files
+    in CustomAgentLogsTmp/ since this directory is .gitignore'd and committing would
+    cause data loss during git checkout HEAD -- . cleanup
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: 364-371
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+  reference: Do NOT `git add` or `git commit` the state file. It lives in `CustomAgentLogsTmp/`
+    which is `.gitignore`d. Committing it with `git add -f` would cause `git checkout
+    HEAD -- .` (used between phases) to revert it, losing data.
 config_edits:
 - path: .github/skills/try-fix/SKILL.md
   tier: 1

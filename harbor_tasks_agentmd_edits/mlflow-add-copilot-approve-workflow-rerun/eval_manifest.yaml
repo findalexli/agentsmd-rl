@@ -45,18 +45,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: All shell scripts in .claude have valid bash syntax
+- id: test_repo_ruff_format_claude
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on .claude directory
+- id: test_repo_mlflow_typo_claude
+  type: pass_to_pass
+  origin: repo_tests
+  description: No MLflow typos in .claude directory
 rubric:
 - rule: The approve.sh script should follow the same patterns as the existing poll.sh
     script (set -euo pipefail, gh CLI usage, error handling style)
   source:
     path: .claude/skills/copilot/SKILL.md
-    lines: 1-62
-    commit: 39f35acce9e63788371bfaaa2c57cafef10a02ec
-- rule: Prefer gh CLI over actions/github-script for GitHub API operations
+- rule: The approve.sh script should use gh CLI for GitHub API operations
   source:
-    path: .claude/rules/github-actions.md
-    lines: 7-8
-    commit: 39f35acce9e63788371bfaaa2c57cafef10a02ec
+    path: .claude/skills/copilot/SKILL.md
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1

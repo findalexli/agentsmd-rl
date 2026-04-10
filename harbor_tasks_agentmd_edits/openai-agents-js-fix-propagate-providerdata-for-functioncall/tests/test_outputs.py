@@ -111,6 +111,9 @@ if (!asst.tool_calls || asst.tool_calls.length !== 2) {
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_contributing_md_has_build_check():
+    """CONTRIBUTING.md mentions build-check in contribution workflow."""
+    content = Path(f"{REPO}/CONTRIBUTING.md").read_text()
 
     # Must contain build-check somewhere in the PR submission instructions
     assert "build-check" in content, \
@@ -183,3 +186,44 @@ def test_existing_converter_tests_pass():
     )
     assert r.returncode == 0, \
         f"Upstream tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, \
+        f"Lint failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_check():
+    """Type-checking all packages passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "-r", "build-check"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, \
+        f"Build-check failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_providerData_tests():
+    """ProviderData utility tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run",
+         "packages/agents-openai/test/utils/providerData.test.ts",
+         "--reporter=verbose", "--no-coverage"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, \
+        f"ProviderData tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"

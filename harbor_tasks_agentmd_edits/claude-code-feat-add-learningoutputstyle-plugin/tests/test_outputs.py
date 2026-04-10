@@ -136,3 +136,39 @@ def test_session_start_has_shebang():
     path = Path(f"{PLUGIN_DIR}/hooks-handlers/session-start.sh")
     content = path.read_text()
     assert content.startswith("#!/bin/bash"), "Script should start with bash shebang"
+
+
+def test_repo_all_plugin_json_valid():
+    """All plugin.json files in the repo are valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "for f in /workspace/claude-code/plugins/*/.claude-plugin/plugin.json; do python3 -c 'import json,sys; json.load(open(sys.argv[1]))' \"$f\" || exit 1; done"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin JSON validation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_all_hooks_json_valid():
+    """All hooks.json files in the repo are valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "for f in /workspace/claude-code/plugins/*/hooks/hooks.json; do python3 -c 'import json,sys; json.load(open(sys.argv[1]))' \"$f\" || exit 1; done"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Hooks JSON validation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_shellcheck_passes():
+    """All shell scripts in plugins pass shellcheck (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq shellcheck >/dev/null 2>&1 && find /workspace/claude-code/plugins -name '*.sh' -type f -exec shellcheck {} +"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Shellcheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_explanatory_hook_runs():
+    """Existing explanatory plugin session-start hook executes successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "apt-get update -qq && apt-get install -y -qq jq >/dev/null 2>&1 && export CLAUDE_PLUGIN_ROOT=/workspace/claude-code/plugins/explanatory-output-style && timeout 30 /workspace/claude-code/plugins/explanatory-output-style/hooks-handlers/session-start.sh >/dev/null 2>&1"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Explanatory hook failed to run:\n{r.stderr[-500:]}"

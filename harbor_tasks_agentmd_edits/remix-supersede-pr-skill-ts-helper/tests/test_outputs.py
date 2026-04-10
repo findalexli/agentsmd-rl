@@ -17,6 +17,100 @@ SCRIPT = f"{REPO}/skills/supersede-pr/scripts/close_superseded_pr.ts"
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass gates (repo_tests) — repo CI checks that should pass on base
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_changes_validate():
+    """Repo's changes:validate passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "changes:validate"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validate failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cookie_tests():
+    """Repo's @remix-run/cookie unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["corepack", "enable"],
+        capture_output=True, text=True, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/cookie", "test"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cookie tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 

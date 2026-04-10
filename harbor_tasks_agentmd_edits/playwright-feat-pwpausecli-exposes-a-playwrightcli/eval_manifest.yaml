@@ -23,8 +23,7 @@ checks:
 - id: decorate_server_exported
   type: fail_to_pass
   origin: pr_diff
-  description: decorateServer is exported from network.ts so daemon.ts can import
-    it
+  description: decorateServer is exported from network.ts so daemon.ts can import it
 - id: session_config_exported
   type: fail_to_pass
   origin: pr_diff
@@ -48,8 +47,7 @@ checks:
 - id: skill_md_updated
   type: fail_to_pass
   origin: agent_config
-  description: SKILL.md allowed-tools includes npx/npm and links to playwright-tests
-    reference
+  description: SKILL.md allowed-tools includes npx/npm and links to playwright-tests reference
   source:
     path: packages/playwright/src/skill/SKILL.md
     lines: 1-4
@@ -63,14 +61,12 @@ checks:
     lines: 274-277
     commit: 982b9b279557229b12d049ebd3063da408ba5253
 rubric:
-- rule: The new playwright-tests.md reference should be consistent in tone and format
-    with existing reference docs (request-mocking.md, running-code.md, session-management.md)
+- rule: The playwright-tests.md reference file should be created and document PWPAUSE=cli and playwright-cli --session
   source:
-    path: packages/playwright/src/skill/references/
-    lines: 1-10
+    path: packages/playwright/src/skill/references/playwright-tests.md
+    lines: 1-40
     commit: 982b9b279557229b12d049ebd3063da408ba5253
-- rule: The SKILL.md description should be concise and accurately reflect the expanded
-    scope of the tool
+- rule: The SKILL.md description should be concise and accurately reflect the expanded scope of the tool
   source:
     path: packages/playwright/src/skill/SKILL.md
     lines: 1-4
@@ -78,15 +74,11 @@ rubric:
 config_edits:
 - path: packages/playwright/src/skill/SKILL.md
   tier: 1
-  gold_added: 'description: Automate browser interactions, test web pages and work
-    with Playwright tests.
+  gold_added: 'description: Automate browser interactions, test web pages and work with Playwright tests.
 
     allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
 
     * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)'
-  gold_removed: 'description: Automates browser interactions for web testing, form
-    filling, screenshots, and data extraction. Use when the user needs to navigate
-    websites, interact with web pages, fill forms, take screenshots, test web applications,
-    or extract information from web pages.
+  gold_removed: 'description: Automates browser interactions for web testing, form filling, screenshots, and data extraction. Use when the user needs to navigate websites, interact with web pages, fill forms, take screenshots, test web applications, or extract information from web pages.
 
     allowed-tools: Bash(playwright-cli:*)'

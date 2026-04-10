@@ -306,3 +306,31 @@ def test_statsd_sidecar_is_conditional():
     )
     # Verify statsd-exporter is still referenced in the file
     assert "statsd-exporter" in content, "statsd-exporter name should appear in the file"
+
+
+def test_terraform_fmt_clean_files():
+    """Terraform formatting is correct for clean files (pass_to_pass, repo_tests)."""
+    # Install terraform
+    install_cmd = """
+        apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 &&
+        curl -fsSL -o /tmp/terraform.zip
+        https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip &&
+        unzip -qo /tmp/terraform.zip -d /tmp/
+    """.strip().replace("\n        ", " ")
+    r = subprocess.run(
+        ["bash", "-c", install_cmd],
+        capture_output=True, text=True, timeout=120, cwd="/tmp"
+    )
+    assert r.returncode == 0, f"Terraform installation failed: {r.stderr}"
+
+    # Check formatting for files that are clean in base commit
+    # (some files in the PR have formatting issues in base, we skip those)
+    clean_files = ["outputs.tf", "provider.tf", "prerequisites.tf", "network.tf"]
+    for tf_file in clean_files:
+        r = subprocess.run(
+            ["/tmp/terraform", "fmt", "-check", str(TF_DIR / tf_file)],
+            capture_output=True, text=True, timeout=60, cwd="/tmp"
+        )
+        assert r.returncode == 0, (
+            f"Terraform fmt check failed for {tf_file}:\n{r.stderr[-500:]}"
+        )

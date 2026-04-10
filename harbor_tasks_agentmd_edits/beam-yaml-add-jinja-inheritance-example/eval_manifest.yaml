@@ -17,14 +17,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python syntax check passes for examples_test.py
-- id: test_repo_jinja_template_syntax_base
+- id: test_repo_yamllint_wordcount_minimal
   type: pass_to_pass
   origin: repo_tests
-  description: Jinja2 template syntax is valid for base_pipeline.yaml
-- id: test_repo_jinja_template_syntax_child
+  description: wordcount_minimal.yaml passes yamllint
+- id: test_repo_python_syntax_init_examples
   type: pass_to_pass
   origin: repo_tests
-  description: Jinja2 template syntax is valid for wordCountInheritance.yaml
+  description: Python syntax check passes for examples/__init__.py
+- id: test_repo_python_syntax_init_testing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check passes for testing/__init__.py
+- id: test_repo_yaml_syntax_aggregation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Aggregation YAML files pass yamllint
+- id: test_repo_jinja_template_syntax_include
+  type: pass_to_pass
+  origin: repo_tests
+  description: Jinja2 template syntax is valid for wordCountInclude.yaml
+- id: test_repo_jinja_template_syntax_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Jinja2 template syntax is valid for wordCountImport.yaml
 - id: test_base_pipeline_renders_valid_yaml
   type: fail_to_pass
   origin: pr_diff
@@ -94,5 +110,17 @@ config_edits:
     MY-REGION\"\n\ncd <PATH_TO_BEAM_REPO>/beam/sdks/python\n```\n\nMultiline Run Example:\n\
     ```sh\npython -m apache_beam.yaml.main \\\n  --project=${PROJECT} \\\n  --region=${REGION}\
     \ \\\n  --yaml_pipeline_file=\"${PIPELINE_FILE}\" \\\n  --jinja_variables='{\n\
-    \    \"readF"
+    \    \"readFromTextTransform\": {\"path\": \"'\"${KINGLEAR}\"'\"},\n    \"mapToFieldsSplitConfig\":\
+    \ {\"language\": \"python\", \"fields\":{\"value\":\"1\"}}, \"explodeTransform\":{\"fields\":\"word\"},\
+    \ \"combineTransform\":{\"group_by\":\"word\", \"combine\":{\"value\":\"sum\"}},\
+    \ \"mapToFieldsCountConfig\":{\"language\": \"python\", \"fields\":{\"output\":\"word\\\
+    \ \\\"- \\\"+ str(value)\"}}, \"writeToTextTransform\":{\"path\":\"'\"${TEMP_LOCATION}\"'\"}}'\n\
+    ```\n\nSingle Line Run Example:\n```sh\npython -m apache_beam.yaml.main --project=${PROJECT}\
+    \ --region=${REGION} \\\n--yaml_pipeline_file=\"${PIPELINE_FILE}\" --jinja_variables='{\"readFromTextTransform\":\
+    \n{\"path\": \"'\"${KINGLEAR}\"'\"}, \"mapToFieldsSplitConfig\": {\"language\": \"python\",\
+    \ \"fields\":{\"value\":\"1\"}}, \"explodeTransform\":{\"fields\":\"word\"},\
+    \ \"combineTransform\":{\"group_by\":\"word\", \"combine\":{\"value\":\"sum\"}},\
+    \ \"mapToFieldsCountConfig\":{\"language\": \"python\", \"fields\":{\"output\":\"word\\\
+    \ + \\\"- \\\"+ str(value)\"}}, \"writeToTextTransform\":{\"path\":\"'\"${TEMP_LOCATION}\"'\"}}'\n\
+    ```\n"
   gold_removed: ''

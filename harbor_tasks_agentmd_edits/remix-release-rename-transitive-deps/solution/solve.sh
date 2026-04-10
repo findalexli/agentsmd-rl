@@ -617,3 +617,6 @@ index f40a9c5f28a..b6be114f72c 100644
 PATCH
 
 echo "Patch applied successfully."
+
+# Run prettier to fix any formatting issues introduced by the patch
+cd /workspace/remix && npx prettier --write scripts/utils/changes.ts scripts/utils/packages.ts scripts/release-pr.ts scripts/utils/release-pr.ts 2>/dev/null || true

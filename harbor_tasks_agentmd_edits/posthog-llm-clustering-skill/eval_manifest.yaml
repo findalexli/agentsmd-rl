@@ -73,6 +73,19 @@ checks:
   origin: static
   description: SKILL.md follows existing skill documentation style with tables, code
     blocks, and headers
+# New p2p tests with repo_tests origin
+- id: repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Python files compile without syntax errors via py_compile
+- id: repo_yaml_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: tools.yaml parses correctly via pyyaml in subprocess
+- id: repo_clustering_tests_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clustering test files have valid Python syntax via py_compile
 rubric:
 - rule: Skill documentation should be clear and actionable for agents investigating
     LLM clusters
@@ -84,6 +97,31 @@ rubric:
   source:
     path: .agents/skills/writing-skills/SKILL.md
     lines: 50-100
+    commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+- rule: MCP tools must include proper scopes (e.g., llm_analytics:read) and annotations (readOnly, destructive, idempotent) when being enabled
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: "126-131"
+    commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+- rule: New skills must use lowercase kebab-case naming with gerund form (e.g., exploring-llm-clusters)
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: "44"
+    commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+- rule: SKILL.md files must include required frontmatter with 'name' and 'description' fields
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: "47"
+    commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+- rule: Helper scripts in skills should have proper CLI interfaces with usage messages and argument validation
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: "60-62"
+    commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+- rule: Python code should use type hints (mypy-strict style)
+  source:
+    path: AGENTS.md
+    lines: "140"
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 config_edits:
 - path: products/llm_analytics/skills/exploring-llm-clusters/SKILL.md
@@ -107,11 +145,11 @@ config_edits:
     \ similarity.\nA Temporal workflow runs periodically or on-demand, producing cluster\
     \ events stored as\n`$ai_trace_clusters` (trace-level) or `$ai_generation_clusters`\
     \ (generation-level).\n\nEach cluster event contains:\n\n- `$ai_clustering_run_id`\
-    \ — unique run identifier (format: `<team_id>_<level>_<YYYYMMDD>_<HHMMSS>[_<job_id>]`)\n\
-    - `$ai_clustering_level` — `\"trace\"` or `\"generation\"`\n- `$ai_window_start`\
+    \ — unique run identifier (format: `<team_id>_<level>_<YYYYMMDD>_<HHMMSS>[_<job_id>]`)
+    \n- `$ai_clustering_level` — `"trace"` or `"generation"`\n- `$ai_window_start`\
     \ / `$ai_window_end` — time window analyzed\n- `$ai_total_items_analyzed` — number\
     \ of traces/generations processed\n- `$ai_clusters` — JSON array of cluster objects\n\
-    - `$ai_clustering_params` — algorithm parameters used\n\n### Cluster object shape\
+    \ - `$ai_clustering_params` — algorithm parameters used\n\n### Cluster object shape\
     \ (inside `$ai_clusters`)\n\n```json\n{\n  \"cluster_id\": 0,\n  \"size\": 42,\n\
     \  \"title\": \"User authentication flows\",\n  \"description\": \"Traces involving\
     \ login, signup, and token refresh operations\",\n  \"traces\": {\n    \"<trace_or_generation_id>\"\
@@ -122,9 +160,81 @@ config_edits:
     \ -1` is the **noise/outlier** cluster (items that didn't fit any cluster)\n-\
     \ Items in `traces` are keyed by trace ID (trace-level) or generation event UUID\
     \ (generation-level)\n- `rank` orders items by proximity to centroid (0 = closest)\n\
-    - `x`, `y` are 2D coordinates for visualization (UMAP/PCA/t-SNE reduced)\n\n##\
+    \ - `x`, `y` are 2D coordinates for visualization (UMAP/PCA/t-SNE reduced)\n\n##\
     \ Clustering jobs\n\nEach team can have up to 5 clustering jobs. A job defines:\n\
-    \n- **name** — human-readable label\n- **analysis_level** — `\"trace\"` or `\"\
-    generation\"`\n- **event_filters** — property filters scoping which traces are\
-    \ included\n- **enabled** — whether the "
+    \n- **name** — human-readable label\n- **analysis_level** — `"trace"` or `"\
+    generation"`\n- **event_filters** — property filters scoping which traces are\
+    \ included\n- **enabled** — whether the job runs on schedule\n\nDefault jobs named\
+    \ `"Default - trace"` and `"Default - generation"` are auto-created\nand disabled\
+    \ when a custom job is created for the same level.\n\n## Workflow: explore clusters\n\
+    \n### Step 1 — List recent clustering runs\n\n```sql\nposthog:execute-sql\nSELECT\n\
+    \    JSONExtractString(properties, '$ai_clustering_run_id') as run_id,\n    JSONExtractString(properties,\
+    \ '$ai_clustering_level') as level,\n    JSONExtractString(properties, '$ai_window_start')\
+    \ as window_start,\n    JSONExtractString(properties, '$ai_window_end') as window_end,\n\
+    \    JSONExtractInt(properties, '$ai_total_items_analyzed') as total_items,\n\
+    \    timestamp\nFROM events\nWHERE event IN ('$ai_trace_clusters', '$ai_generation_clusters')\n\
+    \    AND timestamp >= now() - INTERVAL 7 DAY\nORDER BY timestamp DESC\nLIMIT 10\n\
+    ```\n\n### Step 2 — Get clusters from a specific run\n\n```sql\nposthog:execute-sql\nSELECT\n\
+    \    JSONExtractString(properties, '$ai_clustering_run_id') as run_id,\n    JSONExtractString(properties,\
+    \ '$ai_clustering_level') as level,\n    JSONExtractString(properties, '$ai_clustering_job_id')\
+    \ as job_id,\n    JSONExtractString(properties, '$ai_clustering_job_name') as job_name,\n\
+    \    JSONExtractString(properties, '$ai_window_start') as window_start,\n    JSONExtractString(properties,\
+    \ '$ai_window_end') as window_end,\n    JSONExtractInt(properties, '$ai_total_items_analyzed')\
+    \ as total_items,\n    JSONExtractRaw(properties, '$ai_clusters') as clusters,\n\
+    \    JSONExtractRaw(properties, '$ai_clustering_params') as params\nFROM events\nWHERE\
+    \ event IN ('$ai_trace_clusters', '$ai_generation_clusters')\n    AND JSONExtractString(properties,\
+    \ '$ai_clustering_run_id') = '<run_id>'\nLIMIT 1\n```\n\nThe `clusters` field is a JSON\
+    \ array. Parse it to see cluster titles, sizes, and descriptions.\n\n**Important:**\
+    \ The clusters JSON can be very large (thousands of trace IDs with coordinates).\n\
+    \ When the result is too large for inline display, it auto-persists to a file.\n\
+    \ Use `print_clusters.py` from [scripts/](./scripts/) to get a readable summary.\n\
+    \n### Step 3 — Compute metrics for clusters\n\nFor trace-level clusters, compute\
+    \ cost/latency/token metrics:\n\n```sql\nposthog:execute-sql\nSELECT\n    JSONExtractString(properties,\
+    \ '$ai_trace_id') as trace_id,\n    sum(toFloat(properties.$ai_total_cost_usd))\
+    \ as total_cost,\n    max(toFloat(properties.$ai_latency)) as latency,\n    sum(toInt(properties.$ai_input_tokens))\
+    \ as input_tokens,\n    sum(toInt(properties.$ai_output_tokens)) as output_tokens,\n\
+    \    countIf(properties.$ai_is_error = 'true') as error_count\nFROM events\nWHERE\
+    \ event IN ('$ai_generation', '$ai_embedding', '$ai_span')\n    AND timestamp >=\
+    \ parseDateTimeBestEffort('<window_start>')\n    AND timestamp <= parseDateTimeBestEffort('<window_end>')\n\
+    \    AND JSONExtractString(properties, '$ai_trace_id') IN ('<trace_id_1>', '<trace_id_2>',\
+    \ ...)\nGROUP BY trace_id\n```\n\nFor generation-level clusters, match by\
+    \ event UUID:\n\n```sql\nposthog:execute-sql\nSELECT\n    toString(uuid) as generation_id,\n\
+    \    toFloat(properties.$ai_total_cost_usd) as cost,\n    toFloat(properties.$ai_latency)\
+    \ as latency,\n    toInt(properties.$ai_input_tokens) as input_tokens,\n    toInt(properties.$ai_output_tokens)\
+    \ as output_tokens,\n    if(properties.$ai_is_error = 'true', 1, 0) as is_error\nFROM\
+    \ events\nWHERE event = '$ai_generation'\n    AND timestamp >= parseDateTimeBestEffort('<window_start>')\n\
+    \    AND timestamp <= parseDateTimeBestEffort('<window_end>')\n    AND toString(uuid)\
+    \ IN ('<gen_uuid_1>', '<gen_uuid_2>', ...)\n```\n\n### Step 4 — Drill into specific\
+    \ traces\n\nOnce you've identified interesting clusters, use the trace tools to inspect\
+    \ individual traces:\n\n```json\nposthog:query-llm-trace\n{\n  \"traceId\": \"<trace_id_from_cluster>\",\n\
+    \  \"dateRange\": {\"date_from\": \"<window_start>\", \"date_to\": \"<window_end>\"}\n}\n\
+    ```\n\n## Investigation patterns\n\n### \"What kinds of LLM usage do we have?\"\n\
+    \n1. List recent clustering runs (Step 1)\n2. Load the latest run's clusters (Step\
+    \ 2)\n3. Review cluster titles and descriptions — each represents a distinct usage\
+    \ pattern\n4. Compare cluster sizes to understand traffic distribution\n\n### \"Which\
+    \ cluster is most expensive / slowest?\"\n\n1. Load clusters from a run (Step 2)\n\
+    \ 2. Extract trace IDs from each cluster\n3. Compute metrics per cluster (Step 3)\n\
+    \ 4. Aggregate: `avg(cost)`, `avg(latency)`, `sum(cost)` per cluster\n5. Compare across\
+    \ clusters\n\n### \"What's in this cluster?\"\n\n1. Load the cluster's traces (from\
+    \ the `traces` field)\n2. Sort by `rank` (closest to centroid = most representative)\n\
+    \ 3. Inspect the top 3-5 traces via `query-llm-trace` to understand the pattern\n\
+    \ 4. Check the cluster `title` and `description` for the AI-generated summary\n\n###\
+    \ \"Are there error-heavy clusters?\"\n\n1. Compute metrics (Step 3) with `error_count`\n\
+    \ 2. Calculate error rate per cluster: `items_with_errors / total_items`\n3. Focus\
+    \ on clusters with high error rates\n4. Drill into errored traces to find root causes\n\
+    \n### \"How do clusters comparison across runs?\"\n\n1. List multiple runs (Step 1)\n\
+    \ 2. Load clusters from each run\n3. Compare cluster titles — similar titles across\
+    \ runs indicate stable patterns\n4. Track cluster size changes to detect shifts\
+    \ in traffic patterns\n\n## Constructing UI links\n\n- **Clusters overview**: `https://app.posthog.com/llm-analytics/clusters`\n\
+    \ - **Specific run**: `https://app.posthog.com/llm-analytics/clusters/<url_encoded_run_id>`\n\
+    \ - **Cluster detail**: `https://app.posthog.com/llm-analytics/clusters/<url_encoded_run_id>/<cluster_id>`\n\
+    \nAlways surface these links so the user can verify visually in the PostHog UI.\n\
+    \n## Tips\n\n- Always set a time range in SQL queries — cluster events without time bounds are\
+    \ slow\n- Start with run listing to orient, then drill into specific clusters\n- Cluster\
+    \ titles and descriptions are AI-generated summaries — verify by inspecting traces\n\
+    \ - The noise cluster (`cluster_id: -1`) contains outliers that didn't fit any pattern\n\
+    \ - Use `llm-analytics-clustering-jobs-list` to understand what clustering configs\
+    \ are active\n- Trace IDs in clusters can be used directly with `query-llm-trace`\
+    \ for deep inspection\n- For large clusters, inspect the top-ranked traces (closest\
+    \ to centroid) for representative examples"
   gold_removed: ''

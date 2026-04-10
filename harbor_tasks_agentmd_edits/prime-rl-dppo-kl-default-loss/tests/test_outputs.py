@@ -120,7 +120,7 @@ def test_loss_docstring_updated():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config documentation update tests
+# Fail-to-pass (pr_diff) — config/documentation update tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -152,8 +152,32 @@ def test_bugbot_documentation_updated():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's linter passes on modified files (pass_to_pass)."""
+    # Install ruff if not available
+    subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    files = [
+        f"{REPO}/src/prime_rl/trainer/rl/loss.py",
+        f"{REPO}/src/prime_rl/configs/trainer.py",
+    ]
+    result = subprocess.run(
+        ["ruff", "check", "--config", f"{REPO}/pyproject.toml"] + files,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"Ruff check failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_py_compile():
-    """Modified Python files must compile without errors (pass_to_pass)."""
+    """Modified Python files compile without errors (pass_to_pass)."""
     files = [
         "src/prime_rl/trainer/rl/loss.py",
         "src/prime_rl/configs/trainer.py",
@@ -171,7 +195,7 @@ def test_repo_py_compile():
 
 # [repo_tests] pass_to_pass
 def test_repo_ast_parse():
-    """Modified Python files must parse as valid AST (pass_to_pass)."""
+    """Modified Python files parse as valid AST (pass_to_pass)."""
     files = [
         "src/prime_rl/trainer/rl/loss.py",
         "src/prime_rl/configs/trainer.py",
@@ -187,7 +211,7 @@ def test_repo_ast_parse():
 
 # [repo_tests] pass_to_pass
 def test_repo_configs_ast():
-    """DefaultLossConfig class must exist in trainer.py (pass_to_pass)."""
+    """DefaultLossConfig class exists in trainer.py (pass_to_pass)."""
     config_path = Path(REPO) / "src/prime_rl/configs/trainer.py"
     src = config_path.read_text()
     tree = ast.parse(src)
@@ -198,7 +222,7 @@ def test_repo_configs_ast():
 
 # [repo_tests] pass_to_pass
 def test_repo_loss_ast():
-    """default_loss_fn function must exist in loss.py (pass_to_pass)."""
+    """default_loss_fn function exists in loss.py (pass_to_pass)."""
     loss_path = Path(REPO) / "src/prime_rl/trainer/rl/loss.py"
     src = loss_path.read_text()
     tree = ast.parse(src)

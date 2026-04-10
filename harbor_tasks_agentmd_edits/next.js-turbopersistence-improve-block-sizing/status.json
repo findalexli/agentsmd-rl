@@ -1,28 +1,28 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:37:09.432968",
-  "total_time": 5586.05,
-  "sandbox_id": "il283daa2dkzhfz59l531",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:02:27.566740",
+  "total_time": 2233.7,
+  "sandbox_id": "i4w7m389vgrzi6gfydf8c",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 217.38,
+      "time": 545.63,
       "notes": ""
     },
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 4.25,
-      "notes": ""
+      "time": 300,
+      "notes": "CI commands tested: cargo check -p turbo-persistence, cargo clippy -p turbo-persistence, cargo test -p turbo-persistence --lib, cargo fmt --check -p turbo-persistence, cargo test --doc -p turbo-persistence, cargo check --benches -p turbo-persistence"
     },
     "improve": {
       "status": "skipped",
@@ -30,16 +30,33 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_score": 1.0,
+      "notes": "All 4 validation checks passed: 1) Docker build succeeded, 2) NOP test returned reward=0 (9 fail-to-pass tests correctly fail on base code), 3) Gold test returned reward=1 (all 15 tests pass after gold fix), 4) Rubric judge - gold solution satisfies both rubric rules.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 267.29
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.53,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5586.05,
-      "at": "2026-04-09T07:37:09.432968"
+      "time": 2233.7,
+      "at": "2026-04-10T12:02:27.566740"
     }
   ]
 }

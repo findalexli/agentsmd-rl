@@ -88,6 +88,33 @@ def test_dev_login_form_present():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI commands that actually run repo tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_mix_compile():
+    """Elixir project compiles successfully (pass_to_pass)."""
+    import subprocess
+
+    # Install Elixir and Erlang, then compile
+    cmd = """
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq && apt-get install -y -qq wget unzip erlang > /dev/null 2>&1
+wget -q https://github.com/elixir-lang/elixir/releases/download/v1.18.3/elixir-otp-27.zip -O /tmp/elixir.zip
+mkdir -p /opt/elixir && unzip -q -o /tmp/elixir.zip -d /opt/elixir
+export PATH="/opt/elixir/bin:$PATH"
+cd /workspace/tuist/server
+mix deps.get > /dev/null 2>&1
+MIX_ENV=test mix compile --warnings-as-errors 2>&1
+"""
+    r = subprocess.run(
+        ["bash", "-c", cmd],
+        capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"mix compile failed:\\n{r.stderr[-1000:]}\\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — rules from AGENTS.md / CLAUDE.md
 # ---------------------------------------------------------------------------
 

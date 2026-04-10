@@ -17,8 +17,10 @@ RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /works
 
 WORKDIR /workspace/lobe-chat
 
-# Install swr and react for module loading tests
-RUN npm install --no-save --ignore-scripts --legacy-peer-deps swr@2 react@19 2>/dev/null || true
+# Install pnpm and install monorepo dependencies (needed for proper module resolution)
+RUN npm install -g pnpm && \
+    pnpm install --ignore-scripts --frozen-lockfile 2>/dev/null || \
+    pnpm install --ignore-scripts 2>/dev/null || true
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

@@ -51,6 +51,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: SKILL.md still shows ref-based and CSS selector examples
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes on the codebase
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build completes successfully
+- id: test_repo_locator_parser_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Locator parser unit tests pass - verifies isomorphic module works
 rubric:
 - rule: SKILL.md update is consistent with the style of the existing documentation
     sections
@@ -58,6 +70,16 @@ rubric:
     path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
     lines: 1-10
     commit: 35f853d5c293c901ea66a9aa3f56f6879a94e66a
+  reference: |
+    You can also use css selectors or Playwright locators.
+
+    # role locator
+
+    playwright-cli click "getByRole('button', { name: 'Submit' })"
+
+    # test id
+
+    playwright-cli click "getByTestId('submit-button')"
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1

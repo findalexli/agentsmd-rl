@@ -9,6 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: poll.sh parses without bash syntax errors
+- id: test_skill_yaml_frontmatter
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md has valid YAML frontmatter with required fields
 - id: poll_retains_core_loop
   type: pass_to_pass
   origin: static
@@ -38,6 +42,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Copilot skill required files exist and have proper structure
+- id: poll_sh_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh passes shellcheck linting
 rubric:
 - rule: The SKILL.md polling instructions are clear and consistent with the new poll.sh
     interface
@@ -61,7 +69,7 @@ config_edits:
 
     # https://github.com/mlflow/mlflow/pull/21887/agent-sessions/523bb0e1-...
 
-    session_url=$(gh agent-task create -F task-desc.md)
+    session_url=
 
     session_id="${session_url##*/}"
 

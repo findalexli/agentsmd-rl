@@ -62,11 +62,6 @@ print(f"PASS: {len(projects)} projects, all resolve")
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioural: solution includes Legacy and
-# DumpTests projects (both missing from old README template)
-# ---------------------------------------------------------------------------
-
 def test_slnx_includes_legacy_and_dumptests():
     """Solution must include Legacy library and DumpTests (both missing from old template)."""
     r = subprocess.run(
@@ -82,7 +77,6 @@ if not slnx.exists():
 tree = ET.parse(slnx)
 paths = [p.get("Path") for p in tree.getroot().iter("Project")]
 
-# These two were missing from the old manually-created template
 required = {
     "Legacy": "Microsoft.Diagnostics.DataContractReader.Legacy/Microsoft.Diagnostics.DataContractReader.Legacy.csproj",
     "DumpTests": "tests/DumpTests/Microsoft.Diagnostics.DataContractReader.DumpTests.csproj",
@@ -97,7 +91,6 @@ if missing:
     print(f"FAIL: solution missing projects: {missing}")
     sys.exit(1)
 
-# Verify these projects actually exist on disk
 for label, rel in required.items():
     full = cdac / rel
     if not full.exists():
@@ -111,11 +104,6 @@ print(f"PASS: Legacy and DumpTests both present and resolve")
     assert r.returncode == 0, f"Failed: {r.stdout}{r.stderr}"
     assert "PASS" in r.stdout
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioural: solution organises into library
-# and test folders, and paths are relative (not repo-root)
-# ---------------------------------------------------------------------------
 
 def test_slnx_folder_organisation():
     """Solution must have separate Folder elements for libraries and tests, with relative paths."""
@@ -136,7 +124,6 @@ if len(folders) < 2:
     print(f"FAIL: expected >=2 Folder elements, got {len(folders)}")
     sys.exit(1)
 
-# Check test folder exists
 test_folder = None
 for name, f in folders.items():
     if "test" in name.lower():
@@ -146,7 +133,6 @@ if test_folder is None:
     print("FAIL: no folder with 'test' in its name")
     sys.exit(1)
 
-# Check all project paths are relative (not starting with src/)
 for proj in root.iter("Project"):
     path = proj.get("Path", "")
     if path.startswith("src/"):
@@ -163,10 +149,6 @@ print("PASS: folder organisation and relative paths OK")
     assert r.returncode == 0, f"Failed: {r.stdout}{r.stderr}"
     assert "PASS" in r.stdout
 
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — README no longer has manual setup instructions
-# ---------------------------------------------------------------------------
 
 def test_readme_no_manual_slnx_setup():
     """README must not contain the old manual 'Setting up a solution' section."""
@@ -186,10 +168,6 @@ def test_readme_references_checked_in_file():
         "README missing 'Opening the solution' heading"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (agent_config) — copilot-instructions.md: no trailing whitespace
-# ---------------------------------------------------------------------------
-
 def test_no_trailing_whitespace_in_readme():
     """Markdown files must have no trailing whitespace (copilot-instructions.md line 40)."""
     for i, line in enumerate(README.read_text().splitlines(), 1):
@@ -200,7 +178,158 @@ def test_no_trailing_whitespace_in_readme():
 def test_no_trailing_whitespace_in_slnx():
     """cdac.slnx should have no trailing whitespace."""
     if not SLNX.exists():
-        return  # slnx existence is checked by other tests
+        return
     for i, line in enumerate(SLNX.read_text().splitlines(), 1):
         assert line == line.rstrip(), \
             f"cdac.slnx line {i} has trailing whitespace"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI tests that exercise repo tooling
+# ---------------------------------------------------------------------------
+
+def test_repo_slnx_schema():
+    """cdac.slnx follows expected solution file schema (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import xml.etree.ElementTree as ET
+import sys
+import pathlib
+
+slnx = pathlib.Path('/workspace/runtime/src/native/managed/cdac/cdac.slnx')
+if not slnx.exists():
+    print('SKIP: cdac.slnx does not exist yet')
+    sys.exit(0)
+
+try:
+    tree = ET.parse(slnx)
+    root = tree.getroot()
+except ET.ParseError as e:
+    print(f'FAIL: Invalid XML: {e}')
+    sys.exit(1)
+
+if root.tag != 'Solution':
+    print(f"FAIL: Root element is '{root.tag}', expected 'Solution'")
+    sys.exit(1)
+
+configs = root.find('Configurations')
+if configs is None:
+    print('FAIL: Missing Configurations element')
+    sys.exit(1)
+
+platforms = configs.findall('Platform')
+if len(platforms) == 0:
+    print('FAIL: No Platform elements found in Configurations')
+    sys.exit(1)
+
+folders = root.findall('Folder')
+if len(folders) == 0:
+    print('FAIL: No Folder elements found')
+    sys.exit(1)
+
+projects = list(root.iter('Project'))
+if len(projects) == 0:
+    print('FAIL: No Project elements found')
+    sys.exit(1)
+
+print(f'PASS: Valid slnx with {len(folders)} folders, {len(projects)} projects, {len(platforms)} platforms')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"slnx schema validation failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_csproj_exist():
+    """All .csproj files referenced in slnx exist and are valid MSBuild XML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import xml.etree.ElementTree as ET
+import sys
+import pathlib
+
+cdac = pathlib.Path('/workspace/runtime/src/native/managed/cdac')
+slnx = cdac / 'cdac.slnx'
+
+if not slnx.exists():
+    print('SKIP: cdac.slnx does not exist yet')
+    sys.exit(0)
+
+try:
+    tree = ET.parse(slnx)
+    root = tree.getroot()
+except ET.ParseError as e:
+    print(f'FAIL: Invalid slnx XML: {e}')
+    sys.exit(1)
+
+project_paths = [p.get('Path') for p in root.iter('Project') if p.get('Path')]
+if not project_paths:
+    print('FAIL: No Project paths found in slnx')
+    sys.exit(1)
+
+missing = []
+invalid_xml = []
+for rel_path in project_paths:
+    full_path = cdac / rel_path
+    if not full_path.exists():
+        missing.append(rel_path)
+        continue
+    try:
+        ET.parse(full_path)
+    except ET.ParseError as e:
+        invalid_xml.append(f'{rel_path}: {e}')
+
+if missing:
+    print(f'FAIL: Missing csproj files: {missing}')
+    sys.exit(1)
+
+if invalid_xml:
+    print(f'FAIL: Invalid csproj XML: {invalid_xml}')
+    sys.exit(1)
+
+print(f'PASS: All {len(project_paths)} csproj files exist and are valid XML')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"csproj validation failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_readme_structure():
+    """README.md has expected structure with proper headings (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+import pathlib
+
+readme = pathlib.Path('/workspace/runtime/src/native/managed/cdac/README.md')
+if not readme.exists():
+    print('FAIL: README.md does not exist')
+    sys.exit(1)
+
+content = readme.read_text()
+
+required_sections = ['# cDAC', '## Architecture', '## Project structure']
+missing = []
+for section in required_sections:
+    if section not in content:
+        missing.append(section)
+
+if missing:
+    print(f'FAIL: Missing required sections: {missing}')
+    sys.exit(1)
+
+lines = content.splitlines()
+has_h1 = any(line.startswith('# ') for line in lines)
+if not has_h1:
+    print('FAIL: No H1 heading found')
+    sys.exit(1)
+
+backticks = content.count('```')
+if backticks % 2 != 0:
+    print('FAIL: Unmatched code block backticks')
+    sys.exit(1)
+
+print('PASS: README.md has valid structure')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"README structure validation failed:\n{r.stdout}{r.stderr}"

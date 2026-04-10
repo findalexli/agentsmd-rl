@@ -24,6 +24,54 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — CI lint / build checks
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint passes on modified MCP files (pass_to_pass)."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "install"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+    # Then run eslint on existing files (not video.ts which is added by the fix)
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--no-cache",
+         "packages/playwright/src/mcp/browser/tools.ts",
+         "packages/playwright/src/mcp/browser/tools/tracing.ts",
+         "packages/playwright/src/mcp/program.ts",
+         "packages/playwright/src/mcp/terminal/commands.ts",
+         "packages/playwright/src/mcp/terminal/command.ts",
+         "packages/playwright/src/mcp/config.d.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo's workspace packages are consistent (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_generate_channels():
+    """Repo's generate_channels script runs without error (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"generate_channels failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
@@ -205,7 +253,7 @@ const fs = require('fs');
 const content = fs.readFileSync('packages/playwright/src/mcp/browser/tools.ts', 'utf8');
 
 // Check import
-if (!/import\\s+video\\s+from\\s+['\\.\\/ ]*video/.test(content)) {
+if (!/import\\s+video\\s+from\\s+['\"][\\.\\/a-z_]+\\/video['\"]/.test(content)) {
     console.error('tools.ts must import video module');
     process.exit(1);
 }

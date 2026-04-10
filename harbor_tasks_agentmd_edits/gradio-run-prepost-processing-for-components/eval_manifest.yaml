@@ -62,6 +62,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Benchmark README exists and is readable
+- id: repo_profiling_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Profiling module can be imported without errors
+- id: repo_profiling_has_trace_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Profiling module has expected trace functions
+- id: repo_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in modified directories have valid syntax
 rubric:
 - rule: Be consistent with the style of the surrounding code.
   source:
@@ -81,19 +93,19 @@ config_edits:
     \ tiers, etc.)\n└── {app_stem}/                        # One directory per app\
     \ (e.g. \"echo_text\")\n    └── {timestamp}/                   # e.g. \"20260330_142500\"\
     \n        ├── summary.json               # Overall results: app name, timestamp,\
-    \ all tier results\n        ├── summary_table.txt          # Human-readable table\
-    \ (client/server p50/p90/p99, success%)\n        ├── tier_1/\n        │   ├──\
-    \ client_latencies.jsonl  # One JSON object per request (client-side timing)\n\
-    \        │   └── traces.jsonl            # Server-side profiling traces\n    \
-    \    ├── tier_10/\n        │   ├── client_latencies.jsonl\n        │   └── traces.jsonl\n\
-    \        └── tier_100/\n            ├── client_latencies.jsonl\n            └──\
-    \ traces.jsonl\n```\n\nFor A/B tests, both branches share the same `{run_name}`\
-    \ prefix:\n├── main/\n│   ├── runner.py\n│   ├── run_params.json\n│   └── {app_stem}/{timestamp}/...\n\
-    └── {compare_branch}/\n    ├── runner.py\n    ├── run_params.json\n    └── {app_stem}/{timestamp}/...\n\
-    The `tier_{N}` directories are created for each value in `--tiers` (default `1,10,100`),\
-    \ and each app passed via `--apps` gets its own `{app_stem}/` directory."
+    \ all tier results\n        ├── summary_table.txt          # Human-readable table (client/server p50/p90/p99,\
+    \ success%)\n        ├── tier_1/\n        │   ├── client_latencies.jsonl\
+    \  # One JSON object per request (client-side timing)\n        │   └── traces.jsonl            # Server-side\
+    \ profiling traces\n        ├── tier_10/\n        │   ├── client_latencies.jsonl\n     \
+    \   │   └── traces.jsonl\n        └── tier_100/\n            ├── client_latencies.jsonl\n   \
+    \         └── traces.jsonl\n```\n\nFor A/B tests, both branches share the same\
+    \ `{run_name}` prefix:\n├── main/\n│   ├── runner.py\n│   ├── run_params.json\n│   └──\
+    \ {app_stem}/{timestamp}/...\n└── {compare_branch}/\n    ├── runner.py\n    ├── run_params.json\n  \
+    \  └── {app_stem}/{timestamp}/...\nThe `tier_{N}` directories are created for each\
+    \ value in `--tiers` (default `1,10,100`),\n    \ and each app passed via `--apps` gets its\
+    \ own `{app_stem}/` directory."
   gold_removed: "This submits two identical jobs (one per branch) to HF Jobs. Results\
     \ are uploaded to a shared HF bucket path for easy comparison:\n  main/\n    run_params.json\n\
-    \    runner.py              # exact runner script used\n    echo_text/summary.json\n\
-    \    streaming_chat/...\n  avoid-asyncio-sleep-sse/\n    ...\nUse `--dry-run`\
-    \ to preview the generated bash script without submitting."
+    \    runner.py              # exact runner script used\n    echo_text/summary.json\n    streaming_chat/...\n\
+    \  avoid-asyncio-sleep-sse/\n    ...\nUse `--dry-run` to preview the generated bash\
+    \ script without submitting."

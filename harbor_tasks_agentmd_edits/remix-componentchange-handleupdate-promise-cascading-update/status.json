@@ -1,21 +1,53 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:43:18.054723",
-  "total_time": 5852.89,
-  "sandbox_id": "io83mixlnd69pvq7f3lmg",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:23:05.680384",
+  "total_time": 2205.33,
+  "sandbox_id": "ii7w6qyjb9nxesqu8n57f",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "glm-5.1",
       "backend": "glm",
       "time": 212.72,
+      "notes": "Enriched with 4 CI commands: pnpm --filter @remix-run/component run typecheck, pnpm exec eslint packages/component/src --max-warnings=0, pnpm exec prettier --check packages/component/src, pnpm --filter @remix-run/component run build. Added 4 pass_to_pass tests with origin: repo_tests that execute real CI commands."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 458.87,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh idempotency check: changed grep pattern from 'Promise<AbortSignal>' to 'update(): Promise<AbortSignal>' to avoid false positive match on FrameHandle interface. All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.00).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 313.97
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 6.39,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +58,22 @@
       "backend": "glm",
       "time": 5852.89,
       "at": "2026-04-09T07:43:18.054723"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 163.51,
+      "at": "2026-04-10T12:46:20.224949"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2205.33,
+      "at": "2026-04-10T13:23:05.680384"
     }
   ]
 }

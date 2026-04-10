@@ -273,6 +273,40 @@ def test_press_enter_still_uses_wait_for_completion():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+def test_repo_eslint():
+    """Repo's ESLint passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0",
+         "packages/playwright-core/src/tools/backend/keyboard.ts",
+         "packages/playwright-core/src/tools/backend/mouse.ts",
+         "packages/playwright-core/src/tools/backend/snapshot.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Repo's package consistency checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_build():
+    """Repo's build succeeds (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 

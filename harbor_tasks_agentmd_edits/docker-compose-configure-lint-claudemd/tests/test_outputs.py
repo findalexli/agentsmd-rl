@@ -7,10 +7,14 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 from pathlib import Path
 
 REPO = "/workspace/compose"
+
+# Ensure GOTOOLCHAIN=auto is set for all go commands
+os.environ["GOTOOLCHAIN"] = "auto"
 
 
 # ---------------------------------------------------------------------------
@@ -32,6 +36,37 @@ def test_go_syntax_valid():
         assert r.returncode == 0, f"gofmt error in {f}: {r.stderr}"
 
 
+def test_go_vet_compose():
+    """Go vet passes for pkg/compose (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "vet", "./pkg/compose/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert r.returncode == 0, f"go vet failed: {r.stderr}"
+
+
+def test_unit_test_publish():
+    """Unit test for publish functionality passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "test", "-run", "Test_createLayers", "./pkg/compose/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert r.returncode == 0, f"Unit test failed: {r.stderr[-500:]}"
+
+
+def test_gofmt_check():
+    """Modified Go files are properly formatted (pass_to_pass)."""
+    files = ["pkg/compose/publish.go", "pkg/e2e/compose_run_build_once_test.go"]
+    for f in files:
+        r = subprocess.run(
+            ["gofmt", "-l", f],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.stdout.strip() == "", f"File {f} is not properly formatted"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code style tests
 # ---------------------------------------------------------------------------
@@ -44,21 +79,19 @@ def test_publish_uses_fprintf():
         ["grep", "-n", "WriteString(fmt.Sprintf(", str(publish)],
         capture_output=True, text=True,
     )
-    assert r.returncode != 0, f"Found WriteString(fmt.Sprintf anti-pattern at:\n{r.stdout}"
+    assert r.returncode != 0, f"Found WriteString(fmt.Sprintf anti-pattern: {r.stdout}"
     r2 = subprocess.run(
         ["grep", "-c", "fmt.Fprintf(", str(publish)],
         capture_output=True, text=True,
     )
     assert r2.returncode == 0, "No fmt.Fprintf calls found in publish.go"
-    assert int(r2.stdout.strip()) >= 3, \
-        f"Expected >= 3 fmt.Fprintf calls, found {r2.stdout.strip()}"
+    assert int(r2.stdout.strip()) >= 3, f"Expected >= 3 fmt.Fprintf calls, found {r2.stdout.strip()}"
 
 
 def test_no_unnecessary_nolint():
     """Test file must not have unnecessary //nolint:errcheck directive."""
     content = (Path(REPO) / "pkg/e2e/compose_run_build_once_test.go").read_text()
-    assert "//nolint:errcheck" not in content, \
-        "Found unnecessary //nolint:errcheck in compose_run_build_once_test.go"
+    assert "//nolint:errcheck" not in content, "Found unnecessary //nolint:errcheck"
 
 
 # ---------------------------------------------------------------------------
@@ -79,9 +112,6 @@ def test_claude_md_documents_lint_style():
     """CLAUDE.md must document linting setup and code style conventions."""
     claude_md = Path(REPO) / "CLAUDE.md"
     content = claude_md.read_text()
-    assert "golangci-lint" in content.lower(), \
-        "CLAUDE.md should mention golangci-lint"
-    assert "fmt.Fprintf" in content, \
-        "CLAUDE.md should document the fmt.Fprintf preference"
-    assert ".golangci.yml" in content, \
-        "CLAUDE.md should reference the linter config file"
+    assert "golangci-lint" in content.lower(), "CLAUDE.md should mention golangci-lint"
+    assert "fmt.Fprintf" in content, "CLAUDE.md should document the fmt.Fprintf preference"
+    assert ".golangci.yml" in content, "CLAUDE.md should reference the linter config file"

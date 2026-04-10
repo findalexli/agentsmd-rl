@@ -5,6 +5,26 @@ source:
   base_commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
   merge_commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
 checks:
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier format check passes
+- id: test_repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo changes:validate passes
+- id: test_repo_cookie_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo @remix-run/cookie unit tests pass
 - id: syntax_check
   type: fail_to_pass
   origin: pr_diff
@@ -169,7 +189,7 @@ config_edits:
 
     - Open the new PR.
 
-    - Include a traceable link in the PR body such as `Supersedes #<old_pr>`.
+    - Include a traceable link in the PR body such as `Supersede #<old_pr>`.
 
 
     1. Close the superseded PR explicitly.
@@ -211,7 +231,7 @@ config_edits:
 
     - Use `Closes/Fixes` only for issues.
 
-    - Use `Supersedes #<old_pr>` or `Refs #<old_pr>` for PR-to-PR linkage.
+    - Use `Supersede #<old_pr>` or `Refs #<old_pr>` for PR-to-PR linkage.
 
 
     1. Prefer explicit closure over implied automation.

@@ -124,22 +124,84 @@ def test_bootstrap_updated():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests / static) — regression + anti-stub
+# Pass-to-pass (repo_tests) — regression tests using actual CI commands
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_existing_tests_pass():
-    """Existing project tests still pass (CPU-safe subset)."""
-    # Run a focused test that doesn't require native watcher bindings
+def test_repo_typecheck():
+    """TypeScript type checking passes (pass_to_pass)."""
     r = subprocess.run(
-        ["bun", "test", "test/permission/next.test.ts", "--timeout", "30000"],
+        ["bun", "run", "typecheck"],
+        cwd=PACKAGE,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_ignore():
+    """File ignore tests pass - file module related (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/file/ignore.test.ts", "--timeout", "30000"],
         cwd=PACKAGE,
         capture_output=True,
         timeout=60,
     )
-    # Permission tests should still work after our changes
-    assert r.returncode == 0, f"Permission tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    assert r.returncode == 0, f"File ignore tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
 
+
+# [repo_tests] pass_to_pass
+def test_repo_project_state():
+    """Project state tests pass - Instance.state related (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/project/state.test.ts", "--timeout", "30000"],
+        cwd=PACKAGE,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Project state tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_permission_service():
+    """Permission service tests pass - Effect service pattern related (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/permission/next.test.ts", "--timeout", "30000"],
+        cwd=PACKAGE,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Permission service tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_effect_zod():
+    """Effect-zod integration tests pass - Effect patterns related (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/util/effect-zod.test.ts", "--timeout", "30000"],
+        cwd=PACKAGE,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Effect-zod tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_util_timeout():
+    """Timeout util tests pass - async utilities related (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/util/timeout.test.ts", "--timeout", "30000"],
+        cwd=PACKAGE,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Timeout util tests failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (static) — anti-stub check
+# ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
 def test_not_stub():

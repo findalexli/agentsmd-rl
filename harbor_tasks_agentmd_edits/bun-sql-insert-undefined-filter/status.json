@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": -1,
-  "validated_at": "2026-04-09T14:56:21.564809",
-  "total_time": 1690.55,
-  "sandbox_id": "inkp0ar1g9jpsvm9bof2p",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:29:28.057222",
+  "total_time": 931.04,
+  "sandbox_id": "iju4cqa2j43nl93030jv9",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -24,28 +26,58 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "in_progress",
+      "status": "pass",
       "nop_reward": 0.0,
-      "gold_reward": -1,
-      "attempts": 1,
-      "notes": "Fixed solve.sh - replaced git patch with Node.js direct file modifications. Original error was 'corrupt patch at line 256' due to incorrect hunk headers in shared.ts section (line numbers didn't match actual file). Need to verify gold test passes.",
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed test_outputs.py to use regex-based function extraction instead of broken brace-counting logic. Also fixed solve.sh to properly implement the sqlite.ts INSERT logic using buildDefinedColumnsAndQuery. All 4 checks pass: docker build, NOP test (reward=0), gold test (reward=1), rubric is empty.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 5.77
+      "time": 522.41
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 6.2,
+      "time": 282.66,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "test/CLAUDE.md",
+        "CLAUDE.md",
+        "AGENTS.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 0,
+      "rejection_reasons": "none",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 22.77,
-      "notes": ""
+      "time": 36.34
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 36.45,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 18.43,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.14,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -80,6 +112,14 @@
       "backend": "fireworks",
       "time": 1690.55,
       "at": "2026-04-09T14:56:21.564809"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 931.04,
+      "at": "2026-04-10T11:29:28.057222"
     }
   ]
 }

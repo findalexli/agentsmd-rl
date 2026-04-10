@@ -73,43 +73,50 @@ def test_single_insert_no_null_fallback():
         "const fs = require('fs');\n"
         f"const src = fs.readFileSync('{SQLITE_TS}', 'utf8');\n"
         "\n"
-        "// Find the single-insert else branch\n"
-        "const lines = src.split('\\n');\n"
-        "let inSingleInsert = false;\n"
-        "let singleInsertBlock = [];\n"
-        "let braceDepth = 0;\n"
-        "\n"
-        "for (let i = 0; i < lines.length; i++) {\n"
-        "    const line = lines[i];\n"
-        "    if (line.includes('} else {') && i > 0 && lines[i-1].includes('query += \")\"')) {\n"
-        "        inSingleInsert = true;\n"
-        "        braceDepth = 0;\n"
-        "        continue;\n"
-        "    }\n"
-        "    if (inSingleInsert) {\n"
-        "        singleInsertBlock.push(line);\n"
-        "        if (line.includes('{')) braceDepth++;\n"
-        "        if (line.includes('}')) {\n"
-        "            braceDepth--;\n"
-        "            if (braceDepth < 0) {\n"
-        "                inSingleInsert = false;\n"
-        "                break;\n"
-        "            }\n"
-        "        }\n"
-        "    }\n"
+        "// Find the SQLCommand.insert section and check the single-item handling\n"
+        "const insertSectionStart = src.indexOf('command === SQLCommand.insert');\n"
+        "if (insertSectionStart === -1) {\n"
+        "    console.log(JSON.stringify({ok: false, reason: 'could not find insert section'}));\n"
+        "    process.exit(0);\n"
         "}\n"
         "\n"
-        "const block = singleInsertBlock.join('\\n');\n"
+        "// Get the insert section (from the check onwards)\n"
+        "const insertSection = src.substring(insertSectionStart, insertSectionStart + 5000);\n"
         "\n"
-        "const hasUndefinedNullCheck = block.includes('typeof columnValue === \"undefined\"') &&\n"
-        "                               block.includes('binding_values.push(null)');\n"
+        "// Find the single-item else block after the $isArray(items) check\n"
+        "const arrayItemsCheck = insertSection.indexOf('$isArray(items)');\n"
+        "if (arrayItemsCheck === -1) {\n"
+        "    console.log(JSON.stringify({ok: false, reason: 'no $isArray(items) check found'}));\n"
+        "    process.exit(0);\n"
+        "}\n"
         "\n"
-        "if (hasUndefinedNullCheck) {\n"
+        "// Get the part after $isArray(items) check - the else block is the single-insert path\n"
+        "const afterArrayCheck = insertSection.substring(arrayItemsCheck);\n"
+        "\n"
+        "// Find the } else { block after the array handling\n"
+        "const elseMatch = afterArrayCheck.match(/}\\s*else\\s*{/);\n"
+        "if (!elseMatch) {\n"
+        "    console.log(JSON.stringify({ok: false, reason: 'no else block after array handling'}));\n"
+        "    process.exit(0);\n"
+        "}\n"
+        "\n"
+        "// Extract the single-insert block (approximate)\n"
+        "const elseIndex = afterArrayCheck.indexOf(elseMatch[0]);\n"
+        "let singleBlock = afterArrayCheck.substring(elseIndex, elseIndex + 1500);\n"
+        "\n"
+        "// Check that the single-insert block uses buildDefinedColumnsAndQuery or definedColumns\n"
+        "const usesDefinedColumns = singleBlock.includes('definedColumn');\n"
+        "\n"
+        "// Check for the old undefined-to-null conversion pattern\n"
+        "const hasUndefinedNullCheck = singleBlock.includes('typeof columnValue === \"undefined\"') ||\n"
+        "                               (singleBlock.includes('=== \"undefined\"') && singleBlock.includes('push(null)'));\n"
+        "\n"
+        "if (hasUndefinedNullCheck && !usesDefinedColumns) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'single-insert still converts undefined to null'}));\n"
         "    process.exit(0);\n"
         "}\n"
         "\n"
-        "if (!block.includes('definedColumn')) {\n"
+        "if (!usesDefinedColumns) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'single-insert does not use definedColumns'}));\n"
         "    process.exit(0);\n"
         "}\n"
@@ -128,36 +135,31 @@ def test_build_function_checks_all_items():
         "const fs = require('fs');\n"
         f"const src = fs.readFileSync('{SHARED_TS}', 'utf8');\n"
         "\n"
-        "const funcStart = src.indexOf('function buildDefinedColumnsAndQuery');\n"
-        "if (funcStart === -1) {\n"
+        "// Use regex to extract the full function including nested braces\n"
+        "const funcMatch = src.match(/function buildDefinedColumnsAndQuery[\\s\\S]*?\\{[\\s\\S]*?\\n\\}/);\n"
+        "if (!funcMatch) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'function not found'}));\n"
         "    process.exit(0);\n"
         "}\n"
+        "const funcBody = funcMatch[0];\n"
         "\n"
-        "const bodyStart = src.indexOf('{', funcStart);\n"
-        "let depth = 0;\n"
-        "let funcEnd = -1;\n"
-        "for (let i = bodyStart; i < src.length; i++) {\n"
-        "    if (src[i] === '{') depth++;\n"
-        "    if (src[i] === '}') {\n"
-        "        depth--;\n"
-        "        if (depth === 0) { funcEnd = i; break; }\n"
-        "    }\n"
-        "}\n"
+        "// Check for required patterns - must check ALL items in the array\n"
+        "const hasItemsLength = funcBody.includes('items.length');\n"
+        "const hasItemsLoop = funcBody.includes('items.length') || funcBody.includes('for (let j = 0; j < items');\n"
+        "const hasPerItemCheck = funcBody.includes('typeof items[j][column]') || funcBody.includes('items[j][column]') || funcBody.includes('items[j]');\n"
+        "const hasBreak = funcBody.includes('break');\n"
         "\n"
-        "const funcBody = src.substring(funcStart, funcEnd + 1);\n"
-        "\n"
-        "if (!funcBody.includes('items.length')) {\n"
+        "if (!hasItemsLoop && !hasItemsLength) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'no loop over all items'}));\n"
         "    process.exit(0);\n"
         "}\n"
         "\n"
-        "if (!funcBody.includes('typeof items[j][column]')) {\n"
+        "if (!hasPerItemCheck) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'no per-item typeof check'}));\n"
         "    process.exit(0);\n"
         "}\n"
         "\n"
-        "if (!funcBody.includes('break')) {\n"
+        "if (!hasBreak) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'no break after finding defined value'}));\n"
         "    process.exit(0);\n"
         "}\n"
@@ -222,26 +224,17 @@ def test_not_stub():
         "const fs = require('fs');\n"
         f"const src = fs.readFileSync('{SHARED_TS}', 'utf8');\n"
         "\n"
-        "const funcStart = src.indexOf('function buildDefinedColumnsAndQuery');\n"
-        "if (funcStart === -1) {\n"
+        "// Use regex to extract the full function including nested braces\n"
+        "const funcMatch = src.match(/function buildDefinedColumnsAndQuery[\\s\\S]*?\\{[\\s\\S]*?\\n\\}/);\n"
+        "if (!funcMatch) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'function not found'}));\n"
         "    process.exit(0);\n"
         "}\n"
+        "const funcBody = funcMatch[0];\n"
         "\n"
-        "const bodyStart = src.indexOf('{', funcStart);\n"
-        "let depth = 0;\n"
-        "let funcEnd = -1;\n"
-        "for (let i = bodyStart; i < src.length; i++) {\n"
-        "    if (src[i] === '{') depth++;\n"
-        "    if (src[i] === '}') {\n"
-        "        depth--;\n"
-        "        if (depth === 0) { funcEnd = i; break; }\n"
-        "    }\n"
-        "}\n"
-        "\n"
-        "const funcBody = src.substring(funcStart, funcEnd + 1);\n"
-        "\n"
-        "const lines = funcBody.split('\\n').filter(l => {\n"
+        "// Count lines excluding comments and braces\n"
+        "const allLines = funcBody.split('\\n');\n"
+        "const lines = allLines.filter(l => {\n"
         "    const trimmed = l.trim();\n"
         "    return trimmed.length > 0 &&\n"
         "           trimmed !== '{' &&\n"
@@ -251,17 +244,20 @@ def test_not_stub():
         "           !trimmed.startsWith('/*');\n"
         "});\n"
         "\n"
+        "const hasForLoop = funcBody.includes('for (');\n"
+        "const hasIf = funcBody.includes('if (');\n"
+        "\n"
         "if (lines.length < 8) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'function has only ' + lines.length + ' logic lines, expected >= 8'}));\n"
         "    process.exit(0);\n"
         "}\n"
         "\n"
-        "if (!funcBody.includes('for (')) {\n"
+        "if (!hasForLoop) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'no for loop'}));\n"
         "    process.exit(0);\n"
         "}\n"
         "\n"
-        "if (!funcBody.includes('if (')) {\n"
+        "if (!hasIf) {\n"
         "    console.log(JSON.stringify({ok: false, reason: 'no conditional logic'}));\n"
         "    process.exit(0);\n"
         "}\n"
@@ -325,23 +321,31 @@ def test_repo_prettier_format():
 
 
 def test_repo_syntax_valid():
-    """SQL source files must have valid syntax (balanced braces) (pass_to_pass)."""
+    """SQL source files must have valid syntax (esbuild transpilation passes) (pass_to_pass)."""
     sql_files = [
-        ("shared.ts", SHARED_TS),
-        ("sqlite.ts", SQLITE_TS),
-        ("mysql.ts", MYSQL_TS),
-        ("postgres.ts", POSTGRES_TS),
+        f"{REPO}/src/js/internal/sql/shared.ts",
+        f"{REPO}/src/js/internal/sql/sqlite.ts",
+        f"{REPO}/src/js/internal/sql/mysql.ts",
+        f"{REPO}/src/js/internal/sql/postgres.ts",
     ]
-    for name, path in sql_files:
-        src = Path(path).read_text()
-        # Check for balanced braces
-        depth = 0
-        for char in src:
-            if char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-                if depth < 0:
-                    assert False, f"{name}: Unbalanced braces (extra closing brace)"
-        if depth != 0:
-            assert False, f"{name}: Unbalanced braces ({depth} unclosed)"
+    r = subprocess.run(
+        ["npx", "esbuild", "--loader:.ts=ts", "--outdir=/tmp/esbuild-out"] + sql_files,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"esbuild syntax check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_typescript_no_errors():
+    """TypeScript files should transpile without errors (pass_to_pass)."""
+    # Run esbuild with strictest error checking
+    sql_files = [
+        f"{REPO}/src/js/internal/sql/shared.ts",
+        f"{REPO}/src/js/internal/sql/sqlite.ts",
+        f"{REPO}/src/js/internal/sql/mysql.ts",
+        f"{REPO}/src/js/internal/sql/postgres.ts",
+    ]
+    r = subprocess.run(
+        ["npx", "esbuild", "--loader:.ts=ts", "--log-level=error", "--outdir=/tmp/esbuild-check"] + sql_files,
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript error check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

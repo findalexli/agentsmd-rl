@@ -197,7 +197,7 @@ def test_claude_md_has_quick_start():
     assert "## Quick Start" in content or "### Quick Start" in content, \
         "CLAUDE.md must have a Quick Start section"
     # Verify it has actual steps (not just a heading)
-    qs_match = re.search(r"##+ Quick Start\s*\n(.*?)(?=\n##|\Z)", content, re.DOTALL)
+    qs_match = re.search(r"##+ Quick Start\s*\n(.*?)\n(?=##|\Z)", content, re.DOTALL)
     assert qs_match, "Quick Start section must have content"
     qs_content = qs_match.group(1)
     assert "pnpm" in qs_content, "Quick Start must include pnpm commands"
@@ -241,3 +241,44 @@ def test_claude_md_pnpm_turbo_note():
                       for l in turbo_context)
     assert has_warning, \
         "CLAUDE.md should warn that turbo must not be run directly"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI command tests that verify repo tooling works
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_claude_md():
+    """CLAUDE.md passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/CLAUDE.md"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for CLAUDE.md:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_package_json():
+    """package.json passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/package.json"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for package.json:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_claude_md_exists():
+    """CLAUDE.md documentation file exists (pass_to_pass)."""
+    claude_md = Path(REPO) / "CLAUDE.md"
+    assert claude_md.exists(), "CLAUDE.md must exist"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_rc_files():
+    """Prettier config files are valid (pass_to_pass)."""
+    prettierrc = Path(REPO) / ".prettierrc.json"
+    assert prettierrc.exists(), ".prettierrc.json must exist"
+    # Validate JSON
+    data = json.loads(prettierrc.read_text())
+    assert isinstance(data, dict), ".prettierrc.json must be valid JSON"

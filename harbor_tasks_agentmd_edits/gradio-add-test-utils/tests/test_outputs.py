@@ -9,9 +9,29 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import subprocess
+import shutil
+import os
 from pathlib import Path
 
 REPO = "/workspace/gradio"
+
+
+def _ensure_deps():
+    """Ensure pnpm is installed and dependencies are available."""
+    # Install pnpm if not available
+    if not shutil.which("pnpm"):
+        subprocess.run(
+            ["npm", "install", "-g", "pnpm"],
+            capture_output=True, timeout=120, check=False
+        )
+    pnpm = shutil.which("pnpm") or "/usr/local/bin/pnpm"
+    # Check if node_modules exists, if not run pnpm install
+    if not os.path.exists(os.path.join(REPO, "node_modules")):
+        subprocess.run(
+            [pnpm, "install"],
+            capture_output=True, timeout=300, cwd=REPO, check=False
+        )
+    return pnpm
 
 
 # ---------------------------------------------------------------------------
@@ -23,41 +43,55 @@ def test_render_core_exports_intact():
     """render.ts still exports render, cleanup, and fireEvent functions."""
     render_ts = Path(REPO) / "js" / "tootils" / "src" / "render.ts"
     content = render_ts.read_text()
-    assert "export async function render" in content, \
+    assert "export async function render" in content, (
         "render function export missing"
-    assert "function cleanup" in content, \
+    )
+    assert "function cleanup" in content, (
         "cleanup function missing"
-    assert "fireEvent" in content, \
+    )
+    assert "fireEvent" in content, (
         "fireEvent export missing"
+    )
 
 
-# [repo_ci] pass_to_pass - Repo CI: code formatting check
+# [repo_tests] pass_to_pass - Repo CI: code formatting check
 def test_repo_formatting():
     """Repo's code formatting passes (pass_to_pass)."""
-    # Install pnpm if not available
-    r = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, timeout=60)
-    # Run format check using npx to ensure prettier is available
+    pnpm = _ensure_deps()
     r = subprocess.run(
-        ["npx", "prettier", "--check", "--ignore-path", ".config/.prettierignore", "--config", ".config/.prettierrc.json", "--plugin", "prettier-plugin-svelte", "."],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        [pnpm, "run", "format:check"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    assert r.returncode == 0, f"Format check failed:\\n{r.stderr[-500:]}"
+    err_msg = r.stderr[-500:] if r.stderr else ""
+    assert r.returncode == 0, f"Format check failed: {err_msg}"
 
 
-# [repo_ci] pass_to_pass - Repo CI: client node tests
+# [repo_tests] pass_to_pass - Repo CI: client node tests
 def test_repo_client_node_tests():
     """Repo's client node tests pass (pass_to_pass)."""
-    # Install pnpm if not available
-    r = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, timeout=60)
-    # Run client tests using npx vitest directly in the client/js directory
-    env = {"NODE_NO_WARNINGS": "1", "TEST_MODE": "node"}
+    pnpm = _ensure_deps()
+    env = os.environ.copy()
+    env["NODE_NO_WARNINGS"] = "1"
+    env["TEST_MODE"] = "node"
     r = subprocess.run(
-        ["npx", "vitest", "run", "-c", "vite.config.ts"],
-        capture_output=True, text=True, timeout=120, cwd=Path(REPO) / "client/js",
+        [pnpm, "exec", "vitest", "run", "-c", "vite.config.ts"],
+        capture_output=True, text=True, timeout=300, cwd=os.path.join(REPO, "client/js"),
         env=env,
     )
-    assert r.returncode == 0, f"Client node tests failed:\\n{r.stderr[-500:]}"
+    err_msg = r.stderr[-500:] if r.stderr else ""
+    assert r.returncode == 0, f"Client node tests failed: {err_msg}"
 
+
+# [repo_tests] pass_to_pass - Repo CI: TypeScript compilation check for client
+def test_repo_client_typescript():
+    """Repo's client TypeScript compiles without errors (pass_to_pass)."""
+    pnpm = _ensure_deps()
+    r = subprocess.run(
+        [pnpm, "exec", "tsc", "--noEmit", "-p", "client/js"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    err_msg = r.stderr[-500:] if r.stderr else ""
+    assert r.returncode == 0, f"Client TypeScript check failed: {err_msg}"
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
@@ -66,8 +100,7 @@ def test_repo_client_node_tests():
 # [pr_diff] fail_to_pass
 def test_package_json_exports_download_command():
     """package.json must have ./download-command export entry."""
-    r = subprocess.run(
-        ["node", "-e", """
+    node_script = """
 const pkg = JSON.parse(require('fs').readFileSync('js/tootils/package.json', 'utf8'));
 const exp = pkg.exports;
 if (!exp || !exp['./download-command']) {
@@ -75,13 +108,16 @@ if (!exp || !exp['./download-command']) {
   process.exit(1);
 }
 console.log(JSON.stringify({ found: exp['./download-command'] }));
-"""],
+"""
+    r = subprocess.run(
+        ["node", "-e", node_script],
         cwd=REPO, capture_output=True, text=True, timeout=10,
     )
-    assert r.returncode == 0, f"Missing ./download-command export:\\n{r.stderr}"
+    assert r.returncode == 0, f"Missing ./download-command export: {r.stderr}"
     data = json.loads(r.stdout.strip())
-    assert "download-command" in data["found"], \
+    assert "download-command" in data["found"], (
         f"Export path should reference download-command, got: {data['found']}"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -90,11 +126,13 @@ def test_render_event_buffer():
     render_ts = Path(REPO) / "js" / "tootils" / "src" / "render.ts"
     content = render_ts.read_text()
     # The event buffer array must exist
-    assert "event_buffer" in content, \
+    assert "event_buffer" in content, (
         "render.ts should declare an event_buffer array"
+    )
     # The dispatcher must push events into the buffer
-    assert "event_buffer.push" in content, \
+    assert "event_buffer.push" in content, (
         "dispatcher should push events into event_buffer"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -102,11 +140,13 @@ def test_listen_retrospective_mode():
     """listen() must accept a retrospective option and replay buffered events."""
     render_ts = Path(REPO) / "js" / "tootils" / "src" / "render.ts"
     content = render_ts.read_text()
-    assert "retrospective" in content, \
+    assert "retrospective" in content, (
         "listen function should support retrospective option"
+    )
     # Verify retrospective mode iterates over the buffer
-    assert "for" in content and "event_buffer" in content, \
+    assert "for" in content and "event_buffer" in content, (
         "retrospective mode should iterate over event_buffer"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -114,10 +154,12 @@ def test_mock_client_function():
     """render.ts must export a mock_client function for file upload tests."""
     render_ts = Path(REPO) / "js" / "tootils" / "src" / "render.ts"
     content = render_ts.read_text()
-    assert "mock_client" in content, \
+    assert "mock_client" in content, (
         "render.ts should export mock_client"
-    assert "upload" in content and "stream" in content, \
+    )
+    assert "upload" in content and "stream" in content, (
         "mock_client should provide upload and stream mocks"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -127,8 +169,9 @@ def test_download_module_functions():
     assert download_ts.exists(), "js/tootils/src/download.ts must exist"
     content = download_ts.read_text()
     for fn_name in ["download_file", "upload_file", "drop_file"]:
-        assert f"export async function {fn_name}" in content, \
+        assert f"export async function {fn_name}" in content, (
             f"download.ts must export {fn_name}"
+        )
 
 
 # [pr_diff] fail_to_pass
@@ -139,8 +182,9 @@ def test_fixtures_module():
     content = fixtures_ts.read_text()
     expected = ["TEST_TXT", "TEST_JPG", "TEST_PNG", "TEST_MP4", "TEST_WAV", "TEST_PDF"]
     for name in expected:
-        assert f"export const {name}" in content, \
+        assert f"export const {name}" in content, (
             f"fixtures.ts must export {name}"
+        )
 
 
 # [pr_diff] fail_to_pass
@@ -148,15 +192,19 @@ def test_vite_config_browser_commands():
     """vite.config.ts must register expect_download, set_file_inputs, drop_files commands."""
     vite_config = Path(REPO) / "js" / "spa" / "vite.config.ts"
     content = vite_config.read_text()
-    assert "expect_download" in content, \
+    assert "expect_download" in content, (
         "vite.config.ts must import expect_download"
-    assert "set_file_inputs" in content, \
+    )
+    assert "set_file_inputs" in content, (
         "vite.config.ts must import set_file_inputs"
-    assert "drop_files" in content, \
+    )
+    assert "drop_files" in content, (
         "vite.config.ts must import drop_files"
+    )
     # Must be in the commands section
-    assert "commands" in content, \
+    assert "commands" in content, (
         "vite.config.ts must register commands in browser config"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -168,10 +216,13 @@ def test_readme_correct_package_name():
     """README.md must reference @gradio/tootils, not the old @gradio/button."""
     readme = Path(REPO) / "js" / "tootils" / "README.md"
     content = readme.read_text()
-    assert "@gradio/tootils" in content or "tootils" in content.split("\n")[0], \
+    assert ("@gradio/tootils" in content or 
+            "tootils" in content.split("\n")[0]), (
         "README should reference @gradio/tootils package"
-    assert "@gradio/button" not in content, \
+    )
+    assert "@gradio/button" not in content, (
         "README should NOT still reference the old @gradio/button placeholder"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -179,14 +230,17 @@ def test_readme_documents_render_function():
     """README.md must document the render function including its signature."""
     readme = Path(REPO) / "js" / "tootils" / "README.md"
     content = readme.read_text()
-    assert "render" in content.lower(), \
+    assert "render" in content.lower(), (
         "README should document the render function"
+    )
     # Must describe the signature or parameters
-    assert "Component" in content and "props" in content, \
+    assert "Component" in content and "props" in content, (
         "README should describe render's parameters (Component, props)"
+    )
     # Must mention the return value
-    assert "listen" in content, \
+    assert "listen" in content, (
         "README should document the listen helper returned by render"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -194,12 +248,15 @@ def test_readme_documents_file_utilities():
     """README.md must document download_file, upload_file, and drop_file utilities."""
     readme = Path(REPO) / "js" / "tootils" / "README.md"
     content = readme.read_text()
-    assert "download_file" in content, \
+    assert "download_file" in content, (
         "README should document download_file"
-    assert "upload_file" in content, \
+    )
+    assert "upload_file" in content, (
         "README should document upload_file"
-    assert "drop_file" in content, \
+    )
+    assert "drop_file" in content, (
         "README should document drop_file"
+    )
 
 
 # [pr_diff] fail_to_pass
@@ -208,8 +265,12 @@ def test_readme_documents_test_fixtures():
     readme = Path(REPO) / "js" / "tootils" / "README.md"
     content = readme.read_text()
     # Must mention at least some fixtures by name
-    assert "TEST_TXT" in content or "TEST_JPG" in content or "TEST_PNG" in content, \
+    assert ("TEST_TXT" in content or 
+            "TEST_JPG" in content or 
+            "TEST_PNG" in content), (
         "README should document the test fixture constants (TEST_TXT, TEST_JPG, etc.)"
+    )
     # Must mention the fixture file source
-    assert "test_files" in content or "test/test_files" in content, \
+    assert "test_files" in content or "test/test_files" in content, (
         "README should reference the test_files directory where fixtures live"
+    )

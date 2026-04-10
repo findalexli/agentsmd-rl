@@ -9,218 +9,227 @@ if grep -q 'PackageReadmeFile' src/Controls/Maps/src/Controls.Maps.csproj 2>/dev
     exit 0
 fi
 
-git apply --whitespace=fix <<'PATCH'
-diff --git a/src/Controls/Maps/README.md b/src/Controls/Maps/README.md
-new file mode 100644
-index 000000000000..4b591f932369
---- /dev/null
-+++ b/src/Controls/Maps/README.md
-@@ -0,0 +1,177 @@
-+# Microsoft.Maui.Controls.Maps
-+
-+`Microsoft.Maui.Controls.Maps` brings an easy-to-use map control to .NET MAUI apps so you can display maps, drop pins, draw shapes, and react to user interactions on Android and iOS from one shared codebase. (Windows implementation is not available yet.)
-+
-+## Get started
-+
-+1. **Install the package**
-+   ```bash
-+   dotnet add package Microsoft.Maui.Controls.Maps
-+   ```
-+2. **Enable Maps in `MauiProgram.cs`**
-+   ```csharp
-+   var builder = MauiApp.CreateBuilder();
-+   builder
-+       .UseMauiApp<App>()
-+       .UseMauiMaps(); // registers map handlers
-+   ```
-+3. **Add platform credentials**
-+   - **Android**: Add your Google Maps API key to `Platforms/Android/AndroidManifest.xml`
-+     ```xml
-+     <application>
-+         <meta-data android:name="com.google.android.geo.API_KEY"
-+                    android:value="YOUR_API_KEY_HERE" />
-+     </application>
-+     ```
-+   - **iOS**: No additional keys required for the built-in map provider.
-+   - **Windows**: The Maps control is currently not implemented on Windows. For updates, see [this tracking link](https://aka.ms/maui-maps-no-windows).
-+
-+4. **Place a map in your page**
-+   ```xml
-+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-+             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
-+             xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials">
-+    <maps:Map>
-+        <maps:Map.Pins>
-+            <maps:Pin Label="Downtown"
-+                      Address="Main Street"
-+                      Type="Place">
-+                <maps:Pin.Location>
-+                    <sensors:Location>
-+                        <x:Arguments>
-+                            <x:Double>47.6205</x:Double>
-+                            <x:Double>-122.3493</x:Double>
-+                        </x:Arguments>
-+                    </sensors:Location>
-+                </maps:Pin.Location>
-+            </maps:Pin>
-+        </maps:Map.Pins>
-+    </maps:Map>
-+</ContentPage>
-+   ```
-+
-+## Features at a glance
-+
-+- **Pins**: Labels, addresses, pin types, custom images, and tap handling via `PinClicked`.
-+- **Shapes**: Draw **polygons**, **polylines**, and **circles** to outline areas or routes.
-+- **Map interactions**: Handle `MapClicked`, move the camera/region, and programmatically add or remove map elements at runtime.
-+- **Map display**: Switch map types (e.g., Street, Satellite, Hybrid) and control gesture support (scroll, zoom, rotate).
-+- **User location**: Show the user's current location with `IsShowingUser` (platform location permission required).
-+
-+### Samples: pins and shapes
-+
-+```xml
-+<maps:Map xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
-+          xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials"
-+          MapType="Hybrid" MapClicked="OnMapClicked">
-+    <maps:Map.Pins>
-+        <maps:Pin Label="Office" Type="Place">
-+            <maps:Pin.Location>
-+                <sensors:Location>
-+                    <x:Arguments>
-+                        <x:Double>47.6424</x:Double>
-+                        <x:Double>-122.3219</x:Double>
-+                    </x:Arguments>
-+                </sensors:Location>
-+            </maps:Pin.Location>
-+        </maps:Pin>
-+    </maps:Map.Pins>
-+
-+    <maps:Map.MapElements>
-+        <maps:Polygon StrokeColor="Red" FillColor="#40FF0000" StrokeWidth="4">
-+            <maps:Polygon.Geopath>
-+                <sensors:Location>
-+                    <x:Arguments>
-+                        <x:Double>47.642</x:Double>
-+                        <x:Double>-122.323</x:Double>
-+                    </x:Arguments>
-+                </sensors:Location>
-+                <sensors:Location>
-+                    <x:Arguments>
-+                        <x:Double>47.643</x:Double>
-+                        <x:Double>-122.326</x:Double>
-+                    </x:Arguments>
-+                </sensors:Location>
-+                <sensors:Location>
-+                    <x:Arguments>
-+                        <x:Double>47.640</x:Double>
-+                        <x:Double>-122.327</x:Double>
-+                    </x:Arguments>
-+                </sensors:Location>
-+            </maps:Polygon.Geopath>
-+        </maps:Polygon>
-+
-+        <maps:Polyline StrokeColor="DodgerBlue" StrokeWidth="6">
-+            <maps:Polyline.Geopath>
-+                <sensors:Location>
-+                    <x:Arguments>
-+                        <x:Double>47.639</x:Double>
-+                        <x:Double>-122.330</x:Double>
-+                    </x:Arguments>
-+                </sensors:Location>
-+                <sensors:Location>
-+                    <x:Arguments>
-+                        <x:Double>47.640</x:Double>
-+                        <x:Double>-122.335</x:Double>
-+                    </x:Arguments>
-+                </sensors:Location>
-+            </maps:Polyline.Geopath>
-+        </maps:Polyline>
-+
-+        <maps:Circle StrokeColor="Green" FillColor="#40008000" StrokeWidth="3">
-+            <maps:Circle.Center>
-+                <sensors:Location>
-+                    <x:Arguments>
-+                        <x:Double>47.641</x:Double>
-+                        <x:Double>-122.329</x:Double>
-+                    </x:Arguments>
-+                </sensors:Location>
-+            </maps:Circle.Center>
-+            <maps:Circle.Radius>
-+                <maps:Distance>
-+                    <x:Arguments>
-+                        <x:Double>200</x:Double>
-+                    </x:Arguments>
-+                </maps:Distance>
-+            </maps:Circle.Radius>
-+        </maps:Circle>
-+    </maps:Map.MapElements>
-+</maps:Map>
-+```
-+
-+### Samples: interactions and map modes
-+
-+```csharp
-+// In code-behind
-+void OnMapClicked(object sender, MapClickedEventArgs e)
-+{
-+    // Drop a pin where the user tapped
-+    var map = (Map)sender;
-+    map.Pins.Add(new Pin
-+    {
-+        Label = "Dropped pin",
-+        Type = PinType.Place,
-+        Location = e.Location
-+    });
-+
-+    // Move/zoom to the tapped location
-+    map.MoveToRegion(MapSpan.FromCenterAndRadius(e.Location, Distance.FromMeters(500)));
-+}
-+
-+// Toggle map display mode
-+void ToggleMapType(Map map) =>
-+    map.MapType = map.MapType == MapType.Street ? MapType.Satellite : MapType.Street;
-+
-+// Common runtime toggles
-+void EnableLocationAndTraffic(Map map)
-+{
-+    map.IsShowingUser = true;      // requires location permission on the device
-+    map.IsTrafficEnabled = true;   // show live traffic where supported
-+}
-+```
-+
-+## Learn more
-+
-+- [.NET MAUI Map control docs](https://learn.microsoft.com/dotnet/maui/user-interface/controls/map) - capabilities, events, and platform guidance
-+- [.NET MAUI documentation](https://learn.microsoft.com/dotnet/maui/) - build and ship cross-platform apps
-diff --git a/src/Controls/Maps/src/Controls.Maps.csproj b/src/Controls/Maps/src/Controls.Maps.csproj
-index bfaae807eca3..db61d6819577 100644
---- a/src/Controls/Maps/src/Controls.Maps.csproj
-+++ b/src/Controls/Maps/src/Controls.Maps.csproj
-@@ -25,6 +25,7 @@
-     <PackageId>Microsoft.Maui.Controls.Maps</PackageId>
-     <PackageTags>$(DefaultPackageTags);maps;mapping</PackageTags>
-     <Description>Maps and mapping support for .NET Multi-platform App UI (.NET MAUI) apps.</Description>
-+    <PackageReadmeFile>README.md</PackageReadmeFile>
-   </PropertyGroup>
+# Create the README file
+python3 << 'PYEOF'
+readme_content = '''# Microsoft.Maui.Controls.Maps
 
-   <ItemGroup>
-@@ -32,9 +33,12 @@
-     <ProjectReference Include="..\..\..\Core\src\Core.csproj" PrivateAssets="all" />
-     <ProjectReference Include="..\..\..\Core\maps\src\Maps.csproj" />
-   </ItemGroup>
-+  <ItemGroup>
-+    <None Include="$(MSBuildThisFileDirectory)..\README.md" Link="README.md" Pack="true" PackagePath="\" />
-+  </ItemGroup>
+`Microsoft.Maui.Controls.Maps` brings an easy-to-use map control to .NET MAUI apps so you can display maps, drop pins, draw shapes, and react to user interactions on Android and iOS from one shared codebase. (Windows implementation is not available yet.)
 
-   <Import Project="$(MauiSrcDirectory)PublicAPI.targets" />
+## Get started
 
-   <Import Project="$(MauiSrcDirectory)Workload\Shared\LibraryPacks.targets" />
+1. **Install the package**
+   ```bash
+   dotnet add package Microsoft.Maui.Controls.Maps
+   ```
+2. **Enable Maps in `MauiProgram.cs`**
+   ```csharp
+   var builder = MauiApp.CreateBuilder();
+   builder
+       .UseMauiApp<App>()
+       .UseMauiMaps(); // registers map handlers
+   ```
+3. **Add platform credentials**
+   - **Android**: Add your Google Maps API key to `Platforms/Android/AndroidManifest.xml`
+     ```xml
+     <application>
+         <meta-data android:name="com.google.android.geo.API_KEY"
+                    android:value="YOUR_API_KEY_HERE" />
+     </application>
+     ```
+   - **iOS**: No additional keys required for the built-in map provider.
+   - **Windows**: The Maps control is currently not implemented on Windows. For updates, see [this tracking link](https://aka.ms/maui-maps-no-windows).
 
--</Project>
-\ No newline at end of file
-+</Project>
+4. **Place a map in your page**
+   ```xml
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
+             xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials">
+    <maps:Map>
+        <maps:Map.Pins>
+            <maps:Pin Label="Downtown"
+                      Address="Main Street"
+                      Type="Place">
+                <maps:Pin.Location>
+                    <sensors:Location>
+                        <x:Arguments>
+                            <x:Double>47.6205</x:Double>
+                            <x:Double>-122.3493</x:Double>
+                        </x:Arguments>
+                    </sensors:Location>
+                </maps:Pin.Location>
+            </maps:Pin>
+        </maps:Map.Pins>
+    </maps:Map>
+</ContentPage>
+   ```
 
-PATCH
+## Features at a glance
+
+- **Pins**: Labels, addresses, pin types, custom images, and tap handling via `PinClicked`.
+- **Shapes**: Draw **polygons**, **polylines**, and **circles** to outline areas or routes.
+- **Map interactions**: Handle `MapClicked`, move the camera/region, and programmatically add or remove map elements at runtime.
+- **Map display**: Switch map types (e.g., Street, Satellite, Hybrid) and control gesture support (scroll, zoom, rotate).
+- **User location**: Show the user's current location with `IsShowingUser` (platform location permission required).
+
+### Samples: pins and shapes
+
+```xml
+<maps:Map xmlns:maps="http://schemas.microsoft.com/dotnet/2021/maui/maps"
+          xmlns:sensors="clr-namespace:Microsoft.Maui.Devices.Sensors;assembly=Microsoft.Maui.Essentials"
+          MapType="Hybrid" MapClicked="OnMapClicked">
+    <maps:Map.Pins>
+        <maps:Pin Label="Office" Type="Place">
+            <maps:Pin.Location>
+                <sensors:Location>
+                    <x:Arguments>
+                        <x:Double>47.6424</x:Double>
+                        <x:Double>-122.3219</x:Double>
+                    </x:Arguments>
+                </sensors:Location>
+            </maps:Pin.Location>
+        </maps:Pin>
+    </maps:Map.Pins>
+
+    <maps:Map.MapElements>
+        <maps:Polygon StrokeColor="Red" FillColor="#40FF0000" StrokeWidth="4">
+            <maps:Polygon.Geopath>
+                <sensors:Location>
+                    <x:Arguments>
+                        <x:Double>47.642</x:Double>
+                        <x:Double>-122.323</x:Double>
+                    </x:Arguments>
+                </sensors:Location>
+                <sensors:Location>
+                    <x:Arguments>
+                        <x:Double>47.643</x:Double>
+                        <x:Double>-122.326</x:Double>
+                    </x:Arguments>
+                </sensors:Location>
+                <sensors:Location>
+                    <x:Arguments>
+                        <x:Double>47.640</x:Double>
+                        <x:Double>-122.327</x:Double>
+                    </x:Arguments>
+                </sensors:Location>
+            </maps:Polygon.Geopath>
+        </maps:Polygon>
+
+        <maps:Polyline StrokeColor="DodgerBlue" StrokeWidth="6">
+            <maps:Polyline.Geopath>
+                <sensors:Location>
+                    <x:Arguments>
+                        <x:Double>47.639</x:Double>
+                        <x:Double>-122.330</x:Double>
+                    </x:Arguments>
+                </sensors:Location>
+                <sensors:Location>
+                    <x:Arguments>
+                        <x:Double>47.640</x:Double>
+                        <x:Double>-122.335</x:Double>
+                    </x:Arguments>
+                </sensors:Location>
+            </maps:Polyline.Geopath>
+        </maps:Polyline>
+
+        <maps:Circle StrokeColor="Green" FillColor="#40008000" StrokeWidth="3">
+            <maps:Circle.Center>
+                <sensors:Location>
+                    <x:Arguments>
+                        <x:Double>47.641</x:Double>
+                        <x:Double>-122.329</x:Double>
+                    </x:Arguments>
+                </sensors:Location>
+            </maps:Circle.Center>
+            <maps:Circle.Radius>
+                <maps:Distance>
+                    <x:Arguments>
+                        <x:Double>200</x:Double>
+                    </x:Arguments>
+                </maps:Distance>
+            </maps:Circle.Radius>
+        </maps:Circle>
+    </maps:Map.MapElements>
+</maps:Map>
+```
+
+### Samples: interactions and map modes
+
+```csharp
+// In code-behind
+void OnMapClicked(object sender, MapClickedEventArgs e)
+{
+    // Drop a pin where the user tapped
+    var map = (Map)sender;
+    map.Pins.Add(new Pin
+    {
+        Label = "Dropped pin",
+        Type = PinType.Place,
+        Location = e.Location
+    });
+
+    // Move/zoom to the tapped location
+    map.MoveToRegion(MapSpan.FromCenterAndRadius(e.Location, Distance.FromMeters(500)));
+}
+
+// Toggle map display mode
+void ToggleMapType(Map map) =>
+    map.MapType = map.MapType == MapType.Street ? MapType.Satellite : MapType.Street;
+
+// Common runtime toggles
+void EnableLocationAndTraffic(Map map)
+{
+    map.IsShowingUser = true;      // requires location permission on the device
+    map.IsTrafficEnabled = true;   // show live traffic where supported
+}
+```
+
+## Learn more
+
+- [.NET MAUI Map control docs](https://learn.microsoft.com/dotnet/maui/user-interface/controls/map) - capabilities, events, and platform guidance
+- [.NET MAUI documentation](https://learn.microsoft.com/dotnet/maui/) - build and ship cross-platform apps
+'''
+
+with open('src/Controls/Maps/README.md', 'w') as f:
+    f.write(readme_content)
+print("README.md created")
+PYEOF
+
+# Update the csproj file using simple text manipulation
+python3 << 'PYEOF'
+csproj_path = 'src/Controls/Maps/src/Controls.Maps.csproj'
+
+with open(csproj_path, 'r') as f:
+    content = f.read()
+
+# Add PackageReadmeFile after the Description line
+old_desc = '<Description>Maps and mapping support for .NET Multi-platform App UI (.NET MAUI) apps.</Description>'
+new_desc = '''<Description>Maps and mapping support for .NET Multi-platform App UI (.NET MAUI) apps.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>'''
+
+content = content.replace(old_desc, new_desc)
+
+# Find the last </ItemGroup> that contains ProjectReference and add our new ItemGroup after it
+# We need to insert before the first <Import Project
+import_pos = content.find('  <Import Project="$(MauiSrcDirectory)PublicAPI.targets" />')
+
+new_itemgroup = '''  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\\README.md" Link="README.md" Pack="true" PackagePath="\\" />
+  </ItemGroup>
+
+'''
+
+if import_pos > 0:
+    content = content[:import_pos] + new_itemgroup + content[import_pos:]
+
+with open(csproj_path, 'w') as f:
+    f.write(content)
+
+print(f"Updated {csproj_path}")
+PYEOF
+
+# Commit the changes to ensure git status is clean
+git add -A
+git commit -m "Add Maps README and package readme configuration"
 
 echo "Patch applied successfully."

@@ -20,6 +20,48 @@ REPO = "/workspace/Ghost"
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests - using git/Python validation)
+# ---------------------------------------------------------------------------
+
+def test_repo_git_valid():
+    """Repo has valid git structure and HEAD commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status"], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed:\n{r.stderr}"
+    assert "HEAD detached at c1e86e6" in r.stdout, "Repo not at expected base commit"
+
+
+def test_repo_package_json_schema():
+    """package.json has valid schema with required fields (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+import sys
+with open('package.json') as f:
+    data = json.load(f)
+assert 'name' in data, 'Missing name field'
+assert 'version' in data, 'Missing version field'
+assert 'scripts' in data, 'Missing scripts field'
+assert 'setup' in data['scripts'], 'Missing setup script'
+assert 'workspaces' in data, 'Missing workspaces field'
+print('SCHEMA_OK')
+"""], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json schema check failed:\n{r.stderr}"
+    assert "SCHEMA_OK" in r.stdout, "Schema validation did not complete"
+
+
+def test_repo_gitmodules_valid():
+    """.gitmodules file exists and is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "submodule", "status"], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # This may exit 0 even with uninitialized submodules - check it runs
+    assert r.returncode == 0, f"Git submodule command failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
@@ -32,14 +74,14 @@ def test_package_json_valid():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — code behavior
+# Fail-to-pass (pr_diff) - code behavior
 # ---------------------------------------------------------------------------
 
 def test_setup_script_removed():
     """The .github/scripts/setup.js file must be deleted."""
     setup_js = Path(REPO) / ".github" / "scripts" / "setup.js"
     assert not setup_js.exists(), \
-        ".github/scripts/setup.js should be removed — yarn dev now handles MySQL/config setup"
+        ".github/scripts/setup.js should be removed - yarn dev now handles MySQL/config setup"
 
 
 def test_setup_script_simplified():
@@ -52,7 +94,7 @@ with open("package.json") as f:
 setup = data["scripts"]["setup"]
 assert "setup.js" not in setup, f"setup script still references setup.js: {setup}"
 assert "--recursive" in setup, f"setup script missing --recursive: {setup}"
-# Must NOT run arbitrary node scripts — just yarn + submodule init
+# Must NOT run arbitrary node scripts - just yarn + submodule init
 parts = setup.split(" && ")
 assert len(parts) == 2, f"setup should be 'yarn && git submodule update --init --recursive', got: {setup}"
 print("PASS")
@@ -69,7 +111,7 @@ def test_docs_setup_section():
         ["python3", "-c", """
 from pathlib import Path
 content = Path("docs/README.md").read_text()
-# Old text mentioned database initialization — must be gone
+# Old text mentioned database initialization - must be gone
 assert "initializes the database" not in content.lower(), \
     "docs/README.md still mentions database initialization in setup section"
 assert "sets up git hooks" not in content, \

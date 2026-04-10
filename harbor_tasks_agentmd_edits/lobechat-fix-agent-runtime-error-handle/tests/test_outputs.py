@@ -31,6 +31,26 @@ def _run_bun(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
         script_path.unlink(missing_ok=True)
 
 
+def _run_with_deps(cmd: list[str], timeout: int = 600) -> subprocess.CompletedProcess:
+    """Run a command after ensuring dependencies are installed."""
+    # Install dependencies first
+    subprocess.run(
+        ["bun", "install"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=str(REPO),
+    )
+    # Run the actual command
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        cwd=str(REPO),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -314,3 +334,45 @@ def test_typescript_syntax_valid():
         assert abs(open_braces - close_braces) <= 1, (
             f"Unbalanced braces in {f.name}: {open_braces} open, {close_braces} close"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI tests that should pass on base commit
+# ---------------------------------------------------------------------------
+
+
+def test_repo_lint_ts():
+    """Repo's TypeScript linter passes (pass_to_pass)."""
+    r = _run_with_deps(
+        ["npx", "eslint", "src/", "tests/"],
+        timeout=600,
+    )
+    # Exit code 0 = no errors (warnings ok); exit code 1 = errors found
+    assert r.returncode == 0, f"Lint found errors:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_agentruntime_service():
+    """AgentRuntimeService unit tests pass (pass_to_pass)."""
+    r = _run_with_deps(
+        ["npx", "vitest", "run", "src/server/services/agentRuntime/AgentRuntimeService.test.ts", "--silent=passed-only"],
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_agentruntime_executestep():
+    """AgentRuntime executeStep tests pass (pass_to_pass)."""
+    r = _run_with_deps(
+        ["npx", "vitest", "run", "src/server/services/agentRuntime/__tests__/executeStep.test.ts", "--silent=passed-only"],
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_errorresponse_utils():
+    """ErrorResponse utility tests pass (pass_to_pass)."""
+    r = _run_with_deps(
+        ["npx", "vitest", "run", "src/utils/errorResponse.test.ts", "--silent=passed-only"],
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

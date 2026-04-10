@@ -86,6 +86,89 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+def test_repo_prettier_readme():
+    """README.md passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{REPO}/{README_PATH}"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr}"
+
+
+def test_repo_ts_syntax_tracing():
+    """All tracing test files have valid TypeScript syntax (pass_to_pass)."""
+    # Install babel parser in temp dir
+    r = subprocess.run(
+        ["bash", "-c", """
+set -e
+mkdir -p /tmp/babel-check && cd /tmp/babel-check
+if [ ! -d node_modules/@babel/parser ]; then
+  npm init -y > /dev/null 2>&1
+  npm install @babel/parser > /dev/null 2>&1
+fi
+"""],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install babel parser: {r.stderr}"
+
+    # Check each test file
+    for rel in TRACING_TEST_FILES:
+        test_file = Path(REPO) / rel
+        code = """
+const fs = require('fs');
+const parser = require('/tmp/babel-check/node_modules/@babel/parser');
+const code = fs.readFileSync('FILE_PATH', 'utf8');
+parser.parse(code, { sourceType: 'module', plugins: ['typescript'] });
+console.log('OK');
+""".replace("FILE_PATH", str(test_file))
+
+        r = subprocess.run(
+            ["node", "-e", code],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"Syntax check failed for {rel}:\n{r.stderr}"
+
+
+def test_repo_otel_v2_imports_resolve():
+    """OTel v2 package imports resolve correctly at runtime (pass_to_pass)."""
+    code = """
+// Verify all v2 APIs can be imported and used
+const { resourceFromAttributes } = require('@opentelemetry/resources');
+const { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } = require('@opentelemetry/semantic-conventions');
+const { BasicTracerProvider, InMemorySpanExporter, SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
+const { trace } = require('@opentelemetry/api');
+
+// Verify imports are functions/constants
+if (typeof resourceFromAttributes !== 'function') throw new Error('resourceFromAttributes not a function');
+if (typeof ATTR_SERVICE_NAME !== 'string') throw new Error('ATTR_SERVICE_NAME not a string');
+if (typeof ATTR_SERVICE_VERSION !== 'string') throw new Error('ATTR_SERVICE_VERSION not a string');
+if (typeof BasicTracerProvider !== 'function') throw new Error('BasicTracerProvider not a function');
+if (typeof InMemorySpanExporter !== 'function') throw new Error('InMemorySpanExporter not a function');
+if (typeof SimpleSpanProcessor !== 'function') throw new Error('SimpleSpanProcessor not a function');
+if (typeof trace.setGlobalTracerProvider !== 'function') throw new Error('trace.setGlobalTracerProvider not a function');
+
+// Test creating a provider with v2 patterns
+const exporter = new InMemorySpanExporter();
+const provider = new BasicTracerProvider({
+    resource: resourceFromAttributes({
+        [ATTR_SERVICE_NAME]: 'test',
+        [ATTR_SERVICE_VERSION]: '1.0.0',
+    }),
+    spanProcessors: [new SimpleSpanProcessor(exporter)],
+});
+trace.setGlobalTracerProvider(provider);
+
+console.log('V2_IMPORTS_OK');
+"""
+    r = _run_node_file(code)
+    assert r.returncode == 0, f"OTel v2 imports check failed:\n{r.stderr}"
+    assert "V2_IMPORTS_OK" in r.stdout
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral code-execution tests
 # ---------------------------------------------------------------------------
 

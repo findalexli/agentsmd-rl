@@ -79,6 +79,26 @@ def test_bun_api_convention():
     )
 
 
+# [repo_tests] pass_to_pass — repo CI test for modified module
+def test_repo_read_tool_unit_tests():
+    """Repo's unit tests for read tool module pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "git config --global user.email 'test@test.com' && git config --global user.name 'Test' && cd packages/opencode && bun test test/tool/read.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — repo CI typecheck
+def test_repo_typecheck():
+    """TypeScript typecheck on modified file passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd packages/opencode && bunx tsc --noEmit"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

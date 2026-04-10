@@ -9,14 +9,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified Dart files have balanced braces and parens
+- id: modified_dart_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Modified Dart source files exist and are non-empty
+- id: test_files_exist_for_modified
+  type: pass_to_pass
+  origin: static
+  description: Test files exist for the modified Dart components
 - id: pubspec_yaml_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Repo\'s pubspec.yaml is valid YAML
+  description: Repo's pubspec.yaml is valid YAML
 - id: analysis_options_yaml_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Repo\'s analysis_options.yaml is valid YAML
+  description: Repo's analysis_options.yaml is valid YAML
 - id: task_card_hides_due_date_for_completed
   type: fail_to_pass
   origin: pr_diff
@@ -37,12 +45,6 @@ checks:
   description: CHANGELOG documents due date visibility changes for completed/rejected
     tasks
 rubric:
-- rule: Update the feature README files we touch such that they match reality in the
-    codebase, not only for what we touch but in their entirety.
-  source:
-    path: AGENTS.md
-    lines: '92'
-    commit: 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4
 - rule: Config update is consistent with the style of existing documentation in README.md
   source:
     path: README.md
@@ -75,26 +77,6 @@ rubric:
     \ colors)\n- Updated README and Flatpak metainfo to reference the launched \"\
     Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility behavior\
     \ based on task status"
-- rule: AGENTS.md requires adding a CHANGELOG entry for changes
-  source:
-    path: AGENTS.md
-    lines: '91'
-    commit: 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4
-  reference: "# CHANGELOG.md\n## [0.9.794] - 2026-01-02\n### Changed\n- Due Date Visibility\
-    \ Refinements: Improved UX for completed and rejected tasks\n  - Due dates are\
-    \ now hidden on task cards for completed and rejected tasks\n  - Due dates in\
-    \ entry details view show grayed-out styling for completed/rejected tasks (no\
-    \ red/orange urgency colors)\n- Updated README and Flatpak metainfo to reference\
-    \ the launched \"Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility\
-    \ behavior based on task status\n\n# README"
-- rule: TaskDueDateWrapper disables urgency colors for completed/rejected tasks
-  reference: "# CHANGELOG.md\n## [0.9.794] - 2026-01-02\n### Changed\n- Due Date Visibility\
-    \ Refinements: Improved UX for completed and rejected tasks\n  - Due dates are\
-    \ now hidden on task cards for completed and rejected tasks\n  - Due dates in\
-    \ entry details view show grayed-out styling for completed/rejected tasks (no\
-    \ red/orange urgency colors)\n- Updated README and Flatpak metainfo to reference\
-    \ the launched \"Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility\
-    \ behavior based on task status\n\n# README"
 config_edits:
 - path: CHANGELOG.md
   tier: 2

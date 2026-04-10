@@ -13,6 +13,97 @@ from pathlib import Path
 REPO = "/workspace/playwright"
 
 
+def test_repo_eslint():
+    """Repo's ESLint passes on the codebase (pass_to_pass)."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci", "--include-dev"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_build():
+    """Repo builds successfully (pass_to_pass)."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci", "--include-dev"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    # Build the repo
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint_tests():
+    """Repo's test linting passes (pass_to_pass)."""
+    # First install dependencies and build
+    r = subprocess.run(
+        ["npm", "ci", "--include-dev"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Repo's package linting passes (pass_to_pass)."""
+    # First install dependencies and build
+    r = subprocess.run(
+        ["npm", "ci", "--include-dev"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_test_types():
+    """Repo's TypeScript type checking passes (pass_to_pass)."""
+    # First install dependencies and build
+    r = subprocess.run(
+        ["npm", "ci", "--include-dev"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "test-types"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"test-types failed:\n{r.stderr[-500:]}"
+
+
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute a JavaScript snippet via Node.js in the repo directory."""
     script_path = Path(REPO) / "_eval_test.mjs"
@@ -24,50 +115,6 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
         )
     finally:
         script_path.unlink(missing_ok=True)
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — guard rails
-# ---------------------------------------------------------------------------
-
-def test_syntax_check():
-    """Modified TypeScript files must have balanced braces and no obvious syntax errors."""
-    ts_files = [
-        Path(REPO) / "packages/playwright-core/src/tools/cli-client/program.ts",
-        Path(REPO) / "packages/playwright-core/src/tools/cli-client/session.ts",
-        Path(REPO) / "packages/playwright-core/src/tools/cli-daemon/commands.ts",
-        Path(REPO) / "packages/playwright-core/src/tools/cli-daemon/program.ts",
-        Path(REPO) / "packages/playwright-core/src/tools/mcp/config.ts",
-    ]
-    for f in ts_files:
-        content = f.read_text()
-        assert content.count("{") == content.count("}"), \
-            f"Unbalanced braces in {f.name}"
-        assert content.count("(") == content.count(")"), \
-            f"Unbalanced parentheses in {f.name}"
-
-
-def test_open_command_still_has_browser_option():
-    """The open command must still have its browser, headed, persistent options."""
-    content = (Path(REPO) / "packages/playwright-core/src/tools/cli-daemon/commands.ts").read_text()
-    import re
-    open_match = re.search(r"const\s+open\s*=\s*declareCommand\s*\(\s*\{([\s\S]*?)\}\s*\)\s*;", content)
-    assert open_match, "Could not find open command declaration"
-    open_block = open_match.group(1)
-    assert "browser" in open_block, "open command must still have browser option"
-    assert "headed" in open_block, "open command must still have headed option"
-    assert "persistent" in open_block, "open command must still have persistent option"
-
-
-def test_attach_command_has_endpoint_option():
-    """The attach command must have an 'endpoint' option."""
-    content = (Path(REPO) / "packages/playwright-core/src/tools/cli-daemon/commands.ts").read_text()
-    import re
-    attach_match = re.search(r"const\s+attach\s*=\s*declareCommand\s*\(\s*\{([\s\S]*?)\}\s*\)\s*;?", content)
-    assert attach_match, "Could not find attach command declaration"
-    attach_block = attach_match.group(1)
-    assert re.search(r"endpoint.*optional", attach_block), \
-        "attach command must have endpoint option"
 
 
 # ---------------------------------------------------------------------------

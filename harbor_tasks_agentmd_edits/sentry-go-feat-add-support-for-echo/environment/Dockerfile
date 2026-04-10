@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pytest for testing
+RUN pip3 install pytest --break-system-packages
+
 # Clone repo at base commit
 RUN git clone --filter=blob:none https://github.com/getsentry/sentry-go.git /workspace/sentry-go && \
     cd /workspace/sentry-go && \

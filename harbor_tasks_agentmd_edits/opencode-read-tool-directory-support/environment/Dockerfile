@@ -17,5 +17,8 @@ RUN git clone --filter=blob:none https://github.com/anomalyco/opencode.git /work
 
 WORKDIR /workspace/opencode
 
+# Install dependencies
+RUN bun install
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

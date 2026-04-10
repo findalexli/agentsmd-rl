@@ -1,0 +1,20 @@
+
+"""
+Test that:
+1. actions.ts has the new cleanup helpers (cleanupSession, waitSessionIdle, stable)
+2. fixtures.ts has trackSession/trackDirectory in withProject
+3. AGENTS.md documents the new helpers and cleanup patterns
+"""
+import re
+import subprocess
+from pathlib import Path
+
+REPO = "/workspace/opencode"
+E2E_DIR = Path(REPO) / "packages/app/e2e"
+
+
+def _read_file(path: Path) -> str:
+    """Read file content or fail test."""
+    if not path.exists():
+        raise AssertionError(f"File not found: {path}")
+    return path.read_text()

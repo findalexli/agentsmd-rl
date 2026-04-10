@@ -21,4 +21,4 @@ WORKDIR /workspace/next.js
 RUN mkdir -p /logs/verifier
 
 # Install pytest for test runner
-RUN pip3 install pytest --break-system-packages || pip3 install pytest
+RUN pip3 install pytest pytest-json-ctrf --break-system-packages || pip3 install pytest pytest-json-ctrf

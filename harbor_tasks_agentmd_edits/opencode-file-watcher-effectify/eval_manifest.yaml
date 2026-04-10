@@ -78,19 +78,27 @@ checks:
   type: pass_to_pass
   origin: static
   description: watcher.ts retains substantial logic, not gutted
-rubric:
-- rule: New AGENTS.md sections should be consistent with the existing documentation
-    style (markdown headings, bullet lists, code fences)
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 1-44
-    commit: d4694d058cc590b0f05261a04460034d2fa8541d
-- rule: Effect service cleanup uses Effect.addFinalizer rather than manual dispose
-    callbacks
-  source:
-    path: packages/opencode/AGENTS.md
-    lines: 23-24
-    commit: d4694d058cc590b0f05261a04460034d2fa8541d
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes for opencode package
+- id: test_repo_file_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: File module tests pass
+- id: test_repo_pty_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: PTY module tests pass
+- id: test_repo_bun_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun module tests pass
+- id: test_repo_project_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Project module tests pass
+rubric: []
 config_edits:
 - path: packages/opencode/AGENTS.md
   tier: 1

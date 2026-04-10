@@ -146,36 +146,48 @@ def test_repo_syntax_check_fetch_diff():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_ast_parse_fetch_diff():
-    """fetch_diff.py must parse into valid AST (pass_to_pass)."""
-    target = Path(REPO) / ".claude/skills/src/skills/commands/fetch_diff.py"
-    r = subprocess.run(
-        ["python3", "-c", f"""
-import ast
-import pathlib
-src = pathlib.Path('{target}').read_text()
-ast.parse(src)
-print('AST parse OK')
-"""],
-        capture_output=True, text=True, timeout=30,
+def test_repo_ruff_check_fetch_diff():
+    """Repo's ruff linter passes for fetch_diff.py (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff==0.15.5", "pygithub", "-q"],
+        capture_output=True, text=True, timeout=120,
     )
-    assert r.returncode == 0, f"AST parse failed for fetch_diff.py:\n{r.stderr}"
+    target = f"{REPO}/.claude/skills/src/skills/commands/fetch_diff.py"
+    r = subprocess.run(
+        ["ruff", "check", target],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_file_exists_fetch_diff():
-    """fetch_diff.py file must exist at expected path (pass_to_pass)."""
-    target = Path(REPO) / ".claude/skills/src/skills/commands/fetch_diff.py"
-    assert target.exists(), f"fetch_diff.py not found at {target}"
-    assert target.is_file(), f"{target} is not a file"
+def test_repo_ruff_format_fetch_diff():
+    """Repo's ruff format check passes for fetch_diff.py (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "ruff==0.15.5", "pygithub", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    target = f"{REPO}/.claude/skills/src/skills/commands/fetch_diff.py"
+    r = subprocess.run(
+        ["ruff", "format", "--check", target],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_file_exists_skill_md():
-    """SKILL.md file must exist at expected path (pass_to_pass)."""
-    target = Path(REPO) / ".claude/skills/fetch-diff/SKILL.md"
-    assert target.exists(), f"SKILL.md not found at {target}"
-    assert target.is_file(), f"{target} is not a file"
+def test_repo_mypy_fetch_diff():
+    """Repo's mypy type check passes for fetch_diff.py (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "mypy", "pydantic", "aiohttp", "pygithub", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    target = f"{REPO}/.claude/skills/src/skills/commands/fetch_diff.py"
+    r = subprocess.run(
+        ["mypy", target],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Mypy check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] pass_to_pass

@@ -28,7 +28,7 @@ checks:
 - id: specs_import_shared_helpers
   type: fail_to_pass
   origin: pr_diff
-  description: Spec files import slugFromUrl and waitSlug from ../actions
+  description: Spec files import waitSlug from ../actions
 - id: agents_md_documents_new_helpers
   type: fail_to_pass
   origin: agent_config
@@ -49,27 +49,15 @@ checks:
   type: pass_to_pass
   origin: static
   description: sessionIDFromUrl function still present in actions.ts
-rubric: []
+rubric:
+- rule: E2E spec files must use shared helper functions from '../actions' rather than defining duplicate local helpers
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: '171'
+    commit: be9b4d1bcde39341c7813b66c5c19150a01bb8c2
+  reference: "When validating routing, use shared helpers from `../actions`."
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
-  gold_added: '- `sessionIDFromUrl(url)` - Read session ID from URL
-
-    - `slugFromUrl(url)` - Read workspace slug from URL
-
-    - `waitSlug(page, skip?)` - Wait for resolved workspace slug
-
-    4. When validating routing, use shared helpers from `../actions`. Workspace URL
-    slugs can be canonicalized on Windows, so assert against canonical or resolved
-    workspace slugs.
-
-    5. Clean up any created resources
-
-    6. Use specific selectors (avoid CSS classes)
-
-    7. Test one feature per test file'
-  gold_removed: '4. Clean up any created resources
-
-    5. Use specific selectors (avoid CSS classes)
-
-    6. Test one feature per test file'
+  gold_added: '- `sessionIDFromUrl(url)` - Read session ID from URL\n\n    - `slugFromUrl(url)` - Read workspace slug from URL\n\n    - `waitSlug(page, skip?)` - Wait for resolved workspace slug\n\n    4. When validating routing, use shared helpers from `../actions`. Workspace URL\n    slugs can be canonicalized on Windows, so assert against canonical or resolved\n    workspace slugs.\n\n    5. Clean up any created resources\n\n    6. Use specific selectors (avoid CSS classes)\n\n    7. Test one feature per test file'
+  gold_removed: '4. Clean up any created resources\n\n    5. Use specific selectors (avoid CSS classes)\n\n    6. Test one feature per test file'

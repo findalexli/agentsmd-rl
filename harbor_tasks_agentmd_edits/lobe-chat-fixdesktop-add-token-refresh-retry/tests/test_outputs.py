@@ -22,10 +22,10 @@ def _ensure_deps():
     global deps_installed
     if deps_installed:
         return
-    
+
     # Enable pnpm via corepack
     subprocess.run(["corepack", "enable", "pnpm"], capture_output=True, check=False)
-    
+
     # Check if node_modules exists
     if not (REPO / "node_modules").exists():
         # Install root dependencies
@@ -35,7 +35,7 @@ def _ensure_deps():
             timeout=300,
             cwd=REPO,
         )
-    
+
     # Check if desktop node_modules exists
     if not (REPO / "apps/desktop/node_modules").exists():
         # Install desktop dependencies
@@ -45,7 +45,7 @@ def _ensure_deps():
             timeout=300,
             cwd=REPO / "apps/desktop",
         )
-    
+
     deps_installed = True
 
 
@@ -306,6 +306,45 @@ def test_repo_desktop_tests():
     assert r.returncode == 0, f"Desktop tests failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_desktop_controller_tests():
+    """Repo's desktop controller tests (RemoteServerConfigCtr) pass (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "--", "--run", "--silent=passed-only", "src/main/controllers/__tests__/RemoteServerConfigCtr.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO / "apps/desktop",
+    )
+    assert r.returncode == 0, f"Desktop controller tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_oidc_provider_tests():
+    """Repo's OIDC provider tests pass (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--silent=passed-only", "src/libs/oidc-provider/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"OIDC provider tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_store_tests():
+    """Repo's store tests pass (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "vitest", "run", "--silent=passed-only", "src/store"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Store tests failed:\n{r.stderr[-500:]}"
+
+
 # ===================================================================
 # p2p — pass-to-pass checks (task-specific)
 # ===================================================================
@@ -346,14 +385,25 @@ def test_not_stub():
     source = REPO / "apps/desktop/src/main/controllers/RemoteServerConfigCtr.ts"
     content = source.read_text()
 
-    # Extract the isNonRetryableError method body
-    match = re.search(
-        r"isNonRetryableError\(error\?: string\): boolean \{([^}]+(?:\{[^}]*\}[^}]*)*)\}",
-        content,
-        re.DOTALL
-    )
-    assert match, "Could not find isNonRetryableError method"
-    method_body = match.group(1)
+    # Extract the isNonRetryableError method body - find the whole method
+    # The method signature is "isNonRetryableError(error?: string): boolean {"
+    # We need to capture everything between the opening { and the matching closing }
+    start_match = re.search(r"isNonRetryableError\(error\?: string\): boolean \{", content)
+    assert start_match, "Could not find isNonRetryableError method signature"
+
+    start_pos = start_match.end()  # Position right after opening brace
+
+    # Find matching closing brace by counting
+    brace_count = 1
+    pos = start_pos
+    while brace_count > 0 and pos < len(content):
+        if content[pos] == '{':
+            brace_count += 1
+        elif content[pos] == '}':
+            brace_count -= 1
+        pos += 1
+
+    method_body = content[start_pos:pos-1]  # Exclude the final closing brace
 
     # Should have actual logic, not just a simple return
     assert "NON_RETRYABLE_OIDC_ERRORS" in method_body, (

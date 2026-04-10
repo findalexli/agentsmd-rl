@@ -30,18 +30,58 @@ def _run_ts(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, repo_tests) — Repo CI tests as pass-to-pass gates
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_typescript_syntax():
-    """Modified TypeScript files must parse without errors."""
+    """Modified TypeScript files must parse without errors (repo typecheck)."""
     # Run tsc on the entire package to properly resolve path aliases
     r = subprocess.run(
         ["bun", "tsc", "--noEmit"],
         cwd=PKG, capture_output=True, timeout=120,
     )
     assert r.returncode == 0, f"TypeScript syntax error: {r.stderr or r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Full repo typecheck passes via turbo (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "typecheck"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Repo typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tool_registry_tests():
+    """Tool registry unit tests pass (pass_to_pass) - covers modified registry.ts."""
+    r = subprocess.run(
+        ["bun", "test", "test/tool/registry.test.ts", "--timeout", "30000"],
+        cwd=PKG, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Tool registry tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_question_tool_tests():
+    """Question tool unit tests pass (pass_to_pass) - covers QuestionTool."""
+    r = subprocess.run(
+        ["bun", "test", "test/tool/question.test.ts", "--timeout", "30000"],
+        cwd=PKG, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Question tool tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_opencode_package_typecheck():
+    """opencode package typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        cwd=PKG, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Package typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

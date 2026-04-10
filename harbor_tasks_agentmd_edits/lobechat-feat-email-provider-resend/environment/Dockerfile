@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Clone repo at base commit
 RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /workspace/lobe-chat && \
     cd /workspace/lobe-chat && \
@@ -17,8 +20,11 @@ RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /works
 
 WORKDIR /workspace/lobe-chat
 
-# Install just the resend SDK for import verification
-RUN npm install resend 2>/dev/null || true
+# Install resend SDK using pnpm (required for import verification)
+RUN pnpm add resend 2>/dev/null || true
+
+# Set NODE_PATH to find installed modules
+ENV NODE_PATH=/workspace/lobe-chat/node_modules
 
 # Install pytest for test runner
 RUN pip3 install --break-system-packages pytest pytest-json-ctrf 2>/dev/null || \

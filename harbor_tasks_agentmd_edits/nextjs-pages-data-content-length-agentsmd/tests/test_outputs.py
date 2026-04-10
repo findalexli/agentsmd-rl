@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -187,54 +188,83 @@ def test_handler_not_stub():
 # ---------------------------------------------------------------------------
 
 
-def test_repo_typescript():
-    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+def _install_pnpm():
+    """Install pnpm globally."""
     r = subprocess.run(
-        ["npm", "install", "-g", "pnpm"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        ["npm", "install", "-g", "pnpm@9.6.0"],
+        capture_output=True, text=True, timeout=60,
     )
-    # pnpm install handles if already installed
+    return r.returncode == 0
 
-    pnpm_path = subprocess.run(
-        ["npm", "prefix", "-g"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    ).stdout.strip() + "/bin"
 
-    env = {**os.environ, "PATH": f"{pnpm_path}:{os.environ.get('PATH', '')}"}
-
-    # Install dependencies
+def _pnpm_install():
+    """Run pnpm install to install dependencies."""
     r = subprocess.run(
-        ["pnpm", "install"],
-        capture_output=True, text=True, timeout=180, cwd=REPO, env=env,
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    # Install may partially fail on optional deps, continue to build
-
-    # Build the project (required for typecheck)
-    r = subprocess.run(
-        ["timeout", "120", "pnpm", "build"],
-        capture_output=True, text=True, timeout=180, cwd=REPO, env=env,
-    )
-
-    # Run TypeScript typecheck
-    r = subprocess.run(
-        ["timeout", "60", "pnpm", "typescript"],
-        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
-    )
-    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    return r.returncode == 0
 
 
 def test_repo_lint_ast_grep():
     """Repo's AST grep linting passes (pass_to_pass)."""
-    pnpm_path = subprocess.run(
-        ["npm", "prefix", "-g"],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    ).stdout.strip() + "/bin"
-
-    env = {**os.environ, "PATH": f"{pnpm_path}:{os.environ.get('PATH', '')}"}
+    _install_pnpm()
+    _pnpm_install()
 
     # Run ast-grep linting (lightweight, doesn't need build)
     r = subprocess.run(
-        ["timeout", "60", "pnpm", "lint-ast-grep"],
-        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
+        ["pnpm", "lint-ast-grep"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"AST grep lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_lint_handler():
+    """Repo's ESLint on the modified pages-handler.ts passes (pass_to_pass)."""
+    _install_pnpm()
+    _pnpm_install()
+
+    # Run ESLint on the specific modified file only (lighter weight than full lint)
+    r = subprocess.run(
+        ["pnpm", "lint-eslint", "packages/next/src/server/route-modules/pages/pages-handler.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on pages-handler.ts failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_typescript():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    _install_pnpm()
+    _pnpm_install()
+
+    # Build is required for typecheck
+    r = subprocess.run(
+        ["timeout", "180", "pnpm", "build"],
+        capture_output=True, text=True, timeout=240, cwd=REPO,
+    )
+
+    # Run TypeScript typecheck
+    r = subprocess.run(
+        ["timeout", "120", "pnpm", "typescript"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass)."""
+    _install_pnpm()
+    _pnpm_install()
+
+    # Build is required for unit tests
+    r = subprocess.run(
+        ["timeout", "180", "pnpm", "build"],
+        capture_output=True, text=True, timeout=240, cwd=REPO,
+    )
+
+    # Run unit tests
+    r = subprocess.run(
+        ["timeout", "180", "pnpm", "test-unit"],
+        capture_output=True, text=True, timeout=240, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

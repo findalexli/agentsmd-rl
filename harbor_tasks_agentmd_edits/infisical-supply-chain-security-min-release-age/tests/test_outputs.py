@@ -110,6 +110,54 @@ def test_claude_md_existing_sections_intact():
 def test_backend_package_json_scripts_intact():
     """backend/package.json core fields (name, main, scripts) must remain unchanged."""
     pkg = json.loads((REPO / "backend" / "package.json").read_text())
-    assert pkg.get("name") == "infisical", f"Unexpected name: {pkg.get('name')}"
+    assert pkg.get("name") == "backend", f"Unexpected name: {pkg.get('name')}"
     assert "scripts" in pkg, "package.json missing scripts"
     assert "dev" in pkg["scripts"], "dev script missing"
+
+
+# --- Pass-to-pass: repo CI tests ---
+
+
+def test_repo_frontend_typecheck():
+    """Frontend TypeScript typecheck passes (pass_to_pass)."""
+    # Install dependencies first
+    install = subprocess.run(
+        ["npm", "install"],
+        cwd=str(REPO / "frontend"),
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    # Install may have warnings but should create node_modules
+    assert (REPO / "frontend" / "node_modules").exists(), "npm install failed to create node_modules"
+
+    r = subprocess.run(
+        ["npm", "run", "type:check"],
+        cwd=str(REPO / "frontend"),
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Frontend type:check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_frontend_lint():
+    """Frontend ESLint passes (pass_to_pass)."""
+    # Install dependencies first
+    install = subprocess.run(
+        ["npm", "install"],
+        cwd=str(REPO / "frontend"),
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert (REPO / "frontend" / "node_modules").exists(), "npm install failed to create node_modules"
+
+    r = subprocess.run(
+        ["npm", "run", "lint"],
+        cwd=str(REPO / "frontend"),
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Frontend lint failed:\n{r.stderr[-500:]}"

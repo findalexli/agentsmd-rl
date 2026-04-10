@@ -33,6 +33,52 @@ def test_syntax_check():
         )
 
 
+# [repo_tests] pass_to_pass — repo's ESLint CI
+def test_repo_eslint_clickup():
+    """Repo's ESLint passes on clickup skill files (pass_to_pass)."""
+    # ESLint with --quiet only reports errors, not warnings
+    r = subprocess.run(
+        ["npx", "eslint", "--quiet", ".claude/skills/clickup/query.mjs", ".claude/skills/clickup/api/tasks.mjs"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"ESLint failed on modified .mjs files:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — module imports work
+def test_repo_clickup_imports():
+    """ClickUp skill modules can be imported without errors (pass_to_pass)."""
+    script = (
+        "try {\n"
+        "  await import('./.claude/skills/clickup/api/tasks.mjs');\n"
+        "  console.log('PASS: tasks.mjs imports successfully');\n"
+        "} catch(e) {\n"
+        "  console.log('FAIL:', e.message);\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "try {\n"
+        "  await import('./.claude/skills/clickup/lib/markdown.mjs');\n"
+        "  console.log('PASS: markdown.mjs imports successfully');\n"
+        "} catch(e) {\n"
+        "  console.log('FAIL:', e.message);\n"
+        "  process.exit(1);\n"
+        "}\n"
+        "process.exit(0);\n"
+    )
+    r = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"Module import failed:\n{r.stdout.decode()[-500:]}{r.stderr.decode()[-500:]}"
+    )
+
+
 # [repo_tests] pass_to_pass — repo CI equivalent
 def test_repo_modified_files_parse():
     """Repo's modified .mjs files parse as valid JavaScript (pass_to_pass)."""

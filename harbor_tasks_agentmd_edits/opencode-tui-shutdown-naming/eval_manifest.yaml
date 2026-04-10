@@ -5,6 +5,10 @@ source:
   base_commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
   merge_commit: 3ebebe0a96de5ec4757de12a21cb9f933e0fbba0
 checks:
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript files parse correctly using Bun transpiler
 - id: syntax_valid
   type: pass_to_pass
   origin: static
@@ -44,18 +48,35 @@ checks:
   description: AGENTS.md contains Naming Enforcement section with mandatory single-word
     naming rule
 rubric:
-- rule: 'Code follows the style guide in AGENTS.md: prefer single-word variable names,
-    avoid unnecessary destructuring, use const over let, prefer early returns.'
+- rule: 'AGENTS.md contains the complete Naming Enforcement section with mandatory single-word
+    naming rules, examples of preferred short names (pid, cfg, err, opts, dir, root, child,
+    state, timeout), and examples to avoid (inputPID, existingClient, connectTimeout,
+    workerPath).'
   source:
     path: AGENTS.md
-    lines: 9-38
+    lines: 23-42
     commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
-- rule: Naming enforcement section is consistent with the existing style examples
-    in AGENTS.md
-  source:
-    path: AGENTS.md
-    lines: 20-30
-    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+  reference: '### Naming Enforcement (Read This)
+
+
+    THIS RULE IS MANDATORY FOR AGENT WRITTEN CODE.
+
+
+    - Use single word names by default for new locals, params, and helper functions.
+
+    - Multi-word names are allowed only when a single word would be unclear or ambiguous.
+
+    - Do not introduce new camelCase compounds when a short single-word alternative
+    is clear.
+
+    - Before finishing edits, review touched lines and shorten newly introduced identifiers
+    where possible.
+
+    - Good short names to prefer: `pid`, `cfg`, `err`, `opts`, `dir`, `root`, `child`,
+    `state`, `timeout`.
+
+    - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
+    `workerPath`.'
 config_edits:
 - path: AGENTS.md
   tier: 1

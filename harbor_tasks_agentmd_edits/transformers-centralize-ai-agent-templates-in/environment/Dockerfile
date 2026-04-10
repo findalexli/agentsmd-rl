@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential make tmux && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies for repo checks
+RUN pip install --no-cache-dir pyyaml
+
 # Clone repo at base commit (shallow for speed — transformers is huge)
 RUN git init /workspace/transformers && \
     cd /workspace/transformers && \

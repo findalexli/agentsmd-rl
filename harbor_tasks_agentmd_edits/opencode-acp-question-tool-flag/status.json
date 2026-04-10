@@ -3,11 +3,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T05:52:20.119750",
-  "total_time": 7443.05,
-  "sandbox_id": "i15zyfmni2o2e85te2tmg",
+  "validated_at": "2026-04-10T12:11:37.658867",
+  "total_time": 2362.29,
+  "sandbox_id": "i6qb1q43gkcehxvoc7w04",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
   "rubric_icr": 1.0,
   "nodes": {
     "validate": {
@@ -18,14 +19,57 @@
       "notes": "Fixed two issues: 1) solve.sh used git apply with incorrect line numbers in the patch - rewrote to use sed commands for file modifications. 2) test_question_gating_behavior used require() in a .mjs file which fails in ES module environments - changed to .cjs extension. All 8 tests now pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 331.56
+      "time": 295.1
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.69,
+      "time": 2.1,
       "notes": "ICR=1.00"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 583.16,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        ".opencode/agent/translator.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 3,
+      "rejection_reasons": "Rejected rules about: 1) avoiding try/catch (not relevant to this PR), 2) avoiding any type (not touched), 3) single word variable names (good practice but not verifiable from diff alone)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 135.57
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 35.4,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 81.58,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     }
   },
   "history": [
@@ -44,6 +88,14 @@
       "backend": "fireworks",
       "time": 7443.05,
       "at": "2026-04-09T05:52:20.119750"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2362.29,
+      "at": "2026-04-10T12:11:37.658867"
     }
   ]
 }

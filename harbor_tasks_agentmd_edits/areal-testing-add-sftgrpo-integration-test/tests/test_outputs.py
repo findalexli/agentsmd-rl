@@ -95,7 +95,7 @@ for node in ast.walk(tree):
             if dec.args[0].value != 'backend':
                 continue
             if len(dec.args) > 1 and isinstance(dec.args[1], ast.List):
-                values = [e.value for e in child.iter.elts if isinstance(e, ast.Constant)]
+                values = [e.value for e in dec.args[1].elts if isinstance(e, ast.Constant)]
                 if 'fsdp' in values and 'megatron' in values:
                     has_parametrize = True
         assert has_parametrize, "test_sft missing @pytest.mark.parametrize with fsdp+megatron"
@@ -192,11 +192,14 @@ assert 'config_{backend}' in source or 'config_' + '{backend}' in source or 'f"c
 )
 
 # The old hardcoded config.yaml reference should be gone from the load_expr_config call
-# (it may appear in comments, but not as the active config path)
+# (it may appear in comments or test fixture code, but not as the active config path)
 lines = source.splitlines()
 for line in lines:
     stripped = line.strip()
     if stripped.startswith('#'):
+        continue
+    # Skip test fixture code (creating mock files in tmp_path)
+    if 'tmp_path' in stripped and 'config.yaml' in stripped:
         continue
     if 'load_expr_config' in stripped or ('config.yaml' in stripped and 'config_' not in stripped):
         if '"config.yaml"' in stripped or "'config.yaml'" in stripped:
@@ -303,6 +306,112 @@ print("PASS")
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"YAML validation failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — additional CI/CD checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python formatting passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff==0.14.1", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "areal/tests/grpo/test_grpo.py", "areal/tests/sft/test_sft.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clang_format():
+    """C++ source files are properly formatted (pass_to_pass)."""
+    # Install clang-format if not present
+    r = subprocess.run(
+        ["apt-get", "update"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["apt-get", "install", "-y", "--no-install-recommends", "clang-format"],
+        capture_output=True, text=True, timeout=120,
+    )
+
+    # Find and check C++ files
+    r = subprocess.run(
+        ["bash", "-c", """
+find csrc -type f \\( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' -o -name '*.cu' -o -name '*.cuh' \\) -exec clang-format --dry-run --Werror {} +
+"""],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"clang-format check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_json_valid():
+    """JSON reference files are syntactically valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+import os
+
+# Check JSON reference files
+json_files = [
+    "areal/tests/sft/ref_losses.json",  # base commit
+    "areal/tests/sft/ref_losses_fsdp.json",  # after fix
+    "areal/tests/sft/ref_losses_megatron.json",  # after fix
+]
+found_any = False
+for path in json_files:
+    if os.path.exists(path):
+        with open(path) as f:
+            json.load(f)
+        print(f"OK: {path}")
+        found_any = True
+if not found_any:
+    print("ERROR: No JSON files found")
+    exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"JSON validation failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports():
+    """Modified test files can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import ast
+import sys
+
+# Check that the modified files can be parsed and basic imports work
+files = [
+    "areal/tests/grpo/test_grpo.py",
+    "areal/tests/sft/test_sft.py",
+]
+for path in files:
+    with open(path) as f:
+        source = f.read()
+    # Parse to AST
+    tree = ast.parse(source, filename=path)
+    # Check for test function definitions
+    test_funcs = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name.startswith('test_')]
+    print(f"{path}: found {len(test_funcs)} test functions")
+    if not test_funcs:
+        print(f"ERROR: No test functions found in {path}")
+        sys.exit(1)
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import check failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 

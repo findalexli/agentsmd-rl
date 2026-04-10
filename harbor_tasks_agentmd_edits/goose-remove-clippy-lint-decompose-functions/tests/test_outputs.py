@@ -224,6 +224,33 @@ def test_repo_cargo_check_goose_cli():
     assert r.returncode == 0, f"cargo check -p goose-cli failed:\n{r.stderr[-500:]}"
 
 
+
+def test_repo_cargo_clippy_goose():
+    """Repo's goose crate must pass clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "goose", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy -p goose failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_clippy_goose_cli():
+    """Repo's goose-cli crate must pass clippy linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "goose-cli", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy -p goose-cli failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_check_workspace_lib():
+    """Repo's workspace library code must compile (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--workspace", "--lib"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check --workspace --lib failed:\n{r.stderr[-500:]}"
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + syntax checks
 # ---------------------------------------------------------------------------

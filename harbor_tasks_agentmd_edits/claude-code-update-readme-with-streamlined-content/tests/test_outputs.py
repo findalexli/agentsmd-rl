@@ -21,7 +21,7 @@ GIF_PATH = f"{REPO}/demo.gif"
 
 def test_demo_gif_exists():
     """The demo.gif file exists and is a valid GIF file."""
-    code = f"""
+    code = rf"""
 import sys
 from pathlib import Path
 
@@ -32,10 +32,10 @@ if not gif_path.exists():
 if gif_path.stat().st_size == 0:
     print("FAIL: demo.gif is empty", file=sys.stderr)
     sys.exit(1)
-# Verify it's actually a GIF by checking magic bytes
-with open(gif_path, 'rb') as f:
+# Verify it is actually a GIF by checking magic bytes
+with open(gif_path, "rb") as f:
     magic = f.read(6)
-    if magic not in (b'GIF89a', b'GIF87a'):
+    if magic not in (b"GIF89a", b"GIF87a"):
         print(f"FAIL: Not a valid GIF file (magic bytes: {{magic}})", file=sys.stderr)
         sys.exit(1)
 print("PASS: demo.gif exists and is valid")
@@ -52,7 +52,7 @@ print("PASS: demo.gif exists and is valid")
 
 def test_readme_has_gif_reference():
     """README.md contains the demo GIF reference with correct HTML tag."""
-    code = f"""
+    code = rf"""
 import sys
 from pathlib import Path
 
@@ -77,7 +77,7 @@ print("PASS: README has correct demo.gif reference")
 
 def test_readme_streamlined_description():
     """README has concise one-paragraph description instead of bullet list."""
-    code = f"""
+    code = rf"""
 import sys
 from pathlib import Path
 
@@ -116,7 +116,7 @@ print("PASS: README has streamlined description")
 
 def test_readme_simplified_get_started():
     """README has simplified 2-step get started section."""
-    code = f"""
+    code = rf"""
 import sys
 import re
 from pathlib import Path
@@ -141,14 +141,14 @@ if "## Get started" not in content:
     sys.exit(1)
 
 # Extract the Get started section and count numbered steps
-get_started_match = re.search(r'## Get started\\s+(.*?)(?=## |\\Z)', content, re.DOTALL)
+get_started_match = re.search(r"## Get started\s+(.*?)(?=## |\Z)", content, re.DOTALL)
 if not get_started_match:
     print("FAIL: Could not parse Get started section", file=sys.stderr)
     sys.exit(1)
 
 get_started_content = get_started_match.group(1)
 # Count numbered list items (1. 2. etc.)
-steps = re.findall(r'^\\d+\\.', get_started_content, re.MULTILINE)
+steps = re.findall(r"^\d+\.", get_started_content, re.MULTILINE)
 if len(steps) != 2:
     print(f"FAIL: Expected 2 steps, found {{len(steps)}}: {{steps}}", file=sys.stderr)
     sys.exit(1)
@@ -167,13 +167,13 @@ print("PASS: README has simplified 2-step Get started section")
 
 def test_readme_reporting_bugs_heading():
     """README has 'Reporting Bugs' as H2 (##) not H3 (###)."""
-    code = f"""
+    code = rf"""
 import sys
 from pathlib import Path
 
 readme_path = Path("{README_PATH}")
 content = readme_path.read_text()
-lines = content.split('\\n')
+lines = content.splitlines()
 
 found_h2 = False
 found_h3 = False
@@ -205,13 +205,13 @@ print("PASS: Reporting Bugs is correctly H2")
 
 def test_readme_data_usage_heading():
     """README has 'How we use your data' as H3 (###) not H4 (####)."""
-    code = f"""
+    code = rf"""
 import sys
 from pathlib import Path
 
 readme_path = Path("{README_PATH}")
 content = readme_path.read_text()
-lines = content.split('\\n')
+lines = content.splitlines()
 
 found_h3 = False
 found_h4 = False
@@ -247,7 +247,7 @@ print("PASS: How we use your data is correctly H3")
 
 def test_readme_has_key_elements():
     """README still contains essential elements that should not be removed."""
-    code = f"""
+    code = rf"""
 import sys
 from pathlib import Path
 
@@ -281,7 +281,7 @@ print("PASS: README contains all essential elements")
 
 def test_readme_valid_markdown():
     """README is valid markdown with proper structure."""
-    code = f"""
+    code = rf"""
 import sys
 from pathlib import Path
 
@@ -316,3 +316,78 @@ print("PASS: README has valid markdown structure")
     )
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI-style checks that run actual commands
+# ---------------------------------------------------------------------------
+
+def test_repo_git_valid():
+    """Git repository is valid and has expected history (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git status failed: {r.stderr}"
+    # Git repo is valid if git status succeeds (working tree may not be clean if demo.gif was just added)
+
+
+def test_repo_files_exist():
+    """Required repository files exist (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import pathlib; files = [\'README.md\', \'CHANGELOG.md\', \'LICENSE.md\', \'SECURITY.md\']; "
+         f"missing = [f for f in files if not pathlib.Path(\'{REPO}/\' + f).exists()]; "
+         f"print(\'Missing:', missing) if missing else print(\'All required files exist\'); "
+         f"exit(1 if missing else 0)"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"File check failed: {r.stderr}"
+
+
+def test_repo_readme_utf8():
+    """README is valid UTF-8 and non-empty (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import pathlib; p = pathlib.Path(\'{README_PATH}\'); "
+         f"content = p.read_text(encoding=\'utf-8\'); "
+         f"assert len(content) > 1000, \'README too short\'; "
+         f"print(\'README is valid UTF-8 with\', len(content), \'chars\')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"README check failed: {r.stderr}"
+
+
+def test_repo_changelog_format():
+    """CHANGELOG has expected format with version entries (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import pathlib; p = pathlib.Path(\'{REPO}/CHANGELOG.md\'); "
+         f"content = p.read_text(); "
+         f"assert content.startswith(\'# Changelog\'), \'Missing Changelog header\'; "
+         f"assert \'## 1.\' in content, \'Missing version entries\'; "
+         f"print(\'CHANGELOG format OK\')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"CHANGELOG check failed: {r.stderr}"
+
+
+def test_repo_no_merge_conflicts():
+    """No merge conflict markers in markdown files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         f"cd {REPO} && if grep -r \'<<<<<<< HEAD\' *.md .github/**/*.md 2>/dev/null; then exit 1; fi; echo \'No merge conflicts\'"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Merge conflict check failed: {r.stderr}"

@@ -33,6 +33,22 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Tool combines declarations from multiple input files
+- id: test_repo_tools_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: All tools in the repo compile successfully
+- id: test_repo_tools_vet
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go vet passes on all tools
+- id: test_repo_tools_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for tools pass
+- id: test_repo_mod_tidy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go mod is tidy
 rubric:
 - rule: The SKILL.md should follow the same frontmatter format as other Claude skills
     (name, description, argument-hint fields)
@@ -126,38 +142,27 @@ config_edits:
     ```bash
 
     # 1. Create temp branch from current branch
-
     git checkout -b temp-split-SUFFIX $CURRENT_BRANCH
 
 
     # 2. Rename original to new filename
-
     git mv path/to/original.go path/to/new_file.go
-
     git commit -m "temp: rename original.go to new_file.go"
 
 
     # 3. Go back to working branch
-
     git checkout $CURRENT_BRANCH
 
 
     # 4. Rename original to a temp name (creates rename/rename conflict)
-
     git mv path/to/original.go path/to/original_main_temp.go
-
     git commit -m "temp: rename original.go to original_main_temp.go"
 
 
     # 5. Merge — this triggers a CONFLICT (rename/rename), which is what we want
-
     git merge temp-split-SUFFIX --no-commit
-
     git checkout --ours path/to/original_main_temp.go
-
     git checkout --theirs path/to/new_file.go
-
     git add path/to/original_main_temp.go path/to/new_file.go
-
     git rm --cached path/to/original.go 2>/d'
   gold_removed: ''

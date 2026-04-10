@@ -113,6 +113,61 @@ def test_syntax_check():
         assert r.returncode == 0, f"{p.name} has syntax errors:\n{r.stderr.decode()}"
 
 
+# [repo_tests] pass_to_pass — repo CI checks (ruff linting)
+def test_client_lint():
+    """gradio_client module passes ruff linting (pass_to_pass)."""
+    subprocess.run(["pip", "install", "-q", "ruff"], check=False, capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "client/python/gradio_client/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — repo CI checks (ruff formatting)
+def test_client_format():
+    """gradio_client module passes ruff format check (pass_to_pass)."""
+    subprocess.run(["pip", "install", "-q", "ruff"], check=False, capture_output=True)
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", "client/python/gradio_client/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — repo unit tests for utils module
+def test_repo_utils_unit_tests():
+    """gradio_client utils unit tests pass (pass_to_pass)."""
+    # Run specific unit tests from test_utils.py that don't require gradio fixtures
+    test_code = '''
+import sys
+sys.path.insert(0, "/workspace/gradio/client/python")
+sys.path.insert(0, "/workspace/gradio/client/python/test")
+
+# Import test functions directly
+from gradio_client import utils
+
+# Test: test_strip_invalid_filename_characters
+assert utils.strip_invalid_filename_characters("abc") == "abc"
+assert utils.strip_invalid_filename_characters("$$AAabc&3") == "AAabc3"
+
+# Test: test_get_mimetype
+assert utils.get_mimetype("photo.webp") == "image/webp"
+assert utils.get_mimetype("image.png") == "image/png"
+
+# Test: test_is_valid_file
+assert utils.is_valid_file("/home/user/example.pdf", [".pdf"]) is True
+assert utils.is_valid_file("/home/user/example.png", [".jpg"]) is False
+
+print("All unit tests passed!")
+'''
+    r = subprocess.run(
+        ["python", "-c", test_code],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -164,30 +219,6 @@ def test_nested_file_shows_filepath_in_dict():
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static)
 # ---------------------------------------------------------------------------
-
-
-# [static] pass_to_pass — repo CI checks (ruff linting and formatting)
-def test_client_lint():
-    """gradio_client module passes ruff linting (pass_to_pass)."""
-    # Install ruff if not available
-    subprocess.run(["pip", "install", "-q", "ruff"], check=False, capture_output=True)
-    r = subprocess.run(
-        ["python", "-m", "ruff", "check", "client/python/gradio_client/"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [static] pass_to_pass — repo CI checks (ruff formatting)
-def test_client_format():
-    """gradio_client module passes ruff format check (pass_to_pass)."""
-    # Install ruff if not available
-    subprocess.run(["pip", "install", "-q", "ruff"], check=False, capture_output=True)
-    r = subprocess.run(
-        ["python", "-m", "ruff", "format", "--check", "client/python/gradio_client/"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [static] pass_to_pass

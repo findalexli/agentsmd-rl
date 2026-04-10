@@ -205,3 +205,66 @@ if missing:
 
 print("PASS: SKILL.md documents rationalization workflow")
 """
+
+
+
+# ---------------------------------------------------------------------------
+# Additional pass_to_pass tests (enriched from CI exploration)
+# These document CI commands that should pass on base commit.
+# ---------------------------------------------------------------------------
+
+def test_cargo_toml_members_exist():
+    """All workspace members must have valid paths (pass_to_pass)."""
+    content = CARGO_TOML.read_text()
+    data = tomllib.loads(content)
+
+    members = data.get("workspace", {}).get("members", [])
+    workspace_root = Path(REPO) / "quickwit"
+
+    missing = []
+    for member in members:
+        if member.strip().startswith("#"):
+            continue  # Skip commented-out members
+        member_path = workspace_root / member / "Cargo.toml"
+        if not member_path.exists():
+            missing.append(member)
+
+    assert not missing, f"Missing workspace member directories: {missing}"
+
+
+def test_cargo_toml_no_duplicate_deps():
+    """No duplicate entries in workspace dependencies (pass_to_pass)."""
+    content = CARGO_TOML.read_text()
+    data = tomllib.loads(content)
+
+    deps = data.get("workspace", {}).get("dependencies", {})
+    dep_names = list(deps.keys())
+
+    seen = set()
+    duplicates = []
+    for name in dep_names:
+        if name in seen:
+            duplicates.append(name)
+        seen.add(name)
+
+    assert not duplicates, f"Duplicate dependencies found: {duplicates}"
+
+
+def test_cargo_toml_no_merge_conflicts():
+    """Cargo.toml must not contain Git merge conflict markers (pass_to_pass)."""
+    content = CARGO_TOML.read_text()
+    assert "<<<<<<" not in content, "Git merge conflict markers found"
+    assert ">>>>>>" not in content, "Git merge conflict markers found"
+    assert "======" not in content, "Git merge conflict markers found"
+
+
+def test_repo_scripts_exist():
+    """CI scripts referenced by workflows must exist (pass_to_pass)."""
+    scripts_dir = Path(REPO) / "quickwit" / "scripts"
+    assert scripts_dir.exists(), "Scripts directory missing"
+
+    # Key scripts referenced in CI
+    key_scripts = ["check_license_headers.sh", "dep-tree.py"]
+    for script in key_scripts:
+        script_path = scripts_dir / script
+        assert script_path.exists(), f"CI script missing: {script}"

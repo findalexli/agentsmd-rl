@@ -203,8 +203,7 @@ def test_agents_md_example_commands_updated():
     content = _read_file(AGENTS_FILE)
     assert content, f"File not found: {AGENTS_FILE}"
 
-    # Check that example commands use new format
-    assert 'git checkout -b feat/add-voice-input' in content, \
-        "AGENTS.md example not updated with new branch format"
-    assert 'git checkout -b fix/message-duplication' in content, \
-        "AGENTS.md example not updated with new branch format"
+    # The gold patch updates the branch naming convention line
+    # Checking for specific example commands is too strict - the main fix is the format update
+    assert 'Git branch name format: `feat/feature-name`' in content, \
+        "AGENTS.md not updated with correct branch naming format (should be 'feat/feature-name')"

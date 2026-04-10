@@ -1,65 +1,60 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "angular/angular"
+  repo: angular/angular
   pr: 67018
-  base_commit: "d75046bc091699bbadcb5f2032be627e983ee6fa"
-  merge_commit: "62453330f56dbfb65711692097189e13c528d522"
-
+  base_commit: d75046bc091699bbadcb5f2032be627e983ee6fa
+  merge_commit: 62453330f56dbfb65711692097189e13c528d522
 checks:
-  - id: symlink_exists_and_resolves
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".agent/rules/agents.md symlink exists and resolves to AGENTS.md content"
-
-  - id: agents_md_has_frontmatter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md has YAML frontmatter with trigger: always_on"
-
-  - id: prettierignore_has_agent_entry
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".prettierignore includes .agent/rules/agents.md entry"
-
-  - id: pullapprove_has_agent_glob
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".pullapprove.yml includes .agent/**/{*,.*} glob pattern"
-
-  - id: agents_md_has_environment_section
-    type: pass_to_pass
-    origin: static
-    description: "AGENTS.md retains core environment documentation"
-
-  - id: prettierignore_exists
-    type: pass_to_pass
-    origin: static
-    description: ".prettierignore file exists and has content"
-
-  - id: test_repo_tslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TSLint passes"
-
-  - id: test_repo_check_tooling_setup
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript tooling setup compiles"
-
-  - id: test_repo_ts_circular_deps_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo has no circular TypeScript dependencies"
-
-  - id: test_repo_pullapprove_verify
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's PullApprove config is valid"
-
-  - id: test_repo_ngbot_verify
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's NgBot config is valid"
-
+- id: symlink_exists_and_resolves
+  type: fail_to_pass
+  origin: pr_diff
+  description: .agent/rules/agents.md symlink exists and resolves to AGENTS.md content
+- id: agents_md_has_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AGENTS.md has YAML frontmatter with trigger: always_on'
+- id: prettierignore_has_agent_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: .prettierignore includes .agent/rules/agents.md entry
+- id: pullapprove_has_agent_glob
+  type: fail_to_pass
+  origin: pr_diff
+  description: .pullapprove.yml includes .agent/**/{*,.*} glob pattern
+- id: agents_md_has_environment_section
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md retains core environment documentation
+- id: prettierignore_exists
+  type: pass_to_pass
+  origin: static
+  description: .prettierignore file exists and has content
+- id: test_repo_tslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TSLint passes
+- id: test_repo_check_tooling_setup
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript tooling setup compiles
+- id: test_repo_ts_circular_deps_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no circular TypeScript dependencies
+- id: test_repo_pullapprove_verify
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's PullApprove config is valid
+- id: test_repo_ngbot_verify
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's NgBot config is valid
+- id: test_repo_prettier_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config files are properly formatted
+- id: test_repo_buildifier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bazel files are properly formatted
 rubric: []

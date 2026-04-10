@@ -20,7 +20,12 @@ WORKDIR /workspace/gradio
 ENV PYTHONPATH="/workspace/gradio"
 
 # Install minimal deps needed by test_outputs.py
-RUN pip install --no-cache-dir pytest
+RUN pip install --no-cache-dir pytest pytest-json-ctrf
+
+# Install gradio and its dependencies so imports work (install the repo in editable mode)
+RUN pip install --no-cache-dir pillow numpy pydantic && \
+    pip install --no-cache-dir -e /workspace/gradio/client/python && \
+    pip install --no-cache-dir -e /workspace/gradio
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

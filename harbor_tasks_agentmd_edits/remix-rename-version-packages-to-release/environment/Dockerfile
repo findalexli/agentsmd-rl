@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
+# Install pnpm globally
+RUN npm install -g pnpm
+
 # Clone repo at base commit
 RUN git clone --filter=blob:none https://github.com/remix-run/remix.git /workspace/remix && \
     cd /workspace/remix && \
@@ -17,5 +20,14 @@ RUN git clone --filter=blob:none https://github.com/remix-run/remix.git /workspa
 
 WORKDIR /workspace/remix
 
-# Verifier output directory (Harbor bind-mounts this)
-RUN mkdir -p /logs/verifier
+# Install dependencies (needed for pnpm lint, typecheck, etc.)
+RUN pnpm install --frozen-lockfile
+
+# Pre-create mount point and set permissions
+RUN mkdir -p /logs/verifier && chmod 777 /logs/verifier
+
+# Set up pnpm environment
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="${PNPM_HOME}:${PATH}"
+
+WORKDIR /workspace/remix

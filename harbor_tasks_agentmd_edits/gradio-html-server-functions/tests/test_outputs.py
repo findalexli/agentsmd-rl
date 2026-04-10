@@ -110,6 +110,60 @@ def test_skill_md_documents_server_functions():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_html_lint():
+    """Ruff lint check passes on modified Python file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", f"{REPO}/gradio/components/html.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_html_format():
+    """Ruff format check passes on modified Python file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "-m", "ruff", "format", "--check", f"{REPO}/gradio/components/html.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_html_tests():
+    """HTML component tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "pytest", "pytest-asyncio"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pip", "install", "-q", "-e", f"{REPO}/client/python"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pip", "install", "-q", "-e", f"{REPO}"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "-m", "pytest", f"{REPO}/test/components/test_html.py", "-v", "--tb=short"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTML tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub
 # ---------------------------------------------------------------------------
 

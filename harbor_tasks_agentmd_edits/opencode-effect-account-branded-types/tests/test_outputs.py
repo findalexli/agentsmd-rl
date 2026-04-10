@@ -148,6 +148,33 @@ def test_repo_unit_tests_keybind():
     assert r.returncode == 0, f"Keybind tests failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_unit_tests_account_repo():
+    """Account repo unit tests pass (pass_to_pass) - tests account database operations."""
+    r = subprocess.run(
+        ["bun", "test", "test/account/repo.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PKG,
+    )
+    assert r.returncode == 0, f"Account repo tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_account_service():
+    """Account service unit tests pass (pass_to_pass) - tests account service layer."""
+    r = subprocess.run(
+        ["bun", "test", "test/account/service.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PKG,
+    )
+    assert r.returncode == 0, f"Account service tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_storage_db():
+    """Storage/db unit tests pass (pass_to_pass) - tests database layer used by account module."""
+    r = subprocess.run(
+        ["bun", "test", "test/storage/db.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PKG,
+    )
+    assert r.returncode == 0, f"Storage db tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — existing behavior maintained
 # ---------------------------------------------------------------------------

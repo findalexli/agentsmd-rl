@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: SWR module can be loaded and exports all expected hooks
+- id: repo_swr_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for SWR module pass
+- id: repo_swr_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on SWR module
+- id: repo_swr_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier check passes on SWR module
 - id: use_action_swr_uses_fallback_data
   type: fail_to_pass
   origin: pr_diff
@@ -25,7 +37,13 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: .cursor/rules/linear.mdc file exists with Linear issue management rules
-rubric: []
+rubric:
+- rule: New cursor rules files (.mdc) should include standard frontmatter (e.g., '---',
+    'alwaysApply', '---') to match the implicit convention seen in existing files
+  source:
+    path: .cursor/rules/cursor-rules.mdc
+    lines: 1-5
+    commit: 959c210e869803545d451c3019e178966188ef17
 config_edits:
 - path: .cursor/rules/linear.mdc
   tier: 1
@@ -170,4 +188,56 @@ config_edits:
     - Future reference and debugging
 
 
-    ### PR Linear Issue Association (REQUIRED)'
+    ### PR Linear Issue Association (REQUIRED)
+
+
+    **When creating PRs for Linear issues, MUST include magic keywords in PR body:**
+    `Fixes LOBE-123`, `Closes LOBE-123`, `Resolves LOBE-123`, and summarize the work
+    done in the linear issue comment and update the issue status to "In Review".
+
+
+    ### IMPORTANT: Per-Issue Completion Rule
+
+
+    **When working on multiple issues (e.g., parent issue with sub-issues), you MUST
+    update status and add comment for EACH issue IMMEDIATELY after completing it.**
+    Do NOT wait until all issues are done to update them in batch.
+
+
+    **Workflow for EACH individual issue:**
+
+
+    1. Complete the implementation for this specific issue
+
+    2. Run type check: `bun run type-check`
+
+    3. Run related tests if applicable
+
+    4. Create PR if needed
+
+    5. **IMMEDIATELY** update issue status to **"In Review"** (NOT "Done"): `mcp__linear-server__update_issue`
+
+    6. **IMMEDIATELY** add completion comment: `mcp__linear-server__create_comment`
+
+    7. Only then move on to the next issue
+
+
+    **Note:** Issue status should be set to **"In Review"** when PR is created. The
+    status will be updated to **"Done"** only after the PR is merged (usually handled
+    by Linear-GitHub integration or manually).
+
+
+    **Wrong approach:**
+
+
+    - Complete Issue A -> Complete Issue B -> Complete Issue C -> Update all statuses
+    -> Add all comments
+
+    - Mark issue as "Done" immediately after creating PR
+
+
+    **Correct approach:**
+
+
+    - Complete Issue A -> Create PR -> Update A status to "In Review" -> Add A comment
+    -> Complete Issue B -> ...'

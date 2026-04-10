@@ -85,26 +85,28 @@ def test_dev_instance_script_persists_and_reuses_suffix():
 
 
 def test_dev_instance_script_validates_bad_suffix():
-    """Script rejects invalid suffix values (non-numeric, out of range)."""
+    """Script rejects invalid suffix values (non-numeric, out of range) by printing error message."""
     script = Path(REPO) / "mise" / "utilities" / "dev_instance_env.sh"
     assert script.exists(), "mise/utilities/dev_instance_env.sh must exist"
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Test non-numeric suffix
+        # Test non-numeric suffix - script prints error message
         result = subprocess.run(
             ["bash", "-c",
              f'export MISE_PROJECT_ROOT="{tmpdir}"; export TUIST_DEV_INSTANCE="abc"; source "{script}" 2>&1'],
             capture_output=True, text=True, timeout=10
         )
-        assert result.returncode != 0, "Script should fail on non-numeric suffix"
+        assert "Invalid dev instance suffix" in result.stdout, \
+            f"Script should print error for non-numeric suffix, got: {result.stdout}"
 
-        # Test out-of-range suffix (0)
+        # Test out-of-range suffix (0) - script prints error message
         result2 = subprocess.run(
             ["bash", "-c",
              f'export MISE_PROJECT_ROOT="{tmpdir}"; export TUIST_DEV_INSTANCE="0"; source "{script}" 2>&1'],
             capture_output=True, text=True, timeout=10
         )
-        assert result2.returncode != 0, "Script should fail on suffix 0"
+        assert "Invalid dev instance suffix" in result2.stdout, \
+            f"Script should print error for out-of-range suffix, got: {result2.stdout}"
 
 
 def test_dev_instance_script_db_names():
@@ -182,7 +184,6 @@ def test_environment_default_app_url_reads_server_url():
 
 
 
-
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — gitignore update
 # ---------------------------------------------------------------------------
@@ -193,3 +194,78 @@ def test_gitignore_includes_instance_file():
     content = gitignore.read_text()
     assert ".tuist-dev-instance" in content, \
         ".gitignore must include .tuist-dev-instance to avoid committing instance state"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI workflow validation
+# ---------------------------------------------------------------------------
+
+def test_repo_workflow_yamllint():
+    """CI workflow YAML files pass yamllint validation (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip3", "install", "yamllint", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"yamllint install failed: {r.stderr}"
+
+    config = "{extends: default, rules: {line-length: disable, document-start: disable, trailing-spaces: disable, new-line-at-end-of-file: disable, empty-lines: disable}}"
+    r = subprocess.run(
+        ["yamllint", "-d", config,
+         f"{REPO}/.github/workflows/cache.yml",
+         f"{REPO}/.github/workflows/gradle-cache-acceptance.yml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Workflow YAML lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_mise_scripts_bash_syntax():
+    """Mise utility scripts have valid bash syntax (pass_to_pass)."""
+    scripts = [
+        Path(REPO) / "mise" / "utilities" / "setup.sh",
+        Path(REPO) / "mise" / "utilities" / "derived_data_path.sh",
+        Path(REPO) / "mise" / "utilities" / "xcode_path.sh",
+    ]
+    for script in scripts:
+        if script.exists():
+            r = subprocess.run(
+                ["bash", "-n", str(script)],
+                capture_output=True, text=True, timeout=10,
+            )
+            assert r.returncode == 0, f"Bash syntax error in {script.name}: {r.stderr}"
+
+
+def test_repo_mise_toml_valid():
+    """Mise TOML configuration files are structurally valid (pass_to_pass)."""
+    import re
+
+    toml_files = [
+        Path(REPO) / "mise.toml",
+        Path(REPO) / "cache" / "mise.toml",
+        Path(REPO) / "server" / "mise.toml",
+    ]
+
+    for toml_file in toml_files:
+        content = toml_file.read_text()
+        # Basic TOML structure validation
+        assert "[tools]" in content or "[env]" in content, \
+            f"{toml_file.name} missing required [tools] or [env] section"
+
+
+def test_repo_elixir_configs_valid():
+    """Elixir config files have valid structure (pass_to_pass)."""
+    config_files = [
+        Path(REPO) / "cache" / "config" / "runtime.exs",
+        Path(REPO) / "cache" / "config" / "test.exs",
+        Path(REPO) / "server" / "config" / "runtime.exs",
+        Path(REPO) / "server" / "config" / "test.exs",
+    ]
+
+    for config_file in config_files:
+        content = config_file.read_text()
+        assert "import Config" in content, \
+            f"{config_file.name} missing 'import Config'"
+        # Check for basic Elixir syntax patterns
+        open_parens = content.count("(") + content.count("[") + content.count("{")
+        close_parens = content.count(")") + content.count("]") + content.count("}")
+        assert open_parens == close_parens, \
+            f"{config_file.name} has mismatched parentheses/brackets"

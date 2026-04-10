@@ -7,8 +7,24 @@ source:
 checks:
 - id: typescript_syntax
   type: pass_to_pass
-  origin: static
-  description: Modified TypeScript files parse without errors
+  origin: repo_tests
+  description: Modified TypeScript files parse without errors (repo typecheck)
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full repo typecheck passes via turbo
+- id: repo_tool_registry_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tool registry unit tests pass - covers modified registry.ts
+- id: repo_question_tool_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Question tool unit tests pass - covers QuestionTool
+- id: repo_opencode_package_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: opencode package typecheck passes
 - id: flag_opencode_enable_question_tool_defined
   type: fail_to_pass
   origin: pr_diff
@@ -33,7 +49,36 @@ checks:
   origin: pr_diff
   description: translator.md must include OPENCODE_ENABLE_QUESTION_TOOL in env var
     list
-rubric: []
+rubric:
+- rule: Avoid using `try`/`catch` blocks where possible - prefer early returns or
+    ternaries for error handling
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+- rule: Avoid using the `any` type - use proper TypeScript types or type inference
+    instead
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+- rule: Prefer single word variable names where possible (e.g., `question` instead
+    of `questionEnabled`)
+  source:
+    path: AGENTS.md
+    lines: 14,21-31
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+- rule: Use `const` over `let` with ternaries instead of reassignment for conditional
+    values
+  source:
+    path: AGENTS.md
+    lines: 59-69
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+- rule: Avoid `else` statements - prefer early returns for control flow
+  source:
+    path: AGENTS.md
+    lines: 73-87
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
 config_edits:
 - path: packages/opencode/src/acp/README.md
   tier: 2

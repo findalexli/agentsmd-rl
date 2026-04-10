@@ -65,6 +65,38 @@ console.log(JSON.stringify({
     assert data["settled"] == 1, f"settle() should increment settled, got {data['settled']}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_terminal_ts_transpiles():
+    """Terminal probe module transpiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "build", "--transpile-only", f"{REPO}/packages/app/src/testing/terminal.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"terminal.ts transpile failed:\n{r.stderr[-500:]}"
+    assert len(r.stdout) > 100, "terminal.ts transpile should produce output"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_terminal_panel_label_test_transpiles():
+    """Terminal panel label tests transpile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "build", "--target=bun", "--transpile-only", f"{REPO}/packages/app/src/pages/session/terminal-panel.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"terminal-panel.test.ts transpile failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bun_version_available():
+    """Bun runtime is available and functional (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "--version"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"bun --version failed:\n{r.stderr}"
+    assert "1." in r.stdout, f"Expected bun version 1.x, got: {r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

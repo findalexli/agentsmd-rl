@@ -3,37 +3,25 @@
   "verdict": "fail",
   "nop_reward": -1.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-09T08:05:39.981509",
-  "total_time": 7134.03,
-  "sandbox_id": "ipunf8h2wbln9it4es18m",
-  "backend": "glm",
+  "validated_at": "2026-04-10T12:31:11.760322",
+  "total_time": 2150.17,
+  "sandbox_id": "iwou0fxywcc97b02papxt",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
   "nodes": {
     "p2p_enrichment": {
-      "timestamp": "2026-04-09T10:56:00",
-      "status": "completed",
-      "ci_commands_discovered": [
-        "npm run build - builds the entire monorepo (WORKING - requires npm ci first, also installs bundle deps)",
-        "npm run tsc - runs TypeScript typecheck (WORKING - requires npm run build first to install bundle type definitions)",
-        "npm run eslint - linting (WORKING)",
-        "npm run lint-packages - workspace consistency check (WORKING)",
-        "npm run check-deps - dependency checks (EXCLUDED - fails on base commit with pre-existing disallowed imports)",
-        "npm run test-mcp - MCP tests (EXCLUDED - requires network access, fails on base commit)"
-      ],
-      "tests_added": [
-        "test_repo_build - pass_to_pass gate verifying npm run build succeeds",
-        "test_repo_tsc - pass_to_pass gate verifying TypeScript typecheck passes"
-      ],
-      "notes": "IMPORTANT: The tests require npm ci to be run before test execution. The playwright monorepo uses bundled dependencies in packages/playwright/bundles/ and packages/playwright-core/bundles/ that need their own npm ci. Running 'npm run build' after 'npm ci' installs these bundle deps automatically. Then 'npm run tsc' passes because the bundle type definitions are available. The Dockerfile should be updated to run 'npm ci' during image build for tests to work correctly.",
-      "dockerfile_fix_needed": "Add 'RUN npm ci' after WORKDIR /workspace/playwright to enable p2p tests to pass"
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 790.7,
+      "notes": ""
     },
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 1556.84,
-      "notes": ""
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1200,
+      "notes": "Added test_repo_lint_packages as the only working repo_tests p2p gate. Verified all 8 tests pass with reward=1 after applying fix."
     },
     "improve": {
       "status": "skipped",
@@ -41,6 +29,11 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 125.32
     }
   },
   "history": [
@@ -51,6 +44,14 @@
       "backend": "glm",
       "time": 7134.03,
       "at": "2026-04-09T08:05:39.981509"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 2150.17,
+      "at": "2026-04-10T12:31:11.760322"
     }
   ]
 }

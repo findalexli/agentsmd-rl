@@ -183,3 +183,31 @@ def test_repo_bash_syntax_all_claude():
             capture_output=True, text=True, timeout=10,
         )
         assert r.returncode == 0, f"Syntax error in {script}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_claude():
+    """Ruff format check passes on .claude directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pip", "install", "ruff==0.15.5", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", f"{REPO}/.claude/", "--check"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mlflow_typo_claude():
+    """No MLflow typos in .claude directory (pass_to_pass)."""
+    # Run the mlflow-typo.sh script on all files in .claude
+    claude_dir = Path(REPO) / ".claude"
+    files_to_check = list(claude_dir.rglob("*"))
+    if files_to_check:
+        r = subprocess.run(
+            ["bash", f"{REPO}/dev/mlflow-typo.sh"] + [str(f) for f in files_to_check if f.is_file()],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"MLflow typo check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"

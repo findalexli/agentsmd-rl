@@ -25,6 +25,61 @@ def _read_json(path: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI command checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Root package.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json is not valid JSON:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_next_swc_package_json_valid():
+    """packages/next-swc/package.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.parse(require('fs').readFileSync('packages/next-swc/package.json', 'utf8')); console.log('OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"packages/next-swc/package.json is not valid JSON:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_turbo_jsonc_exists():
+    """packages/next-swc/turbo.jsonc exists and is readable (pass_to_pass)."""
+    r = subprocess.run(
+        ["test", "-r", f"{REPO}/packages/next-swc/turbo.jsonc"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"turbo.jsonc does not exist or is not readable:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_script_exists():
+    """Root package.json has build script (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-p", "require('./package.json').scripts.build"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"build script not found:\n{r.stderr[-500:]}"
+    assert "turbo" in r.stdout, f"build script should use turbo: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_agents_md_exists():
+    """AGENTS.md exists and is readable (pass_to_pass)."""
+    r = subprocess.run(
+        ["test", "-r", f"{REPO}/AGENTS.md"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"AGENTS.md not readable:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 

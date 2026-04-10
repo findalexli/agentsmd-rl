@@ -3,28 +3,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T07:46:31.287850",
-  "total_time": 6175.43,
-  "sandbox_id": "i09q8cuyudxvw51nvvl1h",
+  "validated_at": "2026-04-10T13:22:01.456014",
+  "total_time": 1506.51,
+  "sandbox_id": "itov5tlztttqing6p4j8p",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "ci_commands_found": [
-        "python utils/check_modeling_structure.py --no-progress (runs OK)",
-        "python utils/check_modeling_structure.py --help (runs OK)",
-        "make style (runs ruff check and ruff format)",
-        "make check-repo (includes ruff, check_modeling_structure.py - too slow for tests)"
-      ],
-      "tests_added": [
-        "test_repo_check_modeling_structure_runs: Runs check_modeling_structure.py with --no-progress",
-        "test_repo_check_modeling_structure_help: Verifies --help works (p2p - just runs, doesn't check output)",
-        "test_repo_makefile_has_style_target: Verifies Makefile has 'style' target",
-        "test_repo_makefile_style_runs_ruff: Verifies style target runs ruff check and ruff format"
-      ],
-      "notes": "Discovered repo CI commands from Makefile and CircleCI config. Added 4 pass_to_pass tests that verify repo tooling works on both base commit and after gold fix. CI commands tested: (1) check_modeling_structure.py --no-progress - runs without errors in ~60s, (2) check_modeling_structure.py --help - runs without errors, (3) Makefile has 'style' target with ruff check and ruff format. Excluded: ruff check/format full runs (fail due to pre-existing repo issues), ty type check (requires install), make check-repo (too slow, many deps)."
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 463.28,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -46,16 +37,16 @@
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All validations passed. Docker build successful. NOP test shows reward=0 (9 fail-to-pass tests correctly fail on base commit). Gold test shows reward=1 (all 14 tests pass after solve.sh applied). Rubric judge ICR=1.0 (all config/documentation rules followed).",
+      "notes": "All validations passed. Docker build successful. NOP test shows reward=0 (9 fail-to-pass tests correctly fail on base commit). Gold test shows reward=1 (all 17 tests pass after solve.sh applied). Rubric judge ICR=1.0 (all config/documentation rules followed).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 168.89
+      "time": 146.82
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.71,
+      "time": 2.36,
       "notes": "ICR=1.00"
     }
   },
@@ -73,8 +64,24 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 6175.43,
+      "time": 0.0,
       "at": "2026-04-09T07:46:31.287850"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold_reward": -1.0,
+      "backend": "fireworks",
+      "time": 1387.28,
+      "at": "2026-04-10T12:56:54.787442"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1506.51,
+      "at": "2026-04-10T13:22:01.456014"
     }
   ]
 }

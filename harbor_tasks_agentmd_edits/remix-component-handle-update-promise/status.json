@@ -1,32 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:43:19.376481",
-  "total_time": 5796.89,
-  "sandbox_id": "i7jkuej0edej8qocyqt4r",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:09:31.494382",
+  "total_time": 2849.87,
+  "sandbox_id": "ia9ebbchs3c041mnuqa6t",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "docker_error": "git clone --depth=100 does not include base commit 649aecadeb54fc3027a2b6a85020dd31421b5327 (fatal: reference is not a tree). The Dockerfile needs --depth increased or use full clone.",
-      "ci_commands_discovered": [
-        "pnpm run lint - from .github/workflows/check.yaml",
-        "pnpm run typecheck - from .github/workflows/check.yaml",
-        "pnpm run format:check - from .github/workflows/format.yml",
-        "pnpm --filter @remix-run/component run test - from package.json scripts",
-        "npx tsc --noEmit --project packages/component/tsconfig.json - from existing test_outputs.py"
-      ],
-      "p2p_tests_added": [
-        "test_repo_component_typecheck - TypeScript typecheck for component package",
-        "test_repo_component_tests - Component package unit tests via vitest",
-        "test_repo_lint - ESLint checks across the repo",
-        "test_repo_format_check - Prettier format checking"
-      ],
-      "notes": "Added 4 pass_to_pass tests to test_outputs.py covering the repo's CI checks (lint, typecheck, format, component tests). Updated eval_manifest.yaml with matching checks. The Dockerfile still needs fix for shallow clone depth to include base commit."
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 604.51,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "rate_limited",
@@ -41,6 +30,23 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed solve.sh: original patch failed due to context mismatches. Replaced with targeted Python patches that: 1) Add MAX_CASCADING_UPDATES and infinite loop detection to scheduler.ts, 2) Make update() return Promise<AbortSignal> in component.ts, 3) Update documentation signatures from handle.update(task?) to handle.update(), 4) Fix test files to use new API, 5) Run prettier for format compliance. All 11 tests pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1030.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.46,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -51,6 +57,14 @@
       "backend": "glm",
       "time": 5796.89,
       "at": "2026-04-09T07:43:19.376481"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2849.87,
+      "at": "2026-04-10T13:09:31.494382"
     }
   ]
 }

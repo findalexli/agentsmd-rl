@@ -16,22 +16,20 @@ SKILL_MD = Path(REPO) / "packages/playwright/src/skill/SKILL.md"
 CLI_TEST = Path(REPO) / "tests/mcp/cli-misc.spec.ts"
 
 
-def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute JavaScript code via Node in the repo directory."""
-    script = Path(REPO) / "_eval_tmp.mjs"
-    script.write_text(code)
-    try:
-        return subprocess.run(
-            ["node", str(script)],
-            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+def _run_npm_install():
+    """Ensure npm dependencies are installed."""
+    if not Path(REPO, "node_modules/.bin/eslint").exists():
+        r = subprocess.run(
+            ["npm", "install"],
+            cwd=REPO, capture_output=True, text=True, timeout=300
         )
-    finally:
-        script.unlink(missing_ok=True)
+        if r.returncode != 0:
+            raise RuntimeError(f"npm install failed: {r.stderr}")
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # pass_to_pass (static) — gates
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_syntax_check():
     """Modified TypeScript files parse without syntax errors."""
@@ -53,17 +51,100 @@ def test_program_ts_not_stub():
     assert "console.log" in src
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# pass_to_pass (repo_tests) — repo CI checks
+# -----------------------------------------------------------------------------
+
+def test_repo_typescript_syntax_program_ts():
+    """program.ts has valid TypeScript syntax (pass_to_pass)."""
+    _run_npm_install()
+    code = """
+const fs = require('fs');
+const parser = require('@babel/parser');
+const src = fs.readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
+try {
+    parser.parse(src, {sourceType: 'module', plugins: ['typescript']});
+    console.log('PASS: valid TypeScript syntax');
+} catch (e) {
+    console.error('FAIL:', e.message);
+    process.exit(1);
+}
+"""
+    r = subprocess.run(
+        ["node", "-e", code],
+        cwd=REPO, capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Syntax check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_typescript_syntax_cli_misc():
+    """cli-misc.spec.ts has valid TypeScript syntax (pass_to_pass)."""
+    _run_npm_install()
+    code = """
+const fs = require('fs');
+const parser = require('@babel/parser');
+const src = fs.readFileSync('tests/mcp/cli-misc.spec.ts', 'utf8');
+try {
+    parser.parse(src, {sourceType: 'module', plugins: ['typescript']});
+    console.log('PASS: valid TypeScript syntax');
+} catch (e) {
+    console.error('FAIL:', e.message);
+    process.exit(1);
+}
+"""
+    r = subprocess.run(
+        ["node", "-e", code],
+        cwd=REPO, capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Syntax check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_workspace_consistent():
+    """Repo workspace packages are consistent (pass_to_pass)."""
+    _run_npm_install()
+    r = subprocess.run(
+        ["node", "utils/workspace.js", "--ensure-consistent"],
+        cwd=REPO, capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"workspace check failed: {r.stderr}\n{r.stdout}"
+
+
+def test_repo_eslint_modified_file():
+    """ESLint passes on modified program.ts (pass_to_pass)."""
+    _run_npm_install()
+    r = subprocess.run(
+        ["./node_modules/.bin/eslint", "packages/playwright/src/mcp/terminal/program.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"ESLint failed: {r.stderr}\n{r.stdout}"
+
+
+# -----------------------------------------------------------------------------
 # fail_to_pass (pr_diff) — behavioral: console output formatting
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code via Node in the repo directory."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    script.write_text(code)
+    try:
+        return subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
 
 def test_console_output_emoji_format():
     """Install flow console.log calls render with emoji status prefixes."""
-    r = _run_node("""
+    r = _run_node(r"""
 import fs from 'fs';
 
 const src = fs.readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
-const lines = src.split('\\n');
+const lines = src.split('\n');
 
 // Install-flow success messages that should have check-mark prefix
 const targets = ['Workspace initialized', 'Skills installed', 'Created default config', 'Found '];
@@ -78,19 +159,19 @@ for (const line of lines) {
     if (!t.startsWith('console.log(')) continue;
     if (!targets.some(k => t.includes(k))) continue;
 
-    const first = t.indexOf('`');
-    const last = t.lastIndexOf('`');
+    const first = t.indexOf('\`');
+    const last = t.lastIndexOf('\`');
     if (first === -1 || first === last) continue;
 
     // Evaluate the template literal with mock variables
     let rendered;
     try {
         const fn = new Function('cwd', 'channel', 'path', 'skillDestDir',
-            'return `' + t.slice(first + 1, last) + '`');
+            'return \`' + t.slice(first + 1, last) + '\`');
         rendered = fn(cwd, channel, path, skillDestDir);
     } catch { continue; }
 
-    if (!rendered.startsWith('\\u2705')) {
+    if (!rendered.startsWith('\u2705')) {
         console.error('FAIL: missing check-mark prefix: ' + JSON.stringify(rendered));
         process.exit(1);
     }
@@ -103,7 +184,7 @@ if (!errLine) {
     console.error('FAIL: console.error "not found" line missing');
     process.exit(1);
 }
-if (!errLine.includes('\\u274C')) {
+if (!errLine.includes('\u274C')) {
     console.error('FAIL: error message missing cross-mark prefix');
     process.exit(1);
 }
@@ -120,11 +201,11 @@ console.log('PASS: ' + checked + ' success messages verified');
 
 def test_console_output_backtick_paths():
     """Workspace init message wraps the directory path in literal backticks."""
-    r = _run_node("""
+    r = _run_node(r"""
 import fs from 'fs';
 
 const src = fs.readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
-const lines = src.split('\\n');
+const lines = src.split('\n');
 
 // Find the workspace-init console.log line
 const initLine = lines.find(l =>
@@ -135,14 +216,14 @@ if (!initLine) {
 }
 
 const t = initLine.trim();
-const first = t.indexOf('`');
-const last = t.lastIndexOf('`');
+const first = t.indexOf('\`');
+const last = t.lastIndexOf('\`');
 
 // Evaluate the template literal with a mock cwd
 const cwd = '/test/workspace';
 let rendered;
 try {
-    const fn = new Function('cwd', 'return `' + t.slice(first + 1, last) + '`');
+    const fn = new Function('cwd', 'return \`' + t.slice(first + 1, last) + '\`');
     rendered = fn(cwd);
 } catch (e) {
     console.error('FAIL: could not evaluate template: ' + e.message);
@@ -150,8 +231,8 @@ try {
 }
 
 // After the fix, rendered output wraps the path in literal backtick characters
-// e.g. "... at \\`/test/workspace\\`."
-if (!rendered.includes('`/test/workspace`')) {
+// e.g. "... at \`/test/workspace\`."
+if (!rendered.includes('\`/test/workspace\`')) {
     console.error('FAIL: path not wrapped in backticks. Got: ' + JSON.stringify(rendered));
     process.exit(1);
 }
@@ -161,22 +242,22 @@ console.log('PASS: path wrapped in backticks: ' + JSON.stringify(rendered));
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # fail_to_pass (pr_diff) — behavioral: SKILL.md documentation
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_skill_md_open_goto_split():
     """SKILL.md quick start documents 'open' and 'goto' as separate commands."""
-    r = _run_node("""
+    r = _run_node(r"""
 import fs from 'fs';
 
 const content = fs.readFileSync('packages/playwright/src/skill/SKILL.md', 'utf8');
 
 // Extract the Quick start code block
-const qsMatch = content.match(/## Quick start[\\s\\S]*?```bash\\n([\\s\\S]*?)```/);
+const qsMatch = content.match(/## Quick start[\s\S]*?```bash\n([\s\S]*?)```/);
 if (!qsMatch) { console.error('FAIL: no Quick start code block'); process.exit(1); }
 
-const commands = qsMatch[1].split('\\n')
+const commands = qsMatch[1].split('\n')
     .map(l => l.trim())
     .filter(l => l.startsWith('playwright-cli'));
 
@@ -202,13 +283,13 @@ console.log('PASS: quick start has separate open and goto commands');
 
 def test_skill_md_close_in_examples():
     """SKILL.md examples (multi-tab, debugging) end with 'playwright-cli close'."""
-    r = _run_node("""
+    r = _run_node(r"""
 import fs from 'fs';
 
 const content = fs.readFileSync('packages/playwright/src/skill/SKILL.md', 'utf8');
 
 // Check multi-tab example
-const multiTab = content.match(/## Example: Multi-tab workflow[\\s\\S]*?```bash\\n([\\s\\S]*?)```/);
+const multiTab = content.match(/## Example: Multi-tab workflow[\s\S]*?```bash\n([\s\S]*?)```/);
 if (!multiTab) { console.error('FAIL: no Multi-tab workflow example'); process.exit(1); }
 if (!multiTab[1].includes('playwright-cli close')) {
     console.error('FAIL: Multi-tab example missing close');
@@ -216,7 +297,7 @@ if (!multiTab[1].includes('playwright-cli close')) {
 }
 
 // Check first debugging example
-const debug = content.match(/## Example: Debugging with DevTools[\\s\\S]*?```bash\\n([\\s\\S]*?)```/);
+const debug = content.match(/## Example: Debugging with DevTools[\s\S]*?```bash\n([\s\S]*?)```/);
 if (!debug) { console.error('FAIL: no Debugging example'); process.exit(1); }
 if (!debug[1].includes('playwright-cli close')) {
     console.error('FAIL: Debugging example missing close');
@@ -231,12 +312,12 @@ console.log('PASS: examples end with close');
 
 def test_skill_md_install_syntax():
     """SKILL.md install section uses 'install --skills' instead of 'install-skills'."""
-    r = _run_node("""
+    r = _run_node(r"""
 import fs from 'fs';
 
 const content = fs.readFileSync('packages/playwright/src/skill/SKILL.md', 'utf8');
 
-const installSection = content.match(/### Install[\\s\\S]*?```bash\\n([\\s\\S]*?)```/);
+const installSection = content.match(/### Install[\s\S]*?```bash\n([\s\S]*?)```/);
 if (!installSection) { console.error('FAIL: no Install code block'); process.exit(1); }
 
 const block = installSection[1];
@@ -255,20 +336,20 @@ console.log('PASS: install section uses --skills flag');
     assert "PASS" in r.stdout
 
 
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # fail_to_pass (repo_tests) — upstream test expectations
-# ---------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 def test_upstream_test_matches_output():
     """Upstream cli-misc test expects backtick-wrapped skill install output."""
-    r = _run_node("""
+    r = _run_node(r"""
 import fs from 'fs';
 import path from 'path';
 
 const content = fs.readFileSync('tests/mcp/cli-misc.spec.ts', 'utf8');
 
 // Find the install w/skills test and its toContain assertion
-const match = content.match(/install workspace w\\/skills[\\s\\S]*?toContain\\(([\\s\\S]*?)\\)/);
+const match = content.match(/install workspace w\/skills[\s\S]*?toContain\(([\s\S]*?)\)/);
 if (!match) { console.error('FAIL: toContain assertion not found'); process.exit(1); }
 
 // Evaluate the assertion argument (a template literal referencing path.sep)
@@ -282,13 +363,13 @@ try {
 }
 
 // After fix, the expected string contains literal backtick characters around the path
-if (!expected.includes('`')) {
+if (!expected.includes('\`')) {
     console.error('FAIL: expected string has no backtick chars: ' + JSON.stringify(expected));
     process.exit(1);
 }
 
 // And ends with backtick + period
-if (!expected.endsWith('`.')) {
+if (!expected.endsWith('\`.')) {
     console.error('FAIL: expected string does not end with backtick+period: ' + JSON.stringify(expected));
     process.exit(1);
 }

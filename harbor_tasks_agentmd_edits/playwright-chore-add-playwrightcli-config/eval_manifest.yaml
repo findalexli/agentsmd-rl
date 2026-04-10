@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files have balanced braces and are non-empty
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace packages are consistent
+- id: test_repo_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax via Node.js validation
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json files are valid JSON
 - id: config_category_in_type
   type: fail_to_pass
   origin: pr_diff
@@ -40,7 +52,38 @@ checks:
   origin: pr_diff
   description: browser/config.ts daemon config sets contextOptions with default viewport
     1280x720
-rubric: []
+rubric:
+- rule: New command categories must be documented in SKILL.md with usage examples
+    and session flag examples
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 108-118
+    commit: 71e5079b735eda08a72b0fac58a3dd02fde6bb9f
+  reference: '### Configuration
+
+
+    ```bash
+
+
+    # configure the session
+
+
+    playwright-cli config my-config.json
+
+
+    # Configure named session
+
+
+    playwright-cli --session=mysession config my-config.json
+
+
+    # Start with configured session
+
+
+    playwright-cli open --config=my-config.json
+
+
+    ```'
 config_edits:
 - path: packages/playwright/src/mcp/terminal/SKILL.md
   tier: 1

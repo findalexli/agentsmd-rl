@@ -33,6 +33,18 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: test/docker-compose.yml usage comments reference docker:clean
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json is valid JSON
+- id: test_repo_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo script files have valid JavaScript syntax
+- id: test_repo_docker_compose_yml_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo docker-compose.yml is readable and well-formed
 rubric:
 - rule: The docker:clean script should handle the case where containers don't exist
     gracefully (try/catch or similar error suppression)
@@ -43,14 +55,12 @@ rubric:
 config_edits:
 - path: CLAUDE.md
   tier: 1
-  gold_added: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm
-    docker:test`'
-  gold_removed: '- Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm
-    docker:test`'
+  gold_added: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm docker:test`'
+  gold_removed: '- Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm docker:test`'
 - path: CONTRIBUTING.md
   tier: 2
-  gold_added: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB,
-    storage emulators) with fresh data
+  gold_added: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB, storage
+    emulators) with fresh data
 
     pnpm docker:clean  # Stop and remove all services'
   gold_removed: 'pnpm docker:start  # Start all services (PostgreSQL, MongoDB, storage

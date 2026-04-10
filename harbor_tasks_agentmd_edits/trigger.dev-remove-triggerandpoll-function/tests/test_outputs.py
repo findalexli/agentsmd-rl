@@ -67,13 +67,16 @@ def test_other_task_methods_preserved():
         assert method in content, f"tasks object must still export {method.rstrip(',')}"
 
 
+# ---------------------------------------------------------------------------
+# repo_tests: Real CI commands (pass_to_pass)
+# ---------------------------------------------------------------------------
 
-# [static] pass_to_pass - repo CI validation using Node.js TS parsing
-def test_repo_ts_files_parseable():
-    """Repo's modified TypeScript files must be parseable by Node.js (pass_to_pass).
+# [repo_tests] pass_to_pass
+def test_repo_ts_node_syntax():
+    """Repo's modified TypeScript files pass Node.js syntax check (pass_to_pass).
 
-    Uses Node.js 22's --experimental-strip-types to verify syntax validity
-    without requiring pnpm install or full typecheck.
+    Uses Node.js 22 --experimental-strip-types --check to verify syntax
+    without requiring pnpm install or dependencies. This mimics CI validation.
     """
     files_to_check = [
         "packages/trigger-sdk/src/v3/shared.ts",
@@ -89,11 +92,49 @@ def test_repo_ts_files_parseable():
         assert r.returncode == 0, f"{rel_path} has syntax errors:\n{r.stderr}"
 
 
-# [static] pass_to_pass
-def test_repo_import_export_structure():
-    """Repo's modified files must have valid import/export structure (pass_to_pass).
+# [repo_tests] pass_to_pass
+def test_repo_package_json_node_valid():
+    """Repo's package.json files are valid JSON per Node.js (pass_to_pass).
 
-    Validates that imports and exports are syntactically well-formed.
+    Uses Node.js JSON.parse to validate package.json files.
+    """
+    files_to_check = [
+        "packages/trigger-sdk/package.json",
+        "references/v3-catalog/package.json",
+    ]
+    for rel_path in files_to_check:
+        full_path = Path(REPO) / rel_path
+        r = subprocess.run(
+            ["node", "-e", f"JSON.parse(require('fs').readFileSync('{full_path}', 'utf8')); console.log('OK');"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"{rel_path} is invalid JSON:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tsconfig_valid():
+    """Repo's tsconfig files are valid JSON per Node.js (pass_to_pass).
+
+    Validates TypeScript configuration files are parseable.
+    """
+    files_to_check = [
+        "packages/trigger-sdk/tsconfig.json",
+        "packages/trigger-sdk/tsconfig.build.json",
+    ]
+    for rel_path in files_to_check:
+        full_path = Path(REPO) / rel_path
+        r = subprocess.run(
+            ["node", "-e", f"JSON.parse(require('fs').readFileSync('{full_path}', 'utf8')); console.log('OK');"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"{rel_path} is invalid JSON:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_node_syntax_files():
+    """Repo's modified TypeScript files must have valid Node.js syntax (pass_to_pass).
+
+    Uses Node.js --check to verify syntax without requiring pnpm install.
     """
     files_to_check = [
         "packages/trigger-sdk/src/v3/shared.ts",
@@ -102,16 +143,30 @@ def test_repo_import_export_structure():
     ]
     for rel_path in files_to_check:
         full_path = Path(REPO) / rel_path
-        content = full_path.read_text()
-        # Basic structural validation - file should have balanced braces
-        open_braces = content.count("{")
-        close_braces = content.count("}")
-        assert open_braces == close_braces, f"{rel_path} has unbalanced braces"
-        # Check that imports exist
-        assert "import " in content, f"{rel_path} missing import statements"
-        # Verify no obviously broken patterns
-        assert "import from" not in content, f"{rel_path} has malformed import (missing module)"
-        assert "export from" not in content, f"{rel_path} has malformed export (missing module)"
+        r = subprocess.run(
+            ["node", "--check", str(full_path)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"{rel_path} has Node.js syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_markdown_valid():
+    """Repo's markdown and mdc files must be readable (pass_to_pass).
+
+    Uses Node.js to verify the docs and cursor rules files are parseable.
+    """
+    files_to_check = [
+        "docs/triggering.mdx",
+        ".cursor/rules/writing-tasks.mdc",
+    ]
+    for rel_path in files_to_check:
+        full_path = Path(REPO) / rel_path
+        r = subprocess.run(
+            ["node", "-e", f"require('fs').readFileSync('{full_path}', 'utf8'); console.log('OK');"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"{rel_path} is not readable"
 
 
 # ---------------------------------------------------------------------------

@@ -207,8 +207,9 @@ diff --git a/test/Directory.Packages.props b/test/Directory.Packages.props
 index 2dcd2f6da76..936b20c8b55 100644
 --- a/test/Directory.Packages.props
 +++ b/test/Directory.Packages.props
-@@ -18,5 +18,6 @@
+@@ -18,6 +18,7 @@
      <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="$(OpenTelemetryExporterInMemoryVersion)" />
+     <PackageVersion Include="SQLite3MC.PCLRaw.bundle" Version="$(SQLite3MCPCLRawBundleVersion)" />
      <PackageVersion Include="SQLitePCLRaw.provider.sqlite3" Version="$(SQLitePCLRawVersion)" />
      <PackageVersion Include="SQLitePCLRaw.provider.winsqlite3" Version="$(SQLitePCLRawVersion)" />
 +    <PackageVersion Include="Testcontainers.CosmosDb" Version="4.11.0" />

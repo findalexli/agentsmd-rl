@@ -1,34 +1,45 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:56:18.218079",
-  "total_time": 1687.21,
-  "sandbox_id": "iqj03uboni2g5qdahjdp3",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:25:13.753191",
+  "total_time": 676.7,
+  "sandbox_id": "iib0735bcuqhrobgmjp7j",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 49.07,
-      "notes": ""
-    },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 6.7,
+      "time": 327.96,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "plugins/plugin-dev/skills/hook-development/SKILL.md",
+        "plugins/plugin-dev/skills/plugin-structure/SKILL.md",
+        "plugins/README.md",
+        "plugins/explanatory-output-style/ (reference implementation)"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 0,
+      "rejection_reasons": "N/A",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 8.81,
-      "notes": ""
+      "time": 136.55
+    },
+    "rubric_validate": {
+      "status": "error",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.25,
+      "notes": "",
+      "precision": 1.0
     },
     "improve": {
       "status": "skipped",
@@ -38,35 +49,31 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed solve.sh to create .gitignore file (was missing). Docker build passes, NOP test correctly fails with reward=0, Gold test passes with reward=11/11 tests. Rubric rules point to reference docs (SKILL.md) not the files being created - this is a task type mismatch for the rubric judge which expects file modifications, not new file creation.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.71
+      "time": 196.48
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.41,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5793.58,
-      "at": "2026-04-09T07:13:36.439202"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1686.93,
-      "at": "2026-04-09T14:56:18.050138"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1687.21,
-      "at": "2026-04-09T14:56:18.218079"
+      "time": 676.7,
+      "at": "2026-04-10T11:25:13.753191"
     }
   ]
 }

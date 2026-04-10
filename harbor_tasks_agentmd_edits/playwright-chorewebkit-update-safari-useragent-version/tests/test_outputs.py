@@ -159,3 +159,124 @@ def test_device_descriptors_valid_json():
         ).read_text()
     )
     assert len(data) > 50, "deviceDescriptorsSource.json seems truncated"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — git repo integrity check
+def test_repo_git_checkout_valid():
+    """Repo is a valid git checkout with expected commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "rev-parse", "HEAD"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Git check failed: {r.stderr}"
+    commit = r.stdout.strip()
+    # Base commit is 3aba395f2d151d2345de3182b8b3e9564507c9e5
+    assert len(commit) == 40, f"Unexpected commit format: {commit}"
+
+
+# [repo_tests] pass_to_pass — browsers.json schema validation
+def test_repo_browsers_json_schema():
+    """browsers.json has required schema with webkit entry (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import json
+import sys
+with open("{REPO}/packages/playwright-core/browsers.json") as f:
+    data = json.load(f)
+assert "browsers" in data, "Missing 'browsers' key"
+browsers = data["browsers"]
+webkit = [b for b in browsers if b.get("name") == "webkit"]
+assert len(webkit) == 1, f"Expected 1 webkit browser, got {{len(webkit)}}"
+assert "revision" in webkit[0], "Missing revision in webkit entry"
+assert "browserVersion" in webkit[0], "Missing browserVersion in webkit entry"
+print("PASS: browsers.json schema valid")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Schema check failed: {{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — package.json integrity
+def test_repo_package_json_valid():
+    """Root package.json is valid JSON with expected structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import json
+with open("{REPO}/package.json") as f:
+    data = json.load(f)
+assert data.get("name") == "playwright-internal", "Unexpected package name"
+assert "workspaces" in data, "Missing workspaces"
+assert "scripts" in data, "Missing scripts"
+assert "lint" in data["scripts"], "Missing lint script"
+print("PASS: package.json valid")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"package.json check failed: {{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — docs directory structure
+def test_repo_docs_structure():
+    """Docs directory has expected release notes structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+from pathlib import Path
+repo = "{REPO}"
+for lang in ("js", "python", "java", "csharp"):
+    path = Path(repo) / "docs" / "src" / f"release-notes-{{lang}}.md"
+    assert path.exists(), f"Missing release notes: {{path}}"
+    content = path.read_text()
+    assert len(content) > 100, f"Release notes too short: {{path}}"
+print("PASS: All release notes files present")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Docs check failed: {{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — skill directory structure
+def test_repo_skill_directory():
+    """Skill docs directory exists with SKILL.md (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+from pathlib import Path
+repo = "{REPO}"
+skill_dir = Path(repo) / ".claude" / "skills" / "playwright-dev"
+assert skill_dir.exists(), f"Skill directory missing: {{skill_dir}}"
+skill_md = skill_dir / "SKILL.md"
+assert skill_md.exists(), f"SKILL.md missing: {{skill_md}}"
+print("PASS: Skill directory structure valid")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Skill dir check failed: {{r.stderr}}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — wkBrowser.ts structure
+def test_repo_wkbrowser_structure():
+    """wkBrowser.ts has expected structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import re
+from pathlib import Path
+repo = "{REPO}"
+path = Path(repo) / "packages" / "playwright-core" / "src" / "server" / "webkit" / "wkBrowser.ts"
+assert path.exists(), f"wkBrowser.ts missing: {{path}}"
+content = path.read_text()
+assert "BROWSER_VERSION" in content, "Missing BROWSER_VERSION constant"
+assert "DEFAULT_USER_AGENT" in content, "Missing DEFAULT_USER_AGENT"
+assert "webkit" in content.lower(), "Missing webkit references"
+print("PASS: wkBrowser.ts structure valid")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"wkBrowser.ts check failed: {{r.stderr}}"
+    assert "PASS" in r.stdout

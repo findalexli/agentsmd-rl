@@ -69,17 +69,17 @@ def test_terminal_probe_state_tracking():
     """terminalProbe tracks connected, rendered, and settled state correctly."""
     result = _run_ts(
         'globalThis.window = {\n'
-        "  __opencode_e2e: { terminal: { enabled: true, terminals: {} } },\n"
-        "}\n"
+        '  __opencode_e2e: { terminal: { enabled: true, terminals: {} } },\n'
+        '}\n'
         'const { terminalProbe } = await import("./src/testing/terminal.ts")\n'
-        "const probe = terminalProbe('test-1')\n"
-        "probe.init()\n"
-        "probe.connect()\n"
-        "probe.render('hello ')\n"
-        "probe.render('world')\n"
-        "probe.settle()\n"
-        "const state = globalThis.window.__opencode_e2e.terminal.terminals['test-1']\n"
-        "console.log(JSON.stringify(state))\n"
+        'const probe = terminalProbe(\'test-1\')\n'
+        'probe.init()\n'
+        'probe.connect()\n'
+        'probe.render(\'hello \')\n'
+        'probe.render(\'world\')\n'
+        'probe.settle()\n'
+        'const state = globalThis.window.__opencode_e2e.terminal.terminals[\'test-1\']\n'
+        'console.log(JSON.stringify(state))\n'
     )
     assert result.returncode == 0, f"Script failed: {result.stderr}"
     data = json.loads(result.stdout.strip())
@@ -95,15 +95,15 @@ def test_terminal_probe_drop():
     """terminalProbe.drop() removes the terminal entry from state."""
     result = _run_ts(
         'globalThis.window = {\n'
-        "  __opencode_e2e: { terminal: { enabled: true, terminals: {} } },\n"
-        "}\n"
+        '  __opencode_e2e: { terminal: { enabled: true, terminals: {} } },\n'
+        '}\n'
         'const { terminalProbe } = await import("./src/testing/terminal.ts")\n'
-        "const probe = terminalProbe('test-drop')\n"
-        "probe.init()\n"
-        "probe.connect()\n"
-        "probe.drop()\n"
-        "const exists = 'test-drop' in globalThis.window.__opencode_e2e.terminal.terminals\n"
-        "console.log(JSON.stringify({ exists }))\n"
+        'const probe = terminalProbe(\'test-drop\')\n'
+        'probe.init()\n'
+        'probe.connect()\n'
+        'probe.drop()\n'
+        'const exists = \'test-drop\' in globalThis.window.__opencode_e2e.terminal.terminals\n'
+        'console.log(JSON.stringify({ exists }))\n'
     )
     assert result.returncode == 0, f"Script failed: {result.stderr}"
     data = json.loads(result.stdout.strip())
@@ -121,12 +121,12 @@ def test_terminal_probe_noop_without_window():
     result = _run_ts(
         "delete globalThis.window\n"
         'const { terminalProbe } = await import("./src/testing/terminal.ts")\n'
-        "const probe = terminalProbe('test-noop')\n"
-        "probe.init()\n"
-        "probe.connect()\n"
-        "probe.render('data')\n"
-        "probe.settle()\n"
-        "probe.drop()\n"
+        'const probe = terminalProbe(\'test-noop\')\n'
+        'probe.init()\n'
+        'probe.connect()\n'
+        'probe.render(\'data\')\n'
+        'probe.settle()\n'
+        'probe.drop()\n'
         'console.log("ok")\n'
     )
     assert result.returncode == 0, f"Probe should not throw without window: {result.stderr}"
@@ -147,7 +147,6 @@ def _ensure_system_deps():
             timeout=5,
         )
     except FileNotFoundError:
-        # Install unzip if not available
         subprocess.run(
             ["apt-get", "update", "-qq"],
             capture_output=True,
@@ -192,7 +191,6 @@ def test_repo_typecheck_app():
     bun_path = _get_bun_path()
     env = _bun_env()
 
-    # Install dependencies
     r = subprocess.run(
         [str(bun_path), "install"],
         capture_output=True,
@@ -203,7 +201,6 @@ def test_repo_typecheck_app():
     )
     assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
 
-    # Run typecheck on packages/app
     r = subprocess.run(
         [str(bun_path), "run", "typecheck"],
         capture_output=True,
@@ -221,7 +218,6 @@ def test_repo_typecheck_turbo():
     bun_path = _get_bun_path()
     env = _bun_env()
 
-    # Install dependencies
     r = subprocess.run(
         [str(bun_path), "install"],
         capture_output=True,
@@ -232,7 +228,6 @@ def test_repo_typecheck_turbo():
     )
     assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
 
-    # Run turbo typecheck from root
     r = subprocess.run(
         [str(bun_path), "run", "typecheck"],
         capture_output=True,
@@ -242,6 +237,60 @@ def test_repo_typecheck_turbo():
         env=env,
     )
     assert r.returncode == 0, f"turbo typecheck failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests for packages/app pass (pass_to_pass)."""
+    bun_path = _get_bun_path()
+    env = _bun_env()
+
+    r = subprocess.run(
+        [str(bun_path), "install"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        [str(bun_path), "test", "--preload", "./happydom.ts", "./src"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(APP),
+        env=env,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo's prettier check for packages/app/src passes (pass_to_pass)."""
+    bun_path = _get_bun_path()
+    env = _bun_env()
+
+    r = subprocess.run(
+        [str(bun_path), "install"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        [str(bun_path), "run", "prettier", "--check", "packages/app/src"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(REPO),
+        env=env,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -255,12 +304,8 @@ def test_agents_md_documents_helpers():
     agents_md = APP / "e2e" / "AGENTS.md"
     assert agents_md.exists(), "packages/app/e2e/AGENTS.md must exist"
     content = agents_md.read_text()
-    assert "waitTerminalReady" in content, (
-        "AGENTS.md should document waitTerminalReady helper"
-    )
-    assert "runTerminal" in content, (
-        "AGENTS.md should document runTerminal helper"
-    )
+    assert "waitTerminalReady" in content, "AGENTS.md should document waitTerminalReady helper"
+    assert "runTerminal" in content, "AGENTS.md should document runTerminal helper"
 
 
 # [pr_diff] fail_to_pass
@@ -268,15 +313,7 @@ def test_agents_md_terminal_testing_section():
     """e2e/AGENTS.md must include a terminal testing guidelines section."""
     agents_md = APP / "e2e" / "AGENTS.md"
     content = agents_md.read_text()
-    # Check for the terminal testing section heading
     lower = content.lower()
-    assert "terminal test" in lower, (
-        "AGENTS.md should have a Terminal Tests section"
-    )
-    # Section should reference the key concepts: type through browser, not PTY
-    assert "type through the browser" in lower or "type through" in lower, (
-        "Terminal testing section should advise typing through the browser"
-    )
-    assert "waitTerminalReady" in content and "runTerminal" in content, (
-        "Terminal testing section should reference both helpers"
-    )
+    assert "terminal test" in lower, "AGENTS.md should have a Terminal Tests section"
+    assert "type through the browser" in lower or "type through" in lower, "Terminal testing section should advise typing through the browser"
+    assert "waitTerminalReady" in content and "runTerminal" in content, "Terminal testing section should reference both helpers"

@@ -1,20 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:26:58.686617",
-  "total_time": 18906.62,
-  "sandbox_id": "iwcahbr8fqcq3yy9gcug9",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:15:08.042893",
+  "total_time": 1959.17,
+  "sandbox_id": "iegtq12c8et3xkw5f23nn",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "error",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 697.44,
-      "notes": ""
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 500.0,
+      "notes": "Added 1 repo_tests p2p gate: test_repo_typecheck - uses Bun transpiler to verify TypeScript syntax of modified files (thread.ts, worker.ts). CI commands found: bun typecheck (requires tsgo which is not available in Docker), bun test (has module resolution issues), bun build (has workspace dependency issues). The Bun transpiler approach provides lightweight syntax validation without requiring full build environment."
     },
     "improve": {
       "status": "skipped",
@@ -24,16 +25,29 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "judge_score": 1.0,
+      "attempts": 1,
+      "notes": "Fixed rubric rules in eval_manifest.yaml: consolidated two overlapping rules into one comprehensive rule with proper reference field. All checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.62
+      "time": 311.88
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 70.25,
+      "time": 366.17,
       "notes": ""
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.29,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -68,6 +82,14 @@
       "backend": "fireworks",
       "time": 18906.62,
       "at": "2026-04-09T14:26:58.686617"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1959.17,
+      "at": "2026-04-10T12:15:08.042893"
     }
   ]
 }

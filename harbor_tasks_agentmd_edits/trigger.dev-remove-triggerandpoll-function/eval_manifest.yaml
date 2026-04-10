@@ -17,15 +17,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: tasks object still exports trigger, batchTrigger, triggerAndWait, batchTriggerAndWait
-- id: repo_ts_files_parseable
+- id: repo_ts_node_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's modified TypeScript files are parseable by Node.js 22 --experimental-strip-types
-- id: repo_import_export_structure
+  description: Repo's modified TypeScript files pass Node.js 22 --experimental-strip-types --check
+- id: repo_package_json_node_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's modified files have valid import/export structure (balanced
-    braces, valid imports)
+  description: Repo's package.json files are valid JSON per Node.js
+- id: repo_tsconfig_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tsconfig files are valid JSON
+- id: repo_node_syntax_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modified TypeScript files have valid Node.js syntax
+- id: repo_markdown_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's markdown and mdc files are readable via Node.js
 - id: triggerandpoll_function_removed
   type: fail_to_pass
   origin: pr_diff

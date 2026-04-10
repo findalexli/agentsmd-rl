@@ -167,6 +167,84 @@ def test_readme_hyphen_underscore_equivalence_note():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI tests
+# ---------------------------------------------------------------------------
+
+def _ensure_pnpm():
+    """Ensure pnpm is installed and available."""
+    # Check if pnpm is already installed
+    r = subprocess.run(["which", "pnpm"], capture_output=True, text=True)
+    if r.returncode == 0:
+        return
+    # Install pnpm globally
+    r = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, text=True, timeout=120)
+    if r.returncode != 0:
+        raise RuntimeError(f"Failed to install pnpm: {r.stderr}")
+
+
+def _install_mcp_deps():
+    """Install MCP dependencies if not already installed."""
+    # Check if node_modules exists in MCP
+    if Path(f"{MCP}/node_modules").exists():
+        return
+    # Install dependencies
+    r = subprocess.run(
+        ["pnpm", "--filter=@posthog/mcp", "install", "--frozen-lockfile"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"Failed to install MCP deps: {r.stderr[-500:]}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's MCP unit tests pass (pass_to_pass)."""
+    _ensure_pnpm()
+    _install_mcp_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "--", "--run"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=MCP,
+    )
+    assert r.returncode == 0, f"MCP unit tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tool_filtering_tests():
+    """Repo's tool-filtering unit tests pass (pass_to_pass) — most relevant to this PR."""
+    _ensure_pnpm()
+    _install_mcp_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "--", "--run", "tests/unit/tool-filtering.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=MCP,
+    )
+    assert r.returncode == 0, f"Tool filtering tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_tool_names():
+    """Repo's lint-tool-names check passes (pass_to_pass)."""
+    _ensure_pnpm()
+    _install_mcp_deps()
+    r = subprocess.run(
+        ["pnpm", "lint-tool-names"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=MCP,
+    )
+    assert r.returncode == 0, f"lint-tool-names failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression
 # ---------------------------------------------------------------------------
 

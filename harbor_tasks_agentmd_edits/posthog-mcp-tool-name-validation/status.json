@@ -1,20 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T08:11:16.134815",
-  "total_time": 8035.11,
-  "sandbox_id": "iu833nchbmeis1z7xu8vt",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:49:03.934909",
+  "total_time": 2461.86,
+  "sandbox_id": "i621fc7ggqe03g795sm0b",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "model": "claude-sonnet-4-6",
-      "backend": "claude",
-      "time": 600.0,
-      "notes": "Added 3 pass_to_pass tests from repo CI: test_repo_typecheck (pnpm typecheck), test_repo_lint_tool_names (pnpm lint-tool-names), test_repo_unit_tests (pnpm test run). All tests verified passing on base commit 2f7a8ee722e5d451dd2c242c722ea818cc325485. Updated eval_manifest.yaml with matching check entries with origin: repo_tests."
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 650.78,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -31,9 +32,47 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 838.24
+      "time": 450.04,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.5,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: 1) Docker build succeeds, 2) NOP test returns reward=0 (9 tests correctly fail on buggy base code), 3) GOLD test returns reward=1 (all 14 tests pass after fix applied), 4) Rubric judge ICR=0.5 - handbook rules show as FAIL because judge CONFIG_PATTERNS doesn't include docs/published/handbook paths. Fixed YAML parsing issue in eval_manifest.yaml (invalid escape sequence in double-quoted string)."
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".cursorrules",
+        ".agents/skills/writing-skills/SKILL.md",
+        ".agents/skills/implementing-mcp-tools/SKILL.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 6,
+      "rejection_reasons": "Rejected rules: conventional commits (process, not evaluable from diff); parameterized tests (not applicable to this PR's test structure); prefer Kea logic (not applicable - no React/Kea code); skill naming kebab-case (not applicable - no new skill created); Python snake_case (no Python files modified); docstrings on serializers (not applicable to this PR)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 67.88,
+      "notes": ""
+    },
+    "rubric_validate": {
+      "status": "error",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.38,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 9.91,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -52,6 +91,14 @@
       "backend": "fireworks",
       "time": 8035.11,
       "at": "2026-04-09T08:11:16.134815"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2461.86,
+      "at": "2026-04-10T12:49:03.934909"
     }
   ]
 }

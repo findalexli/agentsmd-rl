@@ -1,19 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:55:57.661953",
-  "total_time": 1666.65,
-  "sandbox_id": "iygtoectois5j6j39r6yu",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:56:21.098013",
+  "total_time": 2544.18,
+  "sandbox_id": "idyueg1jxnnqon28t15xz",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.25,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2.68,
+      "time": 980.56,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,16 +33,43 @@
       "notes": "tests look good"
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.64,
+      "time": 54.31,
       "notes": ""
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh to use sed-based replacements instead of git patch. The original patch failed due to Unicode box-drawing character mismatches in the source files.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 4.86
+      "time": 911.06
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 22.38,
+      "notes": "",
+      "precision": 0.25
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 25.69,
+      "notes": "precision was 0.25, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.85,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +96,14 @@
       "backend": "fireworks",
       "time": 1666.65,
       "at": "2026-04-09T14:55:57.661953"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2544.18,
+      "at": "2026-04-10T11:56:21.098013"
     }
   ]
 }

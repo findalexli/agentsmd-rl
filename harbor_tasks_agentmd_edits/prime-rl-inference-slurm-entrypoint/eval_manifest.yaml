@@ -59,14 +59,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ruff format check passes on src/ directory
-- id: test_repo_syntax_pyproject
+- id: test_repo_pyproject_toml_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: pyproject.toml has valid TOML syntax
-- id: test_repo_configs_syntax
+  description: Repo's pyproject.toml has valid TOML syntax
+- id: test_repo_configs_toml_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: All config files in configs/ directory have valid TOML syntax
+  description: All config TOML files in configs/ have valid syntax
+- id: test_repo_entrypoint_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Inference entrypoint (server.py) parses as valid Python
+- id: test_repo_inference_config_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Inference config file parses as valid Python
+- id: test_repo_pyproject_entrypoint_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml has valid entrypoint reference format
 rubric:
 - rule: Skills live in skills/ and are symlinked to .claude/skills/. They teach agents
     how to handle specific workflows. When you make changes to the codebase, check

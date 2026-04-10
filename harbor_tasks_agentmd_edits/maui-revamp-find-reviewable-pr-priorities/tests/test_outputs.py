@@ -40,7 +40,167 @@ def test_script_file_exists():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — PowerShell script changes
+# Pass-to-pass (repo_tests) - structural validation of repo files
+# ---------------------------------------------------------------------------
+
+def test_repo_powershell_script_structure():
+    """PowerShell script has valid structure with param block and required functions (pass_to_pass)."""
+    r = _run_py(r"""
+import re
+import sys
+
+content = open(".github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1").read()
+errors = []
+
+# Check for param block
+if not re.search(r'param\s*\(', content):
+    errors.append("Missing param() block")
+
+# Check for required functions
+required_funcs = ["Invoke-GitHubWithRetry", "Add-UniquePRs", "Get-ReviewStatus",
+                  "Get-ProjectStatus", "Get-PRCategory", "Get-PRComplexity"]
+found_funcs = re.findall(r'function\s+([\w-]+)', content)
+for func in required_funcs:
+    if func not in found_funcs:
+        errors.append(f"Missing required function: {func}")
+
+# Check for ValidateSet in param block (indicates proper parameter validation)
+if "[ValidateSet(" not in content:
+    errors.append("Missing ValidateSet parameter validation")
+
+# Check for ErrorActionPreference
+if "$ErrorActionPreference" not in content:
+    errors.append("Missing ErrorActionPreference setting")
+
+if errors:
+    print("\n".join(errors))
+    sys.exit(1)
+print("PowerShell script structure valid")
+""")
+    assert r.returncode == 0, f"PowerShell script structure validation failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_skill_md_structure():
+    """SKILL.md has valid documentation structure (pass_to_pass)."""
+    r = _run_py(r"""
+import re
+import sys
+
+content = open(".github/skills/find-reviewable-pr/SKILL.md").read()
+errors = []
+
+# Check for required sections
+required_sections = ["## Priority Categories", "## Quick Start", "## Script Parameters"]
+for section in required_sections:
+    if section not in content:
+        errors.append(f"Missing section: {section}")
+
+# Check for parameter table structure
+if "| Parameter |" not in content:
+    errors.append("Missing parameter table")
+
+# Check for example bash commands (indicates usage documentation)
+if "```bash" not in content:
+    errors.append("Missing bash example blocks")
+
+# Check for proper category listings
+if "P/0" not in content and "Priority" not in content:
+    errors.append("Missing P/0 priority category documentation")
+
+if errors:
+    print("\n".join(errors))
+    sys.exit(1)
+print("SKILL.md structure valid")
+""")
+    assert r.returncode == 0, f"SKILL.md structure validation failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_powershell_no_syntax_errors():
+    """PowerShell script has no obvious syntax errors (pass_to_pass)."""
+    r = _run_py(r"""
+import re
+import sys
+
+content = open(".github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1").read()
+errors = []
+
+# Check for balanced braces/parens in param block
+param_match = re.search(r'param\s*\((.*?)\n\)', content, re.DOTALL)
+if param_match:
+    param_block = param_match.group(1)
+    open_parens = param_block.count('(')
+    close_parens = param_block.count(')')
+    open_braces = param_block.count('{')
+    close_braces = param_block.count('}')
+    if open_parens != close_parens:
+        errors.append(f"Unbalanced parentheses in param block: {open_parens} vs {close_parens}")
+
+# Check for unclosed comment blocks
+open_comments = content.count('<#')
+close_comments = content.count('#>')
+if open_comments != close_comments:
+    errors.append(f"Unbalanced comment blocks: <#={open_comments}, #>={close_comments}")
+
+# Check for unclosed strings (odd number of unescaped quotes on key lines)
+lines = content.split('\n')
+for i, line in enumerate(lines[:100], 1):  # Check first 100 lines
+    # Skip comment lines
+    if line.strip().startswith('#'):
+        continue
+    # Count quotes (rough check for even pairs)
+    quotes = line.count('"') - line.count('\""')  # Subtract escaped quotes
+    if quotes % 2 != 0 and 'Write-Host' in line:
+        errors.append(f"Line {i} may have unclosed string: {line[:60]}")
+
+if errors:
+    print("\n".join(errors[:10]))  # Limit errors
+    sys.exit(1)
+print("No obvious PowerShell syntax errors detected")
+""")
+    assert r.returncode == 0, f"PowerShell syntax check failed:\n{r.stdout}{r.stderr}"
+
+
+def test_repo_files_encoding_and_size():
+    """Repo files are valid (readable, non-empty) (pass_to_pass)."""
+    r = _run_py(r"""
+import sys
+from pathlib import Path
+
+script = Path(".github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1")
+skill = Path(".github/skills/find-reviewable-pr/SKILL.md")
+
+errors = []
+
+# Check script
+if not script.exists():
+    errors.append("Script file does not exist")
+else:
+    content = script.read_text(encoding='utf-8')
+    if len(content) < 1000:
+        errors.append(f"Script too small ({len(content)} chars)")
+    if '\x00' in content:
+        errors.append("Script contains null bytes (binary file?)")
+
+# Check SKILL.md
+if not skill.exists():
+    errors.append("SKILL.md does not exist")
+else:
+    content = skill.read_text(encoding='utf-8')
+    if len(content) < 500:
+        errors.append(f"SKILL.md too small ({len(content)} chars)")
+    if '# ' not in content:
+        errors.append("SKILL.md missing header")
+
+if errors:
+    print("\n".join(errors))
+    sys.exit(1)
+print("Files encoding and size valid")
+""")
+    assert r.returncode == 0, f"File validation failed:\n{r.stdout}{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - PowerShell script changes
 # ---------------------------------------------------------------------------
 
 def test_script_param_defaults():
@@ -167,7 +327,7 @@ print(json.dumps({
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — SKILL.md documentation
+# Fail-to-pass (pr_diff) - SKILL.md documentation
 # ---------------------------------------------------------------------------
 
 def test_skill_md_priority_categories():

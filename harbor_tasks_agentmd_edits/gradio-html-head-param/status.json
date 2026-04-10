@@ -1,28 +1,26 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:20:01.918286",
-  "total_time": 5829.65,
-  "sandbox_id": "in7g5ax32j96d1a57oaz4",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:36:04.338037",
+  "total_time": 1327.34,
+  "sandbox_id": "i9v49ddwm3am77zrxjj1b",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.33,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 338.39,
-      "notes": ""
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 38.41,
+      "notes": "precision was 0.33, fixing hallucinated rules"
     },
-    "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 211.99,
-      "notes": ""
+    "p2p_enrichment": {
+      "status": "completed",
+      "notes": "Added 4 new pass_to_pass repo_tests: test_repo_ruff_check (ruff check html.py), test_repo_ruff_format (ruff format --check html.py), test_repo_html_tests (pytest test/components/test_html.py), test_repo_html_syntax (python syntax check). All p2p tests pass on base commit."
     },
     "improve": {
       "status": "skipped",
@@ -30,16 +28,33 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed test_outputs.py: (1) Added kwonlyargs check for head parameter (head is keyword-only after *), (2) Added node.name == 'HTML' check to find correct class, (3) Fixed invalid escape sequences in SKILL.md markers (backticks). Fixed test_html.py: Added 'head': None to expected config dict. All 4 checks pass: Docker build OK, NOP=0, Gold=1, Rubric rules satisfied.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 533.7
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.32,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 5829.65,
-      "at": "2026-04-09T07:20:01.918286"
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1327.34,
+      "at": "2026-04-10T11:36:04.338037"
     }
   ]
 }

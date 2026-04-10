@@ -226,13 +226,39 @@ if (ct3 !== 'text/xml')
 
 
 # [repo_tests] pass_to_pass
-def test_repo_mime_lib_tests_pass():
-    """Repo's own mime library tests pass (pass_to_pass)."""
+def test_repo_detect_mime_type_tests_pass():
+    """detect-mime-type.ts unit tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["node", "--test", "src/lib/*.test.ts"],
+        ["node", "--disable-warning=ExperimentalWarning", "--test", "src/lib/detect-mime-type.test.ts"],
         capture_output=True,
         text=True,
         cwd=str(REPO / "packages/mime"),
         timeout=60,
     )
-    assert r.returncode == 0, f"Repo mime lib tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"detect-mime-type tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_is_compressible_mime_type_tests_pass():
+    """is-compressible-mime-type.ts unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--disable-warning=ExperimentalWarning", "--test", "src/lib/is-compressible-mime-type.test.ts"],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO / "packages/mime"),
+        timeout=60,
+    )
+    assert r.returncode == 0, f"is-compressible-mime-type tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mime_type_to_content_type_tests_pass():
+    """mime-type-to-content-type.ts unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "--disable-warning=ExperimentalWarning", "--test", "src/lib/mime-type-to-content-type.test.ts"],
+        capture_output=True,
+        text=True,
+        cwd=str(REPO / "packages/mime"),
+        timeout=60,
+    )
+    assert r.returncode == 0, f"mime-type-to-content-type tests failed:\n{r.stderr[-500:]}"

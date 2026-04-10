@@ -51,6 +51,82 @@ def test_typescript_parseable():
         assert "export" in content, f"{ts_file.name} has no exports"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_typescript_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    env = {**os.environ, "PATH": "/usr/local/bin:" + os.environ.get("PATH", "")}
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=120, env=env,
+    )
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    r = subprocess.run(
+        ["bun", "run", "typecheck"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tool_registry_tests():
+    """Repo's tool registry unit tests pass (pass_to_pass)."""
+    env = {**os.environ, "PATH": "/usr/local/bin:" + os.environ.get("PATH", "")}
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=120, env=env,
+    )
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    r = subprocess.run(
+        ["bun", "test", "test/tool/registry.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    assert r.returncode == 0, f"Registry tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_question_tool_tests():
+    """Repo's question tool unit tests pass (pass_to_pass)."""
+    env = {**os.environ, "PATH": "/usr/local/bin:" + os.environ.get("PATH", "")}
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=120, env=env,
+    )
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    r = subprocess.run(
+        ["bun", "test", "test/tool/question.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    assert r.returncode == 0, f"Question tool tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_acp_agent_tests():
+    """Repo's ACP agent interface tests pass (pass_to_pass)."""
+    env = {**os.environ, "PATH": "/usr/local/bin:" + os.environ.get("PATH", "")}
+    r = subprocess.run(
+        ["npm", "install", "-g", "bun"],
+        capture_output=True, text=True, timeout=120, env=env,
+    )
+    r = subprocess.run(
+        ["bun", "install"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    r = subprocess.run(
+        ["bun", "test", "test/acp/agent-interface.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO / "packages/opencode"), env=env,
+    )
+    assert r.returncode == 0, f"ACP agent tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

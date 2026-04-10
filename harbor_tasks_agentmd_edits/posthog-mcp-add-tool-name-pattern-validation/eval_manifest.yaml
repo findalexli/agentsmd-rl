@@ -40,84 +40,60 @@ checks:
   description: Handbook doc documents pattern validation for tool names and feature
     identifiers
 rubric:
-- rule: Updated documentation is consistent with the style and tone of existing SKILL.md
-    content
+- rule: SKILL.md must include a "Tool naming constraints" section documenting kebab-case
+    tool names, 52-character limit, snake_case feature identifiers, client limits
+    table, and CI enforcement commands
   source:
     path: .agents/skills/implementing-mcp-tools/SKILL.md
-    lines: 1-70
+    lines: 70-104
     commit: 2f7a8ee722e5d451dd2c242c722ea818cc325485
-- rule: Updated handbook page follows the formatting conventions of the existing document
-  source:
-    path: docs/published/handbook/engineering/ai/implementing-mcp-tools.md
-    lines: 1-20
-    commit: 2f7a8ee722e5d451dd2c242c722ea818cc325485
+  reference: "## Tool naming constraints\n\nTool names and feature identifiers are\
+    \ validated at build time and in CI.\nViolations fail the build.\n\n### Tool names\n\
+    \n- **Format**: lowercase kebab-case \u2014 only `[a-z0-9-]`, no leading/trailing\
+    \ hyphens\n- **Length**: 52 characters or fewer\n- **Convention**: `domain-action`,\
+    \ e.g. `cohorts-create`, `dashboard-get`, `feature-flags-list`\n\n### Feature\
+    \ identifiers\n\n- **Format**: lowercase snake*case \u2014 only `[a-z0-9*]`, must\
+    \ start with a letter\n- **Convention**: should match the product folder name,\
+    \ e.g. `error_tracking`, `feature_flags`\n\n### Why 52 characters?\n\nMCP clients\
+    \ enforce different limits on tool names. The 52-char limit is the safe zone\n\
+    that works across all known clients:\n\n| Client           | Limit           \
+    \               | Notes                                                      \
+    \      |\n| ---------------- | ------------------------------ | ----------------------------------------------------------------\
+    \ |\n| MCP spec (draft) | 1\u2013128 chars, `[A-Za-z0-9_\\-.]` | Official recommendation,\
+    \ not enforced                            |\n| Claude Code      | 64 chars   \
+    \                    | Hard limit; prefixes tool names with `mcp____`        \
+    \           |\n| Cursor           | 60 chars combined              | `server_name\
+    \ + tool_name`; tools over this are silently filtered |\n| OpenAI API       |\
+    \ `^[a-zA-Z0-9_-]+$`, 64 chars   | No dots allowed                           \
+    \                       |\n\nWith the server name \"posthog\" (7 chars) plus a\
+    \ separator, tool names must stay at\nor below 52 characters to fit within Cursor's\
+    \ 60-char combined limit.\n\n### CI enforcement\n\n- `pnpm --filter=@posthog/mcp\
+    \ lint-tool-names` \u2014 validates length and pattern for YAML and JSON definitions\n\
+    - A vitest test validates all runtime `TOOL_MAP` and `GENERATED_TOOL_MAP` entries"
 config_edits:
 - path: .agents/skills/implementing-mcp-tools/SKILL.md
   tier: 1
-  gold_added: '## Tool naming constraints
-
-
-    Tool names and feature identifiers are validated at build time and in CI.
-
-    Violations fail the build.
-
-
-    ### Tool names
-
-
-    - **Format**: lowercase kebab-case — only `[a-z0-9-]`, no leading/trailing hyphens
-
-    - **Length**: 52 characters or fewer
-
-    - **Convention**: `domain-action`, e.g. `cohorts-create`, `dashboard-get`, `feature-flags-list`
-
-
-    ### Feature identifiers
-
-
-    - **Format**: lowercase snake*case — only `[a-z0-9*]`, must start with a letter
-
-    - **Convention**: should match the product folder name, e.g. `error_tracking`,
-    `feature_flags`
-
-
-    ### Why 52 characters?
-
-
-    MCP clients enforce different limits on tool names. The 52-char limit is the safe
-    zone
-
-    that works across all known clients:
-
-
-    | Client           | Limit                          | Notes                                                            |
-
-    | ---------------- | ------------------------------ | ----------------------------------------------------------------
-    |
-
-    | MCP spec (draft) | 1–128 chars, `[A-Za-z0-9_\-.]` | Official recommendation,
-    not enforced                            |
-
-    | Claude Code      | 64 chars                       | Hard limit; prefixes tool
-    names with `mcp____`                   |
-
-    | Cursor           | 60 chars combined              | `server_name + tool_name`;
-    tools over this are silently filtered |
-
-    | OpenAI API       | `^[a-zA-Z0-9_-]+$`, 64 chars   | No dots allowed                                                  |
-
-
-    With the server name "posthog" (7 chars) plus a separator, tool names must stay
-    at
-
-    or below 52 characters to fit within Cursor''s 60-char combined limit.
-
-
-    ### CI enforcement
-
-
-    - `pnpm --filter=@posthog/mcp lint-tool-names` — validates length and pattern
-    for YAML and JSON definitions
-
-    - A vitest test validates all runtime `TOOL_MAP` and `GENERATED_TOOL_MAP` entries'
+  gold_added: "## Tool naming constraints\n\nTool names and feature identifiers are\
+    \ validated at build time and in CI.\nViolations fail the build.\n\n### Tool names\n\
+    \n- **Format**: lowercase kebab-case \u2014 only `[a-z0-9-]`, no leading/trailing\
+    \ hyphens\n- **Length**: 52 characters or fewer\n- **Convention**: `domain-action`,\
+    \ e.g. `cohorts-create`, `dashboard-get`, `feature-flags-list`\n\n### Feature\
+    \ identifiers\n\n- **Format**: lowercase snake*case \u2014 only `[a-z0-9*]`, must\
+    \ start with a letter\n- **Convention**: should match the product folder name,\
+    \ e.g. `error_tracking`, `feature_flags`\n\n### Why 52 characters?\n\nMCP clients\
+    \ enforce different limits on tool names. The 52-char limit is the safe zone\n\
+    that works across all known clients:\n\n| Client           | Limit           \
+    \               | Notes                                                      \
+    \      |\n| ---------------- | ------------------------------ | ----------------------------------------------------------------\
+    \ |\n| MCP spec (draft) | 1\u2013128 chars, `[A-Za-z0-9_\\-.]` | Official recommendation,\
+    \ not enforced                            |\n| Claude Code      | 64 chars   \
+    \                    | Hard limit; prefixes tool names with `mcp____`        \
+    \           |\n| Cursor           | 60 chars combined              | `server_name\
+    \ + tool_name`; tools over this are silently filtered |\n| OpenAI API       |\
+    \ `^[a-zA-Z0-9_-]+$`, 64 chars   | No dots allowed                           \
+    \                       |\n\nWith the server name \"posthog\" (7 chars) plus a\
+    \ separator, tool names must stay at\nor below 52 characters to fit within Cursor's\
+    \ 60-char combined limit.\n\n### CI enforcement\n\n- `pnpm --filter=@posthog/mcp\
+    \ lint-tool-names` \u2014 validates length and pattern for YAML and JSON definitions\n\
+    - A vitest test validates all runtime `TOOL_MAP` and `GENERATED_TOOL_MAP` entries"
   gold_removed: ''

@@ -34,7 +34,40 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files parse without syntax errors
-rubric: []
+- id: test_repo_lint_ts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript linting passes (eslint src/ tests/)
+- id: test_repo_agentruntime_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: AgentRuntimeService unit tests pass (53 tests)
+- id: test_repo_agentruntime_executestep
+  type: pass_to_pass
+  origin: repo_tests
+  description: AgentRuntime executeStep tests pass (13 tests)
+- id: test_repo_errorresponse_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: ErrorResponse utility tests pass (18 tests)
+rubric:
+- rule: Prefer interfaces over types for object shapes in TypeScript - when defining
+    object structures, use `interface` instead of `type`
+  source:
+    path: AGENTS.md
+    lines: '62'
+    commit: 6e2613597800616e3d101e383eca88d46c791588
+- rule: Use `Date.now()` consistently - assign to a constant once and reuse for time
+    consistency within a function
+  source:
+    path: .agents/skills/typescript/SKILL.md
+    lines: '46'
+    commit: 6e2613597800616e3d101e383eca88d46c791588
+- rule: Use `console.error` in catch blocks instead of debug package
+  source:
+    path: .agents/skills/typescript/SKILL.md
+    lines: '52'
+    commit: 6e2613597800616e3d101e383eca88d46c791588
 config_edits:
 - path: .agents/skills/agent-tracing/SKILL.md
   tier: 1

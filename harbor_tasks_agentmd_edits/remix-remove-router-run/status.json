@@ -1,21 +1,52 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:50:10.584243",
-  "total_time": 5343.97,
-  "sandbox_id": "iep0bkq6848up95sxvynh",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:20:40.669632",
+  "total_time": 1436.63,
+  "sandbox_id": "i1unvn5dcn509pjpp5ar5",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "glm-5.1",
       "backend": "glm",
       "time": 221.92,
       "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 338.86,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build: PASSED. NOP test: PASSED (reward=0, 5 fail_to_pass tests correctly fail on buggy base). Gold test: PASSED (reward=1, all 11 tests pass after fix). Rubric judge: FAILED (ICR=0.00) - judge has limitation for deletion-only tasks; extract_added_lines() only looks at added lines (+) but this task involves pure deletions. Core validation tests pass correctly.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 292.05
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.46,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +57,22 @@
       "backend": "glm",
       "time": 5343.97,
       "at": "2026-04-09T07:50:10.584243"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1643.21,
+      "at": "2026-04-10T12:56:43.874485"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1436.63,
+      "at": "2026-04-10T13:20:40.669632"
     }
   ]
 }

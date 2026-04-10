@@ -1,26 +1,27 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:55:48.230399",
-  "total_time": 1657.22,
-  "sandbox_id": "ijtlmwlfnl9a0ecm7e989",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:26:36.292335",
+  "total_time": 759.26,
+  "sandbox_id": "i9wn14nwjo9oz5qce71xl",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 87.77,
-      "notes": ""
+      "notes": "Added 6 repo_tests pass_to_pass gates: (1) test_bootstrap_sh_posix_syntax - sh -n scripts/bootstrap.sh, (2) test_run_clang_format_sh_syntax - bash -n scripts/run-clang-format.sh, (3) test_check_node_sh_syntax - sh -n scripts/check-node.sh, (4) test_check_node_all_sh_syntax - sh -n scripts/check-node-all.sh, (5) test_trace_sh_syntax - sh -n scripts/trace.sh, (6) test_cmake_modules_syntax - cmake -P cmake/tools/SetupCcache.cmake. All 6 new p2p tests pass on base commit."
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 5.05,
+      "time": 246.78,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed solve.sh to properly apply sccache-to-ccache changes using direct file edits instead of corrupted patch. Fixed test_outputs.py to have accurate assertions (cmake_syntax_valid for shallow clone, ccache_not_required for CI guard only, docs_use_ccache with correct backtick escaping).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.64
+      "time": 474.71
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.97,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +73,14 @@
       "backend": "fireworks",
       "time": 1657.22,
       "at": "2026-04-09T14:55:48.230399"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 759.26,
+      "at": "2026-04-10T11:26:36.292335"
     }
   ]
 }

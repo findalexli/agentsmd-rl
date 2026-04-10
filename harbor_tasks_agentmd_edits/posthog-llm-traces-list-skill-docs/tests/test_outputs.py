@@ -27,6 +27,91 @@ def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests)
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified products directories (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # ruff install is optional - if it fails, skip the test
+    if r.returncode != 0:
+        print("SKIP: ruff install failed")
+        return
+
+    r = subprocess.run(
+        ["ruff", "check", "products/llm_analytics/", "products/posthog_ai/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_python_compile():
+    """All Python files in modified directories compile successfully (pass_to_pass)."""
+    r = _run_py("""
+import py_compile
+from pathlib import Path
+import sys
+
+errors = []
+for pyfile in list(Path('products/llm_analytics').rglob('*.py')) + list(Path('products/posthog_ai').rglob('*.py')):
+    try:
+        py_compile.compile(str(pyfile), doraise=True)
+    except Exception as e:
+        errors.append(f'{pyfile}: {e}')
+
+if errors:
+    for e in errors[:5]:
+        print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+else:
+    print(f'All Python files compile successfully')
+""")
+    assert r.returncode == 0, f"Python compile check failed:\n{r.stderr}"
+    assert "compile successfully" in r.stdout
+
+
+def test_repo_all_skills_frontmatter():
+    """All SKILL.md files in products have valid YAML frontmatter (pass_to_pass)."""
+    r = _run_py("""
+from pathlib import Path
+import yaml
+import sys
+
+skill_files = list(Path('products').rglob('SKILL.md'))
+errors = []
+
+for sf in skill_files:
+    try:
+        content = sf.read_text()
+        if not content.startswith('---'):
+            errors.append(f'{sf}: Missing YAML frontmatter')
+            continue
+        end = content.index('---', 3)
+        frontmatter = content[3:end].strip()
+        data = yaml.safe_load(frontmatter)
+        if 'name' not in data:
+            errors.append(f'{sf}: Missing name field')
+        if 'description' not in data:
+            errors.append(f'{sf}: Missing description field')
+    except Exception as e:
+        errors.append(f'{sf}: {e}')
+
+if errors:
+    for e in errors[:5]:
+        print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+else:
+    print(f'All {len(skill_files)} SKILL.md files have valid frontmatter')
+""")
+    assert r.returncode == 0, f"SKILL.md validation failed:\n{r.stderr}"
+    assert "SKILL.md files have valid frontmatter" in r.stdout
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 

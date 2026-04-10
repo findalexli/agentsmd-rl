@@ -9,6 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files have balanced braces
+- id: snap_installs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package dependencies install successfully
 - id: snap_typescript_compiles
   type: pass_to_pass
   origin: repo_tests
@@ -17,6 +21,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Snap package builds successfully
+- id: snap_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package source files follow prettier formatting
 - id: filter_file_mechanism_removed
   type: fail_to_pass
   origin: pr_diff
@@ -48,25 +56,50 @@ checks:
   description: compiler/CLAUDE.md documents project structure, HIR, and fixtures
 rubric:
 - rule: CLAUDE.md documentation style is consistent with the content and detail level
-    appropriate for an AI agent knowledge base
+    appropriate for an AI agent knowledge base (knowledge base format with sections for
+    Project Structure, Running Tests, Version Control, Key Concepts, etc.)
   source:
     path: compiler/CLAUDE.md
-    lines: 1-5
+    lines: 1-10
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
-- rule: fixture-utils.ts still exports getFixtures and TestFilter
-- rule: compiler/CLAUDE.md exists with substantial documentation
+  reference: |
+    # React Compiler Knowledge Base
+
+    This document contains knowledge about the React Compiler gathered during development
+    sessions. It serves as a reference for understanding the codebase architecture and
+    key concepts.
+
+    ## Project Structure
+- rule: compiler/CLAUDE.md exists with substantial documentation (200+ lines covering
+    project structure, HIR, fixtures, and test commands)
   source:
     path: compiler/CLAUDE.md
     lines: 1-221
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
-- rule: CLAUDE.md documents yarn snap with -p, -d, -u flags
+  reference: |
+    Full CLAUDE.md with Project Structure, Running Tests (yarn snap -p/-d/-u), Version
+    Control, Key Concepts (HIR, AliasingEffects), Feature Flags, Debugging Tips,
+    and Error Handling sections (221 lines total).
+- rule: CLAUDE.md documents yarn snap CLI flags (-p pattern, -d debug, -u update)
   source:
     path: compiler/CLAUDE.md
-    lines: 27-40
+    lines: 19-34
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+  reference: |
+    ## Running Tests
+    ```bash
+    yarn snap
+    yarn snap -p <pattern>
+    yarn snap -p <file-basename> -d
+    yarn snap -u
+    ```
 - rule: CLAUDE.md documents React Compiler project structure, HIR, and fixtures
   source:
     path: compiler/CLAUDE.md
-    lines: 7-19
+    lines: 5-16
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
-- rule: constants.ts still exports FIXTURES_PATH and SNAPSHOT_EXTENSION
+  reference: |
+    ## Project Structure
+    - `packages/babel-plugin-react-compiler/` - Main compiler package
+      - `src/HIR/` - High-level Intermediate Representation types and utilities
+      - `src/__tests__/fixtures/compiler/` - Test fixtures

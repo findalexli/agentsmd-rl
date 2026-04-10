@@ -5,46 +5,87 @@ source:
   base_commit: 0ea59a851ef61e08184adc018e9b20801243ed8d
   merge_commit: 0ca68c6be69d142aac369a11c29d3f34a6dcedc3
 checks:
-- id: run_script_syntax_valid
+# Pass-to-pass tests (existing repo_tests)
+- id: test_repo_git_index_valid
   type: pass_to_pass
-  origin: static
-  description: waspc/run script parses without bash syntax errors
-- id: package_json_valid
+  origin: repo_tests
+  description: Git index is valid and lists Haskell source files
+- id: test_package_json_valid
   type: pass_to_pass
-  origin: static
+  origin: repo_tests
   description: package.json is valid JSON with scripts section
-- id: run_script_case_branches_renamed
+- id: test_package_lock_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package-lock.json is valid JSON
+- id: test_waspc_package_json_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All waspc data package.json files are valid JSON
+- id: test_run_script_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run script parses without bash syntax errors
+
+# New pass-to-pass tests added for p2p enrichment
+- id: test_run_script_executes
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run script executes and shows usage
+- id: test_run_script_has_ormolu_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run contains ormolu formatting commands
+- id: test_run_script_has_prettier_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run contains prettier formatting commands
+- id: test_run_script_has_cabal_gild_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run contains cabal-gild formatting commands
+- id: test_package_json_has_prettier_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json has prettier npm scripts
+- id: test_run_script_preserves_build_command
+  type: pass_to_pass
+  origin: repo_tests
+  description: Non-renamed commands (build) remain in the run script
+- id: test_run_script_preserves_test_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: Non-renamed commands (test:*, etc.) remain in the run script
+
+# Fail-to-pass tests (from PR diff)
+- id: test_run_script_case_branches_renamed
   type: fail_to_pass
   origin: pr_diff
   description: Case branches renamed from tool:action to action:tool format
-- id: run_script_has_top_level_format_command
+- id: test_run_script_has_top_level_format_command
   type: fail_to_pass
   origin: pr_diff
   description: New top-level 'format' command runs all formatters
-- id: run_script_has_top_level_check_command
+- id: test_run_script_has_top_level_check_command
   type: fail_to_pass
   origin: pr_diff
   description: New top-level 'check' command runs all checkers
-- id: run_script_prettier_vars_use_new_npm_names
+- id: test_run_script_prettier_vars_use_new_npm_names
   type: fail_to_pass
   origin: pr_diff
   description: PRETTIER_*_CMD variables reference new npm script names
-- id: package_json_scripts_renamed
+- id: test_package_json_scripts_renamed
   type: fail_to_pass
   origin: pr_diff
   description: npm scripts renamed from prettier:* to check/format:prettier
-- id: ci_formatting_uses_new_script_name
+- id: test_ci_formatting_uses_new_script_name
   type: fail_to_pass
   origin: pr_diff
   description: CI workflow uses check:prettier instead of prettier:check
-- id: run_script_help_text_uses_new_names
+- id: test_run_script_help_text_uses_new_names
   type: fail_to_pass
   origin: pr_diff
   description: print_usage section documents all renamed commands
-- id: run_script_preserves_existing_commands
-  type: pass_to_pass
-  origin: static
-  description: Non-renamed commands (build, test, etc.) remain in the run script
 rubric:
 - rule: Command renaming should be consistent across all files — the run script, package.json,
     CI config, and documentation should all use the same new naming convention.

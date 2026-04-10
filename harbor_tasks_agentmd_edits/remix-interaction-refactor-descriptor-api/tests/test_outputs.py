@@ -25,6 +25,7 @@ README = f"{PKG}/README.md"
 CHANGELOG = f"{PKG}/CHANGELOG.md"
 
 _tsx_installed = False
+_pnpm_installed = False
 
 
 def _ensure_tsx():
@@ -37,6 +38,24 @@ def _ensure_tsx():
         capture_output=True, text=True, timeout=60,
     )
     _tsx_installed = True
+
+
+def _ensure_pnpm():
+    """Install pnpm globally and install dependencies (idempotent)."""
+    global _pnpm_installed
+    if _pnpm_installed:
+        return
+    # Install pnpm
+    subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.20.0"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Install dependencies
+    subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    _pnpm_installed = True
 
 
 def _run_ts(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -52,6 +71,30 @@ def _run_ts(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
         )
     finally:
         script.unlink(missing_ok=True)
+
+
+# ---------------------------------------------------------------------------
+# pass_to_pass — repo CI tests
+# ---------------------------------------------------------------------------
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    _ensure_pnpm()
+    r = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    _ensure_pnpm()
+    r = subprocess.run(
+        ["pnpm", "eslint", "packages/interaction/src/"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

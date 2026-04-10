@@ -148,6 +148,71 @@ def test_claude_md_documents_script_usage():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks that should pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_go_build():
+    """Repo's Go code compiles successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/weaviate && GOTOOLCHAIN=auto go build ./..."],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Go build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_linter_error_groups():
+    """Repo's error groups custom linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/weaviate && ./tools/linter_error_groups.sh"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Error groups linter failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_linter_go_routines():
+    """Repo's go routines custom linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/weaviate && ./tools/linter_go_routines.sh"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Go routines linter failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_linter_waitgroups():
+    """Repo's waitgroups custom linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/weaviate && ./tools/linter_waitgroups_done.sh"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Waitgroups linter failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ci_scripts_syntax():
+    """All CI shell scripts have valid syntax (pass_to_pass)."""
+    scripts = [
+        "ci/push_docker.sh",
+        "ci/generate_docker_report.sh",
+        "tools/linter_error_groups.sh",
+        "tools/linter_go_routines.sh",
+        "tools/linter_waitgroups_done.sh",
+        "tools/gen-code-from-swagger.sh",
+    ]
+    for script in scripts:
+        script_path = Path(REPO) / script
+        if script_path.exists():
+            r = subprocess.run(
+                ["bash", "-n", str(script_path)],
+                capture_output=True, text=True, timeout=10,
+            )
+            assert r.returncode == 0, f"Syntax error in {script}: {r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression checks
 # ---------------------------------------------------------------------------
 

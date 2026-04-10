@@ -198,7 +198,7 @@ def test_readme_no_toplevel_ingress_example():
     # In the Ingress Configuration section, the old pattern was:
     #   ingress:
     #     enabled: true
-    # (at column 0 or within a yaml block but not nested under webapp/registry)
+    # (at column 0 - bare top-level, not nested under webapp/registry)
     in_ingress_section = False
     for line in lines:
         if "### Ingress Configuration" in line:
@@ -206,8 +206,95 @@ def test_readme_no_toplevel_ingress_example():
             continue
         if in_ingress_section and line.startswith("### "):
             break
-        if in_ingress_section and line.strip() == "ingress:":
+        # Only flag bare 'ingress:' at column 0 (not indented/nested)
+        if in_ingress_section and line.startswith("ingress:"):
             assert False, "README Ingress Configuration section still shows bare 'ingress:' at top level"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Helm chart structure validation
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_chart_yaml_valid():
+    """Chart.yaml must be valid YAML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import yaml, sys; yaml.safe_load(open(sys.argv[1]))",
+         str(HELM / "Chart.yaml")],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Chart.yaml is not valid YAML:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_chart_has_required_fields():
+    """Chart.yaml must have required fields (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import yaml, sys; c = yaml.safe_load(open(sys.argv[1])); "
+         "assert c['apiVersion'] == 'v2', 'apiVersion must be v2'; "
+         "assert 'dependencies' in c, 'must have dependencies'; "
+         "print('OK')",
+         str(HELM / "Chart.yaml")],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Chart.yaml missing required fields:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_values_has_required_sections():
+    """values.yaml must have required top-level sections (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import yaml, sys; v = yaml.safe_load(open(sys.argv[1])); "
+         "required = ['webapp', 'registry', 'supervisor', 'postgres', 'redis']; "
+         "missing = [r for r in required if r not in v]; "
+         "assert not missing, f'Missing sections: {missing}'; "
+         "print('OK')",
+         str(HELM / "values.yaml")],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"values.yaml missing required sections:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_templates_have_balanced_braces():
+    """Go template files must have balanced braces (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import os, sys\n"
+         "errors = []\n"
+         "templates_dir = 'hosting/k8s/helm/templates'\n"
+         "for root, _, files in os.walk(templates_dir):\n"
+         "    for p in files:\n"
+         "        path = os.path.join(root, p)\n"
+         "        content = open(path).read()\n"
+         "        if content.count('{{') != content.count('}}'):\n"
+         "            errors.append(f'{p}: unbalanced braces')\n"
+         "if errors:\n"
+         "    print('Errors:', errors)\n"
+         "    sys.exit(1)\n"
+         "print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Template syntax errors:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_helpers_has_required_patterns():
+    """_helpers.tpl must define required helper patterns (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import sys; content = open(sys.argv[1]).read(); "
+         "required = ['trigger-v4.fullname', 'trigger-v4.labels', 'trigger-v4.registry.host']; "
+         "missing = [r for r in required if r not in content]; "
+         "assert not missing, f'Missing patterns: {missing}'; "
+         "print('OK')",
+         str(HELM / "templates" / "_helpers.tpl")],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert r.returncode == 0, f"_helpers.tpl missing required patterns:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

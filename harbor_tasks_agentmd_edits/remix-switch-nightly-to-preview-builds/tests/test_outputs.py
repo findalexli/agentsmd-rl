@@ -33,6 +33,46 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD checks
+# ---------------------------------------------------------------------------
+
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm lint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_format_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_changes_validate():
+    """Repo's changeset validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm changes:validate"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validate failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral + structural tests
 # ---------------------------------------------------------------------------
 

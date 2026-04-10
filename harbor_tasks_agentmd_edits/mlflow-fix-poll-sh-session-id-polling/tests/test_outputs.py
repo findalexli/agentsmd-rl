@@ -76,7 +76,35 @@ def test_bash_syntax():
     assert r.returncode == 0, f"Syntax error in poll.sh: {r.stderr}"
 
 
-# [repo_tests] pass_to_pass
+# [repo_tests] pass_to_pass - ACTUAL CI COMMANDS
+def test_repo_bash_syntax_poll_sh():
+    """poll.sh must be valid bash syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", ".claude/skills/copilot/poll.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert r.returncode == 0, f"Syntax error in poll.sh: {r.stderr}"
+
+
+def test_repo_git_tracked_copilot_files():
+    """Copilot skill files must be tracked by git (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-files", ".claude/skills/copilot/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
+    tracked = r.stdout.strip().split("\n")
+    assert ".claude/skills/copilot/poll.sh" in tracked, "poll.sh not tracked by git"
+    assert ".claude/skills/copilot/SKILL.md" in tracked, "SKILL.md not tracked by git"
+
+
+# [static] pass_to_pass - FILE CONTENT CHECKS (not actual CI commands)
 def test_copilot_skill_files_exist():
     """Copilot skill files must exist (poll.sh and SKILL.md)."""
     poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
@@ -86,7 +114,7 @@ def test_copilot_skill_files_exist():
     assert skill_md.exists(), f"SKILL.md not found at {skill_md}"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_poll_sh_executable():
     """poll.sh must be executable (has shebang and executable bit)."""
     poll_sh = Path(REPO) / ".claude" / "skills" / "copilot" / "poll.sh"
@@ -102,7 +130,7 @@ def test_poll_sh_executable():
     assert stat.st_mode & 0o111, "poll.sh not executable"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_skill_md_valid_yaml_frontmatter():
     """SKILL.md must have valid YAML frontmatter structure."""
     skill_md = Path(REPO) / ".claude" / "skills" / "copilot" / "SKILL.md"
@@ -131,7 +159,7 @@ def test_skill_md_valid_yaml_frontmatter():
     assert found_end, "SKILL.md missing YAML frontmatter end (---)"
 
 
-# [repo_tests] pass_to_pass
+# [static] pass_to_pass
 def test_skill_md_has_required_fields():
     """SKILL.md must have required fields (name, description, allowed-tools)."""
     skill_md = Path(REPO) / ".claude" / "skills" / "copilot" / "SKILL.md"

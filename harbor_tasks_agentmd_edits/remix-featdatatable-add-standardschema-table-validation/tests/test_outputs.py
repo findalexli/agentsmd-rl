@@ -254,3 +254,80 @@ def test_table_still_exports_core_api():
         assert re.search(rf"export\s+function\s+{fn}", src), (
             f"{fn} must still be exported"
         )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI gates
+# ---------------------------------------------------------------------------
+
+
+def test_repo_lint():
+    """Repo passes ESLint checks (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm lint"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_format_check():
+    """Repo passes Prettier format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm format:check"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_changes_validate():
+    """Repo change files are valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm changes:validate"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Changes validate failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_typecheck():
+    """Data-table package typechecks successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && pnpm --filter @remix-run/data-table typecheck"],
+        capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Data-table typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_unit_tests():
+    """Data-table table.test.ts unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix/packages/data-table && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && node --disable-warning=ExperimentalWarning --test src/lib/table.test.ts"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Data-table unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_inflection_tests():
+    """Data-table inflection.test.ts unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix/packages/data-table && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && node --disable-warning=ExperimentalWarning --test src/lib/inflection.test.ts"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Data-table inflection tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_table_operators_tests():
+    """Data-table operators.test.ts unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix/packages/data-table && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && node --disable-warning=ExperimentalWarning --test src/lib/operators.test.ts"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Data-table operators tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_data_schema_unit_tests():
+    """Data-schema unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "cd /workspace/remix/packages/data-schema && corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts >/dev/null 2>&1 && node --disable-warning=ExperimentalWarning --test"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Data-schema unit tests failed:\n{r.stderr[-500:]}"

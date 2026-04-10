@@ -443,7 +443,7 @@ index aa5ae45937..93f4d84236 100644
  import viteReact from "@vitejs/plugin-react"
  import viteTsConfigPaths from "vite-tsconfig-paths"
  import tailwindcss from "@tailwindcss/vite"
-+import { caddyPlugin } from "./src/vite-plugin-caddy"
++import { caddyPlugin } from "@/vite-plugin-caddy"
  
  const config = defineConfig({
 +  server: {

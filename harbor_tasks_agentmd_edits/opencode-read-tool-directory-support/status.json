@@ -1,28 +1,50 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:20:34.600790",
-  "total_time": 5616.07,
-  "sandbox_id": "ihugidjah2xu298m26yp1",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:21:01.744617",
+  "total_time": 2563.82,
+  "sandbox_id": "iiy8inl6l7v63tbleevzy",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 13.3,
-      "notes": ""
+      "status": "completed",
+      "notes": "Added 2 repo_tests pass_to_pass gates: 1) test_repo_read_tool_unit_tests - runs \"bun test test/tool/read.test.ts\" with git config setup, 2) test_repo_typecheck - runs \"bunx tsc --noEmit --skipLibCheck packages/opencode/src/tool/read.ts\". CI commands tested and confirmed working in Docker container."
     },
     "improve": {
-      "status": "rate_limited",
+      "status": "skipped",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 9.82,
-      "notes": "syntax error or missing file: "
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 703.83,
+      "notes": ""
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile to add bun install for dependencies. Fixed test typecheck command. Updated rubric rules to reflect actual PR changes. Added tool/*.txt patterns to CONFIG_PATTERNS.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 696.33
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.48,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -33,6 +55,14 @@
       "backend": "fireworks",
       "time": 5616.07,
       "at": "2026-04-09T07:20:34.600790"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2563.82,
+      "at": "2026-04-10T12:21:01.744617"
     }
   ]
 }

@@ -1,19 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:25:08.193623",
-  "total_time": 18796.12,
-  "sandbox_id": "i8ez40s8nei2pyzsiwhcf",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:09:31.908447",
+  "total_time": 3335.05,
+  "sandbox_id": "i0cfol3ku0gykgg7qok1x",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.5,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 570.48,
+      "time": 803.61,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,9 +33,51 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile to add pnpm install for dependencies. Updated gold solution to use 'interface' instead of 'type' for DocumentProps/PageProps to satisfy rubric rule. All 10 tests pass (5 fail-to-pass + 5 pass-to-pass). Rubric judge requires API keys (returns 0.5 fallback when unavailable).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 33.38
+      "time": 1365.88
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        ".cursor/rules/typescript.mdc",
+        "AGENTS.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 4,
+      "rejection_reasons": "Rejected rules about: testing strategy (no tests modified), git workflow (not evaluable from diff), i18n (no locales modified), general code comments (too vague)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 102.34
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 21.35,
+      "notes": "",
+      "precision": 0.5
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 36.34,
+      "notes": "precision was 0.50, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.76,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +104,14 @@
       "backend": "fireworks",
       "time": 18796.12,
       "at": "2026-04-09T14:25:08.193623"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3335.05,
+      "at": "2026-04-10T12:09:31.908447"
     }
   ]
 }

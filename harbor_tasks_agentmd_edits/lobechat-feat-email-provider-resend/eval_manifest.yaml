@@ -13,6 +13,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: The resend npm package is importable and provides a Resend class
+- id: nodejs_available
+  type: pass_to_pass
+  origin: static
+  description: Node.js runtime is available and functional
+- id: repo_has_typescript_config
+  type: pass_to_pass
+  origin: static
+  description: Repo has TypeScript configuration
+- id: repo_has_eslint_config
+  type: pass_to_pass
+  origin: static
+  description: Repo has ESLint configuration file
+- id: repo_package_scripts_defined
+  type: pass_to_pass
+  origin: static
+  description: Repo package.json has expected CI scripts defined
 - id: resend_impl_file_structure
   type: fail_to_pass
   origin: pr_diff
@@ -41,7 +57,36 @@ checks:
   origin: pr_diff
   description: AGENTS.md includes Project Description section with AI Agent Workspace
     branding
-rubric: []
+rubric:
+- rule: Debug loggers must use the namespace pattern 'lobe-[module]:[submodule]' (e.g.,
+    'lobe-email:Resend' for email services)
+  source:
+    path: .cursor/rules/debug-usage.mdc
+    lines: 21-23,33-36
+    commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+- rule: When importing a directory module, use the explicit index path like '@/envs/email/index'
+    instead of '@/envs/email'
+  source:
+    path: .cursor/rules/typescript.mdc
+    lines: '21'
+    commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+- rule: Server environment variables must be defined using createEnv from '@t3-oss/env-nextjs'
+    with zod validation schema in src/envs/<domain>.ts files
+  source:
+    path: .cursor/rules/add-setting-env.mdc
+    lines: 16-34
+    commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+- rule: Prefer async/await over callbacks or chained .then() promises in asynchronous
+    code
+  source:
+    path: .cursor/rules/typescript.mdc
+    lines: 25-28
+    commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+- rule: Prefer interface over type for object shapes (keep type for unions/intersections)
+  source:
+    path: .cursor/rules/typescript.mdc
+    lines: '14'
+    commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
 config_edits:
 - path: .cursor/rules/project-introduce.mdc
   tier: 1

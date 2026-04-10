@@ -67,13 +67,9 @@ def test_ci_action_syntax():
     assert "steps" in data["runs"], "action.yml must have steps"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) - CI/CD gates
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass - CI/CD gate
+# [static] pass_to_pass
 def test_docker_compose_schema():
-    """test/docker-compose.yml has valid schema with name and volumes (pass_to_pass)."""
+    """test/docker-compose.yml has valid schema with name and volumes."""
     import yaml
 
     compose_path = Path(REPO) / "test" / "docker-compose.yml"
@@ -97,9 +93,9 @@ def test_docker_compose_schema():
         assert "healthcheck" in service, f"Service '{svc}' must have healthcheck configured"
 
 
-# [repo_tests] pass_to_pass - CI/CD gate
+# [static] pass_to_pass
 def test_package_scripts_consistent():
-    """package.json docker scripts are consistent and reference valid compose file (pass_to_pass)."""
+    """package.json docker scripts are consistent and reference valid compose file."""
     pkg = json.loads(Path(f"{REPO}/package.json").read_text())
     scripts = pkg.get("scripts", {})
 
@@ -118,9 +114,9 @@ def test_package_scripts_consistent():
         )
 
 
-# [repo_tests] pass_to_pass - CI/CD gate
+# [static] pass_to_pass
 def test_ci_action_valid():
-    """.github/actions/start-database/action.yml references valid profiles and compose file (pass_to_pass)."""
+    """.github/actions/start-database/action.yml references valid profiles and compose file."""
     import yaml
 
     action_path = Path(REPO) / ".github" / "actions" / "start-database" / "action.yml"
@@ -145,6 +141,73 @@ def test_ci_action_valid():
     assert found_profile, (
         "CI action must use a valid --profile flag (postgres, mongodb, mongodb-atlas, or all)"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - Real CI/CD gates using subprocess.run()
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass - CI/CD gate using subprocess.run()
+def test_docker_start_script_shell_valid():
+    """docker:start script has valid shell syntax (pass_to_pass)."""
+    pkg = json.loads(Path(f"{REPO}/package.json").read_text())
+    scripts = pkg.get("scripts", {})
+    start_cmd = scripts.get("docker:start", "")
+
+    # Skip if not present (will be caught by other tests)
+    if not start_cmd:
+        return
+
+    # Validate shell syntax using bash -n
+    r = subprocess.run(
+        ["bash", "-n", "-c", start_cmd],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"docker:start command has invalid bash syntax: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI/CD gate using subprocess.run()
+def test_docker_stop_script_shell_valid():
+    """docker:stop script has valid shell syntax (pass_to_pass)."""
+    pkg = json.loads(Path(f"{REPO}/package.json").read_text())
+    scripts = pkg.get("scripts", {})
+    stop_cmd = scripts.get("docker:stop", "")
+
+    # Skip if not present (will be caught by other tests)
+    if not stop_cmd:
+        return
+
+    # Validate shell syntax using bash -n
+    r = subprocess.run(
+        ["bash", "-n", "-c", stop_cmd],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"docker:stop command has invalid bash syntax: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass - CI/CD gate using subprocess.run()
+def test_ci_action_shell_valid():
+    """CI action shell commands have valid syntax (pass_to_pass)."""
+    import yaml
+
+    action_path = Path(REPO) / ".github" / "actions" / "start-database" / "action.yml"
+    content = action_path.read_text()
+    data = yaml.safe_load(content)
+
+    # Extract all shell commands from the action
+    steps = data.get("runs", {}).get("steps", [])
+    shell_commands = []
+    for step in steps:
+        if "run" in step:
+            shell_commands.append(step["run"])
+
+    # Validate each shell command
+    for i, cmd in enumerate(shell_commands):
+        r = subprocess.run(
+            ["bash", "-n", "-c", cmd],
+            capture_output=True, text=True, timeout=10,
+        )
+        assert r.returncode == 0, f"CI action step {i+1} has invalid shell syntax: {r.stderr}"
 
 
 # ---------------------------------------------------------------------------

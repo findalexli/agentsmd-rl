@@ -1,0 +1,75 @@
+diff --git a/.agents/skills/gradio/SKILL.md b/.agents/skills/gradio/SKILL.md
+index eaa6732e99a..a45d62c8fee 100644
+--- a/.agents/skills/gradio/SKILL.md
++++ b/.agents/skills/gradio/SKILL.md
+@@ -103,7 +103,7 @@ Creates a button that can be assigned arbitrary .click() events.
+ ### `Markdown(value: str | I18nData | Callable | None = None, label: str | I18nData | None = None, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool | None = None, rtl: bool = False, latex_delimiters: list[dict[str, str | bool]] | None = None, visible: bool | Literal['"'"'hidden'"'"'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", sanitize_html: bool = True, line_breaks: bool = False, header_links: bool = False, height: int | str | None = None, max_height: int | str | None = None, min_height: int | str | None = None, buttons: list[Literal['"'"'copy'"'"']] | None = None, container: bool = False, padding: bool = False)`
+ Used to render arbitrary Markdown output.
+ 
+-### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener('"'"'click'"'"', function() { trigger('"'"'click'"'"') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['"'"'hidden'"'"'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, props: Any)`
++### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener('"'"'click'"'"', function() { trigger('"'"'click'"'"') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['"'"'hidden'"'"'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, server_functions: list[Callable] | None = None, props: Any)`
+ Creates a component with arbitrary HTML.
+ 
+ 
+diff --git a/gradio/components/html.py b/gradio/components/html.py
+index 5d21860e574..6da57a3d21b 100644
+--- a/gradio/components/html.py
++++ b/gradio/components/html.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import re
++from collections.abc import Callable
+ from pathlib import Path
+ from typing import TYPE_CHECKING, Any
+ 
+@@ -11,6 +12,7 @@ from gradio_client.documentation import document
+ from gradio.components.component import Component
+ from gradio.components.import_torch import _import_torch
+ from gradio.data_classes import GradioRootModel
++from gradio.events import Dependency
+ from gradio.utils import _get_route
+ 
+ if TYPE_CHECKING:
+@@ -41,6 +43,7 @@ class HTML(Component):
+         autoscroll: bool = False,
+         buttons: list[Button] | None = None,
+         props: Any = None,
++        server_functions: list[Callable] | None = None,
+     ):
+         """
+         Parameters:
+@@ -51,6 +54,7 @@ class HTML(Component):
+             autoscroll: If True, will automatically scroll to the bottom of the component when the value changes.
+             buttons: A list of buttons to display in the component. Can be used to trigger events.
+             props: An arbitrary value that can be accessed from within the `js_on_load` script via the `props` variable. The value is not accessible via an API or Python function call.
++            server_functions: A list of Python functions that can be called from within the `js_on_load` script via the `server` object.
+         """
+         self.html_template = html_template
+         self.css_template = css_template
+@@ -59,6 +63,16 @@ class HTML(Component):
+         self.apply_default_css = apply_default_css
+         self.buttons = buttons
+         self.props = props
++        self.server_functions = server_functions
++        if self.server_functions is not None:
++            for func in self.server_functions:
++                event = Dependency(
++                    fn=func,
++                    inputs=[],
++                    outputs=[],
++                    queue=False,
++                )
++                self._Event(event, f"__server_{func.__name__}")
+ 
+     def preprocess(self, payload: str | None) -> str | None:
+         """
+@@ -89,5 +103,8 @@ class HTML(Component):
+     def api_info(self) -> dict[str, str]:
+         return {"type": "string"}
+ 
++    def __str__(self):
++        return f"HTML(value={self.value!r}, server_functions={[f.__name__ for f in self.server_functions] if self.server_functions else None})"
++
+     def example_payload(self) -> Any:
+         return "<h1>Hello HTML</h1>"

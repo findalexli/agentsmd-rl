@@ -28,22 +28,26 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Sharding plugin README must document the stable routing guarantee
-- id: test_repo_core_exchange_type_added
+- id: test_repo_git_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Core modulus_hash exchange type module exists with valid structure (CI check)
+  description: Git repository is valid and has expected commit (CI check - git rev-parse)
+- id: test_repo_compatibility_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: docs/compatibility.json is valid JSON (CI check - python3 json validation)
 - id: test_repo_makefile_structure
   type: pass_to_pass
   origin: repo_tests
-  description: RabbitMQ Makefile has valid structure for test targets (CI check)
-- id: test_repo_readme_structure
+  description: RabbitMQ Makefile has valid CI structure (CI check - grep for PARALLEL_CT_SET)
+- id: test_repo_components_mk_structure
   type: pass_to_pass
   origin: repo_tests
-  description: Sharding README has expected structure (CI check)
-- id: test_repo_git_structure
+  description: rabbitmq-components.mk has valid RABBITMQ_BUILTIN list with rabbitmq_sharding (CI check - grep)
+- id: test_repo_sharding_readme_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Git repository is valid and has expected commit (CI check)
+  description: Sharding README is valid and mentions x-modulus-hash (CI check - grep)
 rubric:
 - rule: Only add very important comments, both in tests and in the implementation
   source:

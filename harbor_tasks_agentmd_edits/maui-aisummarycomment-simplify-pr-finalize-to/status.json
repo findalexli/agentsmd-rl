@@ -1,19 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:18:35.693595",
-  "total_time": 18403.58,
-  "sandbox_id": "inxxt4sh8dxs31qeukovq",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:50:45.678670",
+  "total_time": 2208.75,
+  "sandbox_id": "i09pxgpvv6881epymbjco",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 131.38,
+      "time": 384.48,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,9 +33,43 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 26.56
+      "time": 600.92,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed Dockerfile (ubuntu:22.04 base + PowerShell). Fixed solve.sh (complete PR diff). Fixed tests (param regex + ParseFile param order)."
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        ".github/copilot-instructions.md",
+        ".github/skills/pr-finalize/SKILL.md"
+      ],
+      "rules_added": 0,
+      "rules_rejected": 0,
+      "rejection_reasons": "No coding conventions applicable to PowerShell script changes. Config files contain C#/.NET-specific guidance and workflow descriptions only.",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 72.41
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.26,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +96,22 @@
       "backend": "fireworks",
       "time": 18403.58,
       "at": "2026-04-09T14:18:35.693595"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0,
+      "at": "2026-04-10T00:00:00"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2208.75,
+      "at": "2026-04-10T11:50:45.678670"
     }
   ]
 }

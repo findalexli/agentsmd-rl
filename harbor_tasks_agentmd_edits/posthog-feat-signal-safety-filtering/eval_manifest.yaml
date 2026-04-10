@@ -9,6 +9,14 @@ checks:
   type: pass_to_pass
   origin: static
   description: All modified Python files must parse without errors
+- id: ruff_check_signals
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on modified signals files
+- id: signals_activities_registered
+  type: pass_to_pass
+  origin: repo_tests
+  description: Signals activities are properly registered in temporal module
 - id: safety_filter_module_structure
   type: fail_to_pass
   origin: pr_diff
@@ -52,17 +60,22 @@ checks:
   description: safety_filter and safety_filter_activity have real implementation,
     not stubs
 rubric:
-- rule: ARCHITECTURE.md updates are consistent with the style and detail level of
-    existing documentation sections
+- rule: New Python modules should use explicit typed errors for error handling (not
+    generic exceptions like ValueError)
   source:
-    path: products/signals/ARCHITECTURE.md
-    lines: 1-10
+    path: AGENTS.md
+    lines: '90'
     commit: 12335b96f2209c3044a2fd623928284ab81b861d
-- rule: eval/AGENTS.md queries section follows the same formatting and structure as
-    the existing eval documentation
+- rule: New features should be placed in the appropriate products/ subdirectory following
+    the product structure
   source:
-    path: products/signals/eval/AGENTS.md
-    lines: 1-10
+    path: AGENTS.md
+    lines: '79'
+    commit: 12335b96f2209c3044a2fd623928284ab81b861d
+- rule: Python files should use type hints following mypy-strict style
+  source:
+    path: AGENTS.md
+    lines: '85'
     commit: 12335b96f2209c3044a2fd623928284ab81b861d
 config_edits:
 - path: products/signals/eval/AGENTS.md
@@ -101,5 +114,30 @@ config_edits:
     \      'signals-grouping/linear-actionability-check'\n  )\n  AND properties.$ai_metric_name\
     \ = 'correct_classification'\nGROUP BY check_name\nORDER BY check_name\n```\n\n\
     ### Report-level judges (safety + actionability)\n\n```sql\nSELECT\n    replaceOne(properties.$ai_experiment_name,\
-    \ 'signals-grouping/', '') AS judge,\n    count() AS total,\n    countIf(properties.$ai_score "
+    \ 'signals-grouping/', '') AS judge,\n    count() AS total,\n    countIf(properties.$ai_score\
+    \ = 1.0) AS correct,\n    round(countIf(properties.$ai_score = 1.0) * 100.0 /\
+    \ count(), 1) AS accuracy_pct,\n    countIf(properties.$ai_score != 1.0 AND properties.$ai_output\
+    \ IN ('SAFE', 'IMMEDIATELY_ACTIONABLE')) AS false_positives,\n    countIf(properties.$ai_score\
+    \ != 1.0 AND properties.$ai_output NOT IN ('SAFE', 'IMMEDIATELY_ACTIONABLE'))\
+    \ AS false_negatives\nFROM events\nWHERE event = '$ai_evaluation'\n  AND properties.$ai_eval_source\
+    \ = 'signals-grouping'\n  AND properties.$ai_evaluation_type = 'offline'\n  AND\
+    \ properties.$ai_experiment_name IN (\n      'signals-grouping/report-safety-check',\n\
+    \      'signals-grouping/report-actionability-check'\n  )\n  AND properties.$ai_metric_name\
+    \ = 'correct_classification'\nGROUP BY judge\nORDER BY judge\n```\n\n### Per-report\
+    \ grouping quality\n\nPurity, is_pure, group_recall distributions.\n\n```sql\n\
+    SELECT\n    properties.$ai_metric_name AS metric,\n    count() AS n,\n    round(avg(properties.$ai_score),\
+    \ 3) AS mean_score,\n    round(min(properties.$ai_score), 3) AS min_score,\n \
+    \   round(max(properties.$ai_score), 3) AS max_score,\n    countIf(properties.$ai_score\
+    \ = 1.0) AS perfect_count\nFROM events\nWHERE event = '$ai_evaluation'\n  AND\
+    \ properties.$ai_eval_source = 'signals-grouping'\n  AND properties.$ai_evaluation_type\
+    \ = 'offline'\n  AND properties.$ai_experiment_name = 'signals-grouping/grouping-quality'\n\
+    GROUP BY metric\nORDER BY metric\n```\n\n### Detailed match failures (for debugging)\n\
+    \n```sql\nSELECT\n    properties.$ai_experiment_item_name AS item,\n    properties.$ai_reasoning\
+    \ AS failure_mode,\n    properties.$ai_input AS signal_description,\n    properties.$ai_expected\
+    \ AS expected,\n    JSONExtractString(properties.$ai_output, 'report') AS actual_decision\n\
+    FROM events\nWHERE event = '$ai_evaluation'\n  AND properties.$ai_eval_source\
+    \ = 'signals-grouping'\n  AND properties.$ai_evaluation_type = 'offline'\n  AND\
+    \ properties.$ai_experiment_name = 'signals-grouping/match-quality'\n  AND properties.$ai_metric_name\
+    \ = 'correct_match'\n  AND properties.$ai_score != 1.0\nORDER BY properties.$ai_reasoning,\
+    \ item\n```\n"
   gold_removed: ''

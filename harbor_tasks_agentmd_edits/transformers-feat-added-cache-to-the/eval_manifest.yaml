@@ -63,6 +63,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI check - Makefile style target runs ruff check and ruff format
+- id: test_repo_check_modeling_structure_list_rules
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - check_modeling_structure.py --list-rules works
+- id: test_repo_check_modeling_structure_rule_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - check_modeling_structure.py --rule shows rule documentation
+- id: test_repo_py_compile_check_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check - check_modeling_structure.py has valid Python syntax
 rubric:
 - rule: Agent config updates are consistent with the style of existing .ai/AGENTS.md
     entries
@@ -96,7 +108,7 @@ rubric:
     \ or make check-repo. Use when typing errors appear in local runs, CI, or PR logs.\n\
     - Optional `make typing` or CI output showing typing failures.\n   - If you already\
     \ have `make typing` or CI output, extract the failing file/module paths.\n  \
-    \  make typing\n   - Re-run `make typing` to confirm the type/model-rules step\
+    \   make typing\n   - Re-run `make typing` to confirm the type/model-rules step\
     \ passes"
 - rule: docs/source/en/pr_checks.md must document 'make typing' command
   source:

@@ -9,6 +9,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files exist and parse without errors
+- id: test_component_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component package TypeScript typechecks without errors
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes without errors on the component package
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes on component package
+- id: test_component_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component package TypeScript builds successfully
 - id: update_returns_promise
   type: fail_to_pass
   origin: pr_diff
@@ -27,10 +43,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Internal scheduleUpdate function no longer accepts a task parameter
-- id: existing_tests_pass
-  type: pass_to_pass
-  origin: repo_tests
-  description: Component package vitest suite passes after changes
+- id: test_agents_md_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents await handle.update() and AbortSignal return
+- id: test_readme_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents handle.update() Promise<AbortSignal> return
 rubric:
 - rule: Documentation updates are consistent with the style of existing AGENTS.md
     content
@@ -67,7 +87,7 @@ rubric:
     \ doing DOM work:\n          async click() {\n            await handle.update()\n\
     \            // Focus the enabled button after update completes\n            stopButton.focus()\n\
     \          async click() {\n            await handle.update()\n            //\
-    \ Focus the enabled button af"
+    \ Focus the enabled button after update completes\n            playButton.focus()"
 config_edits:
 - path: packages/component/AGENTS.md
   tier: 1
@@ -93,7 +113,22 @@ config_edits:
     \ `handle.update(task)`:\n// ❌ Avoid: Calling handle.update() before async work\
     \ in the same task\nfunction BadAsyncExample(handle: Handle) {\n  handle.queueTask(async\
     \ (signal) => {\n    handle.update() // This triggers a re-render, which aborts\
-    \ signal!\n\n    let response = await fetch('/api/data', { signal }"
+    \ signal!\n\n    let response = await fetch('/api/data', { signal }) // AbortError:\
+    \ signal is aborted\n    if (signal.aborted) return\n\n    data = await response.json()\n\
+    \    loading = false\n    handle.update()\n  })\n\n  return () => <div>{loading\
+    \ ? 'Loading...' : data.join(', ')}</div>\n}\n\n// ✅ Prefer: Move async work\
+    \ into a new task via handle.update(task)\nfunction GoodAsyncExample(handle: Handle)\
+    \ {\n  let data: string[] = []\n  let loading = false\n\n  handle.queueTask(()\
+    \ => {\n    loading = true\n    handle.update(async (signal) => {\n      // This task\
+    \ gets a fresh signal that won't be aborted by the update above\n      let response\
+    \ = await fetch('/api/data', { signal })\n\n      data = await response.json()\n\
+    \      loading = false\n      handle.update()\n    })\n  })\n\n  return () => <div>{loading\
+    \ ? 'Loading...' : data.join(', ')}</div>\n}\n```\n\nThe key insight is that\
+    \ `handle.update(task)` queues a new task that runs after the update completes,\
+    \ with its own fresh signal. This allows you to:\n\n1. Update state to show loading\
+    \ UI\n2. Trigger a re-render with `handle.update(task)`\n3. Perform async work in\
+    \ the task with a signal that won't be aborted by that re-render\n\n**Signals in\
+    \ events and tasks are how you manage interruptions and disconnects:**"
 - path: packages/component/README.md
   tier: 2
   gold_added: "- **`handle.update()`** - Schedule an update and await completion to\

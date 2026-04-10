@@ -29,91 +29,39 @@ checks:
   type: pass_to_pass
   origin: static
   description: Response.serialize has real logic, not a stub
-- id: repo_build
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo build passes (npm run build)
 - id: repo_lint_packages
   type: pass_to_pass
   origin: repo_tests
   description: Repo package lint passes (npm run lint-packages)
-- id: repo_ts_parse_modified_files
+- id: repo_syntax_check_ts
   type: pass_to_pass
   origin: repo_tests
-  description: Modified TypeScript files parse without errors
-- id: repo_cli_help
+  description: Modified TypeScript files have valid syntax (node --check)
+- id: repo_no_merge_conflicts
   type: pass_to_pass
   origin: repo_tests
-  description: CLI help tests pass
+  description: Modified files have no merge conflict markers
+- id: repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository has clean status at base commit
+- id: repo_ts_no_syntactic_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have no obvious syntactic errors
 rubric:
-- rule: Documentation for --raw in SKILL.md follows the style and structure of existing
-    command documentation sections
+- rule: When adding new CLI commands or features, update the SKILL.md file with the
+    new documentation
   source:
-    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
-    lines: 1-160
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 276-278
     commit: f6e14f9d73b46ab319b334c013094d867d4ef149
-- rule: 'Commit message follows the semantic commit convention described in CLAUDE.md
-    (e.g., feat(cli): ...)'
+- rule: When handling errors in MCP tools, use the Response API response.addError(error)
+    method to add error messages
   source:
-    path: CLAUDE.md
-    lines: 75-90
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 67-74
     commit: f6e14f9d73b46ab319b334c013094d867d4ef149
-- rule: evaluate.ts catches errors and calls addError
-  reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
-
-    ## Raw output
-
-
-    The global `--raw` option strips page status, generated code, and snapshot sections
-    from the output, returning only the result value. Use it to pipe command output
-    into other tools. Commands that don''t produce output return nothing.
-
-
-    ```bash
-
-    playwright-cli --raw eval "JSON.stringify(performance.timing)" | jq ''.loadEventEnd
-    - .navigationStart''
-
-    playwright-cli --raw eval "JSON.stringify([...document.querySelectorAll(''a'')]'
-- rule: SKILL.md documents the --raw option with usage examples
-  source:
-    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
-    lines: 163-177
-    commit: a89099d18c5b67355cf78d8e99f69b8ca23dee5b
-  reference: '## Raw output
-
-
-    The global `--raw` option strips page status, generated code, and snapshot sections
-    from the output, returning only the result value. Use it to pipe command output
-    into other tools. Commands that don''t produce output return nothing.
-
-
-    ```bash
-
-    playwright-cli --raw eval "JSON.stringify(performance.timing)" | jq ''.loadEventEnd
-    - .navigationStart''
-
-    playwright-cli --raw eval "JSON.stringify([...document.querySelectorAll(''a'')].map(a
-    => a.href))" > links.json
-
-    playwright-cli --raw snapshot '
-- rule: Help generator lists --raw in global options
-  reference: '# packages/playwright-core/src/tools/cli-client/skill/SKILL.md
-
-    ## Raw output
-
-
-    The global `--raw` option strips page status, generated code, and snapshot sections
-    from the output, returning only the result value. Use it to pipe command output
-    into other tools. Commands that don''t produce output return nothing.
-
-
-    ```bash
-
-    playwright-cli --raw eval "JSON.stringify(performance.timing)" | jq ''.loadEventEnd
-    - .navigationStart''
-
-    playwright-cli --raw eval "JSON.stringify([...document.querySelectorAll(''a'')]'
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1

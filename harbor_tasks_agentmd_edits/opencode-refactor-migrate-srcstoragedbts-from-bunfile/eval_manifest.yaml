@@ -1,54 +1,80 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 14124
-  base_commit: "6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44"
-  merge_commit: "a8347c3762881f03e096e484a72302302f025a65"
-
+  base_commit: 6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44
+  merge_commit: a8347c3762881f03e096e484a72302302f025a65
 checks:
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must compile without errors"
-
-  - id: migrations_uses_exists_sync
-    type: fail_to_pass
-    origin: pr_diff
-    description: "migrations() function uses existsSync instead of Bun.file().size"
-
-  - id: migrations_skips_missing_files
-    type: fail_to_pass
-    origin: pr_diff
-    description: "migrations() correctly skips directories without migration.sql files"
-
-  - id: storage_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream storage json-migration tests still pass after the migration"
-
-  - id: bun_proc_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "BunProc registry tests pass (repo CI/CD)"
-
-  - id: keybind_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Keybind tests pass (repo CI/CD)"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified migrations function has real logic, not just pass/return"
-
-  - id: bun_file_io_skill_removed
-    type: fail_to_pass
-    origin: agent_config
-    description: "bun-file-io skill file removed as part of migration away from Bun.file()"
-    source:
-      path: ".opencode/skill/bun-file-io/SKILL.md"
-      lines: "1-42"
-      commit: "6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44"
-
-rubric: []
+- id: migrations_uses_exists_sync
+  type: fail_to_pass
+  origin: pr_diff
+  description: migrations() function uses existsSync instead of Bun.file().size
+- id: migrations_skips_missing_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: migrations() correctly skips directories without migration.sql files
+- id: storage_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream storage json-migration tests still pass after the migration
+- id: bun_proc_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: BunProc registry tests pass (repo CI/CD)
+- id: keybind_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Keybind tests pass (repo CI/CD)
+- id: filesystem_util_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Filesystem utility tests pass (repo CI/CD)
+- id: format_util_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Format utility tests pass (repo CI/CD)
+- id: util_lazy_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Lazy utility tests pass (repo CI/CD)
+- id: util_lock_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Lock utility tests pass (repo CI/CD)
+- id: util_timeout_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Timeout utility tests pass (repo CI/CD)
+- id: util_iife_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: IIFE utility tests pass (repo CI/CD)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified migrations function has real logic, not just pass/return
+- id: bun_file_io_skill_removed
+  type: fail_to_pass
+  origin: agent_config
+  description: bun-file-io skill file removed as part of migration away from Bun.file()
+  source:
+    path: .opencode/skill/bun-file-io/SKILL.md
+    lines: 1-42
+    commit: 6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44
+rubric:
+- rule: Avoid `else` statements in modified code — prefer early returns instead
+  source:
+    path: AGENTS.md
+    lines: 73-87
+    commit: 6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops in modified code
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44
+- rule: Prefer `const` over `let` in modified code — use ternaries or early returns instead
+    of reassignment
+  source:
+    path: AGENTS.md
+    lines: 59-69
+    commit: 6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44

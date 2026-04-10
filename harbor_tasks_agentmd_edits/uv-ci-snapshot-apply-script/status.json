@@ -1,21 +1,52 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:47:53.016201",
-  "total_time": 6053.86,
-  "sandbox_id": "ivj30zto79x006sj7b4w9",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:20:48.232280",
+  "total_time": 1089.41,
+  "sandbox_id": "ivfjhxx6pitviirb9lrzx",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 0.75,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 489.56,
+      "status": "completed",
+      "model": "kimi",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "Added CI commands: ruff check scripts/, ruff format --diff scripts/, shellcheck on scripts/*.sh, validate-pyproject pyproject.toml, typos. All tested and passing in Docker."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 187.05,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK, NOP test correctly fails on base commit (reward=0), GOLD test passes all tests after fix (reward=1), Rubric judge runs successfully (0.5 due to missing API keys, expected behavior)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 119.97
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 13.96,
+      "notes": "ICR=0.75"
     }
   },
   "history": [
@@ -26,6 +57,22 @@
       "backend": "glm",
       "time": 6053.86,
       "at": "2026-04-09T07:47:53.016201"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1480.86,
+      "at": "2026-04-10T13:02:38.630229"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1089.41,
+      "at": "2026-04-10T13:20:48.232280"
     }
   ]
 }

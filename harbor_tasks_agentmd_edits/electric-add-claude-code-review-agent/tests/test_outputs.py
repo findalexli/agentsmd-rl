@@ -140,3 +140,31 @@ def test_markdown_files_valid():
     # Verify markdown headers exist
     assert re.search(r'^#+ ', pr_content, re.MULTILINE), "pr-review.md missing markdown headers"
     assert re.search(r'^#+ ', claude_content, re.MULTILINE), "CLAUDE.md missing markdown headers"
+
+
+# -----------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI validation tests
+# -----------------------------------------------------------------------------
+
+def test_repo_pr_workflow_yaml_valid():
+    """New PR workflow YAML has valid syntax (pass_to_pass)."""
+    workflow = Path(f"{REPO}/.github/workflows/claude-code-review.yml")
+    assert workflow.exists(), "claude-code-review.yml does not exist"
+
+    r = subprocess.run(
+        ["yamllint", "-d", "relaxed", str(workflow)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"claude-code-review.yml YAML syntax error: {r.stdout}"
+
+
+def test_repo_mention_workflow_yaml_valid():
+    """New mention workflow YAML has valid syntax (pass_to_pass)."""
+    workflow = Path(f"{REPO}/.github/workflows/claude.yml")
+    assert workflow.exists(), "claude.yml does not exist"
+
+    r = subprocess.run(
+        ["yamllint", "-d", "relaxed", str(workflow)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"claude.yml YAML syntax error: {r.stdout}"

@@ -44,7 +44,7 @@ def _check_source_parses(path: str) -> bool:
 # Gates (pass_to_pass, static) - syntax / compilation checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_repo_ruff_linting():
     """Repo's ruff linting passes on modified files (pass_to_pass)."""
     # Install ruff if not available
@@ -60,6 +60,39 @@ def test_repo_ruff_linting():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff linting failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests_trajectories():
+    """Repo's unit tests for trajectories module pass (pass_to_pass)."""
+    # Install required dependencies for tests
+    deps = ["loguru", "beartype", "cydifflib", "jaxtyping", "pydantic-settings", "tomli_w"]
+    subprocess.run(["pip", "install"] + deps + ["-q"], capture_output=True, timeout=120)
+    # Install procps for pkill command used in conftest.py
+    subprocess.run(["apt-get", "update", "-qq"], capture_output=True, timeout=60)
+    subprocess.run(["apt-get", "install", "-y", "procps", "-qq"], capture_output=True, timeout=60)
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/unit/orchestrator/test_trajectories.py", "-v"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trajectory tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests_batch():
+    """Repo's unit tests for batch module pass (pass_to_pass)."""
+    # Install required dependencies for tests (same as above, idempotent)
+    deps = ["loguru", "beartype", "cydifflib", "jaxtyping", "pydantic-settings", "tomli_w"]
+    subprocess.run(["pip", "install"] + deps + ["-q"], capture_output=True, timeout=120)
+    subprocess.run(["apt-get", "update", "-qq"], capture_output=True, timeout=60)
+    subprocess.run(["apt-get", "install", "-y", "procps", "-qq"], capture_output=True, timeout=60)
+
+    r = subprocess.run(
+        ["python", "-m", "pytest", "tests/unit/orchestrator/test_batch.py", "-v"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Batch tests failed:\n{r.stdout[-2000:]}\n{r.stderr[-1000:]}"
 
 
 # [static] pass_to_pass

@@ -52,7 +52,39 @@ checks:
   origin: static
   description: runTerminal helper must have real implementation with typing and waiting
     logic
-rubric: []
+rubric:
+- rule: 'Test-only probes/drivers should follow the style in packages/app/src/testing/terminal.ts:
+    export const terminalAttr, type TerminalProbeState, terminalProbe(id) with init/connect/render/settle/drop
+    methods'
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 192-194
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Test hooks must be inert unless explicitly enabled via window.__opencode_e2e;
+    do not add normal-runtime listeners or per-update allocations for e2e ceremony
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 194-196
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Terminal tests must type through the browser (not write to PTY via SDK), use
+    waitTerminalReady() and runTerminal() helpers, and avoid waitForTimeout or custom
+    DOM readiness checks
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 171-178
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Variable and function names should prefer single-word identifiers (e.g., 'pid',
+    'cfg', 'err', 'opts', 'dir', 'root', 'child', 'state') rather than camelCase compounds
+    like 'inputPID' or 'connectTimeout'
+  source:
+    path: AGENTS.md
+    lines: 23-42
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Control flow should avoid else statements and prefer early returns
+  source:
+    path: AGENTS.md
+    lines: 84-98
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
@@ -76,3 +108,4 @@ config_edits:
 
     - Avoid `waitForTimeout` and custom DOM or `data-*` readiness checks.'
   gold_removed: ''
+

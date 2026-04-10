@@ -11,6 +11,7 @@ fi
 
 python3 << 'PYEOF'
 import json
+import subprocess
 from pathlib import Path
 
 # 1. remix.config.js — add agentcrumbs to serverDependenciesToBundle
@@ -28,6 +29,13 @@ pkg = json.loads(pkg_path.read_text())
 pkg["dependencies"]["agentcrumbs"] = "^0.5.0"
 pkg["dependencies"] = dict(sorted(pkg["dependencies"].items()))
 pkg_path.write_text(json.dumps(pkg, indent=2) + "\n")
+
+# 2b. Update pnpm-lock.yaml to reflect the new dependency
+subprocess.run(
+    ["bash", "-c", "corepack enable && corepack prepare pnpm@10.23.0 --activate && pnpm install"],
+    cwd="/workspace/trigger.dev",
+    check=True
+)
 
 # 3. pnpm-workspace.yaml — add agentcrumbs to minimumReleaseAgeExclude
 ws = Path("pnpm-workspace.yaml")
@@ -59,7 +67,7 @@ content = content.replace(
 # Append agentcrumbs documentation
 content += "\n<!-- intent-skills:start -->\n"
 content += """
-# Skill mappings \u2014 when working in these areas, load the linked skill file into context.
+# Skill mappings — when working in these areas, load the linked skill file into context.
 
 skills:
 
@@ -71,7 +79,7 @@ load: "node_modules/agentcrumbs/skills/agentcrumbs/init/SKILL.md"
 
 ## agentcrumbs
 
-Add crumbs as you write code \u2014 not just when debugging. Mark lines with
+Add crumbs as you write code — not just when debugging. Mark lines with
 `// @crumbs` or wrap blocks in `// #region @crumbs`. They stay on the
 branch throughout development and are stripped by `agentcrumbs strip`
 before merge.
@@ -80,7 +88,7 @@ before merge.
 
 | Namespace         | Description                                    | Path                                |
 | ----------------- | ---------------------------------------------- | ----------------------------------- |
-| `webapp`          | Main Remix app \u2014 API, dashboard, orchestration | `apps/webapp`                       |
+| `webapp`          | Main Remix app — API, dashboard, orchestration | `apps/webapp`                       |
 | `supervisor`      | Task execution container manager               | `apps/supervisor`                   |
 | `sdk`             | Main SDK for writing tasks                     | `packages/trigger-sdk`              |
 | `cli`             | CLI and task image bundling                    | `packages/cli-v3`                   |
@@ -88,13 +96,13 @@ before merge.
 | `build`           | Build extensions and types                     | `packages/build`                    |
 | `react-hooks`     | React hooks for realtime/triggering            | `packages/react-hooks`              |
 | `redis-worker`    | Redis-based background job system              | `packages/redis-worker`             |
-| `run-engine`      | Run Engine 2.0 \u2014 core run lifecycle            | `internal-packages/run-engine`      |
+| `run-engine`      | Run Engine 2.0 — core run lifecycle            | `internal-packages/run-engine`      |
 | `database`        | Prisma client and schema                       | `internal-packages/database`        |
 | `clickhouse`      | ClickHouse client, migrations, analytics       | `internal-packages/clickhouse`      |
 | `schedule-engine` | Durable cron scheduling                        | `internal-packages/schedule-engine` |
 | `run-queue`       | Run queue management                           | `internal-packages/run-queue`       |
 
-Do not invent new namespaces \u2014 pick from this table or ask first.
+Do not invent new namespaces — pick from this table or ask first.
 
 ### For PR reviewers
 

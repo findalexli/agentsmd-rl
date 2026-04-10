@@ -19,5 +19,8 @@ RUN git clone --filter=blob:none --no-checkout https://github.com/cloudflare/wor
 
 WORKDIR /workspace/workerd
 
+# Install rustfmt for syntax checking
+RUN rustup component add rustfmt
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

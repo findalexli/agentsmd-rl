@@ -1,0 +1,123 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 51937
+  base_commit: 2f7a8ee722e5d451dd2c242c722ea818cc325485
+  merge_commit: 6fe1d5dafe2218c2e35121466285017ecadaed60
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: max_tool_name_length_preserved
+  type: pass_to_pass
+  origin: static
+  description: MAX_TOOL_NAME_LENGTH constant remains 52
+- id: tool_name_pattern_validates
+  type: fail_to_pass
+  origin: pr_diff
+  description: TOOL_NAME_PATTERN accepts valid kebab-case and rejects invalid names
+- id: feature_name_pattern_validates
+  type: fail_to_pass
+  origin: pr_diff
+  description: FEATURE_NAME_PATTERN accepts valid snake_case and rejects invalid identifiers
+- id: schema_rejects_invalid_tool_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: CategoryConfigSchema rejects tool names that violate kebab-case pattern
+- id: lint_validates_json_definitions
+  type: fail_to_pass
+  origin: pr_diff
+  description: lint-tool-names.ts validates JSON definition files, not just YAML
+- id: skill_md_naming_constraints
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents tool naming constraints with pattern and length
+    info
+- id: handbook_pattern_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Handbook doc documents pattern validation for tool names and feature
+    identifiers
+rubric:
+- rule: Updated documentation is consistent with the style and tone of existing SKILL.md
+    content
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 1-70
+    commit: 2f7a8ee722e5d451dd2c242c722ea818cc325485
+- rule: Updated handbook page follows the formatting conventions of the existing document
+  source:
+    path: docs/published/handbook/engineering/ai/implementing-mcp-tools.md
+    lines: 1-20
+    commit: 2f7a8ee722e5d451dd2c242c722ea818cc325485
+config_edits:
+- path: .agents/skills/implementing-mcp-tools/SKILL.md
+  tier: 1
+  gold_added: '## Tool naming constraints
+
+
+    Tool names and feature identifiers are validated at build time and in CI.
+
+    Violations fail the build.
+
+
+    ### Tool names
+
+
+    - **Format**: lowercase kebab-case — only `[a-z0-9-]`, no leading/trailing hyphens
+
+    - **Length**: 52 characters or fewer
+
+    - **Convention**: `domain-action`, e.g. `cohorts-create`, `dashboard-get`, `feature-flags-list`
+
+
+    ### Feature identifiers
+
+
+    - **Format**: lowercase snake*case — only `[a-z0-9*]`, must start with a letter
+
+    - **Convention**: should match the product folder name, e.g. `error_tracking`,
+    `feature_flags`
+
+
+    ### Why 52 characters?
+
+
+    MCP clients enforce different limits on tool names. The 52-char limit is the safe
+    zone
+
+    that works across all known clients:
+
+
+    | Client           | Limit                          | Notes                                                            |
+
+    | ---------------- | ------------------------------ | ----------------------------------------------------------------
+    |
+
+    | MCP spec (draft) | 1–128 chars, `[A-Za-z0-9_\-.]` | Official recommendation,
+    not enforced                            |
+
+    | Claude Code      | 64 chars                       | Hard limit; prefixes tool
+    names with `mcp____`                   |
+
+    | Cursor           | 60 chars combined              | `server_name + tool_name`;
+    tools over this are silently filtered |
+
+    | OpenAI API       | `^[a-zA-Z0-9_-]+$`, 64 chars   | No dots allowed                                                  |
+
+
+    With the server name "posthog" (7 chars) plus a separator, tool names must stay
+    at
+
+    or below 52 characters to fit within Cursor''s 60-char combined limit.
+
+
+    ### CI enforcement
+
+
+    - `pnpm --filter=@posthog/mcp lint-tool-names` — validates length and pattern
+    for YAML and JSON definitions
+
+    - A vitest test validates all runtime `TOOL_MAP` and `GENERATED_TOOL_MAP` entries'
+  gold_removed: ''

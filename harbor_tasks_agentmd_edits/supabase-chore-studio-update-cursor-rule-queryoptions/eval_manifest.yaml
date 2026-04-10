@@ -44,6 +44,14 @@ checks:
     path: .cursor/rules/studio/queries/RULE.md
     lines: '46'
     commit: 11d4da6c4b6d282c1d829a4786a342468472a698
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Studio unit tests pass (vitest)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Studio ESLint passes
 rubric:
 - rule: Config update is consistent with the style and structure of existing cursor
     rules in .cursor/rules/studio/
@@ -100,8 +108,8 @@ config_edits:
     \ and returns `data`\n- Wrap it in `useXQuery()` using `useQuery`, `UseCustomQueryOptions`,\
     \ and a domain key helper.\n- Gate with `enabled` so the query doesn't run until\
     \ required variables exist (and platform-only queries should include `IS_PLATFORM`).\n\
-    export async function getX({ projectRef }: XVariables, signal?: AbortSignal) {\n\
-    export const useXQuery = <TData = XData>(\n  { projectRef }: XVariables,\n  {\
+    export async function getX({ projectRef }: XVariables, signal?: AbortSignal) {\
+    \nexport const useXQuery = <TData = XData>(\n  { projectRef }: XVariables,\n  {\
     \ enabled = true, ...options }: UseCustomQueryOptions<XData, XError, TData> =\
     \ {}\n) =>\n  useQuery<XData, XError, TData>({\n    enabled: IS_PLATFORM && enabled\
     \ && typeof projectRef !== 'undefined',\n    ...options,\n  - defaul"

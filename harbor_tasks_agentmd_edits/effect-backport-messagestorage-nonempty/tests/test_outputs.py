@@ -14,6 +14,47 @@ REPO = "/workspace/effect"
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) -- CI checks that must pass before fix
+# ---------------------------------------------------------------------------
+
+
+def test_repo_check():
+    """TypeScript compilation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint():
+    """ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_circular():
+    """Circular dependency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "circular"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Circular check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cluster_tests():
+    """Cluster package tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "packages/cluster/test/MessageStorage.test.ts"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cluster tests failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 

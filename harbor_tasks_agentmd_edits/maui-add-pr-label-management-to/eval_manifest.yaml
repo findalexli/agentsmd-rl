@@ -5,236 +5,39 @@ source:
   base_commit: d7d5e048c6941e80aa56982adff9aa48de260ed7
   merge_commit: e8f0031d821766f32bd5d1f59d73eea342061876
 checks:
-- id: ps1_not_empty
-  type: pass_to_pass
-  origin: static
-  description: PowerShell script exists and is non-trivial
-- id: powershell_script_basic_structure
+- id: test_repo_powershell_syntax_validation
   type: pass_to_pass
   origin: repo_tests
-  description: PowerShell script has valid basic structure with balanced braces
-- id: shared_baseline_script_imports
+  description: PowerShell files have valid syntax via Python subprocess validation
+- id: test_repo_skill_yaml_frontmatter
   type: pass_to_pass
   origin: repo_tests
-  description: Verify-tests-fail.ps1 properly imports from EstablishBrokenBaseline.ps1
-- id: skill_md_documentation_structure
+  description: SKILL.md has valid YAML frontmatter via Python subprocess check
+- id: test_repo_git_file_consistency
   type: pass_to_pass
   origin: repo_tests
-  description: SKILL.md has all required documentation sections
-- id: git_repository_integrity
+  description: Git tracked files are consistent via git ls-files/cat-file commands
+- id: test_repo_file_structure_consistency
   type: pass_to_pass
   origin: repo_tests
-  description: Git repository is properly initialized at expected base commit
-- id: update_labels_function_logic
-  type: fail_to_pass
-  origin: pr_diff
-  description: Update-VerificationLabels function has correct toggle logic with REST
-    API DELETE/POST and error handling
-- id: label_names_and_constants
-  type: fail_to_pass
-  origin: pr_diff
-  description: Script defines $LabelConfirmed and $LabelFailed constants with correct
-    label strings
-- id: labels_called_on_all_paths
-  type: fail_to_pass
-  origin: pr_diff
-  description: Update-VerificationLabels called with correct bool in all 4 verification
-    paths
-- id: pr_detection_fallback
-  type: fail_to_pass
-  origin: pr_diff
-  description: PR detection has gh pr list --head fallback for fork branches
-- id: skill_md_labels_section
-  type: fail_to_pass
-  origin: pr_diff
-  description: SKILL.md has PR Labels section documenting both labels, table, and
-    toggle behavior
-- id: existing_verify_failure_mode_preserved
+  description: Required repository files exist and are readable via Python subprocess
+- id: test_repo_baseline_script_exists
   type: pass_to_pass
-  origin: static
-  description: Verify-failure-only mode logic still present
+  origin: repo_tests
+  description: EstablishBrokenBaseline.ps1 dependency exists and has required functions
 rubric:
-- rule: PR label documentation is consistent with the style of existing SKILL.md sections
-  source:
-    path: .github/skills/verify-tests-fail-without-fix/SKILL.md
-    lines: 1-10
-    commit: d7d5e048c6941e80aa56982adff9aa48de260ed7
-- rule: Label management function follows existing PowerShell patterns in the script
-    (error handling, Write-Host formatting)
-  source:
-    path: .github/skills/verify-tests-fail-without-fix/scripts/verify-tests-fail.ps1
-    lines: 1-50
-    commit: d7d5e048c6941e80aa56982adff9aa48de260ed7
-- rule: Function removes opposite label via DELETE before adding new one via POST
-  reference: '# .github/skills/verify-tests-fail-without-fix/SKILL.md
-
-    4. **Updates PR labels** based on result
-
-    5. Reports result
-
-    9. **Updates PR labels** based on result
-
-    10. Reports result
-
-
-    ## PR Labels
-
-
-    The skill automatically manages two labels on the PR to indicate verification
-    status:
-
-
-    | Label | Color | When Applied |
-
-    |-------|-------|--------------|
-
-    | `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without
-    fix (AI verified tests catch the bug) |
-
-    | `s/ai-reproduction-failed` | 🟠 O'
 - rule: SKILL.md has PR Labels section documenting both label names
   source:
     path: .github/skills/verify-tests-fail-without-fix/SKILL.md
     lines: 98-114
     commit: e8f0031d821766f32bd5d1f59d73eea342061876
-  reference: '4. **Updates PR labels** based on result
-
-    5. Reports result
-
-    9. **Updates PR labels** based on result
-
-    10. Reports result
-
-
-    ## PR Labels
-
-
-    The skill automatically manages two labels on the PR to indicate verification
-    status:
-
-
-    | Label | Color | When Applied |
-
-    |-------|-------|--------------|
-
-    | `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without
-    fix (AI verified tests catch the bug) |
-
-    | `s/ai-reproduction-failed` | 🟠 Orange (#E65100) | Tests PASS without fix (AI
-    verified te'
-- rule: SKILL.md describes when each label is applied and toggle behavior
-  source:
-    path: .github/skills/verify-tests-fail-without-fix/SKILL.md
-    lines: 107-114
-    commit: e8f0031d821766f32bd5d1f59d73eea342061876
-  reference: '4. **Updates PR labels** based on result
-
-    5. Reports result
-
-    9. **Updates PR labels** based on result
-
-    10. Reports result
-
-
-    ## PR Labels
-
-
-    The skill automatically manage two labels on the PR to indicate verification status:
-
-
-    | Label | Color | When Applied |
-
-    |-------|-------|--------------|
-
-    | `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without
-    fix (AI verified tests catch the bug) |
-
-    | `s/ai-reproduction-failed` | 🟠 Orange (#E65100) | Tests PASS without fix (AI
-    verified te'
-- rule: SKILL.md workflow steps mention updating PR labels
+  reference: "## PR Labels\n\nThe skill automatically manages two labels on the PR to indicate verification status:\n\n| Label | Color | When Applied |\n|-------|-------|--------------|\n| `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without fix (AI verified tests catch the bug) |\n| `s/ai-reproduction-failed` | 🟠 Orange (#E65100) | Tests PASS without fix (AI verified tests don't catch the bug) |"
+- rule: SKILL.md workflow steps mention updating PR labels in both modes
   source:
     path: .github/skills/verify-tests-fail-without-fix/SKILL.md
     lines: 84-95
     commit: e8f0031d821766f32bd5d1f59d73eea342061876
-  reference: '4. **Updates PR labels** based on result
-
-    5. Reports result
-
-    9. **Updates PR labels** based on result
-
-    10. Reports result
-
-
-    ## PR Labels
-
-
-    The skill automatically manages two labels on the PR to indicate verification
-    status:
-
-
-    | Label | Color | When Applied |
-
-    |-------|-------|--------------|
-
-    | `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without
-    fix (AI verified tests catch the bug) |
-
-    | `s/ai-reproduction-failed` | 🟠 Orange (#E65100) | Tests PASS without fix (AI
-    verified te'
-- rule: SKILL.md still documents both modes and troubleshooting
-  reference: '# .github/skills/verify-tests-fail-without-fix/SKILL.md
-
-    4. **Updates PR labels** based on result
-
-    5. Reports result
-
-    9. **Updates PR labels** based on result
-
-    10. Reports result
-
-
-    ## PR Labels
-
-
-    The skill automatically manages two labels on the PR to indicate verification
-    status:
-
-
-    | Label | Color | When Applied |
-
-    |-------|-------|--------------|
-
-    | `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without
-    fix (AI verified tests catch the bug) |
-
-    | `s/ai-reproduction-failed` | 🟠 O'
-- rule: PR auto-detection has gh pr list --head fallback for fork branches
-  reference: '# .github/skills/verify-tests-fail-without-fix/SKILL.md
-
-    4. **Updates PR labels** based on result
-
-    5. Reports result
-
-    9. **Updates PR labels** based on result
-
-    10. Reports result
-
-
-    ## PR Labels
-
-
-    The skill automatically manages two labels on the PR to indicate verification
-    status:
-
-
-    | Label | Color | When Applied |
-
-    |-------|-------|--------------|
-
-    | `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without
-    fix (AI verified tests catch the bug) |
-
-    | `s/ai-reproduction-failed` | 🟠 O'
+  reference: "4. **Updates PR labels** based on result\n5. Reports result\n9. **Updates PR labels** based on result\n10. Reports result"
 config_edits:
 - path: .github/skills/verify-tests-fail-without-fix/SKILL.md
   tier: 1

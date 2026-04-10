@@ -9,6 +9,30 @@ checks:
   type: pass_to_pass
   origin: static
   description: SKILL.md has valid YAML frontmatter with name and allowed-tools
+- id: repo_bash_syntax_poll
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh passes bash syntax check (repo CI)
+- id: repo_yaml_valid_skill
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md frontmatter is valid YAML (repo CI)
+- id: repo_skill_has_name
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md frontmatter has required 'name' field (repo CI)
+- id: repo_skill_has_allowed_tools
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md frontmatter has required 'allowed-tools' field (repo CI)
+- id: repo_poll_is_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh has executable permissions (repo CI)
+- id: repo_poll_fails_without_args
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh exits non-zero when called without arguments (repo CI)
 - id: poll_script_exists_executable
   type: fail_to_pass
   origin: pr_diff
@@ -34,7 +58,13 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: SKILL.md has a polling for completion section with usage instructions
-rubric: []
+rubric:
+- rule: The added polling section in SKILL.md must clearly document how to invoke
+    the polling script and specify the required arguments (owner/repo and PR number)
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 28-34
+    commit: 91ce5a5514917a562304c7946c9c6313b88cce40
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1

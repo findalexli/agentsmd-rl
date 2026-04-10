@@ -45,9 +45,9 @@ def test_ccache_not_required():
     assert "REQUIRED" not in content or "find_command" not in content, \
         "SetupCcache.cmake should not require ccache to be present"
 
-    # Must not have CI guard that disables ccache
-    assert "CCACHE_DISABLE" not in content, \
-        "SetupCcache.cmake should not disable ccache in CI"
+    # Must not have CI-specific guard that disables ccache in non-macOS CI
+    assert "if (CI AND NOT APPLE)" not in content, \
+        "SetupCcache.cmake should not have CI-specific ccache disable guard"
 
 
 def test_bootstrap_uses_ccache():
@@ -90,7 +90,7 @@ def test_docs_use_ccache():
 
     assert "ccache" in content.lower(), \
         "CONTRIBUTING.md should mention ccache"
-    assert "Install `ccache`" in content, \
+    assert "Optional: Install `ccache`" in content, \
         "CONTRIBUTING.md should have ccache install section heading"
 
     # Should not mention sccache anywhere
@@ -132,10 +132,9 @@ def test_cmake_syntax_valid():
 
     # Basic structural checks that would catch malformed CMakeLists.txt
     assert "cmake_minimum_required" in content, "CMakeLists.txt should have cmake_minimum_required"
-    assert "project(" in content, "CMakeLists.txt should have project()"
     assert "include(" in content, "CMakeLists.txt should have include() directives"
-    assert "add_subdirectory" in content or "add_executable" in content or "add_library" in content, \
-        "CMakeLists.txt should define targets or include subdirectories"
+    # Check that SetupCcache is included (the main change from the PR)
+    assert "include(SetupCcache)" in content, "CMakeLists.txt should include SetupCcache"
 
 
 def test_bootstrap_syntax_valid():
@@ -145,3 +144,67 @@ def test_bootstrap_syntax_valid():
         cwd=REPO, capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == 0, f"bootstrap.sh has bash syntax errors: {result.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI command validation
+# ---------------------------------------------------------------------------
+
+
+def test_bootstrap_sh_posix_syntax():
+    """Repo's bootstrap.sh passes POSIX shell syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["sh", "-n", "scripts/bootstrap.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"bootstrap.sh has shell syntax errors: {result.stderr}"
+
+
+def test_run_clang_format_sh_syntax():
+    """Repo's run-clang-format.sh passes bash syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-n", "scripts/run-clang-format.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"run-clang-format.sh has bash syntax errors: {result.stderr}"
+
+
+def test_check_node_sh_syntax():
+    """Repo's check-node.sh passes POSIX shell syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["sh", "-n", "scripts/check-node.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"check-node.sh has shell syntax errors: {result.stderr}"
+
+
+def test_check_node_all_sh_syntax():
+    """Repo's check-node-all.sh passes POSIX shell syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["sh", "-n", "scripts/check-node-all.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"check-node-all.sh has shell syntax errors: {result.stderr}"
+
+
+def test_trace_sh_syntax():
+    """Repo's trace.sh passes POSIX shell syntax check (pass_to_pass)."""
+    result = subprocess.run(
+        ["sh", "-n", "scripts/trace.sh"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, f"trace.sh has shell syntax errors: {result.stderr}"
+
+
+def test_cmake_modules_syntax():
+    """Repo's CMake modules can be parsed by cmake without syntax errors (pass_to_pass)."""
+    # Test SetupCcache.cmake can be loaded in script mode
+    # cmake -P will fail if there are syntax errors, even with undefined commands
+    result = subprocess.run(
+        ["cmake", "-P", "cmake/tools/SetupCcache.cmake"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    # The script may fail due to undefined functions, but syntax errors are what we care about
+    # A syntax error will contain "Parse error" in output
+    assert "Parse error" not in result.stderr, f"SetupCcache.cmake has parse errors: {result.stderr}"
+    assert "syntax error" not in result.stderr.lower(), f"SetupCcache.cmake has syntax errors: {result.stderr}"

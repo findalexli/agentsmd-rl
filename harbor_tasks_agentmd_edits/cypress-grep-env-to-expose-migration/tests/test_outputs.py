@@ -40,6 +40,89 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI tests that execute actual repo code
+# ---------------------------------------------------------------------------
+
+def test_repo_utils_module():
+    """Utils module functions work correctly (pass_to_pass)."""
+    test_code = f"""
+import {{ parseGrep, shouldTestRun, parseTagsGrep, parseTitleGrep }} from "{REPO}/npm/grep/src/utils.ts";
+
+const parsed = parseGrep("hello world");
+if (!parsed || !parsed.title || parsed.title.length !== 1) {{
+  console.error("parseGrep failed");
+  process.exit(1);
+}}
+
+const result = shouldTestRun(parsed, "hello world test");
+if (result !== true) {{
+  console.error("shouldTestRun failed");
+  process.exit(1);
+}}
+
+const tags = parseTagsGrep("@smoke @critical");
+if (!tags || tags.length !== 2) {{
+  console.error("parseTagsGrep failed");
+  process.exit(1);
+}}
+
+const title = parseTitleGrep("test title");
+if (!title || title.title !== "test title") {{
+  console.error("parseTitleGrep failed");
+  process.exit(1);
+}}
+
+console.log("PASS");
+"""
+    test_file = "/tmp/test_utils_module.ts"
+    Path(test_file).write_text(test_code)
+    r = subprocess.run(
+        ["node", "--experimental-strip-types", "--no-warnings", test_file],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0
+    assert "PASS" in r.stdout
+
+
+def test_repo_typescript_syntax():
+    """Modified TypeScript files have valid syntax (pass_to_pass)."""
+    for relpath in ["npm/grep/src/plugin.ts", "npm/grep/src/register.ts", "npm/grep/src/utils.ts"]:
+        src_path = Path(REPO) / relpath
+        test_code = f"""
+import * as fs from "fs";
+const content = fs.readFileSync("{src_path}", "utf8");
+if (!content.includes("export")) {{
+  console.error("missing export");
+  process.exit(1);
+}}
+console.log("PASS");
+"""
+        test_file = "/tmp/test_syntax.ts"
+        Path(test_file).write_text(test_code)
+        r = subprocess.run(
+            ["node", "--experimental-strip-types", "--no-warnings", test_file],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0
+        assert "PASS" in r.stdout
+
+
+def test_repo_package_json_valid():
+    """package.json is valid JSON with required fields (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", f"""
+const pkg = require("{REPO}/npm/grep/package.json");
+if (!pkg.name) {{ console.error("missing name"); process.exit(1); }}
+if (!pkg.scripts) {{ console.error("missing scripts"); process.exit(1); }}
+if (!pkg.dependencies) {{ console.error("missing dependencies"); process.exit(1); }}
+console.log("PASS");
+        """],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0
+    assert "PASS" in r.stdout
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -84,7 +167,38 @@ if (fs.existsSync(versionPath)) {
     "export const version = '0.0.0';\n");
 }
 
-// Install debug (only external dependency of plugin.ts)
+// Create mock modules to avoid heavy dependencies
+fs.writeFileSync(tmpDir + '/src/mock_globby.ts', `
+export function sync(pattern: string | string[], options?: any): string[] {
+  return ['test.cy.ts'];
+}
+`);
+
+fs.writeFileSync(tmpDir + '/src/mock_find_test_names.ts', `
+export function getTestNames(source: string): any {
+  return { suiteNames: [], testNames: [] };
+}
+`);
+
+// Modify plugin.ts to use mocks
+let pluginSrc = fs.readFileSync(tmpDir + '/src/plugin.ts', 'utf8');
+// Replace heavy imports with mocks
+pluginSrc = pluginSrc.replace(
+  "import { sync as globbySync } from 'globby'",
+  "import { sync as globbySync } from './mock_globby.ts'"
+);
+pluginSrc = pluginSrc.replace(
+  "import { getTestNames } from 'find-test-names'",
+  "import { getTestNames } from './mock_find_test_names.ts'"
+);
+// Replace JSON import with a simple constant
+pluginSrc = pluginSrc.replace(
+  /import { version } from '..\/package\.json'/,
+  "const version = '0.0.0'"
+);
+fs.writeFileSync(tmpDir + '/src/plugin.ts', pluginSrc);
+
+// Install only debug (lightweight dependency)
 execSync('npm init -y 2>&1', { cwd: tmpDir, stdio: 'pipe' });
 execSync('npm install debug 2>&1', { cwd: tmpDir, stdio: 'pipe', timeout: 60000 });
 
@@ -139,19 +253,9 @@ try {
     { cwd: tmpDir, stdio: 'pipe', timeout: 30000 }
   );
 } catch (e1) {
-  // Fallback: tsx (downloads on first use)
-  try {
-    out = execSync(
-      'npx --yes tsx src/test.ts',
-      { cwd: tmpDir, stdio: 'pipe', timeout: 120000 }
-    );
-  } catch (e2) {
-    throw new Error(
-      'Plugin test failed (both --experimental-strip-types and tsx)\n' +
-      'node: ' + (e1.stderr?.toString() || e1.message) + '\n' +
-      'tsx: ' + (e2.stderr?.toString() || e2.message)
-    );
-  }
+  throw new Error(
+    'Plugin test failed: ' + (e1.stderr?.toString() || e1.message)
+  );
 }
 console.log(out.toString().trim());
 """, timeout=90)

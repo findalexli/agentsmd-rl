@@ -41,6 +41,91 @@ def test_syntax_check():
             assert r.returncode == 0, f"{f} has syntax errors: {r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_ruff_check_signals():
+    """Ruff linter passes on modified signals files (pass_to_pass)."""
+    # Install ruff first
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr}"
+
+    # Run ruff check on modified files
+    modified_files = [
+        "products/signals/backend/temporal/buffer.py",
+        "products/signals/backend/temporal/__init__.py",
+        "products/signals/backend/temporal/llm.py",
+        "products/signals/backend/temporal/summary.py",
+        "products/signals/eval/eval_grouping_e2e.py",
+        "products/signals/eval/data_spec.py",
+    ]
+
+    for f in modified_files:
+        p = Path(REPO) / f
+        if p.exists():
+            r = subprocess.run(
+                ["ruff", "check", str(p), "--output-format=concise"],
+                capture_output=True, text=True, timeout=60, cwd=REPO,
+            )
+            assert r.returncode == 0, f"Ruff check failed for {f}:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_signals_activities_registered():
+    """Signals activities are properly registered in temporal module (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, '/workspace/posthog')
+
+# Verify the imports work at AST level
+import ast
+
+# Check __init__.py has proper activity imports
+init_path = '/workspace/posthog/products/signals/backend/temporal/__init__.py'
+with open(init_path) as f:
+    init_src = f.read()
+    init_tree = ast.parse(init_src)
+
+# Verify key imports exist (using new names after PR 51171 rename)
+imports_found = {
+    'report_safety_judge_activity': False,
+    'safety_filter_activity': False,
+    'summarize_signals_activity': False,
+    'actionability_judge_activity': False,
+    'BufferSignalsWorkflow': False,
+    'SignalReportSummaryWorkflow': False,
+}
+
+for node in ast.walk(init_tree):
+    if isinstance(node, ast.ImportFrom):
+        for alias in node.names:
+            if alias.name in imports_found:
+                imports_found[alias.name] = True
+    elif isinstance(node, ast.Name):
+        if node.id in imports_found:
+            imports_found[node.id] = True
+
+# Check ACTIVITIES and WORKFLOWS lists exist
+has_activities = 'ACTIVITIES' in init_src
+has_workflows = 'WORKFLOWS' in init_src
+
+assert has_activities, "ACTIVITIES list not found in __init__.py"
+assert has_workflows, "WORKFLOWS list not found in __init__.py"
+
+# Verify all expected imports are present
+for name, found in imports_found.items():
+    assert found, f"Required import '{name}' not found in __init__.py"
+
+print("All signals activities properly registered")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Signals activities check failed:\n{r.stdout}\n{r.stderr}"
+    assert "properly registered" in r.stdout
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

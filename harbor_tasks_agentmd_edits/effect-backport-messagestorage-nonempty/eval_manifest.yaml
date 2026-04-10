@@ -5,6 +5,22 @@ source:
   base_commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
   merge_commit: 17812444c6c0d8f19f9fbc85d82f911dff5523ab
 checks:
+- id: test_repo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compilation passes (pnpm check)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes (pnpm lint)
+- id: test_repo_circular
+  type: pass_to_pass
+  origin: repo_tests
+  description: Circular dependency check passes (pnpm circular)
+- id: test_repo_cluster_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cluster package tests pass (vitest run MessageStorage.test.ts)
 - id: source_files_parse
   type: pass_to_pass
   origin: static
@@ -30,18 +46,14 @@ checks:
   origin: pr_diff
   description: A changeset file exists in .changeset/ referencing @effect/cluster
 rubric:
-- rule: Always look at existing code in the repository to learn and follow established
-    patterns before writing new code
+- rule: Add a Changesets section to AGENTS.md documenting the changeset requirement
   source:
     path: AGENTS.md
-    lines: 28-29
-    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
-- rule: Keep code and any wording concise and to the point. Sacrifice grammar for
-    the sake of concision.
-  source:
-    path: AGENTS.md
-    lines: '14'
-    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+    reference: |
+      ## Changesets
+
+      All pull requests must include a changeset in the `.changeset/` directory.
+      This is important for maintaining a clear changelog and ensuring proper versioning of packages.
 config_edits:
 - path: AGENTS.md
   tier: 1

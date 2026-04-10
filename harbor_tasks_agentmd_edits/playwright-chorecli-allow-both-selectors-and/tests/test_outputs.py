@@ -180,3 +180,63 @@ def test_skill_md_preserves_ref_and_css_examples():
     # CSS selector example
     assert "#main" in content or "button.submit" in content, \
         "SKILL.md should still show CSS selector example"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """Repo's ESLint passes on the codebase (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "--max-warnings=0", "."],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build completes successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_locator_parser_unit():
+    """Locator parser unit tests - verify isomorphic module works (pass_to_pass)."""
+    # Test the locator parser bundle that esbuild creates
+    script = r"""
+const { locatorOrSelectorAsSelector } = require('/tmp/locatorParser.cjs');
+
+const tests = [
+    { input: "getByRole('button', { name: 'Submit' })", expected: "internal:role=button[name='Submit']" },
+    { input: "getByTestId('my-id')", expected: "internal:testid=my-id" },
+    { input: "#main > button", expected: "#main > button" },
+    { input: ".classname", expected: ".classname" },
+];
+
+let passed = 0;
+let failed = 0;
+for (const t of tests) {
+    const result = locatorOrSelectorAsSelector('javascript', t.input, 'data-testid');
+    if (result && result.length > 0) {
+        passed++;
+    } else {
+        console.log(`FAIL: ${t.input} -> empty result`);
+        failed++;
+    }
+}
+console.log(JSON.stringify({ passed, failed, total: tests.length }));
+"""
+    result = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Locator parser unit test failed: {result.stderr}"
+    data = json.loads(result.stdout.strip().split("\n")[-1])
+    assert data["failed"] == 0, f"Locator parser tests failed: {data['failed']} of {data['total']}"

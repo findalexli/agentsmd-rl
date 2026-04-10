@@ -39,6 +39,30 @@ checks:
   type: pass_to_pass
   origin: static
   description: deviceDescriptorsSource.json must be valid JSON with many entries
+- id: repo_git_checkout_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is a valid git checkout with expected commit
+- id: repo_browsers_json_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: browsers.json has required schema with webkit entry
+- id: repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root package.json is valid JSON with expected structure
+- id: repo_docs_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Docs directory has expected release notes structure
+- id: repo_skill_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: Skill docs directory exists with SKILL.md
+- id: repo_wkbrowser_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: wkBrowser.ts has expected structure
 rubric:
 - rule: The skill document should explain how to find the latest stable Safari version
     (not Technology Preview)
@@ -56,15 +80,15 @@ config_edits:
   tier: 2
   gold_added: "# Updating WebKit Safari Version\n\nThe Safari version string used\
     \ in the WebKit user-agent is declared in one place:\n\n**[packages/playwright-core/src/server/webkit/wkBrowser.ts](../../../packages/playwright-core/src/server/webkit/wkBrowser.ts)**\
-    \ — `BROWSER_VERSION` constant (line ~35).\n\n```ts\nconst BROWSER_VERSION = '26.4';\n\
-    const DEFAULT_USER_AGENT = `Mozilla/5.0 ... Version/${BROWSER_VERSION} Safari/605.1.15`;\n\
-    ```\n\n## Steps to update\n\n1. **Find the latest stable Safari version** — search\
-    \ `site:developer.apple.com \"Safari X.Y Release Notes\"` or check the [Safari\
-    \ Release Notes](https://developer.apple.com/documentation/safari-release-notes)\
+    \ \u2014 `BROWSER_VERSION` constant (line ~35).\n\n```ts\nconst BROWSER_VERSION\
+    \ = '26.4';\nconst DEFAULT_USER_AGENT = `Mozilla/5.0 ... Version/${BROWSER_VERSION}\
+    \ Safari/605.1.15`;\n```\n\n## Steps to update\n\n1. **Find the latest stable\
+    \ Safari version** \u2014 search `site:developer.apple.com \"Safari X.Y Release\
+    \ Notes\"` or check the [Safari Release Notes](https://developer.apple.com/documentation/safari-release-notes)\
     \ index. The highest numbered entry that is not a Technology Preview is the current\
     \ stable release.\n\n2. **Update `BROWSER_VERSION`** in `wkBrowser.ts`.\n\n3.\
-    \ **Run lint** to update any generated files that embed the version:\n\n   ```bash\n\
-    \   npm run flint\n   ```"
+    \ **Run lint** to update any generated files that embed the version:\n\n   \
+    ```bash\n   npm run flint\n   ```"
   gold_removed: ''
 - path: README.md
   tier: 2

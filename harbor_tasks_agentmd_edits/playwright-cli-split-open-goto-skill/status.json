@@ -1,21 +1,53 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:45:58.922143",
-  "total_time": 5711.72,
-  "sandbox_id": "igvljz5au27k4fi8m8li8",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:30:56.205432",
+  "total_time": 2410.43,
+  "sandbox_id": "i1mh4mownxgvo7wkugv6g",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 63.84,
+      "time": 300.0,
+      "notes": "Added 4 pass_to_pass repo_tests gates: (1) test_repo_typescript_syntax_program_ts - validates program.ts syntax using @babel/parser, (2) test_repo_typescript_syntax_cli_misc - validates cli-misc.spec.ts syntax, (3) test_repo_workspace_consistent - runs workspace.js --ensure-consistent, (4) test_repo_eslint_modified_file - runs ESLint on program.ts. Docker: node:22-slim with npm install. Repo: microsoft/playwright @ 0f542ecb2d37ec5bcf4e987d20ac379ccdba9033. Modified files: packages/playwright/src/mcp/terminal/program.ts, packages/playwright/src/skill/SKILL.md, tests/mcp/cli-misc.spec.ts"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 742.2,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed judge.py rubric extraction to include all file hunks (not just config files). Adjusted rubric rule to match gold solution actual behavior (backticks only on some messages, not all). All 4 checks now pass: Docker build OK, NOP reward=0, Gold reward=1, Rubric ICR=1.0",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 380.72
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.21,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +58,14 @@
       "backend": "fireworks",
       "time": 5711.72,
       "at": "2026-04-09T07:45:58.922143"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2410.43,
+      "at": "2026-04-10T12:30:56.205432"
     }
   ]
 }

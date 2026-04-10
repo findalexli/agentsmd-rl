@@ -110,6 +110,36 @@ def test_repo_eslint_modified():
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
 
+
+# [repo_tests] pass_to_pass
+def test_repo_generate_channels():
+    """Repo's generate_channels script passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"generate_channels failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_copyright():
+    """Repo's copyright check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/copyright.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"copyright check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_tools_directory():
+    """Repo's ESLint on tools directory passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "--cache", "packages/playwright-core/src/tools/"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on tools directory failed:\n{r.stderr[-500:]}"
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests (CODE EXECUTION)
 # ---------------------------------------------------------------------------

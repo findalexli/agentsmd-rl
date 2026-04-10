@@ -33,6 +33,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's turbo typecheck passes across monorepo
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for packages/app pass (bun test)
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier check for packages/app/src passes
 - id: agents_md_documents_helpers
   type: fail_to_pass
   origin: pr_diff
@@ -41,7 +49,24 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: e2e/AGENTS.md includes terminal testing guidelines section
-rubric: []
+rubric:
+- rule: E2E test files must import test and expect from '../fixtures', not from '@playwright/test'
+    directly
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 99-107
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Code should avoid 'else' statements - prefer early returns instead
+  source:
+    path: AGENTS.md
+    lines: 82-98
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Prefer single-word variable names for locals, params, and helper functions
+    (multi-word only when necessary for clarity)
+  source:
+    path: AGENTS.md
+    lines: 21-32
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1

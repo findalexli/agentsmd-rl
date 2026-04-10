@@ -222,3 +222,36 @@ def test_repo_makefile_style_runs_ruff():
     style_block = style_match.group()
     assert "ruff check" in style_block, "style target must run ruff check"
     assert "ruff format" in style_block, "style target must run ruff format"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_modeling_structure_list_rules():
+    """Repo's check_modeling_structure.py --list-rules works (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py", "--list-rules"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"--list-rules failed:\n{r.stderr}"
+    assert "TRF001" in r.stdout, "Should list TRF001 rule"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_modeling_structure_rule_doc():
+    """Repo's check_modeling_structure.py --rule works (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_modeling_structure.py", "--rule", "TRF001"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"--rule failed:\n{r.stderr}"
+    assert "TRF001" in r.stdout, "Should show TRF001 documentation"
+    assert "config_class" in r.stdout, "Should mention config_class in documentation"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile_check_modeling_structure():
+    """Python syntax of check_modeling_structure.py is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "utils/check_modeling_structure.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"

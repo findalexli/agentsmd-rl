@@ -29,61 +29,52 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: C3 package unit tests pass
+  - id: test_repo_catalog_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo catalog usage validation passes
+  - id: test_repo_package_deps_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo package dependencies validation passes
+  - id: test_c3_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: C3 package linting passes
+  - id: test_c3_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: C3 package formatting passes
 rubric:
-  - rule: AGENTS.md update is consistent with the style and structure of the existing
-      file
+  - rule: AGENTS.md is updated and maintains consistent style
     source:
       path: packages/create-cloudflare/AGENTS.md
       lines: 1-25
       commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
-  - rule: engines.node requires at least Node.js 20
-    reference: "# packages/create-cloudflare/AGENTS.md\nProject scaffolding CLI for\
-      \ Cloudflare Workers. Main source entry: . Bin entry: \
-      \ (Node.js version gate shim).\n-  \u2014 Bin shim that checks Node.js\
-      \ version before requiring \n-  \u2014 Main entry. Exports\
-      \  for programmatic use\n-   and  point at ;  points at \n-  is a plain\
-      \ CommonJS shim that gates on Node.js version (read fro"
-  - rule: AGENTS.md documents the new bin/c3.js shim entry point
+  - rule: AGENTS.md documents Node.js version requirements
+    reference: "packages/create-cloudflare/AGENTS.md documents the Node.js version requirement from engines.node"
+  - rule: AGENTS.md documents the bin/c3.js entry point
     source:
       path: packages/create-cloudflare/AGENTS.md
       lines: 5-11
       commit: 448fec88a19cad5a3ab7a4d7ff99e166cd485ea2
-    reference: "Project scaffolding CLI for Cloudflare Workers. Main source entry: .\
-      \ Bin entry:  (Node.js version gate shim).\n-  \u2014 Bin\
-      \ shim that checks Node.js version before requiring \n- \
-      \ \u2014 Main entry. Exports  for programmatic use\n- \
-      \  and  point at ;  points at \n\
-      \-  is a plain CommonJS shim that gates on Node.js version (read from\
-      \  ) before"
-  - rule: AGENTS.md mentions the Node.js version gate/check
+    reference: "AGENTS.md documents bin/c3.js as the bin entry point"
+  - rule: AGENTS.md documents the Node.js version gate
     source:
       path: packages/create-cloudflare/AGENTS.md
       lines: 4-18
       commit: 448fec88a19cad5a3ab7a4d7ff99e166cd485ea2
-    reference: "Project scaffolding CLI for Cloudflare Workers. Main source entry: .\
-      \ Bin entry:  (Node.js version gate shim).\n-  \u2014 Bin\
-      \ shim that checks Node.js version before requiring \n- \
-      \ \u2014 Main entry. Exports  for programmatic use\n- \
-      \  and  point at ;  points at \n\
-      \-  is a plain CommonJS shim that gates on Node.js version (read from\
-      \  ) before"
-  - rule: AGENTS.md no longer says there is no separate bin shim
+    reference: "AGENTS.md mentions the Node.js version gate/check in bin/c3.js"
+  - rule: AGENTS.md removes the no separate bin shim language
     source:
       path: packages/create-cloudflare/AGENTS.md
       lines: 15-16
       commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
-    reference: "Project scaffolding CLI for Cloudflare Workers. Main source entry: .\
-      \ Bin entry:  (Node.js version gate shim).\n-  \u2014 Bin\
-      \ shim that checks Node.js version before requiring \n- \
-      \ \u2014 Main entry. Exports  for programmatic use\n- \
-      \  and  point at ;  points at \n\
-      \-  is a plain CommonJS shim that gates on Node.js version (read from\
-      \  ) before"
-  - rule: package.json bin field points to bin shim, not dist/cli.js
-    reference: "# packages/create-cloudflare/AGENTS.md\nProject scaffolding CLI for\
-      \ Cloudflare Workers. Main source entry: . Bin entry: \
-      \ (Node.js version gate shim).\n-  \u2014 Bin shim that checks Node.js\
-      \ version before requiring \n-  \u2014 Main entry. Exports\
-      \  for programmatic use\n-   and  point at ;  points at \n-  is a plain\
-      \ CommonJS shim that gates on Node.js version (read fro"
-
+    reference: "AGENTS.md no longer states there is no separate bin shim"
+  - rule: AGENTS.md documents the package.json bin field change
+    reference: "AGENTS.md documents that package.json bin points to bin/c3.js"
+  - rule: AGENTS.md documents the bin shim implementation
+    source:
+      path: AGENTS.md
+      lines: "112-115"
+      commit: 0de69890c8503bb67e391e7ad5578c7001b7798e

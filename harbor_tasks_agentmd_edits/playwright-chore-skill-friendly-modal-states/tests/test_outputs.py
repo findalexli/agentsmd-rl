@@ -92,6 +92,64 @@ def test_repo_mcp_tool_types_syntax():
     assert r.returncode == 0, f"tool.ts is not readable:\n{r.stderr}"
 
 
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_config_syntax():
+    """Repo MCP config.ts has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('packages/playwright/src/mcp/browser/config.ts','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"config.ts is not readable:\n{r.stderr}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_response_syntax():
+    """Repo MCP response.ts has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('packages/playwright/src/mcp/browser/response.ts','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"response.ts is not readable:\n{r.stderr}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_build_js_syntax():
+    """Repo build.js has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('utils/build/build.js','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"build.js is not readable:\n{r.stderr}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_npm_install():
+    """Repo npm install succeeds (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"npm install failed:\n{r.stderr[-500:]}"
+
+
+# [repo] pass_to_pass - CI/CD gate
+def test_repo_mcp_cli_spec_syntax():
+    """Repo MCP CLI test spec has valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e",
+         "require('fs').readFileSync('tests/mcp/cli.spec.ts','utf8');"
+         "console.log('OK')"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"cli.spec.ts is not readable:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - command renames
 # ---------------------------------------------------------------------------

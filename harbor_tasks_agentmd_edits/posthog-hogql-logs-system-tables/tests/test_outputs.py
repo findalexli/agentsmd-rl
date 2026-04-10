@@ -46,6 +46,102 @@ except SyntaxError as e:
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - repo CI command tests
+# ---------------------------------------------------------------------------
+
+def test_system_py_structure_valid():
+    """system.py has valid Python structure with expected classes."""
+    r = _run_in_venv(f"""
+import ast, sys
+
+source = open({str(SYSTEM_PY)!r}).read()
+tree = ast.parse(source)
+
+# Check for SystemTables class
+classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+if "SystemTables" not in classes:
+    print("SystemTables class not found", file=sys.stderr)
+    sys.exit(1)
+
+# Check for PostgresTable calls (indicating table definitions)
+has_postgres_table = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.Call):
+        func_name = ""
+        if isinstance(node.func, ast.Name):
+            func_name = node.func.id
+        elif isinstance(node.func, ast.Attribute):
+            func_name = node.func.attr
+        if func_name == "PostgresTable":
+            has_postgres_table = True
+            break
+
+if not has_postgres_table:
+    print("No PostgresTable definitions found", file=sys.stderr)
+    sys.exit(1)
+
+print("OK")
+""")
+    assert r.returncode == 0, f"system.py structure invalid: {r.stderr}"
+
+
+def test_system_py_imports_valid():
+    """system.py has valid import statements."""
+    r = _run_in_venv(f"""
+import ast, sys
+
+source = open({str(SYSTEM_PY)!r}).read()
+tree = ast.parse(source)
+
+# Check that imports are valid Python syntax
+for node in ast.walk(tree):
+    if isinstance(node, ast.Import):
+        for alias in node.names:
+            if not alias.name.replace(".", "").replace("_", "").isalnum():
+                print(f"Invalid import: {{alias.name}}", file=sys.stderr)
+                sys.exit(1)
+    elif isinstance(node, ast.ImportFrom):
+        if node.module and not node.module.replace(".", "").replace("_", "").isalnum():
+            print(f"Invalid from import: {{node.module}}", file=sys.stderr)
+            sys.exit(1)
+
+print("OK")
+""")
+    assert r.returncode == 0, f"system.py has invalid imports: {r.stderr}"
+
+
+def test_markdown_files_parseable():
+    """Markdown files are parseable and have expected structure."""
+    # Check SKILL.md
+    r1 = _run_in_venv(f"""
+import sys
+content = open({str(SKILL_MD)!r}).read()
+if len(content) < 100:
+    print("SKILL.md too short", file=sys.stderr)
+    sys.exit(1)
+if "# " not in content:
+    print("SKILL.md missing heading", file=sys.stderr)
+    sys.exit(1)
+print("SKILL.md OK")
+""")
+    assert r1.returncode == 0, f"SKILL.md invalid: {r1.stderr}"
+
+    # Check guidelines.md
+    r2 = _run_in_venv(f"""
+import sys
+content = open({str(GUIDELINES_MD)!r}).read()
+if len(content) < 100:
+    print("guidelines.md too short", file=sys.stderr)
+    sys.exit(1)
+if "# " not in content:
+    print("guidelines.md missing heading", file=sys.stderr)
+    sys.exit(1)
+print("guidelines.md OK")
+""")
+    assert r2.returncode == 0, f"guidelines.md invalid: {r2.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) - code behavioral tests
 # ---------------------------------------------------------------------------
 
@@ -76,7 +172,7 @@ if not found:
     print("logs_views assignment not found", file=sys.stderr)
     sys.exit(1)
 
-# Verify it's a PostgresTable call
+# Verify it is a PostgresTable call
 if not isinstance(found, ast.Call):
     print("logs_views is not a Call expression", file=sys.stderr)
     sys.exit(1)

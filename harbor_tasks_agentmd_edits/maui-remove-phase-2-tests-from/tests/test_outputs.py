@@ -63,9 +63,16 @@ def test_summary_script_no_tests_section_extraction():
     assert r.returncode == 0, f"Script has syntax errors: {r.stderr}"
 
     content = script_path.read_text()
-    # The old script had $testsContent, $testsSection, $newTestsSession variables
-    assert "$testsContent" not in content, "Script should not extract $testsContent"
-    assert "$testsSection" not in content, "Script should not build $testsSection"
+    # The gold patch removes the extraction of Tests content:
+    # - The $testsContent = Get-SectionByPattern assignment is removed
+    # - The $testsSection = New-PhaseSection building is removed
+    # - The $testsSection output in phaseSections is removed
+    assert "$testsContent = Get-SectionByPattern" not in content, \
+        "Script should not have $testsContent extraction assignment"
+    assert "$testsSection = New-PhaseSection" not in content, \
+        "Script should not build $testsSection"
+    assert "$phaseSections += $testsSection" not in content, \
+        "Script should not add Tests section to output"
 
 
 # [pr_diff] fail_to_pass
@@ -137,3 +144,42 @@ def test_plan_template_has_gate_fix_report():
     assert "Gate" in content, "PLAN-TEMPLATE should have Gate phase"
     assert "Fix" in content, "PLAN-TEMPLATE should have Fix phase"
     assert "Report" in content, "PLAN-TEMPLATE should have Report phase"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI checks from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_powershell_scripts_parse():
+    """All PowerShell scripts in .github must parse without syntax errors (pass_to_pass)."""
+    scripts = [
+        ".github/skills/ai-summary-comment/scripts/post-ai-summary-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-pr-finalize-comment.ps1",
+        ".github/scripts/Review-PR.ps1",
+    ]
+    for script_rel in scripts:
+        script_path = Path(REPO) / script_rel
+        r = subprocess.run(
+            ["pwsh", "-Command",
+             f"[System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw '{script_path}'), [ref]$null) | Out-Null; if ($?) {{ exit 0 }} else {{ exit 1 }}"],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"PowerShell script {script_rel} has syntax errors: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_loadable():
+    """Modified PowerShell scripts can be loaded by Get-Command (pass_to_pass)."""
+    scripts = [
+        ".github/skills/ai-summary-comment/scripts/post-ai-summary-comment.ps1",
+        ".github/skills/ai-summary-comment/scripts/post-pr-finalize-comment.ps1",
+        ".github/scripts/Review-PR.ps1",
+    ]
+    for script_rel in scripts:
+        script_path = Path(REPO) / script_rel
+        r = subprocess.run(
+            ["pwsh", "-Command", f"Get-Command '{script_path}'"],
+            capture_output=True, text=True, timeout=30,
+        )
+        assert r.returncode == 0, f"PowerShell script {script_rel} is not loadable: {r.stderr}"

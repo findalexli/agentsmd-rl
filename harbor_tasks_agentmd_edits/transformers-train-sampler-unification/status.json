@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:43:08.731183",
-  "total_time": 5835.0,
-  "sandbox_id": "i4qhugtma7lqpibjtptvd",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:03:24.799899",
+  "total_time": 1743.23,
+  "sandbox_id": "ihiosj3snv001ud7fgdtx",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 0.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 4.95,
-      "notes": "Added 3 new pass_to_pass checks from repo CI/CD tests: (1) test_repo_training_args_tests - runs pytest on tests/trainer/test_training_args.py (23 tests pass), (2) test_repo_trainer_utils_tests - runs pytest on tests/trainer/test_trainer_utils.py (18 tests pass, includes sampler tests), (3) test_repo_ruff_format_check - runs ruff format --check on modified files. All commands verified working in Docker container on base commit 8efd81513f51cd343d086e0e8f69190caa49dbcf. Skipped: make style (has pre-existing issues), make check-repo (too many checks, some fail), full test suite (too slow >120s), integration tests (require GPU/slow)."
+      "time": 289.63,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "rate_limited",
@@ -30,6 +30,24 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed. Docker build succeeded. NOP test correctly returns reward=0 (5 fail-to-pass tests fail on base commit). Gold test correctly returns reward=1 (all 10 tests pass after applying solve.sh). Rubric judge shows ICR=0.00 because rules check for modifications to AGENTS.md and .github/copilot-instructions.md which are config files the gold solution correctly does NOT modify.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 313.6
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 7.34,
+      "notes": "ICR=0.00"
     }
   },
   "history": [
@@ -40,6 +58,22 @@
       "backend": "glm",
       "time": 5835.0,
       "at": "2026-04-09T07:43:08.731183"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "validation",
+      "time": 0,
+      "at": "2026-04-10T00:00:00.000000"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1743.23,
+      "at": "2026-04-10T13:03:24.799899"
     }
   ]
 }

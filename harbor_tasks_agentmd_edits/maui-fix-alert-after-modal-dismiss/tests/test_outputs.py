@@ -43,8 +43,18 @@ def test_syntax_check():
 
     for rel in [COPILOT_REL, SKILL_REL, EXAMPLE_REL]:
         md = Path(REPO, rel).read_text()
-        assert "<<<<<<" not in md, f"{rel}: merge conflict marker found"
-        assert ">>>>>>" not in md, f"{rel}: merge conflict marker found"
+        # Check for actual merge conflict markers, not code examples
+        # Split by code blocks (``` or indented) and only check narrative text
+        import re
+
+        # Remove code blocks before checking for conflict markers
+        text_without_code = re.sub(r'```[\s\S]*?```', '', md)
+        text_without_code = re.sub(r'~~~[\s\S]*?~~~', '', text_without_code)
+        # Also remove indented code blocks (4+ spaces)
+        text_without_code = re.sub(r'^(    |\t).*', '', text_without_code, flags=re.MULTILINE)
+
+        assert "<<<<<<" not in text_without_code, f"{rel}: merge conflict marker found"
+        assert ">>>>>>" not in text_without_code, f"{rel}: merge conflict marker found"
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +99,8 @@ cond = wm.group(1).strip()
 checks = {
     "has_presented_vc": "PresentedViewController" in cond,
     "has_isbeingdismissed": "IsBeingDismissed" in cond,
-    "has_negation": bool(re.search(r"!\s*\w+\.IsBeingDismissed", cond)),
+    # Match negation with optional chaining: !x?.y.IsBeingDismissed or !x.y.IsBeingDismissed
+    "has_negation": bool(re.search(r"!\s*\S+\.IsBeingDismissed", cond)),
     "is_compound": "&&" in cond,
 }
 
@@ -241,14 +252,26 @@ def test_existing_alert_manager_logic_intact():
     """
     content = Path(REPO, ALERT_MANAGER_REL).read_text()
 
-    method_match = re.search(
-        r"static\s+UIViewController\s+GetTopUIViewController\s*\(.*?\)\s*\{(.*?)^\t\t\t\t\}",
+    # Find the method and extract its body by counting braces
+    method_start = re.search(
+        r"static\s+UIViewController\s+GetTopUIViewController\s*\([^)]*\)\s*\{",
         content,
-        re.DOTALL | re.MULTILINE,
     )
-    assert method_match, "GetTopUIViewController method not found"
+    assert method_start, "GetTopUIViewController method not found"
 
-    body = method_match.group(1)
+    start_pos = method_start.end()
+
+    # Count braces to find the end of the method body
+    brace_count = 1
+    pos = start_pos
+    while brace_count > 0 and pos < len(content):
+        if content[pos] == '{':
+            brace_count += 1
+        elif content[pos] == '}':
+            brace_count -= 1
+        pos += 1
+
+    body = content[start_pos:pos-1]  # -1 to exclude the final closing brace
 
     assert "RootViewController" in body, (
         "GetTopUIViewController must still start from RootViewController"
@@ -287,3 +310,135 @@ def test_skill_md_never_approve_rule_intact():
     assert "Code Review" in content, (
         "SKILL.md must retain the Code Review section"
     )
+
+
+def test_repo_xml_validation():
+    """XAML files in the repo must be valid XML (pass_to_pass).
+
+    Uses Python's xml.etree.ElementTree to verify XAML files are well-formed.
+    This catches syntax errors in the XAML files that would break the build.
+    """
+    r = _run_py(r"""
+import xml.etree.ElementTree as ET
+import json
+import sys
+import glob
+import os
+
+# Get list of XAML files in the test issues directory
+xaml_files = glob.glob(
+    "src/Controls/tests/TestCases.HostApp/Issues/*.xaml"
+)[:20]
+
+errors = []
+for f in xaml_files:
+    try:
+        ET.parse(f)
+    except ET.ParseError as e:
+        errors.append(f"{f}: {e}")
+
+if errors:
+    print(json.dumps({"error": "; ".join(errors)}))
+    sys.exit(1)
+
+print(json.dumps({
+    "status": "PASS",
+    "checked": len(xaml_files)
+}))
+""")
+    assert r.returncode == 0, f"XML validation failed:\n{r.stderr}\n{r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("status") == "PASS", f"XML validation failed: {data}"
+
+
+def test_repo_json_validation():
+    """JSON config files must be valid (pass_to_pass).
+
+    Validates global.json and other config files are parseable.
+    This ensures the repo's configuration is not corrupted.
+    """
+    r = _run_py(r"""
+import json
+import sys
+import glob
+import os
+
+json_files = [
+    "global.json",
+    "github-merge-flow-net10.jsonc",
+    "github-merge-flow-net11.jsonc",
+]
+
+errors = []
+for f in json_files:
+    if not os.path.exists(f):
+        continue
+    try:
+        # Read and strip comments for .jsonc files
+        with open(f) as fp:
+            content = fp.read()
+        # Remove single-line comments for jsonc
+        lines = [l for l in content.split('\n') if not l.strip().startswith('//')]
+        json.loads('\n'.join(lines))
+    except json.JSONDecodeError as e:
+        errors.append(f"{f}: {e}")
+
+if errors:
+    print(json.dumps({"error": "; ".join(errors)}))
+    sys.exit(1)
+
+print(json.dumps({"status": "PASS"}))
+""")
+    assert r.returncode == 0, f"JSON validation failed:\n{r.stderr}\n{r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("status") == "PASS", f"JSON validation failed: {data}"
+
+
+def test_repo_alertmanager_cs_syntax():
+    """AlertManager.iOS.cs must have valid C# structure (pass_to_pass).
+
+    Checks brace balance, namespace declarations, and method structure
+    using regex parsing - a lightweight syntax validation.
+    """
+    r = _run_py(r"""
+import re
+import json
+import sys
+import os
+
+content = open(
+    "src/Controls/src/Core/Platform/AlertManager/AlertManager.iOS.cs"
+).read()
+
+errors = []
+
+# Check brace balance
+open_braces = content.count('{')
+close_braces = content.count('}')
+if open_braces != close_braces:
+    errors.append(f"Unbalanced braces: {open_braces} open, {close_braces} close")
+
+# Check namespace declaration
+if "namespace Microsoft.Maui.Controls.Platform" not in content:
+    errors.append("Missing correct namespace declaration")
+
+# Check class structure
+if "static UIViewController GetTopUIViewController" not in content:
+    errors.append("GetTopUIViewController method not found")
+
+# Check for basic method structure (base or fixed version)
+if "while (topUIViewController?.PresentedViewController is not null" not in content:
+    errors.append("While loop structure not found")
+
+if errors:
+    print(json.dumps({"error": "; ".join(errors)}))
+    sys.exit(1)
+
+print(json.dumps({
+    "status": "PASS",
+    "braces": open_braces
+}))
+""")
+    assert r.returncode == 0, f"C# syntax check failed:\n{r.stderr}\n{r.stdout}"
+    data = json.loads(r.stdout.strip())
+    assert data.get("status") == "PASS", f"C# syntax check failed: {data}"

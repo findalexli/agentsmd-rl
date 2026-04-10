@@ -19,5 +19,11 @@ RUN git init /workspace/playwright && \
 
 WORKDIR /workspace/playwright
 
+# Install npm dependencies for the monorepo
+RUN npm ci
+
+# Build the monorepo to generate required files (tsc and check-deps need this)
+RUN npm run build
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

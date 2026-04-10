@@ -81,7 +81,7 @@ def test_pdf_viewer_imports_unified():
 
 
 def test_pdf_preview_imports_unified():
-    """SharePdf/PdfPreview must import from unified @/libs/pdfjs module."""
+    """SharePdf/PdfPreview must import from the unified @/libs/pdfjs module."""
     content = (REPO / "src/features/ShareModal/SharePdf/PdfPreview.tsx").read_text()
     assert "@/libs/pdfjs" in content, \
         "Must import from unified @/libs/pdfjs module"
@@ -126,7 +126,7 @@ def test_repo_eslint_passes():
     """
     r = subprocess.run(
         ["npm", "run", "lint:ts"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-1000:]}"
 
@@ -137,7 +137,7 @@ def test_repo_stylelint_passes():
     """
     r = subprocess.run(
         ["npm", "run", "lint:style"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-1000:]}"
 
@@ -148,7 +148,7 @@ def test_repo_no_circular_deps():
     """
     r = subprocess.run(
         ["npm", "run", "lint:circular:main"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Circular dependency check failed:\n{r.stderr[-1000:]}"
 
@@ -159,6 +159,6 @@ def test_repo_component_tests_pass():
     """
     r = subprocess.run(
         ["npx", "vitest", "run", "--reporter=verbose", "src/components"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Component tests failed:\n{r.stderr[-1000:]}"

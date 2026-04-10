@@ -3,11 +3,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T03:42:31.510597",
-  "total_time": 7514.59,
-  "sandbox_id": "i98h9tmmiqw94xrfzpuih",
+  "validated_at": "2026-04-10T11:55:24.359070",
+  "total_time": 1844.39,
+  "sandbox_id": "i3z9vb3xb8z90hx63wu98",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.66,
   "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
@@ -15,7 +16,7 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 356.16,
-      "notes": ""
+      "notes": "Found and verified 2 CI commands as pass_to_pass gates: (1) node --check scripts/pr-status.js - syntax validation, (2) npx prettier --check scripts/pr-status.js - formatting check. Both work without pnpm install. Updated eval_manifest.yaml to fix origin for syntax_check from static to repo_tests (it uses subprocess.run with node --check)."
     },
     "improve": {
       "status": "skipped",
@@ -32,14 +33,43 @@
       "notes": "Fixed two issues: (1) Added pytest-json-ctrf to Dockerfile for --ctrf support, (2) Fixed test_not_stub regex that couldn't handle nested braces in function bodies - replaced with brace-counting algorithm",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 183.18
+      "time": 119.21
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.81,
+      "time": 4.37,
       "notes": "ICR=1.00"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 180.59,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 85.05,
+      "notes": ""
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 34.79,
+      "notes": "",
+      "precision": 0.66
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 46.81,
+      "notes": "precision was 0.66, fixing hallucinated rules"
     }
   },
   "history": [
@@ -58,6 +88,14 @@
       "backend": "fireworks",
       "time": 7514.59,
       "at": "2026-04-09T03:42:31.510597"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1844.39,
+      "at": "2026-04-10T11:55:24.359070"
     }
   ]
 }

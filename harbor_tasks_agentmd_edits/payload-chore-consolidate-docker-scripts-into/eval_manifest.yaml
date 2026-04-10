@@ -21,17 +21,29 @@ checks:
     structure
 - id: docker_compose_schema
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: test/docker-compose.yml has valid schema with name, volumes, and healthchecks
 - id: package_scripts_consistent
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: package.json docker scripts reference unified test/docker-compose.yml
 - id: ci_action_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: CI start-database action references valid profiles and unified compose
     file
+- id: docker_start_script_shell_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker:start script has valid shell syntax (subprocess.run bash -n)
+- id: docker_stop_script_shell_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker:stop script has valid shell syntax (subprocess.run bash -n)
+- id: ci_action_shell_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI action shell commands have valid syntax (subprocess.run bash -n)
 - id: docker_start_uses_profiles
   type: fail_to_pass
   origin: pr_diff

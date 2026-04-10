@@ -1,75 +1,75 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 16439
-  base_commit: "28bb16ca2a374439973d4f3f4b71d72f7fdae9cd"
-  merge_commit: "0b7a5b1e7bc7619c85e7cf4e30a1a0d4885779b6"
-
+  base_commit: 28bb16ca2a374439973d4f3f4b71d72f7fdae9cd
+  merge_commit: 0b7a5b1e7bc7619c85e7cf4e30a1a0d4885779b6
 checks:
-  # Code behavior checks
-  - id: actions_ts_has_cleanup_helpers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "actions.ts exports cleanupSession and waitSessionIdle functions"
-
-  - id: actions_ts_stable_polling_logic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stable() function implements polling with metadata comparison"
-
-  - id: withSession_uses_cleanupSession
-    type: fail_to_pass
-    origin: pr_diff
-    description: "withSession helper uses cleanupSession instead of direct delete"
-
-  - id: fixtures_ts_has_tracking
-    type: fail_to_pass
-    origin: pr_diff
-    description: "fixtures.ts has trackSession and trackDirectory in TestFixtures type"
-
-  - id: fixtures_cleanup_uses_cleanupSession
-    type: fail_to_pass
-    origin: pr_diff
-    description: "withProject cleanup uses cleanupSession for tracked sessions"
-
-  # Config/documentation checks (agentmd-edit specific)
-  - id: agents_md_documents_helpers
-    type: fail_to_pass
-    origin: agent_config
-    description: "AGENTS.md documents new helper functions (withProject, trackSession, trackDirectory)"
-    source:
-      path: "packages/app/e2e/AGENTS.md"
-      lines: "71-76"
-      commit: "28bb16ca2a374439973d4f3f4b71d72f7fdae9cd"
-
-  - id: agents_md_recommends_fixture_cleanup
-    type: fail_to_pass
-    origin: agent_config
-    description: "AGENTS.md recommends fixture-managed cleanup over direct sdk.session.delete"
-    source:
-      path: "packages/app/e2e/AGENTS.md"
-      lines: "112-135"
-      commit: "28bb16ca2a374439973d4f3f4b71d72f7fdae9cd"
-
-  - id: agents_md_documents_cleanup_pattern
-    type: fail_to_pass
-    origin: agent_config
-    description: "AGENTS.md Error Handling section documents the new trackSession/trackDirectory patterns"
-    source:
-      path: "packages/app/e2e/AGENTS.md"
-      lines: "123-135"
-      commit: "28bb16ca2a374439973d4f3f4b71d72f7fdae9cd"
-
-  # Static checks
-  - id: typescript_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files parse without syntax errors"
-
-  - id: cleanupSession_signature_correct
-    type: fail_to_pass
-    origin: pr_diff
-    description: "cleanupSession has correct function signature accepting sessionID, directory, and sdk"
-
+- id: actions_ts_has_cleanup_helpers
+  type: fail_to_pass
+  origin: pr_diff
+  description: actions.ts exports cleanupSession and waitSessionIdle functions
+- id: actions_ts_stable_polling_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: stable() function implements polling with metadata comparison
+- id: withSession_uses_cleanupSession
+  type: fail_to_pass
+  origin: pr_diff
+  description: withSession helper uses cleanupSession instead of direct delete
+- id: fixtures_ts_has_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: fixtures.ts has trackSession and trackDirectory in TestFixtures type
+- id: fixtures_cleanup_uses_cleanupSession
+  type: fail_to_pass
+  origin: pr_diff
+  description: withProject cleanup uses cleanupSession for tracked sessions
+- id: agents_md_documents_helpers
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md documents new helper functions (withProject, trackSession,
+    trackDirectory)
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 71-76
+    commit: 28bb16ca2a374439973d4f3f4b71d72f7fdae9cd
+- id: agents_md_recommends_fixture_cleanup
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md recommends fixture-managed cleanup over direct sdk.session.delete
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 112-135
+    commit: 28bb16ca2a374439973d4f3f4b71d72f7fdae9cd
+- id: agents_md_documents_cleanup_pattern
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md Error Handling section documents the new trackSession/trackDirectory
+    patterns
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 123-135
+    commit: 28bb16ca2a374439973d4f3f4b71d72f7fdae9cd
+- id: typescript_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: cleanupSession_signature_correct
+  type: fail_to_pass
+  origin: pr_diff
+  description: cleanupSession has correct function signature accepting sessionID,
+    directory, and sdk
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes (bun turbo typecheck)
+- id: test_repo_app_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo app package unit tests pass (bun run test:unit)
+- id: test_repo_app_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo app package typecheck passes (bun run typecheck)
 rubric: []

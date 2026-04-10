@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified Go files parse without errors
+- id: go_vet_compose
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go vet passes for pkg/compose
+- id: unit_test_publish
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit test for publish functionality passes
+- id: gofmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Go files are properly formatted
 - id: publish_uses_fprintf
   type: fail_to_pass
   origin: pr_diff
@@ -25,7 +37,42 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: CLAUDE.md documents linting setup and fmt.Fprintf style preference
-rubric: []
+rubric:
+- rule: Document how to run the linter with e2e tags in CLAUDE.md (golangci-lint run
+    --build-tags "e2e" ./...)
+  source:
+    path: CLAUDE.md
+    lines: '14'
+    commit: 27d9d506306e808965d99b70c1f59308dcabca13
+  reference: 'Run: golangci-lint run --build-tags "e2e" ./...'
+- rule: Document forbidden packages in CLAUDE.md (e.g., io/ioutil, github.com/pkg/errors,
+    gopkg.in/yaml.v2, golang.org/x/exp/maps, golang.org/x/exp/slices)
+  source:
+    path: CLAUDE.md
+    lines: 23-24
+    commit: 27d9d506306e808965d99b70c1f59308dcabca13
+  reference: No io/ioutil, github.com/pkg/errors, gopkg.in/yaml.v2, golang.org/x/exp/maps,
+    golang.org/x/exp/slices
+- rule: Document the correct errdefs package in CLAUDE.md (Use github.com/containerd/errdefs
+    instead of github.com/docker/docker/errdefs)
+  source:
+    path: CLAUDE.md
+    lines: '25'
+    commit: 27d9d506306e808965d99b70c1f59308dcabca13
+  reference: Use github.com/containerd/errdefs instead of github.com/docker/docker/errdefs
+- rule: In Go tests, use t.Context() instead of context.Background() or context.TODO()
+  source:
+    path: CLAUDE.md
+    lines: '26'
+    commit: 27d9d506306e808965d99b70c1f59308dcabca13
+  reference: 'In tests: use t.Context() instead of context.Background() or context.TODO()'
+- rule: When writing to strings.Builder or other io.Writer, prefer fmt.Fprintf over
+    WriteString(fmt.Sprintf(...)) for efficiency
+  source:
+    path: CLAUDE.md
+    lines: '27'
+    commit: 27d9d506306e808965d99b70c1f59308dcabca13
+  reference: Prefer fmt.Fprintf over WriteString(fmt.Sprintf(...))
 config_edits:
 - path: CLAUDE.md
   tier: 1

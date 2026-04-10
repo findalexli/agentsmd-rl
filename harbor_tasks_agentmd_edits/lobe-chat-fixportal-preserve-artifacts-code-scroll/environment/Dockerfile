@@ -18,7 +18,7 @@ RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /works
 WORKDIR /workspace/lobe-chat
 
 # Install minimal deps for testing (only what test_outputs.py needs)
-RUN pip3 install --no-cache-dir pytest --break-system-packages || pip3 install --no-cache-dir pytest
+RUN pip3 install --no-cache-dir pytest pytest-json-ctrf --break-system-packages || pip3 install --no-cache-dir pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

@@ -1,21 +1,22 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:35:58.974194",
-  "total_time": 5703.65,
-  "sandbox_id": "iatc3kwomwco3uy4cy65w",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:29:18.183651",
+  "total_time": 2338.75,
+  "sandbox_id": "iydxqa92azd29ldhydgjv",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.5,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 6.23,
-      "notes": ""
+      "notes": "Added 3 repo_tests p2p gates: test_repo_eslint (npm run eslint on MCP files), test_repo_lint_packages (npm run lint-packages), test_repo_generate_channels (node utils/generate_channels.js). All 6 p2p tests pass on base commit."
     },
     "improve": {
       "status": "skipped",
@@ -23,6 +24,58 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 669.45,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "packages/playwright/src/mcp/terminal/SKILL.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 0,
+      "rejection_reasons": "None",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 45.91
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 44.58,
+      "notes": "",
+      "precision": 0.5
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 22.58,
+      "notes": "precision was 0.50, fixing hallucinated rules"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_video_tools_imported_in_browser_tools regex pattern to match './tools/video' import path. All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (1.0)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 316.75
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.27,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -33,6 +86,14 @@
       "backend": "fireworks",
       "time": 5703.65,
       "at": "2026-04-09T07:35:58.974194"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2338.75,
+      "at": "2026-04-10T12:29:18.183651"
     }
   ]
 }

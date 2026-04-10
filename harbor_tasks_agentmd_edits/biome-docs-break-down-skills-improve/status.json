@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:56:34.949951",
-  "total_time": 1703.94,
-  "sandbox_id": "ifgvewrkjy6yv3oneewny",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:19:52.800102",
+  "total_time": 355.74,
+  "sandbox_id": "iintmr3i8qplus8dcp7kv",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -20,7 +21,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 320.72,
+      "time": 211.55,
       "notes": ""
     },
     "improve": {
@@ -29,6 +30,24 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.5,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: (1) Docker build succeeded, (2) NOP test returned reward=0 (7 f2p tests correctly failed on base commit), (3) Gold test returned reward=1 (13/13 tests passed after solve.sh applied), (4) Rubric judge scored 0.5 due to truncated gold references in eval_manifest.yaml - this is a manifest data quality issue, not a solution problem. The gold_added fields are cut off (e.g., 'Bug F' at line 214), causing false negatives. All actual pytest tests verify the solution is correct.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 118.19
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 3.88,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -47,6 +66,14 @@
       "backend": "fireworks",
       "time": 1703.94,
       "at": "2026-04-09T14:56:34.949951"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 355.74,
+      "at": "2026-04-10T11:19:52.800102"
     }
   ]
 }

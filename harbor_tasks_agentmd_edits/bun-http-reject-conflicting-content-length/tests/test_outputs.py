@@ -124,9 +124,22 @@ def test_repo_bun_types():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
-    # Run tsc --noEmit from repo root pointing to bun-types tsconfig
+    # Run tsc via bunx using the locally installed typescript
     r = subprocess.run(
-        ["npx", "tsc", "--noEmit", "-p", "packages/bun-types/tsconfig.json"],
+        ["bunx", "tsc", "--noEmit", "-p", "packages/bun-types/tsconfig.json"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Bun types check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_http_smuggling_tests():
+    """HTTP request smuggling tests pass (pass_to_pass)."""
+    # These tests verify HTTP security hardening including:
+    # - Transfer-Encoding header validation
+    # - Chunk size validation
+    # - Pipelined request isolation
+    r = subprocess.run(
+        ["bun", "test", "test/js/bun/http/request-smuggling.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"HTTP smuggling tests failed:\n{r.stderr[-500:]}"

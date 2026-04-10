@@ -315,3 +315,4 @@ def test_directive_ext_not_stub():
     match_arms = content.count(".value().ok()?.initializer()")
     assert match_arms >= 8, \
         f"directive_ext.rs must have 8 match arms (has {match_arms}) — not a stub"
+

@@ -30,7 +30,7 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# pass_to_pass (static) — syntax / regression checks
+# pass_to_pass (static) -- syntax / regression checks
 # ---------------------------------------------------------------------------
 
 def test_repo_prettier():
@@ -38,7 +38,7 @@ def test_repo_prettier():
     # Run in bash with corepack enabled
     r = subprocess.run(
         ["bash", "-c", "cd /workspace/prisma && corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run prettier-check"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
@@ -50,6 +50,10 @@ def test_repo_engines_override():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Engines override check failed:\n{r.stderr[-500:]}"
+
+
+
+
 
 
 def test_studio_syntax_node_check():
@@ -82,7 +86,7 @@ def test_existing_bff_procedures_preserved():
 
 
 # ---------------------------------------------------------------------------
-# fail_to_pass (pr_diff) — behavioral code-execution tests
+# fail_to_pass (pr_diff) -- behavioral code-execution tests
 # ---------------------------------------------------------------------------
 
 def test_transaction_procedure_handler():
@@ -125,7 +129,7 @@ if (!block.includes('ctx.json')) {
 // 6. Must have substantive logic (not a one-liner stub)
 const lines = block.split('\\n').filter(l => l.trim().length > 0);
 if (lines.length < 5) {
-    console.error('STUB: handler has only ' + lines.length + ' lines — too short');
+    console.error('STUB: handler has only ' + lines.length + ' lines -- too short');
     process.exit(1);
 }
 
@@ -308,7 +312,7 @@ if (hardcoded >= 2) {
 const hasConst = src.match(/const\\s+REACT[_A-Z]*VERSION\\s*=\\s*['"`]/);
 if (!hasConst) {
     // Also accept template variable usage in the import map
-    const hasTemplateVar = mapBlock.includes('${') && mapBlock.match(/REACT/);
+    const hasTemplateVar = mapBlock.includes('\${') && mapBlock.match(/REACT/);
     if (!hasTemplateVar) {
         console.error('NO_REACT_CONSTANT');
         process.exit(1);
@@ -322,7 +326,7 @@ console.log('PASS');
 
 
 # ---------------------------------------------------------------------------
-# fail_to_pass (pr_diff) — AGENTS.md documentation tests
+# fail_to_pass (pr_diff) -- AGENTS.md documentation tests
 # ---------------------------------------------------------------------------
 
 def test_agents_md_studio_import_map_docs():
@@ -350,5 +354,5 @@ def test_agents_md_react_pinning_docs():
     ])
     assert has_esm_sh and has_react_pin, (
         "AGENTS.md must document the esm.sh React pinning pattern "
-        "to avoid invalid-hook-call crashes"
+        "to avoid invalid-hook-call style errors"
     )

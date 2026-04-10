@@ -1,22 +1,23 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:23:32.816035",
-  "total_time": 18700.73,
-  "sandbox_id": "isp1jghj7ajdn17zgdh8v",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:05:23.017730",
+  "total_time": 2013.11,
+  "sandbox_id": "ij30tcr0p6g3rxv6a23k1",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 269.01,
+      "time": 457.21,
       "notes": ""
     },
-    "p2p_enrichment": {
+    "p2p_enrichment_old": {
       "status": "error",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh to apply patches correctly. The original solve.sh used git apply with a patch that had incorrect line numbers. Rewrote the fix using Python to precisely insert Object.assign line after the correct asst.tool_calls line (with funcCall in scope), and update CONTRIBUTING.md to add build-check to PR checklist.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 7.08
+      "time": 362.53
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.31,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +73,14 @@
       "backend": "fireworks",
       "time": 18700.73,
       "at": "2026-04-09T14:23:32.816035"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2013.11,
+      "at": "2026-04-10T12:05:23.017730"
     }
   ]
 }

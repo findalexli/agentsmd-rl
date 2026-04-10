@@ -57,69 +57,48 @@ checks:
 - id: repo_build_scripts_parseable
   type: pass_to_pass
   origin: repo_tests
-  description: Build scripts (bun.ts, compile.ts) are syntactically valid TypeScript
-    with balanced braces and valid structure
-- id: repo_claude_md_valid
+  description: Build scripts (bun.ts, compile.ts) pass TypeScript syntax validation
+    via tsc API using subprocess.run()
+- id: repo_typescript_prettier_check
   type: pass_to_pass
   origin: repo_tests
-  description: CLAUDE.md is valid markdown with required sections (Ninja primer, Gotchas,
-    Iterating) and code blocks
+  description: TypeScript build scripts (bun.ts, compile.ts) pass prettier format
+    check via subprocess.run(), matching CI format.yml workflow
+- id: repo_markdownlint_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLAUDE.md passes markdownlint with MD013 disabled via subprocess.run()
+- id: repo_git_tracks_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified source files are tracked by git and have valid content,
+    verified via git ls-files subprocess.run()
 rubric:
-- rule: Config update style is consistent with the existing CLAUDE.md documentation
+- rule: When dep sub-builds rewrite forwarding headers as undeclared side effects,
+    dep outputs (lib*.a) must use implicit dependencies (|), not order-only (||),
+    because depfiles record headers but ninja stats them before the sub-build runs
+    — order-only would lag one build behind
   source:
     path: scripts/build/CLAUDE.md
-    lines: 1-10
+    lines: 227-229
     commit: c721d357ad9ed04017bb24d21decf5739dba3911
-- rule: Code comments follow the existing pattern of explaining WHY, not just WHAT
+- rule: 'Documentation for dependency types must explain the invalidation signal rationale:
+    dep outputs are implicit deps because the lib itself signals rebuild, while codegen
+    headers stay order-only because they are declared ninja outputs with restat'
   source:
     path: scripts/build/CLAUDE.md
-    lines: 16-18
+    lines: 76-82
     commit: c721d357ad9ed04017bb24d21decf5739dba3911
-config_edits:
-- path: scripts/build/CLAUDE.md
-  tier: 1
-  gold_added: 'build obj/src/foo.c.o: cc ../../src/foo.c | deps/zstd/libzstd.a ||
-    codegen/generated.h
-
-    - **implicit inputs** (`| foo`) — tracked for rebuild but not in `$in`. Use for
-    the PCH, dep lib outputs (invalidation signal for their headers), or a per-file
-    generated header this source is known to read
-
-    - **order-only inputs** (`|| stamp`) — must exist before this edge runs, but mtime
-    doesn''t trigger rebuild. Use for bulk codegen headers: "must be generated first,
-    but the compiler''s `.d` depfile will track which ones I actually read"
-
-    **`depfile`** — compiler writes `foo.o.d` listing every `#include`d header. Ninja
-    reads it on the next build to know which headers this `.o` depends on. Codegen
-    headers are order-only for this reason: they''re declared outputs with restat,
-    the depfile gives exact per-file header deps on build 2+, and order-only just
-    ensures they exist for build 1. Dep outputs (`lib*.a`) are a different story —
-    PCH, cc, and no-PCH cxx use them as _implicit_ deps, because local sub-builds
-    (e.g. WebKit) rewrite forwarding headers as undeclared side effects and order-only
-    would lag one build behind (see Gotchas).
-
-    **PCH, cc, and no-PCH cxx need implicit dep on `depOutputs`**, not order-only.
-    Local WebKit''s sub-build rewrites forwarding headers as an undeclared side effect
-    (only `lib*.a` are declared outputs). Depfiles record those headers, but ninja
-    stats them before the sub-build runs — order-only lags one build. The lib itself
-    is the invalidation signal. Codegen headers stay order-only: they''re declared
-    outputs with restat, so depfile tracking is exact.'
-  gold_removed: 'build obj/src/foo.c.o: cc ../../src/foo.c | codegen/generated.h ||
-    ../../vendor/zstd/.ref
-
-    - **implicit inputs** (`| foo.h`) — tracked for rebuild but not in `$in`. Use
-    for files the command reads that aren''t on its command line (generated headers,
-    PCH)
-
-    - **order-only inputs** (`|| stamp`) — must exist before this edge runs, but mtime
-    doesn''t trigger rebuild. Use for "X must be fetched/generated first, but the
-    compiler''s `.d` depfile will track which files I actually read"
-
-    **`depfile`** — compiler writes `foo.o.d` listing every `#include`d header. Ninja
-    reads it on the next build to know which headers this `.o` depends on. This is
-    why cxx uses order-only for dep outputs: the depfile gives exact per-file header
-    deps on build 2+; order-only just ensures headers exist for build 1.
-
-    **PCH needs implicit dep on `depOutputs`**, not order-only. Local WebKit regenerates
-    headers mid-build; order-only would let ninja think PCH is fresh while headers
-    change under it → "file modified since PCH was b'
+- rule: The depOutputs variable comment must describe its role as the implicit-dep
+    signal for PCH/cc/no-PCH cxx, not just PCH order-only-deps
+  source:
+    path: scripts/build/bun.ts
+    lines: 61-62
+    commit: c721d357ad9ed04017bb24d21decf5739dba3911
+- rule: CompileOpts documentation must explicitly mention dep outputs (lib*.a) in
+    implicitInputs with the WebKit side-effect rationale, and reference this from
+    orderOnlyInputs docs
+  source:
+    path: scripts/build/compile.ts
+    lines: 140-164
+    commit: c721d357ad9ed04017bb24d21decf5739dba3911

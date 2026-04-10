@@ -1,27 +1,22 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:38:25.141803",
-  "total_time": 5692.8,
-  "sandbox_id": "im2gy36eoe3f5rnpy9mly",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:37:48.772031",
+  "total_time": 1618.02,
+  "sandbox_id": "ira6aawpxny06pg9q9lkl",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.5,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "timestamp": "2026-04-09T12:58:00Z",
-      "ci_commands_found": [
-        "ruff check --config=pyproject.toml src/ tests/",
-        "ruff format --check --config=pyproject.toml src/ tests/"
-      ],
-      "ci_commands_added": [
-        "test_repo_ruff_check",
-        "test_repo_ruff_format"
-      ],
-      "notes": "Added 2 pass_to_pass tests based on repo CI. Tests use ruff (Python linter/formatter). Skipped pytest tests as they require heavy dependencies (torch, vllm, flash-attn) that need network and GPU. Verified all p2p tests pass on base commit."
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 136.28,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "rate_limited",
@@ -36,6 +31,52 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 3,
+      "rejection_reasons": "1 process rule (branch prefixes), 1 testing rule (irrelevant to PR), 1 Zen of Python rule (too vague)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 49.08
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 31.15,
+      "notes": "",
+      "precision": 0.5
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 55.04,
+      "notes": "precision was 0.50, fixing hallucinated rules"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All four validations passed: Docker build successful, NOP test correctly returns 0 (7 fail-to-pass tests fail on base commit), Gold test returns 1 (all 10 tests pass after gold patch applied), Rubric judge ICR=1.0. The task is properly configured with skills directory structure, SKILL.md files with YAML frontmatter, .claude/skills symlink, and AGENTS.md updates.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 127.59
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.41,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -46,6 +87,14 @@
       "backend": "fireworks",
       "time": 5692.8,
       "at": "2026-04-09T07:38:25.141803"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1618.02,
+      "at": "2026-04-10T12:37:48.772031"
     }
   ]
 }

@@ -24,8 +24,14 @@ import os
 import sys
 import importlib.util
 
-spec = importlib.util.spec_from_file_location("profiling", "{REPO}/gradio/profiling.py")
+# Insert repo into sys.path for proper imports
+sys.path.insert(0, "{REPO}")
+
+# Use importlib while properly registering in sys.modules to avoid dataclass issues
+spec = importlib.util.spec_from_file_location("gradio.profiling", "{REPO}/gradio/profiling.py")
 mod = importlib.util.module_from_spec(spec)
+sys.modules["gradio.profiling"] = mod
+sys.modules["profiling"] = mod
 spec.loader.exec_module(mod)
 
 {test_code}
@@ -51,6 +57,34 @@ def test_syntax_check():
         assert fpath.exists(), f"{relpath} not found"
     src = (Path(REPO) / "gradio" / "profiling.py").read_text()
     ast.parse(src)
+
+
+# [repo_tests] pass_to_pass - Repo CI linting
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/gradio/profiling.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI formatting
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/gradio/profiling.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

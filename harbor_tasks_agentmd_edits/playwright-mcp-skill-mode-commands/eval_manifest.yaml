@@ -19,8 +19,24 @@ checks:
   description: Modified TypeScript files are parseable by Node.js
 - id: mcp_package_structure
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: MCP package structure is intact with required directories and files
+- id: repo_tsc_no_emit
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript structure check via Node.js parser
+- id: repo_import_statements
+  type: pass_to_pass
+  origin: repo_tests
+  description: Import statements in modified files are valid
+- id: repo_export_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: Export patterns in modified files are valid
+- id: repo_no_console_in_production_code
+  type: pass_to_pass
+  origin: repo_tests
+  description: No console.log statements in production TypeScript files
 - id: help_json_command_names
   type: fail_to_pass
   origin: pr_diff

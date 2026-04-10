@@ -54,6 +54,19 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's desktop tests pass (pnpm test -- --run in apps/desktop)
+- id: repo_desktop_controller_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's desktop controller tests (RemoteServerConfigCtr) pass (pnpm
+    test with RemoteServerConfigCtr.test.ts)
+- id: repo_oidc_provider_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's OIDC provider tests pass (npx vitest run src/libs/oidc-provider/)
+- id: repo_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's store tests pass (npx vitest run src/store)
 - id: typescript_compiles
   type: pass_to_pass
   origin: static
@@ -67,7 +80,21 @@ checks:
   type: pass_to_pass
   origin: static
   description: isNonRetryableError has real logic, not just return false
-rubric: []
+rubric:
+- rule: Desktop controller unit tests should be placed in __tests__/ directory alongside
+    the controller
+  source:
+    path: .cursor/rules/desktop-controller-tests.mdc
+    lines: 8-10
+    commit: 95bc5c2e6c9cca04b584002fbd85145e3b977e1f
+  reference: LobeChat 桌面端使用 Vitest 作为测试框架。控制器的单元测试应放置在对应控制器文件同级的 `__tests__` 目录下，并以原控制器文件名加
+    `.test.ts` 作为文件名。
+- rule: 'TypeScript: prefer interface over type for object shapes'
+  source:
+    path: AGENTS.md
+    lines: '50'
+    commit: 95bc5c2e6c9cca04b584002fbd85145e3b977e1f
+  reference: '- Prefer interfaces over types for object shapes'
 config_edits:
 - path: CLAUDE.md
   tier: 1

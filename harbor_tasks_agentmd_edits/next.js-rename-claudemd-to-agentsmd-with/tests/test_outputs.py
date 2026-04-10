@@ -79,6 +79,49 @@ def test_repo_readme_symlink_valid():
     assert "packages/next/README.md" in target, f"Unexpected readme target: {target}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_no_broken_symlinks():
+    """Repository should have no broken symlinks in tracked files (pass_to_pass)."""
+    # Find broken symlinks (excluding .git to avoid false positives)
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && find . -type l ! -exec test -e {{}} \\; -print 2>/dev/null | grep -v '^\\./\\.git' | head -20"],
+        capture_output=True, text=True, timeout=30,
+    )
+    # Command succeeds even when finding broken links - check output
+    broken_links = r.stdout.strip()
+    # Allow broken links only in node_modules paths (test fixtures)
+    if broken_links:
+        non_node_modules = [l for l in broken_links.split('\n') if l and 'node_modules' not in l]
+        if non_node_modules:
+            raise AssertionError(f"Broken symlinks found: {non_node_modules}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pnpm_config_valid():
+    """pnpm package manager config should be valid (pass_to_pass)."""
+    # Enable corepack and verify pnpm can read package.json
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO} && corepack enable && pnpm --version"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"pnpm config check failed: {r.stderr}"
+    # Should output a version number like 9.6.0
+    assert len(r.stdout.strip()) > 0, "pnpm version should be readable"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_log_readable():
+    """Git history should be readable (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-10"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git log failed: {r.stderr}"
+    # Should have commit history
+    lines = r.stdout.strip().split('\n')
+    assert len(lines) >= 5, f"Expected at least 5 commits, got {len(lines)}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

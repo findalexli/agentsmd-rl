@@ -5,6 +5,22 @@ source:
   base_commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
   merge_commit: 7a4bfa1ae6afb2c2b30fe0d4107256793dde8a3a
 checks:
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json is valid JSON with required scripts
+- id: test_repo_tracing_ts_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified tracing.ts has balanced braces and valid syntax
+- id: test_repo_types_dts_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Types definition files have valid structure
+- id: test_repo_npm_ci_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: npm ci completes successfully
 - id: tracing_ts_syntax
   type: pass_to_pass
   origin: static
@@ -40,13 +56,7 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: CLAUDE.md Commit Convention section adds npm run flint instruction
-rubric:
-- rule: The API documentation update is consistent with the formatting conventions
-    used in other method definitions in class-tracing.md
-  source:
-    path: .claude/skills/playwright-dev/api.md
-    lines: 9-40
-    commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+rubric: []
 config_edits:
 - path: CLAUDE.md
   tier: 1

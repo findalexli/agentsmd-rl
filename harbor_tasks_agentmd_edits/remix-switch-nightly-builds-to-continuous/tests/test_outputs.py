@@ -107,8 +107,8 @@ for (let i = start + 'util.parseArgs'.length; i < script.length; i++) {
 const config = eval('(' + configStr + ')');
 
 // Actually call util.parseArgs with the extracted config + --branch flag
-// Old config defines 'branch' option → accepts it
-// New config has no options → rejects it with ERR_PARSE_ARGS_UNKNOWN_OPTION
+// Old config defines 'branch' option -> accepts it
+// New config has no options -> rejects it with ERR_PARSE_ARGS_UNKNOWN_OPTION
 try {
     util.parseArgs({ ...config, args: ['--branch', 'nightly'] });
     console.log('FAIL: --branch flag was accepted by parseArgs config');
@@ -156,8 +156,8 @@ const config = eval('(' + configStr + ')');
 const result = util.parseArgs({ ...config, args: [] });
 
 // Reconstruct the script's branch resolution logic
-// Old: positionals[0] || values.branch || 'nightly' → resolves to 'nightly'
-// New: positionals[0] → undefined (then script throws)
+// Old: positionals[0] || values.branch || 'nightly' -> resolves to 'nightly'
+// New: positionals[0] -> undefined (then script throws)
 let installableBranch;
 if (script.includes("|| 'nightly'")) {
     installableBranch = result.positionals[0]
@@ -223,6 +223,87 @@ def test_contributing_nightly_to_preview():
         "CONTRIBUTING.md should have a 'Preview builds' section heading"
     assert 'remix#nightly' not in contributing, \
         "CONTRIBUTING.md install commands should reference preview, not nightly"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD tests
+# ---------------------------------------------------------------------------
+
+def test_repo_format_check():
+    """Repo's Prettier formatting check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.26.0"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # pnpm install must succeed before we can run format check
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "format:check"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_lint():
+    """Repo's ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.26.0"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.26.0"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "typecheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_changes_validate():
+    """Repo's change file validation passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.26.0"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pnpm install failed:\n{r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["pnpm", "changes:validate"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validation failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -33,6 +33,46 @@ checks:
   type: pass_to_pass
   origin: static
   description: All modified source files must still exist
+- id: semantic_module_structure
+  type: pass_to_pass
+  origin: static
+  description: Semantic module has expected directory structure
+- id: rust_source_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust source files have valid basic syntax (balanced braces)
+- id: error_message_patterns_detectable
+  type: pass_to_pass
+  origin: static
+  description: Error message patterns (old and new) are detectable in source files
+- id: claude_md_structure
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md has expected structure with Development Workflow section
+- id: snapshot_tests_structure
+  type: pass_to_pass
+  origin: static
+  description: Snapshot test files have valid structure with insta assertions
+- id: test_repo_typos_on_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Spell check passes on semantic module files
+- id: test_repo_typos_on_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Spell check passes on integration test files
+- id: test_repo_ruff_python_bindings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python bindings pass ruff linting
+- id: test_repo_shellcheck_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI shell scripts pass shellcheck
+- id: test_repo_no_dbg_in_rust
+  type: pass_to_pass
+  origin: repo_tests
+  description: No dbg! macros in modified Rust files
 rubric:
 - rule: Error message rewording should sound natural and be consistent in tone across
     all files
@@ -49,53 +89,59 @@ rubric:
 - rule: Snapshot string in sql.rs must match updated error text
   reference: "# CLAUDE.md\n## Error Messages\n\nError messages should avoid 2nd person\
     \ (you/your). Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n\
-    - ❌ \"are you missing `from` statement?\" → ✅ \"`from` statement might be\n  missing?\"\
-    \n- ❌ \"did you forget to specify the column name?\" → ✅ \"column name might be\n\
-    \  missing?\"\n- ❌ \"you can only use X\" → ✅ \"X requires Y\" (for hard constraints)\n\
-    - ❌ \"Have you forgotten an argument?\" → ✅ \"Argument might be missing?\""
+    - \u274C \"are you missing `from` statement?\" \u2192 \u2705 \"`from` statement might\
+    \ be\n  missing?\"\n- \u274C \"did you forget to specify the column name?\" \u2192\
+    \ \u2705 \"column name might be\n  missing?\"\n- \u274C \"you can only use X\" \
+    \u2192 \u2705 \"X requires Y\" (for hard constraints)\n- \u274C \"Have you forgotten\
+    \ an argument?\" \u2192 \u2705 \"Argument might be missing?\""
 - rule: CLAUDE.md must include error message style guidelines section
   source:
     path: CLAUDE.md
     lines: 73-84
     commit: 6b023815bc05fc3a4b4a2bc4ada5a9b9ac9b17b1
-  reference: "## Error Messages\n\nError messages should avoid 2nd person (you/your).\
-    \ Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n- ❌ \"are you\
-    \ missing `from` statement?\" → ✅ \"`from` statement might be\n  missing?\"\n\
-    - ❌ \"did you forget to specify the column name?\" → ✅ \"column name might be\n\
-    \  missing?\"\n- ❌ \"you can only use X\" → ✅ \"X requires Y\" (for hard constraints)\n\
-    - ❌ \"Have you forgotten an argument?\" → ✅ \"Argument might be missing?\""
+  reference: "# CLAUDE.md\n## Error Messages\n\nError messages should avoid 2nd person\
+    \ (you/your). Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n\
+    - \u274C \"are you missing `from` statement?\" \u2192 \u2705 \"`from` statement might\
+    \ be\n  missing?\"\n- \u274C \"did you forget to specify the column name?\" \u2192\
+    \ \u2705 \"column name might be\n  missing?\"\n- \u274C \"you can only use X\" \
+    \u2192 \u2705 \"X requires Y\" (for hard constraints)\n- \u274C \"Have you forgotten\
+    \ an argument?\" \u2192 \u2705 \"Argument might be missing?\""
 - rule: CLAUDE.md error message guidelines must include before/after examples
   source:
     path: CLAUDE.md
     lines: 73-84
     commit: 6b023815bc05fc3a4b4a2bc4ada5a9b9ac9b17b1
-  reference: "## Error Messages\n\nError messages should avoid 2nd person (you/your).\
-    \ Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n- ❌ \"are you\
-    \ missing `from` statement?\" → ✅ \"`from` statement might be\n  missing?\"\n\
-    - ❌ \"did you forget to specify the column name?\" → ✅ \"column name might be\n\
-    \  missing?\"\n- ❌ \"you can only use X\" → ✅ \"X requires Y\" (for hard constraints)\n\
-    - ❌ \"Have you forgotten an argument?\" → ✅ \"Argument might be missing?\""
+  reference: "# CLAUDE.md\n## Error Messages\n\nError messages should avoid 2nd person\
+    \ (you/your). Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n\
+    - \u274C \"are you missing `from` statement?\" \u2192 \u2705 \"`from` statement might\
+    \ be\n  missing?\"\n- \u274C \"did you forget to specify the column name?\" \u2192\
+    \ \u2705 \"column name might be\n  missing?\"\n- \u274C \"you you can only use X\" \
+    \u2192 \u2705 \"X requires Y\" (for hard constraints)\n- \u274C \"Have you forgotten\
+    \ an argument?\" \u2192 \u2705 \"Argument might be missing?\""
 - rule: CLAUDE.md must still contain its pre-existing sections
   reference: "# CLAUDE.md\n## Error Messages\n\nError messages should avoid 2nd person\
     \ (you/your). Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n\
-    - ❌ \"are you missing `from` statement?\" → ✅ \"`from` statement might be\n  missing?\"\
-    \n- ❌ \"did you forget to specify the column name?\" → ✅ \"column name might be\n\
-    \  missing?\"\n- ❌ \"you can only use X\" → ✅ \"X requires Y\" (for hard constraints)\n\
-    - ❌ \"Have you forgotten an argument?\" → ✅ \"Argument might be missing?\""
+    - \u274C \"are you missing `from` statement?\" \u2192 \u2705 \"`from` statement might\
+    \ be\n  missing?\"\n- \u274C \"did you forget to specify the column name?\" \u2192\
+    \ \u2705 \"column name might be\n  missing?\"\n- \u274C \"you can only use X\" \
+    \u2192 \u2705 \"X requires Y\" (for hard constraints)\n- \u274C \"Have you forgotten\
+    \ an argument?\" \u2192 \u2705 \"Argument might be missing?\""
 - rule: Snapshot strings in bad_error_messages.rs must match updated error text
   reference: "# CLAUDE.md\n## Error Messages\n\nError messages should avoid 2nd person\
     \ (you/your). Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n\
-    - ❌ \"are you missing `from` statement?\" → ✅ \"`from` statement might be\n  missing?\"\
-    \n- ❌ \"did you forget to specify the column name?\" → ✅ \"column name might be\n\
-    \  missing?\"\n- ❌ \"you can only use X\" → ✅ \"X requires Y\" (for hard constraints)\n\
-    - ❌ \"Have you forgotten an argument?\" → ✅ \"Argument might be missing?\""
+    - \u274C \"are you missing `from` statement?\" \u2192 \u2705 \"`from` statement might\
+    \ be\n  missing?\"\n- \u274C \"did you forget to specify the column name?\" \u2192\
+    \ \u2705 \"column name might be\n  missing?\"\n- \u274C \"you can only use X\" \
+    \u2192 \u2705 \"X requires Y\" (for hard constraints)\n- \u274C \"Have you forgotten\
+    \ an argument?\" \u2192 \u2705 \"Argument might be missing?\""
 config_edits:
 - path: CLAUDE.md
   tier: 1
   gold_added: "## Error Messages\n\nError messages should avoid 2nd person (you/your).\
-    \ Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n- ❌ \"are you\
-    \ missing `from` statement?\" → ✅ \"`from` statement might be\n  missing?\"\n\
-    - ❌ \"did you forget to specify the column name?\" → ✅ \"column name might be\n\
-    \  missing?\"\n- ❌ \"you can only use X\" → ✅ \"X requires Y\" (for hard constraints)\n\
-    - ❌ \"Have you forgotten an argument?\" → ✅ \"Argument might be missing?\""
+    \ Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n- \u274C \"are\
+    \ you missing `from` statement?\" \u2192 \u2705 \"`from` statement might be\n\
+    \  missing?\"\n- \u274C \"did you forget to specify the column name?\" \u2192 \u2705\
+    \ \"column name might be\n  missing?\"\n- \u274C \"you can only use X\" \u2192\
+    \ \u2705 \"X requires Y\" (for hard constraints)\n- \u274C \"Have you forgotten\
+    \ an argument?\" \u2192 \u2705 \"Argument might be missing?\""
   gold_removed: ''

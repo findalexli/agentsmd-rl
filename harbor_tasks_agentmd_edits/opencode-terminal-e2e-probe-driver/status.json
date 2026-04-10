@@ -1,20 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:44:50.904438",
-  "total_time": 6692.86,
-  "sandbox_id": "ifqobdm0vrv7783t3cb7f",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:14:21.906867",
+  "total_time": 1927.86,
+  "sandbox_id": "ijmus5k57fsh5s2fh8yi2",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during validate",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 98.77,
+      "time": 405.93,
       "notes": ""
     },
     "p2p_enrich": {
@@ -26,10 +27,50 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "packages/app/AGENTS.md",
+        "packages/app/e2e/AGENTS.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 3,
+      "rejection_reasons": "Selector rules not specific to PR changes; Process rules (PR workflow, test structure) not evaluable from diff",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 87.82
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 22.78,
+      "notes": "",
+      "precision": 1.0
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build successful, NOP test reward=0 (7 fail_to_pass tests correctly fail on base commit), Gold test reward=1 (all 11 tests pass after solve.sh), Rubric ICR=1.0 (gold solution follows all 3 rubric rules)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 220.37
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.12,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -40,6 +81,22 @@
       "backend": "glm",
       "time": 6692.86,
       "at": "2026-04-09T07:44:50.904438"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0,
+      "at": "2026-04-10T19:15:00"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1927.86,
+      "at": "2026-04-10T12:14:21.906867"
     }
   ]
 }

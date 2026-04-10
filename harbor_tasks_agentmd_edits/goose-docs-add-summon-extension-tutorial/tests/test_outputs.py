@@ -194,6 +194,24 @@ apt-get install -y nodejs 2>/dev/null
     assert r.returncode == 0, f"Documentation build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
+def test_documentation_verify_build():
+    """Repo's documentation verify-build passes (pass_to_pass)."""
+    install_node = """
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash - 2>/dev/null
+apt-get install -y nodejs 2>/dev/null
+"""
+    r = subprocess.run(
+        ["bash", "-c", install_node],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Install npm deps, build, and verify
+    r = subprocess.run(
+        ["bash", "-c", f"cd {REPO}/documentation && npm ci --silent 2>&1 | tail -3 && npm run build 2>&1 | tail -5 && ./scripts/verify-build.sh"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Documentation verify-build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — regression + validation
 # ---------------------------------------------------------------------------

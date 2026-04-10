@@ -1,21 +1,53 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:35:50.079799",
-  "total_time": 6146.78,
-  "sandbox_id": "iudjot3yuy4pk4q2t6dsi",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:29:22.138969",
+  "total_time": 2460.2,
+  "sandbox_id": "igcx3erg6h399m1zrqhqu",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 587.91,
+      "notes": "Added 4 repo_tests CI commands as p2p gates: ruff check, mypy, validate.sh script, and module importability tests. Tests verified passing on base commit. Docker image built successfully."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 458.6,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed AST parsing tests to handle AnnAssign (annotated assignments) for TEMPLATE_TO_NAME_MAP and TEMPLATE_TO_REPO_MAP. Added helper function _get_map_from_ast() and updated test_template_name_map_updated(), test_repo_urls_unchanged(), and _get_map_key_attrs() to check both ast.Assign and ast.AnnAssign nodes. All 14 tests pass. Rubric judge: ICR=1.00.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 770.09
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.93,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +58,14 @@
       "backend": "glm",
       "time": 6146.78,
       "at": "2026-04-09T07:35:50.079799"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2460.2,
+      "at": "2026-04-10T12:29:22.138969"
     }
   ]
 }

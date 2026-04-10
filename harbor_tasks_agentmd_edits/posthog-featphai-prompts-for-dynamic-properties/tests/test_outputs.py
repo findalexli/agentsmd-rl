@@ -39,7 +39,58 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
+# Pass-to-pass (repo_tests) - CI tooling verification
+# ---------------------------------------------------------------------------
+
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    # Install ruff if not present
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff check on modified files
+    r = subprocess.run(
+        ["ruff", "check", "ee/hogai/chat_agent/taxonomy/prompts.py",
+         "ee/hogai/tools/read_taxonomy/core.py",
+         "posthog/hogql_queries/ai/event_taxonomy_query_runner.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    # Install ruff if not present
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Run ruff format check on modified files
+    r = subprocess.run(
+        ["ruff", "format", "--check", "ee/hogai/chat_agent/taxonomy/prompts.py",
+         "ee/hogai/tools/read_taxonomy/core.py",
+         "posthog/hogql_queries/ai/event_taxonomy_query_runner.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_syntax_modified_files():
+    """Python syntax validation via AST on modified files (pass_to_pass)."""
+    files = [
+        "ee/hogai/chat_agent/taxonomy/prompts.py",
+        "ee/hogai/tools/read_taxonomy/core.py",
+        "posthog/hogql_queries/ai/event_taxonomy_query_runner.py",
+    ]
+    for f in files:
+        r = _run_python(f"import ast; ast.parse(open('{f}').read()); print('OK')")
+        assert r.returncode == 0, f"{f} syntax error: {r.stderr}"
+        assert "OK" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) - behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
 def test_prompt_documents_dynamic_properties():
@@ -221,7 +272,7 @@ print(json.dumps({"omit_strings": omit_strings}))
 
 
 # ---------------------------------------------------------------------------
-# Config-edit (agent_config) — SKILL.md and reference doc
+# Config-edit (agent_config) - SKILL.md and reference doc
 # ---------------------------------------------------------------------------
 
 def test_skill_md_references_dynamic_properties():
@@ -246,7 +297,7 @@ def test_dynamic_properties_reference_doc():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
+# Pass-to-pass (static) - anti-stub
 # ---------------------------------------------------------------------------
 
 def test_not_stub():

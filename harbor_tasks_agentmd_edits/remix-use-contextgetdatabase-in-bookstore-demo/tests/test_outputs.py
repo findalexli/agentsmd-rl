@@ -63,6 +63,12 @@ def test_repo_format_check():
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
 
 
+def test_bookstore_unit_tests():
+    """Bookstore demo unit tests pass (pass_to_pass)."""
+    r = _pnpm_cmd(["--filter", "bookstore-demo", "test"], timeout=120)
+    assert r.returncode == 0, f"Bookstore tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
 def test_syntax_check():
     """Modified TypeScript files exist and are non-empty."""
     files = [

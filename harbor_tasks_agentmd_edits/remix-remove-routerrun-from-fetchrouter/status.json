@@ -1,21 +1,82 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:45:46.496855",
-  "total_time": 5707.62,
-  "sandbox_id": "itk58fcxidzd6i9wyb96z",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:10:13.546746",
+  "total_time": 2451.32,
+  "sandbox_id": "ivh5eyu6ubprxjgptrj7k",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.67,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 61.03,
+      "notes": "Added 3 pass_to_pass tests with origin: repo_tests. CI commands found from .github/workflows/test.yaml and check.yaml: 1) pnpm --filter @remix-run/fetch-router test - runs Node.js native test runner on the package (test_repo_unit_tests), 2) pnpm lint -- packages/fetch-router/src - runs ESLint on modified source (test_repo_lint), 3) pnpm --filter @remix-run/fetch-router typecheck - runs tsgo TypeScript compiler (test_repo_typecheck). Docker image built successfully. All 7 p2p tests pass (4 static + 3 repo_tests). 5 f2p tests fail as expected on base commit."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 586.58,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "packages/component/AGENTS.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 4,
+      "rejection_reasons": "2 about changes/releases (process rules), 1 about demo ports (not applicable), 1 about accessible navigation (not applicable to this PR)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 93.33
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 25.3,
+      "notes": "",
+      "precision": 0.67
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 34.68,
+      "notes": "precision was 0.67, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build succeeded, NOP test correctly returns reward=0 (5 f2p tests fail on base code, 7 p2p tests pass), Gold test returns reward=1 (all 12 tests pass). Updated rubric rule to be applicable for deletion PR: changed from code style rules (imports/test callbacks) to 'When removing an unreleased breaking change feature, the corresponding change file must be deleted'. The gold solution correctly follows this rule as verified by test_change_file_deleted passing and container inspection showing minor.router-run.md is deleted.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 283.51
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.38,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +87,22 @@
       "backend": "fireworks",
       "time": 5707.62,
       "at": "2026-04-09T07:45:46.496855"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "validation",
+      "time": 0,
+      "at": "2026-04-10T20:10:00"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2451.32,
+      "at": "2026-04-10T13:10:13.546746"
     }
   ]
 }

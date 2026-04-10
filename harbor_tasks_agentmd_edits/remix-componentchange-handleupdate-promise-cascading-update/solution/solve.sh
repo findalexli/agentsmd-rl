@@ -4,7 +4,8 @@ set -euo pipefail
 cd /workspace/remix
 
 # Idempotent: skip if already applied
-if grep -q 'Promise<AbortSignal>' packages/component/src/lib/component.ts 2>/dev/null; then
+# Check for the specific Handle.update() return type change
+if grep -q 'update(): Promise<AbortSignal>' packages/component/src/lib/component.ts 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi

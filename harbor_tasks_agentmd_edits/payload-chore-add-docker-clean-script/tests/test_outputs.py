@@ -109,7 +109,6 @@ def test_claude_md_docker_commands():
     assert "docker:clean" in content, "CLAUDE.md should reference docker:clean"
     # Ensure docker:stop is no longer documented as a command
     lines = content.splitlines()
-    docker_lines = [l for l in lines if "docker:" in l.lower() and "docker:test" not in l and "docker:start" not in l]
     has_stop_ref = any("docker:stop" in l for l in lines if "docker:" in l)
     assert not has_stop_ref, "CLAUDE.md should not reference docker:stop anymore"
 
@@ -149,3 +148,44 @@ def test_docker_compose_yml_comments():
         f"docker-compose.yml Usage block should reference docker:clean, got:\n{usage_text}"
     assert "docker:stop" not in usage_text, \
         "docker-compose.yml Usage block should not reference docker:stop"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI checks that should pass at base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """Repo's package.json must be valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "JSON.stringify(require('./package.json')); console.log('Valid JSON')"],
+        capture_output=True, text=True, timeout=15, cwd=REPO,
+    )
+    assert r.returncode == 0, f"package.json is not valid JSON:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_scripts_syntax():
+    """Repo's script files must have valid JavaScript syntax (pass_to_pass)."""
+    scripts_dir = Path(REPO) / "scripts"
+    js_files = list(scripts_dir.glob("*.js"))
+    assert len(js_files) > 0, "No .js files found in scripts/ directory"
+
+    for js_file in js_files:
+        r = subprocess.run(
+            ["node", "--check", str(js_file)],
+            capture_output=True, text=True, timeout=15,
+        )
+        assert r.returncode == 0, f"Syntax error in {js_file.name}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_docker_compose_yml_readable():
+    """Repo's docker-compose.yml must be readable and well-formed (pass_to_pass)."""
+    dc = Path(REPO) / "test" / "docker-compose.yml"
+    assert dc.exists(), "test/docker-compose.yml does not exist"
+
+    # Read and validate it's not empty and contains expected content
+    content = dc.read_text()
+    assert "services:" in content, "docker-compose.yml missing 'services' section"
+    assert "version:" in content or "name:" in content, "docker-compose.yml missing version or name"

@@ -9,6 +9,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files parse without errors
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on the entire codebase
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes on all packages
+- id: repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Change files validation passes
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier format check passes
+- id: repo_scripts_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Scripts directory TypeScript compilation passes
 - id: release_pr_script_renamed
   type: fail_to_pass
   origin: pr_diff
@@ -57,7 +77,25 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: publish.ts updated to reference 'Release' instead of 'Version Packages'
-rubric: []
+rubric:
+- rule: Prefer `let` for local variables, `const` only at module scope; never use
+    `var`
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 130fbdc7b808a2d313363458dabc00caf036f482
+- rule: Use regular function declarations/expressions by default; only use arrow functions
+    as callbacks where preserving lexical `this` is beneficial
+  source:
+    path: AGENTS.md
+    lines: 25-26
+    commit: 130fbdc7b808a2d313363458dabc00caf036f482
+- rule: Use descriptive lowercase names for type parameters (e.g., `source`, `method`,
+    `pattern`) instead of single uppercase letters like `T`, `P`, or `K`
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 130fbdc7b808a2d313363458dabc00caf036f482
 config_edits:
 - path: AGENTS.md
   tier: 1

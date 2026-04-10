@@ -19,5 +19,8 @@ RUN git init /workspace/playwright && \
 
 WORKDIR /workspace/playwright
 
+# Install npm dependencies for the repo
+RUN npm ci
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

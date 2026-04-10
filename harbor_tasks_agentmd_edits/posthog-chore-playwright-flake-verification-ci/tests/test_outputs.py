@@ -43,6 +43,59 @@ def test_workflow_yaml_valid():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_bash_syntax_verify_script():
+    """Bash syntax check for the verification script (pass_to_pass)."""
+    # This script is created by the fix; syntax check validates it's well-formed bash
+    script = Path(REPO) / ".github" / "scripts" / "verify-playwright-new-tests-and-snapshots.sh"
+    assert script.exists(), "Verification script does not exist"
+    r = subprocess.run(
+        ["bash", "-n", str(script)],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"Bash syntax error:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax_check_scripts():
+    """Python syntax check for CI scripts (pass_to_pass)."""
+    scripts = [
+        ".github/scripts/check-idor-model-coverage.py",
+        ".github/scripts/check-operator-parity.py",
+    ]
+    for script_path in scripts:
+        full_path = Path(REPO) / script_path
+        if full_path.exists():
+            r = subprocess.run(
+                ["python3", "-m", "py_compile", str(full_path)],
+                capture_output=True, text=True, timeout=10,
+            )
+            assert r.returncode == 0, f"Python syntax error in {script_path}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_workflow_yaml_validates():
+    """CI workflow files are valid YAML (pass_to_pass)."""
+    import yaml
+
+    workflows = [
+        ".github/workflows/ci-e2e-playwright.yml",
+        ".github/workflows/ci-frontend.yml",
+    ]
+    for wf_path in workflows:
+        full_path = Path(REPO) / wf_path
+        if full_path.exists():
+            content = full_path.read_text()
+            try:
+                yaml.safe_load(content)
+            except yaml.YAMLError as e:
+                raise AssertionError(f"Workflow YAML {wf_path} is invalid: {e}")
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

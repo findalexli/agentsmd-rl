@@ -9,6 +9,22 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files are syntactically valid
+- id: repo_typescript_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: repo_tool_registry_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo tool registry unit tests pass
+- id: repo_question_tool_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo question tool unit tests pass
+- id: repo_acp_agent_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ACP agent interface tests pass
 - id: flag_constant_defined
   type: fail_to_pass
   origin: pr_diff
@@ -38,7 +54,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified code has real conditional logic, not stubs
-rubric: []
+rubric:
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: 21-22
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 59-63
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
 config_edits:
 - path: .opencode/agent/translator.md
   tier: 2

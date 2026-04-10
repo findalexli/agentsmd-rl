@@ -3,9 +3,9 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T04:26:07.367843",
-  "total_time": 10130.65,
-  "sandbox_id": "iuevtu9a15yqiu6t4caqt",
+  "validated_at": "2026-04-10T12:50:32.212251",
+  "total_time": 2166.52,
+  "sandbox_id": "ifcd5k3ti5w9xzuokdzdu",
   "backend": "fireworks",
   "pipeline": "agents",
   "rubric_icr": 1.0,
@@ -15,7 +15,7 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 952.07,
-      "notes": ""
+      "notes": "Added 2 new repo_tests pass_to_pass gates. CI commands tested from .github/workflows/test-rust.yaml: (1) cargo check -p prqlc --all-targets, (2) cargo test -p prqlc --doc. Tests added to test_outputs.py: test_prqlc_check_all_targets (validates tests/examples compile), test_prqlc_doc_tests (validates documentation examples). All 6 pass_to_pass tests pass (including 4 existing: syntax_check, existing_gen_query_tests, test_prqlc_clippy, test_prqlc_tests_pass)."
     },
     "improve": {
       "status": "skipped",
@@ -29,17 +29,24 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build succeeds. NOP test correctly fails (reward=0) - the Rust tests panic at module.rs:258 due to .unwrap() on None. Gold test passes (reward=1) - all 6 tests pass including the 2 fail-to-pass tests (join_group_returns_error, error_mentions_context). Rubric judge returns 0.5 due to missing ANTHROPIC_API_KEY (fallback value), but manual verification confirms all 4 rubric rules pass: Error Handling section exists in CLAUDE.md, .unwrap() avoidance is documented, section uses consistent emoji markers, and follows tone guidelines.",
+      "notes": "All validation checks passed. Docker build succeeds. NOP test correctly fails (reward=0) - tests panic at module.rs:258 due to .unwrap() on None. Gold test passes (reward=1) - all 8 tests pass including 2 fail-to-pass tests (join_group_returns_error, error_mentions_context). Rubric judge ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 313.81
+      "time": 255.58
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.7,
+      "time": 1.43,
       "notes": "ICR=1.00"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 731.82,
+      "notes": ""
     }
   },
   "history": [
@@ -58,6 +65,14 @@
       "backend": "fireworks",
       "time": 10130.65,
       "at": "2026-04-09T04:26:07.367843"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2166.52,
+      "at": "2026-04-10T12:50:32.212251"
     }
   ]
 }

@@ -10,10 +10,10 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/workspace/angular"
-
 
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute Python code in the repo directory."""
@@ -290,3 +290,120 @@ def test_existing_release_scripts_intact():
         "devtools:build:firefox:release script must still exist"
     assert "devtools:build:chrome" in scripts, \
         "devtools:build:chrome base script must still exist"
+
+
+def test_repo_package_json_scripts():
+    """Repo package.json has all required devtools scripts (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", '''
+import json
+import sys
+
+pkg = json.load(open("/workspace/angular/package.json"))
+scripts = pkg.get("scripts", {})
+
+required = [
+    "devtools:build:chrome",
+    "devtools:build:firefox",
+    "devtools:build:chrome:release",
+    "devtools:build:firefox:release",
+    "devtools:test",
+    "devtools:test:unit"
+]
+
+missing = [s for s in required if s not in scripts]
+if missing:
+    print(f"Missing: {missing}")
+    sys.exit(1)
+
+# Verify devtools:test:unit references correct bazel path
+test_unit = scripts.get("devtools:test:unit", "")
+if "//devtools/..." not in test_unit:
+    print("devtools:test:unit missing //devtools/...")
+    sys.exit(1)
+
+print("PASS")
+'''],
+        capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Package.json validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_bazel_structure():
+    """Bazel BUILD files have valid structure with balanced parens (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", '''
+import sys
+from pathlib import Path
+
+REPO = "/workspace/angular"
+files = [
+    "devtools/BUILD.bazel",
+    "devtools/projects/shell-browser/src/BUILD.bazel",
+    "devtools/projects/shell-browser/src/app/BUILD.bazel",
+    "devtools/tools/defaults.bzl"
+]
+
+for f in files:
+    content = (Path(REPO) / f).read_text()
+    if content.count("(") != content.count(")"):
+        print(f"Unbalanced parens in {f}")
+        sys.exit(1)
+    if content.count("[") != content.count("]"):
+        print(f"Unbalanced brackets in {f}")
+        sys.exit(1)
+    if "load(" not in content:
+        print(f"No load() in {f}")
+        sys.exit(1)
+
+print("PASS")
+'''],
+        capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Bazel structure validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_devtools_structure():
+    """Devtools directory has all required files and structure (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-c", '''
+import sys
+from pathlib import Path
+
+REPO = "/workspace/angular"
+required_files = [
+    "devtools/BUILD.bazel",
+    "devtools/tools/defaults.bzl",
+    "devtools/projects/shell-browser/src/BUILD.bazel",
+    "devtools/projects/shell-browser/src/app/BUILD.bazel",
+    "devtools/README.md",
+    "devtools/tsconfig.json",
+    "devtools/tsconfig-test.json"
+]
+
+for f in required_files:
+    path = Path(REPO) / f
+    if not path.exists():
+        print(f"Missing: {f}")
+        sys.exit(1)
+
+print("PASS")
+'''],
+        capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, f"Devtools structure validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_git_tracking():
+    """Repo is valid git repo with expected commit checked out (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "rev-parse", "HEAD"],
+        capture_output=True, text=True, timeout=30
+    )
+    assert r.returncode == 0, f"Git check failed: {r.stderr}"
+    # Verify the commit starts with expected base commit
+    assert r.stdout.strip().startswith("f30ed6bbf6"), \
+        f"Unexpected commit: {r.stdout.strip()}"

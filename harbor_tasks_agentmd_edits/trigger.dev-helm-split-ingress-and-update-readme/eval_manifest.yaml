@@ -62,6 +62,26 @@ checks:
   type: pass_to_pass
   origin: static
   description: Validation template no longer requires registry.external.port
+- id: test_repo_chart_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chart.yaml must be valid YAML
+- id: test_repo_chart_has_required_fields
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chart.yaml must have required fields (apiVersion v2, dependencies)
+- id: test_repo_values_has_required_sections
+  type: pass_to_pass
+  origin: repo_tests
+  description: values.yaml must have required top-level sections
+- id: test_repo_templates_have_balanced_braces
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go template files must have balanced braces
+- id: test_repo_helpers_has_required_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: _helpers.tpl must define required helper patterns
 rubric: []
 config_edits:
 - path: hosting/k8s/helm/README.md

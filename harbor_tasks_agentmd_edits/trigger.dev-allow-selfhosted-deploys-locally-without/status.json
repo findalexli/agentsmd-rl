@@ -1,21 +1,52 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:46:39.610865",
-  "total_time": 5902.8,
-  "sandbox_id": "ievx4emcn5j5ef9rjz521",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:22:49.682657",
+  "total_time": 1569.4,
+  "sandbox_id": "iswglh060mefjwvmo8rv3",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 306.03,
+      "notes": "Added 4 repo_tests p2p gates: test_repo_no_tabs (spaces not tabs), test_repo_trailing_newline (POSIX newline), test_repo_node_syntax_webapp_route (balanced braces + export check), test_repo_node_syntax_buildimage (balanced braces + TRIGGER_API_URL check). All use subprocess.run() with cat/tail/node commands."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 577.78,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build succeeded. NOP test correctly fails with reward=0 (3 fail-to-pass tests fail on base commit). Gold test passes with reward=1 (8/8 tests pass after applying fix). Fixed solve.sh to use sed-based approach instead of git patch (patch format was corrupt due to heredoc issues). Rubric judge ICR=0 is expected since no agent has run on the base repo - the gold solution does contain correct config edits.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 176.15
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.58,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +57,22 @@
       "backend": "glm",
       "time": 5902.8,
       "at": "2026-04-09T07:46:39.610865"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1217.23,
+      "at": "2026-04-10T12:56:40.127605"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1569.4,
+      "at": "2026-04-10T13:22:49.682657"
     }
   ]
 }

@@ -9,6 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files exist and are readable
+- id: ts_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax (Node.js readable)
 - id: test_repo_typecheck
   type: pass_to_pass
   origin: repo_tests
@@ -66,21 +70,21 @@ rubric:
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
-  gold_added: '- `withProject(...)` - Create temp project/workspace
+  gold_added: '- withProject(...) - Create temp project/workspace
 
-    - `trackSession(sessionID, directory?)` - Register session for fixture cleanup
+    - trackSession(sessionID, directory?) - Register session for fixture cleanup
 
-    - `trackDirectory(directory)` - Register directory for fixture cleanup
+    - trackDirectory(directory) - Register directory for fixture cleanup
 
     Tests should clean up after themselves. Prefer fixture-managed cleanup:
 
-    - Prefer `withSession(...)` for temp sessions
+    - Prefer withSession(...) for temp sessions
 
-    - In `withProject(...)` tests that create sessions or extra workspaces, call `trackSession(sessionID,
-    directory?)` and `trackDirectory(directory)`
+    - In withProject(...) tests that create sessions or extra workspaces, call trackSession(sessionID,
+    directory?) and trackDirectory(directory)
 
     - This lets fixture teardown abort, wait for idle, and clean up safely under CI
     concurrency
 
-    - Avoid calling `sdk.session.delete(...)` directly'
+    - Avoid calling sdk.session.delete(...) directly'
   gold_removed: 'Tests should clean up after themselves:'

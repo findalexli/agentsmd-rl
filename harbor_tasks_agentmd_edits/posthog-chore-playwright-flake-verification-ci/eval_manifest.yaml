@@ -14,6 +14,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: CI workflow file must be valid YAML
+- id: test_repo_bash_syntax_verify_script
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bash syntax check for the verification script using bash -n
+- id: test_repo_python_syntax_check_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check for CI helper scripts using py_compile
+- id: test_repo_workflow_yaml_validates
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI workflow files are valid YAML (using yaml.safe_load)
 - id: verification_script_validates_args
   type: fail_to_pass
   origin: pr_diff
@@ -61,6 +73,7 @@ rubric:
     path: playwright/README.md
     lines: 1-10
     commit: e74eb42064ccff936e8b2039626646132a444c8d
+  reference: "### Best practices\n\n- Don't use CSS selectors — prefer accessibility roles\n  (`getByRole`) or `getByTestId()` which maps to `data-attr` in our config.\n  Add `data-attr` to components if needed.\n- Write fewer, longer tests that do multiple things. Split logical steps\n  with `test.step()`.\n- Use page object models for common tasks and accessing common elements\n  (see `page-models/`).\n- After UI interactions, assert on UI changes — don't assert on network\n  requests resolving.\n- Never put conditional logic (`if`) in a test.\n\n### Gotchas\n\n**Flaky tests are almost always due to not waiting for the right thing.**\nConsider adding a better selector, an intermediate step like waiting for URL\n  or page title to change,\nor waiting for a critical network request to complete.\n\n**Loose selectors cause strict mode violations.**\nIf a selector matches multiple elements, Playwright will show all matches — use\n  the output to narrow down:"
 config_edits:
 - path: .agents/skills/playwright-test/SKILL.md
   tier: 1

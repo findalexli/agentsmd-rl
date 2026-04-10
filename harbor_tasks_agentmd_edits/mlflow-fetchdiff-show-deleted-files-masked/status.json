@@ -1,28 +1,28 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:21:24.503333",
-  "total_time": 5796.02,
-  "sandbox_id": "ivleucc0hjwljzf2r9ejo",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:50:57.593880",
+  "total_time": 1712.38,
+  "sandbox_id": "idyl0ttwfv7qbn4qa7qft",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 87.87,
+      "time": 282.16,
       "notes": ""
     },
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 229.09,
-      "notes": ""
+      "notes": "CI commands tested and added: pip install ruff==0.15.5 + ruff check, ruff format --check; pip install mypy pydantic aiohttp pygithub + mypy. All pass on base commit."
     },
     "improve": {
       "status": "skipped",
@@ -30,6 +30,23 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed solve.sh patch (variable name bug: file_path -> effective_path). All 4 validation checks pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 217.08
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 5.56,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -40,6 +57,14 @@
       "backend": "glm",
       "time": 5796.02,
       "at": "2026-04-09T07:21:24.503333"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1712.38,
+      "at": "2026-04-10T11:50:57.593880"
     }
   ]
 }

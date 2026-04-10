@@ -146,3 +146,72 @@ def test_no_remaining_js_trycatch_in_migrated_files():
     header = Path(f"{REPO}/src/workerd/jsg/jsg.h").read_text()
     # jsg.h should not contain js.tryCatch calls — it defines macros, not uses them
     assert "js.tryCatch([" not in header, "jsg.h should not contain js.tryCatch lambda calls"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI command tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_python_lint():
+    """Python tools pass ruff linting (pass_to_pass)."""
+    # Install ruff if not present
+    install = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Run ruff check on Python tools
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/tools/update_node_version.py"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shellcheck_build_script():
+    """Shell scripts pass shellcheck validation (pass_to_pass)."""
+    # Install shellcheck if not present
+    install = subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    install2 = subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "shellcheck"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Run shellcheck on build script (only errors, not warnings)
+    r = subprocess.run(
+        ["shellcheck", "-S", "error", f"{REPO}/build-releases.sh"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Shellcheck failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_clone_valid():
+    """Git repository is valid and has expected commit history (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "-C", REPO, "log", "--oneline", "-n", "5"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Git log failed:\n{r.stderr}"
+    # Verify we have the expected commit
+    assert "bca53517" in r.stdout, "Expected base commit not found in git history"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jsg_module_exists():
+    """JSG module source files exist in expected locations (pass_to_pass)."""
+    r = subprocess.run(
+        ["ls", "-la", f"{REPO}/src/workerd/jsg/jsg.h", f"{REPO}/src/workerd/jsg/jsg.c++"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"JSG module files not found:\n{r.stderr}"
+    # Verify file sizes are reasonable (not empty)
+    for line in r.stdout.strip().split("\n"):
+        if "jsg.h" in line or "jsg.c++" in line:
+            parts = line.split()
+            if len(parts) >= 5:
+                size = int(parts[4])
+                assert size > 10000, f"JSG source file seems too small ({size} bytes)"

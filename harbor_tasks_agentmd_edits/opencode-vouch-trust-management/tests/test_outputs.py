@@ -9,9 +9,26 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import subprocess
 import yaml
+import pytest
 from pathlib import Path
 
 REPO = "/workspace/opencode"
+
+
+# Custom YAML loader that preserves 'on' as a string key, not boolean True
+class NoBooleanLoader(yaml.SafeLoader):
+    pass
+
+# Disable boolean parsing for 'on', 'off', 'yes', 'no', etc.
+NoBooleanLoader.yaml_implicit_resolvers = {
+    key: [(tag, regexp) for tag, regexp in resolvers if tag != 'tag:yaml.org,2002:bool']
+    for key, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.copy().items()
+}
+
+
+def load_yaml_no_bool(content):
+    """Load YAML without implicit boolean conversion for 'on'/'off'."""
+    return yaml.load(content, Loader=NoBooleanLoader)
 
 
 # ---------------------------------------------------------------------------
@@ -33,7 +50,7 @@ def test_workflow_syntax_valid():
         wf_path = workflows_dir / wf
         content = wf_path.read_text()
         # Must parse as valid YAML
-        parsed = yaml.safe_load(content)
+        parsed = load_yaml_no_bool(content)
         assert parsed is not None, f"{wf} is not valid YAML"
         # Must have 'name' field
         assert "name" in parsed, f"{wf} missing 'name' field"
@@ -71,7 +88,7 @@ def test_vouch_check_issue_workflow_structure():
     assert wf_path.exists(), "vouch-check-issue.yml must exist"
 
     content = wf_path.read_text()
-    parsed = yaml.safe_load(content)
+    parsed = load_yaml_no_bool(content)
 
     # Must trigger on issues opened
     assert "issues" in parsed.get("on", {}), "Must trigger on issues"
@@ -95,7 +112,7 @@ def test_vouch_check_pr_workflow_structure():
     assert wf_path.exists(), "vouch-check-pr.yml must exist"
 
     content = wf_path.read_text()
-    parsed = yaml.safe_load(content)
+    parsed = load_yaml_no_bool(content)
 
     # Must trigger on pull_request_target opened
     assert "pull_request_target" in parsed.get("on", {}), "Must trigger on pull_request_target"
@@ -113,7 +130,7 @@ def test_compliance_close_workflow_structure():
     assert wf_path.exists(), "compliance-close.yml must exist"
 
     content = wf_path.read_text()
-    parsed = yaml.safe_load(content)
+    parsed = load_yaml_no_bool(content)
 
     # Must have schedule trigger
     assert "schedule" in parsed.get("on", {}), "Must have schedule trigger"
@@ -228,7 +245,7 @@ def test_vouch_workflows_not_empty():
         assert len(lines) >= 20, f"{wf} appears to be a stub (too few lines)"
 
         # Must have jobs section with actual content
-        parsed = yaml.safe_load(content)
+        parsed = load_yaml_no_bool(content)
         assert "jobs" in parsed, f"{wf} must have jobs section"
         assert len(parsed["jobs"]) >= 1, f"{wf} must have at least one job"
 
@@ -261,3 +278,159 @@ def test_contributing_section_not_stub():
             # Section should have at least 15 content lines
             assert section_lines >= 15, \
                 "Trust & Vouch System section is too short (likely a stub)"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_yamllint():
+    """All workflow YAML files must be valid (yamllint check)."""
+    workflows_dir = Path(REPO) / ".github" / "workflows"
+    workflow_files = list(workflows_dir.glob("*.yml"))
+
+    for wf in workflow_files:
+        r = subprocess.run(
+            ["python3", "-c",
+             f"import yaml; yaml.safe_load(open('{wf}').read())"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"YAML syntax error in {wf.name}: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shellcheck():
+    """Shell scripts in repo must pass shellcheck (if any exist)."""
+    # Check if shellcheck is available
+    r = subprocess.run(
+        ["which", "shellcheck"], capture_output=True, text=True, timeout=10,
+    )
+    if r.returncode != 0:
+        pytest.skip("shellcheck not available, skipping shellcheck test")
+
+    solve_script = Path("/workspace/task/solution/solve.sh")
+    if solve_script.exists():
+        r = subprocess.run(
+            ["shellcheck", str(solve_script)],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert r.returncode == 0, f"solve.sh failed shellcheck:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo files should be formatted with prettier (pass_to_pass)."""
+    # Check if npx is available
+    r = subprocess.run(
+        ["which", "npx"], capture_output=True, text=True, timeout=10,
+    )
+    if r.returncode != 0:
+        import pytest
+        pytest.skip("npx not available, skipping prettier check")
+
+    # Check key workflow files for valid formatting
+    workflows_dir = Path(REPO) / ".github" / "workflows"
+    key_workflows = ["test.yml", "typecheck.yml"]
+
+    for wf in key_workflows:
+        wf_path = workflows_dir / wf
+        if wf_path.exists():
+            r = subprocess.run(
+                ["npx", "prettier", "--check", str(wf_path)],
+                capture_output=True, text=True, timeout=60, cwd=REPO,
+            )
+            assert r.returncode == 0, f"{wf} is not properly formatted:\n{r.stderr[-300:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_status():
+    """Git repo must be in a clean state (no uncommitted changes at base commit)."""
+    # Configure git to trust the repo directory
+    subprocess.run(
+        ["git", "config", "--global", "--add", "safe.directory", REPO],
+        capture_output=True, timeout=10,
+    )
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    if r.returncode != 0 and "dubious ownership" in r.stderr:
+        pytest.skip("Git ownership issue - skipping test")
+    assert r.returncode == 0, f"git status failed: {r.stderr}"
+    # At base commit, repo should be clean. If there are uncommitted changes,
+    # it means the gold solution was applied - this is expected in gold test mode.
+    # We just verify git status works correctly.
+    if r.stdout.strip() != "":
+        # Check if the changes are from the expected gold solution files
+        expected_patterns = ["VOUCHED.td", "vouch-check", "compliance-close", "CONTRIBUTING.md", "config.yml"]
+        for line in r.stdout.strip().split("\n"):
+            if line.strip():
+                # Verify at least one expected pattern is in the status output
+                if any(p in line for p in expected_patterns):
+                    return  # Expected gold solution changes
+        # If we get here, there are unexpected changes
+        pytest.fail(f"Repo has unexpected uncommitted changes: {r.stdout.strip()}")
+
+
+# [repo_tests] pass_to_pass
+def test_repo_file_structure():
+    """Required repository directories must exist."""
+    required_dirs = [
+        ".github/workflows",
+        ".github/ISSUE_TEMPLATE",
+    ]
+    for d in required_dirs:
+        r = subprocess.run(
+            ["test", "-d", f"{REPO}/{d}"],
+            capture_output=True, text=True, timeout=10,
+        )
+        assert r.returncode == 0, f"Required directory {d} does not exist"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_contributing_exists():
+    """CONTRIBUTING.md must exist and be non-empty."""
+    r = subprocess.run(
+        ["test", "-s", f"{REPO}/CONTRIBUTING.md"],
+        capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, "CONTRIBUTING.md does not exist or is empty"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_package_json_valid():
+    """package.json must be valid JSON."""
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import json; json.load(open('{REPO}/package.json'))"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"package.json is invalid JSON: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_workflow_syntax_actionlint():
+    """GitHub Actions workflows must be syntactically valid (actionlint)."""
+    # Check if actionlint is available
+    r = subprocess.run(
+        ["which", "actionlint"], capture_output=True, text=True, timeout=10,
+    )
+    if r.returncode != 0:
+        # Fallback: use simple YAML validation for workflows
+        workflows_dir = Path(REPO) / ".github" / "workflows"
+        for wf in workflows_dir.glob("*.yml"):
+            r = subprocess.run(
+                ["python3", "-c",
+                 f"import yaml; d=yaml.safe_load(open('{wf}').read()); assert 'jobs' in d or 'on' in d, 'Missing required fields'"],
+                capture_output=True, text=True, timeout=30, cwd=REPO,
+            )
+            assert r.returncode == 0, f"Workflow {wf.name} validation failed: {r.stderr}"
+        return
+
+    # If actionlint is available, use it
+    r = subprocess.run(
+        ["actionlint", "-oneline", f"{REPO}/.github/workflows/"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"actionlint found issues:\n{r.stdout[-500:]}"

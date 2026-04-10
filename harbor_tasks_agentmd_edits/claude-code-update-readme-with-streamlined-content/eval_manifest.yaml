@@ -41,6 +41,27 @@ checks:
   type: pass_to_pass
   origin: static
   description: README is valid markdown with proper structure (verified via subprocess)
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and has expected history (runs git status)
+- id: test_repo_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required repository files exist (README.md, CHANGELOG.md, LICENSE.md,
+    SECURITY.md)
+- id: test_repo_readme_utf8
+  type: pass_to_pass
+  origin: repo_tests
+  description: README is valid UTF-8 and has sufficient content (>1000 chars)
+- id: test_repo_changelog_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: CHANGELOG has expected format with version entries
+- id: test_repo_no_merge_conflicts
+  type: pass_to_pass
+  origin: repo_tests
+  description: No merge conflict markers in markdown files
 rubric: []
 config_edits:
 - path: README.md

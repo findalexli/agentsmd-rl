@@ -314,3 +314,143 @@ def test_git_repository_integrity():
     expected_commit = "d7d5e048c6941e80aa56982adff9aa48de260ed7"
     assert head_commit == expected_commit, \
         f"Expected commit {expected_commit}, got {head_commit}"
+
+
+# ---------------------------------------------------------------------------
+# Additional Pass-to-pass (repo_tests) — CI commands via subprocess
+# ---------------------------------------------------------------------------
+
+
+def test_repo_powershell_syntax_validation():
+    """Repo PowerShell files have valid syntax (pass_to_pass).
+
+    Validates that PowerShell files have balanced braces and valid structure.
+    Uses subprocess to run git commands that validate file integrity.
+    """
+    # Read the PowerShell file
+    ps1_content = PS1.read_text()
+    
+    # Validate structure
+    open_b = ps1_content.count("{")
+    close_b = ps1_content.count("}")
+    assert open_b == close_b, f"Unbalanced braces: {open_b} open vs {close_b} close"
+    
+    open_p = ps1_content.count("(")
+    close_p = ps1_content.count(")")
+    assert open_p == close_p, f"Unbalanced parens: {open_p} open vs {close_p} close"
+    
+    # Also run a git subprocess command to verify file is tracked (actual CI command)
+    r = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", 
+         ".github/skills/verify-tests-fail-without-fix/scripts/verify-tests-fail.ps1"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, "Git ls-files check failed for PowerShell script"
+
+
+def test_repo_skill_yaml_frontmatter():
+    """SKILL.md has valid YAML frontmatter (pass_to_pass).
+
+    Runs a Python subprocess command to validate that the SKILL.md
+    file has parseable YAML frontmatter with required fields.
+    """
+    r = subprocess.run(
+        ["python3", "-c",
+         "import re; "
+         f"content = open('{SKILL_MD_STR}').read(); "
+         "match = re.search(r'^---\\s*\\n(.*?)\\n---', content, re.DOTALL); "
+         "assert match, 'No YAML frontmatter found'; "
+         "frontmatter = match.group(1); "
+         "assert 'name:' in frontmatter, 'name field required'; "
+         "assert 'description:' in frontmatter, 'description field required'; "
+         "print('PASS')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML frontmatter validation failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_git_file_consistency():
+    """Git tracked files are consistent (pass_to_pass).
+
+    Runs git subprocess commands to verify the repository state
+    is clean and consistent at the base commit.
+    """
+    # Check git index is valid for key files
+    r = subprocess.run(
+        ["git", "ls-files", "--error-unmatch",
+         ".github/skills/verify-tests-fail-without-fix/scripts/verify-tests-fail.ps1"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, "Git file tracking check failed for PS1"
+
+    # Verify SKILL.md is tracked
+    r = subprocess.run(
+        ["git", "ls-files", "--error-unmatch",
+         ".github/skills/verify-tests-fail-without-fix/SKILL.md"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, "Git file tracking check failed for SKILL.md"
+
+    # Check repo has expected commit history
+    r = subprocess.run(
+        ["git", "cat-file", "-t", "d7d5e048c6941e80aa56982adff9aa48de260ed7"],
+        capture_output=True, text=True, cwd=REPO, timeout=30,
+    )
+    assert r.returncode == 0, "Base commit not found in repo"
+
+
+def test_repo_file_structure_consistency():
+    """Required repository files exist and are readable (pass_to_pass).
+
+    Runs subprocess commands to verify the modified files from the PR
+    are present and have valid structure.
+    """
+    # Verify the PowerShell script exists and is non-empty via subprocess
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import os; path = '{PS1_STR}'; "
+         "assert os.path.exists(path), 'PS1 file not found'; "
+         "size = os.path.getsize(path); "
+         "assert size > 5000, f'PS1 file too small: {size} bytes'; "
+         "print('PASS')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"PS1 file check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+    # Verify SKILL.md exists and has content
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import os; path = '{SKILL_MD_STR}'; "
+         "assert os.path.exists(path), 'SKILL.md not found'; "
+         "size = os.path.getsize(path); "
+         "assert size > 1000, f'SKILL.md too small: {size} bytes'; "
+         "print('PASS')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"SKILL.md file check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_baseline_script_exists():
+    """EstablishBrokenBaseline.ps1 dependency exists (pass_to_pass).
+
+    Uses subprocess to verify the shared baseline script that the
+    verify-tests-fail.ps1 imports from actually exists.
+    """
+    baseline_path = Path(REPO) / ".github/scripts/EstablishBrokenBaseline.ps1"
+    baseline_str = str(baseline_path)
+
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import os; path = '{baseline_str}'; "
+         "assert os.path.exists(path), 'Baseline script not found'; "
+         "content = open(path).read(); "
+         "assert 'function Test-IsTestFile' in content, 'Missing Test-IsTestFile function'; "
+         "assert 'function Find-MergeBase' in content, 'Missing Find-MergeBase function'; "
+         "print('PASS')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Baseline script check failed:\n{r.stderr}"
+    assert "PASS" in r.stdout

@@ -1,21 +1,54 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:29:57.072895",
-  "total_time": 5573.03,
-  "sandbox_id": "iedhz6f707al130o1wodd",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:43:53.675760",
+  "total_time": 1904.82,
+  "sandbox_id": "i84qyor1ldu352c0c39qg",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 7.46,
+      "notes": "Added 3 pass_to_pass tests with origin: repo_tests: (1) test_repo_prettier_readme - runs npx prettier --check on README.md, (2) test_repo_ts_syntax_tracing - uses @babel/parser to verify TypeScript syntax of all tracing test files, (3) test_repo_otel_v2_imports_resolve - validates OTel v2 packages can be imported and used at runtime. All 3 p2p tests verified passing in Docker on base commit. CI commands identified from .github/workflows/test-template.yml (prettier-check) and repository structure (TypeScript validation, OTel v2 runtime checks). Total 5 p2p tests (2 static + 3 repo_tests) and 4 f2p tests."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 588.55,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "judge_score": 0.5,
+      "judge_note": "Default 0.5 when no API keys available (expected in env without GEMINI_API_KEY or ANTHROPIC_API_KEY)",
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build OK, NOP test correctly failed (reward=0), GOLD test all 9 tests passed (reward=1). Rubric judge returned 0.5 due to missing API keys (expected fallback behavior). Tests properly validate OTel v2 migration (resourceFromAttributes, ATTR_SERVICE_NAME/VERSION, spanProcessors, parentSpanContext, trace.setGlobalTracerProvider).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 81.81
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.84,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +59,14 @@
       "backend": "fireworks",
       "time": 5573.03,
       "at": "2026-04-09T07:29:57.072895"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1904.82,
+      "at": "2026-04-10T12:43:53.675760"
     }
   ]
 }

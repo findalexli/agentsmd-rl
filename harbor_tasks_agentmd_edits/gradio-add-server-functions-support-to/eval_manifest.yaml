@@ -9,6 +9,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified Python files must parse without errors
+- id: repo_html_component_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's HTML component tests pass
+- id: repo_button_component_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Button component tests pass
+- id: repo_component_props_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's component props tests pass
 - id: server_import_added
   type: fail_to_pass
   origin: pr_diff
@@ -62,52 +74,80 @@ checks:
     path: AGENTS.md
     lines: '44'
     commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
-rubric: []
+rubric:
+- rule: "Python code must be formatted with ruff and frontend code with prettier (run scripts/format_backend.sh and scripts/format_frontend.sh before submitting)"
+  source:
+    path: AGENTS.md
+    lines: "41-44"
+    commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
+- rule: "Code changes must be consistent with the style of surrounding code in the same file"
+  source:
+    path: AGENTS.md
+    lines: "45"
+    commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
+- rule: "When modifying a Gradio component, the SKILL.md signature for that component must be updated to include any new parameters"
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: "103"
+    commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
+  reference: "### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = \"${value}\", css_template: str = \"\", js_on_load: str | None = \"element.addEventListener('click', function() { trigger('click') });\", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = \"value\", min_height: int | None = None, max_height: int | str | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, server_functions: list[Callable] | None = None, props: Any)`"
+
 config_edits:
 - path: .agents/skills/gradio/SKILL.md
   tier: 1
-  gold_added: "### `HTML(value: Any | Callable | None = None, label: str | I18nData\
-    \ | None = None, html_template: str = \"${value}\", css_template: str = \"\",\
-    \ js_on_load: str | None = \"element.addEventListener('click', function() { trigger('click')\
-    \ });\", apply_default_css: bool = True, every: Timer | float | None = None, inputs:\
-    \ Component | Sequence[Component] | set[Component] | None = None, show_label:\
-    \ bool = False, visible: bool | Literal['hidden'] = True, elem_id: str | None\
-    \ = None, elem_classes: list[str] | str | None = None, render: bool = True, key:\
-    \ int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str]\
-    \ | str | None = \"value\", min_height: int | None = None, max_height: int | str\
-    \ | None = None, container: bool = False, padding: bool = False, autoscroll: bool\
-    \ = False, buttons: list[Button] | None = None, server_functions: list[Callable]\
-    \ | None = None, props: Any)`\n\n\n## Server Functions\n\nYou can call Python\
-    \ functions directly from your `js_on_load` code using the `server_functions`\
-    \ parameter. Pass a list of Python functions to `server_functions`, and they become\
-    \ available as async methods on a `server` object inside `js_on_load`.\n\nExample:\n\
-    ```python\nimport os\nimport gradio as gr\n\ndef list_files(path):\n    try:\n\
-    \        return os.listdir(path)\n    except (FileNotFoundError, PermissionError)\
-    \ as e:\n        return [f\"Error: {e}\"]\n\nwith gr.Blocks() as demo:\n    gr.Markdown(\"\
-    # Server Functions Demo\")\n    filetree = gr.HTML(\n        value=os.path.abspath(''),\n\
-    \        html_template=\"\"\"\n            <div>\n                <p>Directory:\
-    \ <strong>${value}</strong></p>\n                <div class='tree'></div>\n  \
-    \              <button class='load-btn'>Load Files</button>\n            </div>\n\
-    \        \"\"\",\n        js_on_load=\"\"\"\n            const loadBtn = element.querySelector('.load-btn');\n\
-    \            const tree = element.querySelector('.tree');\n            loadBtn.addEventListener('click',\
-    \ async () => {\n                const files = await server.list_files(props.value);\n\
-    \                tree.innerHTML = '';\n                files.forEach(file => {\n\
-    \                    const fileEl = document.createElement('div');\n         \
-    \           fileEl.textContent = file;\n                    tree.appendChild(fileEl);\n\
-    \                });\n            });\n        \"\"\",\n        server_functions=[list_files],\n\
-    \    )\n\nif __name__ == \"__main__\":\n    demo.launch()\n```\n\nEach function\
-    \ in `server_functions` becomes an async method on the `server` object:\n- Function\
-    \ name becomes the method name\n- Arguments are passed to the Python function\n\
-    - Returns a Promise that resolves with the function's return value\n- Use `await\
-    \ server.func_name(args)` or `server.func_name(args).then(result => ...)`"
-  gold_removed: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
-    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
-    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
-    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
-    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
-    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
-    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
-    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
-    = "value", min_height: int | None = None, max_height: int | str | None = None,
-    container: bool = False, padding: bool = False, autoscroll: bool = False, buttons:
-    list[Button] | None = None, props: Any)`'
+  gold_added: |-
+    ### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener('click', function() { trigger('click') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | str | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, server_functions: list[Callable] | None = None, props: Any)`
+
+    ## Server Functions
+
+    You can call Python functions directly from your `js_on_load` code using the `server_functions` parameter. Pass a list of Python functions to `server_functions`, and they become available as async methods on a `server` object inside `js_on_load`.
+
+    Example:
+    ```python
+    import os
+    import gradio as gr
+
+    def list_files(path):
+        try:
+            return os.listdir(path)
+        except (FileNotFoundError, PermissionError) as e:
+            return [f"Error: {e}"]
+
+    with gr.Blocks() as demo:
+        gr.Markdown("# Server Functions Demo")
+        filetree = gr.HTML(
+            value=os.path.abspath(''),
+            html_template="""
+                <div>
+                    <p>Directory: <strong>${value}</strong></p>
+                    <div class='tree'></div>
+                    <button class='load-btn'>Load Files</button>
+                </div>
+            """,
+            js_on_load="""
+                const loadBtn = element.querySelector('.load-btn');
+                const tree = element.querySelector('.tree');
+                loadBtn.addEventListener('click', async () => {
+                    const files = await server.list_files(props.value);
+                    tree.innerHTML = '';
+                    files.forEach(file => {
+                        const fileEl = document.createElement('div');
+                        fileEl.textContent = file;
+                        tree.appendChild(fileEl);
+                    });
+                });
+            """,
+            server_functions=[list_files],
+        )
+
+    if __name__ == "__main__":
+        demo.launch()
+    ```
+
+    Each function in `server_functions` becomes an async method on the `server` object:
+    - Function name becomes the method name
+    - Arguments are passed to the Python function
+    - Returns a Promise that resolves with the function's return value
+    - Use `await server.func_name(args)` or `server.func_name(args).then(result => ...)`
+  gold_removed: |-
+    ### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener('click', function() { trigger('click') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | str | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, props: Any)`

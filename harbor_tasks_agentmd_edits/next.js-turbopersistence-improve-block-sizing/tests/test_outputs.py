@@ -70,6 +70,48 @@ def test_cargo_test_filtered():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_cargo_fmt():
+    """turbo-persistence code is properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check", "-p", "turbo-persistence"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"cargo fmt check failed:\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_doc_tests():
+    """turbo-persistence doc tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--doc", "-p", "turbo-persistence"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"cargo doc tests failed:\n{r.stderr.decode()[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_benches():
+    """turbo-persistence benchmarks compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--benches", "-p", "turbo-persistence"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"cargo check benches failed:\n{r.stderr.decode()[-500:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core code changes
 # ---------------------------------------------------------------------------

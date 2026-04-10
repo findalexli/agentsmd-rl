@@ -1,21 +1,52 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:32:11.126906",
-  "total_time": 5895.61,
-  "sandbox_id": "i9l6mxyx00fm913rtum21",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T12:55:36.653953",
+  "total_time": 3879.06,
+  "sandbox_id": "icuyq7johdgbrpaz1d1s9",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 364.51,
+      "notes": "Added 5 repo_tests p2p gates: test_repo_mcp_cli_parsing, test_repo_mcp_cli_help, test_repo_build, test_repo_check_deps, test_repo_eslint_on_modified_files. CI commands tested: npm run build, npm run check-deps, npm run eslint, npx playwright test --config=tests/mcp/playwright.config.ts cli-parsing.spec.ts, cli-help.spec.ts."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 819.87,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed test_find_workspace_dir_function which had broken f-string escaping causing regex failures. The test now uses Python re module instead of Node.js regex to extract the function, and correctly handles JavaScript JSON.stringify omitting undefined values.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1771.48
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.21,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +57,14 @@
       "backend": "glm",
       "time": 5895.61,
       "at": "2026-04-09T07:32:11.126906"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3879.06,
+      "at": "2026-04-10T12:55:36.653953"
     }
   ]
 }

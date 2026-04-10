@@ -178,3 +178,25 @@ def test_prqlc_tests_pass():
         cwd=REPO, capture_output=True, text=True, timeout=180,
     )
     assert r.returncode == 0, f"Tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_prqlc_check_all_targets():
+    """Repo's prqlc crate compiles for all targets (pass_to_pass)."""
+    # CI runs cargo check --all-targets to ensure tests and examples compile
+    r = subprocess.run(
+        ["cargo", "check", "-p", "prqlc", "--all-targets"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"cargo check --all-targets failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_prqlc_doc_tests():
+    """Repo's prqlc doc tests pass (pass_to_pass)."""
+    # Doc tests ensure documentation examples are correct
+    r = subprocess.run(
+        ["cargo", "test", "-p", "prqlc", "--doc"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Doc tests failed:\n{r.stderr[-500:]}"

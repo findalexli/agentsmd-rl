@@ -3,19 +3,20 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T05:54:38.565261",
-  "total_time": 7208.31,
-  "sandbox_id": "iryz0xw2s0adwsqli9k2p",
+  "validated_at": "2026-04-10T12:13:56.464733",
+  "total_time": 1730.43,
+  "sandbox_id": "iwmgg16fhxe3h0nn9ebgw",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
   "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "completed",
-      "model": "kimi-k2p5-turbo",
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 229.24,
-      "notes": "Added 3 repo_tests pass_to_pass gates: docker_compose_schema, package_scripts_consistent, ci_action_valid. Environment limitations (no Node.js/pnpm/Docker) prevented adding runtime CI tests. Static/syntax validation tests added to verify unified docker-compose.yml structure, package.json script consistency, and CI action validity."
+      "time": 307.58,
+      "notes": ""
     },
     "p2p_enrich": {
       "status": "ok",
@@ -37,17 +38,48 @@
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All four validation checks passed: Docker build successful, NOP test reward=0 (correctly fails on base code with 11 failures), Gold test reward=1 (all 14 tests pass after fix), Rubric judge ICR=1.0 (empty rubric). No fixes required - task is properly configured.",
+      "notes": "All four validation checks passed: Docker build successful, NOP test reward=0 (11 failures correctly fail on base code), Gold test reward=1 (all 17 tests pass after fix), Rubric judge ICR=1.0 (empty rubric).",
+      "validated_at": "2026-04-10T19:13:42.265646",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 64.73
+      "time": 64.87
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.7,
+      "time": 0.14,
       "notes": "ICR=1.00"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "CONTRIBUTING.md",
+        ".github/actions/start-database/action.yml"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 3,
+      "rejection_reasons": "PR title format rules (process), TypeScript patterns (not relevant), test structure rules (not relevant)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 48.52
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 31.19,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 18.51,
+      "notes": "precision was 0.00, fixing hallucinated rules"
     }
   },
   "history": [
@@ -66,6 +98,20 @@
       "backend": "fireworks",
       "time": 7208.31,
       "at": "2026-04-09T05:54:38.565261"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "at": "2026-04-10T19:13:42.265666"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1730.43,
+      "at": "2026-04-10T12:13:56.464733"
     }
   ]
 }

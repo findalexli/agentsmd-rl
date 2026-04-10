@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:41:32.382933",
-  "total_time": 6653.57,
-  "sandbox_id": "iaawpn35rphdvfhocdnsx",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:17:10.515862",
+  "total_time": 5330.11,
+  "sandbox_id": "iypj9itjhkaflkzji86ps",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during validate",
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
+    "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1068.53,
+      "time": 2511.31,
       "notes": ""
     },
     "improve": {
@@ -23,6 +23,45 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "templates/with-cloudflare-d1/AGENTS.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 0,
+      "rejection_reasons": "",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 59.9
+    },
+    "rubric_validate": {
+      "status": "error",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.41,
+      "notes": "",
+      "precision": 1.0
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed test_outputs.py: changed process.argv[2] to process.argv[1] for Node.js -e argument passing, fixed PayloadLogger regex for export type syntax, and simplified Node.js test script. Fixed eval_manifest.yaml rubric rules to be valid YAML. All 4 validation checks pass.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1519.22
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.63,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -33,6 +72,14 @@
       "backend": "fireworks",
       "time": 6653.57,
       "at": "2026-04-09T07:41:32.382933"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 5330.11,
+      "at": "2026-04-10T13:17:10.515862"
     }
   ]
 }

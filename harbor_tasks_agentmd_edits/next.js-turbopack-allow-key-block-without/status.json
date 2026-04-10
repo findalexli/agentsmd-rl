@@ -1,19 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:25:13.733778",
-  "total_time": 18801.66,
-  "sandbox_id": "ihqasxkblcw8f65zi3tk1",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:57:36.629057",
+  "total_time": 1965.43,
+  "sandbox_id": "irohh9l5i8anyxl8fkjl3",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 252.52,
+      "time": 277.64,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,9 +32,22 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP test reward=0 (base code correctly fails), Gold test reward=1 (all 13 tests pass after patch), Rubric judge ICR=1.0 (README style compliance verified). The judge was initially returning 0.0 because it was checking the task harness directory instead of the container repo - when pointed at the correct repo it gives ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 80.3
+      "time": 257.86
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.39,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +74,14 @@
       "backend": "fireworks",
       "time": 18801.66,
       "at": "2026-04-09T14:25:13.733778"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1965.43,
+      "at": "2026-04-10T11:57:36.629057"
     }
   ]
 }

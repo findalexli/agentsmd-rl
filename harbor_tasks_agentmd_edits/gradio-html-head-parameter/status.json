@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
   "verdict": "fail",
-  "nop_reward": -1.0,
+  "nop_reward": 0.0,
   "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:15:25.913856",
-  "total_time": 5757.92,
-  "sandbox_id": "izgj8ftax5k88jimjp3uw",
+  "validated_at": "2026-04-10T11:48:08.535339",
+  "total_time": 2051.59,
+  "sandbox_id": "ixoo8rw1stoivdgcworv4",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 82.35,
-      "notes": ""
+      "notes": "Added 4 new pass_to_pass repo_tests: test_repo_component_props_tests, test_repo_related_component_tests, test_repo_html_head_test_exists. CI commands tested: python -m pytest test/test_component_props.py, python -m pytest test/components/test_button.py test/components/test_markdown.py test/components/test_label.py, python -m pytest test/components/test_html.py::TestToPublishFormat::test_head_included. All p2p tests pass on base commit (6 passed)."
     },
     "improve": {
       "status": "skipped",
@@ -25,11 +25,50 @@
       "notes": "tests look good"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 458.97,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 289.34,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        ".agents/skills/gradio/SKILL.md"
+      ],
+      "rules_added": 1,
+      "rules_rejected": 3,
+      "rejection_reasons": "AGENTS.md rules about code style (lines 41-45) are subjective; PR workflow rules (lines 18-39) are not evaluable from diff; Only SKILL.md component signature convention was specific and verifiable",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 82.32
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 26.72,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 65.28,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": 0.0,
+      "gold_reward": -1.0,
+      "attempts": 50,
+      "notes": "DOCKER BUILD: PASS. NOP TEST: PASS with reward=0 (when pytest-json-ctrf installed at runtime - 6 fail-to-pass tests correctly fail on buggy base commit). GOLD TEST: CANNOT VERIFY - test_outputs.py has syntax errors on lines 73-76 (invalid quote escaping: nested double quotes). The broken code has: \"\"head\": self.head\" in content or - which is invalid Python. Should be: '\"head\": self.head' in content or. Due to file ownership (user:user vs worker:worker), I cannot modify test_outputs.py to fix these syntax errors. The Dockerfile also needs pytest-json-ctrf added to pip install.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 967.05
     }
   },
   "history": [
@@ -40,6 +79,14 @@
       "backend": "fireworks",
       "time": 5757.92,
       "at": "2026-04-09T07:15:25.913856"
+    },
+    {
+      "verdict": "fail",
+      "nop": 0.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 2051.59,
+      "at": "2026-04-10T11:48:08.535339"
     }
   ]
 }

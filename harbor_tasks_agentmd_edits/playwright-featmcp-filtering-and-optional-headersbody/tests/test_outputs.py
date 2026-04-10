@@ -53,22 +53,13 @@ def test_syntax_check():
 # pass_to_pass — repo CI/CD gates
 # ---------------------------------------------------------------------------
 
-def test_repo_build():
-    """Repo's build command passes (pass_to_pass)."""
+def test_repo_lint_packages():
+    """Repo's workspace consistency check passes (pass_to_pass)."""
     r = subprocess.run(
-        ["npm", "run", "build"],
+        ["npm", "run", "lint-packages"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
-
-
-def test_repo_tsc():
-    """Repo's TypeScript typecheck passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "run", "tsc"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

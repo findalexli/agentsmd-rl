@@ -187,3 +187,27 @@ def test_query_gates_with_enabled():
     assert re.search(r"enabled\s*:", content), (
         "Query options must include an `enabled:` property"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI tests that must pass at base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Studio unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && cd /workspace/supabase/apps/studio && NODE_OPTIONS='--max-old-space-size=3072' pnpm run test:ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Studio ESLint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && cd /workspace/supabase/apps/studio && pnpm run lint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

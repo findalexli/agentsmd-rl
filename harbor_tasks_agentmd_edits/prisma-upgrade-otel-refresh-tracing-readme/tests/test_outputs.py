@@ -26,6 +26,15 @@ TRACING_TEST_FILES = [
 README_PATH = "packages/instrumentation/README.md"
 
 
+def _run_with_pnpm_install(cmd: str, cwd: str = REPO, timeout: int = 300) -> subprocess.CompletedProcess:
+    """Run a command with pnpm install first to ensure dependencies are available."""
+    full_cmd = f"corepack enable && pnpm install --frozen-lockfile >/dev/null 2>&1 && {cmd}"
+    return subprocess.run(
+        ["bash", "-c", full_cmd],
+        capture_output=True, text=True, timeout=timeout, cwd=cwd,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / validation checks
 # ---------------------------------------------------------------------------
@@ -43,6 +52,48 @@ def test_json_syntax_check():
             cwd=REPO, capture_output=True, text=True, timeout=10,
         )
         assert r.returncode == 0, f"{pkg_file} is not valid JSON: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_check():
+    """Repo prettier formatting check passes (pass_to_pass)."""
+    r = _run_with_pnpm_install("pnpm run prettier-check")
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_engines_override():
+    """Repo check-engines-override passes (pass_to_pass)."""
+    r = _run_with_pnpm_install("pnpm run check-engines-override")
+    assert r.returncode == 0, f"Check engines override failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo eslint linting on modified files passes (pass_to_pass)."""
+    r = _run_with_pnpm_install("pnpm eslint packages/client/tests/functional/tracing*/ packages/instrumentation/")
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_instrumentation_unit_tests():
+    """@prisma/instrumentation unit tests pass (pass_to_pass)."""
+    r = _run_with_pnpm_install("cd packages/instrumentation && pnpm run test")
+    assert r.returncode == 0, f"Instrumentation tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build_instrumentation():
+    """@prisma/instrumentation package builds successfully (pass_to_pass)."""
+    r = _run_with_pnpm_install("pnpm run build --filter=@prisma/instrumentation")
+    assert r.returncode == 0, f"Instrumentation build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_modified_packages():
+    """Modified package.json files have correct formatting (pass_to_pass)."""
+    r = _run_with_pnpm_install("pnpm exec prettier --check packages/client/package.json packages/query-plan-executor/package.json")
+    assert r.returncode == 0, f"Prettier check on modified packages failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

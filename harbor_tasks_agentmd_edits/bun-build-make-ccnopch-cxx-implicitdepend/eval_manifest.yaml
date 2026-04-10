@@ -1,84 +1,86 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28858
-  base_commit: "485ec522a22b469b336aece8276b507a71665a87"
-  merge_commit: "871f660f5816a48dacc6c53e104f42d775852e6b"
-
+  base_commit: 485ec522a22b469b336aece8276b507a71665a87
+  merge_commit: 871f660f5816a48dacc6c53e104f42d775852e6b
 checks:
-  - id: cc_implicit_dep_outputs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "cc() calls in compileC pass depOutputs as implicitInputs, not orderOnlyInputs"
-
-  - id: nopch_cxx_implicit_dep_outputs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No-PCH cxx path sets opts.implicitInputs = depOutputs"
-
-  - id: codegen_separated_from_dep_outputs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "depOutputs and codegen.cppAll are not combined into one order-only variable"
-
-  - id: claude_md_dep_strategy_updated
-    type: fail_to_pass
-    origin: agent_config
-    description: "CLAUDE.md Gotchas documents cc and no-PCH cxx using implicit deps on depOutputs"
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "227-229"
-      commit: "485ec522a22b469b336aece8276b507a71665a87"
-
-  - id: compile_opts_has_both_input_types
-    type: pass_to_pass
-    origin: static
-    description: "compile.ts CompileOpts interface retains both implicitInputs and orderOnlyInputs"
-
-  - id: bun_ts_pch_implicit_deps
-    type: pass_to_pass
-    origin: static
-    description: "PCH still uses implicit deps on depOutputs (unchanged behavior)"
-
-  - id: repo_editorconfig_compliance
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Build scripts comply with EditorConfig (UTF-8, LF, no trailing whitespace)"
-
-  - id: repo_build_script_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Build script imports point to existing files"
-
-  - id: repo_json_configs_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "JSON configuration files are syntactically valid"
-
-  - id: repo_git_integrity
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository passes fsck integrity check"
-
-  - id: repo_shell_scripts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Shell scripts in .buildkite/ have valid syntax"
-
-  - id: repo_build_scripts_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Build scripts exist and have substantial content"
-
-  - id: repo_claude_md_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CLAUDE.md has expected sections (Ninja Primer, Gotchas)"
-
-  - id: repo_build_scripts_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Build scripts have expected functions and interfaces"
-
-rubric: []
+- id: cc_implicit_dep_outputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: cc() calls in compileC pass depOutputs as implicitInputs, not orderOnlyInputs
+- id: nopch_cxx_implicit_dep_outputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: No-PCH cxx path sets opts.implicitInputs = depOutputs
+- id: codegen_separated_from_dep_outputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: depOutputs and codegen.cppAll are not combined into one order-only
+    variable
+- id: claude_md_dep_strategy_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md Gotchas documents cc and no-PCH cxx using implicit deps on
+    depOutputs
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 227-229
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+- id: compile_opts_has_both_input_types
+  type: pass_to_pass
+  origin: static
+  description: compile.ts CompileOpts interface retains both implicitInputs and orderOnlyInputs
+- id: bun_ts_pch_implicit_deps
+  type: pass_to_pass
+  origin: static
+  description: PCH still uses implicit deps on depOutputs (unchanged behavior)
+- id: repo_editorconfig_compliance
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts comply with EditorConfig (UTF-8, LF, no trailing whitespace)
+- id: repo_build_script_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build script imports point to existing files
+- id: repo_json_configs_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: JSON configuration files are syntactically valid
+- id: repo_git_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository passes fsck integrity check
+- id: repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in .buildkite/ have valid syntax
+- id: repo_build_scripts_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts exist and have substantial content
+- id: repo_claude_md_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLAUDE.md has expected sections (Ninja Primer, Gotchas)
+- id: repo_build_scripts_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts have expected functions and interfaces
+- id: repo_tsconfig_valid_jsonc
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript config files are syntactically valid JSONC
+rubric:
+- rule: PCH, cc, and no-PCH cxx must all use implicit deps on depOutputs, not order-only
+    — the Gotchas section must be updated to reflect this unified approach
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 227-229
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+  reference: '**PCH, cc, and no-PCH cxx need implicit dep on `depOutputs`**, not order-only.
+    Local WebKit''s sub-build rewrites forwarding headers as an undeclared side effect
+    (only `lib*.a` are declared outputs). Depfiles record those headers, but ninja
+    stats them before the sub-build runs — order-only lags one build. The lib itself
+    is the invalidation signal. Codegen headers stay order-only: they''re declared
+    outputs with restat, so depfile tracking is exact.'

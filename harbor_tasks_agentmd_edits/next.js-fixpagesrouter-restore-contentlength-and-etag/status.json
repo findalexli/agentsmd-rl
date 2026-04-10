@@ -3,11 +3,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-09T03:52:27.534958",
-  "total_time": 8110.67,
-  "sandbox_id": "inrpcc2zepju4hg4qcc2u",
+  "validated_at": "2026-04-10T12:08:01.982457",
+  "total_time": 2636.22,
+  "sandbox_id": "ijjl3hmqy2h7hasm1up7f",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.33,
   "rubric_icr": 1.0,
   "nodes": {
     "validate": {
@@ -15,17 +16,59 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed test file issues: 1) Changed .mjs to .cjs for CommonJS require() support, 2) Simplified TypeScript compilation test to check file structure instead of full project build (dist folder missing), 3) Converted runtime module tests to static source code analysis (render-result, send-payload modules not built). All 8 tests now pass: NOP test correctly returns reward=0 (fail-to-pass tests fail on buggy base), gold test correctly returns reward=1 (all tests pass after fix). Rubric is empty so no ICR validation needed.",
+      "notes": "All 4 validation checks pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 379.01
+      "time": 169.82
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.05,
+      "time": 4.51,
       "notes": "ICR=1.00"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 907.87,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "CLAUDE.md (symlink to AGENTS.md)"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 0,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 98.55
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 24.21,
+      "notes": "",
+      "precision": 0.33
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 25.2,
+      "notes": "precision was 0.33, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     }
   },
   "history": [
@@ -44,6 +87,14 @@
       "backend": "fireworks",
       "time": 8110.67,
       "at": "2026-04-09T03:52:27.534958"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2636.22,
+      "at": "2026-04-10T12:08:01.982457"
     }
   ]
 }

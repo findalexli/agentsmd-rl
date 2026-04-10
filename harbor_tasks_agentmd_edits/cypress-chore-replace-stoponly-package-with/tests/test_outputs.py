@@ -120,6 +120,94 @@ def test_repo_eslintrc_exists():
     assert abs(opens - closes) <= 1, f"eslintrc.js has bracket imbalance"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_baseconfig_mocha_import():
+    """ESLint baseConfig imports the mocha plugin (pass_to_pass)."""
+    r = _run_py("""
+import sys
+src = open("/workspace/cypress/packages/eslint-config/src/baseConfig.ts").read()
+if "import mocha from 'eslint-plugin-mocha'" not in src:
+    sys.exit("mocha plugin import not found in baseConfig.ts")
+if "mocha.configs" not in src:
+    sys.exit("mocha.configs not referenced in baseConfig.ts")
+print("PASS")
+""")
+    assert r.returncode == 0, f"baseConfig mocha import check failed: {r.stderr}{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_config_package_valid():
+    """@packages/eslint-config package.json is valid JSON with dependencies (pass_to_pass)."""
+    r = _run_py("""
+import json, sys
+try:
+    pkg = json.load(open("/workspace/cypress/packages/eslint-config/package.json"))
+    # Check that it has the expected structure
+    if "devDependencies" not in pkg:
+        sys.exit("eslint-config package.json missing devDependencies")
+    print("PASS")
+except json.JSONDecodeError as e:
+    sys.exit(f"Invalid JSON in eslint-config package.json: {e}")
+""")
+    assert r.returncode == 0, f"eslint-config package.json check failed: {r.stderr}{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_root_package_scripts_structure():
+    """Root package.json has valid scripts section with lint script (pass_to_pass)."""
+    r = _run_py("""
+import json, sys
+try:
+    pkg = json.load(open("/workspace/cypress/package.json"))
+    scripts = pkg.get("scripts", {})
+    # Verify key scripts exist that CI would run
+    if "lint" not in scripts:
+        sys.exit("lint script not found in package.json")
+    print("PASS")
+except json.JSONDecodeError as e:
+    sys.exit(f"Invalid JSON in root package.json: {e}")
+""")
+    assert r.returncode == 0, f"root package.json scripts check failed: {r.stderr}{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cypress_tests_file_exists():
+    """cypress-tests.ts type test file exists and is readable (pass_to_pass)."""
+    r = _run_py("""
+import sys
+try:
+    src = open("/workspace/cypress/cli/types/tests/cypress-tests.ts").read()
+    # Verify it's a TypeScript test file with expected content
+    if len(src) < 100:
+        sys.exit("cypress-tests.ts is too short or empty")
+    print("PASS")
+except Exception as e:
+    sys.exit(f"Error reading cypress-tests.ts: {e}")
+""")
+    assert r.returncode == 0, f"cypress-tests.ts existence check failed: {r.stderr}{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslintignore_structure():
+    """npm/eslint-plugin-dev/.eslintignore exists and is valid (pass_to_pass)."""
+    r = _run_py("""
+import sys
+try:
+    content = open("/workspace/cypress/npm/eslint-plugin-dev/.eslintignore").read()
+    # The file should exist and be readable
+    lines = content.strip().split('\\n')
+    print(f"PASS: found {len(lines)} lines in eslintignore")
+except Exception as e:
+    sys.exit(f"Error reading eslintignore: {e}")
+""")
+    assert r.returncode == 0, f"eslintignore check failed: {r.stderr}{r.stdout}"
+    assert "PASS" in r.stdout
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -1,21 +1,75 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:40:19.861916",
-  "total_time": 5745.54,
-  "sandbox_id": "im31vh5f7kxumfj7rk2hi",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:30:48.255565",
+  "total_time": 1013.55,
+  "sandbox_id": "iahpflr0f6h29db4506yo",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 115.31,
+      "notes": "Added 5 pass_to_pass tests with origin: repo_tests. Helm not available in Docker, used Python-based validations: Chart.yaml validation, Chart dependencies check, values.yaml sections check, Go template syntax check (balanced braces), _helpers.tpl patterns check. All 5 new p2p tests pass on base commit. Docker build successful."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 305.99,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        ".github/copilot-instructions.md"
+      ],
+      "rules_added": 0,
+      "rules_rejected": 0,
+      "rejection_reasons": "Config files contain TypeScript/React coding conventions (types over interfaces, no enums, no default exports, vitest tests, pnpm format). PR only modifies Helm chart YAML files and templates - no overlap.",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 33.46
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.27,
+      "notes": "",
+      "precision": 1.0
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_readme_no_toplevel_ingress_example which used line.strip() == 'ingress:' - this incorrectly matched properly nested 'ingress:' keys (2-space indented) under webapp: and registry:. Changed to line.startswith('ingress:') to only catch bare top-level ingress:. All 4 validations now pass: Docker build OK, NOP test reward=0 (12 tests fail on buggy base), Gold test reward=1 (19 tests pass). Rubric judge shows 0.5 due to LLM evaluation error but rubric is empty and content is verified correct.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 203.02
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -26,6 +80,30 @@
       "backend": "fireworks",
       "time": 5745.54,
       "at": "2026-04-09T07:40:19.861916"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1204.39,
+      "at": "2026-04-10T12:56:46.182231"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1027.21,
+      "at": "2026-04-10T13:13:54.507134"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1013.55,
+      "at": "2026-04-10T13:30:48.255565"
     }
   ]
 }

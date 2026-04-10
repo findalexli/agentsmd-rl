@@ -34,7 +34,7 @@ def test_raw_changelog_runs():
     """script/raw-changelog.ts exists and --help outputs usage info."""
     result = _run_bun("script/raw-changelog.ts", ["--help"])
     assert result.returncode == 0, f"raw-changelog.ts --help failed:\n{result.stderr}"
-    assert "Starting version" in result.stdout, f"Missing 'Starting version' in help:\n{result.stdout}"
+    assert "Starting version" in result.stdout, f"Missing Starting version in help:\n{result.stdout}"
 
 
 def test_changelog_wrapper_flags():
@@ -50,7 +50,7 @@ def test_version_uses_bun_script():
     """script/version.ts calls bun script/changelog.ts instead of opencode run."""
     content = Path(f"{REPO}/script/version.ts").read_text()
     assert "bun script/changelog.ts" in content, \
-        "version.ts should call 'bun script/changelog.ts'"
+        "version.ts should call bun script/changelog.ts"
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +85,7 @@ def test_command_wraps_input_in_tags():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass — regression checks
+# Pass-to-pass — regression checks (static file checks)
 # ---------------------------------------------------------------------------
 
 
@@ -102,4 +102,60 @@ def test_command_preserves_attribution_rules():
     assert "(@username)" in content, \
         "changelog.md should preserve (@username) attribution rule"
     assert "Do not derive" in content, \
-        "changelog.md should preserve 'Do not derive' rule"
+        "changelog.md should preserve Do not derive rule"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — repo CI tests (subprocess execution)
+# ---------------------------------------------------------------------------
+
+
+def test_repo_prettier_scripts():
+    """Repo's prettier formatting passes on script files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "prettier", "--check", "script/changelog.ts", "script/version.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_command():
+    """Repo's prettier formatting passes on command files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "prettier", "--check", ".opencode/command/changelog.md"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_changelog_syntax():
+    """changelog.ts has valid syntax and --help works (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "script/changelog.ts", "--help"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"changelog.ts --help failed:\n{r.stderr}"
+    assert "--from" in r.stdout, "Missing --from option in help"
+    assert "--to" in r.stdout, "Missing --to option in help"
+
+
+def test_repo_git_tracking():
+    """Git repository is properly initialized with HEAD commit (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "log", "--oneline", "-1"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git log failed:\n{r.stderr}"
+    assert "v1.3.9" in r.stdout, "Expected v1.3.9 commit not found"

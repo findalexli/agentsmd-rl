@@ -108,6 +108,32 @@ def test_repo_gofmt_idtui():
     assert r.returncode == 0, f"gofmt command failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - Repo CI/CD: go mod verify
+def test_repo_go_mod_verify():
+    """Repo's go mod verify passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "mod", "verify"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go mod verify failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - Repo CI/CD: go test compile for dagql/idtui
+def test_repo_go_test_compile_idtui():
+    """Repo's go test compile for dagql/idtui passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["go", "test", "-c", "./dagql/idtui"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"go test compile for dagql/idtui failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

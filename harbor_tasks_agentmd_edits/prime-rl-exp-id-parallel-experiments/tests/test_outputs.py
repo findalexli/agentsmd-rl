@@ -60,6 +60,28 @@ def test_ruff_lint():
     )
     assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
 
+def test_bash_syntax():
+    """Repo bash scripts pass syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", f"{REPO}/tmux.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bash syntax check failed for tmux.sh:\n{r.stderr}"
+
+
+def test_pyproject_toml_valid():
+    """Repo pyproject.toml is valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "tomli"],
+        capture_output=True, text=True, timeout=60,
+    )
+    cmd = f"import tomli; tomli.load(open(\"{REPO}/pyproject.toml\", \"rb\"))"
+    r = subprocess.run(
+        [sys.executable, "-c", cmd],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml is invalid TOML:\n{r.stderr}"
+
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests using subprocess

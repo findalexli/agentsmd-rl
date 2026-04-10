@@ -8,7 +8,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         git curl ca-certificates build-essential \
         python3 python3-pip python3-venv \
-        gnupg lsb-release && \
+        gnupg lsb-release unzip zip && \
     # Install GitHub CLI (gh)
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
         gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg && \

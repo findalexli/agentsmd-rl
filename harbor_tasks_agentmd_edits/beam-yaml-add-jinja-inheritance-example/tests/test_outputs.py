@@ -55,10 +55,10 @@ def test_repo_yamllint_non_jinja():
     )
     # Check aggregation examples which are pure YAML (no Jinja syntax)
     r = subprocess.run(
-        ["yamllint", "-c", ".yamllint.yml", "sdks/python/apache_beam/yaml/examples/transforms/aggregation/combine_sum.yaml"],
+        ["yamllint", "-c", ".yamllint.yml", "sdks/python/apache_beam/yaml/examples/transforms/aggregation/combine_sum_minimal.yaml"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"yamllint failed:\\n{r.stdout}{r.stderr}"
+    assert r.returncode == 0, f"yamllint failed:\n{r.stdout}{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -68,7 +68,7 @@ def test_repo_python_syntax_input_data():
         [sys.executable, "-m", "py_compile", "sdks/python/apache_beam/yaml/examples/testing/input_data.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Python syntax check failed for input_data.py:\\n{r.stderr}"
+    assert r.returncode == 0, f"Python syntax check failed for input_data.py:\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
@@ -78,56 +78,101 @@ def test_repo_python_syntax_examples_test():
         [sys.executable, "-m", "py_compile", "sdks/python/apache_beam/yaml/examples/testing/examples_test.py"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert r.returncode == 0, f"Python syntax check failed for examples_test.py:\\n{r.stderr}"
+    assert r.returncode == 0, f"Python syntax check failed for examples_test.py:\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_jinja_template_syntax_base():
-    """Jinja2 template syntax is valid for base_pipeline.yaml (pass_to_pass)."""
+def test_repo_yamllint_wordcount_minimal():
+    """wordcount_minimal.yaml passes yamllint (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "yamllint"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["yamllint", "-c", ".yamllint.yml", "sdks/python/apache_beam/yaml/examples/wordcount_minimal.yaml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"yamllint failed for wordcount_minimal.yaml:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax_init_examples():
+    """Python syntax check passes for examples/__init__.py (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", "sdks/python/apache_beam/yaml/examples/__init__.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed for examples/__init__.py:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax_init_testing():
+    """Python syntax check passes for testing/__init__.py (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", "sdks/python/apache_beam/yaml/examples/testing/__init__.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed for testing/__init__.py:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_yaml_syntax_aggregation():
+    """Aggregation YAML files pass yamllint (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "yamllint"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["yamllint", "-c", ".yamllint.yml", "sdks/python/apache_beam/yaml/examples/transforms/aggregation/combine_count_minimal.yaml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"yamllint failed for combine_count_minimal.yaml:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jinja_template_syntax_include():
+    """Jinja2 template syntax is valid for wordCountInclude.yaml (pass_to_pass)."""
     r = _run_python("""
 from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
 import sys
 
-base_dir = '/workspace/beam/sdks/python/apache_beam/yaml/examples/transforms/jinja/inheritance/base'
+jinja_dir = '/workspace/beam/sdks/python/apache_beam/yaml/examples/transforms/jinja'
 try:
-    env = Environment(loader=FileSystemLoader(base_dir))
-    template = env.get_template('base_pipeline.yaml')
-    # Parse without rendering to validate syntax
-    env.parse(template.source)
+    env = Environment(loader=FileSystemLoader(jinja_dir))
+    template = env.get_template('include/wordCountInclude.yaml')
+    # Successfully loading template validates syntax
     print("PASS")
 except TemplateSyntaxError as e:
     print(f"Jinja syntax error: {e}")
     sys.exit(1)
 """)
-    assert r.returncode == 0, f"Jinja template syntax check failed for base_pipeline.yaml:\\n{r.stderr}"
+    assert r.returncode == 0, f"Jinja template syntax check failed for wordCountInclude.yaml:\n{r.stderr}"
     assert "PASS" in r.stdout
 
 
 # [repo_tests] pass_to_pass
-def test_repo_jinja_template_syntax_child():
-    """Jinja2 template syntax is valid for wordCountInheritance.yaml (pass_to_pass)."""
+def test_repo_jinja_template_syntax_import():
+    """Jinja2 template syntax is valid for wordCountImport.yaml (pass_to_pass)."""
     r = _run_python("""
 from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
 import sys
 
-sdk_python = '/workspace/beam/sdks/python'
+jinja_dir = '/workspace/beam/sdks/python/apache_beam/yaml/examples/transforms/jinja'
 try:
-    env = Environment(loader=FileSystemLoader(sdk_python))
-    child_path = 'apache_beam/yaml/examples/transforms/jinja/inheritance/wordCountInheritance.yaml'
-    template = env.get_template(child_path)
-    # Parse without rendering to validate syntax
-    env.parse(template.source)
+    env = Environment(loader=FileSystemLoader(jinja_dir))
+    template = env.get_template('import/wordCountImport.yaml')
+    # Successfully loading template validates syntax
     print("PASS")
 except TemplateSyntaxError as e:
     print(f"Jinja syntax error: {e}")
     sys.exit(1)
 """)
-    assert r.returncode == 0, f"Jinja template syntax check failed for wordCountInheritance.yaml:\\n{r.stderr}"
+    assert r.returncode == 0, f"Jinja template syntax check failed for wordCountImport.yaml:\n{r.stderr}"
     assert "PASS" in r.stdout
 
 
 # -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — Jinja2 template rendering
+# Fail-to-pass (pr_diff) - Jinja2 template rendering
 # -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -207,7 +252,7 @@ print("PASS")
 
 
 # -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — test framework integration
+# Fail-to-pass (pr_diff) - test framework integration
 # -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass

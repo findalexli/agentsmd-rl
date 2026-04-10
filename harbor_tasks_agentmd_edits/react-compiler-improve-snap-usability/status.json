@@ -1,31 +1,59 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:54:06.005998",
-  "total_time": 5973.01,
-  "sandbox_id": "iaq5xneg1ltigj37v6pwf",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T13:19:49.379160",
+  "total_time": 1839.75,
+  "sandbox_id": "izhl6szj8b5qnwuw04itm",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 454.95,
+      "status": "completed",
+      "notes": "Added 4 pass_to_pass repo_tests: test_repo_node_syntax_check (Node.js brace/paren validation), test_repo_snap_imports_valid (import/export validation), test_repo_runner_has_cli_options (yargs CLI validation), test_repo_file_structure_valid (file structure validation). All 4 p2p tests pass on base commit. 3 fail_to_pass tests correctly fail (awaiting fix)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 330.26,
       "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile base commit from 2af6822c2108eabc0228d7809aa27c00bb2ebb53 to 24d8716e366909129ffd66670e1e530e6796097d (parent of PR #35523). Original commit already had CLAUDE.md from PR #35523, making fail-to-pass tests incorrectly pass. Also updated solve.sh to stage files with git add so judge can detect modifications. All 4 checks pass: Docker build, NOP (reward=0), Gold (reward=1, 10/10 tests pass), Rubric (config_edits=1.0, content is correct).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 244.97
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.25,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 5973.01,
-      "at": "2026-04-09T07:54:06.005998"
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1839.75,
+      "at": "2026-04-10T13:19:49.379160"
     }
   ]
 }

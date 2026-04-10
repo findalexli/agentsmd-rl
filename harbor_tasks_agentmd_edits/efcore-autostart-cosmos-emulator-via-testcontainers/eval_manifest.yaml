@@ -9,6 +9,30 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified C# files are present and non-empty
+- id: test_repo_cosmosconfig_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: cosmosConfig.json is valid JSON
+- id: test_repo_packages_props_xml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: test/Directory.Packages.props is valid XML
+- id: test_repo_csproj_xml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: EFCore.Cosmos.FunctionalTests.csproj is valid XML
+- id: test_repo_helix_proj_xml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: eng/helix.proj is valid XML
+- id: test_repo_shell_scripts_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified shell scripts have valid syntax
+- id: test_repo_git_fsck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository passes integrity check
 - id: test_testenvironment_initialize_async_logic
   type: fail_to_pass
   origin: pr_diff
@@ -43,42 +67,12 @@ rubric:
     path: .agents/skills/cosmos-provider/SKILL.md
     lines: 1-22
     commit: dd9da572feeb9851a0c4a6579b05163c48574c29
-- rule: Agent skill files should be updated when significant implementation details
-    change, per copilot-instructions.md
-  source:
-    path: .github/copilot-instructions.md
-    lines: 125-126
-    commit: dd9da572feeb9851a0c4a6579b05163c48574c29
-- rule: helix.proj no longer references Docker startup scripts
-  reference: '# .agents/skills/cosmos-provider/SKILL.md
-
-    ## Azure Cosmos DB Emulator for Tests
-
-    - `TestEnvironment.InitializeAsync()` auto-starts a `Testcontainers.CosmosDb`
-    container when `Test__Cosmos__DefaultConnection` is not set. Set the env var to
-    use an existing emulator instead.
-
-    - Skip tests requiring unsupported features on the Linux emulator with `[CosmosCondition(CosmosCondition.IsNotLinuxEmulator)]`.'
 - rule: cosmos-provider SKILL.md updated to document Testcontainers approach
   source:
     path: .agents/skills/cosmos-provider/SKILL.md
     lines: 24-27
     commit: 23054e87c735a09e93487ad572d8660d35fe3202
   reference: '## Azure Cosmos DB Emulator for Tests
-
-    - `TestEnvironment.InitializeAsync()` auto-starts a `Testcontainers.CosmosDb`
-    container when `Test__Cosmos__DefaultConnection` is not set. Set the env var to
-    use an existing emulator instead.
-
-    - Skip tests requiring unsupported features on the Linux emulator with `[CosmosCondition(CosmosCondition.IsNotLinuxEmulator)]`.'
-- rule: Async methods use ConfigureAwait(false) per copilot-instructions.md
-  source:
-    path: .github/copilot-instructions.md
-    lines: '135'
-    commit: dd9da572feeb9851a0c4a6579b05163c48574c29
-  reference: '# .agents/skills/cosmos-provider/SKILL.md
-
-    ## Azure Cosmos DB Emulator for Tests
 
     - `TestEnvironment.InitializeAsync()` auto-starts a `Testcontainers.CosmosDb`
     container when `Test__Cosmos__DefaultConnection` is not set. Set the env var to

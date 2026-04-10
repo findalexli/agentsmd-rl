@@ -1,26 +1,27 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:55:47.480164",
-  "total_time": 1656.47,
-  "sandbox_id": "ib5z7s2yvwmepuaso3kat",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T11:22:27.835149",
+  "total_time": 510.79,
+  "sandbox_id": "i6bew13b0b449an5in5aj",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 7.22,
-      "notes": ""
+      "notes": "Added 4 new pass_to_pass repo_tests: test_repo_package_json_scripts, test_repo_bazel_structure, test_repo_devtools_structure, test_repo_git_tracking. CI commands validated: Python-based file structure validation, Bazel syntax checks, package.json validation. Docker environment only has Python/git - no Bazel/Node available."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 59.77,
+      "time": 385.85,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed. Docker build successful, NOP test correctly failed (reward=0) on buggy base code with 5 expected fail_to_pass tests failing, Gold test passed (reward=1) with all 12 tests passing, Rubric judge ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.7
+      "time": 93.37
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 3.16,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -50,7 +63,7 @@
       "nop": -1.0,
       "gold": -1.0,
       "backend": "fireworks",
-      "time": 1656.16,
+      "time": 59.77,
       "at": "2026-04-09T14:55:47.293300"
     },
     {
@@ -60,6 +73,14 @@
       "backend": "fireworks",
       "time": 1656.47,
       "at": "2026-04-09T14:55:47.480164"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 510.79,
+      "at": "2026-04-10T11:22:27.835149"
     }
   ]
 }

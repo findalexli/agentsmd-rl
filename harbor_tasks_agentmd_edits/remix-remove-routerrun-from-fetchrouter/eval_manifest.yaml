@@ -42,6 +42,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: fetch-router README still documents core features
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for fetch-router pass
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo linter passes on fetch-router source
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes for fetch-router
 config_edits:
 - path: demos/bookstore/README.md
   tier: 2
@@ -65,3 +77,11 @@ config_edits:
     \ ({ method }) => method)\nconsole.log(method) // \"POST\"\n```\n\nThis is especially\
     \ useful in tests for request-scoped services like authenticated users, database\n\
     handles, correlation IDs, and per-request feature flag"
+rubric:
+- rule: When removing an unreleased breaking change feature, the corresponding change
+    file must be deleted
+  source:
+    path: packages/fetch-router/.changes/minor.router-run.md
+    lines: 1-16
+    commit: 783fa46240191001e0ee2084297b5c81d78b3545
+  reference: This file should be deleted (see gold solution)

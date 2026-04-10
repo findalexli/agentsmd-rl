@@ -246,6 +246,15 @@ def test_verify_tool_multi_file():
     assert "fromB" in names, "Should include declaration from second file"
 
 
+def test_verify_tool_no_args_shows_usage():
+    """Running with no arguments prints usage and exits non-zero."""
+    subprocess.run(
+        ["go", "build", "-o", "/tmp/split-file-verify", "./tools/split-file-verify"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
 
     result = subprocess.run(
         ["/tmp/split-file-verify"],
@@ -259,6 +268,16 @@ def test_verify_tool_multi_file():
 # Config file update tests (config_edit) — SKILL.md must exist and be correct
 # ---------------------------------------------------------------------------
 
+def test_skill_md_exists():
+    """SKILL.md file exists at the correct path."""
+    skill_path = Path(REPO) / ".claude" / "skills" / "split-file" / "SKILL.md"
+    assert skill_path.exists(), "SKILL.md must exist at .claude/skills/split-file/SKILL.md"
+
+
+def test_skill_md_frontmatter():
+    """SKILL.md has correct YAML frontmatter format."""
+    skill_path = Path(REPO) / ".claude" / "skills" / "split-file" / "SKILL.md"
+    assert skill_path.exists(), "SKILL.md must exist"
 
     content = skill_path.read_text()
     # Must have YAML frontmatter with name and description
@@ -268,6 +287,10 @@ def test_verify_tool_multi_file():
     assert "description:" in content.split("---")[1], "Frontmatter must include 'description' field"
 
 
+def test_skill_md_git_rename_technique():
+    """SKILL.md documents the git rename/rename conflict technique."""
+    skill_path = Path(REPO) / ".claude" / "skills" / "split-file" / "SKILL.md"
+    content = skill_path.read_text()
 
     assert "git mv" in content, "Should document git mv command for file renaming"
     assert "rename" in content, "Should mention rename technique"
@@ -277,6 +300,10 @@ def test_verify_tool_multi_file():
         "Should mention the rename/rename conflict technique"
 
 
+def test_skill_md_verify_tool():
+    """SKILL.md references the split-file-verify tool."""
+    skill_path = Path(REPO) / ".claude" / "skills" / "split-file" / "SKILL.md"
+    content = skill_path.read_text()
 
     assert "split-file-verify" in content, \
         "Should reference the split-file-verify tool"
@@ -286,6 +313,10 @@ def test_verify_tool_multi_file():
         "Should mention TSV output format or diff comparison"
 
 
+def test_skill_md_workflow_phases():
+    """SKILL.md describes a multi-phase workflow."""
+    skill_path = Path(REPO) / ".claude" / "skills" / "split-file" / "SKILL.md"
+    content = skill_path.read_text()
 
     assert "analyze" in content or "analysis" in content, \
         "Should have an analysis/planning phase"
@@ -295,9 +326,69 @@ def test_verify_tool_multi_file():
         "Should have a verification phase"
 
 
+def test_skill_md_goimports_warning():
+    """SKILL.md warns about goimports alias resolution issues."""
+    skill_path = Path(REPO) / ".claude" / "skills" / "split-file" / "SKILL.md"
+    content = skill_path.read_text()
 
     assert "goimports" in content, \
         "Should mention goimports for fixing imports after split"
     # Should warn about alias issues — a key gotcha from experience
     assert "alias" in content or "wrong package" in content or "resolv" in content, \
         "Should warn about goimports alias resolution issues"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI commands that should pass at base commit
+# ---------------------------------------------------------------------------
+
+def test_repo_tools_build():
+    """All tools in the repo compile successfully (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "build", "./tools/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**subprocess.os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert result.returncode == 0, f"Tools build failed:\n{result.stderr}"
+
+
+def test_repo_tools_vet():
+    """Go vet passes on all tools (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "vet", "./tools/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**subprocess.os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert result.returncode == 0, f"Go vet failed:\n{result.stderr}"
+
+
+def test_repo_tools_test():
+    """Unit tests for tools pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "test", "-short", "-count=1", "./tools/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**subprocess.os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert result.returncode == 0, f"Tools tests failed:\n{result.stderr}"
+
+
+def test_repo_mod_tidy():
+    """Go mod is tidy (pass_to_pass)."""
+    result = subprocess.run(
+        ["go", "mod", "tidy", "-diff"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env={**subprocess.os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert result.returncode == 0, f"go mod tidy -diff failed:\n{result.stderr}"

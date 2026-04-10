@@ -46,6 +46,75 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+def test_repo_cosmosconfig_json_valid():
+    """cosmosConfig.json is valid JSON (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import json; json.load(open('test/EFCore.Cosmos.FunctionalTests/cosmosConfig.json')); print('VALID')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"JSON validation failed:\n{r.stderr}"
+    assert "VALID" in r.stdout
+
+
+def test_repo_packages_props_xml_valid():
+    """test/Directory.Packages.props is valid XML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import xml.etree.ElementTree as ET; ET.parse('test/Directory.Packages.props'); print('VALID')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"XML validation failed:\n{r.stderr}"
+    assert "VALID" in r.stdout
+
+
+def test_repo_csproj_xml_valid():
+    """EFCore.Cosmos.FunctionalTests.csproj is valid XML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import xml.etree.ElementTree as ET; "
+         "ET.parse('test/EFCore.Cosmos.FunctionalTests/EFCore.Cosmos.FunctionalTests.csproj'); print('VALID')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"XML validation failed:\n{r.stderr}"
+    assert "VALID" in r.stdout
+
+
+def test_repo_helix_proj_xml_valid():
+    """eng/helix.proj is valid XML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import xml.etree.ElementTree as ET; ET.parse('eng/helix.proj'); print('VALID')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"XML validation failed:\n{r.stderr}"
+    assert "VALID" in r.stdout
+
+
+def test_repo_shell_scripts_valid():
+    """All modified shell scripts have valid syntax (pass_to_pass)."""
+    scripts = ["build.sh", "restore.sh"]
+    for script in scripts:
+        r = subprocess.run(
+            ["bash", "-n", script],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Shell syntax error in {script}:\n{r.stderr}"
+
+
+def test_repo_git_fsck():
+    """Git repository passes integrity check (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "fsck", "--full"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git fsck failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
@@ -57,17 +126,17 @@ import re
 src = open('test/EFCore.Cosmos.FunctionalTests/TestUtilities/TestEnvironment.cs').read()
 
 # Method exists with correct signature
-assert 'public static async Task InitializeAsync()' in src, \\
+assert 'public static async Task InitializeAsync()' in src, \
     'Must define public static async Task InitializeAsync()'
 
 # Path 1: use configured connection if set
-assert re.search(r'IsNullOrEmpty\\(configured\\)', src), \\
+assert re.search(r'IsNullOrEmpty\\(configured\\)', src), \
     'Path 1: must check IsNullOrEmpty for configured connection'
 
 # Path 2: probe for already-running emulator
-assert 'TryProbeEmulatorAsync' in src, \\
+assert 'TryProbeEmulatorAsync' in src, \
     'Path 2: must define TryProbeEmulatorAsync'
-assert re.search(r'await.*TryProbeEmulatorAsync.*ConfigureAwait', src), \\
+assert re.search(r'await.*TryProbeEmulatorAsync.*ConfigureAwait', src), \
     'Path 2: must await TryProbeEmulatorAsync with ConfigureAwait'
 
 # Path 3: start testcontainer as fallback
@@ -99,7 +168,7 @@ conn = data['Test']['Cosmos']['DefaultConnection']
 assert conn is None, f'DefaultConnection should be null, got {conn!r}'
 
 # AuthToken must still be present (not accidentally removed)
-assert data['Test']['Cosmos'].get('AuthToken') is not None, \\
+assert data['Test']['Cosmos'].get('AuthToken') is not None, \
     'AuthToken must still be present'
 
 print('PASS')
@@ -135,16 +204,16 @@ props_tree = ET.parse('test/Directory.Packages.props')
 props_root = props_tree.getroot()
 found = False
 for elem in props_root.iter():
-    if elem.text and 'Testcontainers.CosmosDb' in elem.text:
+    if elem.get('Include') == 'Testcontainers.CosmosDb':
         found = True
         break
 assert found, 'Directory.Packages.props must declare Testcontainers.CosmosDb version'
 
 # csproj must have a PackageReference
 csproj = open('test/EFCore.Cosmos.FunctionalTests/EFCore.Cosmos.FunctionalTests.csproj').read()
-assert 'Testcontainers.CosmosDb' in csproj, \\
+assert 'Testcontainers.CosmosDb' in csproj, \
     'csproj must reference Testcontainers.CosmosDb'
-assert '<PackageReference Include="Testcontainers.CosmosDb"' in csproj, \\
+assert '<PackageReference Include="Testcontainers.CosmosDb"' in csproj, \
     'csproj must have correct PackageReference syntax'
 
 print('PASS')
@@ -161,23 +230,23 @@ import re
 src = open('test/EFCore.Cosmos.FunctionalTests/TestUtilities/CosmosTestStore.cs').read()
 
 # ConnectionUri and ConnectionString must be mutable (private set)
-assert 'public string ConnectionUri { get; private set; }' in src, \\
+assert 'public string ConnectionUri { get; private set; }' in src, \
     'ConnectionUri must have private setter'
-assert 'public string ConnectionString { get; private set; }' in src, \\
+assert 'public string ConnectionString { get; private set; }' in src, \
     'ConnectionString must have private setter'
 
 # Must call TestEnvironment.InitializeAsync
-assert 'TestEnvironment.InitializeAsync()' in src, \\
+assert 'TestEnvironment.InitializeAsync()' in src, \
     'Must call TestEnvironment.InitializeAsync()'
 
 # Must update connection details after init
-assert 'ConnectionUri = TestEnvironment.DefaultConnection' in src, \\
+assert 'ConnectionUri = TestEnvironment.DefaultConnection' in src, \
     'Must update ConnectionUri from TestEnvironment'
-assert 'ConnectionString = TestEnvironment.ConnectionString' in src, \\
+assert 'ConnectionString = TestEnvironment.ConnectionString' in src, \
     'Must update ConnectionString from TestEnvironment'
 
 # Must use ConfigureAwait(false)
-assert re.search(r'InitializeAsync.*ConfigureAwait\\(false\\)', src), \\
+assert re.search(r'InitializeAsync.*ConfigureAwait\\(false\\)', src), \
     'Must use ConfigureAwait(false) on InitializeAsync call'
 
 print('PASS')
@@ -192,14 +261,14 @@ def test_options_builder_uses_http_handler():
 src = open('test/EFCore.Cosmos.FunctionalTests/TestUtilities/CosmosDbContextOptionsBuilderExtensions.cs').read()
 
 # Must reference TestEnvironment.HttpMessageHandler
-assert 'TestEnvironment.HttpMessageHandler' in src, \\
+assert 'TestEnvironment.HttpMessageHandler' in src, \
     'Must use TestEnvironment.HttpMessageHandler'
 
 # Must have HttpClientFactory pattern
 assert 'HttpClientFactory' in src, 'Must set HttpClientFactory'
 
 # Must still have fallback cert validation
-assert 'DangerousAcceptAnyServerCertificateValidator' in src, \\
+assert 'DangerousAcceptAnyServerCertificateValidator' in src, \
     'Must accept self-signed certs as fallback'
 
 print('PASS')
@@ -214,15 +283,15 @@ def test_helix_simplified():
 src = open('eng/helix.proj').read()
 
 # Old script references must be gone
-assert 'run-cosmos-container.sh' not in src, \\
+assert 'run-cosmos-container.sh' not in src, \
     'helix.proj must not reference run-cosmos-container.sh'
-assert 'run-cosmos-container.ps1' not in src, \\
+assert 'run-cosmos-container.ps1' not in src, \
     'helix.proj must not reference run-cosmos-container.ps1'
 
 # Old Docker cleanup commands removed
-assert 'docker stop cosmos-emulator' not in src, \\
+assert 'docker stop cosmos-emulator' not in src, \
     'Old docker stop command must be removed'
-assert 'docker rm -f cosmos-emulator' not in src, \\
+assert 'docker rm -f cosmos-emulator' not in src, \
     'Old docker rm command must be removed'
 
 # CosmosTests must still be referenced

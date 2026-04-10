@@ -1,64 +1,76 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 38517
-  base_commit: "703996071cb3a7ec642b30a2b428c369c3ebb7c7"
-  merge_commit: "c9bfd527ad32c485079b03f6153a3fd2849a421c"
-
+  base_commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+  merge_commit: c9bfd527ad32c485079b03f6153a3fd2849a421c
 checks:
-  # Core code behavioral tests
-  - id: runcode_function_invocation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "browser_run_code invokes user code as a function with page argument"
-
-  - id: runcode_schema_describes_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Schema description says 'function' not 'snippet'"
-
-  - id: runcode_addcode_wraps_invocation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "response.addCode shows function invocation format"
-
-  - id: runcode_no_iife_wrapper
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Old IIFE wrapper pattern is removed"
-
-  # Config update tests — agent definitions list browser_run_code
-  - id: claude_agent_has_browser_run_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Claude agent planner includes browser_run_code in tools"
-
-  - id: packages_agent_has_browser_run_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Packages agent planner includes browser_run_code in tools"
-
-  - id: github_agent_has_browser_run_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: "GitHub agent planner includes browser_run_code in tools"
-
-  # Structural sanity
-  - id: runcode_uses_vm_context
-    type: pass_to_pass
-    origin: static
-    description: "runCode.ts still uses vm.createContext and vm.runInContext"
-
-  # Repository CI/CD checks (pass_to_pass gates)
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository build passes"
-
-  - id: test_repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository workspace consistency check passes"
-
-rubric: []
+- id: runcode_function_invocation
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_run_code invokes user code as a function with page argument
+- id: runcode_schema_describes_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: Schema description says 'function' not 'snippet'
+- id: runcode_addcode_wraps_invocation
+  type: fail_to_pass
+  origin: pr_diff
+  description: response.addCode shows function invocation format
+- id: runcode_no_iife_wrapper
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old IIFE wrapper pattern is removed
+- id: claude_agent_has_browser_run_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: Claude agent planner includes browser_run_code in tools
+- id: packages_agent_has_browser_run_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: Packages agent planner includes browser_run_code in tools
+- id: github_agent_has_browser_run_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: GitHub agent planner includes browser_run_code in tools
+- id: runcode_uses_vm_context
+  type: pass_to_pass
+  origin: static
+  description: runCode.ts still uses vm.createContext and vm.runInContext
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository build passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository workspace consistency check passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository dependency check passes
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository type tests pass
+rubric:
+- rule: Source files must include the Microsoft copyright notice header at the top
+  source:
+    path: eslint.config.mjs
+    lines: 203-209
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+- rule: Playwright code must not use networkidle or other discouraged/deprecated APIs
+  source:
+    path: examples/todomvc/.claude/agents/playwright-test-healer.md
+    lines: '45'
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+- rule: String literals should use single quotes rather than double quotes
+  source:
+    path: eslint.config.mjs
+    lines: 78-85
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
+- rule: Template literals must not have spaces inside curly brace expressions
+  source:
+    path: eslint.config.mjs
+    lines: '143'
+    commit: 703996071cb3a7ec642b30a2b428c369c3ebb7c7
