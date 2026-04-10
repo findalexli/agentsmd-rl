@@ -110,6 +110,38 @@ def test_pipeline_typing():
     assert r.returncode == 0, f"Pipeline typing check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_modeling_file_structure():
+    """Camembert modeling files have valid structure and imports (pass_to_pass)."""
+    # Verify both modeling files can be parsed and have key components
+    for f in [MODELING, MODULAR]:
+        content = f.read_text()
+        tree = ast.parse(content)
+
+        # Find class definitions
+        classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+
+        # Verify CamembertForCausalLM exists in both files
+        assert "CamembertForCausalLM" in classes, f"CamembertForCausalLM not found in {f}"
+
+
+# [repo_tests] pass_to_pass
+def test_tied_weights_keys_exists():
+    """CamembertForCausalLM has _tied_weights_keys defined (pass_to_pass)."""
+    modeling_content = MODELING.read_text()
+    modular_content = MODULAR.read_text()
+
+    # Verify _tied_weights_keys exists in modeling file
+    assert "_tied_weights_keys" in modeling_content, (
+        "_tied_weights_keys not found in modeling_camembert.py"
+    )
+
+    # Verify _tied_weights_keys exists in modular file
+    assert "_tied_weights_keys" in modular_content, (
+        "_tied_weights_keys not found in modular_camembert.py"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

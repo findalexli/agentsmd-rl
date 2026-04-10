@@ -257,3 +257,22 @@ def test_repo_lint_packages():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"lint-packages failed: {r.stderr[-500:]}"
+
+
+def test_repo_test_types():
+    """Repo test types check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "install", "--include=dev"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed: {r.stderr[-500:]}"
+    r = subprocess.run(
+        ["npm", "run", "test-types"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"test-types failed: {r.stderr[-500:]}"

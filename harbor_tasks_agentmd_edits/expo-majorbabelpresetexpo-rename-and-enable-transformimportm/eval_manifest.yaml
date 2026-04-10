@@ -20,7 +20,15 @@ checks:
 - id: test_repo_import_meta_transform
   type: pass_to_pass
   origin: repo_tests
-  description: Repo import.meta transform works with the preset
+  description: Repo import.meta transform works with the plugin
+- id: test_repo_import_meta_default_ios_error
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo import.meta throws error on iOS when transform is disabled
+- id: test_repo_import_meta_web_no_error
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo import.meta does not throw on web when transform is disabled
 - id: test_repo_build_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -39,5 +47,7 @@ checks:
   description: TypeScript definitions use transformImportMeta
 rubric:
 - rule: Preset enables import.meta transform by default for all environments
-  reference: 'README.md'
+  source: packages/babel-preset-expo/README.md
+  reference: Enable transform that converts import.meta to globalThis.__ExpoImportMetaRegistry.
+    Defaults to true.
 config_edits: []

@@ -1,20 +1,30 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:54:58.048200",
-  "total_time": 1607.03,
-  "sandbox_id": "i3g4m14ik187z5swk4ihh",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:30:56.795071",
+  "total_time": 1305.28,
+  "sandbox_id": "i9t0zeah5yovkcn9udtbk",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        "docs/contributing/editing-agent-instructions.md"
+      ],
+      "rules_added": 0,
+      "rules_rejected": 5,
+      "rejection_reasons": "Config files contain workflow/process rules (env setup, commit conventions, doc editing guidelines) not applicable to Python source code changes. PR only modifies gpu_model_runner.py and compilation.py.",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 10.79,
-      "notes": ""
+      "time": 56.76
     },
     "improve": {
       "status": "skipped",
@@ -24,16 +34,37 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed. NOP test correctly fails on 6 fail-to-pass tests (reward=0). Gold solution applies cleanly and all 20 tests pass (reward=1). Rubric judge ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 5.13
+      "time": 90.49
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 131.48,
+      "time": 295.83,
       "notes": ""
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.22,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -52,6 +83,14 @@
       "backend": "fireworks",
       "time": 1607.03,
       "at": "2026-04-09T14:54:58.048200"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1305.28,
+      "at": "2026-04-10T15:30:56.795071"
     }
   ]
 }

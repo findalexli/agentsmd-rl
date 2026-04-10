@@ -112,11 +112,12 @@ def test_typescript_type_updated():
         raise AssertionError("Type definition not updated: hooks should be optional (hooks?: HookDefinition[])")
 
 
-def test_repo_unit_tests_pass():
+def test_repo_hooks_modal_tests_pass():
     """
-    Pass-to-pass: The existing repo unit tests should pass.
+    Pass-to-pass: Hooks modal unit tests should pass.
 
-    Run the frontend vitest tests for the hooks modal component.
+    CI command from fe-unit-tests.yml: npm run test:coverage
+    Targeted to hooks-modal component tests specifically.
     """
     result = subprocess.run(
         ["npm", "run", "test", "--", "--run", "hooks-modal.test.tsx"],
@@ -127,7 +128,27 @@ def test_repo_unit_tests_pass():
     )
 
     if result.returncode != 0:
-        raise AssertionError(f"Unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}")
+        raise AssertionError(f"Hooks modal tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}")
+
+
+def test_repo_conversation_panel_tests_pass():
+    """
+    Pass-to-pass: Conversation panel tests (including hooks) should pass.
+
+    CI command from fe-unit-tests.yml: npm run test:coverage
+    Tests the conversation-panel directory which includes hooks-modal tests.
+    Covers the modified HookEventItem component and related functionality.
+    """
+    result = subprocess.run(
+        ["npm", "run", "test", "--", "--run", "conversation-panel"],
+        cwd=FRONTEND,
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    if result.returncode != 0:
+        raise AssertionError(f"Conversation panel tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}")
 
 
 def test_repo_lint_passes():

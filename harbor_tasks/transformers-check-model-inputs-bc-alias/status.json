@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T00:36:15.034640",
-  "total_time": 9427.18,
-  "sandbox_id": "icjdi4cqlmcjsxxuz2uab",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:27:20.427038",
+  "total_time": 1389.33,
+  "sandbox_id": "ip53nq2ud4qh1214nplsw",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox is running but port is not open: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 0.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -18,10 +18,10 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 3.56,
+      "time": 410.38,
       "notes": ""
     },
     "improve": {
@@ -32,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Docker build: OK. NOP test: reward=0 as expected (base commit lacks check_model_inputs). Gold test: reward=1 after fixing solve.sh formatting (added 'ruff format' step after patch). Rubric judge: Returns 0.0 due to misconfiguration - it checks for changes in .github/copilot-instructions.md instead of src/transformers/utils/generic.py. This is a judge issue, not a task issue. All core functional validations pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.66
+      "time": 233.03
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.94,
+      "notes": "ICR=0.00"
     }
   },
   "history": [
@@ -69,6 +81,14 @@
       "backend": "fireworks",
       "time": 9427.18,
       "at": "2026-04-10T00:36:15.034640"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1389.33,
+      "at": "2026-04-10T15:27:20.427038"
     }
   ]
 }

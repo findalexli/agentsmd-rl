@@ -57,4 +57,12 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Bazel files are properly formatted
-rubric: []
+rubric:
+- rule: "AGENTS.md MUST have YAML frontmatter with 'trigger: always_on' at the beginning"
+  source:
+    path: AGENTS.md
+  reference: "---\ntrigger: always_on\n---"
+- rule: ".agent/rules/agents.md symlink MUST exist pointing to AGENTS.md"
+  source:
+    path: .agent/rules/agents.md
+  reference: "../../AGENTS.md"

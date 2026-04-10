@@ -215,3 +215,61 @@ def test_uses_storybook_logger():
     )
 
     assert "logger.log(" in src, "Must use logger.log() for output per AGENTS.md"
+
+
+# ---------------------------------------------------------------------------
+# pass_to_pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax_ai_types():
+    """TypeScript files in ai/ must have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "npm install -g typescript 2>/dev/null && "
+            "cd /workspace/storybook/code/lib/cli-storybook && "
+            "tsc --noEmit --skipLibCheck --ignoreConfig --ignoreDeprecations '6.0' "
+            "--target ES2020 --module ESNext --moduleResolution bundler "
+            "--isolatedModules src/ai/types.ts 2>&1"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Filter out module resolution errors - we only care about syntax/structure errors
+    # TS2307 = cannot find module, TS2591 = cannot find name (node types)
+    # These are expected in isolated check mode, but actual syntax errors are not
+    real_errors = [
+        line for line in (r.stderr + r.stdout).splitlines()
+        if "error TS" in line
+        and "src/ai/types.ts" in line
+        and "TS2307" not in line  # ignore "cannot find module" errors
+    ]
+    assert len(real_errors) == 0, (
+        f"TypeScript syntax errors in ai/types.ts:\n{chr(10).join(real_errors)}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typescript_syntax_ai_index():
+    """ai/index.ts must have valid TypeScript syntax (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "npm install -g typescript 2>/dev/null && "
+            "cd /workspace/storybook/code/lib/cli-storybook && "
+            "tsc --noEmit --skipLibCheck --ignoreConfig --ignoreDeprecations '6.0' "
+            "--target ES2020 --module ESNext --moduleResolution bundler "
+            "--isolatedModules src/ai/index.ts 2>&1"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Filter to only errors in the ai/index.ts file itself
+    real_errors = [
+        line for line in (r.stderr + r.stdout).splitlines()
+        if "error TS" in line
+        and "src/ai/index.ts" in line
+        and "TS2307" not in line  # ignore "cannot find module" errors
+    ]
+    assert len(real_errors) == 0, (
+        f"TypeScript syntax errors in ai/index.ts:\n{chr(10).join(real_errors)}"
+    )

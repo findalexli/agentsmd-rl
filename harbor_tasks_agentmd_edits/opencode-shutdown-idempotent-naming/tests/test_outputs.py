@@ -74,28 +74,9 @@ def test_repo_typecheck():
     assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_opencode_package_tests():
-    """Opencode package unit tests pass (pass_to_pass).
-    
-    Runs tests for the opencode package where the modified files reside.
-    Targets tests relevant to the CLI/TUI modules being modified.
-    """
-    # First try running from the package directory
-    r = _run_in_repo(
-        ["bun", "test", "--timeout", "30000"],
-        timeout=120
-    )
-    # The repo has a guard that prevents tests from running at root
-    # If root test fails, try package-specific tests
-    if r.returncode != 0 and "do-not-run-tests-from-root" in r.stderr:
-        r = subprocess.run(
-            ["bun", "test", "--timeout", "30000"],
-            cwd=Path(REPO) / "packages/opencode",
-            capture_output=True,
-            text=True,
-            timeout=120
-        )
-    assert r.returncode == 0, f"Opencode package tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+# Note: test_repo_opencode_package_tests removed because it fails on the base commit
+# (145 failures even before the fix), making it an invalid pass_to_pass test.
+# The repo's own test suite has pre-existing failures at this commit.
 
 
 # -----------------------------------------------------------------------------

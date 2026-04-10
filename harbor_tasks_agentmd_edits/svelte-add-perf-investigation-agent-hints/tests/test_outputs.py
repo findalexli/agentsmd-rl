@@ -14,6 +14,19 @@ from pathlib import Path
 REPO = "/workspace/svelte"
 
 
+def _install_pnpm():
+    """Install pnpm globally if not available."""
+    r = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True, text=True, timeout=120)
+    return r.returncode == 0
+
+
+def _ensure_deps():
+    """Ensure pnpm is installed and dependencies are installed."""
+    _install_pnpm()
+    r = subprocess.run(["pnpm", "install"], cwd=REPO, capture_output=True, text=True, timeout=300)
+    return r.returncode == 0
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code behavioral tests
 # ---------------------------------------------------------------------------
@@ -90,6 +103,54 @@ def test_profile_diff_compares_profiles():
         # Clean up mock data
         import shutil
         shutil.rmtree(profiles_dir, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI tests that should pass on base commit
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint():
+    """ESLint passes on packages/svelte/src/reactivity/ (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["npx", "eslint", "packages/svelte/src/reactivity/"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """TypeScript typecheck passes (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "check"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Reactivity unit tests pass (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "packages/svelte/src/reactivity/map.test.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_runtime_runes_tests():
+    """Runtime runes tests pass (pass_to_pass)."""
+    _ensure_deps()
+    r = subprocess.run(
+        ["pnpm", "test", "runtime-runes"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Runtime runes tests failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

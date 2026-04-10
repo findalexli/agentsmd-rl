@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T14:11:49.865818",
-  "total_time": 5641.26,
-  "sandbox_id": "iou7t90kwxhhoplwzy4ld",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T16:12:13.753199",
+  "total_time": 5292.31,
+  "sandbox_id": "in23vpiofjpv5cj0a98ti",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -20,7 +21,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1916.15,
+      "time": 1244.48,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed syntax check regex in tests/test_outputs.py - changed \\bdo\\b to \\bdo\\b(?!:) to exclude 'do:' keyword syntax which doesn't require 'end'. This was causing false positives on the Elixir HEEx template's 'if @tuist_hosted?, do:' expressions.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2714.79
+      "time": 3304.83
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 3.63,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -52,6 +65,14 @@
       "backend": "fireworks",
       "time": 5641.26,
       "at": "2026-04-10T14:11:49.865818"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 5292.31,
+      "at": "2026-04-10T16:12:13.753199"
     }
   ]
 }

@@ -116,18 +116,35 @@ checks:
 - id: test_repo_client_unit_tests
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's @gradio/client unit tests pass (pnpm --filter @gradio/client test)
+  description: Repo's @gradio/client unit tests pass (pnpm --filter @gradio/client
+    test)
 - id: test_repo_dataframe_builds
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's @gradio/dataframe package builds successfully (pnpm --filter @gradio/dataframe
-    build)
+  description: Repo's @gradio/dataframe package builds successfully (pnpm --filter
+    @gradio/dataframe build)
 - id: test_repo_wasm_builds
   type: pass_to_pass
   origin: repo_tests
   description: Repo's @gradio/wasm package builds successfully (pnpm --filter @gradio/wasm
     build)
-rubric: []
+- id: test_repo_code_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/code package builds successfully (pnpm --filter @gradio/code
+    build)
+rubric:
+- rule: TypeScript files must use tab indentation with tab_width of 2 (not spaces)
+  source:
+    path: .editorconfig
+    lines: 7-8
+    commit: 5a4ae4926b9dadefd5cf9d0225f5e8ed69eebb51
+- rule: TypeScript code must be syntactically valid and follow project type checking
+    standards (pnpm ts:check)
+  source:
+    path: js/README.md
+    lines: 79-87
+    commit: 5a4ae4926b9dadefd5cf9d0225f5e8ed69eebb51
 config_edits:
 - path: js/dataframe/README.md
   tier: 2

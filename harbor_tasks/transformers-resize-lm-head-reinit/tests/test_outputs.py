@@ -359,4 +359,55 @@ print("PASS")
 """
     result = _run_python_code(code, timeout=60)
     assert result.returncode == 0, f"Test failed: {result.stderr}"
-    assert "PASS" in result.stdout, f"Unexpected output: {result.stdout}"
+
+
+# [repo_tests] pass_to_pass - CI: check_imports
+def test_repo_check_imports():
+    """Repo public imports check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "imports"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Imports check failed:\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_config_docstrings
+def test_repo_check_config_docstrings():
+    """Repo config docstrings check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "config_docstrings"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Config docstrings check failed:\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_config_attributes
+def test_repo_check_config_attributes():
+    """Repo config attributes check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "config_attributes"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Config attributes check failed:\n{result.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass - CI: check_modeling_structure
+def test_repo_check_modeling_structure():
+    """Repo modeling file structure check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/checkers.py", "modeling_structure"],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Modeling structure check failed:\n{result.stdout[-500:]}"

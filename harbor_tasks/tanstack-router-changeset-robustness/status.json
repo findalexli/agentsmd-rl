@@ -1,13 +1,84 @@
 {
-  "completed": true,
-  "timestamp": "2026-04-09T11:31:00Z",
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:32:12.761921",
+  "total_time": 1681.72,
+  "sandbox_id": "icwcykpbuhz3ffic6t1ip",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 265.59,
+      "time": 315.43,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 0,
+      "rejection_reasons": "",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 83.92
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 6.88,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 39.33,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed: 1) Created environment/ directory with Dockerfile, 2) Created solution/ directory with solve.sh, 3) Fixed test_outputs.py comments check to use lowercase 'releaselogs[0]' since content.lower() was used, 4) Added patch to Dockerfile. All 4 core validation steps pass: Docker build OK, NOP=0 (5 f2p tests fail as expected), Gold=1 (all 9 tests pass). Rubric rules added for code quality checks.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 493.83
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.95,
+      "notes": "ICR=1.00"
     }
-  }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1681.72,
+      "at": "2026-04-10T15:32:12.761921"
+    }
+  ]
 }

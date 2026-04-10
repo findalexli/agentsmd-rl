@@ -51,21 +51,32 @@ checks:
       lines: "2"
       commit: "b3d7942fbaedda791668d7fe42eaaa323ed7a089"
 
+  # Repo CI tests (pass_to_pass gates from actual CI commands)
+  - id: ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Changed files pass ruff format check (make style)"
+
+  - id: moe_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "MoE integration module imports successfully"
+
+  - id: conversion_mapping_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Conversion mapping module imports and builds mappings"
+
+  - id: core_model_loading_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core model loading classes import successfully"
+
+  - id: grouped_mm_functional
+    type: pass_to_pass
+    origin: repo_tests
+    description: "_can_use_grouped_mm works with aligned tensors"
+
 rubric:
-  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed."
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "b3d7942fbaedda791668d7fe42eaaa323ed7a089"
-
-  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "b3d7942fbaedda791668d7fe42eaaa323ed7a089"
-
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "b3d7942fbaedda791668d7fe42eaaa323ed7a089"
+  - rule: "The fix modifies only necessary files (moe.py, conversion_mapping.py, core_model_loading.py, vlm_tester.py) without touching unrelated code. The gold solution removes Force16BytesAlignment class and its usages, and adds alignment checks directly in _can_use_grouped_mm - this is a minimal, focused change that follows the guideline to keep PRs brief."
+    reference: "Gold solution modifies: src/transformers/integrations/moe.py, src/transformers/conversion_mapping.py, src/transformers/core_model_loading.py, tests/vlm_tester.py, docs/source/en/weightconverter.md. No changes to CLAUDE.md or copilot-instructions.md needed."

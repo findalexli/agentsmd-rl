@@ -45,62 +45,146 @@ checks:
   type: pass_to_pass
   origin: static
   description: CI scripts referenced by workflows must exist
-rubric:
-- rule: The SKILL.md should be well-structured with clear step-by-step instructions,
-    consistent with the style of existing skills in .claude/skills/
-  source:
-    path: .claude/skills/bump-tantivy/SKILL.md
-    lines: 1-5
-    commit: eca4f763214604006262fc6a29dcf59c754813e3
-- rule: Cargo.toml changes should only disable features that are genuinely unused,
-    preserving all features required for compilation
-  source:
-    path: CONTRIBUTING.md
-    lines: 1-10
-    commit: eca4f763214604006262fc6a29dcf59c754813e3
-- rule: rationalize-deps SKILL.md must exist with proper frontmatter
-  source:
-    path: .claude/skills/rationalize-deps/SKILL.md
-    lines: 1-125
-    commit: 73877d1402ab9c294ab7f7a4ee02fb6c0c0f2f85
-- rule: SKILL.md must document dependency rationalization workflow
-  source:
-    path: .claude/skills/rationalize-deps/SKILL.md
-    lines: 1-125
-    commit: 73877d1402ab9c294ab7f7a4ee02fb6c0c0f2f85
-- rule: SKILL.md must describe iterative try-check-fix approach
-  source:
-    path: .claude/skills/rationalize-deps/SKILL.md
-    lines: 60-80
-    commit: 73877d1402ab9c294ab7f7a4ee02fb6c0c0f2f85
+- id: test_repo_license_headers
+  type: pass_to_pass
+  origin: repo_tests
+  description: License headers check passes on all source files
+- id: test_repo_log_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Log format check passes on all Rust source files
+- id: test_repo_cargo_toml_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.toml is valid TOML syntax
+rubric: []
 config_edits:
 - path: .claude/skills/rationalize-deps/SKILL.md
   tier: 1
-  gold_added: "---\nname: rationalize-deps\ndescription: Analyze Cargo.toml dependencies\
-    \ and attempt to remove unused features to reduce compile times and binary size\n\
-    ---\n\n# Rationalize Dependencies\n\nThis skill analyzes Cargo.toml dependencies\
-    \ to identify and remove unused features.\n\n## Overview\n\nMany crates enable\
-    \ features by default that may not be needed. This skill:\n1. Identifies dependencies\
-    \ with default features enabled\n2. Tests if `default-features = false` works\n\
-    3. Identifies which specific features are actually needed\n4. Verifies compilation\
-    \ after changes\n\n## Step 1: Identify the target\n\nAsk the user which crate(s)\
-    \ to analyze:\n- A specific crate name (e.g., \"tokio\", \"serde\")\n- A specific\
-    \ workspace member (e.g., \"quickwit-search\")\n- \"all\" to scan the entire workspace\n\
-    \n## Step 2: Analyze current dependencies\n\nFor the workspace Cargo.toml (`quickwit/Cargo.toml`),\
-    \ list dependencies that:\n- Do NOT have `default-features = false`\n- Have default\
-    \ features that might be unnecessary\n\nRun: `cargo tree -p <crate> -f \"{p} {f}\"\
-    \ --edges features` to see what features are actually used.\n\n## Step 3: For\
-    \ each candidate dependency\n\n### 3a: Check the crate's default features\n\n\
-    Look up the crate on crates.io or check its Cargo.toml to understand:\n- What\
-    \ features are enabled by default\n- What each feature provides\n\nUse: `cargo\
-    \ metadata --format-version=1 | jq '.packages[] | select(.name == \"<crate>\"\
-    ) | .features'`\n\n### 3b: Try disabling default features\n\nModify the dependency\
-    \ in `quickwit/Cargo.toml`:\n\nFrom:\n```toml\nsome-crate = { version = \"1.0\"\
-    \ }\n```\n\nTo:\n```toml\nsome-crate = { version = \"1.0\", default-features =\
-    \ false }\n```\n\n### 3c: Run cargo check\n\nRun: `cargo check --workspace` (or\
-    \ target specific packages for faster feedback)\n\nIf compilation fails:\n1. Read\
-    \ the error messages to identify which features are needed\n2. Add only the required\
-    \ features explicitly:\n   ```toml\n   some-crate = { version = \"1.0\", default-features\
-    \ = false, features = [\"needed-feature\"] }\n   ```\n3. Re-run cargo check\n\n\
-    #"
+  gold_added: |
+    ---
+    name: rationalize-deps
+    description: Analyze Cargo.toml dependencies and attempt to remove unused features to reduce compile times and binary size
+    ---
+
+    # Rationalize Dependencies
+
+    This skill analyzes Cargo.toml dependencies to identify and remove unused features.
+
+    ## Overview
+
+    Many crates enable features by default that may not be needed. This skill:
+    1. Identifies dependencies with default features enabled
+    2. Tests if `default-features = false` works
+    3. Identifies which specific features are actually needed
+    4. Verifies compilation after changes
+
+    ## Step 1: Identify the target
+
+    Ask the user which crate(s) to analyze:
+    - A specific crate name (e.g., "tokio", "serde")
+    - A specific workspace member (e.g., "quickwit-search")
+    - "all" to scan the entire workspace
+
+    ## Step 2: Analyze current dependencies
+
+    For the workspace Cargo.toml (`quickwit/Cargo.toml`), list dependencies that:
+    - Do NOT have `default-features = false`
+    - Have default features that might be unnecessary
+
+    Run: `cargo tree -p <crate> -f "{p} {f}" --edges features` to see what features are actually used.
+
+    ## Step 3: For each candidate dependency
+
+    ### 3a: Check the crate's default features
+
+    Look up the crate on crates.io or check its Cargo.toml to understand:
+    - What features are enabled by default
+    - What each feature provides
+
+    Use: `cargo metadata --format-version=1 | jq '.packages[] | select(.name == "<crate>") | .features'`
+
+    ### 3b: Try disabling default features
+
+    Modify the dependency in `quickwit/Cargo.toml`:
+
+    From:
+    ```toml
+    some-crate = { version = "1.0" }
+    ```
+
+    To:
+    ```toml
+    some-crate = { version = "1.0", default-features = false }
+    ```
+
+    ### 3c: Run cargo check
+
+    Run: `cargo check --workspace` (or target specific packages for faster feedback)
+
+    If compilation fails:
+    1. Read the error messages to identify which features are needed
+    2. Add only the required features explicitly:
+       ```toml
+       some-crate = { version = "1.0", default-features = false, features = ["needed-feature"] }
+       ```
+    3. Re-run cargo check
+
+    ### 3d: Binary search for minimal features
+
+    If there are many default features, use binary search:
+    1. Start with no features
+    2. If it fails, add half the default features
+    3. Continue until you find the minimal set
+
+    ## Step 4: Document findings
+
+    For each dependency analyzed, report:
+    - Original configuration
+    - New configuration (if changed)
+    - Features that were removed
+    - Any features that are required
+
+    ## Step 5: Verify full build
+
+    After all changes, run:
+    ```bash
+    cargo check --workspace --all-targets
+    cargo test --workspace --no-run
+    ```
+
+    ## Common Patterns
+
+    ### Serde
+    Often only needs `derive`:
+    ```toml
+    serde = { version = "1.0", default-features = false, features = ["derive", "std"] }
+    ```
+
+    ### Tokio
+    Identify which runtime features are actually used:
+    ```toml
+    tokio = { version = "1.0", default-features = false, features = ["rt-multi-thread", "macros", "sync"] }
+    ```
+
+    ### Reqwest
+    Often doesn't need all TLS backends:
+    ```toml
+    reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "json"] }
+    ```
+
+    ## Rollback
+
+    If changes cause issues:
+    ```bash
+    git checkout quickwit/Cargo.toml
+    cargo check --workspace
+    ```
+
+    ## Tips
+
+    - Start with large crates that have many default features (tokio, reqwest, hyper)
+    - Use `cargo bloat --crates` to identify large dependencies
+    - Check `cargo tree -d` for duplicate dependencies that might indicate feature conflicts
+    - Some features are needed only for tests - consider using `[dev-dependencies]` features
   gold_removed: ''

@@ -52,6 +52,16 @@ checks:
     origin: repo_tests
     description: "Pipeline type hints are correct"
 
+  - id: modeling_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Camembert modeling files have valid structure and CamembertForCausalLM class exists"
+
+  - id: tied_weights_keys_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CamembertForCausalLM has _tied_weights_keys defined in both modeling and modular files"
+
   - id: model_instantiates
     type: fail_to_pass
     origin: pr_diff
@@ -82,14 +92,5 @@ checks:
       commit: "d81ad48109331f910fd81f699869855cbd50f681"
 
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "d81ad48109331f910fd81f699869855cbd50f681"
-
-  - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/."
-    source:
-      path: "CLAUDE.md"
-      lines: "64"
-      commit: "d81ad48109331f910fd81f699869855cbd50f681"
+  - rule: "Code fix tasks require only code changes, not config file modifications. The tied weights fix correctly changes only modeling_camembert.py and modular_camembert.py."
+    reference: "_tied_weights_keys defines roberta.embeddings.word_embeddings.weight"

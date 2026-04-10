@@ -95,6 +95,64 @@ print('All TOML files valid')
     assert r.returncode == 0, f"TOML validation failed:\n{r.stderr}\n{r.stdout}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's train.py passes ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", f"{REPO}/src/prime_rl/trainer/sft/train.py", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's train.py is properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/src/prime_rl/trainer/sft/train.py", "--config=pyproject.toml"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr}\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_toml_syntax_all():
+    """All TOML files in repo have valid syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import os
+import sys
+import tomllib
+errors = []
+for root, dirs, files in os.walk('{REPO}'):
+    # Skip hidden directories
+    dirs[:] = [d for d in dirs if not d.startswith('.')]
+    for f in files:
+        if f.endswith('.toml'):
+            path = os.path.join(root, f)
+            try:
+                with open(path, 'rb') as fp:
+                    tomllib.load(fp)
+            except Exception as e:
+                errors.append(f'{{path}}: {{e}}')
+if errors:
+    print('TOML errors:', errors)
+    sys.exit(1)
+print(f'All TOML files valid')
+"""],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TOML validation failed:\n{r.stderr}\n{r.stdout}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -11,32 +11,36 @@ checks:
   description: Modified TypeScript files parse without syntax errors
 - id: json_files_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All JSON files in the repo are valid
 - id: ts_syntax_node_parse
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Modified TypeScript files are parseable by Node.js
 - id: mcp_package_structure
   type: pass_to_pass
   origin: static
   description: MCP package structure is intact with required directories and files
-- id: repo_tsc_no_emit
+- id: test_repo_eslint_mcp_files
   type: pass_to_pass
   origin: repo_tests
-  description: TypeScript structure check via Node.js parser
-- id: repo_import_statements
+  description: ESLint passes on modified MCP TypeScript files
+- id: test_repo_typescript_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Import statements in modified files are valid
-- id: repo_export_patterns
+  description: TypeScript parser validates syntax of modified files
+- id: test_repo_test_files_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Export patterns in modified files are valid
-- id: repo_no_console_in_production_code
+  description: Modified test files have valid TypeScript syntax
+- id: test_repo_help_json_valid
   type: pass_to_pass
   origin: repo_tests
-  description: No console.log statements in production TypeScript files
+  description: help.json is valid JSON (Node.js validation)
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json and package-lock.json are valid JSON
 - id: help_json_command_names
   type: fail_to_pass
   origin: pr_diff

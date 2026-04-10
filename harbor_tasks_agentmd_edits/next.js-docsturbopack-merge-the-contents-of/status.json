@@ -1,19 +1,70 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T12:15:38.626770",
-  "total_time": 3103.02,
-  "sandbox_id": "iaqbhv4qbydruugs98m18",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:15:13.621725",
+  "total_time": 1871.95,
+  "sandbox_id": "i8gjfi927hdg3yox8qcqv",
   "backend": "fireworks",
   "pipeline": "agents",
-  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh shebang - was bash but contained Python code. Changed to python3 shebang. All 4 checks pass: Docker build OK, NOP test reward=0, Gold test reward=1, Rubric ICR=1.0",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 940.61
+      "time": 798.71
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 952.36,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        ".rustfmt.toml",
+        ".alexrc",
+        ".claude/skills/update-docs/SKILL.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 2,
+      "rejection_reasons": "2 rules rejected: DOC-CONVENTIONS.md rules for MDX frontmatter not applicable to rustdoc documentation (this PR is Rust docs, not MDX)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 79.68
+    },
+    "rubric_validate": {
+      "status": "error",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.74,
+      "notes": "",
+      "precision": 1.0
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.2,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -24,6 +75,14 @@
       "backend": "fireworks",
       "time": 3103.02,
       "at": "2026-04-10T12:15:38.626770"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1871.95,
+      "at": "2026-04-10T15:15:13.621725"
     }
   ]
 }

@@ -16,15 +16,17 @@ OPTIONS_RS = Path(REPO) / "crates/ty_project/src/metadata/options.rs"
 
 # Rust test code injected into options.rs for behavioral deserialization checks.
 # These tests exercise the python-version validation at the serde layer.
+# Uses Options::from_toml_str which properly sets the ValueSourceGuard context.
 _HARNESS_TEST_MODULE = '''
 #[cfg(test)]
 mod harness_tests {
     use super::*;
+    use crate::metadata::value::ValueSource;
 
     #[test]
     fn harness_rejects_unsupported_27() {
         let toml_str = "[environment]\\npython-version = \\"2.7\\"\\n";
-        let result: Result<Options, toml::de::Error> = toml::from_str(toml_str);
+        let result = Options::from_toml_str(toml_str, ValueSource::File(std::sync::Arc::new(ruff_db::system::SystemPathBuf::from("test.toml"))));
         assert!(
             result.is_err(),
             "Should reject Python 2.7 as unsupported, but deserialization succeeded"
@@ -34,7 +36,7 @@ mod harness_tests {
     #[test]
     fn harness_rejects_unsupported_36() {
         let toml_str = "[environment]\\npython-version = \\"3.6\\"\\n";
-        let result: Result<Options, toml::de::Error> = toml::from_str(toml_str);
+        let result = Options::from_toml_str(toml_str, ValueSource::File(std::sync::Arc::new(ruff_db::system::SystemPathBuf::from("test.toml"))));
         assert!(
             result.is_err(),
             "Should reject Python 3.6 as unsupported, but deserialization succeeded"
@@ -44,22 +46,22 @@ mod harness_tests {
     #[test]
     fn harness_accepts_supported_312() {
         let toml_str = "[environment]\\npython-version = \\"3.12\\"\\n";
-        let result: Result<Options, toml::de::Error> = toml::from_str(toml_str);
+        let result = Options::from_toml_str(toml_str, ValueSource::File(std::sync::Arc::new(ruff_db::system::SystemPathBuf::from("test.toml"))));
         assert!(
             result.is_ok(),
-            "Should accept Python 3.12: {}",
-            result.unwrap_err()
+            "Should accept Python 3.12: {:?}",
+            result.err()
         );
     }
 
     #[test]
     fn harness_accepts_supported_313() {
         let toml_str = "[environment]\\npython-version = \\"3.13\\"\\n";
-        let result: Result<Options, toml::de::Error> = toml::from_str(toml_str);
+        let result = Options::from_toml_str(toml_str, ValueSource::File(std::sync::Arc::new(ruff_db::system::SystemPathBuf::from("test.toml"))));
         assert!(
             result.is_ok(),
-            "Should accept Python 3.13: {}",
-            result.unwrap_err()
+            "Should accept Python 3.13: {:?}",
+            result.err()
         );
     }
 }
@@ -78,7 +80,7 @@ def _ensure_harness_injected():
 def _cargo_test(test_filter: str, timeout: int = 300) -> subprocess.CompletedProcess:
     """Run a specific cargo test in ty_project."""
     return subprocess.run(
-        ["cargo", "test", "-p", "ty_project", "--", test_filter, "--exact"],
+        ["cargo", "test", "-p", "ty_project", "--lib", test_filter],
         cwd=REPO,
         capture_output=True,
         text=True,
@@ -88,7 +90,7 @@ def _cargo_test(test_filter: str, timeout: int = 300) -> subprocess.CompletedPro
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — compilation check
+# Gates (pass_to_pass, static) -- compilation check
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -106,7 +108,7 @@ def test_compiles():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — repo's own CI checks
+# Pass-to-pass (repo_tests) -- repo's own CI checks
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -179,7 +181,7 @@ def test_repo_doc():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -188,7 +190,7 @@ def test_rejects_unsupported_python_27():
     _ensure_harness_injected()
     r = _cargo_test("harness_tests::harness_rejects_unsupported_27")
     assert r.returncode == 0, (
-        f"Test failed — deserialization should reject Python 2.7:\n"
+        f"Test failed -- deserialization should reject Python 2.7:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 
@@ -199,13 +201,13 @@ def test_rejects_unsupported_python_36():
     _ensure_harness_injected()
     r = _cargo_test("harness_tests::harness_rejects_unsupported_36")
     assert r.returncode == 0, (
-        f"Test failed — deserialization should reject Python 3.6:\n"
+        f"Test failed -- deserialization should reject Python 3.6:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — supported versions still work
+# Pass-to-pass (pr_diff) -- supported versions still work
 # ---------------------------------------------------------------------------
 
 # [pr_diff] pass_to_pass
@@ -214,7 +216,7 @@ def test_accepts_supported_python_312():
     _ensure_harness_injected()
     r = _cargo_test("harness_tests::harness_accepts_supported_312")
     assert r.returncode == 0, (
-        f"Test failed — deserialization should accept Python 3.12:\n"
+        f"Test failed -- deserialization should accept Python 3.12:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 
@@ -225,16 +227,16 @@ def test_accepts_supported_python_313():
     _ensure_harness_injected()
     r = _cargo_test("harness_tests::harness_accepts_supported_313")
     assert r.returncode == 0, (
-        f"Test failed — deserialization should accept Python 3.13:\n"
+        f"Test failed -- deserialization should accept Python 3.13:\n"
         f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from AGENTS.md
+# Config-derived (agent_config) -- rules from AGENTS.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — AGENTS.md:79 @ 62a863cf518086135dfd2321c92fbc3823f95de8
+# [agent_config] pass_to_pass -- AGENTS.md:79 @ 62a863cf518086135dfd2321c92fbc3823f95de8
 def test_no_panic_unwrap_in_validation():
     """No panic!/unwrap() in the validation function (AGENTS.md:79)."""
     source = OPTIONS_RS.read_text()
@@ -270,7 +272,7 @@ def test_no_panic_unwrap_in_validation():
                 in_validation_fn = False
 
 
-# [agent_config] pass_to_pass — AGENTS.md:76 @ 62a863cf518086135dfd2321c92fbc3823f95de8
+# [agent_config] pass_to_pass -- AGENTS.md:76 @ 62a863cf518086135dfd2321c92fbc3823f95de8
 def test_imports_at_file_top():
     """Rust imports must be at the top of the file, not locally in functions (AGENTS.md:76).
 
@@ -311,7 +313,7 @@ def test_imports_at_file_top():
             # Check for local use statements inside the function body
             if stripped.startswith("use "):
                 assert False, (
-                    f"Local import at line {i}: {stripped} — "
+                    f"Local import at line {i}: {stripped} -- "
                     f"AGENTS.md requires imports at the top of the file"
                 )
 

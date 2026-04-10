@@ -84,8 +84,29 @@ checks:
 
   - id: test_repo_theme_tests_syntax
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Theme service test file has valid syntax and required imports"
+
+  # Additional pass-to-pass (repo_tests) — CI/CD enrichment
+  - id: test_repo_test_node
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Node.js unit tests pass"
+
+  - id: test_repo_eslint_theme_service
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on workbenchThemeService.ts"
+
+  - id: test_repo_eslint_config_contrib
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on configuration.contribution.ts"
+
+  - id: test_repo_hygiene
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Hygiene checks pass"
 
 rubric:
   - rule: "All strings visible to the user need to be externalized using the vs/nls module."

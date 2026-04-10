@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import ast
 import asyncio
 import functools
+import os
 import subprocess
 import sys
 import types
@@ -406,3 +407,69 @@ def test_repo_ruff_format():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_pathing():
+    """Repo's unit tests for utils/pathing.py pass (pass_to_pass).
+    Tests that don't require heavy dependencies (torch, wandb, loguru)."""
+    # Install pytest if not present
+    try:
+        subprocess.run(["python3", "-c", "import pytest"], capture_output=True, check=True)
+    except subprocess.CalledProcessError:
+        subprocess.run(["pip3", "install", "-q", "pytest"], capture_output=True, check=False)
+
+    # Temporarily rename conftest.py to avoid import errors with heavy deps
+    conftest = Path(REPO) / "tests" / "conftest.py"
+    conftest_bak = Path(REPO) / "tests" / "conftest.py.bak"
+
+    try:
+        if conftest.exists():
+            conftest.rename(conftest_bak)
+
+        # Run only the tests that don't require loguru (skip tests with clean=True flag)
+        env = {**os.environ, "PYTHONPATH": f"{REPO}/src"}
+        r = subprocess.run(
+            [
+                "python3", "-m", "pytest",
+                "tests/unit/utils/test_pathing.py::test_nonexistent_dir_passes",
+                "tests/unit/utils/test_pathing.py::test_empty_dir_passes",
+                "tests/unit/utils/test_pathing.py::test_dir_with_only_logs_passes",
+                "tests/unit/utils/test_pathing.py::test_dir_with_checkpoints_raises",
+                "tests/unit/utils/test_pathing.py::test_dir_with_checkpoints_passes_when_resuming",
+                "-v", "--tb=short"
+            ],
+            capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
+        )
+    finally:
+        if conftest_bak.exists():
+            conftest_bak.rename(conftest)
+
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_toml():
+    """Repo's pyproject.toml is valid TOML and has required sections (pass_to_pass)."""
+    # Use tomllib (Python 3.11+) or install tomli for older versions
+    try:
+        import tomllib
+    except ImportError:
+        subprocess.run(["pip3", "install", "-q", "tomli"], capture_output=True, check=False)
+        import tomli as tomllib
+
+    pyproject_path = Path(REPO) / "pyproject.toml"
+    content = pyproject_path.read_bytes()
+
+    # Must be valid TOML
+    data = tomllib.loads(content.decode("utf-8"))
+
+    # Check required sections exist
+    assert "project" in data, "Missing [project] section"
+    assert "tool" in data, "Missing [tool] section"
+    assert "ruff" in data["tool"], "Missing [tool.ruff] section"
+
+    # Verify project metadata
+    project = data["project"]
+    assert project.get("name") == "prime-rl", "Project name should be prime-rl"
+    assert "dependencies" in project, "Missing dependencies in [project]"

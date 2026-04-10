@@ -188,6 +188,26 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass — modeling structure check
+def test_repo_modeling_structure():
+    """Repo's modeling structure check passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "utils/check_modeling_structure.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Modeling structure check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — inits check
+def test_repo_inits():
+    """Repo's __init__ structure check passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "utils/check_inits.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Init check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — CLAUDE.md rules
 # ---------------------------------------------------------------------------

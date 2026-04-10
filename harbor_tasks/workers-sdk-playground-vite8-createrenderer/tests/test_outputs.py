@@ -46,6 +46,49 @@ def test_jsx_runtime_alias_preserved():
 
 
 # ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — CI checks that exercise the repo tooling
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Repo linting passes
+def test_repo_lint():
+    """Repo's linter (oxlint) passes on all files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run check:lint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo formatting passes
+def test_repo_format():
+    """Repo's formatter (oxfmt) passes on all files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && pnpm run check:format"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Workers-playground package checks pass
+def test_repo_workers_playground_check():
+    """Workers-playground package check passes (pass_to_pass).
+
+    This runs check:default-hashes and check:type on the package,
+    which exercises the vite.config.ts TypeScript compilation.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm run build --filter=@cloudflare/workers-editor-shared... >/dev/null 2>&1 && "
+         "cd packages/workers-playground && pnpm run check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Workers-playground check failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

@@ -193,6 +193,49 @@ echo "PASS"
     assert r.returncode == 0, f"Core module syntax check failed:\n{r.stderr}"
 
 
+def test_trust_store_compiles():
+    """Trust store plugin compiles successfully (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang elixir p7zip-full > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store
+make app 2>&1
+""",
+        shell=True, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Compilation failed:\n{r.stderr[-1000:]}"
+
+
+def test_trust_store_xref():
+    """Trust store plugin passes Xref static analysis (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang elixir p7zip-full > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store
+make app > /dev/null 2>&1
+make xref 2>&1
+""",
+        shell=True, capture_output=True, text=True, timeout=300,
+    )
+    # Xref may report unresolved calls but still exit 0
+    assert r.returncode == 0, f"Xref check failed:\n{r.stderr[-1000:]}"
+
+
+def test_trust_store_ebin_exists():
+    """Trust store plugin generates ebin directory with beam files (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang elixir p7zip-full > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store
+make app > /dev/null 2>&1
+ls ebin/*.beam > /dev/null 2>&1 || exit 1
+echo "PASS"
+""",
+        shell=True, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"ebin directory check failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

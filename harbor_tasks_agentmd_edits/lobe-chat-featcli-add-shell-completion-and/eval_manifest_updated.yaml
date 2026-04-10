@@ -1,0 +1,184 @@
+version: '2.0'
+source:
+  repo: lobehub/lobe-chat
+  pr: 13164
+  base_commit: 12280badbdf288b7018a9d5b907898780cd31a96
+  merge_commit: 4e89a00d2a8e98fe4d680d15f2094081beb555ab
+checks:
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: TypeScript source files compile without errors
+- id: completion_command_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The completion command outputs a valid shell completion script
+- id: completion_bash_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: The completion command outputs valid bash completion script
+- id: complete_internal_command_suggests_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: The __complete internal command suggests subcommands
+- id: complete_internal_nested_subcommands
+  type: fail_to_pass
+  origin: pr_diff
+  description: The __complete command suggests nested subcommands in context
+- id: tsdown_build_config_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The tsdown.config.ts exists and is valid
+- id: tsup_config_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The old tsup.config.ts is removed
+- id: package_json_uses_tsdown
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json uses tsdown instead of tsup for build
+- id: completion_utils_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The completion utility module exists with required exports
+- id: completion_command_module_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The completion command module exists and exports register function
+- id: index_imports_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: The CLI index imports and registers the completion command
+- id: upstream_completion_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: The upstream completion.test.ts unit tests pass
+- id: not_stub_completion_utils
+  type: pass_to_pass
+  origin: static
+  description: The completion utils have meaningful implementation, not stubs
+# NEW: Additional pass_to_pass tests from repo CI
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript type-check (tsc --noEmit) passes
+- id: repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for CLI commands pass
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build command passes
+rubric:
+- rule: 'CLI command files must export a register function named register{Name}Command(program:
+    Command) that follows the pattern in .agents/skills/cli/SKILL.md'
+  source:
+    path: .agents/skills/cli/SKILL.md
+    lines: 95-100
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: CLI commands must be registered in apps/cli/src/index.ts by importing the
+    register function and calling it with the program instance
+  source:
+    path: .agents/skills/cli/SKILL.md
+    lines: 117-125
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: CLI command tests must be created alongside the command file as <name>.test.ts
+    in the same directory
+  source:
+    path: .agents/skills/cli/SKILL.md
+    lines: 127-130
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: Type imports must use import type { ... } syntax (separate statement), not
+    inline import { type ... } syntax
+  source:
+    path: .agents/skills/typescript/SKILL.md
+    lines: 31-36
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: Tests should prefer vi.spyOn over vi.mock for more targeted and maintainable
+    mocking
+  source:
+    path: .agents/skills/testing/SKILL.md
+    lines: 35-45
+    commit: 12280badbdf288b7018a9d5b907898780cd31a96
+config_edits:
+- path: apps/cli/README.md
+  tier: 2
+  gold_added: '# @lobehub/cli
+
+
+    LobeHub command-line interface.
+
+
+    ## Local Development
+
+
+    | Task                                       | Command                    |
+
+    | ------------------------------------------ | -------------------------- |
+
+    | Run in dev mode                            | `bun run dev -- <command>` |
+
+    | Build the CLI                              | `bun run build`            |
+
+    | Link `lh`/`lobe`/`lobehub` into your shell | `bun run cli:link`         |
+
+    | Remove the global link                     | `bun run cli:unlink`       |
+
+
+    - `bun run build` only generates `dist/index.js`.
+
+    - To make `lh` available in your shell, run `bun run cli:link`.
+
+    - After linking, if your shell still cannot find `lh`, run `rehash` in `zsh`.
+
+
+    ## Shell Completion
+
+
+    ### Install completion for a linked CLI
+
+
+    | Shell  | Command                        |
+
+    | ------ | ------------------------------ |
+
+    | `zsh`  | `source <(lh completion zsh)`  |
+
+    | `bash` | `source <(lh completion bash)` |
+
+
+    ### Use completion during local development
+
+
+    | Shell  | Command                                      |
+
+    | ------ | -------------------------------------------- |
+
+    | `zsh`  | `source <(bun src/index.ts completion zsh)`  |
+
+    | `bash` | `source <(bun src/index.ts completion bash)` |
+
+
+    - Completion is context-aware. For example, `lh agent <Tab>` shows agent subcommands
+    instead of top-level commands.
+
+    - If you re-run the corresponding `source <(...)` command to reload it in the current shell session.
+
+    - Completion only registers shell functions. It does not install the `lh` binary
+    by itself.
+
+
+    ## Quick Check
+
+
+    ```bash
+
+    which lh
+
+    lh --help
+
+    lh agent <TAB>
+
+    ```'
+  gold_removed: ''

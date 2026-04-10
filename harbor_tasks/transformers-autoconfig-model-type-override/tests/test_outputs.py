@@ -283,3 +283,47 @@ def test_minimal_diff():
     assert numstat, "No changes detected to configuration_utils.py"
     added = int(numstat.split()[0])
     assert added <= 30, f"Too many lines added ({added}), expected <= 30"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_doc_toc():
+    """Repo's documentation table of contents check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"check_doc_toc failed: {err}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_doctest_list():
+    """Repo's doctest list check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"check_doctest_list failed: {err}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_auto_mappings():
+    """Repo's auto mappings sort check passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "utils/sort_auto_mappings.py", "--check_only"],
+        capture_output=True, text=True, cwd=REPO, timeout=120,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"sort_auto_mappings failed: {err}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports():
+    """Repo's public imports work correctly (pass_to_pass)."""
+    result = subprocess.run(
+        ["python", "-c", "from transformers import *"],
+        capture_output=True, text=True, cwd=REPO, timeout=60,
+    )
+    err = result.stderr[-500:] if result.stderr else ""
+    assert result.returncode == 0, f"Public imports failed: {err}"

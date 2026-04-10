@@ -47,9 +47,37 @@ checks:
     origin: static
     description: "requiresProjectAnnotations must return true when no setup file has setProjectAnnotations"
 
+  # New repo_tests pass_to_pass checks using TypeScript AST validation
+  - id: repo_utils_ts_no_syntax_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "utils.ts must have zero TypeScript parse diagnostics (CI-style AST check)"
+
+  - id: repo_index_ts_no_syntax_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "index.ts must have zero TypeScript parse diagnostics (CI-style AST check)"
+
+  - id: repo_base_commit_structure_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Base commit utils.ts structure must be valid - CI AST validation"
+
+  - id: repo_base_commit_structure_index
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Base commit index.ts structure must be valid - CI AST validation"
+
+  - id: repo_import_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All imports in modified files must be syntactically valid (CI AST check)"
+
+  - id: repo_function_call_structure_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Key function calls in index.ts must have valid structure (CI AST check)"
+
 rubric:
-  - rule: "Use Storybook loggers instead of raw console.* in normal code paths"
-    source:
-      path: "AGENTS.md"
-      lines: "241-248"
-      commit: "6d4fcb5417be0013e4c2d6e2e166a15a81637268"
+  - rule: "The fix must remove the CSF4-specific code path from the vitest plugin without adding new console.* usage"
+    description: "The fix should properly remove isCSF4 parameter and preview file loading logic. Console.* usage should remain as-is since it's pre-existing in the base commit and unrelated to the fix."

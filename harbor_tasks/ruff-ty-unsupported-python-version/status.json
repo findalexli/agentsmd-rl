@@ -1,19 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T06:54:00.000000",
-  "total_time": 408.83,
-  "sandbox_id": "ivzmby7tmd932la218s6z",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:53:36.307858",
+  "total_time": 3266.0,
+  "sandbox_id": "ir03hf5ptk2mzf85jxuam",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 939.71,
+      "time": 720.19,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,20 +32,24 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed test_outputs.py: (1) Updated harness tests to use Options::from_toml_str with ValueSource::File instead of toml::from_str with ValueSource::Default, (2) Removed --exact flag from cargo test command that was causing 0 tests to run. All 4 validation checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (1.0).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.71
+      "time": 2103.43
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 15001.16,
-      "at": "2026-04-09T13:21:53.503726"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -76,6 +81,14 @@
       "backend": "fireworks",
       "time": 408.83,
       "at": "2026-04-09T15:04:40.288715"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3266.0,
+      "at": "2026-04-10T15:53:36.307858"
     }
   ]
 }

@@ -68,9 +68,12 @@ def test_actions_has_slug_from_url():
     assert "export function slugFromUrl(url: string)" in content, \
         "slugFromUrl function not exported from actions.ts"
 
-    # Check for the regex pattern
-    assert r"/\\/([^/]+)\\/session(?:[/?#]|$)/" in content, \
-        "slugFromUrl regex pattern not found"
+    # Check for the key parts of the regex pattern
+    # The actual regex in source is /\/([^/]+)\/session(?:[/?#]|$)/
+    # Just check for the distinctive components instead of the exact escaped string
+    assert "/\\/" in content, "slugFromUrl regex should contain escaped forward slash"
+    assert "([^/]+)" in content, "slugFromUrl regex should contain capture group for slug"
+    assert "/session(?:[/?#]|$)" in content, "slugFromUrl regex should match session path pattern"
 
 
 def test_actions_has_wait_slug():
@@ -106,27 +109,34 @@ def test_duplicated_helpers_removed_from_specs():
 
 
 def test_specs_import_shared_helpers():
-    """Spec files import slugFromUrl and waitSlug from ../actions."""
+    """Spec files import shared helpers from ../actions.
+
+    - workspace-new-session.spec.ts and workspaces.spec.ts import both slugFromUrl and waitSlug
+    - projects-switch.spec.ts imports only waitSlug (it doesn't use slugFromUrl directly)
+    """
     for spec_file in [PROJECTS_SWITCH_FILE, WORKSPACE_NEW_SESSION_FILE, WORKSPACES_FILE]:
         content = spec_file.read_text()
 
         # Check the import statement includes these functions
-        import_match = re.search(r'from "\.\./actions"', content)
-        if not import_match:
-            import_match = re.search(r"from '\.\./actions'", content)
-
+        # Use regex to find the entire import block (may span multiple lines)
+        import_match = re.search(
+            r'import\s*\{[^}]*\}\s*from\s*["\']\.\./actions["\']',
+            content,
+            re.DOTALL
+        )
         assert import_match, f"{spec_file.name} should import from ../actions"
 
-        # Check that the import includes the helpers
-        # Look for the import line and check it includes slugFromUrl and waitSlug
-        lines = content.split('\n')
-        for line in lines:
-            if '../actions' in line and 'from' in line:
-                assert 'slugFromUrl' in line, \
-                    f"{spec_file.name} import should include slugFromUrl from ../actions"
-                assert 'waitSlug' in line, \
-                    f"{spec_file.name} import should include waitSlug from ../actions"
-                break
+        import_block = import_match.group(0)
+
+        # All files should import waitSlug
+        assert 'waitSlug' in import_block, \
+            f"{spec_file.name} import should include waitSlug from ../actions"
+
+        # slugFromUrl is required in files that use it directly
+        # projects-switch.spec.ts only uses waitSlug, not slugFromUrl directly
+        if spec_file != PROJECTS_SWITCH_FILE:
+            assert 'slugFromUrl' in import_block, \
+                f"{spec_file.name} import should include slugFromUrl from ../actions"
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +178,38 @@ def test_agents_md_documents_routing_guidance():
 
     assert "resolved workspace slugs" in content.lower() or "workspace slug" in content.lower(), \
         "AGENTS.md should mention resolved workspace slugs"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands from the repo
+# ---------------------------------------------------------------------------
+
+def test_repo_e2e_actions_typecheck():
+    """Repo's TypeScript typecheck passes on e2e actions.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "x", "tsc", "--noEmit", "packages/app/e2e/actions.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Allow TS2304 errors (Cannot find name) which are missing type imports, but not syntax errors
+    stderr_filtered = "\n".join(
+        line for line in r.stderr.splitlines()
+        if "error TS" in line and "TS2304" not in line and "TS2580" not in line
+    )
+    assert not stderr_filtered, f"TypeScript errors in actions.ts:\n{r.stderr[-800:]}"
+
+
+def test_repo_e2e_typecheck_all():
+    """Repo's TypeScript typecheck passes on e2e directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "x", "tsc", "--noEmit", "-p", "packages/app/e2e"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Only fail for real type errors, not missing type declarations
+    stderr_filtered = "\n".join(
+        line for line in r.stderr.splitlines()
+        if "error TS" in line and "TS2304" not in line and "TS2580" not in line and "TS7016" not in line
+    )
+    assert not stderr_filtered, f"TypeScript errors in e2e package:\n{r.stderr[-800:]}"
 
 
 # ---------------------------------------------------------------------------

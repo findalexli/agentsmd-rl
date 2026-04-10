@@ -9,31 +9,47 @@ if grep -q "pg_advisory_lock(3617572382373537863)" enterprise/migrations/env.py;
     exit 0
 fi
 
-# Apply the gold patch
-cat <<'PATCH' | git apply -
-diff --git a/enterprise/migrations/env.py b/enterprise/migrations/env.py
-index e3915fbf65ba..23daa3a28d27 100644
---- a/enterprise/migrations/env.py
-+++ b/enterprise/migrations/env.py
-@@ -8,7 +8,7 @@
+# Use Python to properly edit the file
+python3 << 'EOF'
+import re
 
- from alembic import context  # noqa: E402
- from google.cloud.sql.connector import Connector  # noqa: E402
--from sqlalchemy import create_engine  # noqa: E402
-+from sqlalchemy import create_engine, text  # noqa: E402
- from storage.base import Base  # noqa: E402
+with open("enterprise/migrations/env.py", "r") as f:
+    content = f.read()
 
- target_metadata = Base.metadata
-@@ -109,6 +109,10 @@ def run_migrations_online() -> None:
-             version_table_schema=target_metadata.schema,
-         )
+# 1. Add 'text' to the sqlalchemy import
+content = content.replace(
+    "from sqlalchemy import create_engine  # noqa: E402",
+    "from sqlalchemy import create_engine, text  # noqa: E402"
+)
 
-+        # Lock number must be unique — md5 hash of 'openhands_enterprise_migrations'
-+        # Lock is released when the connection context manager exits
-+        connection.execute(text('SELECT pg_advisory_lock(3617572382373537863)'))
-+
-         with context.begin_transaction():
-             context.run_migrations()
-PATCH
+# 2. Add the advisory lock call before begin_transaction in run_migrations_online
+# Find the pattern in run_migrations_online function
+old_pattern = """    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table_schema=target_metadata.schema,
+        )
 
-echo "Patch applied successfully"
+        with context.begin_transaction():"""
+
+new_pattern = """    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table_schema=target_metadata.schema,
+        )
+
+        # Lock number must be unique — md5 hash of 'openhands_enterprise_migrations'
+        # Lock is released when the connection context manager exits
+        connection.execute(text('SELECT pg_advisory_lock(3617572382373537863)'))
+
+        with context.begin_transaction():"""
+
+content = content.replace(old_pattern, new_pattern)
+
+with open("enterprise/migrations/env.py", "w") as f:
+    f.write(content)
+
+print("Patch applied successfully")
+EOF

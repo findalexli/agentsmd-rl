@@ -326,3 +326,33 @@ def test_repo_typecheck():
     assert r.returncode == 0, (
         f"Typecheck failed:\n{r.stdout}\n{r.stderr}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's pnpm build passes for interaction package (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter", "@remix-run/interaction", "build"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"Build failed:\n{r.stdout}\n{r.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Repo's prettier formatting check passes for interaction package (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", f"{PKG}/src/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Format check failed:\n{r.stdout}\n{r.stderr}"
+    )

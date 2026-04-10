@@ -1,19 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:49:42.940591",
-  "total_time": 1291.9,
-  "sandbox_id": "iqwdtck12khyg9le3udch",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:54:15.807865",
+  "total_time": 3305.4,
+  "sandbox_id": "iep4kh7hfselawazxopxe",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 8.31,
+      "time": 1294.43,
       "notes": ""
     },
     "improve": {
@@ -24,9 +25,22 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "judge_score": 1.0,
+      "attempts": 1,
+      "notes": "Fixed rubric in eval_manifest.yaml - this is a pure code change task (refactoring digest parsing) with no config files to modify. Removed inappropriate rubric rules that expected config edits. All 4 checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (1.0).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.66
+      "time": 1181.12
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -45,6 +59,14 @@
       "backend": "fireworks",
       "time": 1291.9,
       "at": "2026-04-09T14:49:42.940591"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3305.4,
+      "at": "2026-04-10T15:54:15.807865"
     }
   ]
 }

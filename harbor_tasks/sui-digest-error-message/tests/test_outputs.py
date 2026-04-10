@@ -44,7 +44,7 @@ def test_digest_from_base58_exists():
 def test_digest_from_base58_eq_32():
     """
     F2P: digest_from_base58 must accept valid 32-byte base58 strings.
-    A string of 32 '1's in base58 decodes to 32 zero bytes.
+    A string of 32 '1s in base58 decodes to 32 zero bytes.
     """
     result = run_cargo_test("sui-types", "test_digest_from_base58_eq_32", timeout=300)
     output = result.stdout + result.stderr
@@ -96,6 +96,82 @@ def test_cargo_check():
     )
     assert result.returncode == 0, \
         f"cargo check failed:\n{result.stderr[-1000:]}"
+
+
+def test_cargo_clippy():
+    """
+    P2P: The code must pass clippy linting (repo CI standard).
+    """
+    result = subprocess.run(
+        ["cargo", "clippy", "-p", "sui-types", "--", "-D", "warnings"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, \
+        f"cargo clippy failed:\n{result.stderr[-1000:]}"
+
+
+def test_cargo_fmt():
+    """
+    P2P: The code must be properly formatted (repo CI standard).
+    """
+    result = subprocess.run(
+        ["cargo", "fmt", "--all", "--", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, \
+        f"cargo fmt check failed:\n{result.stderr[-500:]}"
+
+
+def test_cargo_xlint():
+    """
+    P2P: The code must pass xlint license/workspace checks (repo CI standard).
+    """
+    result = subprocess.run(
+        ["cargo", "xlint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, \
+        f"cargo xlint failed:\n{result.stderr[-500:]}"
+
+
+def test_sui_types_lib_tests():
+    """
+    P2P: sui-types library unit tests must pass (repo CI standard).
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "sui-types", "--lib", "--", "--test-threads=1"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, \
+        f"sui-types lib tests failed:\n{result.stderr[-1000:]}"
+
+
+def test_sui_types_digest_integration_tests():
+    """
+    P2P: sui-types digest integration tests must pass (covers modified code).
+    Tests CheckpointDigest, TransactionDigest, ObjectDigest, etc. from_str parsing.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "sui-types", "--test", "digests_tests"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300
+    )
+    assert result.returncode == 0, \
+        f"sui-types digest integration tests failed:\n{result.stderr[-1000:]}"
 
 
 def test_unit_tests_pass():

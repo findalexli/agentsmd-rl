@@ -36,7 +36,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: README uses correct Bazel target with container-client@ suffix
-rubric: []
+rubric:
+- rule: Bazel test target names must include the @ suffix (e.g., //src/workerd/server/tests/container-client:container-client@,
+    not //src/workerd/server/tests/container-client). The @ suffix is required for
+    all test targets.
+  source:
+    path: AGENTS.md
+    lines: 61-81
+    commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
 config_edits:
 - path: src/workerd/server/tests/container-client/README.md
   tier: 2

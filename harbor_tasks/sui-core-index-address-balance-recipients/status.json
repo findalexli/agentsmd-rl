@@ -1,20 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T01:07:21.811258",
-  "total_time": 11294.1,
-  "sandbox_id": "iwltfxjcdbtg7i4p9nvdk",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T16:07:50.032887",
+  "total_time": 4119.73,
+  "sandbox_id": "ikkxd26v8uvb82m78oj0p",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.87,
+      "time": 2470.51,
       "notes": ""
     },
     "improve": {
@@ -25,16 +26,44 @@
       "notes": "tests look good"
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 5,
+      "rejection_reasons": "3 rules about testing/workflow not applicable to diff evaluation, 2 rules already covered by existing checks",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.69,
-      "notes": ""
+      "time": 73.2
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All checks passed. Removed inappropriate rubric section from eval_manifest.yaml - the rubric rules were about code style but the rubric judge is designed for config file edits, not code changes. The code quality checks (cargo fmt, clippy, xlint) are already covered by pass-to-pass tests.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.59
+      "time": 914.53
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 14.71,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.1,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -61,6 +90,14 @@
       "backend": "fireworks",
       "time": 11294.1,
       "at": "2026-04-10T01:07:21.811258"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4119.73,
+      "at": "2026-04-10T16:07:50.032887"
     }
   ]
 }

@@ -60,6 +60,25 @@ def _extract_function(source: str, name: str):
     return full_text, body_with_braces
 
 
+def _setup_pnpm():
+    """Install pnpm globally and install dependencies."""
+    # Install pnpm
+    subprocess.run(
+        ["npm", "install", "-g", "pnpm@9.12.0"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # Install dependencies (lockfile should be up to date from base commit)
+    subprocess.run(
+        ["pnpm", "install"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
@@ -213,6 +232,52 @@ def test_error_handling_around_rpc_call():
         "runInRunnerObject must use try/catch or try/finally "
         "to ensure cleanup on error"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI commands from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Repo's build for vite-plugin passes (pass_to_pass)."""
+    _setup_pnpm()
+    r = subprocess.run(
+        ["pnpm", "turbo", "build", "--filter", "@cloudflare/vite-plugin", "--output-logs=errors-only"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's typecheck for vite-plugin passes (pass_to_pass)."""
+    _setup_pnpm()
+    r = subprocess.run(
+        ["pnpm", "turbo", "check:type", "--filter", "@cloudflare/vite-plugin", "--output-logs=errors-only"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_runner_worker_tests():
+    """Repo's runner-worker unit tests pass (pass_to_pass)."""
+    _setup_pnpm()
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "src/workers/runner-worker/__tests__/env.spec.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=f"{REPO}/packages/vite-plugin-cloudflare",
+    )
+    assert r.returncode == 0, f"Runner-worker tests failed:\n{r.stderr[-1000:]}"
 
 
 # ---------------------------------------------------------------------------

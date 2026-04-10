@@ -5,10 +5,22 @@ source:
   base_commit: 5c5560039dad1359efc2dcd7e3a939bc3d95b6fe
   merge_commit: 04a824e3f685b6a686e3308c65c1bd637a3e8eeb
 checks:
-- id: repo_unit_config
+- id: repo_ruff_lint
   type: pass_to_pass
   origin: repo_tests
-  description: Repo unit tests for config modules pass
+  description: Repo's ruff linter passes
+- id: repo_unit_training_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for training config pass
+- id: repo_unit_orchestrator_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for orchestrator config pass
+- id: repo_unit_eval_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for eval config pass
 - id: import_training_modules
   type: pass_to_pass
   origin: repo_tests
@@ -79,7 +91,9 @@ checks:
   description: README.md should have 'Developer' and 'Configs' sections
 rubric:
 - rule: New code creates proper CheckpointManager classes with save/load functionality
+  source: src/zeroband/training/orchestrator/ckpt.py
 - rule: New code follows existing config patterns using pydantic
+  source: src/zeroband/training/config.py
 config_edits:
 - path: README.md
   tier: 2

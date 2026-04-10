@@ -4,30 +4,126 @@ set -euo pipefail
 cd /workspace/gradio
 
 # Idempotent: skip if already applied (check for new README content)
-if grep -q "Standalone Svelte component that brings Gradio's Dataframe UI" js/dataframe/README.md 2>/dev/null | head -1; then
-    if ! grep -q "BaseDataFrame" js/dataframe/README.md 2>/dev/null; then
-        echo "Patch already applied."
-        exit 0
-    fi
+# The new README has '## Install' section which doesn't exist in old version
+if grep -q '## Install' js/dataframe/README.md 2>/dev/null; then
+    echo "Patch already applied."
+    exit 0
 fi
 
 # Use --whitespace=fix if patch has trailing whitespace issues
-git apply - <<'PATCH'
+git apply --whitespace=fix - <<'GITPATCH'
+diff --git a/.changeset/brown-beds-fail.md b/.changeset/brown-beds-fail.md
+new file mode 100644
+index 000000000..62319a482
+--- /dev/null
++++ b/.changeset/brown-beds-fail.md
+@@ -0,0 +1,8 @@
++---
++"@gradio/code": minor
++"@gradio/dataframe": minor
++"gradio": minor
++"website": minor
++---
++
++feat:Add JS Dataframe documentation to docs
+diff --git a/Users/peterallen/Projects/gradio/js/core/src/gradio_helper.d.ts b/Users/peterallen/Projects/gradio/js/core/src/gradio_helper.d.ts
+new file mode 100644
+index 000000000..c49f20e17
+--- /dev/null
++++ b/Users/peterallen/Projects/gradio/js/core/src/gradio_helper.d.ts
+@@ -0,0 +1,4 @@
++export { Gradio } from "@gradio/utils";
++export type I18nFormatter = typeof formatter;
++export declare function formatter(value: string | null | undefined): string;
++export declare const reactive_formatter: import("svelte/store").Readable<typeof formatter>;
+diff --git a/Users/peterallen/Projects/gradio/js/core/src/i18n.d.ts b/Users/peterallen/Projects/gradio/js/core/src/i18n.d.ts
+new file mode 100644
+index 000000000..10a16ab28
+--- /dev/null
++++ b/Users/peterallen/Projects/gradio/js/core/src/i18n.d.ts
+@@ -0,0 +1,28 @@
++export interface I18nData {
++    __type__: "translation_metadata";
++    key: string;
++}
++export type Lang = {
++    [key: string]: Record<string, string> | string;
++};
++export interface LangsRecord {
++    [lang: string]: {
++        type: "lazy";
++        data: () => Promise<Lang>;
++    } | {
++        type: "static";
++        data: Lang;
++    };
++}
++export declare function is_translation_metadata(obj: any): obj is I18nData;
++export declare function translate_if_needed(value: any): string;
++export declare function process_langs(): LangsRecord;
++export declare const language_choices: [string, string][];
++export declare let all_common_keys: Set<string>;
++export declare function setupi18n(custom_translations?: Record<string, Record<string, string>>): Promise<void>;
++export declare function changeLocale(new_locale: string): void;
++export declare function get_initial_locale(browser_locale: string | null, available_locales: string[], fallback_locale?: string): string;
++export declare function load_translations(translations: {
++    processed_langs: LangsRecord;
++    custom_translations: Record<string, Record<string, string>>;
++}): void;
+diff --git a/Users/peterallen/Projects/gradio/js/core/src/lang/loading.d.ts b/Users/peterallen/Projects/gradio/js/core/src/lang/loading.d.ts
+new file mode 100644
+index 000000000..fcc9f8823
+--- /dev/null
++++ b/Users/peterallen/Projects/gradio/js/core/src/lang/loading.d.ts
+@@ -0,0 +1,33 @@
++export declare const loading: {
++    ar: string;
++    ca: string;
++    ckb: string;
++    de: string;
++    en: string;
++    es: string;
++    eu: string;
++    fa: string;
++    fi: string;
++    fr: string;
++    he: string;
++    hi: string;
++    ja: string;
++    ko: string;
++    lt: string;
++    nb: string;
++    nl: string;
++    pl: string;
++    "pt-BR": string;
++    pt: string;
++    ro: string;
++    ru: string;
++    sv: string;
++    ta: string;
++    th: string;
++    tr: string;
++    uk: string;
++    ur: string;
++    uz: string;
++    "zh-CN": string;
++    "zh-TW": string;
++};
 diff --git a/js/_website/src/routes/[[version]]/docs/+layout.server.ts b/js/_website/src/routes/[[version]]/docs/+layout.server.ts
-index feca3ece73d..513db511638 100644
+index feca3ece7..513db5116 100644
 --- a/js/_website/src/routes/[[version]]/docs/+layout.server.ts
 +++ b/js/_website/src/routes/[[version]]/docs/+layout.server.ts
 @@ -9,6 +9,8 @@ const VERSION = version.version;
-
+ 
  let cache = new Map();
-
+ 
 +const components_to_document = ["dataframe", "js-client"];
 +
  async function load_release_docs(
  	version: string
  ): Promise<typeof import("$lib/json/docs.json")> {
 @@ -39,7 +41,10 @@ export async function load({ params, url }) {
-
+ 
  	let docs: { [key: string]: any } = docs_json.docs;
  	let js = docs_json.js || {};
 -	let js_pages = docs_json.js_pages || [];
@@ -38,15 +134,39 @@ index feca3ece73d..513db511638 100644
  	let js_client = docs_json.js_client;
  	let on_main = params.version === "main";
  	let pages: any = docs_json.pages;
-
+diff --git a/js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts b/js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts
+index ff3ffc166..ccbcdfc57 100644
+--- a/js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts
++++ b/js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts
+@@ -10,6 +10,7 @@ import "prismjs/components/prism-typescript";
+ import "prismjs/components/prism-javascript";
+ import "prismjs/components/prism-csv";
+ import "prismjs/components/prism-markup";
++import "prism-svelte";
+ 
+ function plugin() {
+ 	return function transform(tree: any) {
+@@ -32,7 +33,11 @@ const langs = {
+ 	ts: "typescript",
+ 	javascript: "javascript",
+ 	js: "javascript",
+-	directory: "json"
++	directory: "json",
++	svelte: "svelte",
++	sv: "svelte",
++	md: "markdown",
++	css: "css"
+ };
+ 
+ function highlight(code: string, lang: string | undefined) {
 diff --git a/js/_website/src/routes/[[version]]/docs/js/+page.server.ts b/js/_website/src/routes/[[version]]/docs/js/+page.server.ts
-index 50c23bae4b9..3bc9f6d5d68 100644
+index 50c23bae4..3bc9f6d5d 100644
 --- a/js/_website/src/routes/[[version]]/docs/js/+page.server.ts
 +++ b/js/_website/src/routes/[[version]]/docs/js/+page.server.ts
 @@ -2,8 +2,27 @@ import { redirect } from "@sveltejs/kit";
-
+ 
  export const prerender = true;
-
+ 
 -export function load({ params }) {
 -	if (params?.version) throw redirect(302, `/${params?.version}/docs/js/atoms`);
 +async function urlExists(fetch: any, url: string): Promise<boolean> {
@@ -70,12 +190,12 @@ index 50c23bae4b9..3bc9f6d5d68 100644
 +	if (exists) {
 +		throw redirect(302, url);
 +	}
-
+ 
 -	throw redirect(302, `/docs/js/atoms`);
 +	throw redirect(302, fallback_url);
  }
 diff --git a/js/_website/src/routes/[[version]]/docs/js/[jsdoc]/+page.server.ts b/js/_website/src/routes/[[version]]/docs/js/[jsdoc]/+page.server.ts
-index 3ebc79fdbe6..1c8467b856e 100644
+index 3ebc79fdb..1c8467b85 100644
 --- a/js/_website/src/routes/[[version]]/docs/js/[jsdoc]/+page.server.ts
 +++ b/js/_website/src/routes/[[version]]/docs/js/[jsdoc]/+page.server.ts
 @@ -10,6 +10,7 @@ import "prismjs/components/prism-typescript";
@@ -84,7 +204,7 @@ index 3ebc79fdbe6..1c8467b856e 100644
  import "prismjs/components/prism-markup";
 +import "prism-svelte";
  import { error } from "@sveltejs/kit";
-
+ 
  export const prerender = true;
 @@ -32,8 +33,14 @@ const langs = {
  	shell: "bash",
@@ -100,7 +220,7 @@ index 3ebc79fdbe6..1c8467b856e 100644
 +	md: "markdown",
 +	css: "css"
  };
-
+ 
  function highlight(code: string, lang: string | undefined) {
 @@ -61,6 +68,7 @@ export async function load({ params, parent }) {
  	if (!js_pages.some((p: string) => p === params.jsdoc)) {
@@ -111,7 +231,7 @@ index 3ebc79fdbe6..1c8467b856e 100644
  		return function transform(tree: any) {
  			tree.children.forEach((n: any) => {
 diff --git a/js/_website/src/routes/[[version]]/docs/js/[jsdoc]/+page.svelte b/js/_website/src/routes/[[version]]/docs/js/[jsdoc]/+page.svelte
-index b07c627b5ce..6b450a3bfdf 100644
+index b07c627b5..6b450a3bf 100644
 --- a/js/_website/src/routes/[[version]]/docs/js/[jsdoc]/+page.svelte
 +++ b/js/_website/src/routes/[[version]]/docs/js/[jsdoc]/+page.svelte
 @@ -53,38 +53,6 @@
@@ -192,33 +312,8 @@ index b07c627b5ce..6b450a3bfdf 100644
  		</div>
  	</div>
  </main>
-diff --git a/js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts b/js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts
-index ff3ffc1662e..ccbcdfc57a1 100644
---- a/js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts
-+++ b/js/_website/src/routes/[[version]]/docs/js-client/+page.server.ts
-@@ -10,6 +10,7 @@ import "prismjs/components/prism-typescript";
- import "prismjs/components/prism-javascript";
- import "prismjs/components/prism-csv";
- import "prismjs/components/prism-markup";
-+import "prism-svelte";
-
- function plugin() {
- 	return function transform(tree: any) {
-@@ -32,7 +33,11 @@ const langs = {
- 	ts: "typescript",
- 	javascript: "javascript",
- 	js: "javascript",
--	directory: "json"
-+	directory: "json",
-+	svelte: "svelte",
-+	sv: "svelte",
-+	md: "markdown",
-+	css: "css"
- };
-
- function highlight(code: string, lang: string | undefined) {
 diff --git a/js/_website/src/routes/[[version]]/docs/js/storybook/+page.server.ts b/js/_website/src/routes/[[version]]/docs/js/storybook/+page.server.ts
-index e0bdffc8624..68208326ab4 100644
+index e0bdffc86..68208326a 100644
 --- a/js/_website/src/routes/[[version]]/docs/js/storybook/+page.server.ts
 +++ b/js/_website/src/routes/[[version]]/docs/js/storybook/+page.server.ts
 @@ -9,7 +9,7 @@ import "prismjs/components/prism-json";
@@ -227,9 +322,9 @@ index e0bdffc8624..68208326ab4 100644
  import "prismjs/components/prism-markup";
 -import { error } from "@sveltejs/kit";
 +import "prism-svelte";
-
+ 
  export const prerender = true;
-
+ 
 @@ -31,7 +31,14 @@ const langs = {
  	shell: "bash",
  	json: "json",
@@ -244,10 +339,10 @@ index e0bdffc8624..68208326ab4 100644
 +	md: "markdown",
 +	css: "css"
  };
-
+ 
  function highlight(code: string, lang: string | undefined) {
 diff --git a/js/_website/src/routes/[[version]]/docs/js/storybook/+page.svelte b/js/_website/src/routes/[[version]]/docs/js/storybook/+page.svelte
-index 797c12a86f1..062d7e2f80a 100644
+index 797c12a86..062d7e2f8 100644
 --- a/js/_website/src/routes/[[version]]/docs/js/storybook/+page.svelte
 +++ b/js/_website/src/routes/[[version]]/docs/js/storybook/+page.svelte
 @@ -41,18 +41,6 @@
@@ -261,7 +356,7 @@ index 797c12a86f1..062d7e2f80a 100644
 -					class="text-right px-4 py-1 bg-gray-50 rounded-full hover:underline max-w-[48%]"
 -				>
 -					<div class="flex text-lg">
--						<p class="whitespace-50/nowrap overflow-hidden text-ellipsis">atoms</p>
+-						<p class="whitespace-nowrap overflow-hidden text-ellipsis">atoms</p>
 -						<span class="text-orange-500 ml-1">&#8594;</span>
 -					</div>
 -				</a>
@@ -290,7 +385,7 @@ index 797c12a86f1..062d7e2f80a 100644
  	</div>
  </main>
 diff --git a/js/_website/src/routes/changelog/+page.server.ts b/js/_website/src/routes/changelog/+page.server.ts
-index af0f5298a16..56e30acf29f 100644
+index af0f5298a..56e30acf2 100644
 --- a/js/_website/src/routes/changelog/+page.server.ts
 +++ b/js/_website/src/routes/changelog/+page.server.ts
 @@ -13,6 +13,7 @@ import "prismjs/components/prism-json";
@@ -298,7 +393,7 @@ index af0f5298a16..56e30acf29f 100644
  import "prismjs/components/prism-csv";
  import "prismjs/components/prism-markup";
 +import "prism-svelte";
-
+ 
  const langs = {
  	python: "python",
 @@ -23,7 +24,14 @@ const langs = {
@@ -315,10 +410,10 @@ index af0f5298a16..56e30acf29f 100644
 +	md: "markdown",
 +	css: "css"
  };
-
+ 
  function highlight(code: string, lang: string | undefined) {
 diff --git a/js/code/package.json b/js/code/package.json
-index da1b83a185f..80383b268ff 100644
+index da1b83a18..80383b268 100644
 --- a/js/code/package.json
 +++ b/js/code/package.json
 @@ -38,14 +38,16 @@
@@ -341,18 +436,16 @@ index da1b83a185f..80383b268ff 100644
  		"./package.json": "./package.json"
  	},
 diff --git a/js/dataframe/README.md b/js/dataframe/README.md
-index 3027f485661..84600ae2cc7 100644
+index 3027f4856..84600ae2c 100644
 --- a/js/dataframe/README.md
 +++ b/js/dataframe/README.md
 @@ -1,41 +1,236 @@
 -# `@gradio/dataframe`
 +# @gradio/dataframe
-
+ 
 -```html
 -<script>
 -    import { BaseDataFrame, BaseExample } from "@gradio/dataframe";
--</script>
--```
 +Standalone Svelte component that brings Gradio's Dataframe UI to any Svelte/SvelteKit project.
 +
 +This component is lightweight, virtualized for efficient rendering of large datasets, and offers features like column freezing, and customizable styling via CSS variables. Use this component when you need a highly interactive, accessible, and easily themeable table for user-facing applications, especially where seamless Svelte/SvelteKit integration is important.
@@ -398,7 +491,7 @@ index 3027f485661..84600ae2cc7 100644
 +  function handle_input(e: any) {
 +    console.log("input", e.detail);
 +  }
-+</script>
+ </script>
 +
 +<Dataframe
 +  bind:value
@@ -501,7 +594,7 @@ index 3027f485661..84600ae2cc7 100644
 +  line_breaks?: boolean;
 +
 +  /**
-+   * Enable or disable text wrapping in cells.
++   * (Optional) Enable or disable text wrapping in cells.
 +   * Default: false
 +   */
 +  wrap?: boolean;
@@ -570,9 +663,43 @@ index 3027f485661..84600ae2cc7 100644
 +    --gr-df-accent: #7c3aed;
 +  }
 +</style>
-+```
-+
-+Alternatively, you can target internal classes within the Dataframe using a global override.
+ ```
+ 
+-BaseDataFrame
+-```javascript
+-	export let datatype: Datatype | Datatype[];
+-	export let label: string | null = null;
+-	export let headers: Headers = [];
+-	let values: (string | number)[][];
+-	export let value: { data: Data; headers: Headers; metadata: Metadata } | null;
+-	export let col_count: [number, "fixed" | "dynamic"];
+-	export let row_count: [number, "fixed" | "dynamic"];
+-	export let latex_delimiters: {
+-		left: string;
+-		right: string;
+-		display: boolean;
+-	}[];
+-
+-	export let editable = true;
+-	export let wrap = false;
+-	export let root: string;
+-	export let i18n: I18nFormatter;
+-
+-	export let height = 500;
+-	export let line_breaks = true;
+-	export let column_widths: string[] = [];
+-```
+-
+-BaseExample
+-```javascript
+-	export let gradio: Gradio;
+-	export let value: (string | number)[][] | string;
+-	export let type: "gallery" | "table";
+-	export let selected = false;
+-	export let index: number;
+-```
+\ No newline at end of file
++Alternatively, you can target internal classes within the Dataframe using a global override. 
 +
 +```css
 +.df-theme :global(.cell-wrap) {
@@ -589,14 +716,14 @@ index 3027f485661..84600ae2cc7 100644
 +
 diff --git a/js/dataframe/standalone/README.md b/js/dataframe/standalone/README.md
 deleted file mode 100644
-index cd915b3b8d0..00000000000
+index cd915b3b8..000000000
 --- a/js/dataframe/standalone/README.md
 +++ /dev/null
 @@ -1,152 +0,0 @@
 -@gradio/dataframe
 -================================
 -
--Standalone Svelte component that brings Gradio's Dataframe UI to any Svelte/SvelteKit project.
+-Standalone Svelte component that brings Gradio's Dataframe UI to any Svelte/SvelteKit project. 
 -
 -Install
 --------
@@ -650,7 +777,7 @@ index cd915b3b8d0..00000000000
 -```
 -
 -Props
--------
+------
 -
 -| Prop                    | Type                                   | Default   | Description                                                |
 -|-------------------------|----------------------------------------|-----------|------------------------------------------------------------|
@@ -729,7 +856,7 @@ index cd915b3b8d0..00000000000
 -</style>
 -```
 -
--Alternatively, you can target internal classes within the Dataframe using a global override.
+-Alternatively, you can target internal classes within the Dataframe using a global override. 
 -
 -```css
 -.df-theme :global(.cell-wrap) {
@@ -745,6 +872,6 @@ index cd915b3b8d0..00000000000
 -
 -MIT
 -
-PATCH
+GITPATCH
 
 echo "Patch applied successfully."

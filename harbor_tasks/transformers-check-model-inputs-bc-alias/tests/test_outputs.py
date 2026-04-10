@@ -125,8 +125,7 @@ def test_deprecation_warning_emitted():
     so running in-process after other tests would suppress the warning even
     if the alias is present. A fresh process guarantees a clean cache.
     """
-    script = """\
-import sys, logging, io
+    script = """import sys, logging, io
 sys.path.insert(0, '/workspace/transformers/src')
 
 import transformers.utils.generic as gen_mod
@@ -204,6 +203,25 @@ def test_generic_utilities_intact():
     assert PaddingStrategy("longest") == PaddingStrategy.LONGEST
 
 
+# [repo_tests] pass_to_pass
+def test_generic_module_imports():
+    """All public utilities from generic.py can be imported (pass_to_pass)."""
+    script = """import sys
+sys.path.insert(0, '/workspace/transformers/src')
+from transformers.utils.generic import (
+    ExplicitEnum, PaddingStrategy, ModelOutput,
+    flatten_dict, expand_dims, transpose, reshape, squeeze, to_py_obj,
+    merge_with_config_defaults
+)
+print("All imports successful")
+"""
+    r = subprocess.run(
+        ["python3", "-c", script],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Import test failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from .github/copilot-instructions.md
 # ---------------------------------------------------------------------------
@@ -216,3 +234,13 @@ def test_style_ruff_passes():
         cwd=REPO, capture_output=True, text=True, timeout=60,
     )
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_format_ruff_passes():
+    """Code formatting is enforced in the CI — ruff format must pass on the modified file."""
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", "src/transformers/utils/generic.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"

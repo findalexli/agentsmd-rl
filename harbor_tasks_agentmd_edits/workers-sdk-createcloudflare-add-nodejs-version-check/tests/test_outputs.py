@@ -192,8 +192,62 @@ def test_c3_format():
     assert result.returncode == 0, f"C3 format check failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
 
 
+def test_repo_fixtures_validation():
+    """Repo fixtures validation passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-c", """
+            cd /workspace/workers-sdk &&
+            corepack enable &&
+            pnpm install --frozen-lockfile > /dev/null 2>&1 &&
+            node -r esbuild-register tools/deployments/validate-fixtures.ts
+        """],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Fixtures validation failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def test_repo_private_packages_validation():
+    """Repo private packages validation passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-c", """
+            cd /workspace/workers-sdk &&
+            corepack enable &&
+            pnpm install --frozen-lockfile > /dev/null 2>&1 &&
+            node -r esbuild-register tools/deployments/validate-private-packages.ts
+        """],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Private packages validation failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def test_repo_workflow_action_pinning():
+    """Repo GitHub workflow action pinning validation passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-c", """
+            cd /workspace/workers-sdk &&
+            corepack enable &&
+            pnpm install --frozen-lockfile > /dev/null 2>&1 &&
+            node -r esbuild-register tools/github-workflow-helpers/validate-action-pinning.ts
+        """],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Workflow action pinning validation failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
+def test_repo_lint():
+    """Repo-wide linting passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "-c", """
+            cd /workspace/workers-sdk &&
+            corepack enable &&
+            pnpm install --frozen-lockfile > /dev/null 2>&1 &&
+            pnpm run check:lint
+        """],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Repo lint failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config edit (config_edit) — AGENTS.md must document the bin shim
 # ---------------------------------------------------------------------------
-
-

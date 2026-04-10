@@ -16,10 +16,25 @@ CONFIG_PY = f"{REPO}/src/prime_rl/trainer/models/nemotron_h/configuration_nemotr
 MODELING_PY = f"{REPO}/src/prime_rl/trainer/models/nemotron_h/modeling_nemotron_h.py"
 
 
-def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute Python code in a subprocess with the repo on PYTHONPATH."""
+def _run_py_direct(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute Python code with direct config file loading (avoids torch dep)."""
+    # Wrap the code to load config directly from file
+    wrapped = f'''
+import sys
+import importlib.util
+spec = importlib.util.spec_from_file_location("configuration_nemotron_h", "{CONFIG_PY}")
+mod = importlib.util.module_from_spec(spec)
+sys.path.insert(0, "{REPO}/src")
+try:
+    spec.loader.exec_module(mod)
+    NemotronHConfig = mod.NemotronHConfig
+except Exception as e:
+    print(f"Import error: {{e}}")
+    sys.exit(1)
+{code}
+'''
     return subprocess.run(
-        ["python3", "-c", code],
+        ["python3", "-c", wrapped],
         capture_output=True, text=True, timeout=timeout, cwd=REPO,
     )
 
@@ -43,8 +58,7 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_nano_30b_dimension_invariant():
     """Config mamba_expand yields correct intermediate_size for Nano-30B."""
-    r = _run_py("""
-from prime_rl.trainer.models.nemotron_h.configuration_nemotron_h import NemotronHConfig
+    r = _run_py_direct("""
 config = NemotronHConfig(hidden_size=2688, mamba_num_heads=64, mamba_head_dim=64, mamba_expand=2)
 expected = 64 * 64  # 4096
 actual = int(config.mamba_expand * config.hidden_size)
@@ -58,8 +72,7 @@ print("PASS")
 # [pr_diff] fail_to_pass
 def test_multiple_dimension_combos():
     """Config mamba_expand correct for varied hidden_size / head combos."""
-    r = _run_py("""
-from prime_rl.trainer.models.nemotron_h.configuration_nemotron_h import NemotronHConfig
+    r = _run_py_direct("""
 cases = [
     (1024, 32, 48, 3),   # expected 1536, raw gives 3072
     (512,  16, 48, 2),   # expected  768, raw gives 1024
@@ -79,9 +92,7 @@ print("PASS")
 # [pr_diff] fail_to_pass
 def test_fractional_expand_precision():
     """No off-by-one from float truncation when expand is not a clean fraction."""
-    r = _run_py("""
-from prime_rl.trainer.models.nemotron_h.configuration_nemotron_h import NemotronHConfig
-
+    r = _run_py_direct("""
 # 3840 / 2688 = 1.42857142857... (repeating)
 config = NemotronHConfig(hidden_size=2688, mamba_num_heads=80, mamba_head_dim=48, mamba_expand=2)
 expected = 80 * 48  # 3840
@@ -106,8 +117,7 @@ print("PASS")
 # [pr_diff] pass_to_pass
 def test_120b_default_config():
     """120B default config still produces correct mamba_expand."""
-    r = _run_py("""
-from prime_rl.trainer.models.nemotron_h.configuration_nemotron_h import NemotronHConfig
+    r = _run_py_direct("""
 config = NemotronHConfig()
 expected = 128 * 64  # 8192
 actual = int(config.mamba_expand * config.hidden_size)
@@ -175,11 +185,11 @@ def test_no_work_process_comments():
 def test_repo_ruff_check():
     """Repo's ruff lint check passes on modified files (pass_to_pass)."""
     r = subprocess.run(
-        ["pip", "install", "-q", "ruff", "pytest"],
+        ["pip", "install", "-q", "ruff"],
         capture_output=True, text=True, timeout=60,
     )
     r = subprocess.run(
-        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/trainer/models/nemotron_h/"],
+        ["python", "-m", "ruff", "check", "--config=pyproject.toml", "src/prime_rl/trainer/models/nemotron_h/"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
@@ -189,11 +199,11 @@ def test_repo_ruff_check():
 def test_repo_ruff_format():
     """Repo's ruff format check passes on modified files (pass_to_pass)."""
     r = subprocess.run(
-        ["pip", "install", "-q", "ruff", "pytest"],
+        ["pip", "install", "-q", "ruff"],
         capture_output=True, text=True, timeout=60,
     )
     r = subprocess.run(
-        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/trainer/models/nemotron_h/"],
+        ["python", "-m", "ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/trainer/models/nemotron_h/"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
@@ -202,9 +212,77 @@ def test_repo_ruff_format():
 # [repo_tests] pass_to_pass
 def test_repo_no_broken_syntax():
     """All modified Python files parse without syntax errors (pass_to_pass)."""
-    for fpath in [CONFIG_PY, MODELING_PY]:
-        source = Path(fpath).read_text()
-        try:
-            ast.parse(source)
-        except SyntaxError as e:
-            raise AssertionError(f"Syntax error in {fpath}: {e}")
+    r = subprocess.run(
+        ["python", "-c", f"import ast; ast.parse(open('{CONFIG_PY}').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax error in {CONFIG_PY}:\n{r.stderr[-500:]}"
+    r = subprocess.run(
+        ["python", "-c", f"import ast; ast.parse(open('{MODELING_PY}').read())"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax error in {MODELING_PY}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_full_lint():
+    """Repo's full ruff lint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["python", "-m", "ruff", "check", "--config=pyproject.toml", "."],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Full ruff lint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_imports_clean():
+    """Modified config file parses and has NemotronHConfig class (pass_to_pass)."""
+    # Parse the config file directly to verify structure (avoids torch dependency)
+    r = subprocess.run(
+        ["python", "-c", f"""
+import ast
+with open('{CONFIG_PY}') as f:
+    tree = ast.parse(f.read())
+
+# Check that NemotronHConfig class exists
+classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+assert 'NemotronHConfig' in classes, f'NemotronHConfig not found, got: {{classes}}'
+print('IMPORT_OK')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config import check failed:\n{r.stderr[-500:]}"
+    assert "IMPORT_OK" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_repo_config_validates():
+    """NemotronHConfig class has required attributes defined (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", f"""
+import ast
+with open('{CONFIG_PY}') as f:
+    tree = ast.parse(f.read())
+
+# Find NemotronHConfig class and check for required attributes
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == 'NemotronHConfig':
+        # Check __init__ assigns required attributes
+        for item in node.body:
+            if isinstance(item, ast.FunctionDef) and item.name == '__init__':
+                assigns = [n.attr for n in ast.walk(item) if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id == 'self']
+                required = ['mamba_expand', 'mamba_num_heads', 'mamba_head_dim', 'hidden_size']
+                missing = [r for r in required if r not in assigns]
+                assert not missing, f'Missing attributes in __init__: {{missing}}'
+                print('CONFIG_VALID')
+                break
+        break
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config validation failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert "CONFIG_VALID" in r.stdout

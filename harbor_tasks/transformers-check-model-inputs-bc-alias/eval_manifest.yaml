@@ -37,6 +37,11 @@ checks:
     origin: repo_tests
     description: "Existing utilities in generic.py (ExplicitEnum, PaddingStrategy) still work"
 
+  - id: generic_module_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All public utilities from generic.py can be imported"
+
   - id: style_ruff_passes
     type: pass_to_pass
     origin: agent_config
@@ -45,6 +50,11 @@ checks:
       path: ".github/copilot-instructions.md"
       lines: "17"
       commit: "2620c4ddd41afcc8d3b1d1134803bd418ffa45a7"
+
+  - id: format_ruff_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ruff format --check passes on the modified file (code formatting enforced in CI)"
 
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."

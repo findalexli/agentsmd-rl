@@ -48,20 +48,48 @@ checks:
 - id: test_repo_clippy
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's clippy linting passes (cargo clippy)
+  description: Repo's clippy linting passes (cargo clippy -p turbo-tasks)
 - id: test_repo_formatting
   type: pass_to_pass
   origin: repo_tests
   description: Repo's code formatting passes (cargo fmt --check)
+- id: test_repo_clippy_workspace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workspace clippy passes (cargo clippy --workspace --exclude next-napi-bindings --exclude turbo-tasks-macros)
+- id: test_turbo_tasks_backend_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbo-tasks-backend operation_vc test passes
 - id: test_existing_tests_pass
   type: pass_to_pass
   origin: repo_tests
-  description: Upstream test suite (cargo test) still passes
+  description: Upstream test suite (cargo test --lib) still passes
 - id: test_not_stub
   type: pass_to_pass
   origin: static
   description: README.md has substantial content, not just a placeholder
-rubric: []
+rubric:
+- rule: ".alexrc must be updated to include 'dirty' in the allow list when using the word in documentation"
+  source:
+    path: ".alexrc"
+    lines: "1-31"
+    commit: "545eba1ff6a6e74042c6e9c7412e3315a6f36d19~1"
+- rule: "Module-level rustdoc should use #[doc = include_str!(\"README.md\")] pattern to embed external documentation files"
+  source:
+    path: "AGENTS.md"
+    lines: "46-53"
+    commit: "545eba1ff6a6e74042c6e9c7412e3315a6f36d19~1"
+- rule: "Rust documentation comments must wrap at 100 characters (comment_width = 100 in .rustfmt.toml)"
+  source:
+    path: ".rustfmt.toml"
+    lines: "3-6"
+    commit: "545eba1ff6a6e74042c6e9c7412e3315a6f36d19~1"
+- rule: "When adding highlight={...} attributes to code blocks in documentation, carefully count actual line numbers within the code block"
+  source:
+    path: "AGENTS.md"
+    lines: "426-431"
+    commit: "545eba1ff6a6e74042c6e9c7412e3315a6f36d19~1"
 config_edits:
 - path: turbopack/crates/turbo-tasks/README.md
   tier: 2
@@ -70,7 +98,7 @@ config_edits:
 - path: turbopack/crates/turbo-tasks/src/vc/README.md
   tier: 2
   gold_added: '**Value cells** represent the pending result of a computation, similar
-    to a cell in a spreadsheet. When a `Vc`''s contents change, the change is propagated
+    to a cell in a spreadsheet. When a `Vc\''s contents change, the change is propagated
     by invalidating dependent tasks.
 
 
@@ -78,19 +106,11 @@ config_edits:
     to get a [`ReadRef<T>`][`ReadRef`]:
 
 
-    ```
-
-    let some_vc: Vc<T>;
-
-    let some_ref: ReadRef<T> = some_vc.await?;
-
-    some_ref.some_method_on_t();
-
-    ```
+    
 
 
     The returned [`ReadRef<T>`][`ReadRef`] represents a [reference-counted][triomphe::Arc]
-    snapshot of a cell''s value at a given point in time.
+    snapshot of a cell\'s value at a given point in time.
 
 
     ## Understanding Cells
@@ -102,10 +122,10 @@ config_edits:
     - **Immutability**: Once a value is stored in a cell, it becomes immutable until
     that task is re-executed.
 
-    - **Recomputability**: If invalidated or cache evicted, a cell''s contents can
+    - **Recomputability**: If invalidated or cache evicted, a cell\'s contents can
     be re-computed by re-executing its associated task.
 
-    - **Dependency Tracking**: When a cell''s contents are read (with `.await`), the
+    - **Dependency Tracking**: When a cell\'s contents are read (with `.await`), the
     reading task is marked as dependent on the cell.
 
     - **Persistence**: Cells owned by persisted tasks are serializable using the [`bincode`]
@@ -113,20 +133,8 @@ config_edits:
 
 
     Cells are stored in arrays associated with the task that constructed them. A `Vc`
-    can either point to a specific cell (this is a *"resolved"* cell), or the return
-    value of a function (this is an *"unresolved"* cell).
+    can either point to a specific cell (this is a *resolved* cell), or the return
+    value of a function (this is an *unresolved* cell).
 
 
-    <figure style="display: flex; flex-direction: column; justify-content: center;">
-
-    <img alt="A diagram showing where cells are stored in tasks" width="850px" src="https://h8dxkfmaphn8o0p3.public.blob.vercel-storage.com/rustdoc-images/RawVc.excalidraw.png">
-
-    <figcaption style="font-style: italic; font-size: 80%;">
-
-    <tt>TaskOutput</tt>s point to a specific task, and refer to the output cell for
-    that task. <tt>TaskCell</tt>s point to a specific cell within a task. Task cells
-    are stored in a table (conceptually a <tt>Map&lt;ValueTypeId, Vec&lt;SharedReference&gt;&gt</tt>)
-    and are referenced by a pair of a type id and a sequentially allocated index.
-
-    </figcaptio'
-  gold_removed: ''
+    <figure style=display:

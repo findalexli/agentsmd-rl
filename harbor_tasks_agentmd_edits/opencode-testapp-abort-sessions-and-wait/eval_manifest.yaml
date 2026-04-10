@@ -1,0 +1,34 @@
+checks:
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes on the repo via bun run typecheck
+- id: test_repo_app_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes on packages/app
+- id: test_repo_app_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests pass for packages/app (301 tests)
+- id: test_repo_hello_script
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic bun script execution works (hello script)
+rubric:
+- rule: Compaction module must define DEFAULT_TAIL_TURNS constant for recent context retention
+  source:
+    path: packages/opencode/src/session/compaction.ts
+    commit: 65cde7f494e3069f9ee625c357dc17bb899d8961
+- rule: Compaction module must define MIN_TAIL_TOKENS and MAX_TAIL_TOKENS constants
+  source:
+    path: packages/opencode/src/session/compaction.ts
+    commit: 65cde7f494e3069f9ee625c357dc17bb899d8961
+- rule: Compaction module must have a tailBudget function to calculate token budget for recent turns
+  source:
+    path: packages/opencode/src/session/compaction.ts
+    commit: 65cde7f494e3069f9ee625c357dc17bb899d8961
+- rule: Compaction module must have a select function to choose which messages to preserve vs compact
+  source:
+    path: packages/opencode/src/session/compaction.ts
+    commit: 65cde7f494e3069f9ee625c357dc17bb899d8961

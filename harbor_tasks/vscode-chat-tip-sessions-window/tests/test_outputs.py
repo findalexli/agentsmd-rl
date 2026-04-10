@@ -77,7 +77,8 @@ process.stdout.write(JSON.stringify({entries, imports}));
 
 def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute JavaScript code via Node in the repo directory."""
-    script = Path(REPO) / "_eval_tmp.js"
+    # Use .cjs extension to force CommonJS mode (VS Code uses ES modules by default)
+    script = Path(REPO) / "_eval_tmp.cjs"
     script.write_text(code)
     try:
         return subprocess.run(
@@ -238,6 +239,109 @@ def test_existing_tips_preserved():
     ]
     for tip_id in expected_tips:
         assert tip_id in content, f"Existing tip removed: {tip_id}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_eslint_chat():
+    """ESLint check on modified chat files passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "src/vs/workbench/contrib/chat/browser/chatTipCatalog.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ts_parse_chat():
+    """TypeScript file parses without syntax errors (pass_to_pass)."""
+    code = """
+const ts = require('typescript');
+const fs = require('fs');
+const file = 'src/vs/workbench/contrib/chat/browser/chatTipCatalog.ts';
+const content = fs.readFileSync(file, 'utf8');
+
+// Parse with TypeScript - syntax only check
+const src = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true);
+
+// Check for scanner errors (catches basic syntax issues)
+const scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, content);
+let token = scanner.scan();
+let errors = 0;
+
+while (token !== ts.SyntaxKind.EndOfFileToken) {
+    if (token === ts.SyntaxKind.Unknown) {
+        errors++;
+        console.error('Unknown token at position', scanner.getTextPos());
+    }
+    token = scanner.scan();
+}
+
+if (errors > 0) process.exit(1);
+console.log('TypeScript parsing OK');
+"""
+    # Use .cjs extension to force CommonJS mode
+    script = Path(REPO) / "_ts_parse_check.cjs"
+    script.write_text(code)
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"TypeScript parse failed:\n{r.stderr[-500:]}"
+    finally:
+        script.unlink(missing_ok=True)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_check():
+    """Import paths in modified file are valid (pass_to_pass)."""
+    code = """
+const fs = require('fs');
+const path = require('path');
+const file = 'src/vs/workbench/contrib/chat/browser/chatTipCatalog.ts';
+const content = fs.readFileSync(file, 'utf8');
+
+// Extract import paths
+const importRegex = /from\\s+['\"]([^'\"]+)['\"];/g;
+let match;
+const imports = [];
+while ((match = importRegex.exec(content)) !== null) {
+    imports.push(match[1]);
+}
+
+// Check that .js imports exist (without .js extension, as the actual .ts files exist)
+const repoRoot = '/workspace/vscode';
+let errors = 0;
+for (const imp of imports) {
+    if (imp.startsWith('.')) {
+        // Relative import - resolve and check
+        const dir = path.dirname(file);
+        const resolved = path.resolve(repoRoot, dir, imp);
+        // Check if the file exists (as .ts since we check source)
+        const tsPath = resolved.replace(/\\.js$/, '.ts');
+        try {
+            fs.accessSync(tsPath);
+        } catch (e) {
+            console.error('Import not found:', imp, '->', tsPath);
+            errors++;
+        }
+    }
+}
+
+if (errors > 0) process.exit(1);
+console.log('Import check passed:', imports.length, 'imports verified');
+"""
+    # Use .cjs extension to force CommonJS mode
+    script = Path(REPO) / "_import_check.cjs"
+    script.write_text(code)
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Import check failed:\n{r.stderr[-500:]}"
+    finally:
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------

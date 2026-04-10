@@ -71,14 +71,16 @@ checks:
       lines: "2"
       commit: "09fea1e6e970a1051b1141ce320a3d696b2c15ed"
 
-rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "09fea1e6e970a1051b1141ce320a3d696b2c15ed"
-  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed."
-    source:
-      path: "AGENTS.md"
-      lines: "59"
-      commit: "09fea1e6e970a1051b1141ce320a3d696b2c15ed"
+  - id: test_syntax_parse_subprocess
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python subprocess can parse the modified file without syntax errors"
+
+  - id: test_doc_toc_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Documentation TOC check passes"
+
+# No rubric rules - this is a code-only bugfix PR. All quality checks are covered by the test cases
+# in the checks section above (syntax, ruff, test outputs). The rubric judge is designed for
+# config/documentation edit tasks, not code changes.

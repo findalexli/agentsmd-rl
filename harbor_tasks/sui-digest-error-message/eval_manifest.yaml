@@ -29,14 +29,36 @@ checks:
     origin: repo_tests
     description: Code must pass cargo check compilation
 
+  - id: test_cargo_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code must pass cargo clippy linting
+
+  - id: test_cargo_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code must be properly formatted
+
+  - id: test_cargo_xlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code must pass xlint license/workspace checks
+
+  - id: test_sui_types_lib_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-types library unit tests must pass
+
+  - id: test_sui_types_digest_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: sui-types digest integration tests must pass (covers modified code)
+
   - id: test_unit_tests_pass
     type: pass_to_pass
     origin: repo_tests
     description: All sui-types unit tests must pass
 
-# Soft rules from CLAUDE.md - for LLM judge only (not programmatically checked)
-rubric:
-  - "All new functions should have clear doc comments explaining their purpose"
-  - "Code should follow Rust best practices for error handling with anyhow"
-  - "Refactoring should reduce code duplication across digest types"
-  - "Error messages should be helpful for debugging malformed digests"
+# No rubric rules - this is a pure code change task (no config files to modify)
+# The gold solution only modifies crates/sui-types/src/digests.rs
+rubric: []

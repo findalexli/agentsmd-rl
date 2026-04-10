@@ -109,8 +109,9 @@ def test_comments_added():
     content = SCRIPT_PATH.read_text()
 
     # Check for explanatory comments
+    # Note: content.lower() makes variable names lowercase too
     assert "so HEAD is the release commit" in content.lower() or \
-           "current release commit is releaseLogs[0]" in content.lower(), \
+           "current release commit is releaselogs[0]" in content.lower(), \
         "Script should explain the git log range logic"
 
     assert "non-conventional commits" in content.lower() or \
@@ -119,11 +120,14 @@ def test_comments_added():
 
 
 def test_node_syntax_valid():
-    """Verify the script has valid Node.js syntax."""
+    """Repo's Node.js syntax check passes (pass_to_pass).
+
+    Runs node --check on the modified script to validate syntax.
+    """
     result = subprocess.run(
         ["node", "--check", str(SCRIPT_PATH)],
         capture_output=True,
-        text=True
+        text=True, cwd=REPO,
     )
     assert result.returncode == 0, \
         f"Script has syntax errors: {result.stderr}"

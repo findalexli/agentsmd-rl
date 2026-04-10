@@ -89,37 +89,109 @@ def test_fix_is_in_hydrate_function_path():
     )
 
 
-def test_typescript_compiles():
+def test_repo_typescript_compiles():
     """
-    Verify that the modified TypeScript compiles without errors.
+    PASS-TO-PASS: TypeScript compilation passes for router-core.
+
+    Verifies the package builds without type errors.
+    Origin: repo_tests - runs actual CI build command.
     """
     result = subprocess.run(
-        ["pnpm", "nx", "run", "@tanstack/router-core:build"],
+        ["pnpm", "nx", "run", "@tanstack/router-core:test:types"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120
+        timeout=300,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
     )
 
     assert result.returncode == 0, (
-        f"TypeScript compilation failed:\n{result.stdout}\n{result.stderr}"
+        f"TypeScript type checking failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}"
     )
 
 
-def test_unit_tests_pass():
+def test_repo_unit_tests_pass():
     """
-    Run unit tests for router-core to ensure the fix doesn't break existing functionality.
+    PASS-TO-PASS: Unit tests pass for router-core.
+
+    Runs the vitest test suite including hydrate.test.ts which covers
+    the SSR hydration functionality being modified.
+    Origin: repo_tests - runs actual CI test command.
     """
     result = subprocess.run(
-        ["pnpm", "nx", "run", "@tanstack/router-core:test:unit"],
+        ["pnpm", "nx", "run", "@tanstack/router-core:test:unit", "--", "--run"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120
+        timeout=300,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
     )
 
-    # Some tests may fail for unrelated reasons; we mainly care that the code runs
-    # without crashing due to syntax/type errors
-    assert "Error" not in result.stderr or "SyntaxError" not in result.stderr, (
-        f"Tests failed with errors:\n{result.stderr}"
+    assert result.returncode == 0, (
+        f"Unit tests failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}"
+    )
+
+
+def test_repo_eslint_passes():
+    """
+    PASS-TO-PASS: ESLint passes for router-core source files.
+
+    Verifies code style and quality checks pass.
+    Origin: repo_tests - runs actual CI lint command.
+    """
+    result = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/router-core:test:eslint"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+
+    # ESLint returns 0 even with warnings, only fails on errors
+    assert result.returncode == 0, (
+        f"ESLint failed with errors:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}"
+    )
+
+
+def test_repo_build_passes():
+    """
+    PASS-TO-PASS: Build verification passes for router-core.
+
+    Runs publint and attw to verify package exports and types are correct.
+    Origin: repo_tests - runs actual CI build verification command.
+    """
+    result = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/router-core:test:build"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+
+    assert result.returncode == 0, (
+        f"Build verification failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}"
+    )
+
+
+def test_repo_hydrate_tests_pass():
+    """
+    PASS-TO-PASS: Hydration-specific unit tests pass.
+
+    Specifically runs the hydrate.test.ts file which tests the SSR hydration
+    functionality that the fix modifies.
+    Origin: repo_tests - runs actual CI test command targeting specific file.
+    """
+    result = subprocess.run(
+        ["pnpm", "vitest", "run", "tests/hydrate.test.ts"],
+        cwd=os.path.join(REPO, "packages/router-core"),
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CI": "1"}
+    )
+
+    assert result.returncode == 0, (
+        f"Hydrate tests failed:\n{result.stdout[-2000:]}\n{result.stderr[-1000:]}"
     )

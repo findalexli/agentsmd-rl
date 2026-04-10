@@ -151,6 +151,26 @@ def test_repo_validator_tests():
     assert r.returncode == 0, f"Validator tests failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_print_tests():
+    """Print tests pass - tests AST-to-code conversion relevant to parsing (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "packages/svelte/tests/print/test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Print tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_css_tests():
+    """CSS tests pass - tests CSS parsing which may involve expressions (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "packages/svelte/tests/css/test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CSS tests failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (pr_diff) - regression checks
 # ---------------------------------------------------------------------------
@@ -161,7 +181,7 @@ def test_simple_expressions_parse():
     cases = [
         ("{42}", "Literal", {"value": 42}),
         ("{(42)}", "Literal", {"value": 42}),
-        ('{\"hello\"}', "Literal", {"value": "hello"}),
+        ('{"hello"}', "Literal", {"value": "hello"}),
         ("{true}", "Literal", {"value": True}),
     ]
     for template, expected_type, expected_props in cases:

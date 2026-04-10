@@ -8,6 +8,9 @@ RUN apt-get update && \
         git curl ca-certificates python3 python3-pip python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Python dependencies needed for tests
+RUN pip3 install --break-system-packages pyyaml || pip3 install pyyaml
+
 # Clone repo at base commit (use --filter=blob:none for large monorepos)
 RUN git clone --filter=blob:none https://github.com/PostHog/posthog.git /workspace/posthog && \
     cd /workspace/posthog && \

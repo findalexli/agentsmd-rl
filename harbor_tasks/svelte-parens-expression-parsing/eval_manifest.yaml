@@ -57,9 +57,18 @@ checks:
     origin: repo_tests
     description: "Validator tests pass - expression validation"
 
+  - id: test_repo_print_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Print tests pass - AST-to-code conversion"
+
+  - id: test_repo_css_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CSS tests pass - CSS parsing with expressions"
+
 rubric:
-  - rule: "Use snake_case for internal variable names and methods."
-    source:
-      path: CONTRIBUTING.md
-      lines: "131"
-      commit: "0395ef0df7ff12c4b633b650c5f2db512d382836"
+  # Note: This task is a parser bug fix (PR #18075). The gold solution already
+  # follows the project's snake_case conventions. No documentation edits needed.
+  - rule: "Code changes use snake_case for internal variable names and methods."
+    reference: "const _ = parser.ts ? ParserWithTS : acorn.Parser; export function remove_parens(node)"

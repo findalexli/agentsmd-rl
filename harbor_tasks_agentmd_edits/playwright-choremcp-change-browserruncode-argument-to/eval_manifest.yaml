@@ -40,19 +40,23 @@ checks:
 - id: test_repo_build
   type: pass_to_pass
   origin: repo_tests
-  description: Repository build passes
+  description: Repository build passes - runs 'npm run build' (compiles TypeScript, bundles packages)
 - id: test_repo_lint_packages
   type: pass_to_pass
   origin: repo_tests
-  description: Repository workspace consistency check passes
+  description: Repository workspace consistency check passes - runs 'npm run lint-packages' (workspace dependency check)
 - id: test_repo_check_deps
   type: pass_to_pass
   origin: repo_tests
-  description: Repository dependency check passes
+  description: Repository dependency check passes - runs 'npm run check-deps' after build (validates DEPS files)
 - id: test_repo_test_types
   type: pass_to_pass
   origin: repo_tests
-  description: Repository type tests pass
+  description: Repository type tests pass - runs 'npm run test-types' after build (TypeScript type checking on generated types)
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository ESLint check passes - runs 'npm run eslint -- --max-warnings=0 packages/playwright/src/mcp/' (linting on MCP files)
 rubric:
 - rule: Source files must include the Microsoft copyright notice header at the top
   source:

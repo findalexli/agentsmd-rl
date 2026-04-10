@@ -390,3 +390,138 @@ console.log('PASS: TypeScript file has valid syntax');
     finally:
         script.unlink(missing_ok=True)
     assert r.returncode == 0, f"TypeScript syntax check failed: {r.stderr}"
+
+
+def test_repo_eslint_check():
+    """ESLint must pass on the target TypeScript file (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "src/vs/workbench/contrib/chat/browser/actions/chatForkActions.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_node_syntax_check():
+    """Target file must be parseable by Node.js without syntax errors (pass_to_pass)."""
+    js_code = r"""
+import fs from 'fs';
+const TARGET = '/workspace/vscode/src/vs/workbench/contrib/chat/browser/actions/chatForkActions.ts';
+
+try {
+    const src = fs.readFileSync(TARGET, 'utf8');
+
+    // Check for common syntax errors
+    const errors = [];
+
+    // 1. Check for double semicolons
+    if (src.includes(';;')) {
+        errors.push('Found double semicolon');
+    }
+
+    // 2. Check for unclosed multi-line comments
+    const openComments = (src.match(/\/\*/g) || []).length;
+    const closeComments = (src.match(/\*\//g) || []).length;
+    if (openComments !== closeComments) {
+        errors.push(`Unbalanced comments: ${openComments} open, ${closeComments} close`);
+    }
+
+    // 3. Check for basic brace balance (simplified)
+    const openBraces = (src.match(/\{/g) || []).length;
+    const closeBraces = (src.match(/\}/g) || []).length;
+    if (openBraces !== closeBraces) {
+        errors.push(`Unbalanced braces: ${openBraces} open, ${closeBraces} close`);
+    }
+
+    // 4. Check for basic parentheses balance
+    const openParens = (src.match(/\(/g) || []).length;
+    const closeParens = (src.match(/\)/g) || []).length;
+    if (openParens !== closeParens) {
+        errors.push(`Unbalanced parentheses: ${openParens} open, ${closeParens} close`);
+    }
+
+    // 5. Check file is not empty and has content
+    if (src.trim().length === 0) {
+        errors.push('File is empty');
+    }
+
+    // 6. Verify it starts with expected copyright comment
+    if (!src.includes('Copyright (c) Microsoft Corporation')) {
+        errors.push('Missing copyright header');
+    }
+
+    if (errors.length > 0) {
+        console.error('FAIL: ' + errors.join('\n'));
+        process.exit(1);
+    }
+
+    console.log('PASS: File syntax is valid');
+} catch (err) {
+    console.error('FAIL: ' + err.message);
+    process.exit(1);
+}
+"""
+    script = Path(REPO) / "_p2p_node_syntax.mjs"
+    script.write_text(js_code)
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Node syntax check failed: {r.stderr}"
+
+
+def test_repo_imports_valid():
+    """All import statements in target file must be syntactically valid (pass_to_pass)."""
+    target = json.dumps(TARGET)
+    r = _run_node(f"""
+import fs from 'fs';
+const src = fs.readFileSync({target}, 'utf8');
+const lines = src.split('\\n');
+
+const importRegex = /^import\\s+.*?\\s+from\\s+['"]([^'"]+)['"];?$/;
+const errors = [];
+
+for (let i = 0; i < lines.length; i++) {{
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('import ')) {{
+        // Check import statement format
+        if (!importRegex.test(trimmed)) {{
+            // Allow side-effect imports: import 'module';
+            if (!/^import\\s+['"][^'"]+['"];?$/.test(trimmed)) {{
+                errors.push(`Line ${{i+1}}: Invalid import - ${{trimmed.slice(0, 60)}}`);
+            }}
+        }}
+
+        // Check for duplicate .js extensions
+        if (trimmed.includes('.js.js')) {{
+            errors.push(`Line ${{i+1}}: Duplicate .js extension`);
+        }}
+    }}
+}}
+
+if (errors.length > 0) {{
+    console.error('FAIL: ' + errors.join('\\n'));
+    process.exit(1);
+}}
+console.log('PASS: All imports valid');
+""")
+    assert r.returncode == 0, f"Import validation failed: {r.stderr}"
+
+
+def test_repo_chat_test_files_exist():
+    """Chat-related test files must exist and be readable (pass_to_pass)."""
+    test_files = [
+        "src/vs/workbench/contrib/chat/test/browser/actions/chatExecuteActions.test.ts",
+        "src/vs/workbench/contrib/chat/test/browser/actions/chatTitleActions.test.ts",
+    ]
+
+    for tf in test_files:
+        path = Path(REPO) / tf
+        assert path.exists(), f"Test file missing: {tf}"
+        content = path.read_text()
+        assert len(content) > 0, f"Test file empty: {tf}"
+        assert "import" in content, f"Test file missing imports: {tf}"

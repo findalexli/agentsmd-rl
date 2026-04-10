@@ -222,3 +222,37 @@ def test_no_duplicate_imports():
     ]
     duplicates = {l for l in import_lines if import_lines.count(l) > 1}
     assert not duplicates, f"Duplicate import statements found: {duplicates}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI/CD tests
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — VS Code CI: eslint check
+def test_repo_eslint_theme_file():
+    """Repo's eslint passes on the modified theme service file (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "build/eslint.ts", THEME_FILE],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — VS Code CI: stylelint check
+def test_repo_stylelint():
+    """Repo's stylelint passes on all CSS files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "stylelint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — VS Code CI: eslint on themes directory
+def test_repo_eslint_themes_dir():
+    """Repo's eslint passes on the themes directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "build/eslint.ts", "src/vs/workbench/services/themes/"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint on themes dir failed:\n{r.stderr[-500:]}"

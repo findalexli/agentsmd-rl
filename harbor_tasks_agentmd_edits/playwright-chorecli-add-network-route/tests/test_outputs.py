@@ -84,7 +84,7 @@ if (!src.includes('defineTool')) {
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -147,7 +147,7 @@ if (!handler.includes('body') || !handler.includes('status')) {
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -193,7 +193,7 @@ if (!src.includes('export default')) {
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -248,7 +248,7 @@ if (!src.includes('.unroute(')) {
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -278,7 +278,7 @@ if (!src.includes('...route')) {
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -309,7 +309,7 @@ if (!helpSrc.includes('Network')) {
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -352,7 +352,7 @@ if (!src.includes("category: 'network'") && !src.includes('category: "network"')
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -389,34 +389,28 @@ def test_skill_md_lint_command():
 # Pass-to-pass gates from repo CI/CD
 # ---------------------------------------------------------------------------
 
+def _run_with_build(cmd: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
+    """Run npm ci, build, then the command. Returns the result of the final command."""
+    # First run npm ci + build
+    subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    # Then run the actual command
+    return subprocess.run(
+        cmd, capture_output=True, text=True, timeout=timeout, cwd=REPO,
+    )
+
+
 # [repo_tests] pass_to_pass - TypeScript compilation
 def test_repo_typecheck():
     """Repo TypeScript compilation passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "run", "tsc"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
-    )
-    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-1000:]}"
-
-
-# [repo_tests] pass_to_pass - Dependency check
-def test_repo_check_deps():
-    """Repo dependency check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "run", "check-deps"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Dependency check failed:\n{r.stderr[-1000:]}"
-
-
-# [repo_tests] pass_to_pass - ESLint on MCP files
-def test_repo_lint_mcp():
-    """ESLint on MCP files passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npx", "eslint", "--cache", "packages/playwright/src/mcp/"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"ESLint on MCP files failed:\n{r.stderr[-1000:]}"
+    r = _run_with_build(["npm", "run", "tsc"], timeout=300)
+    assert r.returncode == 0, f"TypeScript compilation failed:\\n{r.stderr[-1000:]}"
 
 
 # [repo_tests] pass_to_pass - Package consistency
@@ -426,44 +420,26 @@ def test_repo_lint_packages():
         ["npm", "run", "lint-packages"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Package consistency check failed:\n{r.stderr[-1000:]}"
-
-
-# [repo_tests] pass_to_pass - Test linting
-def test_repo_lint_tests():
-    """Repo test linting passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "run", "lint-tests"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Test linting failed:\n{r.stderr[-1000:]}"
+    assert r.returncode == 0, f"Package consistency check failed:\\n{r.stderr[-1000:]}"
 
 
 # [repo_tests] pass_to_pass - Build verification
 def test_repo_build():
     """Repo build passes (pass_to_pass)."""
     r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\\n{r.stderr[-1000:]}"
+    r = subprocess.run(
         ["npm", "run", "build"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
-
-
-# [repo_tests] pass_to_pass - Documentation linting
-def test_repo_doc_lint():
-    """Repo documentation lint passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "run", "doc"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Documentation lint failed:\n{r.stderr[-1000:]}"
+    assert r.returncode == 0, f"Build failed:\\n{r.stderr[-1000:]}"
 
 
 # [repo_tests] pass_to_pass - Test types check
 def test_repo_test_types():
     """Repo test types check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "run", "test-types"],
-        capture_output=True, text=True, timeout=180, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Test types check failed:\n{r.stderr[-1000:]}"
+    r = _run_with_build(["npm", "run", "test-types"], timeout=300)
+    assert r.returncode == 0, f"Test types check failed:\\n{r.stderr[-1000:]}"

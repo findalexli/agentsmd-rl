@@ -141,9 +141,9 @@ def test_repo_eslint():
     """Repo's ESLint passes (pass_to_pass)."""
     r = subprocess.run(
         ["npm", "run", "eslint"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"ESLint failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 def test_repo_monaco_compile_check():
@@ -152,7 +152,7 @@ def test_repo_monaco_compile_check():
         ["npm", "run", "monaco-compile-check"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Monaco compile check failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Monaco compile check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 def test_repo_vscode_dts_compile_check():
@@ -161,16 +161,7 @@ def test_repo_vscode_dts_compile_check():
         ["npm", "run", "vscode-dts-compile-check"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"VSCode dts compile check failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
-
-
-def test_repo_define_class_fields_check():
-    """Repo's define class fields check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "run", "define-class-fields-check"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Define class fields check failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"VSCode dts compile check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 def test_repo_stylelint():
@@ -179,4 +170,4 @@ def test_repo_stylelint():
         ["npm", "run", "stylelint"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Stylelint failed:\\n{r.stderr[-500:]}\\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

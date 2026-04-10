@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:54:44.611580",
-  "total_time": 1593.59,
-  "sandbox_id": "iovsbhkvu6p5y1wul61sz",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:32:50.652876",
+  "total_time": 1419.1,
+  "sandbox_id": "iig1ufgifqosr5c34kf9r",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.25,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -17,18 +19,26 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 125.51,
+      "time": 271.28,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "docs/contributing/README.md",
+        "docs/contributing/editing-agent-instructions.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 3,
+      "rejection_reasons": "3 rules rejected: PR workflow/commit message rules not evaluable from code diff; environment setup rules not applicable to code changes",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.69,
-      "notes": ""
+      "time": 41.94
     },
     "improve": {
       "status": "skipped",
@@ -38,9 +48,36 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_trtllm_multinode_raises_valueerror to extract both _resolve_fi_ar_backend and get_fi_ar_workspace functions. Docker build, NOP test (0), gold test (1), and rubric judge all pass. Judge returned 0.5 due to missing API keys (fallback), not actual rubric violations.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.63
+      "time": 109.78
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 21.85,
+      "notes": "",
+      "precision": 0.25
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 48.91,
+      "notes": "precision was 0.25, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.95,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +104,14 @@
       "backend": "fireworks",
       "time": 1593.59,
       "at": "2026-04-09T14:54:44.611580"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1419.1,
+      "at": "2026-04-10T15:32:50.652876"
     }
   ]
 }

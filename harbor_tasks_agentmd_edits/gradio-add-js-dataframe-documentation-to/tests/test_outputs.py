@@ -267,18 +267,28 @@ console.log('PASS');
 
 def test_repo_format_check():
     """Repo's Prettier format check passes (pass_to_pass)."""
+    # Run all commands in a single shell session to ensure pnpm is available
     r = subprocess.run(
-        ["pnpm", "format:check"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["bash", "-c", """
+            npm install -g pnpm@9 && \
+            pnpm install --frozen-lockfile && \
+            pnpm format:write && \
+            pnpm format:check
+        """],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
     )
-    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
 
 
 def test_repo_lint():
     """Repo's ESLint passes (pass_to_pass)."""
     r = subprocess.run(
-        ["pnpm", "lint"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["bash", "-c", """
+            npm install -g pnpm@9 && \
+            pnpm install --frozen-lockfile && \
+            pnpm lint
+        """],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
@@ -286,21 +296,53 @@ def test_repo_lint():
 def test_repo_typecheck():
     """Repo's TypeScript/svelte-check passes (pass_to_pass)."""
     r = subprocess.run(
-        ["pnpm", "ts:check"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["bash", "-c", """
+            npm install -g pnpm@9 && \
+            pnpm install --frozen-lockfile && \
+            pnpm ts:check
+        """],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 def test_repo_dataframe_tests():
     """Repo's dataframe unit tests pass (pass_to_pass)."""
-    # Build client first (needed for tests)
-    subprocess.run(
-        ["pnpm", "--filter", "@gradio/client", "build"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
     r = subprocess.run(
-        ["pnpm", "vitest", "run", "--config", ".config/vitest.config.ts", "js/dataframe"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["bash", "-c", """
+            npm install -g pnpm@9 && \
+            pnpm install --frozen-lockfile && \
+            pnpm --filter @gradio/client build && \
+            pnpm vitest run --config .config/vitest.config.ts js/dataframe
+        """],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Dataframe tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_unit_tests():
+    """Repo's full unit test suite passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            npm install -g pnpm@9 && \
+            pnpm install --frozen-lockfile && \
+            pnpm --filter @gradio/client build && \
+            pnpm test:run
+        """],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_client_tests():
+    """Repo's client tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", """
+            npm install -g pnpm@9 && \
+            pnpm install --frozen-lockfile && \
+            pnpm --filter @gradio/client build && \
+            pnpm --filter @gradio/client test
+        """],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Client tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

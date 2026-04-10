@@ -348,3 +348,51 @@ def test_repo_ai_languagemodel_tests():
         cwd=REPO,
     )
     assert r.returncode == 0, f"AI LanguageModel tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_ai_tool_tests():
+    """AI Tool package unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm vitest run packages/ai/ai/test/Tool.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"AI Tool tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_ai_prompt_tests():
+    """AI Prompt package unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm vitest run packages/ai/ai/test/Prompt.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"AI Prompt tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_sql_tests():
+    """SQL package unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm vitest run packages/sql/test/"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"SQL tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_schema_userland_tests():
+    """Schema userland tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install && pnpm vitest run packages/effect/test/Schema/SchemaUserland.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Schema userland tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

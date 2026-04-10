@@ -14,7 +14,7 @@ REPO = "/workspace/bun"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests via --help flag
+# Fail-to-pass (pr_diff) - core behavioral tests via --help flag
 # ---------------------------------------------------------------------------
 
 def _run_help():
@@ -71,7 +71,7 @@ def test_help_documents_input_types():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) — CLAUDE.md documentation update
+# Fail-to-pass (config_edit) - CLAUDE.md documentation update
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
@@ -81,7 +81,7 @@ def test_help_documents_input_types():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — existing functionality preserved
+# Pass-to-pass (repo_tests) - existing functionality preserved
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -103,3 +103,43 @@ def test_repo_banned_words():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Banned words test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_int_from_float():
+    """Repo's internal int_from_float tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "test/internal/int_from_float.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"int_from_float test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint_scripts():
+    """Repo's oxlint check on scripts passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "oxlint", "--format=github", "scripts/buildkite-failures.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_scripts():
+    """Repo's prettier format check on scripts passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "--bun", "prettier@latest", "--check", "scripts/buildkite-failures.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"

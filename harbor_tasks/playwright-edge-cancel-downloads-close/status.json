@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:01:14.661782",
-  "total_time": 203.19,
-  "sandbox_id": "iq651z0gpfk8193h55bpd",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:19:17.284321",
+  "total_time": 1507.29,
+  "sandbox_id": "irhh3sajs52dg2kdbsizo",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -18,10 +18,10 @@
       "notes": "Added 4 repo CI/CD checks as pass_to_pass gates: test_repo_typecheck (npm run tsc), test_repo_check_deps (npm run check-deps), test_repo_lint_tests (npm run lint-tests), test_repo_build (npm run build). All verified passing on base commit 72310c757282e397fcd280e85602adcdf0d581ca."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 10.27,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 555.36,
       "notes": ""
     },
     "improve": {
@@ -32,32 +32,24 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "completed",
+      "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed two test bugs: 1) test_download_cancel_method was checking braceDepth AFTER counting braces, so it never found cancel() at depth 1. Fixed by checking depth BEFORE counting. 2) test_context_close_cancels_downloads found 'disposeBrowserContext' in a comment instead of the actual call. Fixed by searching for 'send('Target.disposeBrowserContext'' instead. All checks now pass.",
+      "attempts": 1,
+      "notes": "All four validation checks passed: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0). Fixed judge execution by mounting taskforge module and running judge inside container with proper repo.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.61
+      "time": 514.45
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2.38,
-      "notes": "ICR=0.50"
+      "time": 2.25,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 10073.96,
-      "at": "2026-04-09T11:59:46.756866"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +81,14 @@
       "backend": "fireworks",
       "time": 203.19,
       "at": "2026-04-09T15:01:14.661782"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1507.29,
+      "at": "2026-04-10T15:19:17.284321"
     }
   ]
 }

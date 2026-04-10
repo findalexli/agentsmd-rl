@@ -1,13 +1,15 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:54:48.129360",
-  "total_time": 1597.11,
-  "sandbox_id": "iss4mgqkqvsbxe9q1a7ru",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:20:36.420981",
+  "total_time": 1285.88,
+  "sandbox_id": "ixgbogd9lie2w6u4451yi",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -24,23 +26,43 @@
       "notes": "tests look good"
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 15.51,
+      "time": 428.45,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2.0,
+      "time": 79.66,
       "notes": ""
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build succeeds, NOP test returns reward=0 (tests correctly fail on buggy base), Gold test returns reward=1 (all 11 tests pass after fix), rubric_validate shows precision=1.0",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 3.23
+      "time": 126.8
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 22.35,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.16,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +89,14 @@
       "backend": "fireworks",
       "time": 1597.11,
       "at": "2026-04-09T14:54:48.129360"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1285.88,
+      "at": "2026-04-10T15:20:36.420981"
     }
   ]
 }

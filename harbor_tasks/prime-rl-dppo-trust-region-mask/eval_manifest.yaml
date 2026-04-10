@@ -37,6 +37,11 @@ checks:
     origin: repo_tests
     description: "Modified modules can be imported and used at base commit"
 
+  - id: repo_pyproject_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pyproject.toml is valid TOML"
+
   - id: dppo_config_fields
     type: fail_to_pass
     origin: pr_diff
@@ -73,19 +78,12 @@ checks:
     description: "Negative advantages with low violations are still masked"
 
 rubric:
-  - rule: "When renaming or removing config fields, emit a deprecation warning with a clear migration path. Do not silently drop fields."
+  - rule: "Config field renames must update all usages consistently across the codebase (config definition, loss implementation, tests)."
     source:
       path: "skills/config/SKILL.md"
-      lines: "73"
       commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
 
-  - rule: "Incompatible option combinations should raise in model_validator at config resolution time, not at runtime."
-    source:
-      path: "skills/config/SKILL.md"
-      lines: "72"
-      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
-
-  - rule: "Use targeted comments sparingly to clarify ambiguous logic. Don't explain your work process or reference old code."
+  - rule: "Use targeted comments to clarify logic. Don't explain your work process or reference old code."
     source:
       path: "AGENTS.md"
       lines: "6"
@@ -96,4 +94,3 @@ rubric:
       path: "AGENTS.md"
       lines: "44"
       commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
-

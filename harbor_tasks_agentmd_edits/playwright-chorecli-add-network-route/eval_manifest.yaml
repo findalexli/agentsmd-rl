@@ -74,18 +74,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo test types check passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript compilation passes
 rubric:
-- rule: New tool implementations follow the patterns of existing MCP tools (defineTool,
-    schema shape, handle signature)
+- rule: 'SKILL.md must include a ## Building section in both Tools and CLI sections with development guidance about watch mode and lint'
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: 8-12
-    commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
-- rule: SKILL.md updates are consistent with the style and tone of the existing content
+    lines: 1-50
+    commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+  reference: |
+    ## Building
+    - Assume watch is running at all times, run lint to see type errors
+
+    ## Testing
+    - Do not run test --debug
+- rule: SKILL.md Lint section must use npm run flint instead of npm run flint:mcp
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
-    lines: 1-33
-    commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+    lines: 40-45
+    commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+  reference: |
+    # Lint
+    - run `npm run flint` to lint everything before commit
 config_edits:
 - path: .claude/skills/playwright-mcp-dev/SKILL.md
   tier: 1

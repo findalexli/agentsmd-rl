@@ -269,3 +269,72 @@ def test_set_proc_title_not_stub():
                 stmts = stmts[1:]
 
             assert len(stmts) >= 1, "set_proc_title() must have meaningful implementation, not just pass/return"
+
+
+# ---------------------------------------------------------------------------
+# Additional pass-to-pass gates — CI validation checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_pyproject_toml_valid():
+    """Repo's pyproject.toml is valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c", "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml is invalid TOML:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_process_module_importable():
+    """The process.py module can be imported (pass_to_pass)."""
+    test_script = """
+import sys
+sys.path.insert(0, '/workspace/prime-rl/src')
+
+# Test that process.py can be imported (it has no external deps)
+from prime_rl.utils import process
+
+# Verify expected functions exist
+assert hasattr(process, 'cleanup_threads'), "cleanup_threads not found"
+assert hasattr(process, 'cleanup_processes'), "cleanup_processes not found"
+assert hasattr(process, 'monitor_process'), "monitor_process not found"
+
+print("SUCCESS: process module importable")
+"""
+    r = subprocess.run(
+        [sys.executable, "-c", test_script],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Module import failed:\n{r.stderr}"
+    assert "SUCCESS" in r.stdout, f"Expected SUCCESS in output: {r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_process_py_compiles():
+    """All modified Python files compile without errors (pass_to_pass)."""
+    files_to_check = [
+        "src/prime_rl/utils/process.py",
+        "src/prime_rl/entrypoints/inference.py",
+        "src/prime_rl/entrypoints/rl.py",
+        "src/prime_rl/entrypoints/sft.py",
+        "src/prime_rl/orchestrator/env_server/env_server.py",
+        "src/prime_rl/orchestrator/orchestrator.py",
+        "src/prime_rl/trainer/rl/train.py",
+        "src/prime_rl/trainer/sft/train.py",
+    ]
+
+    for file_path in files_to_check:
+        full_path = Path(REPO) / file_path
+        r = subprocess.run(
+            ["python", "-m", "py_compile", str(full_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert r.returncode == 0, f"py_compile failed for {file_path}:\n{r.stderr}"

@@ -13,48 +13,44 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff linting passes on litellm/caching/ directory
-- id: test_repo_black_format_check
+- id: test_repo_black_format_modified_file
   type: pass_to_pass
   origin: repo_tests
-  description: Black format check passes on litellm/caching/ directory
+  description: Black formatting check passes on the modified file
 - id: test_repo_in_memory_cache_tests
   type: pass_to_pass
   origin: repo_tests
-  description: In-memory cache unit tests pass (base class tests)
+  description: In-memory cache unit tests pass (base class for LLMClientCache)
 - id: test_repo_dual_cache_tests
   type: pass_to_pass
   origin: repo_tests
   description: Dual cache unit tests pass
-- id: test_repo_caching_handler_basic
-  type: pass_to_pass
-  origin: repo_tests
-  description: Basic caching handler tests pass (LLMCachingHandler, not LLMClientCache)
 - id: test_repo_caching_imports
   type: pass_to_pass
   origin: repo_tests
   description: Caching module imports work correctly
-- id: remove_key_does_not_close_async_client
+- id: test_remove_key_does_not_close_async_client
   type: fail_to_pass
   origin: pr_diff
   description: Evicting an async client from LLMClientCache must NOT close it
-- id: remove_key_does_not_close_sync_client
+- id: test_remove_key_does_not_close_sync_client
   type: fail_to_pass
   origin: pr_diff
   description: Evicting a sync client from LLMClientCache must NOT close it
-- id: eviction_does_not_close_async_clients
+- id: test_eviction_does_not_close_async_clients
   type: fail_to_pass
   origin: pr_diff
   description: Cache eviction by capacity must not close async clients
-- id: remove_key_handles_plain_values
+- id: test_remove_key_handles_plain_values
   type: pass_to_pass
   origin: pr_diff
   description: _remove_key still works for non-client values (strings, dicts)
-- id: agents_md_no_close_on_eviction_rule
+- id: test_agents_md_no_close_on_eviction_rule
   type: fail_to_pass
   origin: pr_diff
   description: AGENTS.md must document the rule about never closing clients on cache
     eviction
-- id: claude_md_client_cache_safety
+- id: test_claude_md_client_cache_safety
   type: fail_to_pass
   origin: pr_diff
   description: CLAUDE.md must document HTTP Client Cache Safety section

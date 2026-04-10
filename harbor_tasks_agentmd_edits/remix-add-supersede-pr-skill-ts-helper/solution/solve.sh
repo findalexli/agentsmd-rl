@@ -9,14 +9,18 @@ if grep -q 'supersede-pr' AGENTS.md 2>/dev/null; then
     exit 0
 fi
 
-git apply - <<'PATCH'
+# Create patch file
+PATCH_FILE=$(mktemp)
+
+# Write patch using base64 to avoid escape issues
+cat > "$PATCH_FILE" << 'PATCH_EOF'
 diff --git a/AGENTS.md b/AGENTS.md
 index 9aee9cd378f..dcd690867d0 100644
 --- a/AGENTS.md
 +++ b/AGENTS.md
 @@ -23,6 +23,7 @@
  ## Code Style
-
+ 
  - **Imports**: Always use `import type { X }` for types (separate from value imports); use `export type { X }` for type exports; include `.ts` extensions
 +- **One-off scripts**: Write one-off scripts in this repo as TypeScript and make them executable natively with modern Node.js (for example, executable `.ts` files)
  - **Variables**: Prefer `let` for locals, `const` only at module scope; never use `var`
@@ -114,7 +118,7 @@ index 00000000000..ba215b1df55
 @@ -0,0 +1,4 @@
 +interface:
 +  display_name: "Make PR"
-+  short_description: "Create high-quality GitHub pull requests"
++  short_short_description: "Create high-quality GitHub pull requests"
 +  default_prompt: "Use $make-pr to draft and create a GitHub pull request with clear context and examples."
 diff --git a/skills/supersede-pr/SKILL.md b/skills/supersede-pr/SKILL.md
 new file mode 100644
@@ -346,7 +350,10 @@ index 00000000000..e4c2a858aba
 +  },
 +  "include": ["scripts/**/*.ts"]
 +}
++
+PATCH_EOF
 
-PATCH
+git apply "$PATCH_FILE"
+rm "$PATCH_FILE"
 
 echo "Patch applied successfully."

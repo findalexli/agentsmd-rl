@@ -8,6 +8,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/repo"
@@ -34,6 +35,66 @@ def _find_method(cls_node, name):
         if isinstance(item, ast.FunctionDef) and item.name == name:
             return item
     return None
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    files = [
+        "src/transformers/models/qwen2_vl/configuration_qwen2_vl.py",
+        "src/transformers/models/qwen2_5_vl/configuration_qwen2_5_vl.py",
+        "src/transformers/models/colqwen2/configuration_colqwen2.py",
+        "src/transformers/models/colmodernvbert/configuration_colmodernvbert.py",
+        "src/transformers/models/modernvbert/modeling_modernvbert.py",
+        "src/transformers/models/modernvbert/modular_modernvbert.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "check"] + [f"{REPO}/{f}" for f in files],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    files = [
+        "src/transformers/models/qwen2_vl/configuration_qwen2_vl.py",
+        "src/transformers/models/qwen2_5_vl/configuration_qwen2_5_vl.py",
+        "src/transformers/models/colqwen2/configuration_colqwen2.py",
+        "src/transformers/models/colmodernvbert/configuration_colmodernvbert.py",
+        "src/transformers/models/modernvbert/modeling_modernvbert.py",
+        "src/transformers/models/modernvbert/modular_modernvbert.py",
+    ]
+    r = subprocess.run(
+        ["ruff", "format", "--check"] + [f"{REPO}/{f}" for f in files],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_copies():
+    """Repo's copied code consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_copies.py"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_copies.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_inits():
+    """Repo's init file consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check_inits.py failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux python3 python3-pip && \
+        git curl ca-certificates build-essential tmux python3 python3-pip unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Install bun for this repo
@@ -22,7 +22,7 @@ RUN git clone --filter=blob:none https://github.com/anomalyco/opencode.git /work
 WORKDIR /workspace/opencode
 
 # Install minimal deps for test runner (NOT full project deps)
-RUN pip3 install --no-cache-dir pytest --break-system-packages 2>/dev/null || pip3 install --no-cache-dir pytest
+RUN pip3 install --no-cache-dir pytest pytest-json-ctrf --break-system-packages 2>/dev/null || pip3 install --no-cache-dir pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

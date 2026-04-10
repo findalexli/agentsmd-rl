@@ -22,6 +22,21 @@ checks:
     origin: repo_tests
     description: "Ruff format check passes on orchestrator module"
 
+  - id: test_repo_ruff_lint_full
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff lint check passes on full src directory"
+
+  - id: test_repo_ruff_format_full
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check passes on full src directory"
+
+  - id: test_repo_py_compile_modified
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified orchestrator files compile without errors"
+
   - id: generate_catches_group_exceptions
     type: fail_to_pass
     origin: pr_diff
@@ -71,32 +86,37 @@ checks:
       commit: "60f01a04681df563044cf3cb7c64ec480b608451"
 
 rubric:
-  - rule: "Errors should never pass silently. Unless explicitly silenced."
+  - rule: "Errors should never pass silently. Unless explicitly silenced. Code must log warnings for failures."
     source:
-      path: "AGENTS.md"
-      lines: "23-24"
+      path: "src/prime_rl/orchestrator/vf_utils.py"
+      lines: "181-183"
       commit: "60f01a04681df563044cb7c64ec480b608451"
+    reference: "except Exception as e:\n            get_logger().warning(f\"Group failed: {e}\")"
 
-  - rule: "Simple is better than complex."
+  - rule: "Simple is better than complex. Code should be straightforward without over-engineering."
     source:
-      path: "AGENTS.md"
-      lines: "16"
+      path: "src/prime_rl/orchestrator/vf_utils.py"
+      lines: "166-185"
       commit: "60f01a04681df563044cf3cb7c64ec480b608451"
+    reference: "Simple try/except wrapper around run_group with logging and progress update, returns None on failure"
 
-  - rule: "Explicit is better than implicit."
+  - rule: "Explicit is better than implicit. Use explicit exception types, not bare except."
     source:
-      path: "AGENTS.md"
-      lines: "15"
+      path: "src/prime_rl/orchestrator/vf_utils.py"
+      lines: "181"
       commit: "60f01a04681df563044cf3cb7c64ec480b608451"
+    reference: "except Exception as e:"
 
-  - rule: "Avoid try/except blocks unless it's really necessary. It's fine that a program fails if something goes wrong. You can add try catch on code that explicitly aims to be fault tolerant like adding retry mechanisms or explicit and intentional robustness."
+  - rule: "Try/except blocks should only be used for intentional fault tolerance with logging."
     source:
-      path: "AGENTS.md"
-      lines: "5"
+      path: "src/prime_rl/orchestrator/vf_utils.py"
+      lines: "180-185"
       commit: "60f01a04681df563044cf3cb7c64ec480b608451"
+    reference: "Try/except in run_group_with_progress for intentional per-group fault tolerance with warning log"
 
-  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
+  - rule: "Do not add unnecessary comments explaining code changes or referring to old code."
     source:
-      path: "AGENTS.md"
-      lines: "7"
+      path: "src/prime_rl/orchestrator/eval_utils.py"
+      lines: "128-130"
       commit: "60f01a04681df563044cf3cb7c64ec480b608451"
+    reference: "Clean code without process-explanatory comments - see test_no_process_comments"

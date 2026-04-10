@@ -8,6 +8,7 @@ The fix: Build to temp dir first, then delete and copy only if build succeeds.
 """
 
 import subprocess
+import pytest
 import os
 import sys
 
@@ -160,6 +161,57 @@ def test_repo_rustfmt_check():
 
     assert result.returncode == 0, \
         f"cargo fmt --check failed (formatting issues):\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_cargo_check_test_build_system_packages():
+    """
+    Pass-to-pass: The modified test file compiles without errors.
+    Verifies the specific test file that the fix modifies compiles.
+    """
+    result = subprocess.run(
+        ['cargo', 'check', '--test', 'build-system-packages', '-p', 'sui-framework'],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180  # 3 minutes for check
+    )
+
+    assert result.returncode == 0, \
+        f"cargo check --test build-system-packages failed:\n{result.stderr[-1000:]}"
+
+
+def test_repo_git_checks():
+    """
+    Pass-to-pass: Git repository checks pass.
+    Verifies no submodules, no case-sensitive filename conflicts, and no whitespace errors.
+    """
+    result = subprocess.run(
+        ["bash", f"{REPO}/scripts/git-checks.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+
+    assert result.returncode == 0, \
+        f"git-checks.sh failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_changed_files():
+    """
+    Pass-to-pass: No uncommitted changes in repository.
+    Verifies the repo is in a clean state with no modified or untracked files.
+    """
+    result = subprocess.run(
+        ["bash", f"{REPO}/scripts/changed-files.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+
+    assert result.returncode == 0, \
+        f"changed-files.sh failed (uncommitted changes exist):\n{result.stdout}\n{result.stderr}"
 
 
 if __name__ == "__main__":

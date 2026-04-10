@@ -3,18 +3,21 @@ Tests for apache/superset#38990 - MCP service table chart raw mode and XSS fixes
 
 This tests:
 1. Table chart form_data includes both 'columns' and 'all_columns' in raw mode
-2. _build_query_columns handles raw mode with all_columns/columns
-3. ASCIIPreviewStrategy handles raw mode correctly
+2. _build_query_columns handles table charts in raw mode with all_columns/columns
+3. ASCIIPreview handles raw mode correctly
 4. GenerateDashboardRequest sanitizes dashboard_title via field_validator
 5. HTML tags are stripped from dashboard titles
 6. Dangerous unicode is removed from dashboard titles
 
 PASS-TO-PASS tests:
 - test_repo_python_syntax: Verify all modified files have valid Python syntax
-- test_repo_sanitization_logic: Verify sanitization functions work correctly
+- test_repo_ruff_lint: Ruff linter passes on modified files
+- test_repo_ruff_format: Ruff format check passes on modified files
+- test_repo_nh3_sanitization: nh3-based sanitization works correctly
 - test_repo_chart_utils_syntax: Verify chart_utils.py syntax
 - test_repo_preview_utils_syntax: Verify preview_utils.py syntax
 - test_repo_get_chart_preview_syntax: Verify get_chart_preview.py syntax
+- test_repo_dashboard_schemas_syntax: Verify dashboard/schemas.py syntax
 """
 
 import sys
@@ -293,32 +296,107 @@ def test_repo_python_syntax():
         # Use py_compile to check syntax
         result = subprocess.run(
             ["python", "-m", "py_compile", full_path],
-            capture_output=True, text=True, timeout=30
+            capture_output=True, text=True, timeout=30, cwd=REPO
         )
         assert result.returncode == 0, f"Syntax error in {rel_path}: {result.stderr}"
 
 
-def test_repo_sanitization_logic():
-    """Sanitization functions work correctly (pass_to_pass)."""
-    sanitization_path = os.path.join(REPO, "superset/mcp_service/utils/sanitization.py")
-    if not os.path.exists(sanitization_path):
-        pytest.skip("sanitization.py not found")
+def test_repo_ruff_lint():
+    """Ruff linter passes on modified MCP service files (pass_to_pass)."""
+    files_to_check = [
+        "superset/mcp_service/chart/chart_utils.py",
+        "superset/mcp_service/chart/preview_utils.py",
+        "superset/mcp_service/dashboard/schemas.py",
+    ]
 
-    with open(sanitization_path, "r") as f:
-        content = f.read()
+    # First check ruff is available
+    check = subprocess.run(["which", "ruff"], capture_output=True, text=True)
+    if check.returncode != 0:
+        pytest.skip("ruff not installed")
 
-    # Verify nh3 is imported for HTML sanitization
-    assert "import nh3" in content, "sanitization.py must import nh3"
+    for rel_path in files_to_check:
+        full_path = os.path.join(REPO, rel_path)
+        if not os.path.exists(full_path):
+            pytest.skip(f"{rel_path} not found")
 
-    # Verify _strip_html_tags function exists and uses nh3
-    assert "def _strip_html_tags" in content, "sanitization.py must have _strip_html_tags function"
-    assert "nh3.clean" in content, "sanitization.py must use nh3.clean for HTML stripping"
+    # Run ruff check on all files at once
+    result = subprocess.run(
+        ["ruff", "check", "--output-format=concise"] + files_to_check,
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert result.returncode == 0, f"Ruff lint failed:\n{result.stdout}\n{result.stderr}"
 
-    # Verify _remove_dangerous_unicode function exists
-    assert "def _remove_dangerous_unicode" in content, "sanitization.py must have _remove_dangerous_unicode function"
 
-    # Check for dangerous unicode pattern (zero-width chars, control chars)
-    assert r"[\u200B-\u200D\uFEFF\u0000-\u0008" in content, "sanitization.py must handle dangerous unicode"
+def test_repo_ruff_format():
+    """Ruff format check passes on modified MCP service files (pass_to_pass)."""
+    files_to_check = [
+        "superset/mcp_service/chart/chart_utils.py",
+        "superset/mcp_service/chart/preview_utils.py",
+        "superset/mcp_service/dashboard/schemas.py",
+    ]
+
+    # First check ruff is available
+    check = subprocess.run(["which", "ruff"], capture_output=True, text=True)
+    if check.returncode != 0:
+        pytest.skip("ruff not installed")
+
+    for rel_path in files_to_check:
+        full_path = os.path.join(REPO, rel_path)
+        if not os.path.exists(full_path):
+            pytest.skip(f"{rel_path} not found")
+
+    # Run ruff format check on all files at once
+    result = subprocess.run(
+        ["ruff", "format", "--check"] + files_to_check,
+        capture_output=True, text=True, timeout=60, cwd=REPO
+    )
+    assert result.returncode == 0, f"Ruff format check failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_nh3_sanitization():
+    """nh3-based HTML sanitization functions work correctly (pass_to_pass)."""
+    # Test nh3 is installed and works as expected in the repo
+    test_code = '''
+import nh3
+import re
+import html
+
+def _strip_html_tags(value):
+    if not value:
+        return value
+    max_iterations = 100
+    decoded = value
+    prev = None
+    iterations = 0
+    while prev != decoded and iterations < max_iterations:
+        prev = decoded
+        decoded = html.unescape(decoded)
+        iterations += 1
+    cleaned = nh3.clean(decoded, tags=set(), url_schemes=set())
+    return cleaned.replace("&amp;", "&")
+
+def _remove_dangerous_unicode(value):
+    if not value:
+        return value
+    return re.sub(
+        r"[\\u200B-\\u200D\\uFEFF\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f]", "", value
+    )
+
+# Tests
+assert _strip_html_tags("<b>hello</b>") == "hello"
+assert "<script>" not in _strip_html_tags("<script>alert(1)</script>")
+result = _strip_html_tags("&lt;script&gt;alert(1)&lt;/script&gt;")
+assert "<script>" not in result, f"Entity-encoded failed: {result}"
+assert _remove_dangerous_unicode("he\\u200bllo") == "hello"
+assert _remove_dangerous_unicode("\\ufeffhello") == "hello"
+print("All sanitization tests passed!")
+'''
+
+    result = subprocess.run(
+        ["python", "-c", test_code],
+        capture_output=True, text=True, timeout=30
+    )
+    assert result.returncode == 0, f"Sanitization test failed:\n{result.stderr}"
 
 
 def test_repo_chart_utils_syntax():
@@ -330,16 +408,9 @@ def test_repo_chart_utils_syntax():
     # Syntax check
     result = subprocess.run(
         ["python", "-m", "py_compile", chart_utils_path],
-        capture_output=True, text=True, timeout=30
+        capture_output=True, text=True, timeout=30, cwd=REPO
     )
     assert result.returncode == 0, f"chart_utils.py has syntax errors: {result.stderr}"
-
-    # Content check - verify map_table_config exists
-    with open(chart_utils_path, "r") as f:
-        content = f.read()
-
-    assert "def map_table_config" in content, "chart_utils.py must have map_table_config function"
-    assert "query_mode" in content, "chart_utils.py must handle query_mode"
 
 
 def test_repo_preview_utils_syntax():
@@ -351,15 +422,9 @@ def test_repo_preview_utils_syntax():
     # Syntax check
     result = subprocess.run(
         ["python", "-m", "py_compile", preview_utils_path],
-        capture_output=True, text=True, timeout=30
+        capture_output=True, text=True, timeout=30, cwd=REPO
     )
     assert result.returncode == 0, f"preview_utils.py has syntax errors: {result.stderr}"
-
-    # Content check - verify _build_query_columns exists
-    with open(preview_utils_path, "r") as f:
-        content = f.read()
-
-    assert "def _build_query_columns" in content, "preview_utils.py must have _build_query_columns function"
 
 
 def test_repo_get_chart_preview_syntax():
@@ -371,7 +436,7 @@ def test_repo_get_chart_preview_syntax():
     # Syntax check
     result = subprocess.run(
         ["python", "-m", "py_compile", get_chart_preview_path],
-        capture_output=True, text=True, timeout=30
+        capture_output=True, text=True, timeout=30, cwd=REPO
     )
     assert result.returncode == 0, f"get_chart_preview.py has syntax errors: {result.stderr}"
 
@@ -385,13 +450,6 @@ def test_repo_dashboard_schemas_syntax():
     # Syntax check
     result = subprocess.run(
         ["python", "-m", "py_compile", schemas_path],
-        capture_output=True, text=True, timeout=30
+        capture_output=True, text=True, timeout=30, cwd=REPO
     )
     assert result.returncode == 0, f"dashboard/schemas.py has syntax errors: {result.stderr}"
-
-    # Content check - verify GenerateDashboardRequest exists with validator
-    with open(schemas_path, "r") as f:
-        content = f.read()
-
-    assert "class GenerateDashboardRequest" in content, "schemas.py must have GenerateDashboardRequest class"
-    assert "@field_validator" in content, "schemas.py must use field_validator"

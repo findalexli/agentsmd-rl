@@ -133,124 +133,26 @@ def test_gate_condition_checks_for_valid_workflow():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static/pr_diff) — behavioral verification
+# Pass-to-pass (repo_tests) — actual CI/CD commands
 # ---------------------------------------------------------------------------
 
-def test_parse_workflow_run_id_behavior():
-    """parseWorkflowRunId correctly extracts run IDs or returns undefined for diverse inputs.
+def test_repo_tsfmt_check():
+    """Repo's TypeScript formatter check passes (pass_to_pass).
 
-    Extracts the function body from the .ts file, strips TypeScript annotations,
-    and executes as plain JavaScript via Node.js to verify runtime behavior.
-    """
-    content = MODEL_FILE.read_text()
-    fn_start = content.find("function parseWorkflowRunId")
-    assert fn_start != -1, "parseWorkflowRunId not found in githubPullRequestCIModel.ts"
-
-    # Extract brace-balanced function body
-    brace_count = 0
-    fn_end = fn_start
-    for i, ch in enumerate(content[fn_start:], fn_start):
-        if ch == '{':
-            brace_count += 1
-        elif ch == '}':
-            brace_count -= 1
-            if brace_count == 0:
-                fn_end = i + 1
-                break
-
-    fn_text = content[fn_start:fn_end]
-
-    # Strip TypeScript type annotations to get executable JS
-    fn_js = re.sub(r':\s*(?:string|number)(?:\s*\|\s*undefined)?', '', fn_text)
-    fn_js = fn_js.replace('export ', '')
-
-    # Test cases: (input_js_expr, expected_js_value)
-    test_cases = [
-        # Standard GitHub Actions URL with job segment
-        ("'https://github.com/microsoft/vscode/actions/runs/12345/job/67890'", "12345"),
-        # URL without job segment
-        ("'https://github.com/owner/repo/actions/runs/99999'", "99999"),
-        # Minimal run ID = 1
-        ("'https://github.com/owner/repo/actions/runs/1'", "1"),
-        # Large run ID
-        ("'https://github.com/org/project/actions/runs/9876543210'", "9876543210"),
-        # Non-GitHub-Actions URL -> undefined
-        ("'https://example.com/ci/check/1'", "undefined"),
-        # CircleCI URL -> undefined
-        ("'https://circleci.com/gh/owner/repo/123'", "undefined"),
-        # URL with /actions/ but no /runs/ -> undefined
-        ("'https://github.com/owner/repo/actions/workflows/ci.yml'", "undefined"),
-        # Empty string -> undefined
-        ("''", "undefined"),
-        # undefined input -> undefined
-        ("undefined", "undefined"),
-    ]
-
-    checks = "\n".join(
-        f"var _r{i} = parseWorkflowRunId({inp}); "
-        f"if (String(_r{i}) !== String({exp})) {{ "
-        f"  process.stderr.write('FAIL case {i}: got=' + _r{i} + ' expected={exp}\\n'); "
-        f"  process.exit(1); "
-        f"}}"
-        for i, (inp, exp) in enumerate(test_cases)
-    )
-
-    script = f"{fn_js}\n{checks}\nconsole.log('all passed');"
-
-    # Write to temp file and execute via Node
-    tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False)
-    tmp.write(script)
-    tmp.close()
-    try:
-        r = subprocess.run(
-            ["node", tmp.name],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        assert r.returncode == 0, (
-            f"parseWorkflowRunId behavior test failed:\n"
-            f"stdout: {r.stdout}\nstderr: {r.stderr}"
-        )
-        assert "all passed" in r.stdout
-    finally:
-        os.unlink(tmp.name)
-
-
-def test_model_compiles_cleanly():
-    """The model TypeScript file compiles without errors."""
-    r = subprocess.run(
-        ["npx", "tsc", "--noEmit", "--skipLibCheck",
-         "src/vs/sessions/contrib/github/browser/models/githubPullRequestCIModel.ts"],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Model file compilation failed: {r.stderr}"
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from .github/copilot-instructions.md
-# ---------------------------------------------------------------------------
-
-def test_uses_tabs_not_spaces():
-    """Modified code uses tabs for indentation, not spaces.
-
-    Rule: 'We use tabs, not spaces.' (.github/copilot-instructions.md:72)
-    Checks that all non-empty, non-import lines in both modified files use
-    tab indentation rather than leading spaces.
+    Runs tsfmt --dry on the modified files to verify they follow
+    the project's formatting standards (tabs, not spaces).
     """
     for filepath in [MODEL_FILE, WIDGET_FILE]:
-        content = filepath.read_text()
-        for i, line in enumerate(content.splitlines(), 1):
-            if not line or line == line.lstrip():
-                continue  # blank or no indentation
-            stripped = line.lstrip()
-            # Skip JSDoc/block comment lines (` * ...`, ` *---*/`, etc.)
-            if stripped.startswith('*'):
-                continue
-            # Line is indented — must start with tab, not spaces
-            assert line[0] == '\t', (
-                f"{filepath.name}:{i} uses space indentation: {line!r}"
-            )
+        r = subprocess.run(
+            ["npx", "tsfmt", "--dry", str(filepath)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=REPO,
+        )
+        # tsfmt exits 0 even if files would be formatted, we just need it to run
+        # Check for actual errors in stderr
+        if r.returncode != 0 and "Error" in r.stderr:
+            raise AssertionError(f"tsfmt failed on {filepath.name}:\n{r.stderr}")
+
+

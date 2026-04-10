@@ -1,46 +1,85 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:49:27.577919",
-  "total_time": 1276.54,
-  "sandbox_id": "i3ytjijhxwqkr2zge03i1",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:14:22.023294",
+  "total_time": 911.47,
+  "sandbox_id": "ihzhmgdg3ij0pjjc6hpv3",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 238.44,
+      "notes": ""
+    },
+    "p2p_enrichment_old": {
       "status": "rate_limited",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 237.86,
       "notes": ""
     },
-    "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 22.45,
-      "notes": ""
-    },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        ".claude/skills/add-rollout-function/SKILL.md",
+        ".claude/skills/add-eval-dataset-config/SKILL.md",
+        ".claude/skills/add-dynamic-filter/SKILL.md",
+        ".claude/skills/add-reward-function/SKILL.md",
+        ".claude/skills/add-tests-and-ci/SKILL.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 3,
+      "rejection_reasons": "3 rules rejected: not applicable to Python backend code (CI workflow rules), PR doesn't modify CI files",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.72,
-      "notes": ""
+      "time": 51.82
     },
     "improve": {
-      "status": "error",
+      "status": "skipped",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2.2,
-      "notes": "no test functions found"
+      "time": 0,
+      "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. NOP reward=0 (fail-to-pass tests fail correctly on buggy code). Gold reward=1 (all 13 tests pass after patch). Rubric ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.66
+      "time": 69.12
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 10.31,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 16.83,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.16,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +106,14 @@
       "backend": "fireworks",
       "time": 1276.54,
       "at": "2026-04-09T14:49:27.577919"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 911.47,
+      "at": "2026-04-10T15:14:22.023294"
     }
   ]
 }

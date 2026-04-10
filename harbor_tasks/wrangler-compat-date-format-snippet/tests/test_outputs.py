@@ -15,6 +15,34 @@ from pathlib import Path
 
 REPO = "/workspace/workers-sdk"
 TARGET_FILE = f"{REPO}/packages/wrangler/src/api/startDevWorker/ConfigController.ts"
+WRANGLER_DIR = f"{REPO}/packages/wrangler"
+
+
+def _install_and_run(cmd: list[str], cwd: str = REPO, timeout: int = 600) -> subprocess.CompletedProcess:
+    """Install pnpm and dependencies, then run the command."""
+    # Install pnpm
+    r = subprocess.run(
+        ["npm", "install", "-g", "pnpm@10.33.0"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if r.returncode != 0:
+        return subprocess.CompletedProcess(args=r.args, returncode=r.returncode, stdout=r.stdout, stderr=r.stderr)
+
+    # Install dependencies
+    r = subprocess.run(
+        ["pnpm", "install", "--frozen-lockfile"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=cwd,
+    )
+    if r.returncode != 0:
+        return subprocess.CompletedProcess(args=r.args, returncode=r.returncode, stdout=r.stdout, stderr=r.stderr)
+
+    # Run the actual command
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd)
 
 
 def _get_compat_date_function() -> str:
@@ -151,6 +179,53 @@ console.log('PASS');
     )
     assert r.returncode == 0, f"Parse check failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI tests
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_config_controller():
+    """Repo linter passes on ConfigController.ts (pass_to_pass)."""
+    r = _install_and_run(
+        ["pnpm", "exec", "oxlint", "src/api/startDevWorker/ConfigController.ts"],
+        cwd=WRANGLER_DIR,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_config_controller():
+    """Repo format check passes on ConfigController.ts (pass_to_pass)."""
+    r = _install_and_run(
+        ["pnpm", "exec", "oxfmt", "--check", "src/api/startDevWorker/ConfigController.ts"],
+        cwd=WRANGLER_DIR,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_config_controller_unit_tests():
+    """Repo unit tests for ConfigController pass (pass_to_pass)."""
+    # First build dependencies
+    r = _install_and_run(
+        ["pnpm", "run", "build", "--filter", "@cloudflare/workers-utils", "--filter", "wrangler"],
+        cwd=REPO,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+    # Run the tests
+    r = _install_and_run(
+        ["pnpm", "exec", "vitest", "run", "src/__tests__/api/startDevWorker/ConfigController.test.ts"],
+        cwd=WRANGLER_DIR,
+        timeout=300,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

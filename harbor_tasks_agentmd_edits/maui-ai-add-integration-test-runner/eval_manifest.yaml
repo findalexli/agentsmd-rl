@@ -15,28 +15,64 @@ checks:
   description: SetUpNuGetPackages has real file I/O operations, not a stub
 - id: global_json_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: global.json is valid JSON with required SDK configuration
 - id: csproj_files_valid_xml
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All .csproj files are valid XML
 - id: directory_build_props_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Directory.Build.props is valid XML
 - id: directory_build_targets_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Directory.Build.targets is valid XML
 - id: nuget_config_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: NuGet.config is valid XML with required package sources
 - id: build_scripts_executable
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Build scripts exist and have correct structure
+- id: solution_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Solution file Microsoft.Maui.sln exists and is readable
+- id: test_utils_csproj_valid
+  type: pass_to_pass
+  origin: static
+  description: Integration tests project file is valid XML
+- id: github_workflows_exist
+  type: pass_to_pass
+  origin: static
+  description: GitHub Actions workflow files exist and are readable
+- id: basebuildtest_cs_exists
+  type: pass_to_pass
+  origin: static
+  description: BaseBuildTest.cs exists and contains required methods
+- id: editorconfig_exists
+  type: pass_to_pass
+  origin: static
+  description: EditorConfig file exists and has valid content
+- id: gitattributes_exists
+  type: pass_to_pass
+  origin: static
+  description: .gitattributes file exists with required settings
+- id: powershell_script_valid
+  type: pass_to_pass
+  origin: static
+  description: Run-IntegrationTests.ps1 has valid PowerShell syntax structure
+- id: copilot_instructions_valid
+  type: pass_to_pass
+  origin: static
+  description: copilot-instructions.md exists and has valid structure
+- id: integration_instructions_valid
+  type: pass_to_pass
+  origin: static
+  description: integration-tests.instructions.md exists and has valid content
 - id: git_repo_clean
   type: pass_to_pass
   origin: repo_tests
@@ -44,31 +80,7 @@ checks:
 - id: git_no_merge_conflicts
   type: pass_to_pass
   origin: repo_tests
-  description: Repository contains no merge conflict markers
-- id: solution_file_exists
-  type: pass_to_pass
-  origin: repo_tests
-  description: Solution file Microsoft.Maui.sln exists and is readable
-- id: test_utils_csproj_valid
-  type: pass_to_pass
-  origin: repo_tests
-  description: Integration tests project file is valid XML
-- id: github_workflows_exist
-  type: pass_to_pass
-  origin: repo_tests
-  description: GitHub Actions workflow files exist and are readable
-- id: basebuildtest_cs_exists
-  type: pass_to_pass
-  origin: repo_tests
-  description: BaseBuildTest.cs exists and contains required methods
-- id: editorconfig_exists
-  type: pass_to_pass
-  origin: repo_tests
-  description: EditorConfig file exists and has valid content
-- id: gitattributes_exists
-  type: pass_to_pass
-  origin: repo_tests
-  description: .gitattributes file exists with required settings
+  description: Repository contains no merge conflict markers via git grep
 - id: msbuild_isolation_files
   type: fail_to_pass
   origin: pr_diff

@@ -44,8 +44,7 @@ checks:
 - id: short_variable_names
   type: fail_to_pass
   origin: agent_config
-  description: Code uses short variable names per AGENTS.md (root, file, network,
-    external)
+  description: Code uses short variable names per AGENTS.md (root, file, network, external)
   source:
     path: AGENTS.md
     lines: 24-26
@@ -53,8 +52,7 @@ checks:
 - id: agents_md_has_naming_enforcement
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md adds Naming Enforcement section with mandatory single-word
-    rule
+  description: AGENTS.md adds Naming Enforcement section with mandatory single-word rule
 - id: agents_md_naming_rules_bullet_points
   type: fail_to_pass
   origin: pr_diff
@@ -66,8 +64,7 @@ checks:
 - id: no_iife_import
   type: pass_to_pass
   origin: agent_config
-  description: thread.ts removes iife import (replaced with helper functions per AGENTS.md
-    style)
+  description: thread.ts removes iife import (replaced with helper functions per AGENTS.md style)
   source:
     path: AGENTS.md
     lines: 24-26
@@ -75,31 +72,25 @@ checks:
 - id: error_handler_reused
   type: pass_to_pass
   origin: static
-  description: Error handler extracted as reusable function, used for both exception
-    types
-rubric: []
+  description: Error handler extracted as reusable function, used for both exception types
+rubric:
+- rule: Code changes must use single-word variable and function names where possible
+  source:
+    path: AGENTS.md
+    lines: 14,20-21
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+- rule: Helper functions should use early returns instead of else statements
+  source:
+    path: AGENTS.md
+    lines: 72,76-80
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+- rule: New variables should use const instead of let (prefer immutability)
+  source:
+    path: AGENTS.md
+    lines: '59'
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: '### Naming Enforcement (Read This)
-
-
-    THIS RULE IS MANDATORY FOR AGENT WRITTEN CODE.
-
-
-    - Use single word names by default for new locals, params, and helper functions.
-
-    - Multi-word names are allowed only when a single word would be unclear or ambiguous.
-
-    - Do not introduce new camelCase compounds when a short single-word alternative
-    is clear.
-
-    - Before finishing edits, review touched lines and shorten newly introduced identifiers
-    where possible.
-
-    - Good short names to prefer: `pid`, `cfg`, `err`, `opts`, `dir`, `root`, `child`,
-    `state`, `timeout`.
-
-    - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
-    `workerPath`.'
+  gold_added: '### Naming Enforcement (Read This)'
   gold_removed: ''

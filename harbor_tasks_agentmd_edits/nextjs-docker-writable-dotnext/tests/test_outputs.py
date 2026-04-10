@@ -234,3 +234,36 @@ def test_readme_describes_cache_tradeoff():
     assert has_optional_mount, (
         "README should describe the .next/cache mount as optional and explain the tradeoff"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_readme_prettier():
+    """README.md passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", README],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for README:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_compose_prettier():
+    """compose.yml passes prettier formatting check (pass_to_pass)."""
+    compose_path = f"{REPO}/examples/with-docker/compose.yml"
+    r = subprocess.run(
+        ["npx", "prettier", "--check", compose_path],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for compose.yml:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_package_json_valid():
+    """package.json is valid JSON (pass_to_pass)."""
+    import json
+    pkg_path = f"{REPO}/examples/with-docker/package.json"
+    content = Path(pkg_path).read_text()
+    try:
+        json.loads(content)
+    except json.JSONDecodeError as e:
+        assert False, f"Invalid JSON in package.json: {e}"

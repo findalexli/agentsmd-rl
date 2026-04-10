@@ -130,175 +130,161 @@ def test_mcp_package_structure():
 # Pass-to-pass (repo_tests) — CI tests using subprocess
 # ---------------------------------------------------------------------------
 
-def test_repo_tsc_no_emit():
-    """TypeScript compilation check via Node parser (pass_to_pass repo test)."""
-    r = subprocess.run(
-        ["node", "-e", """
-const fs = require('fs');
-const path = require('path');
-const REPO = '/workspace/playwright';
+def test_repo_eslint_mcp_files():
+    """Run ESLint on modified MCP files (pass_to_pass repo test).
 
-// Check that all modified files have valid TypeScript structure
-// by verifying import/export statements and basic syntax
+    Note: This test runs npm ci first to install dependencies, then runs ESLint.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+node --max-old-space-size=3072 node_modules/.bin/eslint \
+    packages/playwright/src/mcp/terminal/commands.ts \
+    packages/playwright/src/mcp/program.ts \
+    packages/playwright/src/mcp/browser/config.ts \
+    packages/playwright/src/mcp/browser/response.ts \
+    packages/playwright/src/mcp/browser/tab.ts \
+    packages/playwright/src/mcp/browser/tools/evaluate.ts \
+    packages/playwright/src/mcp/browser/tools/tool.ts \
+    --ext .ts --no-cache 2>&1
+"""],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_typescript_syntax():
+    """Use TypeScript parser to verify syntax of modified files (pass_to_pass).
+
+    Note: This test runs npm ci first to install dependencies, then uses TypeScript parser.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+node -e '
+const fs = require("fs");
+const ts = require("typescript");
+
 const files = [
-    'packages/playwright/src/mcp/browser/config.ts',
-    'packages/playwright/src/mcp/browser/response.ts',
-    'packages/playwright/src/mcp/browser/tab.ts',
-    'packages/playwright/src/mcp/browser/tools/evaluate.ts',
-    'packages/playwright/src/mcp/browser/tools/tool.ts',
-    'packages/playwright/src/mcp/program.ts',
-    'packages/playwright/src/mcp/terminal/commands.ts'
+    "packages/playwright/src/mcp/browser/config.ts",
+    "packages/playwright/src/mcp/browser/response.ts",
+    "packages/playwright/src/mcp/browser/tab.ts",
+    "packages/playwright/src/mcp/browser/tools/evaluate.ts",
+    "packages/playwright/src/mcp/browser/tools/tool.ts",
+    "packages/playwright/src/mcp/program.ts",
+    "packages/playwright/src/mcp/terminal/commands.ts"
 ];
 
-const errors = [];
+let hasErrors = false;
 for (const file of files) {
-    const fullPath = path.join(REPO, file);
-    const content = fs.readFileSync(fullPath, 'utf8');
-    
-    // Check that imports/exports have semicolons or proper structure
-    const lines = content.split('\\n');
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        // Check for obviously broken syntax (rare but catches major issues)
-        if (line.includes('import') && line.includes('from') && !line.trim().endsWith(';') && !line.includes('{')) {
-            // Some import styles don't need semicolons
-        }
-    }
-    
-    // Check for TypeScript keywords that indicate valid structure
-    if (!content.includes('export') && !content.includes('import') && !content.includes('function')) {
-        errors.push(file + ': Missing expected TypeScript constructs');
+    const content = fs.readFileSync(file, "utf8");
+    const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+
+    if (sourceFile.parseDiagnostics && sourceFile.parseDiagnostics.length > 0) {
+        console.error("Parse errors in " + file + ":");
+        sourceFile.parseDiagnostics.forEach(d => console.error("  " + d.messageText));
+        hasErrors = true;
     }
 }
 
-if (errors.length > 0) {
-    console.error(errors.join('\\n'));
+if (hasErrors) {
+    process.exit(1);
+} else {
+    console.log("All TypeScript files have valid syntax");
+}
+'
+"""],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript syntax check failed: {r.stderr[-500:]}"
+
+
+def test_repo_test_files_syntax():
+    """Check that modified test files have valid TypeScript syntax (pass_to_pass).
+
+    Note: This test runs npm ci first to install dependencies, then uses TypeScript parser.
+    """
+    r = subprocess.run(
+        ["bash", "-c", """
+cd /workspace/playwright
+npm ci --silent 2>/dev/null
+node -e '
+const fs = require("fs");
+const ts = require("typescript");
+
+const testFiles = [
+    "tests/mcp/cli.spec.ts",
+    "tests/mcp/dialogs.spec.ts",
+    "tests/mcp/files.spec.ts"
+];
+
+let hasErrors = false;
+for (const file of testFiles) {
+    const content = fs.readFileSync(file, "utf8");
+    const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+
+    if (sourceFile.parseDiagnostics && sourceFile.parseDiagnostics.length > 0) {
+        console.error("Parse errors in " + file + ":");
+        sourceFile.parseDiagnostics.forEach(d => console.error("  " + d.messageText));
+        hasErrors = true;
+    } else {
+        console.log(file + " parses OK");
+    }
+}
+
+if (hasErrors) {
+    process.exit(1);
+} else {
+    console.log("All test files have valid TypeScript syntax");
+}
+'
+"""],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test files syntax check failed: {r.stderr[-500:]}"
+
+
+def test_repo_help_json_valid():
+    """Validate help.json is valid JSON using Node.js (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require('fs');
+const path = 'packages/playwright/src/mcp/terminal/help.json';
+const content = fs.readFileSync(path, 'utf8');
+try {
+    JSON.parse(content);
+    console.log('help.json is valid JSON');
+} catch (e) {
+    console.error('Invalid JSON in help.json: ' + e.message);
     process.exit(1);
 }
-console.log('TypeScript structure check passed');
 """],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"TypeScript check failed: {r.stderr}"
+    assert r.returncode == 0, f"help.json validation failed: {r.stderr}"
 
 
-def test_repo_import_statements():
-    """Verify import statements in modified files are valid (pass_to_pass)."""
+def test_repo_package_json_valid():
+    """Validate package.json files are valid JSON (pass_to_pass)."""
     r = subprocess.run(
         ["node", "-e", """
 const fs = require('fs');
-const path = require('path');
-const REPO = '/workspace/playwright';
-
-const files = [
-    'packages/playwright/src/mcp/browser/tab.ts',
-    'packages/playwright/src/mcp/browser/response.ts',
-    'packages/playwright/src/mcp/browser/tools/evaluate.ts',
-    'packages/playwright/src/mcp/program.ts'
-];
-
-for (const file of files) {
-    const fullPath = path.join(REPO, file);
-    const content = fs.readFileSync(fullPath, 'utf8');
-    
-    // Find all import statements
-    const importMatches = content.match(/import\\s+.*?\\s+from\\s+['\"][^'\"]+['\"];?/g);
-    if (importMatches) {
-        for (const imp of importMatches) {
-            // Check import is not malformed
-            if (imp.includes('from from') || imp.includes('import import')) {
-                console.error('Malformed import in ' + file + ': ' + imp);
-                process.exit(1);
-            }
-        }
+const files = ['package.json', 'package-lock.json'];
+for (const f of files) {
+    try {
+        JSON.parse(fs.readFileSync(f, 'utf8'));
+        console.log(f + ' is valid JSON');
+    } catch (e) {
+        console.error('Invalid JSON in ' + f + ': ' + e.message);
+        process.exit(1);
     }
 }
-console.log('Import statement check passed');
 """],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"Import check failed: {r.stderr}"
-
-
-def test_repo_export_patterns():
-    """Verify export patterns in modified files (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e", """
-const fs = require('fs');
-const path = require('path');
-const REPO = '/workspace/playwright';
-
-// Check that key exports exist in modified files
-const checks = [
-    {
-        file: 'packages/playwright/src/mcp/browser/config.ts',
-        exports: ['FullConfig', 'resolveConfig']
-    },
-    {
-        file: 'packages/playwright/src/mcp/browser/tools/evaluate.ts',
-        exports: ['evaluate']
-    },
-    {
-        file: 'packages/playwright/src/mcp/terminal/commands.ts',
-        exports: ['commands', 'declareCommand']
-    }
-];
-
-for (const check of checks) {
-    const fullPath = path.join(REPO, check.file);
-    const content = fs.readFileSync(fullPath, 'utf8');
-    
-    for (const exp of check.exports) {
-        if (!content.includes(exp)) {
-            console.error('Missing export "' + exp + '" in ' + check.file);
-            process.exit(1);
-        }
-    }
-}
-console.log('Export patterns check passed');
-"""],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Export check failed: {r.stderr}"
-
-
-def test_repo_no_console_in_production_code():
-    """Verify no console.log in production TypeScript files (pass_to_pass)."""
-    r = subprocess.run(
-        ["node", "-e", """
-const fs = require('fs');
-const path = require('path');
-const REPO = '/workspace/playwright';
-
-const files = [
-    'packages/playwright/src/mcp/browser/config.ts',
-    'packages/playwright/src/mcp/browser/response.ts',
-    'packages/playwright/src/mcp/browser/tab.ts',
-    'packages/playwright/src/mcp/browser/tools/evaluate.ts',
-    'packages/playwright/src/mcp/browser/tools/tool.ts',
-    'packages/playwright/src/mcp/program.ts',
-    'packages/playwright/src/mcp/terminal/commands.ts'
-];
-
-for (const file of files) {
-    const fullPath = path.join(REPO, file);
-    const content = fs.readFileSync(fullPath, 'utf8');
-    
-    // Check for console.log (should not be in production code)
-    const lines = content.split('\\n');
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line.includes('console.log') && !line.startsWith('//') && !line.startsWith('*')) {
-            console.error('console.log found in ' + file + ' at line ' + (i+1));
-            process.exit(1);
-        }
-    }
-}
-console.log('No console.log in production code check passed');
-"""],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Console check failed: {r.stderr}"
+    assert r.returncode == 0, f"package.json validation failed: {r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -337,17 +323,16 @@ console.log('PASS');
 def test_eval_auto_wrap():
     """evaluate tool must auto-wrap expressions that don't contain '=>',
     verified by checking source for the pattern and testing the logic."""
-    r = subprocess.run(
-        ["node", "-e", """
+    js_code = """
 const fs = require('fs');
 const code = fs.readFileSync('packages/playwright/src/mcp/browser/tools/evaluate.ts', 'utf8');
 
 // Source must contain the arrow-detection check
-const hasArrowCheck = code.includes(".includes('=>")") || code.includes('.includes("=>")');
+const hasArrowCheck = code.indexOf("=>") !== -1 && code.indexOf("includes") !== -1;
 if (!hasArrowCheck) { console.error('evaluate.ts has no arrow-detection check'); process.exit(1); }
 
 // Source must contain the wrapping pattern
-const hasWrap = code.includes('() => (') || code.includes('\`() => (\`');
+const hasWrap = code.includes('() => (') || code.includes('`() => (`');
 if (!hasWrap) { console.error('evaluate.ts has no auto-wrap pattern'); process.exit(1); }
 
 // Replicate the exact logic and test it
@@ -371,9 +356,15 @@ for (const [input, expected] of cases) {
   }
 }
 console.log('PASS');
-"""],
+"""
+    # Write JS to file to avoid quote escaping issues
+    js_file = Path(REPO) / "_test_eval_auto_wrap.js"
+    js_file.write_text(js_code)
+    r = subprocess.run(
+        ["node", str(js_file)],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
+    js_file.unlink()  # Cleanup
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
 

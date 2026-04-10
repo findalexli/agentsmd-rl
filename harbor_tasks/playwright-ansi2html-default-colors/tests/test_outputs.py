@@ -132,9 +132,15 @@ def _run_with_npm_ci(cmd, timeout=120, cwd=REPO):
     return r
 
 
-def test_repo_eslint_modified():
-    """ESLint passes on modified packages (pass_to_pass)."""
-    r = _run_with_npm_ci("./node_modules/.bin/eslint packages/web/src/ packages/trace-viewer/src/", timeout=180)
+def test_repo_eslint_web():
+    """ESLint passes on packages/web/src (pass_to_pass)."""
+    r = _run_with_npm_ci("./node_modules/.bin/eslint packages/web/src/", timeout=180)
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint_trace_viewer():
+    """ESLint passes on packages/trace-viewer/src (pass_to_pass)."""
+    r = _run_with_npm_ci("./node_modules/.bin/eslint packages/trace-viewer/src/", timeout=180)
     assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
 
 

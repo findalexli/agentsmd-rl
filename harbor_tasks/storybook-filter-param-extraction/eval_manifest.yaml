@@ -12,12 +12,12 @@ checks:
     origin: repo_tests
     description: "Repo's tags module functionality works (tests parseTagsParam and serializeTagsParam)"
 
-  - id: test_repo_typescript_syntax
+  - id: test_repo_vitest_statuses
     type: pass_to_pass
     origin: repo_tests
-    description: "Modified TypeScript files parse without syntax errors"
+    description: "Repo's vitest tests for statuses module pass (22 tests covering parseStatusesParam and serializeStatusesParam)"
 
-  - id: syntax_check
+  - id: test_syntax_check
     type: pass_to_pass
     origin: static
     description: "Modified files must exist and have valid TypeScript structure"
@@ -70,4 +70,14 @@ checks:
       lines: "246"
       commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
 
-rubric: []
+rubric:
+  - rule: "New TypeScript files must use explicit .ts extensions for relative imports (e.g., './foo.ts', '../lib/bar.ts')"
+    source:
+      path: "AGENTS.md"
+      lines: "246"
+      commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
+  - rule: "Modified TypeScript files must not use raw console.log/warn/error - use Storybook loggers (storybook/internal/client-logger for client-side, storybook/internal/node-logger for server-side)"
+    source:
+      path: "AGENTS.md"
+      lines: "241-250"
+      commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"

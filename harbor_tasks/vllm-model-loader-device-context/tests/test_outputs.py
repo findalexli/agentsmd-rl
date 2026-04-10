@@ -117,6 +117,52 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands that work without GPU/network
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — ruff lint check
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on base_loader.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "check", TARGET],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ruff format check
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on base_loader.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — typos spell check
+def test_repo_typos():
+    """Repo's typos spell checker passes on base_loader.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "typos", "-q"],
+        capture_output=True, text=True, timeout=120,
+    )
+    r = subprocess.run(
+        ["typos", TARGET],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Typos check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 

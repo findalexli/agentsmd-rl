@@ -4,86 +4,115 @@ source_pr:
   number: 7066
   merge_commit: 6ee0e795b085651beb2f1ac6503cdbd7eaffedd1
   base_commit: a556afa0f07c551cc0edaf17fa7d0de7014a1c68
+title: Fix SSR hash scroll preservation after hydration
+description: 'TanStack Router has an SSR hydration bug where the scroll position anchored
+  to a
 
-title: "Fix SSR hash scroll preservation after hydration"
-
-description: |
-  TanStack Router has an SSR hydration bug where the scroll position anchored to a
   URL hash (e.g., /page#section) gets reset when preloading another route or
+
   invalidating router data. The fix sets `router.stores.resolvedLocation` after
+
   SSR hydration to prevent re-running hash scroll on subsequent load cycles.
 
+  '
 repository:
   url: https://github.com/TanStack/router.git
   base_commit: a556afa0f07c551cc0edaf17fa7d0de7014a1c68
   language: typescript
   framework: tanstack-router
-
-# For each test_* function in test_outputs.py, define a check
 checks:
-  - id: "solve_sh_exists"
-    name: "solve.sh exists"
-    description: "Verify the solve.sh patch script exists"
-    file: "tests/test_outputs.py"
-    test_function: "test_solve_sh_exists"
-    type: "existence"
-    points: 5
-
-  - id: "ssr_client_exists"
-    name: "SSR client file exists"
-    description: "Verify the target ssr-client.ts file exists"
-    file: "tests/test_outputs.py"
-    test_function: "test_ssr_client_file_exists"
-    type: "existence"
-    points: 5
-
-  - id: "hydrate_function_exists"
-    name: "hydrate function exists"
-    description: "Verify the hydrate function exists in ssr-client.ts"
-    file: "tests/test_outputs.py"
-    test_function: "test_hydrate_function_exists"
-    type: "existence"
-    points: 5
-
-  - id: "resolved_location_fix"
-    name: "resolvedLocation fix applied"
-    description: "FAIL-TO-PASS: Verify resolvedLocation is set after SSR hydration"
-    file: "tests/test_outputs.py"
-    test_function: "test_resolved_location_set_after_hydration"
-    type: "fail_to_pass"
-    points: 50
-
-  - id: "fix_location_correct"
-    name: "Fix is in correct location"
-    description: "Verify the fix is placed after dehydrated flag cleanup"
-    file: "tests/test_outputs.py"
-    test_function: "test_fix_is_in_hydrate_function_path"
-    type: "pass_to_pass"
-    points: 15
-
-  - id: "typescript_compiles"
-    name: "TypeScript compiles"
-    description: "Verify the modified TypeScript compiles without errors"
-    file: "tests/test_outputs.py"
-    test_function: "test_typescript_compiles"
-    type: "pass_to_pass"
-    points: 20
-
-  - id: "unit_tests_pass"
-    name: "Unit tests pass"
-    description: "Run unit tests to ensure fix doesn't break existing functionality"
-    file: "tests/test_outputs.py"
-    test_function: "test_unit_tests_pass"
-    type: "pass_to_pass"
-    points: 0  # Bonus points only, not required for success
-
+- id: solve_sh_exists
+  name: solve.sh exists
+  description: Verify the solve.sh patch script exists
+  file: tests/test_outputs.py
+  test_function: test_solve_sh_exists
+  type: existence
+  points: 5
+- id: ssr_client_exists
+  name: SSR client file exists
+  description: Verify the target ssr-client.ts file exists
+  file: tests/test_outputs.py
+  test_function: test_ssr_client_file_exists
+  type: existence
+  points: 5
+- id: hydrate_function_exists
+  name: hydrate function exists
+  description: Verify the hydrate function exists in ssr-client.ts
+  file: tests/test_outputs.py
+  test_function: test_hydrate_function_exists
+  type: existence
+  points: 5
+- id: resolved_location_fix
+  name: resolvedLocation fix applied
+  description: 'FAIL-TO-PASS: Verify resolvedLocation is set after SSR hydration'
+  file: tests/test_outputs.py
+  test_function: test_resolved_location_set_after_hydration
+  type: fail_to_pass
+  points: 50
+- id: fix_location_correct
+  name: Fix is in correct location
+  description: Verify the fix is placed after dehydrated flag cleanup
+  file: tests/test_outputs.py
+  test_function: test_fix_is_in_hydrate_function_path
+  type: pass_to_pass
+  points: 15
+- id: repo_typescript_compiles
+  name: TypeScript compilation passes
+  description: 'PASS-TO-PASS: TypeScript type checking passes for router-core'
+  file: tests/test_outputs.py
+  test_function: test_repo_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  points: 10
+- id: repo_unit_tests_pass
+  name: Unit tests pass
+  description: 'PASS-TO-PASS: Unit tests pass for router-core package'
+  file: tests/test_outputs.py
+  test_function: test_repo_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  points: 10
+- id: repo_eslint_passes
+  name: ESLint passes
+  description: 'PASS-TO-PASS: ESLint checks pass for router-core source'
+  file: tests/test_outputs.py
+  test_function: test_repo_eslint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  points: 5
+- id: repo_build_passes
+  name: Build verification passes
+  description: 'PASS-TO-PASS: Build verification with publint and attw passes'
+  file: tests/test_outputs.py
+  test_function: test_repo_build_passes
+  type: pass_to_pass
+  origin: repo_tests
+  points: 5
+- id: repo_hydrate_tests_pass
+  name: Hydration tests pass
+  description: 'PASS-TO-PASS: Specific hydrate.test.ts tests pass'
+  file: tests/test_outputs.py
+  test_function: test_repo_hydrate_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  points: 5
 agent_config:
-  - file: "AGENTS.md"
-    rules:
-      - "Prefer pnpm nx over npx nx"
-      - "Use CI=1 NX_DAEMON=false when running nx commands"
-      - "Run only one Nx command at a time"
-      - "If nx hangs, run pnpm nx reset once and retry"
-
-# Soft/subjective rules for LLM judge
-rubric: []
+- file: AGENTS.md
+  rules:
+  - Prefer pnpm nx over npx nx
+  - Use CI=1 NX_DAEMON=false when running nx commands
+  - Run only one Nx command at a time
+  - If nx hangs, run pnpm nx reset once and retry
+rubric:
+- rule: Code changes in router-core must maintain framework-agnostic design (no React/Solid-specific
+    logic in core)
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: a556afa0f07c551cc0edaf17fa7d0de7014a1c68
+- rule: TypeScript code must use strict mode with extensive type safety (no implicit
+    any, proper typing)
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: a556afa0f07c551cc0edaf17fa7d0de7014a1c68

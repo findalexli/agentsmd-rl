@@ -1,19 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T12:59:06.644630",
-  "total_time": 1677.51,
-  "sandbox_id": "i3kbl9gdaez6zlcpqz2bd",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:04:10.257804",
+  "total_time": 1208.49,
+  "sandbox_id": "i2b3s2g8qzl8zdshgdkie",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.2,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 186.5,
+      "time": 263.57,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,9 +33,50 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "judge_icr": 1.0,
+      "attempts": 1,
+      "notes": "Fixed eval_manifest.yaml by removing 2 unreasonable rubric rules: (1) 'Always run uvx prek run -a' - gold solution doesn't do this, just applies patch; (2) 'Avoid writing significant amounts of new code' - gold solution explicitly adds setup_primer_project.py script which is the core of the PR. All 4 validation checks now pass: Docker build OK, NOP reward=0 (fail-to-pass tests correctly fail), Gold reward=1 (all 15 tests pass), Rubric judge ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 170.57
+      "time": 163.11
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 3,
+      "rejection_reasons": "Rejected: PR workflow rules (line 67 - process not evaluable), Test requirements (lines 71-72 - separate checks), Rust-specific rules (lines 76-79 - not applicable to Python script)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 37.74
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 19.02,
+      "notes": "",
+      "precision": 0.2
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 24.92,
+      "notes": "precision was 0.20, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.8,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -52,6 +95,14 @@
       "backend": "fireworks",
       "time": 1677.51,
       "at": "2026-04-10T12:59:06.644630"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1208.49,
+      "at": "2026-04-10T15:04:10.257804"
     }
   ]
 }

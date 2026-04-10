@@ -8,7 +8,12 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     tmux \
+    libkrb5-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Configure git first (required before any git commit)
+RUN git config --global user.email "agent@test.com" && \
+    git config --global user.name "Test Agent"
 
 # Clone VS Code at base commit (snapshot without full history)
 WORKDIR /workspace
@@ -20,13 +25,9 @@ RUN git init vscode && cd vscode && \
     rm -rf .git && \
     git init && git add -A && git commit -m "snapshot"
 
-# Configure git
-RUN git config --global user.email "agent@test.com" && \
-    git config --global user.name "Test Agent"
-
 # Install dependencies (VS Code requires npm install for tests)
 WORKDIR /workspace/vscode
-RUN npm install --ignore-engines 2>&1 | tail -20 || true
+RUN npm install 2>&1 | tail -30 || true
 
 # Create logs directory
 RUN mkdir -p /logs/verifier

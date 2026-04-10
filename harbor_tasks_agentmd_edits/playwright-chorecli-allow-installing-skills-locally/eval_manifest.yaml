@@ -29,10 +29,34 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Network capability must be defined in config.d.ts
-- id: skill_file_documentation
+- id: skill_file_exists
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md must document the install-skills command
+  description: SKILL.md must exist and be a valid skill documentation file
+- id: repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compilation passes without errors
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build passes without errors
+- id: repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workspace package consistency check passes
+- id: repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: DEPS constraints check passes
+- id: repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test file linting passes
+- id: repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Channel generation script runs without errors
 - id: existing_mcp_tests_pass
   type: pass_to_pass
   origin: repo_tests

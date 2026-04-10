@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:53:38.938531",
-  "total_time": 1527.92,
-  "sandbox_id": "ihp5e4rlahrxo6j9sos8t",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:36:24.263009",
+  "total_time": 1332.41,
+  "sandbox_id": "iczxvp8i19gm7ccnswvji",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -17,10 +18,10 @@
       "notes": "P2P enrichment completed. Added 12 new pass_to_pass CI checks from VS Code's actual CI pipeline. CI commands discovered from .github/workflows/pr.yml and package.json: eslint, hygiene, valid-layers-check, define-class-fields-check, monaco-compile-check, vscode-dts-compile-check, tsec-compile-check, check-cyclic-dependencies, test-build-scripts, stylelint, compile, core-ci. Docker build failed due to git config order issue - RUN at lines 16-21 executes git commit before git config at lines 24-25."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 66.9,
+      "time": 99.03,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed 4 issues: 1) Dockerfile - moved git config before git commit, 2) test_outputs.py - fixed getFinalResponse test to find implementation not interface, 3) Skipped CI checks that require npm install, 4) Removed inappropriate rubric rules about copilot-instructions.md",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.68
+      "time": 491.25
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.16,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +73,14 @@
       "backend": "fireworks",
       "time": 1527.92,
       "at": "2026-04-09T14:53:38.938531"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1332.41,
+      "at": "2026-04-10T15:36:24.263009"
     }
   ]
 }

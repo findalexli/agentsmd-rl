@@ -157,6 +157,46 @@ def test_repo_ruff_format():
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint_full():
+    """Ruff lint check passes on full src directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    r = subprocess.run(
+        ["ruff", "check", "--config=/workspace/pyproject.toml", "/workspace/src/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint check on full src failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_full():
+    """Ruff format check passes on full src directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=/workspace/pyproject.toml", "/workspace/src/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check on full src failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile_modified():
+    """Modified files compile without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", "src/prime_rl/orchestrator/vf_utils.py", "src/prime_rl/orchestrator/eval_utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------

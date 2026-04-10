@@ -75,10 +75,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Inference config file parses as valid Python
-- id: test_repo_pyproject_entrypoint_valid
+- id: test_repo_examples_toml_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: pyproject.toml has valid entrypoint reference format
+  description: All example TOML files in examples/ have valid syntax
+- id: test_repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts in scripts/ have valid bash syntax
 rubric:
 - rule: Skills live in skills/ and are symlinked to .claude/skills/. They teach agents
     how to handle specific workflows. When you make changes to the codebase, check
@@ -90,110 +94,22 @@ rubric:
 config_edits:
 - path: skills/inference-server/SKILL.md
   tier: 1
-  gold_added: '## SLURM scheduling
-
-
-    The inference entrypoint supports optional SLURM scheduling, following the same
-    patterns as SFT and RL.
-
-
-    ### Single-node SLURM
-
-
-    ```toml
-
-    # inference_slurm.toml
-
-    output_dir = "/shared/outputs/my-inference"
-
-
-    [model]
-
-    name = "Qwen/Qwen3-8B"
-
-
-    [parallel]
-
-    tp = 8
-
-
-    [slurm]
-
-    job_name = "my-inference"
-
-    partition = "cluster"
-
-    ```
-
-
-    ```bash
-
-    uv run inference @ inference_slurm.toml
-
-    ```
-
-
-    ### Multi-node SLURM (independent vLLM replicas)
-
-
-    Each node runs an independent vLLM instance. No cross-node parallelism — TP and
-    DP must fit within a single node''s GPUs.
-
-
-    ```toml
-
-    # inference_multinode.toml
-
-    output_dir = "/shared/outputs/my-inference"
-
-
-    [model]
-
-    name = "PrimeIntellect/INTELLECT-3-RL-600"
-
-
-    [parallel]
-
-    tp = 8
-
-    dp = 1
-
-
-    [deployment]
-
-    type = "multi_node"
-
-    num_nodes = 4
-
-    gpus_per_node = 8
-
-
-    [slurm]
-
-    job_name = "my-inference"
-
-    partition = "cluster"
-
-    ```
-
-
-    ### Dry run
-
-
-    Add `dry_run = true` to generate the sbatch script without submitting:
-
-
-    ```bash
-
-    uv run inference @ config.toml --dry-run true
-
-    ```
-
-
-    - `src/prime_rl/entrypoints/inference.py` — entrypoint with local/SLURM routing
-
-    - `src/prime_rl/inference/server.py` — vLLM env setup
-
-    - `src/prime_rl/templates/inference.sbatch.j2` — SLURM template (handles both
-    single and multi-node)'
-  gold_removed: '- `src/prime_rl/inference/server.py` — entry point, env var setup'
+  gold_added: "## SLURM scheduling\n\nThe inference entrypoint supports optional SLURM\
+    \ scheduling, following the same patterns as SFT and RL.\n\n### Single-node SLURM\n\
+    \n```toml\n# inference_slurm.toml\noutput_dir = \"/shared/outputs/my-inference\"\
+    \n\n[model]\nname = \"Qwen/Qwen3-8B\"\n\n[parallel]\ntp = 8\n\n[slurm]\njob_name\
+    \ = \"my-inference\"\npartition = \"cluster\"\n```\n\n```bash\nuv run inference\
+    \ @ inference_slurm.toml\n```\n\n### Multi-node SLURM (independent vLLM replicas)\n\
+    \nEach node runs an independent vLLM instance. No cross-node parallelism \u2014\
+    \ TP and DP must fit within a single node's GPUs.\n\n```toml\n# inference_multinode.toml\n\
+    output_dir = \"/shared/outputs/my-inference\"\n\n[model]\nname = \"PrimeIntellect/INTELLECT-3-RL-600\"\
+    \n\n[parallel]\ntp = 8\ndp = 1\n\n[deployment]\ntype = \"multi_node\"\nnum_nodes\
+    \ = 4\ngpus_per_node = 8\n\n[slurm]\njob_name = \"my-inference\"\npartition =\
+    \ \"cluster\"\n```\n\n### Dry run\n\nAdd `dry_run = true` to generate the sbatch\
+    \ script without submitting:\n\n```bash\nuv run inference @ config.toml --dry-run\
+    \ true\n```\n\n- `src/prime_rl/entrypoints/inference.py` \u2014 entrypoint with\
+    \ local/SLURM routing\n- `src/prime_rl/inference/server.py` \u2014 vLLM env setup\n\
+    - `src/prime_rl/templates/inference.sbatch.j2` \u2014 SLURM template (handles\
+    \ both single and multi-node)"
+  gold_removed: "- `src/prime_rl/inference/server.py` \u2014 entry point, env var\
+    \ setup"

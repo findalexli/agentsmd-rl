@@ -218,3 +218,26 @@ def test_scripts_pyproject_valid():
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Invalid TOML in scripts/pyproject.toml: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_root_pyproject_valid():
+    """Root pyproject.toml is valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         f"import tomllib; tomllib.loads(open('{REPO}/pyproject.toml').read()); print('OK')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Invalid TOML in root pyproject.toml: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_add_rule_script_valid():
+    """add_rule.py passes syntax validation (pass_to_pass)."""
+    script_path = Path(REPO) / "scripts" / "add_rule.py"
+    # Syntax check
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(script_path)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax error in add_rule.py: {r.stderr}"

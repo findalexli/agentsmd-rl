@@ -45,19 +45,27 @@ checks:
 - id: test_repo_format_check
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's Prettier format check passes
+  description: Repo's Prettier format check passes (pnpm format:check)
 - id: test_repo_lint
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's ESLint passes
+  description: Repo's ESLint passes (pnpm lint)
 - id: test_repo_typecheck
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's TypeScript/svelte-check passes
+  description: Repo's TypeScript/svelte-check passes (pnpm ts:check)
 - id: test_repo_dataframe_tests
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's dataframe unit tests pass
+  description: Repo's dataframe unit tests pass (vitest on js/dataframe)
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's full unit test suite passes (pnpm test:run)
+- id: test_repo_client_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client tests pass (pnpm --filter @gradio/client test)
 rubric: []
 config_edits:
 - path: js/dataframe/README.md
@@ -69,17 +77,17 @@ config_edits:
     \ when you need a highly interactive, accessible, and easily themeable table for\
     \ user-facing applications, especially where seamless Svelte/SvelteKit integration\
     \ is important.\n\n## Install\n\nWith `npm`:\n\n```shell\nnpm i @gradio/dataframe\n\
-    ```\n\nWith `pnpm`:\n\n```shell\npnpm add @gradio/dataframe\n```\n\n**[View on\
-    \ npm](https://www.npmjs.com/package/@gradio/dataframe)**\n\n## Usage (Svelte/SvelteKit)\n\
+    ```\n\nWith `pnpm`:\n\n```shell\npnpm add @gradio/dataframe\n```\n\n**[View\
+    \ on\n\tnpm](https://www.npmjs.com/package/@gradio/dataframe)**\n\n## Usage (Svelte/SvelteKit)\n\
     \n```svelte\n<script lang=\"ts\">\n  import Dataframe from \"@gradio/dataframe\"\
     ;\n\n  let value = {\n    data: [\n      [\"Alice\", 25, true],\n      [\"Bob\"\
     , 30, false]\n    ],\n    headers: [\"Name\", \"Age\", \"Active\"],\n  };\n\n\
-    \  function handle_change(e: any) {\n    console.log(\"changed\", e.detail);\n\
-    \  }\n\n  function handle_select(e: any) {\n    console.log(\"selected\", e.detail);\n\
+    \  function handle_change(e: any) {\n    console.log(\"changed\", e.detail);\n  }\n\
+    \n  function handle_select(e: any) {\n    console.log(\"selected\", e.detail);\n\
     \  }\n\n  function handle_input(e: any) {\n    console.log(\"input\", e.detail);\n\
     \  }\n</script>\n\n<Dataframe\n  bind:value\n  {datatype}\n  show_search=\"search\"\
-    \n  show_row_numbers={true}\n  show_copy_button={true}\n  show_fullscreen_button={true}\n\
-    \  editable={true}\n  on:change={handle_change}\n  on:select={handle_select}\n\
+    \n  show_row_numbers={true}\n  show_copy_button={true}\n  show_fullscreen_button={true}\
+    \n  editable={true}\n  on:change={handle_change}\n  on:select={handle_select}\n\
     \  on:input={handle_input}\n  />\n```\n\n## Props\n\n```typescript\ninterface\
     \ DataframeProps {\n\n  /**\n   * The value object containing the table data,\
     \ headers, and optional metadata.\n   * Example: { data: [...], headers: [...],\

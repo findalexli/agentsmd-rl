@@ -1,70 +1,89 @@
-version: "2.0"
+version: '2.0'
 source:
   repo: microsoft/vscode
-  base_commit: "3c51a00d738294aa6e113b87e38b8ea770fbf9ee"
-
+  base_commit: 3c51a00d738294aa6e113b87e38b8ea770fbf9ee
 checks:
-  - id: test_type_guards_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Type guards isChangesFileItem and isChangesRootItem correctly distinguish file, root, and resource node elements"
-
-  - id: test_change_type_includes_none
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ChangeType union includes 'none' for unchanged files"
-
-  - id: test_root_item_interfaces_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "IChangesRootItem and IChangesTreeRootInfo interfaces defined with required members"
-
-  - id: test_build_tree_children_accepts_root_info
-    type: fail_to_pass
-    origin: pr_diff
-    description: "buildTreeChildren accepts optional treeRootInfo parameter for root wrapping"
-
-  - id: test_render_root_element_method
-    type: fail_to_pass
-    origin: pr_diff
-    description: "renderRootElement method exists with FileKind.ROOT_FOLDER rendering"
-
-  - id: test_collect_workspace_files_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "collectWorkspaceFiles async function exists for non-git workspace file enumeration"
-
-  - id: test_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "Target changesView.ts file exists"
-
-  - id: test_build_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Build scripts typecheck passes"
-
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint check passes on the codebase"
-
-  - id: test_valid_layers_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Valid layers check passes"
-
-  - id: test_vscode_dts_compile_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "VS Code dts compile check passes"
-
-  - id: test_cli_cargo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CLI Rust clippy linting passes"
-
-  - id: test_cli_cargo_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CLI Rust unit tests pass"
+- id: test_type_guards_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Type guards isChangesFileItem and isChangesRootItem correctly distinguish
+    file, root, and resource node elements
+- id: test_change_type_includes_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChangeType union includes 'none' for unchanged files
+- id: test_root_item_interfaces_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: IChangesRootItem and IChangesTreeRootInfo interfaces defined with required
+    members
+- id: test_build_tree_children_accepts_root_info
+  type: fail_to_pass
+  origin: pr_diff
+  description: buildTreeChildren accepts optional treeRootInfo parameter for root
+    wrapping
+- id: test_render_root_element_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: renderRootElement method exists with FileKind.ROOT_FOLDER rendering
+- id: test_collect_workspace_files_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: collectWorkspaceFiles async function exists for non-git workspace file
+    enumeration
+- id: test_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Target changesView.ts file exists
+- id: test_build_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts typecheck passes
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint check passes on the codebase
+- id: test_valid_layers_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Valid layers check passes
+- id: test_vscode_dts_compile_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: VS Code dts compile check passes
+- id: test_cli_cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI Rust clippy linting passes
+- id: test_cli_cargo_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI Rust unit tests pass
+rubric:
+- rule: Use tabs for indentation, not spaces (TypeScript files)
+  source:
+    path: .github/copilot-instructions.md
+    lines: 70-72
+    commit: 3c51a00d738294aa6e113b87e38b8ea770fbf9ee
+- rule: Use arrow functions (=>) over anonymous function expressions
+  source:
+    path: .github/copilot-instructions.md
+    lines: '104'
+    commit: 3c51a00d738294aa6e113b87e38b8ea770fbf9ee
+- rule: Use PascalCase for type names and camelCase for function/method names
+  source:
+    path: .github/copilot-instructions.md
+    lines: 76-79
+    commit: 3c51a00d738294aa6e113b87e38b8ea770fbf9ee
+- rule: For vs/sessions layer code, use Menus.* constants from browser/menus.ts, never
+    shared MenuId.* from vs/platform/actions
+  source:
+    path: .github/skills/sessions/SKILL.md
+    lines: 175-176
+    commit: 3c51a00d738294aa6e113b87e38b8ea770fbf9ee
+- rule: Views and contributions in vs/sessions must use WindowVisibility.Sessions
+    in their registration
+  source:
+    path: .github/skills/sessions/SKILL.md
+    lines: 242-244
+    commit: 3c51a00d738294aa6e113b87e38b8ea770fbf9ee

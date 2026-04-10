@@ -380,11 +380,11 @@ print("PASS")
 def test_chat_template_utils_unit_tests():
     """Repo's chat_template_utils unit tests pass (pass_to_pass)."""
     r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "pytest", "pytest-xdist", "-q"],
+        [sys.executable, "-m", "pip", "install", "pytest", "-q"],
         capture_output=True,
     )
     r = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/utils/test_chat_template_utils.py", "-x", "-q"],
+        [sys.executable, "-m", "pytest", "tests/utils/test_chat_template_utils.py", "-x", "-q", "-p", "no:network_debug"],
         capture_output=True,
         text=True,
         timeout=120,
@@ -396,7 +396,7 @@ def test_chat_template_utils_unit_tests():
 # [repo_tests] pass_to_pass
 def test_render_jinja_template_backward_compat():
     """render_jinja_template still works after changes (subprocess execution)."""
-    code = """
+    code = r"""
 import sys
 sys.path.insert(0, "/workspace/transformers/src")
 
@@ -432,6 +432,62 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
+# [repo_tests] pass_to_pass
+def test_get_json_schema_function():
+    """Repo's get_json_schema function works correctly (pass_to_pass)."""
+    code = """
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
+
+from transformers.utils.chat_template_utils import get_json_schema
+
+def fn(x: int, y: str) -> str:
+    '''
+    Test function
+
+    Args:
+        x: The first input
+        y: The second input
+
+    Returns:
+        The output
+    '''
+    return str(x) + y
+
+schema = get_json_schema(fn)
+assert schema["type"] == "function", f"Expected type 'function', got {schema['type']}"
+assert schema["function"]["name"] == "fn", f"Expected name 'fn', got {schema['function']['name']}"
+assert "x" in schema["function"]["parameters"]["properties"], "x should be in properties"
+assert "y" in schema["function"]["parameters"]["properties"], "y should be in properties"
+print("PASS: get_json_schema works correctly")
+"""
+    r = _run_python_code(code, timeout=30)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass
+def test_compile_jinja_template():
+    """Repo's _compile_jinja_template function works correctly (pass_to_pass)."""
+    code = r"""
+import sys
+sys.path.insert(0, "/workspace/transformers/src")
+
+from transformers.utils.chat_template_utils import _compile_jinja_template
+
+template = r"{% for msg in messages %}{{ msg['role'] }}: {{ msg['content'] }}\n{% endfor %}"
+compiled = _compile_jinja_template(template)
+assert compiled is not None, "Template compilation failed"
+# Test that we can render
+result = compiled.render(messages=[{"role": "user", "content": "Hello"}])
+assert "user: Hello" in result, f"Unexpected render result: {result}"
+print("PASS: _compile_jinja_template works correctly")
+"""
+    r = _run_python_code(code, timeout=30)
+    assert r.returncode == 0, f"Test failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (agent_config) — style enforcement
 # ---------------------------------------------------------------------------
@@ -439,7 +495,11 @@ print("PASS")
 
 # [agent_config] pass_to_pass — AGENTS.md:2 @ 6a056a16a856097cb0400ce9a48e96ab9d469e30
 def test_ruff_style_check():
-    """Modified Python files pass ruff linting (make style requirement from AGENTS.md)."""
+    """Modified Python files pass ruff linting (make style requirement from AGENTS.md).
+    
+    Note: The base commit has some existing FURB110 lint warnings that are not
+    related to the PR changes. We ignore those specific warnings.
+    """
     subprocess.run(
         [sys.executable, "-m", "pip", "install", "ruff", "-q"],
         capture_output=True,
@@ -451,9 +511,32 @@ def test_ruff_style_check():
         f"{REPO}/src/transformers/models/voxtral/processing_voxtral.py",
     ]
     result = subprocess.run(
-        [sys.executable, "-m", "ruff", "check"] + files,
+        [sys.executable, "-m", "ruff", "check", "--ignore", "FURB110"] + files,
         capture_output=True,
         text=True,
         cwd=REPO,
     )
     assert result.returncode == 0, f"ruff check failed:\n{result.stdout}\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_ruff_format_check():
+    """Modified Python files pass ruff format check (make style requirement)."""
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+    )
+    files = [
+        f"{REPO}/src/transformers/processing_utils.py",
+        f"{REPO}/src/transformers/utils/chat_template_utils.py",
+        f"{REPO}/src/transformers/models/smolvlm/processing_smolvlm.py",
+        f"{REPO}/src/transformers/models/voxtral/processing_voxtral.py",
+    ]
+    result = subprocess.run(
+        [sys.executable, "-m", "ruff", "format", "--check"] + files,
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"ruff format check failed:\n{result.stdout}\n{result.stderr}"
+# Test suite for transformers-processor-chat-template-kwargs validation

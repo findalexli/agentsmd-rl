@@ -8,6 +8,52 @@ REPO = "/workspace/sui"
 TARGET_FILE = f"{REPO}/consensus/core/src/authority_node.rs"
 
 
+# =============================================================================
+# Pass-to-Pass Tests (repo_tests origin - these run actual CI commands)
+# =============================================================================
+
+
+def test_repo_cargo_check_consensus_core():
+    """Cargo check compiles consensus-core package (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "consensus-core"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_cargo_clippy_consensus_core():
+    """Cargo clippy lints consensus-core package (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "consensus-core", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_cargo_fmt_check():
+    """Cargo fmt check passes for all code (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr}"
+
+
+# =============================================================================
+# Fail-to-Pass Tests (the original fix verification tests)
+# =============================================================================
+
+
 def test_mainnet_guard_removed():
     """FIFO compaction for Mainnet is no longer gated - the chain type check is removed."""
     with open(TARGET_FILE) as f:

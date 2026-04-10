@@ -53,14 +53,14 @@ const content = fs.readFileSync(
   'src/vs/workbench/contrib/files/browser/files.contribution.ts', 'utf8'
 );
 
-// Extract the default object near watcherExclude
-const defaultMatch = content.match(/'default':\\s*\\{([^}]+)\\}/);
-if (!defaultMatch) {
-  console.error('No default block found');
+// Extract the watcherExclude config section first, then find its default
+const watcherMatch = content.match(/'files\\.watcherExclude':\\s*\\{[\\s\\S]*?'default':\\s*\\{([^}]+)\\}/);
+if (!watcherMatch) {
+  console.error('No watcherExclude default block found');
   process.exit(1);
 }
 
-const block = defaultMatch[1];
+const block = watcherMatch[1];
 const patterns = [];
 const re = /'([^']+)':\\s*true/g;
 let m;
@@ -149,13 +149,14 @@ const content = fs.readFileSync(
   'src/vs/workbench/contrib/files/browser/files.contribution.ts', 'utf8'
 );
 
-const defaultMatch = content.match(/'default':\\s*\\{([^}]+)\\}/);
-if (!defaultMatch) {
-  console.error('No default block found');
+// Extract the watcherExclude config section first, then find its default
+const watcherMatch = content.match(/'files\\.watcherExclude':\\s*\\{[\\s\\S]*?'default':\\s*\\{([^}]+)\\}/);
+if (!watcherMatch) {
+  console.error('No watcherExclude default block found');
   process.exit(1);
 }
 
-const block = defaultMatch[1];
+const block = watcherMatch[1];
 const patterns = [];
 const re = /'([^']+)':\\s*true/g;
 let m;

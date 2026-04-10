@@ -11,6 +11,7 @@ we cannot instantiate vLLM models or run CUDA kernels in this environment.
 """
 
 import ast
+import subprocess
 from pathlib import Path
 
 REPO = "/workspace/vllm"
@@ -60,6 +61,103 @@ def test_gemma4_model_class_exists():
     methods = _class_methods(cls)
     assert "forward" in methods, "Gemma4Model.forward not found"
     assert "__init__" in methods, "Gemma4Model.__init__ not found"
+
+
+# ---------------------------------------------------------------------------
+# Gates (pass_to_pass, repo_tests) — CI lint/format checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on gemma4.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "vllm/model_executor/models/gemma4.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on gemma4.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "vllm/model_executor/models/gemma4.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_spdx_header():
+    """SPDX license header check passes on gemma4.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_spdx_header.py", "vllm/model_executor/models/gemma4.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"SPDX header check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_forbidden_imports():
+    """Forbidden imports check passes on gemma4.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_forbidden_imports.py", "vllm/model_executor/models/gemma4.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_boolean_context_manager():
+    """Boolean context manager check passes on gemma4.py (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "tools/pre_commit/check_boolean_context_manager.py", "vllm/model_executor/models/gemma4.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Boolean context manager check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # ---------------------------------------------------------------------------

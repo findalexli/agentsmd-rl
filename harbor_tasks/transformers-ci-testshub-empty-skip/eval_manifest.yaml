@@ -86,8 +86,9 @@ checks:
       commit: "c9faacd7d57459157656bdffe049dabb6293f011"
 
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
+  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case."
     source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
+      path: "utils/tests_fetcher.py"
+      lines: "1106-1120"
       commit: "c9faacd7d57459157656bdffe049dabb6293f011"
+    reference: "def create_test_list_from_filter(full_test_list, out_path):\n    os.makedirs(out_path, exist_ok=True)\n    all_test_files = \"\\n\".join(full_test_list)\n+\n    # Collect info: job_name, file_name and files_to_test, so we can process after the loop\n+    to_output = []\n     for job_name, _filter in JOB_TO_TEST_FILE.items():\n         file_name = os.path.join(out_path, f\"{job_name}_test_list.txt\")\n         if job_name == \"tests_hub\":\n             files_to_test = [\"tests\"]\n         else:\n             files_to_test = list(re.findall(_filter, all_test_files))\n-        print(job_name, file_name)\n+        print(job_name, file_name, len(files_to_test))\n+\n         if len(files_to_test) > 0:  # No tests -> no file with test list\n-            with open(file_name, \"w\") as f:\n-                f.write(\"\\n\".join(files_to_test))\n+            to_output.append((job_name, file_name, files_to_test))\n+\n+    # Only get `tests_hub`, which means we have 0 test file for all other jobs --> No job at all to run.\n+    if len(to_output) == 1:\n+        print(\"No test file found for any job, skipping `tests_hub` as well.\")\n+        to_output = []\n+\n+    for _, file_name, files_to_test in to_output:\n+        with open(file_name, \"w\") as f:\n+            f.write(\"\\n\".join(files_to_test))"

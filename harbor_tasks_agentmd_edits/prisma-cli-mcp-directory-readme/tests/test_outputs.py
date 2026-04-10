@@ -268,3 +268,17 @@ def test_repo_eslint_cli_modified():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_all():
+    """Repo-wide prettier check passes (pass_to_pass)."""
+    # Enable corepack first to get pnpm
+    subprocess.run(["corepack", "enable"], check=True, cwd=REPO)
+    subprocess.run(["corepack", "prepare", "pnpm@9.14.4", "--activate"], check=True, cwd=REPO)
+    # Install dependencies first
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], capture_output=True, timeout=300, cwd=REPO)
+    r = subprocess.run(
+        ["pnpm", "run", "prettier-check"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"

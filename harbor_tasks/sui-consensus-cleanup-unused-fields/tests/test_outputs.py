@@ -1,11 +1,16 @@
 """Tests for sui PR #26086: cleanup unused fields and no-op flag."""
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 REPO = Path("/workspace/sui")
 
+
+# =============================================================================
+# Fail-to-pass tests (verifying the fix)
+# =============================================================================
 
 def test_consensus_config_field_removed():
     """always_accept_system_transactions field removed from ConsensusProtocolConfig (fail_to_pass)."""
@@ -187,31 +192,47 @@ def test_consensus_manager_no_flag():
         "consensus_always_accept_system_transactions() call still in consensus_manager"
 
 
-def test_rust_syntax_valid():
-    """Rust source files are syntactically valid (pass_to_pass)."""
-    # Quick syntax check using rustc --emit=metadata (fast check, doesn't produce full binary)
-    files_to_check = [
-        REPO / "consensus/config/src/consensus_protocol_config.rs",
-        REPO / "consensus/core/src/commit.rs",
-        REPO / "crates/sui-core/src/authority/authority_store_tables.rs",
-        REPO / "crates/sui-core/src/authority.rs",
-        REPO / "crates/sui-core/src/consensus_types/consensus_output_api.rs",
-        REPO / "crates/sui-core/src/consensus_manager/mod.rs",
-    ]
+# =============================================================================
+# Pass-to-pass tests (quality gates - using actual CI commands)
+# =============================================================================
 
-    for file_path in files_to_check:
-        r = subprocess.run(
-            ["rustc", "--emit=metadata", "-o", "/dev/null", str(file_path)],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        # Note: this might fail due to dependencies, but shouldn't fail for syntax
-        # We just check that it's not a syntax error (exit code 1 with specific messages)
-        if r.returncode != 0:
-            # If it fails, it should be due to missing deps, not syntax errors
-            assert "expected" not in r.stderr.lower() or "syntax" not in r.stderr.lower(), \
-                f"Syntax error in {file_path}: {r.stderr[:500]}"
+def test_cargo_check_consensus():
+    """Cargo check passes on modified consensus crates (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "consensus-config", "-p", "consensus-core"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-1000:]}"
+
+
+def test_cargo_fmt():
+    """Rust code is properly formatted (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--check"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo fmt check failed:\n{r.stderr[-500:]}"
+
+
+def test_cargo_test_consensus():
+    """Consensus crate unit tests pass (pass_to_pass)."""
+    env = os.environ.copy()
+    env["SUI_SKIP_SIMTESTS"] = "1"
+    r = subprocess.run(
+        ["cargo", "test", "--lib", "-p", "consensus-core", "-p", "consensus-config", "--", "--test-threads=2"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+        env=env,
+    )
+    assert r.returncode == 0, f"Consensus tests failed:\n{r.stderr[-1000:]}"
 
 
 if __name__ == "__main__":

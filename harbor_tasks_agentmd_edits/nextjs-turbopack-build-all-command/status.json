@@ -1,20 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T11:56:36.472733",
-  "total_time": 1558.26,
-  "sandbox_id": "ivzubzuj0s8yat377by6i",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T14:51:12.761030",
+  "total_time": 430.96,
+  "sandbox_id": "iw9lhdos39gaq2b7a999m",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "completed",
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 6.9,
-      "notes": "Docker image built successfully. Added 4 new pass-to-pass tests: packages_directory_structure (static), git_repo_valid (repo_tests), node_version (repo_tests), pnpm_version (repo_tests). Fixed origin of existing tests: lerna_json_valid, turbo_json_valid, next_package_json_valid changed from repo_tests to static (they only read JSON files). Verified all 9 pass-to-pass tests pass. The 5 fail-to-pass tests correctly fail on base commit. CI commands tested: node --version (passes), git rev-parse (passes), pnpm --version (not installed in Docker, handled gracefully). Repo CI workflows analyzed: build_and_test.yml runs lint-no-typescript, check-examples, validate-externals-doc, types-and-precompiled, test-cargo-unit, rust-check. Many Node.js scripts fail without dependencies installed."
+      "time": 236.04,
+      "notes": ""
     },
     "improve": {
       "status": "skipped",
@@ -23,35 +24,32 @@
       "time": 0,
       "notes": "tests look good"
     },
-    "p2p_enrichment": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 218.71,
-      "notes": ""
-    },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four validation checks pass. Fixed test_git_repo_valid to handle gold solution case (HEAD~1 check). Docker build succeeds, NOP test correctly fails on base commit (5 fail-to-pass tests fail), gold test passes all 18 tests, rubric judge ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 94.85
+      "time": 159.32
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.36,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5629.12,
-      "at": "2026-04-09T07:43:30.439192"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1558.26,
-      "at": "2026-04-10T11:56:36.472733"
+      "time": 430.96,
+      "at": "2026-04-10T14:51:12.761030"
     }
   ]
 }

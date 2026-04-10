@@ -29,7 +29,28 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: SKILL.md documents bench:compare workflow and profile output locations
-rubric: []
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on packages/svelte/src/reactivity/
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Reactivity unit tests pass
+- id: test_repo_runtime_runes_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Runtime runes tests pass
+rubric:
+- rule: Internal variables and functions in JavaScript files must use snake_case
+  source:
+    path: CONTRIBUTING.md
+    lines: '131'
+    commit: c93e251654a3193f294d6a4171d4087b4cb2fb80
 config_edits:
 - path: .agents/skills/performance-investigation/SKILL.md
   tier: 1

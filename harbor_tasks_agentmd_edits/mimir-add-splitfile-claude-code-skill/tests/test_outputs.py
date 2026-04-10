@@ -318,7 +318,7 @@ def test_skill_md_workflow_phases():
     skill_path = Path(REPO) / ".claude" / "skills" / "split-file" / "SKILL.md"
     content = skill_path.read_text()
 
-    assert "analyze" in content or "analysis" in content, \
+    assert "analyze" in content.lower() or "analysis" in content.lower(), \
         "Should have an analysis/planning phase"
     assert "split" in content, \
         "Should have a split phase"
@@ -392,3 +392,18 @@ def test_repo_mod_tidy():
         env={**subprocess.os.environ, "GOTOOLCHAIN": "auto"},
     )
     assert result.returncode == 0, f"go mod tidy -diff failed:\n{result.stderr}"
+
+
+def test_repo_gofmt():
+    """Go code in tools directory is properly formatted (pass_to_pass)."""
+    result = subprocess.run(
+        ["gofmt", "-l", "./tools"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env={**subprocess.os.environ, "GOTOOLCHAIN": "auto"},
+    )
+    assert result.returncode == 0, f"gofmt failed:\n{result.stderr}"
+    # gofmt -l outputs file names that need formatting; empty output means all files are formatted
+    assert result.stdout.strip() == "", f"The following files need formatting:\n{result.stdout}"

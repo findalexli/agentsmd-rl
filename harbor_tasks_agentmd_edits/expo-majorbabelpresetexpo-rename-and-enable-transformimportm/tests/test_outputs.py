@@ -94,25 +94,97 @@ node -e "const preset = require('babel-preset-expo'); console.log('PRESET_LOADED
 
 # [repo_tests] pass_to_pass
 def test_repo_import_meta_transform():
-    """Repo's import.meta transform works with the preset (pass_to_pass)."""
+    """Repo's import.meta transform works with the plugin (pass_to_pass)."""
     script = """
-mkdir -p /tmp/test-transform
-cd /tmp/test-transform
-echo '{"name": "test", "version": "1.0.0"}' > package.json
-npm install @babel/core @babel/generator @babel/helper-module-imports debug resolve-from @babel/plugin-proposal-decorators @babel/plugin-proposal-export-default-from @babel/plugin-syntax-export-default-from @babel/plugin-transform-class-static-block @babel/plugin-transform-export-namespace-from @babel/plugin-transform-flow-strip-types @babel/plugin-transform-modules-commonjs @babel/plugin-transform-object-rest-spread @babel/plugin-transform-parameters @babel/plugin-transform-private-methods @babel/plugin-transform-private-property-in-object @babel/plugin-transform-runtime @babel/preset-react @babel/preset-typescript babel-plugin-react-native-web babel-plugin-syntax-hermes-parser babel-plugin-transform-flow-enums @babel/runtime @react-native/babel-preset --silent 2>&1 | tail -1
-mkdir -p node_modules/babel-preset-expo
-cp -r /workspace/expo/packages/babel-preset-expo/build/* node_modules/babel-preset-expo/
-cp /workspace/expo/packages/babel-preset-expo/lazy-imports-blacklist.js node_modules/babel-preset-expo/
-node -e 'const babel = require("@babel/core"); const preset = require("babel-preset-expo"); function getCaller(props) { return props; } const options = { filename: "/unknown", babelrc: false, presets: [[preset, { unstable_transformImportMeta: true }]], sourceMaps: true, configFile: false, compact: false, comments: true, retainLines: true, caller: getCaller({ name: "metro", engine: "hermes", platform: "ios", isDev: true }) }; const sourceCode = "var url = import.meta.url;"; const result = babel.transformSync(sourceCode, options); if (result.code.includes("globalThis.__ExpoImportMetaRegistry")) { console.log("TRANSFORM_SUCCESS"); } else { console.log("TRANSFORM_FAILED:" + result.code); }'
+const babel = require("@babel/core");
+const { expoImportMetaTransformPluginFactory } = require("./build/import-meta-transform-plugin");
+const plugin = expoImportMetaTransformPluginFactory(true);
+const result = babel.transformSync("var url = import.meta.url;", {
+    plugins: [plugin],
+    filename: "test.js",
+    caller: { name: "metro", platform: "ios" }
+});
+if (result.code.includes("globalThis.__ExpoImportMetaRegistry")) {
+    console.log("TRANSFORM_SUCCESS");
+} else {
+    console.log("TRANSFORM_FAILED:" + result.code);
+}
 """
     r = subprocess.run(
-        ["bash", "-c", script],
+        ["node", "-e", script],
         capture_output=True,
         text=True,
-        timeout=300,
+        timeout=30,
+        cwd=PKG,
     )
     assert r.returncode == 0, f"Transform test failed:\n{r.stderr[-500:]}"
     assert "TRANSFORM_SUCCESS" in r.stdout, f"Transform did not succeed:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_meta_default_ios_error():
+    """Repo's import.meta throws error on iOS when transform is disabled (pass_to_pass)."""
+    script = """
+const babel = require("@babel/core");
+const { expoImportMetaTransformPluginFactory } = require("./build/import-meta-transform-plugin");
+const plugin = expoImportMetaTransformPluginFactory(false);
+try {
+    babel.transformSync("var url = import.meta.url;", {
+        plugins: [plugin],
+        filename: "test.js",
+        caller: { name: "metro", platform: "ios" }
+    });
+    console.log("NO_ERROR_THROWN");
+} catch(e) {
+    if (e.message.includes("import.meta")) {
+        console.log("ERROR_THROWN_CORRECTLY");
+    } else {
+        console.log("WRONG_ERROR:", e.message);
+    }
+}
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=PKG,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+    assert "ERROR_THROWN_CORRECTLY" in r.stdout, f"Expected error to be thrown for iOS:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_meta_web_no_error():
+    """Repo's import.meta does not throw on web when transform is disabled (pass_to_pass)."""
+    script = """
+const babel = require("@babel/core");
+const { expoImportMetaTransformPluginFactory } = require("./build/import-meta-transform-plugin");
+const plugin = expoImportMetaTransformPluginFactory(false);
+try {
+    const result = babel.transformSync("var url = import.meta.url;", {
+        plugins: [plugin],
+        filename: "test.js",
+        caller: { name: "metro", platform: "web" }
+    });
+    if (result.code.includes("import.meta.url")) {
+        console.log("WEB_PASSTHROUGH_SUCCESS");
+    } else {
+        console.log("WEB_TRANSFORMED_UNEXPECTEDLY:", result.code);
+    }
+} catch(e) {
+    console.log("WEB_ERROR_THROWN:", e.message);
+}
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=PKG,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+    assert "WEB_PASSTHROUGH_SUCCESS" in r.stdout, f"Expected web to pass through without error:\n{r.stdout}"
 
 
 # [repo_tests] pass_to_pass

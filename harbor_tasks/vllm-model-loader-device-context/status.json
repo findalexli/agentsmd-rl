@@ -1,72 +1,78 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:54:52.730048",
-  "total_time": 1601.71,
-  "sandbox_id": "i7hv2i9jsmix0or21tlcg",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:30:59.573767",
+  "total_time": 1308.01,
+  "sandbox_id": "iiawin3e5c1l4t3zobtye",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 65.66,
-      "notes": ""
+      "notes": "CI commands found: ruff check (passes), ruff format --check (passes), typos spell check (passes). Added 3 repo_tests p2p gates: test_repo_ruff_check, test_repo_ruff_format, test_repo_typos. Full vllm tests require GPU/network, excluded."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 140.09,
+      "time": 264.46,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.67,
+      "time": 64.32,
       "notes": ""
     },
     "improve": {
-      "status": "error",
+      "status": "skipped",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.67,
-      "notes": "syntax error or missing file: "
+      "time": 0,
+      "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 4.28
+      "time": 72.56,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build succeeded, NOP test correctly fails with reward=0 (2 fail-to-pass tests fail on buggy base), Gold test passes with reward=1 (all 11 tests pass after fix), Rubric judge ICR=1.0."
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.3,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
       "backend": "fireworks",
-      "time": 5878.86,
-      "at": "2026-04-09T07:00:02.143043"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1601.44,
-      "at": "2026-04-09T14:54:52.560193"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1601.71,
-      "at": "2026-04-09T14:54:52.730048"
+      "time": 1308.01,
+      "at": "2026-04-10T15:30:59.573767"
     }
   ]
 }

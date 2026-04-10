@@ -17,6 +17,18 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified Python files must parse without syntax errors
+- id: test_repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pyproject.toml is valid TOML
+- id: test_repo_process_module_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: The process.py module can be imported without errors
+- id: test_repo_process_py_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified Python files compile without errors
 - id: set_proc_title_function_exists
   type: fail_to_pass
   origin: pr_diff
@@ -55,118 +67,32 @@ checks:
   type: pass_to_pass
   origin: static
   description: set_proc_title() is not a stub - has real implementation logic
-rubric:
-- rule: 'When adding new functionality that affects runtime behavior, corresponding
-    SKILL.md documentation must be updated to reflect the changes (per AGENTS.md:
-    ''When you make changes to the codebase, check if any skills need to be updated
-    to stay accurate'')'
-  source:
-    path: AGENTS.md
-    lines: 37-40
-    commit: 8304f1e2acdd9a5264a323f15d132bb7f2015a9f
-- rule: Code should use minimal try/except blocks - let errors propagate rather than
-    catching them silently. Only catch exceptions for intentional fault tolerance
-    (retries, robustness). Process utilities should not have broad exception handlers
-    that hide bugs.
-  source:
-    path: AGENTS.md
-    lines: '5'
-    commit: 8304f1e2acdd9a5264a323f15d132bb7f2015a9f
-- rule: Git dependency pins in pyproject.toml must use a 7-character commit hash for
-    the rev field
-  source:
-    path: AGENTS.md
-    lines: '34'
-    commit: 8304f1e2acdd9a5264a323f15d132bb7f2015a9f
 config_edits:
 - path: skills/monitor-run/SKILL.md
   tier: 1
-  gold_added: '### Identify processes via process tree
-
-
-    All prime-rl and verifiers processes set custom process titles using `setproctitle`,
-    making them easy to identify in `ps`, `htop`, and `pstree`.
-
-
-    #### Process titles
-
-
-    | Process | Title |
-
-    |---------|-------|
-
-    | RL launcher (`uv run rl`) | `PRIME-RL::Launcher` |
-
-    | SFT launcher (`uv run sft`) | `PRIME-RL::SFT` |
-
-    | Inference server (`uv run inference`) | `PRIME-RL::Inference` |
-
-    | Orchestrator (`uv run orchestrator`) | `PRIME-RL::Orchestrator` |
-
-    | RL trainer (via torchrun) | `PRIME-RL::Trainer` |
-
-    | SFT trainer (via torchrun) | `PRIME-RL::SFTTrainer` |
-
-    | Env server (`uv run env-server`) | `PRIME-RL::EnvServer` |
-
-    | vLLM engine core (spawned by inference) | `VLLM::EngineCore` |
-
-    | Env server (spawned by orchestrator) | `Verifiers::EnvServer` |
-
-    | Env worker N | `Verifiers::EnvWorker{N}` |
-
-
-    #### Inspecting the process tree
-
-
-    ```bash
-
-    # Find all prime-rl / verifiers processes
-
-    ps -eo pid,comm,args | grep -E "PRIME-RL|Verifiers"
-
-
-    # Show the full tree from the launcher PID (filter threads with grep -v)
-
-
-    # Find vLLM processes specifically (engine core, router)
-
-    ps -eo pid,comm,args | grep -E "VLLM::"
-
-
-    # Find vLLM processes on GPUs
-
-    nvidia-smi --query-compute-apps=pid,name,gpu_uuid --format=csv,noheader
-
-    ```
-
-
-    A typical single-node RL run process tree:
-
-
-    ```
-
-    PRIME-RL::Launcher
-
-    ├── PRIME-RL::Inference          (vLLM server, GPU 0)
-
-    ├── PRIME-RL::Orchestrator       (CPU-only, data/scheduling)
-
-    │   ├── Verifiers::EnvServer     (ZMQ env server per environment)
-
-    │   │   ├── Verifiers::EnvWorker0
-
-    │   │   ├── Verifiers::EnvWorker1
-
-    │   │   └── ...
-
-    │   └── ...
-
-    ├── torchrun
-
-    │   └── PRIME-RL::Trainer        (RL trainer, GPU 1+)
-
-    └── tail -F trainer.log
-
-    ```'
+  gold_added: "### Identify processes via process tree\n\nAll prime-rl and verifiers\
+    \ processes set custom process titles using `setproctitle`, making them easy to\
+    \ identify in `ps`, `htop`, and `pstree`.\n\n#### Process titles\n\n| Process\
+    \ | Title |\n|---------|-------|\n| RL launcher (`uv run rl`) | `PRIME-RL::Launcher`\
+    \ |\n| SFT launcher (`uv run sft`) | `PRIME-RL::SFT` |\n| Inference server (`uv\
+    \ run inference`) | `PRIME-RL::Inference` |\n| Orchestrator (`uv run orchestrator`)\
+    \ | `PRIME-RL::Orchestrator` |\n| RL trainer (via torchrun) | `PRIME-RL::Trainer`\
+    \ |\n| SFT trainer (via torchrun) | `PRIME-RL::SFTTrainer` |\n| Env server (`uv\
+    \ run env-server`) | `PRIME-RL::EnvServer` |\n| vLLM engine core (spawned by inference)\
+    \ | `VLLM::EngineCore` |\n| Env server (spawned by orchestrator) | `Verifiers::EnvServer`\
+    \ |\n| Env worker N | `Verifiers::EnvWorker{N}` |\n\n#### Inspecting the process\
+    \ tree\n\n```bash\n# Find all prime-rl / verifiers processes\nps -eo pid,comm,args\
+    \ | grep -E \"PRIME-RL|Verifiers\"\n\n# Show the full tree from the launcher PID\
+    \ (filter threads with grep -v)\n\n# Find vLLM processes specifically (engine\
+    \ core, router)\nps -eo pid,comm,args | grep -E \"VLLM::\"\n\n# Find vLLM processes\
+    \ on GPUs\nnvidia-smi --query-compute-apps=pid,name,gpu_uuid --format=csv,noheader\n\
+    ```\n\nA typical single-node RL run process tree:\n\n```\nPRIME-RL::Launcher\n\
+    \u251C\u2500\u2500 PRIME-RL::Inference          (vLLM server, GPU 0)\n\u251C\u2500\
+    \u2500 PRIME-RL::Orchestrator       (CPU-only, data/scheduling)\n\u2502   \u251C\
+    \u2500\u2500 Verifiers::EnvServer     (ZMQ env server per environment)\n\u2502\
+    \   \u2502   \u251C\u2500\u2500 Verifiers::EnvWorker0\n\u2502   \u2502   \u251C\
+    \u2500\u2500 Verifiers::EnvWorker1\n\u2502   \u2502   \u2514\u2500\u2500 ...\n\
+    \u2502   \u2514\u2500\u2500 ...\n\u251C\u2500\u2500 torchrun\n\u2502   \u2514\u2500\
+    \u2500 PRIME-RL::Trainer        (RL trainer, GPU 1+)\n\u2514\u2500\u2500 tail\
+    \ -F trainer.log\n```"
   gold_removed: ''

@@ -1,33 +1,89 @@
-version: "2.0"
+version: '2.0'
 source:
   repo: microsoft/vscode
   base_commit: 68cb51843c3f0f4e551479f825d18c954e88c778
-
 checks:
-  - id: test_file_exists
-    type: pass_to_pass
-    origin: static
-    description: Target promptFilesLocator.ts file must exist
+- id: test_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Target promptFilesLocator.ts file must exist
+- id: test_loop_terminates_at_drive_root
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Loop in findParentRepoFolders must use while(true) with isEqual(current,
+    parent) fixed-point check and terminate at filesystem roots including Windows
+    drive roots
 
-  - id: test_loop_terminates_at_drive_root
-    type: fail_to_pass
-    origin: pr_diff
-    description: >
-      Loop in findParentRepoFolders must use while(true) with
-      isEqual(current, parent) fixed-point check and terminate
-      at filesystem roots including Windows drive roots
+    '
+- id: test_parent_computed_inside_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'dirname(current) must be computed inside the while(true) body, not
+    pre-computed before the loop
 
-  - id: test_parent_computed_inside_loop
-    type: fail_to_pass
-    origin: pr_diff
-    description: >
-      dirname(current) must be computed inside the while(true)
-      body, not pre-computed before the loop
+    '
+- id: test_break_with_all_termination_conditions
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Break guard must check all four conditions: dirname fixed-point, root
+    path, user home boundary, and seen-set deduplication -- using parent (not current)
+    for the latter two
 
-  - id: test_break_with_all_termination_conditions
-    type: fail_to_pass
-    origin: pr_diff
-    description: >
-      Break guard must check all four conditions: dirname fixed-point,
-      root path, user home boundary, and seen-set deduplication —
-      using parent (not current) for the latter two
+    '
+- id: test_repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript syntax is valid via compiler API
+- id: test_repo_file_structure
+  type: pass_to_pass
+  origin: static
+  description: Chat/promptSyntax module files exist in expected locations
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'VS Code: mocha unit tests pass'
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'VS Code: ESLint checks pass'
+- id: test_repo_valid_layers
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'VS Code: architectural layer checks pass'
+- id: test_repo_typescript_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript files parse correctly via compiler API
+rubric:
+- rule: TypeScript code must use tabs for indentation, not spaces
+  source:
+    path: .github/copilot-instructions.md
+    lines: 70-72
+    commit: 68cb51843c3f0f4e551479f825d18c954e88c778
+- rule: Local variables and function names must use camelCase
+  source:
+    path: .github/copilot-instructions.md
+    lines: 76-79
+    commit: 68cb51843c3f0f4e551479f825d18c954e88c778
+- rule: Loop and conditional bodies must be surrounded with curly braces
+  source:
+    path: .github/copilot-instructions.md
+    lines: '113'
+    commit: 68cb51843c3f0f4e551479f825d18c954e88c778
+- rule: Opening curly braces must go on the same line as the statement that necessitates
+    them
+  source:
+    path: .github/copilot-instructions.md
+    lines: '114'
+    commit: 68cb51843c3f0f4e551479f825d18c954e88c778
+- rule: Parenthesized constructs should have no surrounding whitespace. A single space
+    follows commas, colons, and semicolons in those constructs.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '115'
+    commit: 68cb51843c3f0f4e551479f825d18c954e88c778
+- rule: Use 'single quotes' for strings not shown to the user.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '94'
+    commit: 68cb51843c3f0f4e551479f825d18c954e88c778

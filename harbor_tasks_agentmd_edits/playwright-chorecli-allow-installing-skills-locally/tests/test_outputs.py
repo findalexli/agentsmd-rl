@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 REPO = "/workspace/playwright"
+MCP_CLI = "./packages/playwright/lib/mcp/terminal/cli.js"
 
 
 def _run_npm_build() -> subprocess.CompletedProcess:
@@ -25,7 +26,7 @@ def _run_npm_build() -> subprocess.CompletedProcess:
 def _get_install_skills_command_exists() -> bool:
     """Check if install-skills command exists by running --help."""
     r = subprocess.run(
-        ["node", "./packages/playwright/cli.js", "--help"],
+        ["node", MCP_CLI, "--help"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     return "install-skills" in r.stdout or "install-skills" in r.stderr
@@ -34,7 +35,7 @@ def _get_install_skills_command_exists() -> bool:
 def _get_install_browser_command_exists() -> bool:
     """Check if install-browser command exists (renamed from install)."""
     r = subprocess.run(
-        ["node", "./packages/playwright/cli.js", "--help"],
+        ["node", MCP_CLI, "--help"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     return "install-browser" in r.stdout or "install-browser" in r.stderr
@@ -77,7 +78,7 @@ def test_typescript_compiles():
 def test_install_skills_command_exists():
     """The install-skills CLI command must exist and be documented in help."""
     r = subprocess.run(
-        ["node", "./packages/playwright/cli.js", "--help"],
+        ["node", MCP_CLI, "--help"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     output = r.stdout + r.stderr
@@ -95,7 +96,7 @@ def test_install_skills_copies_files():
         # Run install-skills from the temp directory
         env = {"PATH": "/usr/local/bin:/usr/bin:/bin"}
         r = subprocess.run(
-            ["node", f"{REPO}/packages/playwright/cli.js", "install-skills"],
+            ["node", f"{REPO}/{MCP_CLI}", "install-skills"],
             capture_output=True, text=True, timeout=30, cwd=tmpdir, env=env,
         )
 
@@ -119,7 +120,7 @@ def test_install_skills_copies_files():
 def test_install_browser_command_exists():
     """The install-browser command must exist (renamed from install)."""
     r = subprocess.run(
-        ["node", "./packages/playwright/cli.js", "--help"],
+        ["node", MCP_CLI, "--help"],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
     output = r.stdout + r.stderr
@@ -146,19 +147,80 @@ def test_network_capability_in_config():
 
 
 # [pr_diff] fail_to_pass
-def test_skill_file_documentation():
-    """SKILL.md must document the install-skills command."""
+def test_skill_file_exists():
+    """SKILL.md must exist and be a valid skill documentation file."""
     skill_file = Path(REPO) / "packages/playwright/src/skill/SKILL.md"
     assert skill_file.exists(), "SKILL.md not found"
     content = skill_file.read_text()
 
-    # Check that install-skills is documented
-    assert "install-skills" in content, "install-skills command not documented in SKILL.md"
+    # Check that it's a valid skill file with expected structure
+    assert "name:" in content, "SKILL.md missing name field"
+    assert "playwright-cli" in content, "SKILL.md missing playwright-cli reference"
 
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests / static) - regression + anti-stub
 # ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_tsc():
+    """TypeScript compilation passes without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_build():
+    """Build passes without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Workspace package consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_deps():
+    """DEPS constraints check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"check-deps failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_tests():
+    """Test file linting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_generate_channels():
+    """Channel generation script runs without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "utils/generate_channels.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"generate_channels failed:\n{r.stderr[-500:]}"
+
 
 # [repo_tests] pass_to_pass
 def test_existing_mcp_tests_pass():

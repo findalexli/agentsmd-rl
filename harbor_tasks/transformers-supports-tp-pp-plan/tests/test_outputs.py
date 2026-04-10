@@ -8,7 +8,9 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import os
 import subprocess
+import sys
 import textwrap
 from pathlib import Path
 
@@ -18,13 +20,15 @@ TARGET = f"{REPO}/src/transformers/modeling_utils.py"
 
 def _run_in_subprocess(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run Python code in a subprocess with proper PYTHONPATH."""
+    env = os.environ.copy()
+    env["PYTHONPATH"] = REPO
     return subprocess.run(
-        ["python3", "-c", code],
+        [sys.executable, "-c", code],
         capture_output=True,
         text=True,
         timeout=timeout,
         cwd=REPO,
-        env={"PYTHONPATH": REPO},
+        env=env,
     )
 
 
@@ -63,47 +67,52 @@ def _extract_method(source, method_name, *, is_setter=False):
 
 def _build_supports_tp_harness(prop_src, *, tp_plan, base_tp_plan, config_tp_plan):
     """Build exec code for supports_tp_plan with given mock values."""
-    return (
-        f"class Cfg:\n"
-        f"    base_model_tp_plan = {config_tp_plan!r}\n"
-        f"class Base:\n"
-        f"    _tp_plan = {base_tp_plan!r}\n"
-        f"class M:\n"
-        f"    _tp_plan = {tp_plan!r}\n"
-        f"    config = Cfg()\n"
-        f"    base_model = Base()\n"
-        + textwrap.indent(prop_src, "    ")
-        + "\nresult = M().supports_tp_plan\n"
-    )
+    lines = [
+        "class Cfg:",
+        f"    base_model_tp_plan = {config_tp_plan!r}",
+        "class Base:",
+        f"    _tp_plan = {base_tp_plan!r}",
+        "class M:",
+        f"    _tp_plan = {tp_plan!r}",
+        "    config = Cfg()",
+        "    base_model = Base()",
+    ]
+    indented_prop = textwrap.indent(prop_src, "    ")
+    lines.append(indented_prop)
+    lines.append("result = M().supports_tp_plan")
+    return "\n".join(lines)
 
 
 def _build_supports_pp_harness(prop_src, *, pp_plan, base_pp_plan, config_pp_plan):
     """Build exec code for supports_pp_plan with given mock values."""
-    return (
-        f"class Cfg:\n"
-        f"    base_model_tp_plan = None\n"
-        f"    base_model_pp_plan = {config_pp_plan!r}\n"
-        f"class Base:\n"
-        f"    _pp_plan = {base_pp_plan!r}\n"
-        f"class M:\n"
-        f"    _pp_plan = {pp_plan!r}\n"
-        f"    config = Cfg()\n"
-        f"    base_model = Base()\n"
-        + textwrap.indent(prop_src, "    ")
-        + "\nresult = M().supports_pp_plan\n"
-    )
+    lines = [
+        "class Cfg:",
+        "    base_model_tp_plan = None",
+        f"    base_model_pp_plan = {config_pp_plan!r}",
+        "class Base:",
+        f"    _pp_plan = {base_pp_plan!r}",
+        "class M:",
+        f"    _pp_plan = {pp_plan!r}",
+        "    config = Cfg()",
+        "    base_model = Base()",
+    ]
+    indented_prop = textwrap.indent(prop_src, "    ")
+    lines.append(indented_prop)
+    lines.append("result = M().supports_pp_plan")
+    return "\n".join(lines)
 
 
 def _build_pp_setter_harness(setter_src):
     """Build exec code for pp_plan setter tests."""
-    return (
-        "class M:\n"
-        "    _pp_plan = None\n"
-        "    @property\n"
-        "    def pp_plan(self):\n"
-        "        return self._pp_plan\n"
-        + textwrap.indent(setter_src, "    ")
-    )
+    lines = [
+        "class M:",
+        "    _pp_plan = None",
+        "    @property",
+        "    def pp_plan(self):",
+        "        return self._pp_plan",
+    ]
+    indented_setter = textwrap.indent(setter_src, "    ")
+    return "\n".join(lines) + "\n" + indented_setter
 
 
 # ---------------------------------------------------------------------------
@@ -137,7 +146,7 @@ def test_supports_tp_plan_empty_dict_false():
         harness = _build_supports_tp_harness(
             prop, tp_plan=tp, base_tp_plan=base_tp, config_tp_plan=cfg_tp
         )
-        code = harness + "print('RESULT:', result)"
+        code = harness + "\nprint('RESULT:', result)"
         r = _run_in_subprocess(code)
         assert r.returncode == 0, f"Harness failed: {r.stderr}"
         # Parse result from output
@@ -168,7 +177,7 @@ def test_supports_pp_plan_empty_dict_false():
         harness = _build_supports_pp_harness(
             prop, pp_plan=pp, base_pp_plan=base_pp, config_pp_plan=cfg_pp
         )
-        code = harness + "print('RESULT:', result)"
+        code = harness + "\nprint('RESULT:', result)"
         r = _run_in_subprocess(code)
         assert r.returncode == 0, f"Harness failed: {r.stderr}"
         for line in r.stdout.strip().split("\n"):
@@ -198,7 +207,7 @@ def test_supports_pp_plan_checks_config():
         harness = _build_supports_pp_harness(
             prop, pp_plan=None, base_pp_plan=None, config_pp_plan=cfg_val
         )
-        code = harness + "print('RESULT:', result)"
+        code = harness + "\nprint('RESULT:', result)"
         r = _run_in_subprocess(code)
         assert r.returncode == 0, f"Harness failed: {r.stderr}"
         for line in r.stdout.strip().split("\n"):
@@ -292,7 +301,7 @@ def test_supports_tp_plan_nonempty_true():
         harness = _build_supports_tp_harness(
             prop, tp_plan=tp, base_tp_plan=None, config_tp_plan=None
         )
-        code = harness + "print('RESULT:', result)"
+        code = harness + "\nprint('RESULT:', result)"
         r = _run_in_subprocess(code)
         assert r.returncode == 0, f"Harness failed: {r.stderr}"
         for line in r.stdout.strip().split("\n"):
@@ -308,7 +317,7 @@ def test_supports_tp_plan_nonempty_true():
     harness = _build_supports_tp_harness(
         prop, tp_plan={}, base_tp_plan={"x": "col"}, config_tp_plan=None
     )
-    code = harness + "print('RESULT:', result)"
+    code = harness + "\nprint('RESULT:', result)"
     r = _run_in_subprocess(code)
     assert r.returncode == 0, f"Harness failed: {r.stderr}"
     for line in r.stdout.strip().split("\n"):
@@ -324,7 +333,7 @@ def test_supports_tp_plan_nonempty_true():
     harness = _build_supports_tp_harness(
         prop, tp_plan={}, base_tp_plan=None, config_tp_plan={"y": "row"}
     )
-    code = harness + "print('RESULT:', result)"
+    code = harness + "\nprint('RESULT:', result)"
     r = _run_in_subprocess(code)
     assert r.returncode == 0, f"Harness failed: {r.stderr}"
     for line in r.stdout.strip().split("\n"):
@@ -348,7 +357,7 @@ def test_supports_pp_plan_nonempty_true():
         harness = _build_supports_pp_harness(
             prop, pp_plan=pp, base_pp_plan=None, config_pp_plan=None
         )
-        code = harness + "print('RESULT:', result)"
+        code = harness + "\nprint('RESULT:', result)"
         r = _run_in_subprocess(code)
         assert r.returncode == 0, f"Harness failed: {r.stderr}"
         for line in r.stdout.strip().split("\n"):
@@ -364,7 +373,7 @@ def test_supports_pp_plan_nonempty_true():
     harness = _build_supports_pp_harness(
         prop, pp_plan={}, base_pp_plan={"x": ("i", "o")}, config_pp_plan=None
     )
-    code = harness + "print('RESULT:', result)"
+    code = harness + "\nprint('RESULT:', result)"
     r = _run_in_subprocess(code)
     assert r.returncode == 0, f"Harness failed: {r.stderr}"
     for line in r.stdout.strip().split("\n"):
@@ -380,7 +389,7 @@ def test_supports_pp_plan_nonempty_true():
     harness = _build_supports_pp_harness(
         prop, pp_plan={}, base_pp_plan=None, config_pp_plan={"y": ("i", "o")}
     )
-    code = harness + "print('RESULT:', result)"
+    code = harness + "\nprint('RESULT:', result)"
     r = _run_in_subprocess(code)
     assert r.returncode == 0, f"Harness failed: {r.stderr}"
     for line in r.stdout.strip().split("\n"):
@@ -447,4 +456,34 @@ def test_ruff_check_clean():
     )
     assert r.returncode == 0, (
         f"ruff check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass — basic syntax validation via Python parser
+def test_syntax_parse_subprocess():
+    """Python subprocess can parse the modified file without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import ast; ast.parse(open('{TARGET}').read())"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Python syntax parsing failed:\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — documentation TOC check
+def test_doc_toc_check():
+    """Documentation TOC check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Documentation TOC check failed:\n{r.stderr[-500:]}"
     )

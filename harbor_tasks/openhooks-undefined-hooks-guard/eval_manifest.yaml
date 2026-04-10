@@ -3,62 +3,63 @@ source:
     owner: All-Hands-AI
     repo: OpenHands
     number: 13589
-    title: "fix(frontend): guard against undefined matcher.hooks in hooks modal"
-    base_commit: "3cd85a07b78a2d9d2e28b2904e1b42096d47a802"
-    merge_commit: "f7b53283b5692e1ba1755bfba8a51f09c76f5ec7"
-
+    title: 'fix(frontend): guard against undefined matcher.hooks in hooks modal'
+    base_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+    merge_commit: f7b53283b5692e1ba1755bfba8a51f09c76f5ec7
 checks:
-  # Fail-to-pass: Core behavior tests
-  - id: test_undefined_hooks_no_crash
-    type: fail_to_pass
-    origin: task_specific
-    description: Fix prevents crash when matcher.hooks is undefined
-
-  - id: test_typescript_type_updated
-    type: fail_to_pass
-    origin: task_specific
-    description: HookMatcher type updated to make hooks optional
-
-  # Pass-to-pass: Repo CI/CD tests
-  - id: test_repo_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    source:
-      file: .github/workflows/fe-unit-tests.yml
-      lines: "npm run test:coverage"
-    description: Frontend unit tests pass (vitest)
-
-  - id: test_repo_test_coverage
-    type: pass_to_pass
-    origin: repo_tests
-    source:
-      file: .github/workflows/fe-unit-tests.yml
-      lines: "npm run test:coverage"
-    description: Frontend unit tests with coverage for hooks-modal component
-
-  - id: test_repo_lint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    source:
-      file: .github/workflows/lint.yml
-      lines: "npm run lint"
-    description: Frontend linting passes (eslint + prettier)
-
-  - id: test_typescript_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    source:
-      file: .github/workflows/lint.yml
-      lines: "npm run typecheck && tsc"
-    description: TypeScript type checking passes
-
-  - id: test_translation_completeness
-    type: pass_to_pass
-    origin: repo_tests
-    source:
-      file: .github/workflows/lint.yml
-      lines: "npm run check-translation-completeness"
-    description: Translation keys have complete language coverage
-
-# Rubric for soft/subjective requirements
-rubric: []
+- id: test_undefined_hooks_no_crash
+  type: fail_to_pass
+  origin: task_specific
+  description: Fix prevents crash when matcher.hooks is undefined
+- id: test_typescript_type_updated
+  type: fail_to_pass
+  origin: task_specific
+  description: HookMatcher type updated to make hooks optional
+- id: test_repo_hooks_modal_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    file: .github/workflows/fe-unit-tests.yml
+    lines: npm run test:coverage
+  description: Frontend hooks-modal unit tests pass (vitest)
+- id: test_repo_conversation_panel_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    file: .github/workflows/fe-unit-tests.yml
+    lines: npm run test:coverage
+  description: Frontend conversation-panel tests including hooks-modal (vitest)
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    file: .github/workflows/lint.yml
+    lines: npm run lint
+  description: Frontend linting passes (eslint + prettier)
+- id: test_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    file: .github/workflows/lint.yml
+    lines: npm run typecheck && tsc
+  description: TypeScript type checking passes
+- id: test_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    file: .github/workflows/lint.yml
+    lines: npm run check-translation-completeness
+  description: Translation keys have complete language coverage
+rubric:
+- rule: TypeScript code should use nullish coalescing (??) or optional chaining (?.)
+    for null/undefined guards instead of manual checks - per .eslintrc @typescript-eslint/prefer-optional-chain
+  source:
+    path: frontend/.eslintrc
+    lines: 21-22
+    commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+- rule: Frontend changes must pass ESLint checks (npm run lint) before being considered
+    complete - per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: 18-24
+    commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802

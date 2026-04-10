@@ -132,3 +132,30 @@ def test_repo_vscode_patterns():
     r = _run_node("""const fs=require("fs");const k=fs.readFileSync("src/vs/workbench/contrib/chat/common/actions/chatContextKeys.ts","utf8");if(!k.includes("export namespace ChatContextKeys"))throw new Error("ns");const r=k.match(/new\s+RawContextKey/g);if(!r||r.length===0)throw new Error("raw");const e=fs.readFileSync("src/vs/workbench/contrib/chat/browser/chatEditing/chatEditingActions.ts","utf8");const a=["EditingSessionAction","WorkingSetAction"];const c=[...e.matchAll(/class\s+(\w+)\s+extends\s+Action2/g)];for(const m of c){const n=m[1];if(a.includes(n))continue;if(!e.includes("registerAction2("+n)&&!e.includes("registerAction2(class "+n))throw new Error(n);}console.log("PASS");""", file_path=CHAT_CONTEXT_KEYS)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+# === CI/CD Pass-to-Pass Tests (origin: repo_tests) ===
+# These tests run actual CI commands from the VS Code repo
+
+def test_repo_eslint():
+    """Repo's ESLint passes on codebase (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\\n{r.stderr[-1000:]}"
+
+def test_repo_precommit_hygiene():
+    """Repo's precommit hygiene checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "precommit"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Precommit hygiene failed:\\n{r.stderr[-1000:]}"
+
+def test_repo_unit_tests_node():
+    """Repo's Node.js unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node unit tests failed:\\n{r.stderr[-1000:]}"

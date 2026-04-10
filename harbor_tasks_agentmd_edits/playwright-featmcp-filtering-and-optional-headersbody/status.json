@@ -1,19 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T12:31:11.760322",
-  "total_time": 2150.17,
-  "sandbox_id": "iwou0fxywcc97b02papxt",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T14:53:42.546781",
+  "total_time": 580.74,
+  "sandbox_id": "ipchesqoimix5zlw9eyuy",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 790.7,
+      "time": 433.22,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Docker build successful. NOP test returns reward=0 (6 fail_to_pass tests correctly failing on base). Gold test returns reward=1 (all 10 tests pass after fix). Rubric judge returns 0.5 due to missing API keys (GEMINI_API_KEY or ANTHROPIC_API_KEY) - this is infrastructure limitation, not rubric failure.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 125.32
+      "time": 129.71
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.17,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -52,6 +65,14 @@
       "backend": "fireworks",
       "time": 2150.17,
       "at": "2026-04-10T12:31:11.760322"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 580.74,
+      "at": "2026-04-10T14:53:42.546781"
     }
   ]
 }

@@ -1,17 +1,15 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-cd /workspace/next.js
-
-# Idempotent: skip if already applied
-if [ -f turbopack/crates/turbo-tasks/src/vc/README.md ]; then
-    if grep -q "Value cells represent the pending result" turbopack/crates/turbo-tasks/src/vc/README.md 2>/dev/null; then
-        echo "Patch already applied."
-        exit 0
-    fi
-fi
-
 #!/usr/bin/env python3
+import subprocess
+import sys
+
+# Check if already applied
+try:
+    with open('/workspace/next.js/turbopack/crates/turbo-tasks/src/vc/README.md', 'r') as f:
+        if 'Value cells represent the pending result' in f.read():
+            print("Patch already applied.")
+            sys.exit(0)
+except FileNotFoundError:
+    pass
 import re
 import os
 

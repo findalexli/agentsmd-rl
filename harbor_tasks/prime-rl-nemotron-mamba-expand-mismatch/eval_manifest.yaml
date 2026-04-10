@@ -55,25 +55,6 @@ checks:
       lines: "7"
       commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
 
-rubric:
-  - rule: "Explicit is better than implicit — the fix should clearly express the relationship between mamba_expand, mamba_num_heads, mamba_head_dim, and hidden_size rather than using opaque constants."
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-
-  - rule: "Simple is better than complex — the fix should be minimal and direct, not over-engineered with unnecessary abstractions."
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-
-  - rule: "Do not add unnecessary comments — only add comments that explain why, not what. Do not reference the work process or old code."
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-
   - id: test_repo_ruff_check
     type: pass_to_pass
     origin: repo_tests
@@ -88,3 +69,48 @@ rubric:
     type: pass_to_pass
     origin: repo_tests
     description: "All modified Python files parse without syntax errors"
+
+  - id: test_repo_ruff_full_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's full ruff lint check passes on all files"
+
+  - id: test_repo_imports_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified module imports without errors"
+
+  - id: test_repo_config_validates
+    type: pass_to_pass
+    origin: repo_tests
+    description: "NemotronHConfig validates with default parameters"
+
+rubric:
+  - rule: "Explicit is better than implicit — mamba_expand should be computed from mamba_num_heads * mamba_head_dim / hidden_size, not an opaque constant."
+    source:
+      path: "AGENTS.md"
+      lines: "14"
+      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
+    reference:
+      file: "src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py"
+      line: 179
+      content: "self.mamba_expand = (mamba_num_heads * mamba_head_dim) / hidden_size"
+
+  - rule: "Simple is better than complex — the fix should be minimal and direct."
+    source:
+      path: "AGENTS.md"
+      lines: "15"
+      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
+    reference:
+      file: "src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py"
+      line: 179
+      content: "self.mamba_expand = (mamba_num_heads * mamba_head_dim) / hidden_size"
+
+  - rule: "Comments should explain why not what — the fix includes a targeted comment explaining the bug."
+    source:
+      path: "AGENTS.md"
+      lines: "7"
+      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
+    reference:
+      file: "src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py"
+      lines: "173-176"

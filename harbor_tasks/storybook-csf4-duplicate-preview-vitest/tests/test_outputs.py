@@ -14,6 +14,8 @@ from pathlib import Path
 REPO = "/workspace/storybook"
 UTILS_TS = f"{REPO}/code/addons/vitest/src/vitest-plugin/utils.ts"
 INDEX_TS = f"{REPO}/code/addons/vitest/src/vitest-plugin/index.ts"
+# Global TypeScript module path in the Docker container
+TS_PATH = "/usr/local/lib/node_modules/typescript"
 
 
 def _run_node(script: str, timeout: int = 30) -> dict:
@@ -36,7 +38,7 @@ def test_typescript_files_parse():
     # Use the TypeScript compiler API to parse each file
     for filepath in [UTILS_TS, INDEX_TS]:
         script = f"""
-const ts = require('typescript');
+const ts = require('{TS_PATH}');
 const fs = require('fs');
 const src = fs.readFileSync('{filepath}', 'utf-8');
 const sf = ts.createSourceFile('{filepath}', src, ts.ScriptTarget.Latest, true);
@@ -65,7 +67,7 @@ def test_no_csf4_param_in_requires_project_annotations():
     handles deduplication internally).
     """
     script = f"""
-const ts = require('typescript');
+const ts = require('{TS_PATH}');
 const fs = require('fs');
 const src = fs.readFileSync('{UTILS_TS}', 'utf-8');
 const sf = ts.createSourceFile('utils.ts', src, ts.ScriptTarget.Latest, true);
@@ -104,14 +106,14 @@ if (!fn) {{
 def test_no_csf4_conditional_return_in_utils():
     """requiresProjectAnnotations must not short-circuit to false for CSF4.
 
-    The base code had 'else if (isCSF4) { return false; }' which prevented
+    The base code had 'else if (isCSF4) {{ return false; }}' which prevented
     project annotations from loading for CSF4 users. This caused the preview
     file to be added directly as a setup file, leading to duplication.
     """
     # The function body must not reference isCSF4 at all
     # Use TypeScript AST to check for any identifier references
     script = f"""
-const ts = require('typescript');
+const ts = require('{TS_PATH}');
 const fs = require('fs');
 const src = fs.readFileSync('{UTILS_TS}', 'utf-8');
 const sf = ts.createSourceFile('utils.ts', src, ts.ScriptTarget.Latest, true);
@@ -211,7 +213,7 @@ def test_project_annotations_conditional_still_exists():
 def test_requires_project_annotations_still_exported():
     """requiresProjectAnnotations must still be exported from utils.ts."""
     script = f"""
-const ts = require('typescript');
+const ts = require('{TS_PATH}');
 const fs = require('fs');
 const src = fs.readFileSync('{UTILS_TS}', 'utf-8');
 const sf = ts.createSourceFile('utils.ts', src, ts.ScriptTarget.Latest, true);
@@ -259,7 +261,7 @@ def test_requires_project_annotations_returns_true_by_default():
 def test_repo_utils_ts_parses():
     """Repo's utils.ts file must parse as valid TypeScript (pass_to_pass)."""
     script = f"""
-const ts = require('typescript');
+const ts = require('{TS_PATH}');
 const fs = require('fs');
 const src = fs.readFileSync('{UTILS_TS}', 'utf-8');
 const sf = ts.createSourceFile('{UTILS_TS}', src, ts.ScriptTarget.Latest, true);
@@ -277,7 +279,7 @@ console.log(JSON.stringify({{ ok: diags.length === 0, diags, file: 'utils.ts' }}
 def test_repo_index_ts_parses():
     """Repo's index.ts file must parse as valid TypeScript (pass_to_pass)."""
     script = f"""
-const ts = require('typescript');
+const ts = require('{TS_PATH}');
 const fs = require('fs');
 const src = fs.readFileSync('{INDEX_TS}', 'utf-8');
 const sf = ts.createSourceFile('{INDEX_TS}', src, ts.ScriptTarget.Latest, true);
@@ -298,7 +300,7 @@ def test_repo_requires_project_annotations_function_signature():
     This ensures the function signature doesn't change unexpectedly between base and gold.
     """
     script = f"""
-const ts = require('typescript');
+const ts = require('{TS_PATH}');
 const fs = require('fs');
 const src = fs.readFileSync('{UTILS_TS}', 'utf-8');
 const sf = ts.createSourceFile('utils.ts', src, ts.ScriptTarget.Latest, true);
@@ -347,3 +349,259 @@ def test_repo_vitest_plugin_imports_valid():
     # Verify no empty import sources
     assert "from ''" not in src, "Empty import source detected"
     assert "import {} from" not in src, "Empty import specifier detected"
+
+
+# ---------------------------------------------------------------------------
+# Additional Pass-to-pass (repo_tests) — CI/CD verification via TypeScript AST
+# These tests validate the repo's code structure using the TypeScript compiler API
+# Similar to what Storybook's own CI check (tsc --noEmit) would validate
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_utils_ts_no_syntax_errors():
+    """utils.ts must have zero TypeScript parse diagnostics (pass_to_pass).
+
+    This CI-style check uses the TypeScript compiler API (same as tsc) to verify
+    the file has no syntax errors. This is equivalent to running tsc --noEmit
+    but without requiring node_modules to be installed.
+    """
+    script = f"""
+const ts = require('{TS_PATH}');
+const fs = require('fs');
+const src = fs.readFileSync('{UTILS_TS}', 'utf-8');
+const sf = ts.createSourceFile('utils.ts', src, ts.ScriptTarget.Latest, true);
+
+// Get parse diagnostics (syntax errors only) - same as tsc --noEmit would report
+const parseDiags = sf.parseDiagnostics || [];
+console.log(JSON.stringify({{
+    file: 'utils.ts',
+    syntaxErrors: parseDiags.length,
+    errors: parseDiags.slice(0, 3).map(d => ts.flattenDiagnosticMessageText(d.messageText, '\\n'))
+}}));
+"""
+    result = _run_node(script)
+    assert result["syntaxErrors"] == 0, (
+        f"utils.ts has {result['syntaxErrors']} syntax errors: {result.get('errors', [])}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_index_ts_no_syntax_errors():
+    """index.ts must have zero TypeScript parse diagnostics (pass_to_pass).
+
+    This CI-style check uses the TypeScript compiler API (same as tsc) to verify
+    the file has no syntax errors. This is equivalent to running tsc --noEmit
+    but without requiring node_modules to be installed.
+    """
+    script = f"""
+const ts = require('{TS_PATH}');
+const fs = require('fs');
+const src = fs.readFileSync('{INDEX_TS}', 'utf-8');
+const sf = ts.createSourceFile('index.ts', src, ts.ScriptTarget.Latest, true);
+
+// Get parse diagnostics (syntax errors only) - same as tsc --noEmit would report
+const parseDiags = sf.parseDiagnostics || [];
+console.log(JSON.stringify({{
+    file: 'index.ts',
+    syntaxErrors: parseDiags.length,
+    errors: parseDiags.slice(0, 3).map(d => ts.flattenDiagnosticMessageText(d.messageText, '\\n'))
+}}));
+"""
+    result = _run_node(script)
+    assert result["syntaxErrors"] == 0, (
+        f"index.ts has {result['syntaxErrors']} syntax errors: {result.get('errors', [])}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_base_commit_structure_utils():
+    """Base commit utils.ts structure must be valid - CI AST validation (pass_to_pass).
+
+    Validates the base commit state of utils.ts using TypeScript AST analysis.
+    Checks that key functions exist with expected structure.
+    """
+    script = f"""
+const ts = require('{TS_PATH}');
+const fs = require('fs');
+const src = fs.readFileSync('{UTILS_TS}', 'utf-8');
+const sf = ts.createSourceFile('utils.ts', src, ts.ScriptTarget.Latest, true);
+
+let functions = [];
+function visit(node) {{
+    if (ts.isFunctionDeclaration(node) && node.name) {{
+        const isExported = node.modifiers && node.modifiers.some(m => m.kind === ts.SyntaxKind.ExportKeyword);
+        const isAsync = node.modifiers && node.modifiers.some(m => m.kind === ts.SyntaxKind.AsyncKeyword);
+        functions.push({{
+            name: node.name.text,
+            isExported: !!isExported,
+            isAsync: !!isAsync,
+            paramCount: node.parameters.length
+        }});
+    }}
+    ts.forEachChild(node, visit);
+}}
+visit(sf);
+
+console.log(JSON.stringify({{ functions: functions }}));
+"""
+    result = _run_node(script)
+
+    # Verify requiresProjectAnnotations exists
+    reqFn = next((f for f in result["functions"] if f["name"] == "requiresProjectAnnotations"), None)
+    assert reqFn is not None, "requiresProjectAnnotations function must exist in utils.ts"
+    assert reqFn["isExported"], "requiresProjectAnnotations must be exported"
+    assert reqFn["isAsync"], "requiresProjectAnnotations must be async"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_base_commit_structure_index():
+    """Base commit index.ts structure must be valid - CI AST validation (pass_to_pass).
+
+    Validates the base commit state of index.ts using TypeScript AST analysis.
+    Checks that key imports and the storybookTest function exist.
+    """
+    script = f"""
+const ts = require('{TS_PATH}');
+const fs = require('fs');
+const src = fs.readFileSync('{INDEX_TS}', 'utf-8');
+const sf = ts.createSourceFile('index.ts', src, ts.ScriptTarget.Latest, true);
+
+let imports = [];
+let arrowFunctions = [];
+let exports = [];
+
+function visit(node) {{
+    if (ts.isImportDeclaration(node)) {{
+        const moduleSpec = node.moduleSpecifier;
+        if (ts.isStringLiteral(moduleSpec)) {{
+            imports.push(moduleSpec.text);
+        }}
+    }}
+    // Check for arrow functions assigned to const variables
+    if (ts.isVariableStatement(node)) {{
+        for (const decl of node.declarationList.declarations) {{
+            if (decl.initializer && (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer))) {{
+                arrowFunctions.push(decl.name.getText(sf));
+            }}
+        }}
+    }}
+    if (ts.isExportAssignment(node)) {{
+        if (node.expression && node.expression.name) {{
+            exports.push(node.expression.name.text);
+        }} else if (node.expression && ts.isIdentifier(node.expression)) {{
+            exports.push(node.expression.text);
+        }}
+    }}
+    ts.forEachChild(node, visit);
+}}
+visit(sf);
+
+console.log(JSON.stringify({{
+    importCount: imports.length,
+    hasVitestConfigImport: imports.some(i => i.includes('vitest/config')),
+    hasStorybookImports: imports.some(i => i.startsWith('storybook/')),
+    arrowFunctions: arrowFunctions,
+    exports: exports
+}}));
+"""
+    result = _run_node(script)
+
+    # Should have vitest/config imports
+    assert result.get("hasVitestConfigImport"), "index.ts must import from vitest/config"
+    # Should have storybook imports
+    assert result.get("hasStorybookImports"), "index.ts must import from storybook packages"
+    # Should have storybookTest arrow function
+    assert "storybookTest" in result.get("arrowFunctions", []), "storybookTest function must exist"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_structure_valid():
+    """All imports in modified files must be syntactically valid (pass_to_pass).
+
+    CI-style check using TypeScript AST to validate import structure.
+    Ensures no broken or malformed import statements.
+    """
+    script = f"""
+const ts = require('{TS_PATH}');
+const fs = require('fs');
+
+function analyzeImports(filepath) {{
+    const src = fs.readFileSync(filepath, 'utf-8');
+    const sf = ts.createSourceFile(filepath, src, ts.ScriptTarget.Latest, true);
+
+    let imports = [];
+    let hasEmptyImport = false;
+
+    function visit(node) {{
+        if (ts.isImportDeclaration(node)) {{
+            const moduleSpec = node.moduleSpecifier;
+            if (ts.isStringLiteral(moduleSpec)) {{
+                const text = moduleSpec.text;
+                if (!text || text.trim() === '') {{
+                    hasEmptyImport = true;
+                }}
+                imports.push({{ module: text }});
+            }}
+        }}
+        ts.forEachChild(node, visit);
+    }}
+    visit(sf);
+
+    return {{ imports, hasEmptyImport }};
+}}
+
+const utilsResult = analyzeImports('{UTILS_TS}');
+const indexResult = analyzeImports('{INDEX_TS}');
+
+console.log(JSON.stringify({{
+    utils: {{ importCount: utilsResult.imports.length, hasEmptyImport: utilsResult.hasEmptyImport }},
+    index: {{ importCount: indexResult.imports.length, hasEmptyImport: indexResult.hasEmptyImport }}
+}}));
+"""
+    result = _run_node(script)
+
+    # Both files should have imports and no empty/invalid ones
+    assert result["utils"]["importCount"] > 0, "utils.ts should have imports"
+    assert result["index"]["importCount"] > 0, "index.ts should have imports"
+    assert not result["utils"]["hasEmptyImport"], "utils.ts has empty/invalid import"
+    assert not result["index"]["hasEmptyImport"], "index.ts has empty/invalid import"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_function_call_structure_valid():
+    """Key function calls in index.ts must have valid structure (pass_to_pass).
+
+    CI-style AST check validating that critical function calls exist with proper arguments.
+    Checks for mergeConfig call and internal setup files array.
+    """
+    script = f"""
+const ts = require('{TS_PATH}');
+const fs = require('fs');
+const src = fs.readFileSync('{INDEX_TS}', 'utf-8');
+const sf = ts.createSourceFile('index.ts', src, ts.ScriptTarget.Latest, true);
+
+let calls = [];
+function visit(node) {{
+    if (ts.isCallExpression(node) && node.expression) {{
+        if (ts.isIdentifier(node.expression)) {{
+            calls.push({{ name: node.expression.text, argCount: node.arguments.length }});
+        }}
+    }}
+    ts.forEachChild(node, visit);
+}}
+visit(sf);
+
+// Check for mergeConfig call
+const mergeConfigCall = calls.find(c => c.name === 'mergeConfig');
+
+console.log(JSON.stringify({{
+    hasMergeConfig: !!mergeConfigCall,
+    mergeConfigArgCount: mergeConfigCall ? mergeConfigCall.argCount : 0,
+    totalCalls: calls.length
+}}));
+"""
+    result = _run_node(script)
+
+    # mergeConfig should be called with 2 arguments
+    assert result.get("hasMergeConfig"), "mergeConfig call must exist in index.ts"
+    assert result.get("mergeConfigArgCount") == 2, "mergeConfig should be called with 2 arguments"

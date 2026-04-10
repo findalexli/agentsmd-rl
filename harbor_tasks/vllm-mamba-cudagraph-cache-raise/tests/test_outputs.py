@@ -106,10 +106,10 @@ for child in ast.walk(target):
                         f"Raise exists but not ValueError: {raise_src}"
                     )
                     assert "max_num_seqs" in raise_src, (
-                        "Error message doesn't reference max_num_seqs"
+                        "Error message does not reference max_num_seqs"
                     )
                     assert "block" in raise_src.lower(), (
-                        "Error message doesn't reference cache blocks"
+                        "Error message does not reference cache blocks"
                     )
                     found_conditional_raise = True
                     break
@@ -259,6 +259,88 @@ else:
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — Repo CI/CD checks
 # ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_forbidden_imports():
+    """Modified files must not contain forbidden imports (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python", "tools/pre_commit/check_forbidden_imports.py",
+            RUNNER, CONFIG,
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Forbidden imports check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_torch_cuda_check():
+    """Modified files must not use torch.cuda APIs (use torch.accelerator instead) (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python", "tools/pre_commit/check_torch_cuda.py",
+            RUNNER, CONFIG,
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"torch.cuda check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_config_validation():
+    """Config classes must have defaults and docstrings (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["python", "tools/pre_commit/validate_config.py", CONFIG],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_init_lazy_imports():
+    """Modified files must follow root lazy import conventions (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python", "tools/pre_commit/check_init_lazy_imports.py",
+            RUNNER, CONFIG,
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Init lazy imports check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_boolean_context_manager():
+    """Modified files must not use boolean ops in with-statements (pass_to_pass)."""
+    subprocess.run(
+        ["pip", "install", "regex", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    r = subprocess.run(
+        [
+            "python", "tools/pre_commit/check_boolean_context_manager.py",
+            RUNNER, CONFIG,
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Boolean context manager check failed:\n{r.stderr}"
+
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_lint():

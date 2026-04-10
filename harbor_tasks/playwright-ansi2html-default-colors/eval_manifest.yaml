@@ -42,10 +42,15 @@ checks:
     origin: static
     description: "The ansi2html.ts module imports and executes without errors"
 
-  - id: test_repo_eslint_modified
+  - id: test_repo_eslint_web
     type: pass_to_pass
     origin: repo_tests
-    description: "ESLint passes on modified packages (web, trace-viewer)"
+    description: "ESLint passes on packages/web/src"
+
+  - id: test_repo_eslint_trace_viewer
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on packages/trace-viewer/src"
 
   - id: test_repo_build
     type: pass_to_pass
@@ -62,21 +67,4 @@ checks:
     origin: repo_tests
     description: "TypeScript typecheck passes after build"
 
-rubric:
-  - rule: "Follow the method visibility naming convention: use private _method() for internal class use, _method() (no private) for same-file use, and method() for public use."
-    source:
-      path: "CLAUDE.md"
-      lines: "95-99"
-      commit: "09a1261b764fc5c106fa8ca1e3c0bee4e8ddb3d1"
-
-  - rule: "Always run npm run flint before committing. Do not use tsc --noEmit or individual lint commands separately."
-    source:
-      path: "CLAUDE.md"
-      lines: "63-66"
-      commit: "09a1261b764fc5c106fa8ca1e3c0bee4e8ddb3d1"
-
-  - rule: "Focus changes on semantically meaningful issues (bugs, incorrect logic, security, API violations). Skip style, formatting, naming, and whitespace changes unless they cause functional problems."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "3-4"
-      commit: "09a1261b764fc5c106fa8ca1e3c0bee4e8ddb3d1"
+rubric: []

@@ -290,3 +290,54 @@ def test_devenv_not_stub():
         f"handleErrorEvent has only {branch_count} branches — "
         f"expected at least 3 (MiniflareCoreError, ProxyController, ConfigController, ...)"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+
+def _setup_repo():
+    """Install pnpm, dependencies, and build the repo."""
+    # Install pnpm if not available
+    subprocess.run(["npm", "install", "-g", "pnpm"], check=True, capture_output=True)
+    # Install dependencies
+    subprocess.run(["pnpm", "install", "--frozen-lockfile"], cwd=REPO, check=True, capture_output=True, timeout=300)
+    # Build the workspace
+    subprocess.run(["pnpm", "run", "build"], cwd=REPO, check=True, capture_output=True, timeout=600)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_modified_files():
+    """Repo's linter (oxlint) passes on modified files (pass_to_pass)."""
+    _setup_repo()
+    r = subprocess.run(
+        ["npx", "oxlint", "--deny-warnings", "--type-aware",
+         f"{REPO}/packages/wrangler/src/api/startDevWorker/DevEnv.ts",
+         f"{REPO}/packages/wrangler/src/api/startDevWorker/BundlerController.ts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typecheck_wrangler():
+    """Wrangler package TypeScript typecheck passes (pass_to_pass)."""
+    _setup_repo()
+    r = subprocess.run(
+        ["pnpm", "--filter", "wrangler", "run", "check:type"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_format_modified_files():
+    """Repo's formatter (oxfmt) check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxfmt", "--check",
+         f"{REPO}/packages/wrangler/src/api/startDevWorker/DevEnv.ts",
+         f"{REPO}/packages/wrangler/src/api/startDevWorker/BundlerController.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"

@@ -119,7 +119,7 @@ def test_streaming_split_delimiter_end_to_end():
         tree = ast.parse(src)
 
         # --- Extract pure-Python functions from module source ---
-        needed = {"STRING_DELIM", "_parse_gemma4_args", "_parse_gemma4_array"}
+        needed = {"STRING_DELIM", "_parse_gemma4_args", "_parse_gemma4_array", "_parse_gemma4_value"}
         segments = []
         for node in tree.body:
             name = None
@@ -208,7 +208,7 @@ def test_parse_args_basic_regression():
             src = f.read()
         tree = ast.parse(src)
 
-        needed = {"STRING_DELIM", "_parse_gemma4_args", "_parse_gemma4_array"}
+        needed = {"STRING_DELIM", "_parse_gemma4_args", "_parse_gemma4_array", "_parse_gemma4_value"}
         segments = []
         for node in tree.body:
             name = None
@@ -279,3 +279,125 @@ def test_not_stub():
             break
 
     assert found, "_emit_argument_diff method not found in parser module"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repo CI checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # pip install may have warnings, that's fine
+    r = subprocess.run(
+        ["ruff", "check", "vllm/tool_parsers/gemma4_tool_parser.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's ruff format check passes on modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "vllm/tool_parsers/gemma4_tool_parser.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Repo's unit tests for _parse_gemma4_args pass (pass_to_pass)."""
+    script = textwrap.dedent(r'''
+        import ast
+        import regex as re
+
+        # Read the source
+        with open("/workspace/vllm/vllm/tool_parsers/gemma4_tool_parser.py") as f:
+            src = f.read()
+        tree = ast.parse(src)
+
+        # Extract pure-Python functions
+        needed = {"STRING_DELIM", "_parse_gemma4_args", "_parse_gemma4_array", "_parse_gemma4_value"}
+        segments = []
+        for node in tree.body:
+            name = None
+            if isinstance(node, ast.Assign):
+                for t in node.targets:
+                    if isinstance(t, ast.Name) and t.id in needed:
+                        name = t.id
+            elif isinstance(node, ast.FunctionDef) and node.name in needed:
+                name = node.name
+            if name:
+                seg = ast.get_source_segment(src, node)
+                if seg:
+                    segments.append(seg)
+
+        code = "\n\n".join(segments)
+        ns = {}
+        exec(code, ns)
+        _parse_gemma4_args = ns["_parse_gemma4_args"]
+        _parse_gemma4_array = ns["_parse_gemma4_array"]
+
+        # Run unit tests (extracted from tests/tool_parsers/test_gemma4_tool_parser.py)
+        # Test empty string
+        assert _parse_gemma4_args("") == {}
+
+        # Test single string value
+        assert _parse_gemma4_args('location:<|"|>Paris<|"|>') == {"location": "Paris"}
+
+        # Test integer value
+        assert _parse_gemma4_args("count:42") == {"count": 42}
+
+        # Test float value
+        assert _parse_gemma4_args("score:3.14") == {"score": 3.14}
+
+        # Test boolean true
+        assert _parse_gemma4_args("flag:true") == {"flag": True}
+
+        # Test boolean false
+        assert _parse_gemma4_args("flag:false") == {"flag": False}
+
+        # Test nested object
+        assert _parse_gemma4_args('nested:{inner:<|"|>value<|"|>}') == {"nested": {"inner": "value"}}
+
+        # Test array of strings
+        assert _parse_gemma4_array('<|"|>a<|"|>,<|"|>b<|"|>') == ["a", "b"]
+
+        # Test unterminated string
+        assert _parse_gemma4_args('key:<|"|>unterminated') == {"key": "unterminated"}
+
+        # Test whitespace only
+        assert _parse_gemma4_args("   ") == {}
+
+        # Test string value with comma
+        assert _parse_gemma4_args('location:<|"|>Paris, France<|"|>') == {"location": "Paris, France"}
+
+        # Test multiple string values
+        assert _parse_gemma4_args('location:<|"|>San Francisco<|"|>,unit:<|"|>celsius<|"|>') == {"location": "San Francisco", "unit": "celsius"}
+
+        # Test mixed types
+        result = _parse_gemma4_args('name:<|"|>test<|"|>,count:42,active:true,score:3.14')
+        assert result == {"name": "test", "count": 42, "active": True, "score": 3.14}
+
+        print("PASS")
+    ''')
+
+    r = subprocess.run(
+        ["python3", "-c", script],
+        cwd="/",
+        capture_output=True, text=True, timeout=30,
+    )
+    stdout, stderr = r.stdout.decode() if isinstance(r.stdout, bytes) else r.stdout, r.stderr.decode() if isinstance(r.stderr, bytes) else r.stderr
+    assert r.returncode == 0 and "PASS" in stdout, (
+        f"Unit tests failed:\nstdout: {stdout}\nstderr: {stderr}"
+    )

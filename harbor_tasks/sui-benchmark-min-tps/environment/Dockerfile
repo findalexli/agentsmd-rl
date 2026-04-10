@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     pkg-config \
     libssl-dev \
+    libclang-dev \
     && rm -rf /var/lib/apt-get/lists/*
 
 # Install pytest

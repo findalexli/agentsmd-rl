@@ -61,6 +61,109 @@ def test_repo_gitmodules_valid():
     assert r.returncode == 0, f"Git submodule command failed:\n{r.stderr}"
 
 
+def test_repo_docs_valid():
+    """docs/README.md exists and has required content (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from pathlib import Path
+p = Path('docs/README.md')
+content = p.read_text()
+assert len(content) > 1000, 'docs/README.md is too short'
+assert 'Ghost' in content, 'Missing Ghost mention in docs/README.md'
+assert 'Quick Start' in content, 'Missing Quick Start section in docs/README.md'
+print('DOCS_OK')
+"""], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Docs README validation failed:\n{r.stderr}"
+    assert "DOCS_OK" in r.stdout, "Docs validation did not complete"
+
+
+def test_repo_core_package_valid():
+    """ghost/core/package.json has valid schema (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import json
+with open('ghost/core/package.json') as f:
+    data = json.load(f)
+assert 'name' in data, 'Missing name field in ghost/core/package.json'
+assert 'version' in data, 'Missing version field in ghost/core/package.json'
+assert data['name'] == 'ghost', f"Expected name 'ghost', got '{data['name']}'"
+print('CORE_PACKAGE_OK')
+"""], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ghost core package.json validation failed:\n{r.stderr}"
+    assert "CORE_PACKAGE_OK" in r.stdout, "Core package validation did not complete"
+
+
+def test_repo_github_workflows_exist():
+    """CI workflow files exist and are valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from pathlib import Path
+
+# Check CI workflow exists
+ci_yml = Path('.github/workflows/ci.yml')
+assert ci_yml.exists(), 'CI workflow file does not exist'
+
+# Check it has content
+content = ci_yml.read_text()
+assert len(content) > 5000, 'CI workflow file seems too short'
+assert 'jobs:' in content, 'Missing jobs section in CI workflow'
+assert 'job_setup:' in content, 'Missing job_setup in CI workflow'
+assert 'job_lint:' in content, 'Missing job_lint in CI workflow'
+assert 'job_unit-tests:' in content, 'Missing job_unit-tests in CI workflow'
+
+print('WORKFLOWS_OK')
+"""], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CI workflows validation failed:\n{r.stderr}"
+    assert "WORKFLOWS_OK" in r.stdout, "Workflows validation did not complete"
+
+
+def test_repo_git_hooks_exist():
+    """Git hooks directory exists with required hooks (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from pathlib import Path
+
+# Check hooks exist
+pre_commit = Path('.github/hooks/pre-commit')
+commit_msg = Path('.github/hooks/commit-msg')
+
+assert pre_commit.exists(), 'pre-commit hook missing'
+assert commit_msg.exists(), 'commit-msg hook missing'
+
+# Check they have content
+assert len(pre_commit.read_text()) > 100, 'pre-commit hook too short'
+assert len(commit_msg.read_text()) > 100, 'commit-msg hook too short'
+
+print('GIT_HOOKS_OK')
+"""], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git hooks validation failed:\n{r.stderr}"
+    assert "GIT_HOOKS_OK" in r.stdout, "Git hooks validation did not complete"
+
+
+def test_repo_dockerfile_valid():
+    """Dockerfile exists and has required content (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+from pathlib import Path
+
+dockerfile = Path('Dockerfile')
+assert dockerfile.exists(), 'Dockerfile missing'
+
+content = dockerfile.read_text()
+assert 'FROM' in content, 'Missing FROM in Dockerfile'
+assert 'ghost' in content.lower(), 'Missing ghost reference in Dockerfile'
+
+print('DOCKERFILE_OK')
+"""], capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Dockerfile validation failed:\n{r.stderr}"
+    assert "DOCKERFILE_OK" in r.stdout, "Dockerfile validation did not complete"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------

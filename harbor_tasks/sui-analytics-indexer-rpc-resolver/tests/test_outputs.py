@@ -8,6 +8,60 @@ REPO = "/workspace/sui"
 CRATE_PATH = f"{REPO}/crates/sui-analytics-indexer"
 
 
+# ============================================================================
+# Pass-to-Pass Tests - Repo CI Checks
+# ============================================================================
+
+
+def test_repo_format_check():
+    """Repo code formatting passes (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "fmt", "--check"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Format check failed:\n{result.stderr.decode()[-500:]}"
+
+
+def test_repo_license_headers():
+    """Repo license headers are valid (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "xlint"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"License check failed:\n{result.stderr.decode()[-500:]}"
+
+
+def test_repo_git_checks():
+    """Repo git checks pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["bash", "scripts/git-checks.sh"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Git checks failed:\n{result.stderr.decode()[-500:]}"
+
+
+def test_repo_clippy():
+    """Repo clippy lints pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["cargo", "xclippy"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert result.returncode == 0, f"Clippy failed:\n{result.stderr.decode()[-500:]}"
+
+
+# ============================================================================
+# Fail-to-Pass Tests - Task Requirements
+# ============================================================================
+
+
 def test_cargo_check_passes():
     """F2P: Verify the crate compiles successfully after migration."""
     result = subprocess.run(

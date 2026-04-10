@@ -1,34 +1,46 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:55:54.267326",
-  "total_time": 1663.25,
-  "sandbox_id": "iqrtqg3bvivj5z7ibrh9u",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T16:02:11.888230",
+  "total_time": 2879.74,
+  "sandbox_id": "iswuphqov7wwkuc4jzqkm",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 8.32,
-      "notes": ""
+      "notes": "Added 3 repo_tests pass_to_pass gates: test_repo_build (pnpm turbo build), test_repo_typecheck (pnpm turbo check:type), test_repo_runner_worker_tests (pnpm vitest run runner-worker tests). CI commands verified in Docker."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 68.31,
+      "time": 1281.61,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        "packages/vite-plugin-cloudflare/AGENTS.md",
+        "STYLEGUIDE.md",
+        "CONTRIBUTING.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 3,
+      "rejection_reasons": "STYLEGUIDE.md and CONTRIBUTING.md focus on CLI style/PR workflow (not evaluable from diff); vite-plugin AGENTS.md wrangler import rule not applicable to this bugfix",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.73,
-      "notes": ""
+      "time": 43.34
     },
     "improve": {
       "status": "skipped",
@@ -38,9 +50,29 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build successful, NOP reward=0 (3 f2p tests correctly failed on buggy base), Gold reward=1 (all 8 tests passed after fix), Rubric already validated as ok. The fix properly wraps RPC call in try/finally to clean up pendingCallbacks and callbackResults on error, preventing memory leak.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.67
+      "time": 389.99
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 45.94,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.59,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +99,14 @@
       "backend": "fireworks",
       "time": 1663.25,
       "at": "2026-04-09T14:55:54.267326"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2879.74,
+      "at": "2026-04-10T16:02:11.888230"
     }
   ]
 }

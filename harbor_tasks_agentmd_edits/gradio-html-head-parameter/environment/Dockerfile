@@ -19,7 +19,7 @@ WORKDIR /workspace/gradio
 
 # Install gradio and its dependencies
 RUN pip install --no-cache-dir -e . && \
-    pip install --no-cache-dir pytest
+    pip install --no-cache-dir pytest pytest-json-ctrf
 
 # Verifier output directory
 RUN mkdir -p /logs/verifier

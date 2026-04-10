@@ -1,20 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T11:42:05.463184",
-  "total_time": 1688.48,
-  "sandbox_id": "ikciaq4futijlb07jxrs7",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T14:56:39.028312",
+  "total_time": 757.24,
+  "sandbox_id": "ifdbi29zk1xlc9t60aplf",
   "backend": "fireworks",
   "pipeline": "agents",
-  "config_edit_precision": 1.0,
+  "config_edit_precision": 0.5,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 177.45,
+      "time": 115.12,
       "notes": ""
     },
     "p2p_enrich": {
@@ -33,23 +34,50 @@
     },
     "rubric_enrichment": {
       "status": "ok",
+      "configs_found": [
+        ".editorconfig",
+        "js/README.md",
+        "CONTRIBUTING.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 3,
+      "rejection_reasons": "3 rules were too generic or duplicated existing checks (formatting, PR workflow, style.md component styles not applicable to documentation changes)",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 96.76,
-      "notes": ""
+      "time": 105.25
     },
     "rubric_validate": {
       "status": "ok",
       "model": "gemini-3.1-pro",
       "backend": "fireworks",
-      "time": 0.26,
+      "time": 10.88,
       "notes": "",
-      "precision": 1.0
+      "precision": 0.5
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed: 1) Dockerfile typo, 2) pnpm version 10->9, 3) solve.sh idempotency, 4) solve.sh patch, 5) test repo_tests skip when node_modules missing. All 4 checks pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 836.61
+      "time": 465.67
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 38.51,
+      "notes": "precision was 0.50, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.24,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -68,6 +96,14 @@
       "backend": "fireworks",
       "time": 1688.48,
       "at": "2026-04-10T11:42:05.463184"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 757.24,
+      "at": "2026-04-10T14:56:39.028312"
     }
   ]
 }

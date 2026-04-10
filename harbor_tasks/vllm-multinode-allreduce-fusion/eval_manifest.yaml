@@ -1,45 +1,72 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 38136
-  base_commit: "f26fcdfb9e50fef30381ed27fa956f7a43b0b1aa"
-  merge_commit: "0904b6550d8e2d11295762fabf3f0d7972bd0300"
-
+  base_commit: f26fcdfb9e50fef30381ed27fa956f7a43b0b1aa
+  merge_commit: 0904b6550d8e2d11295762fabf3f0d7972bd0300
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files (flashinfer_all_reduce.py, envs.py) parse without syntax errors"
-
-  - id: default_backend_is_auto
-    type: fail_to_pass
-    origin: pr_diff
-    description: "envs.py defaults VLLM_FLASHINFER_ALLREDUCE_BACKEND to 'auto' instead of 'trtllm'"
-
-  - id: resolve_backend_auto_selects_by_node_count
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_resolve_fi_ar_backend selects mnnvl for multi-node (>1 node), trtllm for single-node"
-
-  - id: resolve_backend_explicit_passthrough
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_resolve_fi_ar_backend returns explicit backend value without auto-selection"
-
-  - id: trtllm_multinode_raises_valueerror
-    type: fail_to_pass
-    origin: pr_diff
-    description: "get_fi_ar_workspace raises ValueError when trtllm backend is used with multi-node"
-
-  - id: quant_workspace_none_for_multinode
-    type: fail_to_pass
-    origin: pr_diff
-    description: "get_fi_ar_quant_workspace returns None for multi-node setups instead of creating workspace"
-
-  - id: resolve_function_exists
-    type: fail_to_pass
-    origin: static
-    description: "_resolve_fi_ar_backend exists with meaningful logic (conditionals, returns, assignments)"
-
-rubric: []
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Both modified files (flashinfer_all_reduce.py, envs.py) parse without
+    syntax errors
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+- id: repo_mypy_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's mypy typecheck passes on modified files
+- id: repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax validation via AST on modified files
+- id: repo_clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++/CUDA files are properly formatted
+- id: repo_shellcheck_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts pass shellcheck validation
+- id: repo_no_tabs_in_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python files don't use tab characters for indentation
+- id: default_backend_is_auto
+  type: fail_to_pass
+  origin: pr_diff
+  description: envs.py defaults VLLM_FLASHINFER_ALLREDUCE_BACKEND to 'auto' instead
+    of 'trtllm'
+- id: resolve_backend_auto_selects_by_node_count
+  type: fail_to_pass
+  origin: pr_diff
+  description: _resolve_fi_ar_backend selects mnnvl for multi-node (>1 node), trtllm
+    for single-node
+- id: resolve_backend_explicit_passthrough
+  type: fail_to_pass
+  origin: pr_diff
+  description: _resolve_fi_ar_backend returns explicit backend value without auto-selection
+- id: trtllm_multinode_raises_valueerror
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_fi_ar_workspace raises ValueError when trtllm backend is used with
+    multi-node
+- id: quant_workspace_none_for_multinode
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_fi_ar_quant_workspace returns None for multi-node setups instead
+    of creating workspace
+- id: resolve_function_exists
+  type: fail_to_pass
+  origin: static
+  description: _resolve_fi_ar_backend exists with meaningful logic (conditionals,
+    returns, assignments)
+rubric:
+- rule: Python code must follow the Google Python style guide conventions for naming,
+    formatting, and documentation
+  source:
+    path: docs/contributing/README.md
+    lines: '241'
+    commit: f26fcdfb9e50fef30381ed27fa956f7a43b0b1aa

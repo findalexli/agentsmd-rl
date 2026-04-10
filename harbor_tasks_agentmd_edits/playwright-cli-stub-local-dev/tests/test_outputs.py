@@ -57,6 +57,17 @@ def test_repo_lint_packages():
     assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}"
 
 
+
+# [repo_tests] pass_to_pass
+def test_repo_check_deps():
+    """Repo's dependency check passes (npm run check-deps)."""
+    r = subprocess.run(
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code behavioral tests
 # ---------------------------------------------------------------------------
@@ -76,15 +87,16 @@ def test_stub_js_syntax():
 # [pr_diff] fail_to_pass
 def test_stub_package_bin_field():
     """playwright-cli-stub package.json must declare bin.playwright-cli."""
-    r = subprocess.run(
-        ["node", "-e", """
+    script = """
 const pkg = require('./packages/playwright-cli-stub/package.json');
 if (!pkg.bin || pkg.bin['playwright-cli'] !== 'playwright-cli-stub.js') {
     console.error('bin field missing or incorrect:', JSON.stringify(pkg.bin));
     process.exit(1);
 }
 console.log('OK:', JSON.stringify(pkg.bin));
-"""],
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
         cwd=REPO, capture_output=True, text=True, timeout=15,
     )
     assert r.returncode == 0, f"Stub package.json bin field wrong: {r.stderr}"
@@ -104,15 +116,16 @@ def test_stub_requires_program_module():
 # [pr_diff] fail_to_pass
 def test_root_cli_script_removed():
     """Root package.json must NOT have the old 'playwright-cli' npm script."""
-    r = subprocess.run(
-        ["node", "-e", """
+    script = """
 const pkg = require('./package.json');
 if (pkg.scripts && pkg.scripts['playwright-cli']) {
     console.error('Found old script:', pkg.scripts['playwright-cli']);
     process.exit(1);
 }
 console.log('OK: no playwright-cli script in root package.json');
-"""],
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
         cwd=REPO, capture_output=True, text=True, timeout=15,
     )
     assert r.returncode == 0, f"Root package.json still has old playwright-cli script: {r.stderr}"

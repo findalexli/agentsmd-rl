@@ -1,76 +1,97 @@
-version: "1"
+version: '1'
 source_pr:
   owner: apache
   repo: superset
   number: 38990
   merge_commit: 0bae05d4a938d1c74df801ab138d94c136520a71
   base_commit: 1bb41a6e609320dd2932f67d8373cb7866230f65
-title: "fix(mcp): handle table chart raw mode in query builders and sanitize dashboard titles"
-difficulty: "medium"
+title: 'fix(mcp): handle table chart raw mode in query builders and sanitize dashboard
+  titles'
+difficulty: medium
 tags:
-  - "mcp"
-  - "security"
-  - "xss"
-  - "python"
-  - "pydantic"
+- mcp
+- security
+- xss
+- python
+- pydantic
 checks:
-  - id: "table_chart_form_data_columns"
-    type: "pytest"
-    description: "Table chart form_data includes both 'columns' and 'all_columns' in raw mode"
-    origin: "agent_config"
-    source:
-      config_file: "superset/mcp_service/CLAUDE.md"
-      rule: "Pydantic schemas for validation"
-  - id: "preview_utils_raw_mode"
-    type: "pytest"
-    description: "_build_query_columns handles table charts in raw mode with all_columns/columns"
-    origin: "agent_config"
-    source:
-      config_file: "superset/mcp_service/CLAUDE.md"
-      rule: "Pydantic validators for flexible input parsing"
-  - id: "ascii_preview_raw_mode"
-    type: "pytest"
-    description: "ASCIIPreviewStrategy handles raw mode table charts correctly"
-    origin: "agent_config"
-    source:
-      config_file: "superset/mcp_service/CLAUDE.md"
-      rule: "Tool output schemas for chart responses"
-  - id: "dashboard_title_sanitization"
-    type: "pytest"
-    description: "GenerateDashboardRequest sanitizes dashboard_title via field_validator"
-    origin: "agent_config"
-    source:
-      config_file: "superset/mcp_service/CLAUDE.md"
-      rule: "Use Pydantic schemas for validation"
-  - id: "html_tags_stripped"
-    type: "pytest"
-    description: "HTML tags are stripped from dashboard title to prevent XSS"
-  - id: "dangerous_unicode_removed"
-    type: "pytest"
-    description: "Dangerous unicode characters are removed from dashboard title"
-  # PASS-TO-PASS tests - verify repo CI checks pass on base and fixed commits
-  - id: "test_repo_python_syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "All modified Python files have valid syntax"
-  - id: "test_repo_sanitization_logic"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "Sanitization functions (nh3, unicode removal) are correctly implemented"
-  - id: "test_repo_chart_utils_syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "chart_utils.py compiles and contains raw mode handling"
-  - id: "test_repo_preview_utils_syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "preview_utils.py compiles and contains column building logic"
-  - id: "test_repo_get_chart_preview_syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "get_chart_preview.py compiles correctly"
-  - id: "test_repo_dashboard_schemas_syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "dashboard/schemas.py compiles and contains field validators"
-rubric: []
+- id: table_chart_form_data_columns
+  type: pytest
+  description: Table chart form_data includes both 'columns' and 'all_columns' in
+    raw mode
+  origin: agent_config
+  source:
+    config_file: superset/mcp_service/CLAUDE.md
+    rule: Pydantic schemas for validation
+- id: preview_utils_raw_mode
+  type: pytest
+  description: _build_query_columns handles table charts in raw mode with all_columns/columns
+  origin: agent_config
+  source:
+    config_file: superset/mcp_service/CLAUDE.md
+    rule: Pydantic validators for flexible input parsing
+- id: ascii_preview_raw_mode
+  type: pytest
+  description: ASCIIPreviewStrategy handles raw mode table charts correctly
+  origin: agent_config
+  source:
+    config_file: superset/mcp_service/CLAUDE.md
+    rule: Tool output schemas for chart responses
+- id: dashboard_title_sanitization
+  type: pytest
+  description: GenerateDashboardRequest sanitizes dashboard_title via field_validator
+  origin: agent_config
+  source:
+    config_file: superset/mcp_service/CLAUDE.md
+    rule: Use Pydantic schemas for validation
+- id: html_tags_stripped
+  type: pytest
+  description: HTML tags are stripped from dashboard title to prevent XSS
+- id: dangerous_unicode_removed
+  type: pytest
+  description: Dangerous unicode characters are removed from dashboard title
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified Python files have valid syntax via py_compile
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on modified MCP service files
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on modified MCP service files
+- id: test_repo_nh3_sanitization
+  type: pass_to_pass
+  origin: repo_tests
+  description: nh3-based HTML sanitization functions work correctly
+- id: test_repo_chart_utils_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: chart_utils.py compiles successfully
+- id: test_repo_preview_utils_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: preview_utils.py compiles successfully
+- id: test_repo_get_chart_preview_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_chart_preview.py compiles successfully
+- id: test_repo_dashboard_schemas_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: dashboard/schemas.py compiles successfully
+rubric:
+- rule: Use modern Python 3.10+ union syntax (T | None) instead of Optional[T] for
+    type hints in Pydantic schemas and function signatures
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 259-296
+    commit: 1bb41a6e609320dd2932f67d8373cb7866230f65
+- rule: All tool inputs and outputs must be Pydantic models with Field descriptions
+    for automatic validation, LLM-friendly schema generation, and type safety
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 222-242
+    commit: 1bb41a6e609320dd2932f67d8373cb7866230f65

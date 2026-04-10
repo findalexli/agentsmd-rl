@@ -10,16 +10,21 @@ source:
     merge_commit: 192a628cc56fcd901af4330d91c123fe8f493187
 
 checks:
-  # Pass-to-pass tests (quality gates)
-  - id: test_rust_syntax_valid
+  # Pass-to-pass tests (quality gates - actual CI commands)
+  - id: test_cargo_check_consensus
     type: pass_to_pass
     origin: repo_tests
-    description: Rust source files are syntactically valid
+    description: Cargo check passes on modified consensus crates
 
-  - id: test_committed_subdag_new_signature
+  - id: test_cargo_fmt
     type: pass_to_pass
-    origin: gold_patch
-    description: CommittedSubDag::new() signature is correct
+    origin: repo_tests
+    description: Rust code is properly formatted
+
+  - id: test_cargo_test_consensus
+    type: pass_to_pass
+    origin: repo_tests
+    description: Consensus crate unit tests pass
 
   # Fail-to-pass tests (verifying the fix)
   - id: test_consensus_config_field_removed
@@ -67,4 +72,24 @@ checks:
     origin: gold_patch
     description: consensus_manager doesn't pass the flag to protocol config builder
 
-rubric: []
+rubric:
+  - rule: When removing dead code, also remove any associated lint suppressions (#[allow(dead_code)], #[allow(unused)], etc.) - fix the underlying issue rather than suppressing it
+    source:
+      path: CLAUDE.md
+      lines: "113"
+      commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
+  - rule: Unused imports must be removed rather than left with suppression attributes
+    source:
+      path: CLAUDE.md
+      lines: "113"
+      commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
+  - rule: Deprecated/obsolete column families and database fields should be removed completely rather than marked with #[allow(dead_code)]
+    source:
+      path: CLAUDE.md
+      lines: "113"
+      commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41
+  - rule: Code simplifications should include clarifying comments when the 'why' isn't immediately obvious from the code structure
+    source:
+      path: CLAUDE.md
+      lines: "116-124"
+      commit: 5ce3eba9d21aea6f051be3c3306078d2bc572c41

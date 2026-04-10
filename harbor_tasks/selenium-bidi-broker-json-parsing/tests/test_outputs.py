@@ -28,6 +28,33 @@ def test_bazel_assembly_info_build():
     assert r.returncode == 0, f"Bazel assembly-info build failed:\n{r.stderr[-500:]}"
 
 
+def test_bazel_webdriver_net8_build():
+    """Bazel can build .NET 8.0 WebDriver target (pass_to_pass).
+
+    Verifies that the .NET WebDriver library compiles successfully for
+    the .NET 8.0 target framework. This validates the C# syntax and
+    dependencies of the Broker.cs and related BiDi code.
+    """
+    r = subprocess.run(
+        ["bazel", "build", "//dotnet/src/webdriver:webdriver-net8.0"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bazel webdriver-net8.0 build failed:\n{r.stderr[-500:]}"
+
+
+def test_bazel_dotnet_format_script():
+    """Bazel can generate dotnet format script (pass_to_pass).
+
+    Verifies that the dotnet format tooling is properly configured
+    through Bazel, confirming the .NET tooling infrastructure is set up.
+    """
+    r = subprocess.run(
+        ["bazel", "build", "//dotnet:format"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bazel dotnet:format build failed:\n{r.stderr[-500:]}"
+
+
 def test_broker_cs_exists():
     """Broker.cs file exists and is readable (pass_to_pass).
 

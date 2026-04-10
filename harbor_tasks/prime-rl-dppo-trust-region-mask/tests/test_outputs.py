@@ -89,6 +89,15 @@ def test_repo_ruff_format_test_file():
     assert r.returncode == 0, f"Ruff format check failed on test file:\n{r.stdout}\n{r.stderr}"
 
 
+def test_repo_pyproject_toml_valid():
+    """Repo's pyproject.toml is valid TOML (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", "import tomllib; f=open('pyproject.toml', 'rb'); tomllib.load(f); f.close()"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml is invalid TOML:\n{r.stderr}"
+
+
 def test_repo_imports_work():
     """Modified modules can be imported and used at base commit (pass_to_pass)."""
     r = _run_script("""

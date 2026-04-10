@@ -72,29 +72,22 @@ def test_repo_tags_module():
     assert r.returncode == 0, f"Repo tags test failed:\n{r.stderr.decode()[-500:]}"
 
 
-# [repo_tests] pass_to_pass — TypeScript files are syntactically valid
-def test_repo_typescript_syntax():
-    """Modified TypeScript files parse without errors (pass_to_pass)."""
-    import re
-
-    files = [
-        "code/core/src/manager-api/modules/tags.ts",
-        "code/core/src/manager-api/modules/statuses.ts",
-    ]
-
-    for f in files:
-        fp = Path(REPO) / f
-        content = fp.read_text()
-        # Basic syntax checks: balanced braces and valid import statements
-        opens = content.count("{")
-        closes = content.count("}")
-        assert abs(opens - closes) <= 2, f"{f} has unbalanced braces"
-        # Check for valid TypeScript structure (no unmatched parentheses)
-        open_parens = content.count("(")
-        close_parens = content.count(")")
-        assert abs(open_parens - close_parens) <= 2, f"{f} has unbalanced parentheses"
-        # Check for import statements
-        assert re.search(r"import\s+.*\s+from\s+['\"]", content), f"{f} missing import statements"
+# [repo_tests] pass_to_pass — Run repo's actual vitest for statuses module
+def test_repo_vitest_statuses():
+    """Repo's vitest tests for statuses module pass (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "npx", "vitest", "run",
+            "code/core/src/manager-api/tests/statuses.test.ts",
+            "--config", "code/core/vitest.config.ts",
+            "--reporter=verbose"
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Vitest statuses tests failed:\n{r.stderr[-500:]}"
 
 
 # [static] pass_to_pass

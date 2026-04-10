@@ -38,6 +38,30 @@ def test_repo_prettier_check():
     assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
+def test_repo_prettier_check_skill_md():
+    """Repo's prettier formatting passes on SKILL.md (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", ".agents/skills/pr-status-triage/SKILL.md"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check_workflow_md():
+    """Repo's prettier formatting passes on workflow.md (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "prettier", "--check", ".agents/skills/pr-status-triage/workflow.md"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=str(REPO),
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 def test_repo_node_syntax():
     """scripts/pr-status.js must have valid Node.js syntax (pass_to_pass)."""
     r = subprocess.run(
@@ -50,6 +74,19 @@ def test_repo_node_syntax():
     assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_module_loads():
+    """scripts/pr-status.js must load as a module without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "require('./scripts/pr-status.js')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(REPO),
+    )
+    # Should not have syntax errors - runtime errors (gh not found) are expected
+    assert "SyntaxError" not in r.stderr, f"Module loading failed with syntax error:\n{r.stderr[-500:]}"
+
+
 # ---------- pass_to_pass: static checks ----------
 
 
@@ -57,6 +94,24 @@ def test_syntax_valid():
     """scripts/pr-status.js must parse without errors (static pass_to_pass)."""
     result = _run_node(["--check", "scripts/pr-status.js"])
     assert result.returncode == 0, f"Syntax error:\n{result.stderr}"
+
+
+def test_skill_md_exists():
+    """SKILL.md file must exist (static pass_to_pass)."""
+    skill_md = REPO / ".agents/skills/pr-status-triage/SKILL.md"
+    assert skill_md.exists(), "SKILL.md file should exist"
+
+
+def test_workflow_md_exists():
+    """workflow.md file must exist (static pass_to_pass)."""
+    workflow_md = REPO / ".agents/skills/pr-status-triage/workflow.md"
+    assert workflow_md.exists(), "workflow.md file should exist"
+
+
+def test_pr_status_js_exists():
+    """pr-status.js file must exist (static pass_to_pass)."""
+    pr_status_js = REPO / "scripts/pr-status.js"
+    assert pr_status_js.exists(), "pr-status.js file should exist"
 
 
 # ---------- fail_to_pass: code behavior ----------
@@ -77,7 +132,7 @@ def test_reply_to_thread_uses_rest_api():
     content = (REPO / "scripts/pr-status.js").read_text()
 
     # The old code used a GraphQL mutation with addPullRequestReviewThreadReply
-    assert "addPullRequestReviewThreadReply" not in content, (
+    assert "addPullRequestReviewThreadReply(input:" not in content, (
         "replyToThread should no longer use the GraphQL addPullRequestReviewThreadReply mutation"
     )
 

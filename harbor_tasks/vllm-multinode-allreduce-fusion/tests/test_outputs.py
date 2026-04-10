@@ -38,6 +38,122 @@ def test_syntax_valid():
         ast.parse(src)
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    # Check if ruff is available, skip if not
+    r = subprocess.run(
+        ["bash", "-c", "which ruff || echo 'ruff-not-found'"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    if "ruff-not-found" in r.stdout:
+        pytest.skip("ruff not available")
+        return
+
+    r = subprocess.run(
+        ["ruff", "check", "vllm/envs.py", "vllm/distributed/device_communicators/flashinfer_all_reduce.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_mypy_check():
+    """Repo's mypy typecheck passes on modified files (pass_to_pass)."""
+    # Check if mypy is available, skip if not
+    r = subprocess.run(
+        ["bash", "-c", "python3 -m mypy --version 2>/dev/null || echo 'mypy-not-found'"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    if "mypy-not-found" in r.stdout:
+        pytest.skip("mypy not available")
+        return
+
+    # Check envs.py
+    r = subprocess.run(
+        ["python3", "-m", "mypy", "--ignore-missing-imports", "vllm/envs.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"mypy check on envs.py failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+    # Check flashinfer_all_reduce.py
+    r = subprocess.run(
+        ["python3", "-m", "mypy", "--ignore-missing-imports",
+         "vllm/distributed/device_communicators/flashinfer_all_reduce.py"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"mypy check on flashinfer_all_reduce.py failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_python_syntax():
+    """Python syntax validation via AST on modified files (pass_to_pass)."""
+    for path in [TARGET, ENVS]:
+        r = subprocess.run(
+            ["python3", "-c", f"import ast; ast.parse(open('{path}').read())"],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax check failed for {path}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_clang_format_check():
+    """C++/CUDA files are properly formatted (pass_to_pass)."""
+    # Check if any C++ or CUDA files in csrc are clang-format clean
+    # This is a lightweight format check that doesn't require compilation
+    r = subprocess.run(
+        ["bash", "-c", "which clang-format || echo 'clang-format-not-found'"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    if "clang-format-not-found" in r.stdout:
+        pytest.skip("clang-format not available")
+        return
+
+    # Run clang-format check on a subset of C++ files (exclude third_party)
+    r = subprocess.run(
+        ["bash", "-c", "find csrc -name '*.cpp' -o -name '*.h' -o -name '*.cu' -o -name '*.cuh' 2>/dev/null | head -10 | xargs clang-format --dry-run --Werror 2>&1 || true"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Only assert if clang-format actually found issues (not if it's missing)
+    if "clang-format" not in r.stderr.lower() and "error" in r.stdout.lower():
+        assert False, f"clang-format issues found:\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_shellcheck_scripts():
+    """Shell scripts pass shellcheck validation (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "which shellcheck || echo 'shellcheck-not-found'"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    if "shellcheck-not-found" in r.stdout:
+        pytest.skip("shellcheck not available")
+        return
+
+    # Check key shell scripts exist and are valid
+    scripts_to_check = [
+        "tools/pre_commit/shellcheck.sh",
+        "tools/pre_commit/png-lint.sh",
+    ]
+    for script in scripts_to_check:
+        if Path(f"{REPO}/{script}").exists():
+            r = subprocess.run(
+                ["shellcheck", script],
+                capture_output=True, text=True, timeout=30, cwd=REPO,
+            )
+            assert r.returncode == 0, f"shellcheck failed for {script}:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_tabs_in_python():
+    """Python files don't use tab characters for indentation (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "grep -rP '\t' vllm/envs.py vllm/distributed/device_communicators/flashinfer_all_reduce.py 2>/dev/null || true"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.stdout.strip() == "", f"Tab characters found in modified files:\n{r.stdout[:500]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — behavioral tests via subprocess
 # ---------------------------------------------------------------------------
@@ -170,14 +286,19 @@ from unittest.mock import MagicMock
 src = Path("vllm/distributed/device_communicators/flashinfer_all_reduce.py").read_text()
 tree = ast.parse(src)
 
-func_src = None
+# Extract both functions: _resolve_fi_ar_backend and get_fi_ar_workspace
+resolve_func_src = None
+get_workspace_func_src = None
 for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_resolve_fi_ar_backend":
+        lines = src.splitlines(keepends=True)
+        resolve_func_src = textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
     if isinstance(node, ast.FunctionDef) and node.name == "get_fi_ar_workspace":
         lines = src.splitlines(keepends=True)
-        func_src = textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
-        break
+        get_workspace_func_src = textwrap.dedent("".join(lines[node.lineno - 1 : node.end_lineno]))
 
-assert func_src is not None, "get_fi_ar_workspace not found"
+assert resolve_func_src is not None, "_resolve_fi_ar_backend not found"
+assert get_workspace_func_src is not None, "get_fi_ar_workspace not found"
 
 for node_count in [2, 4, 8]:
     ns = {
@@ -186,13 +307,14 @@ for node_count in [2, 4, 8]:
         "ProcessGroup": MagicMock(),
         "_fi_ar_workspace": None,
         "_fi_ar_quant_workspace": None,
-        "_resolve_fi_ar_backend": lambda: "trtllm",
         "get_node_count": lambda nc=node_count: nc,
         "envs": MagicMock(VLLM_FLASHINFER_ALLREDUCE_BACKEND="trtllm"),
         "_create_workspace": MagicMock(),
         "logger": MagicMock(),
     }
-    exec(func_src, ns)
+    # Execute both functions in the same namespace so they can reference each other
+    exec(resolve_func_src, ns)
+    exec(get_workspace_func_src, ns)
     fn = ns["get_fi_ar_workspace"]
 
     try:

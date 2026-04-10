@@ -24,7 +24,7 @@ def test_file_exists():
 def test_loop_terminates_at_drive_root():
     """
     The findParentRepoFolders loop must terminate when dirname hits a
-    fixed point (e.g., Windows drive root where dirname('/c:/') === '/c:/').
+    fixed point (e.g., Windows drive root where dirname("/c:/") === "/c:/").
 
     Reads the actual source, verifies the while(true) + isEqual(current, parent)
     structure, then simulates the algorithm with mock URIs to confirm termination.
@@ -44,7 +44,7 @@ const src = readFileSync(
 // Locate the findParentRepoFolders method
 const idx = src.indexOf('findParentRepoFolders');
 if (idx < 0) { console.error('FAIL: method not found'); process.exit(1); }
-const body = src.slice(idx, idx + 2000);
+const body = src.slice(idx, idx + 3000);
 
 // Buggy version has do { ... } while(...) — misses dirname fixed-point.
 // Fixed version uses while(true) { ... break when isEqual(current, parent) ... }
@@ -118,7 +118,7 @@ const src = readFileSync(
 
 const idx = src.indexOf('findParentRepoFolders');
 if (idx < 0) { console.error('FAIL: method not found'); process.exit(1); }
-const body = src.slice(idx, idx + 2000);
+const body = src.slice(idx, idx + 3000);
 
 const loopStart = Math.max(
     body.indexOf('while (true)'),
@@ -179,13 +179,13 @@ const src = readFileSync(
 
 const idx = src.indexOf('findParentRepoFolders');
 if (idx < 0) { console.error('FAIL: method not found'); process.exit(1); }
-const body = src.slice(idx, idx + 2000);
+const body = src.slice(idx, idx + 3000);
 
 const conditions = [
-    [/isEqual\(current,\s*parent\)/, 'dirname fixed-point check (isEqual(current, parent))'],
-    [/current\.path\s*===\s*'\/'/,   'root path check (current.path === \'/\')'],
-    [/isEqual\(userHome,\s*parent\)/, 'user home boundary (isEqual(userHome, parent))'],
-    [/seen\.has\(parent\)/,           'seen-set dedup (seen.has(parent))'],
+    [/isEqual\(current,\s*parent\)/, 'dirname fixed-point'],
+    [/current\.path\s*===\s*'\/'/,   'root path check'],
+    [/isEqual\(userHome,\s*parent\)/, 'user home boundary'],
+    [/seen\.has\(parent\)/,           'seen-set dedup'],
 ];
 
 const missing = conditions.filter(([re]) => !re.test(body));
@@ -305,3 +305,93 @@ def test_repo_file_structure():
     # Check that basic TypeScript constructs are present
     assert "class PromptFilesLocator" in content, "PromptFilesLocator class not found"
     assert "findParentRepoFolders" in content, "findParentRepoFolders method not found"
+
+
+def test_repo_unit_tests():
+    """Repo's unit tests pass (pass_to_pass).
+
+    Runs the mocha-based node.js unit test suite that is part of
+    VS Code:'s standard CI pipeline.
+    """
+    r = subprocess.run(
+        ["npm", "run", "test-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_eslint():
+    """Repo's ESLint checks pass (pass_to_pass).
+
+    Runs VS Code:'s custom eslint script that checks code style
+    and patterns across the codebase.
+    """
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_valid_layers():
+    """Repo's layer checks pass (pass_to_pass).
+
+    Runs VS Code:'s valid-layers-check script that validates
+    architectural layering constraints in the codebase.
+    """
+    r = subprocess.run(
+        ["npm", "run", "valid-layers-check"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Layer check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_typescript_parse():
+    """TypeScript files parse correctly (pass_to_pass).
+
+    Uses the TypeScript compiler API directly to parse the target
+    file and verify it has no syntax errors.
+    """
+    script = Path(REPO) / "_eval_ts_parse.mjs"
+    script.write_text(r"""
+import { readFileSync } from 'fs';
+import { createSourceFile, ScriptTarget, ScriptKind, SyntaxKind, forEachChild } from 'typescript';
+
+const filePath = 'src/vs/workbench/contrib/chat/common/promptSyntax/utils/promptFilesLocator.ts';
+const content = readFileSync(filePath, 'utf8');
+
+// Parse the file
+const sourceFile = createSourceFile(
+    filePath,
+    content,
+    ScriptTarget.Latest,
+    true,
+    ScriptKind.TS
+);
+
+// Check for syntax errors by looking for Unknown nodes
+let hasErrors = false;
+function visit(node) {
+    if (node.kind === SyntaxKind.Unknown) {
+        hasErrors = true;
+        console.error(`Syntax error at position ${node.pos}`);
+    }
+    forEachChild(node, visit);
+}
+visit(sourceFile);
+
+if (hasErrors) {
+    console.error('FAIL: TypeScript syntax errors found');
+    process.exit(1);
+}
+
+console.log('PASS: TypeScript syntax valid');
+""")
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"TypeScript parse failed:\n{r.stderr}"

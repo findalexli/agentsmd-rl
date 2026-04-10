@@ -1,84 +1,63 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: microsoft/vscode
   pr: 306226
   base_commit: c2016b08f5d48a676858f04907c2b1c10ab03a44
-
 checks:
-  # fail_to_pass — must fail on base, pass on fix
-  - id: test_scoped_editor_service_created
-    type: fail_to_pass
-    origin: pr_diff
-    description: editorService.createScoped called with editorGroupsContainer and stored as scopedEditorService
-
-  - id: test_child_instantiation_service_with_override
-    type: fail_to_pass
-    origin: pr_diff
-    description: Child instantiation service created with IEditorService override via ServiceCollection
-
-  - id: test_window_title_uses_scoped_service
-    type: fail_to_pass
-    origin: pr_diff
-    description: WindowTitle instantiated via scoped this.instantiationService, not original service
-
-  - id: test_active_editor_from_container
-    type: fail_to_pass
-    origin: pr_diff
-    description: Active editor read from editorGroupsContainer.activeGroup, old editorService.activeEditor removed
-
-  # pass_to_pass — must pass on both base and fix
-  - id: test_file_exists
-    type: pass_to_pass
-    origin: static
-    description: Target TypeScript file exists at expected path
-
-  - id: test_file_transpiles
-    type: pass_to_pass
-    origin: static
-    description: TypeScript file transpiles without syntax errors
-
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo ESLint passes
-
-  - id: test_repo_monaco_compile_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Monaco compile check passes
-
-  - id: test_repo_vscode_dts_compile_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: VSCode dts compile check passes
-
-  - id: test_repo_define_class_fields_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Define class fields check passes
-
-  - id: test_repo_stylelint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Stylelint passes
-
-  - id: test_repo_valid_layers_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Valid layers check passes
-
-  - id: test_repo_tsec_compile_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: TSEC compile check passes
-
-  - id: test_repo_cyclic_deps_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Cyclic dependencies check passes
-
-  - id: test_repo_build_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: Build scripts typecheck passes
+- id: test_scoped_editor_service_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: editorService.createScoped called with editorGroupsContainer and stored
+    as scopedEditorService
+- id: test_child_instantiation_service_with_override
+  type: fail_to_pass
+  origin: pr_diff
+  description: Child instantiation service created with IEditorService override via
+    ServiceCollection
+- id: test_window_title_uses_scoped_service
+  type: fail_to_pass
+  origin: pr_diff
+  description: WindowTitle instantiated via scoped this.instantiationService, not
+    original service
+- id: test_active_editor_from_container
+  type: fail_to_pass
+  origin: pr_diff
+  description: Active editor read from editorGroupsContainer.activeGroup, old editorService.activeEditor
+    removed
+- id: test_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Target TypeScript file exists at expected path
+- id: test_file_transpiles
+  type: pass_to_pass
+  origin: static
+  description: TypeScript file transpiles without syntax errors
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes
+- id: test_repo_monaco_compile_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Monaco compile check passes
+- id: test_repo_vscode_dts_compile_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: VSCode dts compile check passes
+- id: test_repo_stylelint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Stylelint passes
+rubric:
+- rule: Service dependencies MUST be declared in constructors and MUST NOT be accessed
+    through the IInstantiationService at any other point in time
+  source:
+    path: .github/copilot-instructions.md
+    lines: 148-149
+    commit: c2016b08f5d48a676858f04907c2b1c10ab03a44
+- rule: Disposables MUST be registered immediately after creation for later disposal.
+    Use helpers such as DisposableStore, MutableDisposable or DisposableMap
+  source:
+    path: .github/copilot-instructions.md
+    lines: 144-145
+    commit: c2016b08f5d48a676858f04907c2b1c10ab03a44

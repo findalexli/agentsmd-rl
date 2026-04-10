@@ -418,3 +418,65 @@ def test_not_stub():
             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
         )
         assert funcs >= 3, f"{fpath.name} only has {funcs} functions"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI gate tests
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Modified Python files must compile without syntax errors."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(CODER_PARSER_FILE), str(XML_PARSER_FILE), str(UTILS_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ast_parse():
+    """Modified Python files must be valid Python (AST parseable)."""
+    for fpath in [CODER_PARSER_FILE, XML_PARSER_FILE, UTILS_FILE]:
+        src = fpath.read_text()
+        tree = ast.parse(src)
+        assert isinstance(tree, ast.Module), f"{fpath.name} did not parse as a module"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff linter must pass on modified files (repo CI standard)."""
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "check", str(CODER_PARSER_FILE), str(XML_PARSER_FILE), str(UTILS_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Ruff format check must pass on modified files (repo CI standard)."""
+    subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", str(CODER_PARSER_FILE), str(XML_PARSER_FILE), str(UTILS_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"

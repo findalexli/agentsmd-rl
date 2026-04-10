@@ -14,15 +14,39 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's prettier formatting passes on pr-status.js
+- id: test_repo_prettier_check_skill_md
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on SKILL.md
+- id: test_repo_prettier_check_workflow_md
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on workflow.md
 - id: test_repo_node_syntax
   type: pass_to_pass
   origin: repo_tests
   description: scripts/pr-status.js has valid Node.js syntax
+- id: test_repo_module_loads
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/pr-status.js loads as a module without syntax errors
 # ---------- pass_to_pass: static checks ----------
 - id: syntax_valid
   type: pass_to_pass
   origin: static
   description: scripts/pr-status.js parses without errors
+- id: test_skill_md_exists
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md file exists
+- id: test_workflow_md_exists
+  type: pass_to_pass
+  origin: static
+  description: workflow.md file exists
+- id: test_pr_status_js_exists
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js file exists
 # ---------- fail_to_pass ----------
 - id: reply_and_resolve_subcommand_exists
   type: fail_to_pass
@@ -68,7 +92,7 @@ rubric:
     path: .agents/skills/authoring-skills/SKILL.md
     lines: "79-86"
     commit: fea754747872122d167dd8bf1fc5581044e50521
-- rule: GitHub API calls in scripts should prefer REST endpoints over GraphQL mutations when the REST endpoint has more predictable behavior (e.g., always publishes immediately vs attaching to pending reviews)
+- rule: GitHub API calls in scripts should prefer REST endpoints over GraphQL mutations when the REST endpoint has more predictable behavior (e.g. always publishes immediately vs attaching to pending reviews)
   source:
     path: .agents/skills/pr-status-triage/SKILL.md
     lines: "6-7"

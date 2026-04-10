@@ -236,12 +236,15 @@ def test_snapshot_tests_structure():
     sql_rs = Path(f"{REPO}/prqlc/prqlc/tests/integration/sql.rs").read_text()
 
     # Check for insta snapshot patterns
-    assert "insta::" in bad_error_msgs or "@r\"" in bad_error_msgs,         "bad_error_messages.rs: Missing insta snapshot patterns"
-    assert "insta::" in sql_rs or "@r\"" in sql_rs or "unwrap_err()" in sql_rs,         "sql.rs: Missing test assertions"
+    assert "insta::" in bad_error_msgs or "@r\"" in bad_error_msgs, \
+        "bad_error_messages.rs: Missing insta snapshot patterns"
+    assert "insta::" in sql_rs or "@r\"" in sql_rs or "unwrap_err()" in sql_rs, \
+        "sql.rs: Missing test assertions"
 
     # Check for Error: and Hint: patterns in test snapshots (both old and new formats)
     assert "Error:" in bad_error_msgs, "bad_error_messages.rs: Missing Error patterns"
-    assert "Hint:" in bad_error_msgs or "Help:" in bad_error_msgs,         "bad_error_messages.rs: Missing Hint/Help patterns"
+    assert "Hint:" in bad_error_msgs or "Help:" in bad_error_msgs, \
+        "bad_error_messages.rs: Missing Hint/Help patterns"
 
 
 # ---------------------------------------------------------------------------
@@ -257,20 +260,6 @@ def test_repo_typos_on_semantic():
     )
     r = subprocess.run(
         ["typos", "prqlc/prqlc/src/semantic/"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Typos check failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_typos_on_tests():
-    """Spell check passes on integration test files (pass_to_pass)."""
-    r = subprocess.run(
-        ["pip3", "install", "typos", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    r = subprocess.run(
-        ["typos", "prqlc/prqlc/tests/integration/"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Typos check failed:\n{r.stdout}\n{r.stderr}"

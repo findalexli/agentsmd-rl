@@ -105,15 +105,21 @@ checks:
     origin: repo_tests
     description: "Repo's public imports work correctly"
 
-rubric:
-  - rule: "Do not edit a # Copied from block, as it will be reverted by make fix-repo."
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "ce4a791c5277840c4c1d74eed03431b674869da5"
+  - id: test_repo_check_doc_toc
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's documentation table of contents check passes"
 
-  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo!"
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "ce4a791c5277840c4c1d74eed03431b674869da5"
+  - id: test_repo_check_doctest_list
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's doctest list check passes"
+
+  - id: test_repo_check_auto_mappings
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's auto mappings sort check passes"
+
+rubric:
+  - rule: "The fix should be minimal and only touch configuration_utils.py without modifying any # Copied from blocks or generated files."
+    reference: "Add model_type override logic to _get_config_dict method in configuration_utils.py"

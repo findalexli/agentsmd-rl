@@ -62,6 +62,24 @@ def test_repo_lint_packages():
     assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
+def test_repo_eslint_backend():
+    """Repo's ESLint passes on backend tools (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "packages/playwright-core/src/tools/backend/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint backend failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_eslint_cli_daemon():
+    """Repo's ESLint passes on cli-daemon tools (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--", "packages/playwright-core/src/tools/cli-daemon/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint cli-daemon failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # fail_to_pass — behavioral (subprocess executes actual code)
 # ---------------------------------------------------------------------------

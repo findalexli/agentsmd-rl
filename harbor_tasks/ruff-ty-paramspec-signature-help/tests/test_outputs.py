@@ -93,6 +93,71 @@ def test_cargo_doc_ty_ide():
     assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_signature_help_basic_function():
+    """Signature help basic function call test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "signature_help::tests::signature_help_basic_function_call", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_signature_help_class_constructor():
+    """Signature help class constructor test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "signature_help::tests::signature_help_class_constructor", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_signature_help_callable_object():
+    """Signature help callable object test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "signature_help::tests::signature_help_callable_object", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_completion_call_keyword_only():
+    """Completion call keyword-only argument test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "completion::tests::call_keyword_only_argument", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_completion_call_positional_only():
+    """Completion call positional-only argument test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "completion::tests::call_positional_only_argument", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # F2P: pr_diff — core behavioral tests (upstream Rust tests added by the PR)
 # ---------------------------------------------------------------------------

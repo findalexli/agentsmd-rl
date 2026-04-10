@@ -5,6 +5,10 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
       git curl ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
 ARG BASE_COMMIT=43cc5138e5145752413235a2a8aa303886077327
 
 RUN git init /repo && \
@@ -16,8 +20,16 @@ RUN git init /repo && \
 RUN git config --global user.email "bench@test" && \
     git config --global user.name "Benchmark"
 
+# Create virtual environment using uv
+RUN cd /repo && uv venv .venv
+ENV VIRTUAL_ENV=/repo/.venv
+ENV PATH="/repo/.venv/bin:${PATH}"
+
+# Install dependencies using uv
+RUN uv pip install torch --index-url https://download.pytorch.org/whl/cpu && \
+    uv pip install pytest pytest-json-ctrf ruff regex mypy pydantic typos
+
 ENV PYTHONPATH="/repo"
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
 RUN mkdir -p /logs/verifier
 

@@ -329,6 +329,61 @@ def test_transformers_imports():
     assert "All imports successful" in r.stdout
 
 
+# [repo_tests] pass_to_pass — all modified files pass ruff format check
+def test_ruff_format_all_modified():
+    """All modified Python files must pass ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-m", "ruff", "format",
+            "src/transformers/configuration_utils.py",
+            "src/transformers/modeling_rope_utils.py",
+            "src/transformers/utils/auto_docstring.py",
+            "tests/utils/test_configuration_utils.py",
+            "utils/check_config_attributes.py",
+            "--check",
+            "--quiet",
+        ],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — all modified files pass ruff lint check
+def test_ruff_lint_all_modified():
+    """All modified Python files must pass ruff lint check (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            "python3", "-m", "ruff", "check",
+            "src/transformers/configuration_utils.py",
+            "src/transformers/modeling_rope_utils.py",
+            "src/transformers/utils/auto_docstring.py",
+            "tests/utils/test_configuration_utils.py",
+            "utils/check_config_attributes.py",
+            "--select", "E,W,F",
+            "--ignore", "E501",
+            "--quiet",
+        ],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ruff lint check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — syntax check on all modified files
+def test_syntax_all_modified():
+    """All modified Python files must have valid syntax (pass_to_pass)."""
+    import py_compile
+
+    files = [
+        "src/transformers/configuration_utils.py",
+        "src/transformers/modeling_rope_utils.py",
+        "src/transformers/utils/auto_docstring.py",
+        "tests/utils/test_configuration_utils.py",
+        "utils/check_config_attributes.py",
+    ]
+    for f in files:
+        py_compile.compile(f"{REPO}/{f}", doraise=True)
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md / .ai/skills/SKILL.md
 # ---------------------------------------------------------------------------

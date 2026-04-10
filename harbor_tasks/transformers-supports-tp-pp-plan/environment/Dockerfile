@@ -21,7 +21,7 @@ RUN git init /workspace/transformers && \
 # Install minimal deps (agent fills in specifics)
 RUN pip install --no-cache-dir numpy 2>/dev/null || true
 
-RUN pip install --no-cache-dir ruff 2>/dev/null || true
+RUN pip install --no-cache-dir ruff pyyaml 2>/dev/null || true
 
 ENV PYTHONPATH="/workspace/transformers"
 

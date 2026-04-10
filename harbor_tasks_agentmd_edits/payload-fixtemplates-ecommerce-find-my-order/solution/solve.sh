@@ -79,11 +79,11 @@ index 5dce533735e..19a38318687 100644
 +++ b/templates/ecommerce/src/app/(app)/(account)/orders/[id]/page.tsx
 @@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic'
 
-type PageProps = {
+ type PageProps = {
    params: Promise<{ id: string }>
 -  searchParams: Promise<{ email?: string }>
 +  searchParams: Promise<{ email?: string; accessToken?: string }>
-}
+ }
 
  export default async function Order({ params, searchParams }: PageProps) {
 @@ -28,7 +28,7 @@ export default async function Order({ params, searchParams }: PageProps) {
@@ -138,7 +138,7 @@ index 39ed4213782..9627aa0c6f7 100644
 --- a/templates/ecommerce/src/app/(app)/find-order/page.tsx
 +++ b/templates/ecommerce/src/app/(app)/find-order/page.tsx
 @@ -20,7 +20,7 @@ export default async function FindOrderPage() {
-}
+ }
 
  export const metadata: Metadata = {
 -  description: 'Find your order with us using your email.',
@@ -218,10 +218,10 @@ index 4a965cb8b4e..1fdcd5e528f 100644
  import { useForm } from 'react-hook-form'
 +import { sendOrderAccessEmail } from './sendOrderAccessEmail'
 
-type FormData = {
+ type FormData = {
    email: string
 @@ -20,8 +20,10 @@ type Props = {
-}
+ }
 
  export const FindOrderForm: React.FC<Props> = ({ initialEmail }) => {
 -  const router = useRouter()

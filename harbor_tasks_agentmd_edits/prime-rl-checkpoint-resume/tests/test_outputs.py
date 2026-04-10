@@ -31,17 +31,54 @@ def _run_python(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------
 
 
-def test_repo_unit_config():
-    """Repo's unit tests for config modules pass (pass_to_pass)."""
+def test_repo_ruff_lint():
+    """Repo's ruff linter passes (pass_to_pass)."""
+    r = subprocess.run(
+        f"pip install -q ruff 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"python -m ruff check . --select F,I --ignore F722,F821 2>&1",
+        capture_output=True, text=True, shell=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_training_config():
+    """Repo's unit tests for training config pass (pass_to_pass)."""
     deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli"
     r = subprocess.run(
         f"pip install -q {deps} 2>&1 | tail -1 && "
         f"cd /workspace/prime-rl && "
         f"PYTHONPATH=/workspace/prime-rl/src python -m pytest "
-        f"tests/unit/training/test_config.py tests/unit/training/orchestrator/test_config.py -v 2>&1",
+        f"tests/unit/training/test_config.py -v --tb=short 2>&1",
         capture_output=True, text=True, shell=True, timeout=300,
     )
-    assert r.returncode == 0, f"Config unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Training config unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_orchestrator_config():
+    """Repo's unit tests for orchestrator config pass (pass_to_pass)."""
+    deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli"
+    r = subprocess.run(
+        f"pip install -q {deps} 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"PYTHONPATH=/workspace/prime-rl/src python -m pytest "
+        f"tests/unit/training/orchestrator/test_config.py -v --tb=short 2>&1",
+        capture_output=True, text=True, shell=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Orchestrator config unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_eval_config():
+    """Repo's unit tests for eval config pass (pass_to_pass)."""
+    deps = "pytest beartype jaxtyping loguru datasets pydantic-settings typer pyyaml tomli"
+    r = subprocess.run(
+        f"pip install -q {deps} 2>&1 | tail -1 && "
+        f"cd /workspace/prime-rl && "
+        f"PYTHONPATH=/workspace/prime-rl/src python -m pytest "
+        f"tests/unit/eval/test_config.py -v --tb=short 2>&1",
+        capture_output=True, text=True, shell=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Eval config unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
 def test_import_training_modules():
@@ -264,6 +301,12 @@ def test_checkpoint_save_load_cycle():
 import sys
 import tempfile
 sys.path.insert(0, '/workspace/prime-rl/src')
+
+# Initialize logger first
+from loguru import logger
+from zeroband.utils.logger import set_logger
+set_logger(logger)
+
 from pathlib import Path
 from zeroband.training.orchestrator.ckpt import CheckpointManager, Progress
 from zeroband.training.orchestrator.config import CheckpointConfig

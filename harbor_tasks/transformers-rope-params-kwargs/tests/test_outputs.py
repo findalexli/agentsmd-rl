@@ -277,3 +277,27 @@ def test_repo_config_from_string():
         timeout=60,
     )
     assert r.returncode == 0, f"config_from_string test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: check_config_attributes.py
+def test_repo_check_config_attributes():
+    """Repo's check_config_attributes script passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/utils/check_config_attributes.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"check_config_attributes failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Repo CI: check_config_docstrings.py
+def test_repo_check_config_docstrings():
+    """Repo's check_config_docstrings script passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", f"{REPO}/utils/check_config_docstrings.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"check_config_docstrings failed:\n{r.stderr[-500:]}"

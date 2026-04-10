@@ -13,14 +13,32 @@ from pathlib import Path
 REPO = "/workspace/playwright"
 
 
-def test_repo_eslint():
-    """Repo's ESLint passes on the codebase (pass_to_pass)."""
-    # First install dependencies
+def _run_npm_ci():
+    """Install dependencies."""
     r = subprocess.run(
         ["npm", "ci", "--include-dev"],
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+
+
+def _run_build():
+    """Build the repo."""
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD commands that should pass on base commit
+# ---------------------------------------------------------------------------
+
+
+def test_repo_eslint():
+    """Repo's ESLint passes on the codebase (pass_to_pass)."""
+    _run_npm_ci()
     r = subprocess.run(
         ["npm", "run", "eslint"],
         capture_output=True, text=True, timeout=600, cwd=REPO,
@@ -30,53 +48,14 @@ def test_repo_eslint():
 
 def test_repo_build():
     """Repo builds successfully (pass_to_pass)."""
-    # First install dependencies
-    r = subprocess.run(
-        ["npm", "ci", "--include-dev"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
-    # Build the repo
-    r = subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
-
-
-def test_repo_lint_tests():
-    """Repo's test linting passes (pass_to_pass)."""
-    # First install dependencies and build
-    r = subprocess.run(
-        ["npm", "ci", "--include-dev"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
-    r = subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
-    r = subprocess.run(
-        ["npm", "run", "lint-tests"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"lint-tests failed:\n{r.stderr[-500:]}"
+    _run_npm_ci()
+    _run_build()
 
 
 def test_repo_lint_packages():
     """Repo's package linting passes (pass_to_pass)."""
-    # First install dependencies and build
-    r = subprocess.run(
-        ["npm", "ci", "--include-dev"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
-    r = subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    _run_npm_ci()
+    _run_build()
     r = subprocess.run(
         ["npm", "run", "lint-packages"],
         capture_output=True, text=True, timeout=600, cwd=REPO,
@@ -84,19 +63,21 @@ def test_repo_lint_packages():
     assert r.returncode == 0, f"lint-packages failed:\n{r.stderr[-500:]}"
 
 
+def test_repo_lint_tests():
+    """Repo's test linting passes (pass_to_pass)."""
+    _run_npm_ci()
+    _run_build()
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"lint-tests failed:\n{r.stderr[-500:]}"
+
+
 def test_repo_test_types():
     """Repo's TypeScript type checking passes (pass_to_pass)."""
-    # First install dependencies and build
-    r = subprocess.run(
-        ["npm", "ci", "--include-dev"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
-    r = subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    _run_npm_ci()
+    _run_build()
     r = subprocess.run(
         ["npm", "run", "test-types"],
         capture_output=True, text=True, timeout=600, cwd=REPO,

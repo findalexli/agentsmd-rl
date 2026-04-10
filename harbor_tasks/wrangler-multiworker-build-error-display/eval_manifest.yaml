@@ -46,14 +46,20 @@ checks:
     origin: static
     description: "handleErrorEvent has meaningful branching logic, not a stub"
 
-rubric:
-  - rule: "Use `import type { X }` for type-only imports (`@typescript-eslint/consistent-type-imports`)"
-    source:
-      path: "AGENTS.md"
-      lines: "90"
-      commit: "d927ee342cd98932556c3671d7f2f01f30bcf954"
-  - rule: "Always use curly braces for control flow"
-    source:
-      path: "AGENTS.md"
-      lines: "94"
-      commit: "d927ee342cd98932556c3671d7f2f01f30bcf954"
+  # CI/repo_tests pass_to_pass checks
+  - id: test_repo_lint_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's linter (oxlint) passes on DevEnv.ts and BundlerController.ts"
+
+  - id: test_repo_typecheck_wrangler
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Wrangler package TypeScript typecheck passes"
+
+  - id: test_repo_format_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's formatter (oxfmt) check passes on modified files"
+
+rubric: []

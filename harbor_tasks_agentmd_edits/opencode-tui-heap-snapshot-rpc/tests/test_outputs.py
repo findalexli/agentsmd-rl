@@ -337,6 +337,15 @@ def test_repo_tui_transcript_tests():
     )
     assert r.returncode == 0, f"TUI transcript tests failed:\n{r.stderr[-500:]}"
 
+# [repo_tests] pass_to_pass
+def test_repo_snapshot_tests():
+    """Snapshot tests pass (pass_to_pass) — covers file snapshot functionality."""
+    r = subprocess.run(
+        ["bun", "test", "test/snapshot/snapshot.test.ts"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/opencode",
+    )
+    assert r.returncode == 0, f"Snapshot tests failed:\n{r.stderr[-500:]}"
+
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub check

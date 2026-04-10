@@ -88,7 +88,18 @@ def test_git_repo_valid():
     head_commit = result.stdout.strip()
     # The commit should start with the expected base commit (allow for local commits)
     expected_base = "46761a321042e8ac1863f4cfc8d73d527956e181"
-    assert head_commit.startswith(expected_base[:16]), f"Unexpected HEAD commit: {head_commit[:16]}... expected {expected_base[:16]}..."
+    if head_commit.startswith(expected_base[:16]):
+        return  # HEAD is at expected commit
+    # Allow for one local commit on top (gold solution case) - check HEAD~1
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD~1"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    if result.returncode == 0:
+        parent_commit = result.stdout.strip()
+        if parent_commit.startswith(expected_base[:16]):
+            return  # HEAD~1 is at expected commit
+    assert False, f"Unexpected HEAD commit: {head_commit[:16]}... expected {expected_base[:16]}... (or one commit on top)"
 
 
 # [repo_tests] pass_to_pass — Node.js CLI validation
@@ -121,6 +132,60 @@ def test_pnpm_version():
     except FileNotFoundError:
         # pnpm not installed in Docker image, skip this test
         pass
+
+
+# [repo_tests] pass_to_pass — CI release script validation
+def test_check_is_release_js():
+    """CI release check script runs and produces expected output (pass_to_pass)."""
+    result = subprocess.run(
+        ["node", "scripts/check-is-release.js"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    # Script returns exit 0 for release commits, exit 1 for non-release
+    # Both are valid - just verify it produces expected output format
+    output = result.stdout + result.stderr
+    assert "not publish commit" in output or result.returncode == 0, (
+        f"check-is-release.js produced unexpected output: {output}"
+    )
+
+
+# [repo_tests] pass_to_pass — Shell script syntax validation
+def test_shell_scripts_syntax():
+    """Shell scripts have valid syntax (pass_to_pass)."""
+    scripts = [
+        "scripts/check-examples.sh",
+        "scripts/check-pre-compiled.sh",
+    ]
+    for script in scripts:
+        script_path = Path(f"{REPO}/{script}")
+        if script_path.exists():
+            result = subprocess.run(
+                ["bash", "-n", str(script_path)],
+                capture_output=True, text=True, timeout=10,
+            )
+            assert result.returncode == 0, f"Shell syntax error in {script}: {result.stderr}"
+
+
+# [repo_tests] pass_to_pass — JSON validation via Python
+def test_workspace_package_json_python():
+    """Root package.json is valid JSON via Python parser (pass_to_pass)."""
+    result = subprocess.run(
+        ["python3", "-c", "import json; json.load(open('package.json'))"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert result.returncode == 0, f"package.json Python validation failed: {result.stderr}"
+
+
+# [repo_tests] pass_to_pass — Node.js can parse package.json
+def test_node_parse_package_json():
+    """Node.js can parse and evaluate package.json scripts (pass_to_pass)."""
+    result = subprocess.run(
+        ["node", "-e", "const p=require('./package.json'); console.log(JSON.stringify(Object.keys(p.scripts).slice(0,5)));"],
+        capture_output=True, text=True, timeout=10, cwd=REPO,
+    )
+    assert result.returncode == 0, f"Node.js package.json parse failed: {result.stderr}"
+    output = result.stdout.strip()
+    assert "build" in output or "new-error" in output, f"Unexpected output from Node: {output}"
 
 
 # ---------------------------------------------------------------------------

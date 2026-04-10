@@ -357,6 +357,32 @@ def test_repo_clustering_tests_syntax():
             assert r.returncode == 0, f"Syntax error in {filepath}: {r.stderr}"
 
 
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on modified Python files (pass_to_pass)."""
+    # Install ruff and check the modified Python files
+    r = subprocess.run(
+        [sys.executable, "-c", f"""
+import subprocess
+import sys
+# Install ruff
+result = subprocess.run([sys.executable, "-m", "pip", "install", "ruff", "--quiet", "--break-system-packages"], capture_output=True)
+# Run ruff check on modified files
+files_to_check = [
+    "{REPO}/products/llm_analytics/backend/api/clustering_job.py",
+    "{REPO}/products/llm_analytics/backend/api/clustering_config.py",
+]
+for filepath in files_to_check:
+    result = subprocess.run([sys.executable, "-m", "ruff", "check", filepath, "--output-format", "concise"], capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Ruff check failed for {{filepath}}: {{result.stderr}}")
+        sys.exit(1)
+print("Ruff checks passed")
+"""],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff check failed: {r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Imports (for pytest)
 # ---------------------------------------------------------------------------

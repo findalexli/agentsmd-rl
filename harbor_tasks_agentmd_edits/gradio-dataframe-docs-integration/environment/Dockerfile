@@ -5,10 +5,10 @@ ENV LANG=C.UTF-8
 
 # Install python3 for test runner + git + pnpm
 RUN apt-get update && \
-    apt-get install -y --no-install-no-install-recommends \
+    apt-get install -y --no-install-recommends \
         git curl ca-certificates python3 python3-pip && \
     rm -rf /var/lib/apt/lists/* && \
-    npm install -g pnpm
+    npm install -g pnpm@9
 
 # Clone repo at base commit
 RUN git clone --filter=blob:none https://github.com/gradio-app/gradio.git /workspace/gradio && \
@@ -20,7 +20,7 @@ RUN git clone --filter=blob:none https://github.com/gradio-app/gradio.git /works
 WORKDIR /workspace/gradio
 
 # Install minimal Python deps needed by test_outputs.py
-RUN python3 -m pip install --break-system-packages pytest pathspec
+RUN python3 -m pip install --break-system-packages pytest pathspec pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

@@ -110,6 +110,59 @@ def test_cargo_fmt_check():
     assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass — CI cargo check for ty binary
+def test_cargo_check_ty():
+    """Repo's cargo check passes for ty binary (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p ty failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — CI cargo check for ty_project crate
+def test_cargo_check_ty_project():
+    """Repo's cargo check passes for ty_project crate (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "ty_project"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p ty_project failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — Library unit tests for ty_python_semantic
+def test_lib_tests_ty_semantic():
+    """Repo's library unit tests pass for ty_python_semantic (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib", "--", "--test-threads=2"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Library tests failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass — class-related mdtests
+def test_class_mdtest():
+    """Repo's class mdtest suite passes (pass_to_pass)."""
+    env = os.environ.copy()
+    env["CARGO_PROFILE_DEV_OPT_LEVEL"] = "1"
+    env["INSTA_FORCE_PASS"] = "1"
+    env["INSTA_UPDATE"] = "always"
+    r = subprocess.run(
+        [
+            "cargo", "test", "-p", "ty_python_semantic",
+            "--test", "mdtest", "--", "class",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env=env,
+    )
+    assert r.returncode == 0, (
+        f"class mdtest failed:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

@@ -220,3 +220,43 @@ def test_repo_theme_tests_syntax():
     # The import may include ThemeSettingDefaults too, so check for either pattern
     assert ("import { migrateThemeSettingsId }" in content or
             "import { migrateThemeSettingsId, ThemeSettingDefaults }" in content),         "Test file must import migrateThemeSettingsId"
+
+
+# [repo_tests] pass_to_pass — Run node unit tests
+def test_repo_test_node():
+    """Node.js unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-node"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node unit tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ESLint on modified theme service file
+def test_repo_eslint_theme_service():
+    """ESLint passes on workbenchThemeService.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "src/vs/workbench/services/themes/common/workbenchThemeService.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on theme service:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ESLint on modified configuration contribution file
+def test_repo_eslint_config_contrib():
+    """ESLint passes on configuration.contribution.ts (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", "src/vs/sessions/contrib/configuration/browser/configuration.contribution.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed on config contribution:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Hygiene/precommit checks
+def test_repo_hygiene():
+    """Hygiene checks pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "precommit"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Hygiene checks failed:\n{r.stderr[-500:]}"

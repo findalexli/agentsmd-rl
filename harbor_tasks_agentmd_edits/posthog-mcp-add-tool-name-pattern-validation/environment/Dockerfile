@@ -18,8 +18,9 @@ RUN git clone --filter=blob:none https://github.com/PostHog/posthog.git /workspa
 
 WORKDIR /workspace/posthog
 
-# Install zod so tests can import yaml-config-schema.ts via node --experimental-strip-types
-RUN npm install --no-save zod
+# Enable pnpm and install dependencies for the MCP package
+RUN corepack enable && corepack prepare pnpm --activate && \
+    pnpm --filter=@posthog/mcp... install --frozen-lockfile
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

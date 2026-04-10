@@ -134,7 +134,7 @@ def test_repo_typecheck():
     """Repo's TypeScript typecheck passes (pass_to_pass)."""
     r = subprocess.run(
         ["bun", "turbo", "typecheck"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
 
@@ -173,6 +173,33 @@ def test_repo_unit_tests_storage_db():
         capture_output=True, text=True, timeout=60, cwd=PKG,
     )
     assert r.returncode == 0, f"Storage db tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_auth():
+    """Auth unit tests pass (pass_to_pass) - tests auth normalization utilities."""
+    r = subprocess.run(
+        ["bun", "test", "test/auth/auth.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PKG,
+    )
+    assert r.returncode == 0, f"Auth tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_acp_agent_interface():
+    """ACP agent interface tests pass (pass_to_pass) - tests agent SDK compliance."""
+    r = subprocess.run(
+        ["bun", "test", "test/acp/agent-interface.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=PKG,
+    )
+    assert r.returncode == 0, f"ACP agent interface tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_unit_tests_cli_github_remote():
+    """CLI github remote tests pass (pass_to_pass) - tests CLI utility functions."""
+    r = subprocess.run(
+        ["bun", "test", "test/cli/github-remote.test.ts"],
+        capture_output=True, text=True, timeout=60, cwd=PKG,
+    )
+    assert r.returncode == 0, f"CLI github remote tests failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------

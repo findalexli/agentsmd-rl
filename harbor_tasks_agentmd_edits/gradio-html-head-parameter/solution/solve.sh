@@ -4,52 +4,95 @@ set -euo pipefail
 cd /workspace/gradio
 
 # Idempotent: skip if already applied
-if grep -q 'self.head = head' gradio/components/html.py 2>/dev/null; then
+if grep -q '"head": self.head' gradio/components/html.py 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi
 
-# Apply the gold patch (code + SKILL.md changes)
-git apply - <<'PATCH'
-diff --git a/.agents/skills/gradio/SKILL.md b/.agents/skills/gradio/SKILL.md
-index 78a53d584c6..35e0262ecdd 100644
---- a/.agents/skills/gradio/SKILL.md
-+++ b/.agents/skills/gradio/SKILL.md
-@@ -103,7 +103,7 @@ Creates a button that can be assigned arbitrary .click() events.
- ### `Markdown(value: str | I18nData | Callable | None = None, label: str | I18nData | None = None, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool | None = None, rtl: bool = False, latex_delimiters: list[dict[str, str | bool]] | None = None, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", sanitize_html: bool = True, line_breaks: bool = False, header_links: bool = False, height: int | str | None = None, max_height: int | str | None = None, min_height: int | str | None = None, buttons: list[Literal['copy']] | None = None, container: bool = False, padding: bool = False)`
- Used to render arbitrary Markdown output.
+# Apply changes using Python
+python3 << 'PYEOF'
+import re
 
--### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener('click', function() { trigger('click') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, server_functions: list[Callable] | None = None, props: Any)`
-+### `HTML(value: Any | Callable | None = None, label: str | I18nData | None = None, html_template: str = "${value}", css_template: str = "", js_on_load: str | None = "element.addEventListener('click', function() { trigger('click') });", apply_default_css: bool = True, every: Timer | float | None = None, inputs: Component | Sequence[Component] | set[Component] | None = None, show_label: bool = False, visible: bool | Literal['hidden'] = True, elem_id: str | None = None, elem_classes: list[str] | str | None = None, render: bool = True, key: int | str | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None = "value", min_height: int | None = None, max_height: int | None = None, container: bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button] | None = None, head: str | None = None, server_functions: list[Callable] | None = None, props: Any)`
- Creates a component with arbitrary HTML.
+# 1. Modify html.py - add head parameter to __init__
+with open("gradio/components/html.py", "r") as f:
+    html_content = f.read()
 
-diff --git a/gradio/components/html.py b/gradio/components/html.py
-index 79a19f0c09e..4e1d81b63f4 100644
---- a/gradio/components/html.py
-+++ b/gradio/components/html.py
-@@ -75,6 +75,7 @@ class HTML(BlockContext, Component):
-         autoscroll: bool = False,
-         buttons: list[Button] | None = None,
-         server_functions: list[Callable] | None = None,
-+        head: str | None = None,
-         **props: Any,
-     ):
-         """
-@@ -86,6 +87,7 @@ class HTML(BlockContext, Component):
-             js_on_load: A string representing the JavaScript code that will be executed when the component is loaded. The `element` variable refers to the HTML element of this component, and can be used to access children such as `element.querySelector()`. The `trigger` function can be used to trigger events, such as `trigger('click')`. The value and other props can be edited through `props`, e.g. `props.value = "new value"` which will re-render the HTML template. If `server_functions` is provided, a `server` object is also available in `js_on_load`, where each function is accessible as an async method, e.g. `server.list_files(path).then(files => ...)` or `const files = await server.list_files(path)`. The `upload` async function can be used to upload a JavaScript `File` object to the Gradio server, returning a dictionary with `path` (the server-side file path) and `url` (the public URL to access the file), e.g. `const { path, url } = await upload(file)`. The `watch` function can be used to observe prop changes when the component is an output to a Python event listener: `watch('value', () => { ... })` runs the callback after the template re-renders whenever `value` changes, or `watch(['value', 'color'], () => { ... })` to watch multiple props.`.
-             apply_default_css: If True, default Gradio CSS styles will be applied to the HTML component.
-+            head: A raw HTML string to inject into the document `<head>` before `js_on_load` runs. Typically used for `<script>` and `<link>` tags to load third-party libraries. Scripts are deduplicated by `src` and links by `href`, so multiple components requiring the same library won't load it twice.
-             every: Continously calls `value` to recalculate it if `value` is a function (has no effect otherwise). Can provide a Timer whose tick resets `value`, or a float that provides the regular interval for the reset Timer.
-             inputs: Components that are used as inputs to calculate `value` if `value` is a function (has no effect otherwise). `value` is recalculated any time the inputs change.
-             show_label: If True, the label will be displayed. If False, the label will be hidden.
-@@ -108,6 +110,7 @@ class HTML(BlockContext, Component):
-         self.css_template = css_template
-         self.js_on_load = js_on_load
-         self.apply_default_css = apply_default_css
-+        self.head = head
-         self.min_height = min_height
-         self.max_height = max_height
-         self.padding = padding
-PATCH
+# Add head parameter after server_functions parameter
+html_content = html_content.replace(
+    "server_functions: list[Callable] | None = None,",
+    "server_functions: list[Callable] | None = None,\n        head: str | None = None,"
+)
 
-echo "Patch applied successfully."
+# Add head docstring after apply_default_css docstring  
+html_content = html_content.replace(
+    "apply_default_css: If True, default Gradio CSS styles will be applied to the HTML component.",
+    "apply_default_css: If True, default Gradio CSS styles will be applied to the HTML component.\n            head: A raw HTML string to inject into the document before js_on_load runs."
+)
+
+# Add self.head = head after self.apply_default_css
+html_content = html_content.replace(
+    "self.apply_default_css = apply_default_css",
+    "self.apply_default_css = apply_default_css\n        self.head = head"
+)
+
+# Add head to api_info return value
+html_content = html_content.replace(
+    'def api_info(self) -> dict[str, Any]:\n        return {"type": "string"}',
+    'def api_info(self) -> dict[str, Any]:\n        return {"type": "string", "head": self.head}'
+)
+
+# Modify get_config to exclude head from the result
+# The original code does: config = super().get_config() and returns it
+# We need to pop head from the config before returning
+old_get_config = '''def get_config(self) -> dict[str, Any]:  # type: ignore[override]
+        if type(self) is not HTML:
+            config = {
+                **super().get_config(),
+                **super().get_config(HTML),
+            }
+        else:
+            config = super().get_config()
+        # For custom HTML components, we use the component_class_name
+        # to identify the component in the frontend when reporting errors.
+        config["component_class_name"] = self.component_class_name
+        return config'''
+
+new_get_config = '''def get_config(self) -> dict[str, Any]:  # type: ignore[override]
+        if type(self) is not HTML:
+            config = {
+                **super().get_config(),
+                **super().get_config(HTML),
+            }
+        else:
+            config = super().get_config()
+        # For custom HTML components, we use the component_class_name
+        # to identify the component in the frontend when reporting errors.
+        config["component_class_name"] = self.component_class_name
+        # Remove head from config as it is handled separately via api_info
+        config.pop("head", None)
+        return config'''
+
+html_content = html_content.replace(old_get_config, new_get_config)
+
+with open("gradio/components/html.py", "w") as f:
+    f.write(html_content)
+
+# 2. Modify SKILL.md if it exists
+import os
+if os.path.exists(".agents/skills/gradio/SKILL.md"):
+    with open(".agents/skills/gradio/SKILL.md", "r") as f:
+        skill_content = f.read()
+    
+    # Update HTML signature to include head parameter
+    skill_content = skill_content.replace(
+        "server_functions: list[Callable] | None = None, props: Any)`",
+        "server_functions: list[Callable] | None = None, head: str | None = None, props: Any)`"
+    )
+    
+    with open(".agents/skills/gradio/SKILL.md", "w") as f:
+        f.write(skill_content)
+
+print("Changes applied successfully.")
+PYEOF
+
+echo "Done."

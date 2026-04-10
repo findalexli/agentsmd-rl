@@ -17,7 +17,8 @@ except ImportError:
     import tomli as tomllib
 
 REPO = "/workspace/quickwit"
-CARGO_TOML = Path(REPO) / "quickwit" / "Cargo.toml"
+QUICKWIT_DIR = Path(REPO) / "quickwit"
+CARGO_TOML = QUICKWIT_DIR / "Cargo.toml"
 SKILL_PATH = Path(REPO) / ".claude" / "skills" / "rationalize-deps" / "SKILL.md"
 
 
@@ -209,8 +210,7 @@ print("PASS: SKILL.md documents rationalization workflow")
 
 
 # ---------------------------------------------------------------------------
-# Additional pass_to_pass tests (enriched from CI exploration)
-# These document CI commands that should pass on base commit.
+# Pass-to-pass tests (static validation)
 # ---------------------------------------------------------------------------
 
 def test_cargo_toml_members_exist():
@@ -219,7 +219,7 @@ def test_cargo_toml_members_exist():
     data = tomllib.loads(content)
 
     members = data.get("workspace", {}).get("members", [])
-    workspace_root = Path(REPO) / "quickwit"
+    workspace_root = QUICKWIT_DIR
 
     missing = []
     for member in members:
@@ -260,7 +260,7 @@ def test_cargo_toml_no_merge_conflicts():
 
 def test_repo_scripts_exist():
     """CI scripts referenced by workflows must exist (pass_to_pass)."""
-    scripts_dir = Path(REPO) / "quickwit" / "scripts"
+    scripts_dir = QUICKWIT_DIR / "scripts"
     assert scripts_dir.exists(), "Scripts directory missing"
 
     # Key scripts referenced in CI
@@ -268,3 +268,36 @@ def test_repo_scripts_exist():
     for script in key_scripts:
         script_path = scripts_dir / script
         assert script_path.exists(), f"CI script missing: {script}"
+
+
+# ---------------------------------------------------------------------------
+# Enriched pass_to_pass tests (origin: repo_tests)
+# These execute actual CI commands via subprocess.run()
+# ---------------------------------------------------------------------------
+
+def test_repo_license_headers():
+    """License headers check passes (pass_to_pass via repo_tests)."""
+    r = subprocess.run(
+        ["bash", "scripts/check_license_headers.sh"],
+        capture_output=True, text=True, timeout=120, cwd=QUICKWIT_DIR,
+    )
+    assert r.returncode == 0, f"License header check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_log_format():
+    """Log format check passes (pass_to_pass via repo_tests)."""
+    r = subprocess.run(
+        ["bash", "scripts/check_log_format.sh"],
+        capture_output=True, text=True, timeout=120, cwd=QUICKWIT_DIR,
+    )
+    assert r.returncode == 0, f"Log format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_toml_syntax():
+    """Cargo.toml is valid TOML syntax (pass_to_pass via repo_tests)."""
+    cargo_path = str(CARGO_TOML)
+    r = subprocess.run(
+        [sys.executable, "-c", "import tomllib; tomllib.loads(open('" + cargo_path + "').read()); print('TOML valid')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Cargo.toml TOML validation failed:\n{r.stderr}"

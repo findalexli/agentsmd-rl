@@ -17,6 +17,31 @@ checks:
     origin: static
     description: "Gemma4Model class still exists with forward and __init__"
 
+  - id: repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on gemma4.py"
+
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on gemma4.py"
+
+  - id: repo_spdx_header
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SPDX license header check passes on gemma4.py"
+
+  - id: repo_forbidden_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Forbidden imports check passes on gemma4.py"
+
+  - id: repo_boolean_context_manager
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Boolean context manager check passes on gemma4.py"
+
   - id: self_decoder_layers_class
     type: fail_to_pass
     origin: pr_diff
@@ -52,4 +77,19 @@ checks:
     origin: pr_diff
     description: "Gemma4Model.__init__ creates self_decoder and cross_decoder"
 
-rubric: []
+rubric:
+  - rule: YOCO (You Only Cache Once) fast prefill optimization must follow the pattern from Gemma3n - split layers into SelfDecoder and CrossDecoder classes, each wrapped with @support_torch_compile(enable_if=lambda vllm_config: vllm_config.cache_config.kv_sharing_fast_prefill) or its negation for the non-fast-prefill case
+    source:
+      path: vllm/model_executor/models/gemma3n.py
+      lines: "574-576, 743-745, 787-788"
+      commit: e69a265135ef48312d78130f64b7bfce4cd81a37
+  - rule: Use vllm.compilation.backends.set_model_tag context manager when instantiating self_decoder and cross_decoder modules
+    source:
+      path: vllm/model_executor/models/gemma3n.py
+      lines: "831-846"
+      commit: e69a265135ef48312d78130f64b7bfce4cd81a37
+  - rule: Import get_forward_context from vllm.forward_context and KVSharingFastPrefillMetadata from vllm.v1.attention.backends.utils for KV-sharing fast prefill implementations
+    source:
+      path: vllm/model_executor/models/gemma3n.py
+      lines: "27, 52"
+      commit: e69a265135ef48312d78130f64b7bfce4cd81a37

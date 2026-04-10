@@ -154,6 +154,31 @@ def test_repo_pyupgrade_tests():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_repo_cargo_fmt():
+    """Repo's rustfmt check passes (pass_to_pass)."""
+    # Install rustfmt component if needed
+    subprocess.run(
+        ["rustup", "component", "add", "rustfmt"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["cargo", "fmt", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"cargo fmt --check failed:\n{r.stderr[-2000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_workspace():
+    """Repo's workspace-wide cargo check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--workspace"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"cargo check --workspace failed:\n{r.stderr[-2000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

@@ -291,6 +291,51 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
+# Repo CI tests (repo_tests) — pass_to_pass gates from actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI: ruff check
+def test_repo_ruff_lint():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["ruff", "check", WEIGHT_UTILS, TEST_FILE, "--select", "E,F", "--quiet"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff lint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: py_compile
+def test_repo_py_compile():
+    """Modified files compile without syntax errors (pass_to_pass)."""
+    import subprocess
+
+    r = subprocess.run(
+        ["python", "-m", "py_compile", WEIGHT_UTILS, TEST_FILE],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI: python -c ast.parse
+def test_repo_ast_parse():
+    """Modified files parse as valid Python AST (pass_to_pass)."""
+    import subprocess
+
+    cmd = (
+        "import ast; "
+        "[ast.parse(open(f).read()) for f in [\"vllm/model_executor/model_loader/weight_utils.py\", "
+        "\"tests/compile/fullgraph/test_basic_correctness.py\"]]"
+    )
+    r = subprocess.run(
+        ["python", "-c", cmd],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST parse failed:\n{r.stderr[-500:]}"
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config) — AGENTS.md lint rule
 # ---------------------------------------------------------------------------
 

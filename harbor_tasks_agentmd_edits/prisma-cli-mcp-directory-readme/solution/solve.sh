@@ -76,4 +76,12 @@ A list of MCP tools are in `./MCP.ts`.
 Start the local CLI MCP server using `npx prisma mcp` or follow the [docs](https://www.prisma.io/docs/postgres/integrations/mcp-server) to add the local MCP Server to your code editor, LLM, or Agent.
 README
 
+# Run prettier on the modified file
+# Enable corepack and run pnpm install to get dependencies for prettier
+corepack enable 2>/dev/null || true
+corepack prepare pnpm@9.14.4 --activate 2>/dev/null || true
+pnpm install --frozen-lockfile >/dev/null 2>&1 || true
+# Format the modified MCP.ts file
+pnpm exec prettier --write packages/cli/src/mcp/MCP.ts >/dev/null 2>&1 || true
+
 echo "Patch applied successfully."

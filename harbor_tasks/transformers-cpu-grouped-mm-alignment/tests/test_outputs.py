@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import subprocess
 import sys
 import unittest.mock
@@ -257,3 +258,110 @@ def test_ruff_check():
         timeout=30,
     )
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI tests (repo_tests) — pass_to_pass gates from actual CI
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — from CI: ruff format check
+def test_ruff_format():
+    """Changed files pass ruff format check (repo CI command: make style)."""
+    r = subprocess.run(
+        [
+            sys.executable, "-m", "ruff", "format",
+            "src/transformers/integrations/moe.py",
+            "src/transformers/conversion_mapping.py",
+            "src/transformers/core_model_loading.py",
+            "--check",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — from CI: MoE module imports
+def test_moe_module_imports():
+    """MoE integration module imports successfully (repo CI import check)."""
+    r = subprocess.run(
+        [
+            sys.executable, "-c",
+            "from transformers.integrations.moe import _can_use_grouped_mm; "
+            "from transformers.utils.import_utils import is_torch_less_or_equal; "
+            "print('OK')",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+        env={**os.environ, "PYTHONPATH": f"{REPO}/src"},
+    )
+    assert r.returncode == 0, f"MoE import failed:\n{r.stderr.decode()}"
+    assert "OK" in r.stdout.decode(), f"MoE import test failed: {r.stdout.decode()}"
+
+
+# [repo_tests] pass_to_pass — from CI: conversion mapping imports
+def test_conversion_mapping_imports():
+    """Conversion mapping module imports and builds mappings (repo CI)."""
+    r = subprocess.run(
+        [
+            sys.executable, "-c",
+            "from transformers.conversion_mapping import _build_checkpoint_conversion_mapping; "
+            "m = _build_checkpoint_conversion_mapping(); "
+            "assert 'mixtral' in m, 'mixtral missing'; "
+            "assert 'qwen3_moe' in m, 'qwen3_moe missing'; "
+            "print('OK')",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+        env={**os.environ, "PYTHONPATH": f"{REPO}/src"},
+    )
+    assert r.returncode == 0, f"Conversion mapping import failed:\n{r.stderr.decode()}"
+    assert "OK" in r.stdout.decode(), f"Conversion mapping test failed: {r.stdout.decode()}"
+
+
+# [repo_tests] pass_to_pass — from CI: core model loading imports
+def test_core_model_loading_imports():
+    """Core model loading classes import successfully (repo CI)."""
+    r = subprocess.run(
+        [
+            sys.executable, "-c",
+            "from transformers.core_model_loading import ("
+            "Chunk, Concatenate, MergeModulelist, WeightConverter, "
+            "WeightRenaming, Transpose, ErnieFuseAndSplitTextVisionExperts); "
+            "print('OK')",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+        env={**os.environ, "PYTHONPATH": f"{REPO}/src"},
+    )
+    assert r.returncode == 0, f"Core model loading import failed:\n{r.stderr.decode()}"
+    assert "OK" in r.stdout.decode(), f"Core model loading test failed: {r.stdout.decode()}"
+
+
+# [repo_tests] pass_to_pass — functional test of _can_use_grouped_mm
+def test_grouped_mm_functional():
+    """_can_use_grouped_mm works with aligned tensors (repo CI functional test)."""
+    r = subprocess.run(
+        [
+            sys.executable, "-c",
+            "import torch; "
+            "from transformers.integrations.moe import _can_use_grouped_mm; "
+            "inp = torch.randn(2, 8, dtype=torch.bfloat16); "
+            "w = torch.randn(16, 8, dtype=torch.bfloat16); "
+            "offs = torch.tensor([2], dtype=torch.int32); "
+            "result = _can_use_grouped_mm(inp, w, offs); "
+            "assert isinstance(result, bool), f'Expected bool, got {type(result)}'; "
+            "print('OK')",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        timeout=30,
+        env={**os.environ, "PYTHONPATH": f"{REPO}/src"},
+    )
+    assert r.returncode == 0, f"Functional test failed:\n{r.stderr.decode()}"
+    assert "OK" in r.stdout.decode(), f"Functional test did not pass: {r.stdout.decode()}"

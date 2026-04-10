@@ -60,7 +60,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Storage/db unit tests pass - tests database layer used by account module
-rubric: []
+- id: repo_unit_tests_auth
+  type: pass_to_pass
+  origin: repo_tests
+  description: Auth unit tests pass - tests auth normalization utilities
+- id: repo_unit_tests_acp_agent_interface
+  type: pass_to_pass
+  origin: repo_tests
+  description: ACP agent interface tests pass - tests agent SDK compliance
+- id: repo_unit_tests_cli_github_remote
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI github remote tests pass - tests CLI utility functions
+rubric:
+- rule: packages/opencode/AGENTS.md must include an Effect guide section documenting
+    Schema patterns (Schema.Class for multi-field types, Schema.brand for single-value
+    types)
+  source:
+    path: packages/opencode/AGENTS.md
+  reference: '# opencode Effect guide\n\n## Schemas\n- Use `Schema.Class` for data\n    types with multiple fields.\n- Use branded schemas (`Schema.brand`) for single-value\n    types.'
+- rule: packages/opencode/AGENTS.md Effect guide must document Layer.effect pattern
+    with ServiceName.of() for service implementations
+  source:
+    path: packages/opencode/AGENTS.md
+  reference: '## Services\n- In `Layer.effect`, always return service implementations\n    with `ServiceName.of({ ... })`, never a plain object.'
 config_edits:
 - path: packages/opencode/AGENTS.md
   tier: 1
@@ -123,8 +146,7 @@ config_edits:
     - In `Effect.gen/fn`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
     MyError(...))` for direct early-failure branches.
 
-    ## Naming
-
-    - Prefer single word variable names where possible (e.g., `pid`, `cfg`, `err`, `opts`, `dir`).
-    - Multi-word names are allowed only when a single word would be unclear or ambiguous.'
+    ## Naming - Prefer single word variable names where possible (e.g., `pid`, `cfg`,
+    `err`, `opts`, `dir`). - Multi-word names are allowed only when a single word
+    would be unclear or ambiguous.'
   gold_removed: ''

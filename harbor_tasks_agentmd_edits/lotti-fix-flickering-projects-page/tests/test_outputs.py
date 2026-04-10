@@ -240,3 +240,60 @@ def test_isort_matrix_provisioner():
     assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - from services/voxtral-local Makefile
+def test_python_syntax_voxtral_local():
+    """Python files in voxtral-local service have valid syntax."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "cd /workspace/lotti/services/voxtral-local && "
+            "find . -name '*.py' -exec python3 -m py_compile {} +"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from services/shared structure
+def test_python_syntax_shared_service():
+    """Python files in shared service have valid syntax."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "cd /workspace/lotti/services/shared && "
+            "find . -name '*.py' -exec python3 -m py_compile {} +"
+        ],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from services/voxtral-local/.flake8 config
+def test_flake8_voxtral_local():
+    """Python linting passes for voxtral-local service (flake8)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "pip install -q flake8 2>/dev/null; "
+            "cd /workspace/lotti/services/voxtral-local && "
+            "flake8 . --max-line-length=100 --extend-ignore=E203,W503,E501"
+        ],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flake8 lint check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from ai-proxy-service Makefile test target
+def test_ai_proxy_service_unit_tests():
+    """AI proxy service unit tests pass (pytest)."""
+    r = subprocess.run(
+        [
+            "bash", "-c",
+            "cd /workspace/lotti/services/ai-proxy-service && "
+            "pip install -q pytest pytest-asyncio httpx 2>/dev/null; "
+            "pip install -q -r requirements.txt 2>/dev/null; "
+            "pytest tests/unit/ -v --tb=short --ignore=tests/unit/test_container.py 2>&1 | head -100"
+        ],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"

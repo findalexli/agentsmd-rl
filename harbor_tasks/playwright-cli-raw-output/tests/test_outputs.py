@@ -354,6 +354,11 @@ console.log('PASS');
     assert r.returncode == 0, f"Help text test failed: {r.stderr}"
     assert "PASS" in r.stdout
 
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — Repo CI tests
+# ---------------------------------------------------------------------------
+
 def test_repo_eslint_backend():
     """Repo's linter passes on backend files (pass_to_pass)."""
     r = subprocess.run(
@@ -361,6 +366,7 @@ def test_repo_eslint_backend():
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
 
 def test_repo_eslint_cli():
     """Repo's linter passes on cli files (pass_to_pass)."""
@@ -370,6 +376,7 @@ def test_repo_eslint_cli():
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
+
 def test_repo_eslint_daemon():
     """Repo's linter passes on daemon files (pass_to_pass)."""
     r = subprocess.run(
@@ -377,3 +384,39 @@ def test_repo_eslint_daemon():
         capture_output=True, text=True, timeout=600, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_eslint_all_tools():
+    """Repo's linter passes on all tools files (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install > /dev/null 2>&1 && npm run eslint -- --max-warnings=0 packages/playwright-core/src/tools/"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_build():
+    """Repo builds successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install > /dev/null 2>&1 && npm run build"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_lint_packages():
+    """Repo's package lint passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install > /dev/null 2>&1 && npm run lint-packages"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint packages failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_mcp_help():
+    """MCP help tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install > /dev/null 2>&1 && npm run build > /dev/null 2>&1 && npx playwright test --config=tests/mcp/playwright.config.ts --project=chrome cli-help.spec.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP help tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

@@ -1,46 +1,74 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:55:11.964269",
-  "total_time": 1620.95,
-  "sandbox_id": "i9qmpdbtentbg7j0uj7wc",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T15:27:39.470823",
+  "total_time": 1107.98,
+  "sandbox_id": "i5nrn1kkbi4331nmn7jqy",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 61.92,
-      "notes": ""
+      "notes": "Added 5 repo_tests pass_to_pass gates: test_repo_ruff_check, test_repo_ruff_format, test_repo_spdx_header, test_repo_forbidden_imports, test_repo_boolean_context_manager. CI commands tested and working in Docker."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 121.97,
+      "time": 298.32,
       "notes": ""
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.58,
+      "time": 82.65,
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        "docs/contributing/editing-agent-instructions.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 0,
       "notes": ""
     },
     "improve": {
-      "status": "error",
+      "status": "skipped",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.66,
-      "notes": "no subprocess.run (grep-only tests)"
+      "time": 0,
+      "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All four validation checks passed: Docker build succeeds, NOP test reward=0 (fail-to-pass tests correctly fail on base), Gold test reward=1 (all 14 tests pass after fix), Rubric rules verified manually in solve.sh patch.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.67
+      "time": 102.19
+    },
+    "rubric_validate": {
+      "status": "error",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.21,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.14,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -67,6 +95,14 @@
       "backend": "fireworks",
       "time": 1620.95,
       "at": "2026-04-09T14:55:11.964269"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1107.98,
+      "at": "2026-04-10T15:27:39.470823"
     }
   ]
 }

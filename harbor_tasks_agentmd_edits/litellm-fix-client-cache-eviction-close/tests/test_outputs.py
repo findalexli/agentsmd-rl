@@ -75,20 +75,52 @@ def test_repo_ruff_caching():
     assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
 
 
-def test_repo_caching_handler_tests():
-    """Repo's caching handler unit tests pass (pass_to_pass)."""
-    # Skip if pytest is not available
+def test_repo_black_format_modified_file():
+    """Black formatting passes on the modified file (pass_to_pass)."""
+    if shutil.which("black") is None:
+        pytest.skip("black not installed")
+
+    # Only check the specific file that was modified, not the entire caching directory
+    # (base commit files may not all pass Black formatting)
+    r = _run_shell(
+        ["black", "--check", "litellm/caching/llm_caching_handler.py"],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_in_memory_cache_tests():
+    """Repo's in-memory cache unit tests pass (pass_to_pass).
+
+    These tests cover the base InMemoryCache class that LLMClientCache extends.
+    They verify core caching functionality: TTL, max_size, eviction order.
+    """
     if shutil.which("pytest") is None:
         pytest.skip("pytest not installed")
 
     r = _run_shell(
-        ["pytest", "tests/test_litellm/caching/test_llm_caching_handler.py", "-v", "--tb=short"],
+        ["python", "-m", "pytest", "tests/test_litellm/caching/test_in_memory_cache.py", "-v", "--tb=short", "-x"],
         timeout=120,
     )
-    assert r.returncode == 0, f"Caching handler tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"In-memory cache tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_import_caching():
+def test_repo_dual_cache_tests():
+    """Repo's dual cache unit tests pass (pass_to_pass).
+
+    Tests the DualCache class which is part of the caching system.
+    """
+    if shutil.which("pytest") is None:
+        pytest.skip("pytest not installed")
+
+    r = _run_shell(
+        ["python", "-m", "pytest", "tests/test_litellm/caching/test_dual_cache.py", "-v", "--tb=short", "-x"],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Dual cache tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_caching_imports():
     """Caching module imports work correctly (pass_to_pass)."""
     r = _run_py("""
 from litellm.caching import llm_caching_handler

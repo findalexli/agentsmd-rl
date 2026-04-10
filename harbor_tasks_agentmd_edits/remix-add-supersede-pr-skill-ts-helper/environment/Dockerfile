@@ -8,12 +8,16 @@ RUN apt-get update && \
         git curl ca-certificates build-essential python3 python3-pip tmux && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone repo at base commit
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Clone repo at base commit and install dependencies
 RUN git clone --filter=blob:none https://github.com/remix-run/remix.git /workspace/remix && \
     cd /workspace/remix && \
     git checkout 64b3a160dc25bbb082b96673e12bb55935f3528d && \
     git config user.email "agent@test" && \
-    git config user.name "Agent"
+    git config user.name "Agent" && \
+    pnpm install
 
 WORKDIR /workspace/remix
 

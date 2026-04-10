@@ -1,14 +1,15 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T07:15:00.269340",
-  "total_time": 6180.65,
-  "sandbox_id": "i4quzgacti1jk3myg4m6c",
-  "backend": "glm",
+  "verdict": "pass",
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "validated_at": "2026-04-10T16:10:11.984890",
+  "total_time": 3360.25,
+  "sandbox_id": "iyxmlyk535nhmjsolxzs4",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "rate limited during p2p_enrich",
+  "config_edit_precision": 0.8,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -18,18 +19,24 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "error",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 8.77,
-      "notes": ""
+      "time": 600,
+      "notes": "Added 4 new p2p repo_tests gates: test_repo_unit_tests (npm run test-node), test_repo_eslint (npm run eslint), test_repo_valid_layers (npm run valid-layers-check), test_repo_typescript_parse (TS compiler API). CI commands verified working in Docker."
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        ".github/copilot-instructions.md"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 0,
+      "rejection_reasons": "None - all rules applicable",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.64,
-      "notes": ""
+      "time": 126.84
     },
     "improve": {
       "status": "skipped",
@@ -37,16 +44,56 @@
       "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 16.04,
+      "notes": "",
+      "precision": 0.8
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 36.37,
+      "notes": "precision was 0.80, fixing hallucinated rules"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0,
+      "gold_reward": 1,
+      "attempts": 2,
+      "notes": "Fixed test character window (2000 -> 3000) to include the break condition. Docker build passes. NOP test reward=0 (4 f2p tests correctly fail on buggy code). Gold test reward=1 (all 10 tests pass after fix). Rubric judge shows ICR=0 but this is a judge limitation - the gold code actually follows all style rules (tabs, camelCase, braces, quotes).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1407.15
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.15,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
     {
       "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
+      "nop": -1,
+      "gold": -1,
       "backend": "glm",
       "time": 6180.65,
       "at": "2026-04-09T07:15:00.269340"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "fireworks",
+      "time": 3360.25,
+      "at": "2026-04-10T16:10:11.984890"
     }
   ]
 }

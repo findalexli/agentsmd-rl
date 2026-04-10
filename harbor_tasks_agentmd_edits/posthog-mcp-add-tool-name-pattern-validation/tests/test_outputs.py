@@ -59,6 +59,46 @@ def test_max_tool_name_length_preserved():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) - CI commands from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_mcp_typecheck():
+    """MCP package TypeScript typecheck passes on modified files (pass_to_pass)."""
+    # Only typecheck the specific files modified by the PR, since the full
+    # package typecheck requires React dependencies for frontend mcp-apps
+    schema_path = Path(REPO) / "services/mcp/scripts/yaml-config-schema.ts"
+    lint_path = Path(REPO) / "services/mcp/scripts/lint-tool-names.ts"
+
+    for f in [schema_path, lint_path]:
+        r = subprocess.run(
+            ["pnpm", "--filter=@posthog/mcp", "exec", "tsc", "--noEmit", "--skipLibCheck", str(f)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"TypeScript check failed for {f}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_mcp_lint_tool_names():
+    """MCP lint-tool-names passes on existing definitions (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter=@posthog/mcp", "lint-tool-names"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP lint-tool-names failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_mcp_unit_tests():
+    """MCP unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "--filter=@posthog/mcp", "test", "--run"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"MCP unit tests failed:\n{r.stderr[-1000:]}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — code behavioral tests
 # ---------------------------------------------------------------------------
 

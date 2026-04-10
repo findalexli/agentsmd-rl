@@ -3,82 +3,85 @@ source:
     owner: TanStack
     repo: router
     number: 6895
-    title: "make changeset publishing more robust"
-    merge_commit: "986776cd27dbab6d032d764933242936f68103f5"
-    base_commit: "ab46b5ec42296c60dc46d97481f038b8df68ed84"
+    title: make changeset publishing more robust
+    merge_commit: 986776cd27dbab6d032d764933242936f68103f5
+    base_commit: ab46b5ec42296c60dc46d97481f038b8df68ed84
   files:
-    - path: scripts/create-github-release.mjs
-      change_type: MODIFIED
-
-# Checks correspond 1:1 with test_outputs.py functions
+  - path: scripts/create-github-release.mjs
+    change_type: MODIFIED
 checks:
-  - id: test_script_exists
-    name: "Script file exists"
-    type: p2p
-    description: "The release script exists at the expected path"
-
-  - id: test_release_logs_parsing
-    name: "Release logs use array-based parsing"
-    type: f2p
-    description: "Script uses split/filter on release logs and accesses [0] and [1] indices"
-
-  - id: test_commit_range_calculation
-    name: "Commit range calculation is robust"
-    type: f2p
-    description: "Script uses explicit previousRelease/currentRelease instead of fragile HEAD~1"
-
-  - id: test_non_conventional_commit_parsing
-    name: "Non-conventional commit parsing improved"
-    type: f2p
-    description: "Script uses split(' ') instead of brittle double indexOf"
-
-  - id: test_prerelease_vs_latest_flag
-    name: "Prerelease handling uses conditional --latest flag"
-    type: f2p
-    description: "Script conditionally adds --latest flag only for non-prereleases"
-
-  - id: test_comments_added
-    name: "Explanatory comments added"
-    type: f2p
-    description: "Script includes comments explaining the git range and parsing logic"
-
-  - id: test_node_syntax_valid
-    name: "Script has valid Node.js syntax"
-    type: p2p
-    description: "The script passes node --check validation"
-
-  - id: test_repo_prettier_check
-    name: "Prettier formatting check passes"
-    type: p2p
-    origin: repo_tests
-    description: "Repo's Prettier formatting check passes on the modified file"
-
-  - id: test_repo_eslint
-    name: "ESLint check passes"
-    type: p2p
-    origin: repo_tests
-    description: "Repo's ESLint check passes on the modified file"
-
-# Rubric for soft/subjective checks (none for this task - all programmatic)
-rubric: []
-
-# Agent configuration sources
+- id: test_script_exists
+  name: Script file exists
+  type: p2p
+  origin: static
+  description: The release script exists at the expected path
+- id: test_release_logs_parsing
+  name: Release logs use array-based parsing
+  type: f2p
+  description: Script uses split/filter on release logs and accesses [0] and [1] indices
+- id: test_commit_range_calculation
+  name: Commit range calculation is robust
+  type: f2p
+  description: Script uses explicit previousRelease/currentRelease instead of fragile
+    HEAD~1
+- id: test_non_conventional_commit_parsing
+  name: Non-conventional commit parsing improved
+  type: f2p
+  description: Script uses split(' ') instead of brittle double indexOf
+- id: test_prerelease_vs_latest_flag
+  name: Prerelease handling uses conditional --latest flag
+  type: f2p
+  description: Script conditionally adds --latest flag only for non-prereleases
+- id: test_comments_added
+  name: Explanatory comments added
+  type: f2p
+  description: Script includes comments explaining the git range and parsing logic
+- id: test_node_syntax_valid
+  name: Script has valid Node.js syntax
+  type: p2p
+  origin: repo_tests
+  description: The script passes node --check validation
+- id: test_repo_prettier_check
+  name: Prettier formatting check passes
+  type: p2p
+  origin: repo_tests
+  description: Repo's Prettier formatting check passes on the modified file
+- id: test_repo_eslint
+  name: ESLint check passes
+  type: p2p
+  origin: repo_tests
+  description: Repo's ESLint check passes on the modified file
+rubric:
+- rule: ESLint check passes on the modified release script
+  source: scripts/create-github-release.mjs
+  reference: The gold solution fixes syntax and passes ESLint validation
+- rule: Prettier formatting check passes on the modified release script
+  source: scripts/create-github-release.mjs
+  reference: The gold solution maintains Prettier formatting
+- rule: Node.js syntax is valid (node --check passes)
+  source: scripts/create-github-release.mjs
+  reference: The gold solution produces valid Node.js syntax
 agent_config:
   sources:
-    - file: AGENTS.md
-      commit: ab46b5ec42296c60dc46d97481f038b8df68ed84
-      lines: "1-150"
-      relevance: |
-        Contains project setup commands, code style guidelines, and Nx testing instructions.
-        This PR modifies a release script, so build/test targets in AGENTS.md are less relevant.
-    - file: README.md
-      commit: ab46b5ec42296c60dc46d97481f038b8df68ed84
-      lines: "1-50"
-      relevance: |
-        General project overview. Less relevant for this specific release script fix.
+  - file: AGENTS.md
+    commit: ab46b5ec42296c60dc46d97481f038b8df68ed84
+    lines: 1-150
+    relevance: 'Contains project setup commands, code style guidelines, and Nx testing
+      instructions.
 
+      This PR modifies a release script, so build/test targets in AGENTS.md are less
+      relevant.
+
+      '
+  - file: README.md
+    commit: ab46b5ec42296c60dc46d97481f038b8df68ed84
+    lines: 1-50
+    relevance: 'General project overview. Less relevant for this specific release
+      script fix.
+
+      '
 metadata:
-  task_name: "tanstack-router-changeset-robustness"
-  difficulty: "easy"
-  category: "release-script"
-  language: "javascript"
+  task_name: tanstack-router-changeset-robustness
+  difficulty: easy
+  category: release-script
+  language: javascript

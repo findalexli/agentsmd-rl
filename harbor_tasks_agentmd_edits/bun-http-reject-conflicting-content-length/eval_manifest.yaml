@@ -47,11 +47,12 @@ checks:
   origin: repo_tests
   description: HTTP request smuggling tests pass (50 tests for Transfer-Encoding validation, chunk size validation, pipelined request isolation)
 rubric:
-- rule: Follow existing code style - check neighboring files for patterns
+- rule: Add documentation for the pr:comments script to CLAUDE.md explaining how to read PR feedback
   source:
     path: CLAUDE.md
-    lines: '245'
-    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+    lines: '281-304'
+    commit: 196ed8a1bd4d5c9915e71816ce64a6a281eee23e
+  reference: '## Reading PR Feedback\n\n`gh pr view --comments` is fine for a quick look at the Conversation tab, but it has a footgun worth knowing about: it only returns issue-stream comments and silently omits review summaries and line-level review comments. If a reviewer leaves an inline comment on a specific file line, it will not show up — no error, no hint that anything is missing.\n\nWhen you want the complete picture — especially when responding to a review or checking whether anyone requested changes — use `bun run pr:comments`. It fetches all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`) and prints them in one chronological listing, each labelled with its actual type (issue comment, review verdict, line comment, reply, suggestion block).\n\n```bash\nbun run pr:comments                    # current branch''s PR\nbun run pr:comments 28838              # by PR number\nbun run pr:comments ''#28838''           # also works\nbun run pr:comments https://github.com/oven-sh/bun/pull/28838\n\n# Machine-readable output for jq pipelines — one object per entry with\n# { when, user, kind, location?, body, url?, resolved?, outdated? }.\n# resolved/outdated come from GraphQL reviewThreads and are present only\n# on line comments / replies whose thread state was successfully fetched\n# (omitted on issue comments, review verdicts, and on GraphQL fetch\n# failure), so `resolved == false` unambiguously means "confirmed open\n# thread". No header, no truncation. The PR is optional here too\n# (defaults to the current branch''s PR).\nbun run pr:comments --json | jq ''.[] | select(.user == "Jarred-Sumner")''\nbun run pr:comments --json | jq ''[.[] | select(.resolved == false)]''   # still open\n```'
 config_edits:
 - path: CLAUDE.md
   tier: 1
