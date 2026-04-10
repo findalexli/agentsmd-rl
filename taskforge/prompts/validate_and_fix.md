@@ -1,6 +1,6 @@
 # Validate and Fix Task
 
-You have a benchmark task at `/workspace/task/`. Your job is to make it pass Docker oracle validation. You have full access to Docker and can run any command.
+You have a benchmark task at `/workspace/task/`. Your job is to make it pass Docker oracle validation. You have full access to Docker and can run any command. The full repo is also cloned at `/workspace/repo/` at the base commit for reference.
 
 ## Context
 

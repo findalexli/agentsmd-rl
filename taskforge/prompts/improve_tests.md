@@ -8,7 +8,8 @@ Read `/workspace/task/status.json` if it exists — the `nodes` section has note
 
 ## Input
 
-Task files are at `/workspace/task/`.
+- Task files are at `/workspace/task/`.
+- **The full repo is cloned at `/workspace/repo/`** at the base commit. Browse it to understand the codebase and find existing test patterns. Note: `/workspace/repo/` is for browsing only — `test_outputs.py` runs inside Docker where the repo is at a different path (check Dockerfile WORKDIR). The `REPO` variable in test_outputs.py must match the Docker-internal path.
 
 ## Problem
 

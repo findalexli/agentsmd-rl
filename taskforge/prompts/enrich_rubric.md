@@ -34,20 +34,32 @@ COMMIT=$(python3 -c "import tomllib; t=tomllib.load(open('/workspace/task/task.t
 
 # Method 2: Fallback to Dockerfile parsing if task.toml doesn't have it
 if [ -z "$REPO" ]; then
-  REPO=$(grep -oP 'github\.com/\K[^/]+/[^/.\s]+' /workspace/task/environment/Dockerfile | head -1)
+  REPO=$(grep -oP 'github\.com/\K[^/]+/[^\s]+?(?=\.git|[\s]|$)' /workspace/task/environment/Dockerfile | head -1)
 fi
 if [ -z "$COMMIT" ]; then
   COMMIT=$(grep -oP '(?:git checkout |git fetch.*origin )\K[a-f0-9]{7,}' /workspace/task/environment/Dockerfile | head -1)
 fi
 
-# List all config files at the base commit
-gh api "repos/$REPO/git/trees/$COMMIT?recursive=1" \
-  --jq '.tree[] | select(.path | test("CLAUDE\\.md|AGENTS\\.md|SKILL\\.md|\\.cursorrules|\\.cursor/rules|copilot-instructions\\.md|CONVENTIONS\\.md")) | .path'
+# The repo is already cloned at /workspace/repo/ — find config files there
+find /workspace/repo -maxdepth 4 -name "CLAUDE.md" -o -name "AGENTS.md" -o -name "SKILL.md" \
+  -o -name ".cursorrules" -o -name "copilot-instructions.md" -o -name "CONVENTIONS.md" \
+  | grep -v node_modules | head -10
 ```
 
-### 3. Fetch and read each config file
+If `/workspace/repo/` doesn't exist, fall back to GitHub API:
+```bash
+gh api "repos/$REPO/git/trees/$COMMIT?recursive=1" \
+  --jq '.tree[] | select(.path | test("CLAUDE\\.md|AGENTS\\.md|SKILL\\.md|\\.cursorrules|copilot-instructions\\.md|CONVENTIONS\\.md")) | .path'
+```
+
+### 3. Read each config file
 
 ```bash
+# Preferred: read directly from the cloned repo
+cat /workspace/repo/CLAUDE.md
+cat /workspace/repo/.claude/skills/dev/SKILL.md
+
+# Fallback if repo not cloned: use GitHub API
 gh api "repos/$REPO/contents/$PATH?ref=$COMMIT" --jq '.content' | base64 -d
 ```
 

@@ -139,39 +139,81 @@ async def ensure_template() -> str:
 async def create_worker_sandbox(
     backend_env: dict[str, str] | None = None,
     timeout: int = 3600,
+    max_ip_retries: int = 10,
 ) -> AsyncSandbox:
     """Create sandbox from harbor-worker template with env vars injected.
+    Retries sandbox creation if the egress IP is blocked by the LLM provider.
     timeout = sandbox lifetime in seconds (default 1 hour)."""
     envs = {"GH_TOKEN": os.environ.get("GH_TOKEN", "")}
     if backend_env:
         envs.update(backend_env)
 
-    sandbox = await retry_on_429(
-        lambda: AsyncSandbox.create(
-            template=TEMPLATE_ALIAS,
-            timeout=timeout,
-            envs=envs,
+    # Determine the API base URL for IP probing
+    api_base = backend_env.get("ANTHROPIC_BASE_URL", "") if backend_env else ""
+
+    for ip_attempt in range(max_ip_retries):
+        sandbox = await retry_on_429(
+            lambda: AsyncSandbox.create(
+                template=TEMPLATE_ALIAS,
+                timeout=timeout,
+                envs=envs,
+            )
         )
-    )
 
-    # Explicitly extend sandbox lifetime (belt + suspenders with create timeout)
-    try:
-        await sandbox.set_timeout(timeout)
-    except Exception:
-        pass
+        # Explicitly extend sandbox lifetime
+        try:
+            await sandbox.set_timeout(timeout)
+        except Exception:
+            pass
 
-    # Wait for Docker daemon to be ready
-    for _ in range(10):
-        code, _, _ = await run_cmd(sandbox, "docker info", timeout=10)
-        if code == 0:
-            break
-        await asyncio.sleep(2)
+        # Quick IP probe: test if this sandbox can reach the LLM API
+        # Always probe Fireworks directly (even if using a proxy) to detect IP blocks
+        probe_url = api_base or "https://api.fireworks.ai/inference"
+        api_key = envs.get("ANTHROPIC_API_KEY", "") or envs.get("ANTHROPIC_AUTH_TOKEN", "")
+        if api_key:
+            probe_code, probe_out, probe_err = await run_cmd(
+                sandbox,
+                f'curl -s -o /dev/null -w "%{{http_code}}" -X POST '
+                f'"https://api.fireworks.ai/inference/v1/messages" '
+                f'-H "Content-Type: application/json" '
+                f'-H "x-api-key: {api_key}" '
+                f'-H "anthropic-version: 2023-06-01" '
+                f"""-d '{{"model":"accounts/fireworks/routers/kimi-k2p5-turbo","messages":[{{"role":"user","content":"hi"}}],"max_tokens":1}}'""",
+                timeout=15,
+            )
+            status_code = probe_out.strip()
+            if status_code == "403":
+                logger.warning(
+                    "Sandbox %s blocked by API (403), retrying (%d/%d)...",
+                    sandbox.sandbox_id, ip_attempt + 1, max_ip_retries,
+                )
+                try:
+                    await sandbox.kill()
+                except Exception:
+                    pass
+                await asyncio.sleep(1)
+                continue
+            elif status_code in ("200", "400", "401", "429"):
+                # 200=ok, 400/401=auth issue but not IP block, 429=rate limit but reachable
+                logger.info("Sandbox %s IP check OK (status %s)", sandbox.sandbox_id, status_code)
+            # else: probe failed (network issue, curl not found, etc.) — proceed anyway
 
-    # Ensure worker user owns workspace (for claude -p as non-root)
-    await run_cmd(sandbox, "chown -R worker:worker /workspace /logs/verifier", timeout=10)
-    # Add worker to docker group so it can run docker commands
-    await run_cmd(sandbox, "usermod -aG docker worker 2>/dev/null || true", timeout=5)
+        # Wait for Docker daemon to be ready
+        for _ in range(10):
+            code, _, _ = await run_cmd(sandbox, "docker info", timeout=10)
+            if code == 0:
+                break
+            await asyncio.sleep(2)
 
+        # Ensure worker user owns workspace (for claude -p as non-root)
+        await run_cmd(sandbox, "chown -R worker:worker /workspace /logs/verifier", timeout=10)
+        # Add worker to docker group so it can run docker commands
+        await run_cmd(sandbox, "usermod -aG docker worker 2>/dev/null || true", timeout=5)
+
+        return sandbox
+
+    # All retries exhausted — return last sandbox anyway
+    logger.error("All %d IP probe retries failed, proceeding with blocked sandbox", max_ip_retries)
     return sandbox
 
 
@@ -1167,6 +1209,43 @@ async def run_task_agents(
             else:
                 await upload_task_files(sandbox, task_dir / task_name)
                 result.scaffold_status = "skipped"
+
+            # ── Clone repo into sandbox so agents can browse source/tests ──
+            # Extract repo URL and commit from the Dockerfile
+            code, repo_info, _ = await run_cmd(
+                sandbox,
+                "python3 -c \""
+                "from pathlib import Path; import re; "
+                "df = Path('/workspace/task/environment/Dockerfile').read_text(); "
+                "repo = re.search(r'github\\.com/([^/]+/[^\\s]+?)(?:\\.git|[\\s]|$)', df); "
+                "commit = re.search(r'(?:git checkout |git fetch.*origin |ARG\\s+BASE_COMMIT=)([a-f0-9]{7,})', df); "
+                "print(repo.group(1) if repo else ''); "
+                "print(commit.group(1) if commit else '')\"",
+                timeout=10,
+            )
+            repo_url = repo_commit = ""
+            if code == 0 and repo_info.strip():
+                lines = repo_info.strip().split("\n")
+                repo_url = lines[0].strip() if len(lines) > 0 else ""
+                repo_commit = lines[1].strip() if len(lines) > 1 else ""
+
+            if repo_url and repo_commit:
+                # Validate repo_url format
+                import re as _re
+                if _re.match(r'^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$', repo_url):
+                    clone_code, _, clone_err = await run_cmd(
+                        sandbox,
+                        f"git clone --filter=blob:none https://github.com/{repo_url}.git /workspace/repo "
+                        f"&& cd /workspace/repo && git checkout {repo_commit}; "
+                        f"chown -R worker:worker /workspace/repo 2>/dev/null || true",
+                        timeout=180,
+                    )
+                    if clone_code == 0:
+                        logger.info("[%s] repo cloned at %s to /workspace/repo", task_name, repo_commit[:8])
+                    else:
+                        logger.warning("[%s] repo clone failed: %s", task_name, (clone_err or "")[:200])
+                else:
+                    logger.warning("[%s] invalid repo_url format: %s", task_name, repo_url)
 
             # Refresh sandbox lifetime before agent chain
             try:
