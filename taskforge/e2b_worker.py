@@ -217,12 +217,18 @@ async def create_worker_sandbox(
         gemini_key = envs.get("GEMINI_API_KEY", "")
         if gemini_key and backend_env and backend_env.get("ANTHROPIC_BASE_URL") == "http://localhost:4000":
             litellm_config = (
+                'litellm_settings:\n'
+                '  drop_params: true\n'
                 'model_list:\n'
-                '  - model_name: "opus"\n'
+                '  - model_name: "claude-opus-4-6"\n'
                 '    litellm_params:\n'
                 '      model: "gemini/gemini-3.1-pro-preview"\n'
                 f'      api_key: "{gemini_key}"\n'
-                '  - model_name: "sonnet"\n'
+                '  - model_name: "claude-sonnet-4-6"\n'
+                '    litellm_params:\n'
+                '      model: "gemini/gemini-3.1-pro-preview"\n'
+                f'      api_key: "{gemini_key}"\n'
+                '  - model_name: "opus"\n'
                 '    litellm_params:\n'
                 '      model: "gemini/gemini-3.1-pro-preview"\n'
                 f'      api_key: "{gemini_key}"\n'
