@@ -83,22 +83,32 @@ Extract **1-5 rubric rules** that passed ALL three filters. For each rule:
 - "Error handling in API endpoints must use the project's AppError class, not raw HTTP exceptions" (when PR adds an endpoint)
 - "New CLI subcommands must be documented in the SKILL.md commands section" (when PR adds a CLI command AND the config file says to do this)
 
-**BAD rules** (generic, reject these):
-- "Follow existing code style" — every PR should do this, not evaluable
-- "Write clean, maintainable code" — subjective noise
-- "Be consistent with surrounding code" — too vague
-- "Add appropriate tests" — out of scope for rubric (tests are separate checks)
+**BAD rules** (reject these):
+- "Follow existing code style" — too vague, not a specific convention
+- "Write clean, maintainable code" — subjective noise, not actionable
+- "Be consistent with surrounding code" — no concrete check
+- "Add appropriate tests" — out of scope (tests are separate checks)
+- "Use feature branches" — process rule, not evaluable from diff
 
 ## Phase 5: Self-Critique and Revise
 
 Before writing to eval_manifest.yaml, review each drafted rule:
 
-1. **Re-read solve.sh** — does this rule relate to what the gold solution actually does?
+1. **Re-read solve.sh** — does this rule relate to the language/files/patterns the gold solution touches?
 2. **Imagine you are the judge** reading the diff + this rule. Could you give a clear PASS/FAIL? If not, the rule is too vague.
 3. **Check for duplicates** — don't repeat rules already in eval_manifest.yaml
-4. **Remove any rule that could apply to ANY PR** — if you could paste this rule into a different task and it would still make sense, it's too generic.
 
-If after filtering you have 0 relevant rules, that's OK — write an empty rubric section and note why (e.g., "config rules are about PR workflow, not code patterns applicable to this diff"). An empty rubric is better than generic filler.
+**Keep rules that are**:
+- Specific coding conventions (naming, error handling patterns, import style) that apply to the changed files' language
+- Documentation requirements that apply when certain types of changes are made
+- Architectural patterns (e.g., "use the project's custom macros" or "avoid try/catch") that a judge can verify in the diff
+
+**Remove rules that are**:
+- Pure process rules (PR workflow, branch naming, commit messages) — not evaluable from code diff
+- Completely subjective with no concrete check ("write clean code")
+- About file types/languages not touched by this PR
+
+A recurring repo convention like "prefer single-word variable names" or "avoid try/catch" IS a valid rubric rule if the PR touches code where it applies — the judge checks the diff against the rule. Do NOT reject rules just because they apply broadly within the repo.
 
 ## Phase 6: Write to eval_manifest.yaml
 
