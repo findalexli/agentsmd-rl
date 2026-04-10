@@ -323,8 +323,8 @@ def stamp_manifest(task_dir: Path) -> int:
             "gold_removed": change.get("removed", "")[:1000],
         })
 
-    # Merge into manifest
-    manifest = yaml.safe_load(manifest_path.read_text())
+    # Merge into manifest (guard against empty/None YAML)
+    manifest = yaml.safe_load(manifest_path.read_text()) or {}
     manifest["config_edits"] = config_edits
     manifest_path.write_text(yaml.dump(
         manifest, default_flow_style=False, sort_keys=False, allow_unicode=True

@@ -401,6 +401,18 @@ Respond with ONLY a JSON object:
     }
 
 
+def _get_precision(gemini_result: dict) -> float:
+    """Extract precision score handling 0.0 correctly (not falsy)."""
+    for key in ("precision_score", "overall_precision"):
+        val = gemini_result.get(key)
+        if val is not None:
+            try:
+                return float(val)
+            except (TypeError, ValueError):
+                pass
+    return 0.0
+
+
 # ── Full validation ──────────────────────────────────────────────────────────
 
 def validate(task_dir: Path, repo_dir: Path, gemini_key: str = "",
@@ -462,7 +474,7 @@ def validate(task_dir: Path, repo_dir: Path, gemini_key: str = "",
         "status": "complete",
         "num_rules": context["num_rules"],
         "config_files": [c["path"] for c in context["config_inventory"]],
-        "precision_score": gemini_result.get("precision_score") or gemini_result.get("overall_precision") or 0.0,
+        "precision_score": _get_precision(gemini_result),
         "summary": gemini_result.get("summary", ""),
         "rules": gemini_result.get("rules", []),
         "recall": gemini_result.get("recall", {}),

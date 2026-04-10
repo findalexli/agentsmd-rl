@@ -121,7 +121,7 @@ def get_diff(repo_dir: str) -> str:
 
 # ── LLM judge call ────────────────────────────────────────────────────────
 
-def call_judge(rules: list[dict], diff: str, config_files: dict[str, str], api_key: str) -> list[dict]:
+def call_judge(rules: list[dict], diff: str, api_key: str) -> list[dict]:
     """Evaluate whether the agent made the right config file edits.
 
     Core question: "As a result of these code changes, did the agent also
@@ -314,6 +314,7 @@ def main():
             for line in env_file.read_text().splitlines():
                 if line.startswith("GEMINI_API_KEY="):
                     gemini_key = line.split("=", 1)[1].strip().strip('"')
+                    os.environ["GEMINI_API_KEY"] = gemini_key
                 if line.startswith("ANTHROPIC_API_KEY="):
                     api_key = line.split("=", 1)[1].strip().strip('"')
         if not gemini_key and not api_key:
@@ -342,7 +343,7 @@ def main():
         sys.exit(0)
 
     try:
-        results = call_judge(rules, diff, {}, api_key)
+        results = call_judge(rules, diff, api_key)
     except Exception as e:
         print(f"Judge error: {e}", file=sys.stderr)
         print("0.5")
