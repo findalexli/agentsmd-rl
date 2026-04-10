@@ -439,15 +439,27 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
     if _get("FIREWORKS_API_KEY"):
         backends.append(Backend(
             name="fireworks",
-            base_url="https://api.fireworks.ai/inference",
+            base_url=_get("FIREWORKS_BASE_URL") or "https://api.fireworks.ai/inference",
             api_key=_get("FIREWORKS_API_KEY"),
             model_map={
                 "opus": "accounts/fireworks/routers/kimi-k2p5-turbo",
                 "sonnet": "accounts/fireworks/routers/kimi-k2p5-turbo",
                 "haiku": "accounts/fireworks/routers/kimi-k2p5-turbo",
             },
-            max_concurrent=40,
+            max_concurrent=100,
             cost_tier=1,
+        ))
+
+    # Gemini 3.1 Pro via litellm proxy inside sandbox
+    # Tier 0.5: free, high concurrency, needs litellm proxy in sandbox
+    if _get("GEMINI_API_KEY"):
+        backends.append(Backend(
+            name="gemini",
+            base_url="http://localhost:4000",  # litellm proxy started inside sandbox
+            api_key="dummy",  # litellm doesn't need auth from localhost
+            model_map={"opus": "opus", "sonnet": "sonnet", "haiku": "haiku"},
+            max_concurrent=50,
+            cost_tier=0,  # Free tier - prefer over Kimi
         ))
 
     # OAuth — subscription, subprocess-only (direct API returns 401)

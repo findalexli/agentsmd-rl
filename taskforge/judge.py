@@ -192,6 +192,59 @@ For each check, decide: did the agent make a SEMANTICALLY EQUIVALENT edit to the
 Respond with ONLY a JSON array:
 [{{"rule_num": N, "pass": true/false, "reason": "one sentence"}}]"""
 
+    # Try Gemini first (preferred), fall back to Anthropic
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
+    if gemini_key:
+        return _call_gemini(prompt, gemini_key)
+    else:
+        return _call_anthropic(prompt, api_key)
+
+
+def _call_gemini(prompt: str, api_key: str) -> list[dict]:
+    """Call Gemini 3.1 Pro for rubric judging. Returns per-rule results with reasoning."""
+    import urllib.request
+
+    body = json.dumps({
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.1,
+            "maxOutputTokens": 8192,
+        },
+    }).encode()
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key={api_key}"
+    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        data = json.loads(resp.read())
+
+    text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+    # Parse JSON array from response (Gemini may wrap in markdown)
+    if "```" in text:
+        # Extract from markdown code block
+        start = text.find("```json")
+        if start >= 0:
+            start = text.find("\n", start) + 1
+        else:
+            start = text.find("```") + 3
+            start = text.find("\n", start) + 1
+        end = text.find("```", start)
+        text = text[start:end].strip()
+
+    if text.startswith("["):
+        return json.loads(text)
+    start = text.find("[")
+    end = text.rfind("]") + 1
+    if start >= 0 and end > start:
+        return json.loads(text[start:end])
+    return []
+
+
+def _call_anthropic(prompt: str, api_key: str) -> list[dict]:
+    """Fallback: call Anthropic Claude Haiku for rubric judging."""
+    import urllib.request
+
     body = json.dumps({
         "model": "claude-haiku-4-5-20251001",
         "max_tokens": 2048,
@@ -253,14 +306,17 @@ def main():
         print("0.0")
         sys.exit(0)
 
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if not api_key:
+    if not gemini_key and not api_key:
         env_file = Path(__file__).parent.parent / ".env"
         if env_file.exists():
             for line in env_file.read_text().splitlines():
+                if line.startswith("GEMINI_API_KEY="):
+                    gemini_key = line.split("=", 1)[1].strip().strip('"')
                 if line.startswith("ANTHROPIC_API_KEY="):
                     api_key = line.split("=", 1)[1].strip().strip('"')
-        if not api_key:
+        if not gemini_key and not api_key:
             print("0.5", file=sys.stderr)
             print("0.5")
             sys.exit(0)

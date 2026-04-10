@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = Path(__file__).resolve().parent / "e2b_template"
-TEMPLATE_ALIAS = "harbor-worker-v2"
+TEMPLATE_ALIAS = "harbor-worker-v3"
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -144,7 +144,10 @@ async def create_worker_sandbox(
     """Create sandbox from harbor-worker template with env vars injected.
     Retries sandbox creation if the egress IP is blocked by the LLM provider.
     timeout = sandbox lifetime in seconds (default 1 hour)."""
-    envs = {"GH_TOKEN": os.environ.get("GH_TOKEN", "")}
+    envs = {
+        "GH_TOKEN": os.environ.get("GH_TOKEN", ""),
+        "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY", ""),
+    }
     if backend_env:
         envs.update(backend_env)
 
@@ -209,6 +212,38 @@ async def create_worker_sandbox(
         await run_cmd(sandbox, "chown -R worker:worker /workspace /logs/verifier", timeout=10)
         # Add worker to docker group so it can run docker commands
         await run_cmd(sandbox, "usermod -aG docker worker 2>/dev/null || true", timeout=5)
+
+        # Start litellm proxy if using Gemini backend (translates Anthropic -> Gemini API)
+        gemini_key = envs.get("GEMINI_API_KEY", "")
+        if gemini_key and backend_env and backend_env.get("ANTHROPIC_BASE_URL") == "http://localhost:4000":
+            litellm_config = (
+                'model_list:\n'
+                '  - model_name: "opus"\n'
+                '    litellm_params:\n'
+                '      model: "gemini/gemini-3.1-pro-preview"\n'
+                f'      api_key: "{gemini_key}"\n'
+                '  - model_name: "sonnet"\n'
+                '    litellm_params:\n'
+                '      model: "gemini/gemini-3.1-pro-preview"\n'
+                f'      api_key: "{gemini_key}"\n'
+            )
+            await sandbox.files.write("/tmp/litellm_config.yaml", litellm_config.encode())
+            await run_cmd(
+                sandbox,
+                "nohup litellm --config /tmp/litellm_config.yaml --port 4000 "
+                "> /tmp/litellm.log 2>&1 & sleep 8",
+                timeout=30,
+            )
+            # Verify proxy is up
+            probe_code, probe_out, _ = await run_cmd(
+                sandbox,
+                'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health',
+                timeout=10,
+            )
+            if probe_out.strip() == "200":
+                logger.info("Sandbox %s: litellm proxy -> Gemini 3.1 Pro ready", sandbox.sandbox_id)
+            else:
+                logger.warning("Sandbox %s: litellm proxy failed to start", sandbox.sandbox_id)
 
         return sandbox
 
