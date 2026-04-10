@@ -1088,6 +1088,8 @@ async def run_judge_in_sandbox(
         "  -v /workspace/judge.py:/judge.py:ro "
         "  -v /workspace/taskforge:/taskforge:ro "
         "  -v /workspace/task/eval_manifest.yaml:/eval_manifest.yaml:ro "
+        f"  -e GEMINI_API_KEY=$GEMINI_API_KEY "
+        f"  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY "
         f"  task-env-gold python3 /judge.py "
         f"  --manifest /eval_manifest.yaml "
         f"  --repo {repo_dir}",
