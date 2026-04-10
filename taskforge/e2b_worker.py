@@ -21,6 +21,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 import time
 from dataclasses import asdict, dataclass
@@ -38,6 +39,7 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = Path(__file__).resolve().parent / "e2b_template"
 TEMPLATE_ALIAS = "harbor-worker-v3"
+SANDBOX_TIMEOUT = 3600  # seconds — refreshed before each agent step
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -849,6 +851,7 @@ async def run_task_improve(
                 result.improve_time = round(time.monotonic() - t0, 2)
                 if status == "rate_limited":
                     result.error = f"rate limited during improve: {err}"
+                    result.total_time = round(time.monotonic() - t_start, 2)
                     if pool and backend:
                         pool.report_429(backend)
                     return result
@@ -929,11 +932,13 @@ async def run_task_full(
             result.scaffold_time = round(time.monotonic() - t0, 2)
             if scaffold_status == "rate_limited":
                 result.error = f"rate limited during scaffold: {err}"
+                result.total_time = round(time.monotonic() - t_start, 2)
                 if pool and backend:
                     pool.report_429(backend)
                 return result
             if scaffold_status != "ok":
                 result.error = f"scaffold failed: {err}"
+                result.total_time = round(time.monotonic() - t_start, 2)
                 return result
 
             # Phase 2: Quality gate
@@ -947,6 +952,7 @@ async def run_task_full(
                 result.improve_time = round(time.monotonic() - t0, 2)
                 if improve_status == "rate_limited":
                     result.error = f"rate limited during improve: {err}"
+                    result.total_time = round(time.monotonic() - t_start, 2)
                     if pool and backend:
                         pool.report_429(backend)
                     return result
@@ -1273,8 +1279,7 @@ async def run_task_agents(
 
             if repo_url and repo_commit:
                 # Validate repo_url format
-                import re as _re
-                if _re.match(r'^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$', repo_url):
+                if re.match(r'^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$', repo_url):
                     clone_code, _, clone_err = await run_cmd(
                         sandbox,
                         f"git clone --filter=blob:none https://github.com/{repo_url}.git /workspace/repo "
@@ -1291,7 +1296,7 @@ async def run_task_agents(
 
             # Refresh sandbox lifetime before agent chain
             try:
-                await sandbox.set_timeout(3600)
+                await sandbox.set_timeout(SANDBOX_TIMEOUT)
             except Exception:
                 pass
 
@@ -1333,7 +1338,7 @@ async def run_task_agents(
 
             # Refresh sandbox lifetime between agents
             try:
-                await sandbox.set_timeout(3600)
+                await sandbox.set_timeout(SANDBOX_TIMEOUT)
             except Exception:
                 pass
 
@@ -1361,7 +1366,7 @@ async def run_task_agents(
                     raise _RateLimited(result.error)
 
                 try:
-                    await sandbox.set_timeout(3600)
+                    await sandbox.set_timeout(SANDBOX_TIMEOUT)
                 except Exception:
                     pass
 
@@ -1386,8 +1391,10 @@ async def run_task_agents(
                     try:
                         feedback_raw = await sandbox.files.read("/workspace/rubric_feedback.json", format="text")
                         feedback = json.loads(feedback_raw)
-                        precision = feedback.get("precision_score") or 0.0
+                        ps = feedback.get("precision_score")
+                        precision = float(ps) if ps is not None else 0.0
                         summary = feedback.get("summary", "")
+                        result.config_edit_precision = precision
                         logger.info("[%s] rubric validation: precision=%.2f %s", task_name, precision, summary[:100])
                     except Exception:
                         feedback = {}
@@ -1405,7 +1412,7 @@ async def run_task_agents(
                     )
                     if has_bad_rules and precision < 0.9:
                         try:
-                            await sandbox.set_timeout(3600)
+                            await sandbox.set_timeout(SANDBOX_TIMEOUT)
                         except Exception:
                             pass
 
@@ -1426,7 +1433,7 @@ async def run_task_agents(
                         await download_task_files(sandbox, dest)
 
                 try:
-                    await sandbox.set_timeout(3600)
+                    await sandbox.set_timeout(SANDBOX_TIMEOUT)
                 except Exception:
                     pass
 
@@ -1453,7 +1460,7 @@ async def run_task_agents(
                 ))
 
             try:
-                await sandbox.set_timeout(3600)
+                await sandbox.set_timeout(SANDBOX_TIMEOUT)
             except Exception:
                 pass
 
@@ -1483,7 +1490,7 @@ async def run_task_agents(
 
             # Refresh sandbox before judge
             try:
-                await sandbox.set_timeout(3600)
+                await sandbox.set_timeout(SANDBOX_TIMEOUT)
             except Exception:
                 pass
 
@@ -1516,14 +1523,24 @@ async def run_task_agents(
 
         except _RateLimited:
             # Error already set by _check_rate_limit — sync partial progress and bail fast
+            result.total_time = round(time.monotonic() - t_start, 2)
             if dest and sandbox:
                 try:
                     await download_task_files(sandbox, dest)
+                    nodes = (await read_sandbox_status(sandbox)).get("nodes", {})
+                    write_status_json(dest, result, nodes=nodes)
                 except Exception:
                     pass
             logger.warning("[%s] rate limited on %s, aborting for retry", task_name, result.backend_name)
         except Exception as e:
             result.error = str(e)[:500]
+            result.total_time = round(time.monotonic() - t_start, 2)
+            if dest and sandbox:
+                try:
+                    await download_task_files(sandbox, dest)
+                    write_status_json(dest, result)
+                except Exception:
+                    pass
         finally:
             if backend_ctx and backend:
                 try:

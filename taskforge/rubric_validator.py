@@ -41,6 +41,7 @@ except ImportError:
 CONFIG_NAMES = {
     "CLAUDE.md", "AGENTS.md", "CONVENTIONS.md", "SKILL.md",
     ".cursorrules", "copilot-instructions.md",
+    ".windsurfrules", ".clinerules", ".continuerules",
 }
 
 
