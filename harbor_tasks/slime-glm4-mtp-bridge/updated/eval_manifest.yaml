@@ -1,0 +1,102 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1712
+  base_commit: "57e76686346beeaaec4010ebefc56b9949686457"
+  merge_commit: "e70e6476632ebd551d5eb82186ad1cc948e0d8f5"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified Python files must parse without errors"
+
+  - id: test_repo_syntax_glm4moe_lite
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: glm4moe_lite.py must have valid Python syntax"
+
+  - id: test_repo_syntax_model_provider
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: model_provider.py must have valid Python syntax"
+
+  - id: test_repo_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: ruff linting passes on modified files"
+
+  - id: test_repo_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: black formatting check passes on modified files"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: isort import ordering check passes on modified files"
+
+  - id: test_repo_mtp_bridge_mapping
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: MTP bridge mapping unit tests pass"
+
+  - id: test_repo_plugin_contracts_generate
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Plugin generate contracts unit tests pass"
+
+  - id: test_repo_plugin_contracts_runtime_hook
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Plugin runtime hook contracts unit tests pass"
+
+  - id: rope_theta_patched
+    type: fail_to_pass
+    origin: pr_diff
+    description: "GLM4MoELiteBridge.__init__ extracts rope_theta from rope_parameters dict"
+
+  - id: shared_mapping_dynamic_layers
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_SHARED_STATE_DICT_MAPPING uses dynamic num_hidden_layers instead of hardcoded 61"
+
+  - id: convert_mtp_direct_names
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_convert_mtp_param maps direct MTP param names with dynamic layer count"
+
+  - id: convert_mtp_transformer_delegation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_convert_mtp_param delegates transformer-layer params via attention/mlp mappings"
+
+  - id: safetensor_io_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_get_safetensor_io returns standard SafeTensorIO, not FP8 dequant"
+
+  - id: weight_to_hf_shared
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_weight_to_hf_format returns both base and MTP-layer names for shared weights"
+
+rubric:
+  - rule: "Follow existing code style and naming conventions. Check neighboring files for patterns."
+    source:
+      path: ".claude/skills/add-tests-and-ci/SKILL.md"
+      lines: "23-24"
+      commit: "57e76686346beeaaec4010ebefc56b9949686457"
+
+  - rule: "Run the exact existing test files you changed, if any. Avoid running repository-wide checks unless they are part of the task."
+    source:
+      path: "docs/en/developer_guide/ci.md"
+      lines: "33-35"
+      commit: "57e76686346beeaaec4010ebefc56b9949686457"
+
+  - rule: "Correctness is critically important for a training framework. All changes must be verifiable through existing tests."
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "31-32"
+      commit: "57e76686346beeaaec4010ebefc56b9949686457"

@@ -182,20 +182,44 @@ export function wrapStreamFnHandleSensitiveStopReason(baseFn: StreamFn): StreamF
 }
 TSEOF
 
-# Patch attempt.ts to import and wire the recovery wrapper
-# Add import after the tool-call-argument-repair import
-sed -i '/import {$/,/} from "\.\/attempt\.tool-call-argument-repair\.js";/{
-  /} from "\.\/attempt\.tool-call-argument-repair\.js";/a\import { wrapStreamFnHandleSensitiveStopReason } from "./attempt.stop-reason-recovery.js";
-}' src/agents/pi-embedded-runner/run/attempt.ts
+# Use Python to patch attempt.ts reliably
+python3 << 'PYEOF'
+import re
 
-# Add the wrapper call before the sanitizeSessionHistory try block
-sed -i '/try {$/,/const prior = await sanitizeSessionHistory/{
-  /const prior = await sanitizeSessionHistory/i\
-      // Anthropic-compatible providers can add new stop reasons before pi-ai maps them.\
-      // Recover the known "sensitive" stop reason here so a model refusal does not\
-      // bubble out as an uncaught runner error and stall channel polling.\
-      activeSession.agent.streamFn = wrapStreamFnHandleSensitiveStopReason(\
-        activeSession.agent.streamFn,\
-      );\
+ATTEMPT_TS = "src/agents/pi-embedded-runner/run/attempt.ts"
 
-}' src/agents/pi-embedded-runner/run/attempt.ts
+with open(ATTEMPT_TS, "r") as f:
+    content = f.read()
+
+# Add import if not present
+import_line = 'import { wrapStreamFnHandleSensitiveStopReason } from "./attempt.stop-reason-recovery.js";' 
+if "attempt.stop-reason-recovery.js" not in content:
+    # Find the tool-call-argument-repair import block and add after its closing
+    pattern = r'(} from "./attempt\.tool-call-argument-repair\.js";\n)(import \{[^}]+\} from "./attempt\.tool-call-normalization\.js";)' 
+    replacement = r'\1' + import_line + r'\n\2'
+    new_content = re.sub(pattern, replacement, content, count=1)
+    if new_content == content:
+        # Fallback: try simpler pattern
+        pattern = r'(} from "./attempt\.tool-call-argument-repair\.js";\n)'
+        replacement = r'\1' + import_line + r'\n'
+        new_content = re.sub(pattern, replacement, content, count=1)
+    content = new_content
+
+# Add wrapper call if not present
+if "wrapStreamFnHandleSensitiveStopReason(" not in content:
+    # Find the sanitizeSessionHistory line and add before it
+    pattern = r'(const prior = await sanitizeSessionHistory)'
+    replacement = r'''      // Anthropic-compatible providers can add new stop reasons before pi-ai maps them.
+      // Recover the known "sensitive" stop reason here so a model refusal does not
+      // bubble out as an uncaught runner error and stall channel polling.
+      activeSession.agent.streamFn = wrapStreamFnHandleSensitiveStopReason(
+        activeSession.agent.streamFn,
+      );
+\1'''
+    content = re.sub(pattern, replacement, content, count=1)
+
+with open(ATTEMPT_TS, "w") as f:
+    f.write(content)
+
+print("attempt.ts patched successfully")
+PYEOF

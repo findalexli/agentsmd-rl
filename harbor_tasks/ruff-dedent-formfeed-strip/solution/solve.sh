@@ -3,98 +3,99 @@ set -euo pipefail
 
 cd /workspace/ruff
 
-# Idempotent: skip if already applied (check for the specific indent handling in dedent_to)
-if grep -q "let indent = indent.trim_start_matches" crates/ruff_python_trivia/src/textwrap.rs 2>/dev/null; then
+# Idempotent: skip if already applied
+if grep -q "let indent = indent.trim_start_matches.*x0C" crates/ruff_python_trivia/src/textwrap.rs 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi
 
-git apply - <<'PATCH'
-diff --git a/crates/ruff_linter/resources/test/fixtures/ruff/RUF072.py b/crates/ruff_linter/resources/test/fixtures/ruff/RUF072.py
-index 7c422fb1c5d76c..0261718218dbd9 100644
---- a/crates/ruff_linter/resources/test/fixtures/ruff/RUF072.py
-+++ b/crates/ruff_linter/resources/test/fixtures/ruff/RUF072.py
-@@ -176,4 +176,12 @@
-     1
-     2
- finally:
--    pass
-\ No newline at end of file
-+    pass
-+
-+
-+# Regression test for https://github.com/astral-sh/ruff/issues/24373
-+# (`try` is preceded by a form feed below)
-+try:
-+    1
-+finally:
-+    pass
- diff --git a/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap b/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap
-index c46cec7598b757..2e420a0007e32a 100644
---- a/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap
-+++ b/crates/ruff_linter/src/rules/ruff/snapshots/ruff_linter__rules__ruff__tests__preview__RUF072_RUF072.py.snap
-@@ -349,3 +349,25 @@ help: Remove the `finally` clause
-     -     pass
- 175 + 1
- 176 + 2
-+177 |
-+178 |
-+179 | # Regression test for https://github.com/astral-sh/ruff/issues/24373
-+
-+RUF072 [*] Empty `finally` clause
-+   --> RUF072.py:186:1
-+    |
-+184 |   try:
-+185 |       1
-+186 | / finally:
-+187 | |     pass
-+    | |________^
-+    |
-+help: Remove the `finally` clause
-+181 |
-+182 | # Regression test for https://github.com/astral-sh/ruff/issues/24373
-+183 | # (`try` is preceded by a form feed below)
-+    - try:
-+    -     1
-+    - finally:
-+    -     pass
-+184 + 1
- diff --git a/crates/ruff_python_trivia/src/textwrap.rs b/crates/ruff_python_trivia/src/textwrap.rs
-index 7ef766fbfd9197..df7b1618dea2f8 100644
---- a/crates/ruff_python_trivia/src/textwrap.rs
-+++ b/crates/ruff_python_trivia/src/textwrap.rs
-@@ -203,6 +203,11 @@ pub fn dedent(text: &str) -> Cow<'_, str> {
- /// # Panics
- /// If the first line is indented by less than the provided indent.
- pub fn dedent_to(text: &str, indent: &str) -> Option<String> {
-+    // The caller may provide an `indent` from source code by taking
-+    // a range of text beginning with the start of a line. In Python,
-+    // while a line may begin with form feeds, these do not contribute
-+    // to the indentation. So we strip those here.
-+    let indent = indent.trim_start_matches('\x0C');
-     // Look at the indentation of the first non-empty line, to determine the "baseline" indentation.
-     let mut first_comment_indent = None;
-     let existing_indent_len = text
-@@ -753,4 +758,18 @@ mod tests {
-         ].join("");
-         assert_eq!(dedent_to(&x, ""), Some(y));
-     }
-+
-+    #[test]
-+    #[rustfmt::skip]
-+    fn dedent_to_ignores_leading_form_feeds_in_provided_indentation() {
-+        let x = [
-+            "  1",
-+            "  2",
-+        ].join("\n");
-+        let y = [
-+            "1",
-+            "2",
-+        ].join("\n");
-+        assert_eq!(dedent_to(&x, "\x0c\x0c"), Some(y));
-+    }
- }
- 
- PATCH
+# Fix 1: textwrap.rs - add the form feed stripping at start of dedent_to
+cat > /tmp/fix_textwrap.py << 'PYEOF'
+import re
+
+with open('crates/ruff_python_trivia/src/textwrap.rs', 'r') as f:
+    content = f.read()
+
+# Add the fix after the function signature
+old_text = """pub fn dedent_to(text: &str, indent: &str) -> Option<String> {
+    // Look at the indentation of the first non-empty line, to determine the \"baseline\" indentation."""
+
+new_text = """pub fn dedent_to(text: &str, indent: &str) -> Option<String> {
+    // The caller may provide an `indent` from source code by taking
+    // a range of text beginning with the start of a line. In Python,
+    // while a line may begin with form feeds, these do not contribute
+    // to the indentation. So we strip those here.
+    let indent = indent.trim_start_matches('\\x0C');
+    // Look at the indentation of the first non-empty line, to determine the \"baseline\" indentation."""
+
+if "let indent = indent.trim_start_matches" not in content:
+    content = content.replace(old_text, new_text)
+    print("Fixed textwrap.rs")
+else:
+    print("textwrap.rs already fixed")
+
+# Add the unit test at the very end of the file, inside the tests module
+# Find the last function and add after its closing brace
+test_code = '''
+
+    #[test]
+    #[rustfmt::skip]
+    fn dedent_to_ignores_leading_form_feeds_in_provided_indentation() {
+        let x = [
+            "  1",
+            "  2",
+        ].join("\\n");
+        let y = [
+            "1",
+            "2",
+        ].join("\\n");
+        assert_eq!(dedent_to(&x, "\\x0c\\x0c"), Some(y));
+    }
+'''
+
+if 'dedent_to_ignores_leading_form_feeds_in_provided_indentation' not in content:
+    # Find the last test function closing and add before the final module close
+    # The file ends with "}\n}" (closing function then closing mod tests)
+    # We need to find where to insert our test
+
+    # Strategy: find the last non-empty line that is just "    }" (4 spaces + })
+    # which closes the last test function
+    lines = content.split('\n')
+
+    # Find the last line that is exactly "    }" (4 spaces closing brace)
+    # which closes a test function
+    insert_pos = None
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i] == '    }':
+            insert_pos = i + 1
+            break
+
+    if insert_pos:
+        lines.insert(insert_pos, test_code.rstrip())
+        content = '\n'.join(lines)
+        with open('crates/ruff_python_trivia/src/textwrap.rs', 'w') as f:
+            f.write(content)
+        print("Added unit test to textwrap.rs")
+    else:
+        print("Could not find insertion point for test")
+else:
+    print("Unit test already exists")
+
+PYEOF
+
+python3 /tmp/fix_textwrap.py
+
+# Run cargo fmt to ensure formatting is correct
+cargo fmt -- crates/ruff_python_trivia/src/textwrap.rs
+
+# Fix 2: Add regression test fixture
+fixture_file='crates/ruff_linter/resources/test/fixtures/ruff/RUF072.py'
+if ! grep -q 'try is preceded by a form feed below' "$fixture_file" 2>/dev/null; then
+    # Need to add a form feed character before try
+    printf '\n\n# Regression test for https://github.com/astral-sh/ruff/issues/24373\n# (`try` is preceded by a form feed below)\n\x0ctry:\n    1\nfinally:\n    pass\n' >> "$fixture_file"
+    echo "Added regression test fixture"
+else
+    echo "Regression test fixture already present"
+fi
 
 echo "Patch applied successfully."

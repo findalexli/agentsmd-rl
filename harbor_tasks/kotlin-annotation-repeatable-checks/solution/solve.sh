@@ -430,6 +430,7 @@ index 60d262db5db86..d142d784bd9f8 100644
 +            it.fqName(session) in IGNORED_ON_PARCEL_FQ_NAMES
          }
      }
+
 PATCH
 
 # Idempotency check: distinctive line from the patch

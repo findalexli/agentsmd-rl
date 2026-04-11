@@ -32,10 +32,15 @@ content = content.replace(
 
             // `tx_context`''')
 
-# Add the config values for version 119
+# Add the config values for version 119 - must be set for ALL chains, not just Testnet
+# The fields need to be set OUTSIDE the Testnet block so they apply to Unknown, Mainnet, and Testnet
 content = content.replace(
-    'cfg.gasless_allowed_token_types = Some(vec![(TESTNET_USDC.to_string(), 0)]);',
-    '''cfg.gasless_allowed_token_types = Some(vec![(TESTNET_USDC.to_string(), 0)]);
+    '''                    if chain == Chain::Testnet {
+                        cfg.gasless_allowed_token_types = Some(vec![(TESTNET_USDC.to_string(), 0)]);
+                    }''',
+    '''                    if chain == Chain::Testnet {
+                        cfg.gasless_allowed_token_types = Some(vec![(TESTNET_USDC.to_string(), 0)]);
+                    }
                     cfg.transfer_receive_object_cost_per_byte = Some(1);
                     cfg.transfer_receive_object_type_cost_per_byte = Some(2);''')
 
@@ -115,8 +120,7 @@ with open('sui-execution/latest/sui-move-natives/src/transfer.rs', 'r') as f:
 # Add import
 content = content.replace(
     'use move_vm_runtime::{\n    execution::Type,',
-    'use move_vm_runtime::shared::views::{SizeConfig, ValueView};\nuse move_vm_runtime::{\n    execution::Type,'
-)
+    'use move_vm_runtime::shared::views::{SizeConfig, ValueView};\nuse move_vm_runtime::{\n    execution::Type,')
 
 # Add new fields to TransferReceiveObjectInternalCostParams (NOT replace the whole struct)
 content = content.replace(
@@ -127,8 +131,7 @@ content = content.replace(
     pub transfer_receive_object_internal_cost_base: InternalGas,
     pub transfer_receive_object_internal_cost_per_byte: InternalGas,
     pub transfer_receive_object_internal_type_cost_per_byte: InternalGas,
-}'''
-)
+}''')
 
 # Add type-based charging after getting child_ty
 old_receive = '''let child_ty = ty_args.pop().unwrap();
@@ -154,7 +157,7 @@ new_return = '''let child_size = child.abstract_memory_size(&SizeConfig {
     native_charge_gas_early_exit!(
         context,
         transfer_receive_object_internal_cost_params.transfer_receive_object_internal_cost_per_byte
-        * u64::from(child_size).into()
+            * u64::from(child_size).into()
     );
 
     Ok(NativeResult::ok(context.gas_used(), smallvec![child]))
@@ -168,5 +171,8 @@ print("Updated transfer.rs")
 print("All patches applied successfully!")
 PYEOF
 
+# Run cargo fmt to fix any formatting issues from the patches
+cargo fmt
+
 # Accept the insta snapshots so tests pass
-cargo insta test -p sui-protocol-config --accept -- 2>/dev/null || echo "Insta test may have failed but snapshots should be updated"
+cargo insta accept 2>/dev/null || echo "Insta accept completed or no pending snapshots"

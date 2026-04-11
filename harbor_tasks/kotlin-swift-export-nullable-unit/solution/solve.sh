@@ -177,3 +177,6 @@ index 99b691de777aa..a965e645a559f 100644
 PATCH
 
 echo "Patch applied successfully"
+
+# Commit the changes so git status is clean
+git add -A && git -c user.email="test@test.com" -c user.name="Test" commit -m "Apply gold solution" || true
