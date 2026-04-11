@@ -74,17 +74,31 @@ class Check(BaseModel):
         return self
 
 
+class VerificationMethod(str, Enum):
+    """How a rubric rule is verified at eval time."""
+    PROGRAMMATIC = "programmatic"    # grep/AST check baked into test.sh (deterministic)
+    LLM_JUDGE = "llm_judge"         # Gemini/Claude evaluates diff vs rule (soft)
+    SEMANTIC_DIFF = "semantic_diff"  # Gemini compares gold config vs agent config (Track 2)
+
+
 class RubricRule(BaseModel):
     """A positive rubric: convention the gold solution FOLLOWS.
 
     Must be derived from an actual agent config file (CLAUDE.md, AGENTS.md, etc.)
     with specific evidence from the gold diff demonstrating compliance.
+
+    verification controls HOW the rule is checked at eval time:
+    - programmatic: baked into test.sh (grep, AST check, etc.) — deterministic
+    - llm_judge: Gemini reads agent diff + rule, decides pass/fail — soft
+    - semantic_diff: Gemini compares gold config edit vs agent edit — Track 2
     """
     rule: str                        # What the agent should do
     source: SourceRef | None = None  # Where rule came from (required for quality)
     reference: str | None = None     # Gold answer for agentmd-edit tasks (optional)
     evidence: str | None = None      # How the gold solution demonstrates compliance
     category: str | None = None      # naming, style, architecture, testing, etc.
+    verification: VerificationMethod = VerificationMethod.LLM_JUDGE  # default: LLM
+    check_cmd: str | None = None     # For programmatic: shell command that exits 0 on pass
 
 
 class DistractorRule(BaseModel):

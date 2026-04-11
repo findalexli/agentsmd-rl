@@ -112,6 +112,14 @@ rubric:
       lines: "28-32"
     evidence: "Gold uses `question` not `shouldEnableQuestion`"
     category: naming
+    verification: llm_judge           # Gemini evaluates agent diff vs rule
+
+  - rule: "No wildcard imports in TypeScript files"
+    source:
+      path: AGENTS.md
+      lines: "15"
+    verification: programmatic        # Baked into test.sh, deterministic
+    check_cmd: "! grep -r 'import \\*' /workspace/repo/src/"
 
 # Track 4: Distractors — conventions that create COLLISIONS
 distractors:
@@ -123,6 +131,16 @@ distractors:
     why_distracting: "Conflicts with readability; extracted variable clarifies conditional logic"
     severity: medium
 ```
+
+### Verification methods
+
+| Method | When | How | Cost |
+|--------|------|-----|------|
+| `programmatic` | Rule is checkable by grep/AST | `check_cmd` in test.sh | Free |
+| `llm_judge` | Rule requires judgment | Gemini reads diff vs rule | ~$0.01 |
+| `semantic_diff` | Config edit comparison | Gemini compares gold vs agent | ~$0.01 |
+
+Prefer `programmatic` when possible — deterministic, no LLM cost, reproducible. Use `llm_judge` only when the rule requires semantic understanding (style, architecture decisions). `semantic_diff` is only for Track 2 config edits.
 
 ### Four evaluation tracks
 
