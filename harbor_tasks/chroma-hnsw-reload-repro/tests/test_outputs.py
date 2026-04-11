@@ -154,17 +154,50 @@ def test_clippy():
 def test_repo_tests_pass():
     """Pass-to-pass: The chroma-index crate's existing tests pass.
 
-    This runs the crate's own test suite (excluding the new hnsw_reload_repro test)
-    to ensure the fix doesn't break any existing functionality.
-
-    We exclude the hnsw_reload_repro test since that's what we're adding and
-    it may intentionally fail/crash on the base commit.
+    This runs the crate's own test suite (excluding the new hnsw_reload_repro test
+    and test_flush_from_memory_propagates_errors which fails in Docker due to
+    permission handling differences) to ensure the fix doesn't break any existing
+    functionality.
     """
     result = subprocess.run(
-        ["cargo", "test", "-p", "chroma-index", "--lib", ],
+        ["cargo", "test", "-p", "chroma-index", "--lib", "--",
+         "--skip", "test_flush_from_memory_propagates_errors"],
         cwd=RUST_DIR,
         capture_output=True,
         text=True,
         timeout=600,
     )
     assert result.returncode == 0, f"Existing tests failed:\n{result.stderr[-1000:]}"
+
+
+def test_hnsw_provider_tests():
+    """Pass-to-pass: HNSW provider tests pass (excluding Docker-specific test).
+
+    These tests cover the HnswIndexProvider which is central to the reload
+    functionality being fixed by this PR.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "chroma-index", "--lib", "hnsw_provider", "--",
+         "--skip", "test_flush_from_memory_propagates_errors"],
+        cwd=RUST_DIR,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"HNSW provider tests failed:\n{result.stderr[-500:]}"
+
+
+def test_spann_tests():
+    """Pass-to-pass: SPANN index tests pass.
+
+    These tests cover the SpannIndex which uses the HNSW provider and is
+    directly related to the reload issue being fixed.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "chroma-index", "--lib", "spann"],
+        cwd=RUST_DIR,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert result.returncode == 0, f"SPANN tests failed:\n{result.stderr[-500:]}"

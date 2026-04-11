@@ -428,6 +428,124 @@ def test_repo_clang_version():
         f"Clang version may not support required C++23: {version_line}"
 
 
+def test_repo_ninja_version():
+    """PASS-TO-PASS: Ninja build system is available.
+
+    Verify Ninja is installed and working. Ninja is the build system
+    used by ClickHouse CI for parallel builds.
+    """
+    result = subprocess.run(
+        ["ninja", "--version"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+
+    assert result.returncode == 0, f"Ninja not available: {result.stderr}"
+    # Ninja version output is just the version number
+    version = result.stdout.strip()
+    assert version[0].isdigit(), f"Unexpected ninja version output: {result.stdout}"
+
+
+def test_repo_ccache_version():
+    """PASS-TO-PASS: CCache compiler cache is available.
+
+    Verify ccache is installed and working. CCache is used by ClickHouse
+    CI to speed up rebuilds by caching compilation results.
+    """
+    result = subprocess.run(
+        ["ccache", "--version"],
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+
+    assert result.returncode == 0, f"ccache not available: {result.stderr}"
+    assert "ccache" in result.stdout.lower(), f"Unexpected ccache output: {result.stdout}"
+
+
+def test_repo_clang_preprocess():
+    """PASS-TO-PASS: Clang can preprocess the modified file.
+
+    Verify clang++-20 can preprocess the formatDateTime.cpp file.
+    This is a lightweight check that verifies the file structure is valid
+    and standard library includes are resolvable.
+    """
+    result = subprocess.run(
+        ["clang++-20", "-std=c++23", "-E", f"{REPO}/{FILE_PATH}", "-I", f"{REPO}/src", "-I", f"{REPO}/base"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO
+    )
+
+    # The preprocessor may fail on missing project-specific includes,
+    # but it should not fail on syntax errors
+    stderr_lower = result.stderr.lower()
+
+    # Check for actual syntax errors (not just missing includes)
+    syntax_errors = [
+        "expected expression",
+        "syntax error",
+        "parse error",
+        "unexpected",
+        "invalid syntax"
+    ]
+
+    for error in syntax_errors:
+        if error in stderr_lower:
+            assert False, f"C++ syntax error during preprocessing: {result.stderr[:500]}"
+
+    # If preprocessing produced output, that's a good sign
+    assert len(result.stdout) > 0, "Preprocessor produced no output"
+
+
+def test_repo_file_no_carriage_return():
+    """PASS-TO-PASS: Modified file has no carriage return characters.
+
+    Verify the modified file uses Unix line endings (LF) not Windows
+    line endings (CRLF). This is a common CI lint check.
+    """
+    result = subprocess.run(
+        ["file", f"{REPO}/{FILE_PATH}"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO
+    )
+
+    assert result.returncode == 0, f"file command failed: {result.stderr}"
+
+    # The 'file' command should indicate the line ending type
+    output = result.stdout.lower()
+    # If CRLF is present, file command typically says "with CRLF line terminators"
+    assert "crlf" not in output, f"File has Windows line endings (CRLF): {result.stdout}"
+
+
+def test_repo_function_syntax_basic():
+    """PASS-TO-PASS: Basic C++ syntax validation with grep patterns.
+
+    Verify basic C++ structural elements are present in the modified file.
+    This complements clang checks with simple pattern-based validation.
+    """
+    # Use grep to check for expected C++ patterns
+    patterns_to_check = [
+        (r"static bool containsOnlyFixedWidthMySQLFormatters", "function definition"),
+        (r"variable_width_formatter", "variable_width_formatter array"),
+        (r"std::any_of", "std::any_of usage"),
+    ]
+
+    for pattern, description in patterns_to_check:
+        result = subprocess.run(
+            ["grep", "-q", pattern, f"{REPO}/{FILE_PATH}"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO
+        )
+        assert result.returncode == 0, f"Expected pattern '{description}' not found in file"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

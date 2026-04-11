@@ -78,16 +78,22 @@ scoring:
 rubric:
   # Soft/subjective rules from agent configs
   - id: "error_handling_try_catch"
-    name: "Uses try/catch for error handling"
-    criteria: "The fix wraps arrow binding repair and element restoration in try-catch blocks"
+    rule: "Uses try/catch for error handling - wraps arrow binding repair and element restoration in try-catch blocks"
+    source:
+      path: "packages/excalidraw/data/restore.ts"
+    reference: "try { ... } catch (error) { console.error(\"Error repairing binding:\", error); } and try { migratedElement = restoreElement(...) } catch (error) { console.error(\"Error restoring element:\", error); migratedElement = null; }"
     weight: 1.0
 
   - id: "error_logging_contextual"
-    name: "Logs errors with contextual information"
-    criteria: "Uses console.error with descriptive messages like \"Error repairing binding:\" and \"Error restoring element:\""
+    rule: "Logs errors with contextual information using console.error with descriptive messages like 'Error repairing binding:' and 'Error restoring element:'"
+    source:
+      path: "packages/excalidraw/data/restore.ts"
+    reference: "console.error(\"Error repairing binding:\", error) and console.error(\"Error restoring element:\", error)"
     weight: 1.0
 
   - id: "graceful_degradation"
-    name: "Graceful degradation on errors"
-    criteria: "When an error occurs, the function continues processing other elements rather than crashing"
+    rule: "Graceful degradation on errors - when an error occurs, the function continues processing other elements rather than crashing"
+    source:
+      path: "packages/excalidraw/data/restore.ts"
+    reference: "migratedElement = null in catch block allows reduce to continue with other elements"
     weight: 1.0

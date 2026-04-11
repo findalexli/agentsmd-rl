@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T02:26:59.434769",
-  "total_time": 3822.9,
-  "sandbox_id": "i4nw64ws0b4269tuikx1j",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:03:24.295847",
+  "total_time": 2069.09,
+  "sandbox_id": "infjz3er79jpcglt3mw61",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -45,20 +45,24 @@
       "notes": ""
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed test_typescript_compiles to install dependencies before running tsc. Fixed solve.sh idempotency check that was incorrectly matching overflowY: 'auto' in the hover block. All 4 validation checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (N/A for validation task).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 6.96
+      "time": 1248.87
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.09,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 999.91,
-      "at": "2026-04-09T14:44:51.052877"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -90,6 +94,14 @@
       "backend": "gemini",
       "time": 3822.9,
       "at": "2026-04-10T02:26:59.434769"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2069.09,
+      "at": "2026-04-10T18:03:24.295847"
     }
   ]
 }

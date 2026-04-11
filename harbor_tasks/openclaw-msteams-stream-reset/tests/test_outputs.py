@@ -587,6 +587,9 @@ def test_repo_typescript_syntax():
     Validates that .ts files can be parsed without syntax errors using Node.js
     --experimental-strip-types. This catches basic syntax issues without
     requiring full type checking (which needs node_modules).
+
+    Mirrors CI TypeScript parsing checks by running the Node.js TypeScript
+    stripper on each source file (types are stripped before parsing).
     """
     ext_dir = os.path.join(REPO, "extensions/msteams/src")
     violations = []
@@ -598,6 +601,7 @@ def test_repo_typescript_syntax():
             filepath = os.path.join(root, fname)
 
             # Try to parse the file with Node.js TypeScript support
+            # Pipe file content through stdin so types get stripped before parsing
             r = subprocess.run(
                 ["node", "--experimental-strip-types", "--no-warnings", "-e", "0"],
                 input=Path(filepath).read_text(),
@@ -639,14 +643,48 @@ def test_repo_target_typescript_parse():
     --experimental-strip-types, mirroring CI TypeScript checks.
     """
     r = subprocess.run(
-        ["node", "--experimental-strip-types", "--no-warnings", TARGET],
+        ["node", "--experimental-strip-types", "--no-warnings", "-e", "0"],
+        input=Path(TARGET).read_text(),
         capture_output=True,
         text=True,
         timeout=30,
     )
-    # Exit 0 means it parsed successfully (it won't run, just parse)
-    # Note: This validates syntax; missing imports will cause runtime errors
-    # but the syntax must be valid
-    assert r.returncode == 0 or "import" in r.stderr, (
+    # Exit 0 means it parsed successfully (types are stripped before parsing)
+    assert r.returncode == 0, (
         f"Target file has TypeScript syntax errors:\n{r.stderr[-500:]}"
     )
+
+
+
+# [repo_tests] pass_to_pass — CI/CD check: secrets baseline valid JSON
+def test_repo_secrets_baseline_valid():
+    """.secrets.baseline is valid JSON (pass_to_pass).
+
+    Mirrors CI security-fast job that reads the detect-secrets baseline.
+    Validates the baseline file is parseable JSON.
+    """
+    baseline_path = os.path.join(REPO, ".secrets.baseline")
+    r = subprocess.run(
+        ["python3", "-c", "import json; json.load(open(\"" + baseline_path + "\")); print(\"OK\")"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f".secrets.baseline is not valid JSON:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — CI/CD check: git repository is valid
+def test_repo_git_valid():
+    """Git repository is in valid state (pass_to_pass).
+
+    Validates git status works and repo is not corrupted.
+    Mirrors basic CI git sanity checks.
+    """
+    r = subprocess.run(
+        ["git", "status", "--short"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Git repository is corrupted:\n{r.stderr[-500:]}"

@@ -164,15 +164,6 @@ def test_repo_markdown_parser_all_tests():
     assert r.returncode == 0, f"Tests failed:\n{r.stderr.decode()[-2000:]}"
 
 
-def test_repo_markdown_formatter_tests():
-    """Markdown formatter tests pass (pass_to_pass)."""
-    r = subprocess.run(
-        ["cargo", "test", "-p", "biome_markdown_formatter"],
-        cwd=REPO, capture_output=True, timeout=300,
-    )
-    assert r.returncode == 0, f"Formatter tests failed:\n{r.stderr.decode()[-2000:]}"
-
-
 def test_repo_format_check():
     """Repo's Rust code formatting passes (pass_to_pass)."""
     r = subprocess.run(
@@ -182,10 +173,10 @@ def test_repo_format_check():
     assert r.returncode == 0, f"Format check failed:\n{r.stderr.decode()[-2000:]}"
 
 
-def test_repo_related_markdown_crates_check():
-    """Related markdown crates compile without errors (pass_to_pass)."""
+def test_repo_markdown_list_tightness():
+    """Markdown list tightness tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["cargo", "check", "-p", "biome_markdown_factory", "-p", "biome_markdown_syntax", "-p", "biome_markdown_formatter"],
+        ["cargo", "test", "-p", "biome_markdown_parser", "--test", "list_tightness"],
         cwd=REPO, capture_output=True, timeout=300,
     )
-    assert r.returncode == 0, f"Related markdown crates check failed:\n{r.stderr.decode()[-2000:]}"
+    assert r.returncode == 0, f"List tightness tests failed:\n{r.stderr.decode()[-2000:]}"

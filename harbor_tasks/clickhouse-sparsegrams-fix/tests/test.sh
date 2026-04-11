@@ -8,14 +8,14 @@ pip3 install pytest -q
 
 # Run tests
 cd /workspace/ClickHouse
-pytest /workspace/task/tests/test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log
+pytest /tests/test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log
 
 # Write binary reward
 exit_code=${PIPESTATUS[0]}
 if [ $exit_code -eq 0 ]; then
-    echo "1.0" > /logs/verifier/reward
+    echo "1.0" > /logs/verifier/reward.txt
 else
-    echo "0.0" > /logs/verifier/reward
+    echo "0.0" > /logs/verifier/reward.txt
 fi
 
 exit $exit_code

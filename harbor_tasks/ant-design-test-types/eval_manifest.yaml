@@ -98,20 +98,32 @@ checks:
     origin: repo_tests
     description: "Repo CI Node.js tests pass for relevant subset (npm run test:node equivalent)"
 
+# Config edits for Track 2 evaluation (code changes, not config files)
+config_edits:
+  - path: "tests/setupAfterEnv.ts"
+    tier: 1
+    gold_added: "type SnapshotTarget = HTMLElement | DocumentFragment | HTMLCollection | NodeList | Node[]; function formatHTML(nodes: SnapshotTarget); let cloneNodes: Node | Node[]; as HTMLElement"
+    gold_removed: "function formatHTML(nodes: any); let cloneNodes: any; as any"
+
+  - path: "tests/shared/focusTest.tsx"
+    tier: 1
+    gold_added: "type FocusableRef = { focus: () => void; blur: () => void; }; React.createRef<FocusableRef>(); const getElement = (container: HTMLElement): HTMLElement; querySelector<HTMLElement>; expect(element).not.toBeNull()"
+    gold_removed: "React.createRef<any>(); getElement(container)!"
+
 # Rubric for soft/subjective requirements from agent configs
 rubric:
   - id: no_explicit_any
-    text: "Never use 'any' type - define precise types instead"
-    source: "CLAUDE.md TypeScript Requirements"
+    text: "Never use 'any' type - define precise types instead in tests/setupAfterEnv.ts"
+    source: "tests/setupAfterEnv.ts"
 
   - id: use_generic_queryselector
-    text: "Use generic type parameters for querySelector (e.g., querySelector<HTMLElement>)"
-    source: "CLAUDE.md TypeScript Requirements"
+    text: "Use generic type parameters for querySelector (e.g., querySelector<HTMLElement>) in tests/shared/focusTest.tsx"
+    source: "tests/shared/focusTest.tsx"
 
   - id: proper_ref_types
-    text: "Component ref types should use proper interface types, not 'any'"
-    source: "CLAUDE.md React Component Guidelines"
+    text: "Component ref types should use proper interface types, not 'any' in tests/shared/focusTest.tsx"
+    source: "tests/shared/focusTest.tsx"
 
   - id: type_assertions_proper
-    text: "Use proper type assertions (e.g., 'as HTMLElement') instead of 'as any'"
-    source: "CLAUDE.md TypeScript Requirements"
+    text: "Use proper type assertions (e.g., 'as HTMLElement') instead of 'as any' in tests/setupAfterEnv.ts"
+    source: "tests/setupAfterEnv.ts"

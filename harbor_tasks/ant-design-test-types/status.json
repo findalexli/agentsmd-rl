@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T20:45:26.487012",
-  "total_time": 1617.97,
-  "sandbox_id": "i1i10q93q8b3s2dzbtl08",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:57:48.513688",
+  "total_time": 1733.29,
+  "sandbox_id": "ievgjdhnohxiqtay7ygjm",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -19,26 +19,31 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "opus",
-      "backend": "gemini",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "judge_score": 0.88,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build OK, NOP test correctly returns 0 (fail-to-pass tests fail on buggy code), Gold test returns 1 (all 16 tests pass), Rubric judge returns 0.88 (>0.8 threshold). Fixed judge.py to support code file evaluation by adding extract_all_hunks() function.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.86
+      "time": 682.02
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.84,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18238.27,
-      "at": "2026-04-09T14:15:50.490215"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -70,6 +75,14 @@
       "backend": "fireworks",
       "time": 1617.97,
       "at": "2026-04-09T20:45:26.487012"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1733.29,
+      "at": "2026-04-10T17:57:48.513688"
     }
   ]
 }

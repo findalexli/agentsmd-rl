@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T05:55:56.057804",
-  "total_time": 16360.42,
-  "sandbox_id": "i5gnuo5g40j6p4een6hph",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:05:08.333102",
+  "total_time": 2173.12,
+  "sandbox_id": "ilr1t9swmv7bet20jkjqk",
+  "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "rubric_enrichment": {
       "status": "ok",
@@ -24,15 +25,34 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "opus",
-      "backend": "gemini",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
     },
     "validate": {
-      "model": "opus",
-      "backend": "gemini",
-      "time": 1902.14
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_repo_git_status to allow uncommitted changes after gold fix is applied (lib.rs and AGENTS.md modifications). All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (gold solution follows rule - note added to AGENTS.md).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "time": 380.83,
+      "backend": "fireworks"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 252.35,
+      "notes": ""
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 4.42,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -51,6 +71,14 @@
       "backend": "gemini",
       "time": 16360.42,
       "at": "2026-04-10T05:55:56.057804"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2173.12,
+      "at": "2026-04-10T18:05:08.333102"
     }
   ]
 }

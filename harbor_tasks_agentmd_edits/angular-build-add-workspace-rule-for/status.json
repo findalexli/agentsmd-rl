@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T14:58:25.336189",
-  "total_time": 863.54,
-  "sandbox_id": "iex3ro3k8ghbok5hfdvs8",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:56:18.266338",
+  "total_time": 1649.42,
+  "sandbox_id": "ioms4kynjj2oad6slasck",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -57,9 +58,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh to be idempotent when adding .agent/**/{*,.*} to .pullapprove.yml - now checks if entry already exists before adding. All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0)",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 413.89
+      "time": 968.02
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.68,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -78,6 +91,14 @@
       "backend": "fireworks",
       "time": 863.54,
       "at": "2026-04-10T14:58:25.336189"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1649.42,
+      "at": "2026-04-10T17:56:18.266338"
     }
   ]
 }

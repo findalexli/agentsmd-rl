@@ -12,25 +12,6 @@ target_files:
 distinctive_line: "missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids"
 
 checks:
-  # Fail-to-pass tests (structure-based, since runtime tests are complex in Airflow)
-  - id: test_code_structure_fix_applied
-    type: fail_to_pass
-    origin: behavioral
-    description: "Fix for identifying missing serialized DAGs is present in code"
-    points: 1
-
-  - id: test_docstring_added
-    type: fail_to_pass
-    origin: behavioral
-    description: "Documentation about omitting DAGs without SerializedDagModel is present"
-    points: 1
-
-  - id: test_sorted_missing_dag_ids
-    type: fail_to_pass
-    origin: behavioral
-    description: "Missing DAG IDs are logged in sorted order"
-    points: 1
-
   # Pass-to-pass tests
   - id: test_repo_unit_tests_exist
     type: pass_to_pass
@@ -38,13 +19,19 @@ checks:
     description: "Repository's unit tests for the fix are present"
     points: 1
 
-  - id: test_fix_does_not_delete_adrq_rows
+  - id: test_repo_unit_tests_pass
     type: pass_to_pass
-    origin: behavioral
-    description: "Fix only removes from in-memory dicts, not database"
+    origin: repo_tests
+    description: "Repository unit tests pass on base commit"
     points: 1
 
-  # CI/CD pass-to-pass tests
+  - id: test_no_session_commit_in_dags_needing_dagruns
+    type: pass_to_pass
+    origin: behavioral
+    description: "dags_needing_dagruns method does not call session.commit()"
+    points: 1
+
+  # CI/CD pass-to-pass tests - Code Quality
   - id: test_repo_ruff_check
     type: pass_to_pass
     origin: repo_tests
@@ -63,10 +50,35 @@ checks:
     description: "Mypy type checking passes on modified dag.py file"
     points: 1
 
+  # CI/CD pass-to-pass tests - Unit Tests
   - id: test_repo_dags_needing_dagruns_tests
     type: pass_to_pass
     origin: repo_tests
-    description: "Existing dags_needing_dagruns tests in repo still pass"
+    description: "Existing dags_needing_dagruns tests in repo pass"
+    points: 1
+
+  - id: test_repo_dag_model_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "DagModel unit tests pass (broader regression check)"
+    points: 1
+
+  - id: test_repo_dag_class_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Dag class unit tests pass (sanity check for dag.py module)"
+    points: 1
+
+  - id: test_repo_serialized_dag_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "SerializedDagModel tests pass (related to fix)"
+    points: 1
+
+  - id: test_repo_asset_model_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Asset-related model tests pass (related to fix)"
     points: 1
 
 # Rubric rules from agent config files

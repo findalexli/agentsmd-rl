@@ -10,8 +10,8 @@ pip3 install pytest --break-system-packages 2>/dev/null || pip3 install pytest
 # Create logs directory
 mkdir -p /logs/verifier
 
-# Run the tests
-cd /workspace/task/tests
+# Run the tests - note: tests are mounted at /tests, not /workspace/task/tests
+cd /tests
 python3 -m pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log
 
 # Write binary reward based on test results

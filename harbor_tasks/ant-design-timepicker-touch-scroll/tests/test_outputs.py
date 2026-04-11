@@ -32,14 +32,20 @@ def test_file_exists():
 
 def test_typescript_compiles():
     """TypeScript must compile without errors."""
+    _install_deps()
+    # TypeScript compilation needs more memory for this large project
+    import os
+    env = os.environ.copy()
+    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
     result = subprocess.run(
-        ["npx", "tsc", "--noEmit", "--skipLibCheck"],
+        ["pnpm", "exec", "tsc", "--noEmit", "--skipLibCheck"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120
+        timeout=300,
+        env=env
     )
-    assert result.returncode == 0, f"TypeScript compilation failed:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"TypeScript compilation failed:\n{result.stderr[-500:]}"
 
 
 def test_overflow_y_is_auto():

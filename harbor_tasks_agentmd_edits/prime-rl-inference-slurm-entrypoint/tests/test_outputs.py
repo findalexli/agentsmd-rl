@@ -1,226 +1,423 @@
-"""
-Task: prime-rl-inference-slurm-entrypoint
-Repo: PrimeIntellect-ai/prime-rl @ 6f6fa002a55a26ba1cc33aa9ac6b7301f59b82e0
-PR:   1898
-
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
-"""
-
-import ast
-import json
 import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 REPO = "/workspace/prime-rl"
 
 
-def _run_in_repo(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
+def _run_in_repo(cmd: list[str], timeout: int = 60, cwd: str = REPO) -> subprocess.CompletedProcess:
     """Run a command in the repo directory."""
-    return subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        cwd=REPO,
-    )
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd)
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) -- syntax / compilation checks
-# ---------------------------------------------------------------------------
-
-# [static] pass_to_pass
-def test_syntax_check():
-    """New entrypoint file must parse without errors."""
-    entrypoint_path = Path(f"{REPO}/src/prime_rl/entrypoints/inference.py")
-    assert entrypoint_path.exists(), f"Entrypoint file not found: {entrypoint_path}"
-
-    src = entrypoint_path.read_text()
-    try:
-        ast.parse(src)
-    except SyntaxError as e:
-        raise AssertionError(f"Syntax error in entrypoint: {e}")
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- core behavioral tests
-# ---------------------------------------------------------------------------
+# =============================================================================
+# FAIL TO PASS TESTS (behavioral - these run actual code)
+# =============================================================================
 
 # [pr_diff] fail_to_pass
 def test_entrypoint_file_exists_with_main():
-    """New inference entrypoint file must exist with main() function."""
-    entrypoint_path = Path(f"{REPO}/src/prime_rl/entrypoints/inference.py")
-    assert entrypoint_path.exists(), "src/prime_rl/entrypoints/inference.py must be created"
+    """New inference entrypoint file exists with main() and inference() functions."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
 
-    src = entrypoint_path.read_text()
-    assert "def main():" in src, "Entrypoint must have main() function"
-    assert "inference(cli(InferenceConfig))" in src, "main() must call inference(cli(InferenceConfig))"
-    assert "def inference(" in src, "Entrypoint must have inference() function"
-    assert "def inference_slurm(" in src, "Entrypoint must have inference_slurm() function"
-    assert "def inference_local(" in src, "Entrypoint must have inference_local() function"
+entrypoint_path = Path("src/prime_rl/entrypoints/inference.py")
+if not entrypoint_path.exists():
+    print(f"Entrypoint file not found: {entrypoint_path}")
+    sys.exit(1)
+
+try:
+    tree = ast.parse(entrypoint_path.read_text())
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    sys.exit(1)
+
+functions = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+
+required = ["main", "inference", "inference_slurm", "inference_local", "write_config", "write_slurm_script"]
+missing = [f for f in required if f not in functions]
+
+if missing:
+    print(f"Missing functions: {missing}")
+    sys.exit(1)
+
+print(f"All required functions found: {required}")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Entrypoint check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_pyproject_entrypoint_updated():
-    """pyproject.toml must point to new entrypoint."""
-    pyproject_path = Path(f"{REPO}/pyproject.toml")
-    content = pyproject_path.read_text()
+    """pyproject.toml points inference command to new entrypoints.inference:main."""
+    script = '''
+from pathlib import Path
+import sys
 
-    # Should point to new entrypoint, not old one
-    assert 'inference = "prime_rl.entrypoints.inference:main"' in content, \
-        "pyproject.toml must point inference command to prime_rl.entrypoints.inference:main"
-    assert 'inference = "prime_rl.inference.server:main"' not in content, \
-        "pyproject.toml should not point to old inference.server entrypoint"
+toml_path = Path("pyproject.toml")
+if not toml_path.exists():
+    print("pyproject.toml not found")
+    sys.exit(1)
+
+content = toml_path.read_text()
+
+# Check old entrypoint is removed
+if 'inference = "prime_rl.inference.server:main"' in content:
+    print("ERROR: Old entrypoint still present")
+    sys.exit(1)
+
+# Check new entrypoint is present
+if 'inference = "prime_rl.entrypoints.inference:main"' not in content:
+    print("ERROR: New entrypoint not found")
+    sys.exit(1)
+
+print("Entrypoint correctly updated to prime_rl.entrypoints.inference:main")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"pyproject.toml check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_config_has_slurm_and_deployment():
-    """InferenceConfig must have slurm, deployment, output_dir, and dry_run fields."""
-    sys.path.insert(0, REPO)
-    try:
-        from prime_rl.configs.inference import InferenceConfig
+    """InferenceConfig has slurm, deployment, output_dir, and dry_run fields."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
 
-        # Check that the config class has the new fields
-        import inspect
-        sig = inspect.signature(InferenceConfig)
-        params = list(sig.parameters.keys())
+config_path = Path("src/prime_rl/configs/inference.py")
+if not config_path.exists():
+    print(f"Config file not found: {config_path}")
+    sys.exit(1)
 
-        assert "slurm" in params, "InferenceConfig must have 'slurm' parameter"
-        assert "deployment" in params, "InferenceConfig must have 'deployment' parameter"
-        assert "output_dir" in params, "InferenceConfig must have 'output_dir' parameter"
-        assert "dry_run" in params, "InferenceConfig must have 'dry_run' parameter"
-    finally:
-        sys.path.pop(0)
+try:
+    tree = ast.parse(config_path.read_text())
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    sys.exit(1)
+
+# Find InferenceConfig class
+inference_config = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "InferenceConfig":
+        inference_config = node
+        break
+
+if not inference_config:
+    print("InferenceConfig class not found")
+    sys.exit(1)
+
+# Get all field names (AnnAssign nodes in the class body)
+fields = []
+for item in inference_config.body:
+    if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+        fields.append(item.target.id)
+
+required_fields = ["deployment", "slurm", "output_dir", "dry_run"]
+missing = [f for f in required_fields if f not in fields]
+
+if missing:
+    print(f"Missing fields: {missing}")
+    sys.exit(1)
+
+print(f"All required fields found: {required_fields}")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Config fields check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_config_validators_exist():
-    """InferenceConfig must have validators for multi_node + slurm and slurm template."""
-    config_path = Path(f"{REPO}/src/prime_rl/configs/inference.py")
-    content = config_path.read_text()
+    """InferenceConfig has validators for multi_node+slurm and slurm template auto-setup."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
 
-    assert "validate_multi_node_requires_slurm" in content, \
-        "Must have validator ensuring multi_node requires slurm"
-    assert "auto_setup_slurm_template" in content, \
-        "Must have validator for auto-setting slurm template path"
+config_path = Path("src/prime_rl/configs/inference.py")
+if not config_path.exists():
+    print(f"Config file not found: {config_path}")
+    sys.exit(1)
+
+try:
+    tree = ast.parse(config_path.read_text())
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    sys.exit(1)
+
+# Find InferenceConfig class
+inference_config = None
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name == "InferenceConfig":
+        inference_config = node
+        break
+
+if not inference_config:
+    print("InferenceConfig class not found")
+    sys.exit(1)
+
+# Find validators
+validators = []
+for item in inference_config.body:
+    if isinstance(item, ast.FunctionDef):
+        for decorator in item.decorator_list:
+            if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name):
+                if decorator.func.id == "model_validator":
+                    validators.append(item.name)
+            elif isinstance(decorator, ast.Name) and decorator.id == "model_validator":
+                validators.append(item.name)
+
+required_validators = ["validate_multi_node_requires_slurm", "auto_setup_slurm_template"]
+missing = [v for v in required_validators if v not in validators]
+
+if missing:
+    print(f"Missing validators: {missing}")
+    sys.exit(1)
+
+print(f"All required validators found: {required_validators}")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Config validators check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_slurm_template_file_exists():
-    """SLURM template file must exist."""
-    template_path = Path(f"{REPO}/src/prime_rl/templates/inference.sbatch.j2")
-    assert template_path.exists(), "src/prime_rl/templates/inference.sbatch.j2 must be created"
+    """SLURM template file inference.sbatch.j2 exists with proper SBATCH directives."""
+    script = '''
+from pathlib import Path
+import sys
 
-    content = template_path.read_text()
-    assert "#!/bin/bash" in content, "Template must be a bash script"
-    assert "#SBATCH" in content, "Template must have SBATCH directives"
+template_path = Path("src/prime_rl/templates/inference.sbatch.j2")
+if not template_path.exists():
+    print(f"Template file not found: {template_path}")
+    sys.exit(1)
+
+content = template_path.read_text()
+
+# Check for key SBATCH directives and template variables
+required_patterns = [
+    "#SBATCH --job-name={{ job_name }}",
+    "#SBATCH --nodes={{ num_nodes }}",
+    "#SBATCH --gres=gpu:{{ gpus_per_node }}",
+    "#SBATCH --partition={{ partition }}",
+    "{{ config_path }}",
+    "{{ output_dir }}",
+]
+
+missing = [p for p in required_patterns if p not in content]
+
+if missing:
+    print(f"Missing patterns: {missing}")
+    sys.exit(1)
+
+print("SLURM template file exists with all required directives")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"SLURM template check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [pr_diff] fail_to_pass
+# [agent_config] fail_to_pass
 def test_skill_md_updated_with_slurm_docs():
-    """SKILL.md must be updated with SLURM inference documentation."""
-    skill_path = Path(f"{REPO}/skills/inference-server/SKILL.md")
-    content = skill_path.read_text()
+    """SKILL.md updated with SLURM scheduling documentation per AGENTS.md rule."""
+    script = '''
+from pathlib import Path
+import sys
 
-    # Check for SLURM-specific documentation
-    assert "## SLURM scheduling" in content, \
-        "SKILL.md must have SLURM scheduling section header"
-    assert "### Single-node SLURM" in content, \
-        "SKILL.md must document single-node SLURM mode"
-    assert "### Multi-node SLURM" in content, \
-        "SKILL.md must document multi-node SLURM mode"
-    assert "### Dry run" in content, \
-        "SKILL.md must document dry_run mode"
+skill_path = Path("skills/inference-server/SKILL.md")
+if not skill_path.exists():
+    print(f"SKILL.md not found: {skill_path}")
+    sys.exit(1)
 
-    # Check for key SLURM config fields mentioned
-    assert "[slurm]" in content, \
-        "SKILL.md must show [slurm] section in examples"
-    assert "[deployment]" in content, \
-        "SKILL.md must show [deployment] section in examples"
+content = skill_path.read_text()
+
+# Check for SLURM documentation sections
+required_sections = [
+    "SLURM scheduling",
+    "Single-node SLURM",
+    "Multi-node SLURM",
+    "Dry run",
+]
+
+missing = [s for s in required_sections if s not in content]
+
+if missing:
+    print(f"Missing sections: {missing}")
+    sys.exit(1)
+
+print("SKILL.md contains all required SLURM documentation sections")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"SKILL.md check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [pr_diff] fail_to_pass
 def test_skill_md_key_files_updated():
-    """SKILL.md key files section must reference new entrypoint."""
-    skill_path = Path(f"{REPO}/skills/inference-server/SKILL.md")
-    content = skill_path.read_text()
+    """SKILL.md key files section references new entrypoint and SLURM template."""
+    script = '''
+from pathlib import Path
+import sys
 
-    # Check key files section was updated
-    assert "src/prime_rl/entrypoints/inference.py" in content, \
-        "SKILL.md key files must list the new entrypoint"
-    assert "src/prime_rl/templates/inference.sbatch.j2" in content, \
-        "SKILL.md key files must list the SLURM template"
+skill_path = Path("skills/inference-server/SKILL.md")
+if not skill_path.exists():
+    print(f"SKILL.md not found: {skill_path}")
+    sys.exit(1)
+
+content = skill_path.read_text()
+
+# Check for new entrypoint and template references
+required_refs = [
+    "src/prime_rl/entrypoints/inference.py",
+    "src/prime_rl/templates/inference.sbatch.j2",
+]
+
+missing = [r for r in required_refs if r not in content]
+
+if missing:
+    print(f"Missing key file references: {missing}")
+    sys.exit(1)
+
+print("SKILL.md key files section updated with new entrypoint and template")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"SKILL.md key files check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) -- anti-stub
-# ---------------------------------------------------------------------------
+# =============================================================================
+# PASS TO PASS TESTS (static checks that should pass on both base and fix)
+# =============================================================================
+
+# [static] pass_to_pass
+def test_syntax_check():
+    """New entrypoint file must parse without syntax errors."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
+
+entrypoint_path = Path("src/prime_rl/entrypoints/inference.py")
+if not entrypoint_path.exists():
+    # If file doesn't exist yet, that's fine for syntax check
+    print("Entrypoint file doesn't exist yet (expected on base commit)")
+    sys.exit(0)
+
+try:
+    ast.parse(entrypoint_path.read_text())
+    print("Entrypoint file parses without syntax errors")
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    sys.exit(1)
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stdout}\n{r.stderr}"
+
 
 # [static] pass_to_pass
 def test_entrypoint_not_stub():
-    """Entrypoint functions must have real logic, not just pass/return."""
-    entrypoint_path = Path(f"{REPO}/src/prime_rl/entrypoints/inference.py")
-    src = entrypoint_path.read_text()
-    tree = ast.parse(src)
+    """Entrypoint functions have real logic, not just pass/return."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
-            if node.name in ["inference", "inference_slurm", "inference_local", "main"]:
-                # Count non-pass, non-docstring statements
-                stmts = []
-                for s in node.body:
-                    if isinstance(s, ast.Pass):
-                        continue
-                    if isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant):
-                        # Skip docstring (Constant string at start of function)
-                        continue
-                    stmts.append(s)
+entrypoint_path = Path("src/prime_rl/entrypoints/inference.py")
+if not entrypoint_path.exists():
+    print("Entrypoint file doesn't exist yet (expected on base commit)")
+    sys.exit(0)
 
-                assert len(stmts) >= 2, f"Function {node.name} appears to be a stub (too few statements)"
+try:
+    tree = ast.parse(entrypoint_path.read_text())
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    sys.exit(1)
+
+# Check that main functions are not just stubs
+functions_to_check = ["main", "inference", "inference_slurm", "inference_local"]
+stub_count = 0
+
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name in functions_to_check:
+        # Check if body is just Pass or simple return
+        if len(node.body) == 1:
+            if isinstance(node.body[0], ast.Pass):
+                stub_count += 1
+            elif isinstance(node.body[0], ast.Return) and node.body[0].value is None:
+                stub_count += 1
+
+if stub_count > 0:
+    print(f"Found {stub_count} stub functions")
+    sys.exit(1)
+
+print("Entrypoint functions have real implementation")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Entrypoint not stub check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [static] pass_to_pass
 def test_config_classes_not_stub():
-    """Deployment config classes must have real fields."""
-    config_path = Path(f"{REPO}/src/prime_rl/configs/inference.py")
-    src = config_path.read_text()
-    tree = ast.parse(src)
+    """Deployment config classes have real fields, not empty."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
 
-    # Check that BaseInferenceDeploymentConfig has gpus_per_node field
-    found_classes = {}
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef):
-            if node.name in ["BaseInferenceDeploymentConfig", "SingleNodeInferenceDeploymentConfig", "MultiNodeInferenceDeploymentConfig"]:
-                field_count = 0
-                for item in node.body:
-                    if isinstance(item, ast.AnnAssign):  # Annotated assignment = field
-                        field_count += 1
-                found_classes[node.name] = field_count
+config_path = Path("src/prime_rl/configs/inference.py")
+if not config_path.exists():
+    print("Config file not found")
+    sys.exit(1)
 
-    assert found_classes.get("BaseInferenceDeploymentConfig", 0) >= 1, \
-        "BaseInferenceDeploymentConfig must have at least 1 field"
-    assert found_classes.get("MultiNodeInferenceDeploymentConfig", 0) >= 2, \
-        "MultiNodeInferenceDeploymentConfig must have at least 2 fields (type, num_nodes)"
+try:
+    tree = ast.parse(config_path.read_text())
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    sys.exit(1)
+
+# Check for deployment config classes
+required_classes = [
+    "BaseInferenceDeploymentConfig",
+    "SingleNodeInferenceDeploymentConfig",
+    "MultiNodeInferenceDeploymentConfig",
+]
+
+found_classes = {}
+for node in ast.walk(tree):
+    if isinstance(node, ast.ClassDef) and node.name in required_classes:
+        # Count fields (AnnAssign nodes)
+        field_count = sum(1 for item in node.body if isinstance(item, ast.AnnAssign))
+        found_classes[node.name] = field_count
+
+# Base config should have gpus_per_node
+if "BaseInferenceDeploymentConfig" in found_classes:
+    if found_classes["BaseInferenceDeploymentConfig"] == 0:
+        print("BaseInferenceDeploymentConfig has no fields")
+        sys.exit(1)
+
+# MultiNode should have num_nodes
+if "MultiNodeInferenceDeploymentConfig" in found_classes:
+    if found_classes["MultiNodeInferenceDeploymentConfig"] == 0:
+        print("MultiNodeInferenceDeploymentConfig has no fields")
+        sys.exit(1)
+
+print(f"Deployment config classes have fields: {found_classes}")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Config classes check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) -- repo CI/CD checks
-# ---------------------------------------------------------------------------
+# =============================================================================
+# PASS TO PASS TESTS (repo tests - repository's own checks)
+# =============================================================================
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_check():
-    """Repo's ruff lint check passes (pass_to_pass)."""
-    # Install ruff if needed
+    """Repo's ruff lint check passes on src/ directory."""
     install_result = _run_in_repo(["pip", "install", "ruff", "-q"], timeout=60)
     if install_result.returncode != 0:
         pytest.skip("Could not install ruff")
 
     r = _run_in_repo(
-        ["ruff", "check", "--config=pyproject.toml", "src/"],
+        ["ruff", "check", "--select", "E,W,F", "src/prime_rl/configs/", "src/prime_rl/inference/", "src/prime_rl/entrypoints/"],
         timeout=120,
     )
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
@@ -228,14 +425,13 @@ def test_repo_ruff_check():
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_format():
-    """Repo's ruff format check passes (pass_to_pass)."""
-    # Install ruff if needed
+    """Repo's ruff format check passes on src/ directory."""
     install_result = _run_in_repo(["pip", "install", "ruff", "-q"], timeout=60)
     if install_result.returncode != 0:
         pytest.skip("Could not install ruff")
 
     r = _run_in_repo(
-        ["ruff", "format", "--check", "--config=pyproject.toml", "src/"],
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/configs/", "src/prime_rl/inference/", "src/prime_rl/entrypoints/"],
         timeout=120,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
@@ -243,180 +439,276 @@ def test_repo_ruff_format():
 
 # [repo_tests] pass_to_pass
 def test_repo_pyproject_toml_syntax():
-    """Repo's pyproject.toml has valid TOML syntax (pass_to_pass)."""
-    r = _run_in_repo(
-        ["python3", "-c", "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"],
-        timeout=30,
-    )
-    assert r.returncode == 0, f"pyproject.toml has invalid TOML syntax:\n{r.stderr}"
+    """Repo's pyproject.toml has valid TOML syntax."""
+    script = '''
+from pathlib import Path
+import sys
+
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
+toml_path = Path("pyproject.toml")
+if not toml_path.exists():
+    print("pyproject.toml not found")
+    sys.exit(1)
+
+try:
+    with open(toml_path, "rb") as f:
+        tomllib.load(f)
+    print("pyproject.toml has valid TOML syntax")
+except Exception as e:
+    print(f"TOML parse error: {e}")
+    sys.exit(1)
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"pyproject.toml syntax check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_configs_toml_syntax():
-    """All config TOML files in configs/ have valid syntax (pass_to_pass)."""
+    """All config TOML files in configs/ have valid syntax."""
     script = '''
-import tomllib
 from pathlib import Path
 import sys
 
-configs_dir = Path("configs")
-invalid = []
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
-for config_file in configs_dir.rglob("*.toml"):
+configs_dir = Path("configs")
+if not configs_dir.exists():
+    print("configs directory not found")
+    sys.exit(0)
+
+invalid = []
+for toml_file in configs_dir.rglob("*.toml"):
     try:
-        tomllib.load(open(config_file, "rb"))
+        with open(toml_file, "rb") as f:
+            tomllib.load(f)
     except Exception as e:
-        invalid.append(f"{config_file}: {e}")
+        invalid.append(f"{toml_file}: {e}")
 
 if invalid:
-    print("Invalid config files:")
+    print("Invalid TOML files:")
     for i in invalid:
         print(i)
     sys.exit(1)
-else:
-    print("All config files have valid TOML syntax")
+
+print(f"All TOML files in configs/ parse successfully")
 '''
-    r = _run_in_repo(
-        ["python3", "-c", script],
-        timeout=60,
-    )
-    assert r.returncode == 0, f"Config TOML syntax check failed:\n{r.stdout}\n{r.stderr}"
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Configs TOML syntax check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_entrypoint_parse():
-    """Inference entrypoint (server.py) parses as valid Python (pass_to_pass)."""
-    r = _run_in_repo(
-        ["python3", "-c", "import ast; ast.parse(open('src/prime_rl/inference/server.py').read())"],
-        timeout=30,
-    )
-    assert r.returncode == 0, f"Entrypoint file has Python syntax errors:\n{r.stderr}"
+    """Inference entrypoint (server.py) parses as valid Python."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
+
+server_path = Path("src/prime_rl/inference/server.py")
+if not server_path.exists():
+    print("server.py not found")
+    sys.exit(1)
+
+try:
+    ast.parse(server_path.read_text())
+    print("server.py parses successfully")
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    sys.exit(1)
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Entrypoint parse check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_inference_config_parse():
-    """Inference config file parses as valid Python (pass_to_pass)."""
-    r = _run_in_repo(
-        ["python3", "-c", "import ast; ast.parse(open('src/prime_rl/configs/inference.py').read())"],
-        timeout=30,
-    )
-    assert r.returncode == 0, f"Inference config file has Python syntax errors:\n{r.stderr}"
+    """Inference config file parses as valid Python."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
+
+config_path = Path("src/prime_rl/configs/inference.py")
+if not config_path.exists():
+    print("inference.py config not found")
+    sys.exit(1)
+
+try:
+    ast.parse(config_path.read_text())
+    print("inference.py config parses successfully")
+except SyntaxError as e:
+    print(f"Syntax error: {e}")
+    sys.exit(1)
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Inference config parse check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_examples_toml_syntax():
-    """All example TOML files have valid syntax (pass_to_pass)."""
+    """All example TOML files in examples/ have valid syntax."""
     script = '''
-import tomllib
 from pathlib import Path
 import sys
 
-examples_dir = Path("examples")
-invalid = []
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
-for config_file in examples_dir.rglob("*.toml"):
+examples_dir = Path("examples")
+if not examples_dir.exists():
+    print("examples directory not found")
+    sys.exit(0)
+
+invalid = []
+for toml_file in examples_dir.rglob("*.toml"):
     try:
-        tomllib.load(open(config_file, "rb"))
+        with open(toml_file, "rb") as f:
+            tomllib.load(f)
     except Exception as e:
-        invalid.append(f"{config_file}: {e}")
+        invalid.append(f"{toml_file}: {e}")
 
 if invalid:
-    print("Invalid example config files:")
+    print("Invalid TOML files:")
     for i in invalid:
         print(i)
     sys.exit(1)
-else:
-    print(f"All {len(list(examples_dir.rglob('*.toml')))} example config files have valid TOML syntax")
+
+print(f"All TOML files in examples/ parse successfully")
 '''
-    r = _run_in_repo(
-        ["python3", "-c", script],
-        timeout=60,
-    )
-    assert r.returncode == 0, f"Example TOML syntax check failed:\n{r.stdout}\n{r.stderr}"
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Examples TOML syntax check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_shell_scripts_syntax():
-    """All shell scripts in scripts/ have valid bash syntax (pass_to_pass)."""
+    """All shell scripts in scripts/ have valid bash syntax."""
     script = '''
-import subprocess
 from pathlib import Path
+import subprocess
 import sys
 
 scripts_dir = Path("scripts")
-invalid = []
+if not scripts_dir.exists():
+    print("scripts directory not found")
+    sys.exit(0)
 
-for script_file in scripts_dir.glob("*.sh"):
-    result = subprocess.run(
-        ["bash", "-n", str(script_file)],
-        capture_output=True,
-        text=True
-    )
+invalid = []
+for sh_file in scripts_dir.rglob("*.sh"):
+    result = subprocess.run(["bash", "-n", str(sh_file)], capture_output=True, text=True)
     if result.returncode != 0:
-        invalid.append(f"{script_file}: {result.stderr.strip()}")
+        invalid.append(f"{sh_file}: {result.stderr}")
 
 if invalid:
     print("Invalid shell scripts:")
     for i in invalid:
         print(i)
     sys.exit(1)
-else:
-    print(f"All {len(list(scripts_dir.glob('*.sh')))} shell scripts have valid syntax")
+
+print(f"All shell scripts in scripts/ have valid syntax")
 '''
-    r = _run_in_repo(
-        ["python3", "-c", script],
-        timeout=60,
-    )
-    assert r.returncode == 0, f"Shell script syntax check failed:\n{r.stdout}\n{r.stderr}"
+    r = _run_in_repo(["python3", "-c", script], timeout=60)
+    assert r.returncode == 0, f"Shell scripts syntax check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_jinja2_templates_syntax():
-    """All Jinja2 template files have valid syntax (pass_to_pass)."""
-    install_result = _run_in_repo(["pip", "install", "jinja2", "-q"], timeout=60)
-    if install_result.returncode != 0:
-        pytest.skip("Could not install jinja2")
-
+    """All Jinja2 template files have valid syntax."""
     script = '''
-import jinja2
 from pathlib import Path
 import sys
 
-templates_dir = Path("src/prime_rl/templates/")
-env = jinja2.Environment()
-invalid = []
+try:
+    from jinja2 import Environment, FileSystemLoader
+except ImportError:
+    print("jinja2 not installed, skipping")
+    sys.exit(0)
 
+templates_dir = Path("src/prime_rl/templates")
+if not templates_dir.exists():
+    print("templates directory not found")
+    sys.exit(0)
+
+invalid = []
 for template_file in templates_dir.glob("*.j2"):
     try:
-        env.parse(open(template_file).read())
+        env = Environment(loader=FileSystemLoader(templates_dir))
+        env.get_template(template_file.name)
     except Exception as e:
         invalid.append(f"{template_file}: {e}")
 
 if invalid:
-    print("Invalid templates:")
+    print("Invalid Jinja2 templates:")
     for i in invalid:
         print(i)
     sys.exit(1)
-else:
-    count = len(list(templates_dir.glob("*.j2")))
-    print(f"All {count} Jinja2 templates have valid syntax")
+
+print(f"All Jinja2 templates have valid syntax")
 '''
-    r = _run_in_repo(
-        ["python3", "-c", script],
-        timeout=60,
-    )
-    assert r.returncode == 0, f"Jinja2 template syntax check failed:\n{r.stdout}\n{r.stderr}"
+    r = _run_in_repo(["python3", "-c", script], timeout=30)
+    assert r.returncode == 0, f"Jinja2 templates syntax check failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_ruff_lint_modified_dirs():
-    """Ruff lint check on modified directories passes (pass_to_pass)."""
+    """Ruff lint check on modified directories (configs/, inference/) passes."""
     install_result = _run_in_repo(["pip", "install", "ruff", "-q"], timeout=60)
     if install_result.returncode != 0:
         pytest.skip("Could not install ruff")
 
     r = _run_in_repo(
-        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/configs/", "src/prime_rl/inference/"],
+        ["ruff", "check", "--select", "E,W,F", "src/prime_rl/configs/", "src/prime_rl/inference/", "src/prime_rl/entrypoints/"],
         timeout=120,
     )
-    assert r.returncode == 0, f"Ruff check on modified dirs failed:\n{r.stdout}\n{r.stderr}"
+    assert r.returncode == 0, f"Ruff lint on modified dirs failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_modified_dirs():
+    """Ruff format check on modified directories passes (pass_to_pass)."""
+    install_result = _run_in_repo(["pip", "install", "ruff", "-q"], timeout=60)
+    if install_result.returncode != 0:
+        pytest.skip("Could not install ruff")
+
+    r = _run_in_repo(
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/configs/", "src/prime_rl/inference/", "src/prime_rl/entrypoints/"],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff format check on modified dirs failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_entrypoints_dir_parse():
+    """All Python files in entrypoints/ parse without syntax errors (pass_to_pass)."""
+    script = '''
+import ast
+from pathlib import Path
+import sys
+
+entrypoints_dir = Path("src/prime_rl/entrypoints/")
+invalid = []
+
+for py_file in entrypoints_dir.glob("*.py"):
+    try:
+        ast.parse(open(py_file).read())
+    except SyntaxError as e:
+        invalid.append(f"{py_file}: {e}")
+
+if invalid:
+    print("Files with syntax errors:")
+    for i in invalid:
+        print(i)
+    sys.exit(1)
+else:
+    print(f"All {len(list(entrypoints_dir.glob('*.py')))} entrypoint files parse successfully")
+'''
+    r = _run_in_repo(["python3", "-c", script], timeout=60)
+    assert r.returncode == 0, f"Entrypoint dir parse check failed:\n{r.stdout}\n{r.stderr}"

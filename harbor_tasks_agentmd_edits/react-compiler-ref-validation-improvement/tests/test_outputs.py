@@ -71,7 +71,7 @@ function Playground() {
         output = r.stdout.decode() + r.stderr.decode()
 
         # Should not have ref access error
-        assert "ref" not in output.lower() and "error" not in output.lower(), \
+        assert "cannot access refs during render" not in output.lower(), \
             f"PanResponder should not trigger ref error, but got:\n{output}"
     finally:
         test_path.unlink(missing_ok=True)

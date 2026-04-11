@@ -4,8 +4,11 @@ set -e
 # Navigate to the repository
 cd /workspace/ant-design
 
-# Check if already patched
-if grep -q "overflowY: 'auto'" components/date-picker/style/panel.ts 2>/dev/null; then
+# Check if already patched by verifying:
+# 1. overflowY: 'auto' appears after "padding: 0," (the default value)
+# 2. No &:hover block exists (which was removed by the fix)
+if grep -A1 "padding: 0,$" components/date-picker/style/panel.ts | grep -q "overflowY: 'auto'" && \
+   ! grep -q "'&:hover':" components/date-picker/style/panel.ts; then
     echo "Patch already applied."
     exit 0
 fi

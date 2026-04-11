@@ -3,3 +3,62 @@ rubric:
     source:
       path: "AGENTS.md"
     reference: "Note: turbopack_use_loaders is now webpack_loaders."
+
+checks:
+  # Fail-to-pass checks (behavioral)
+  - id: test_layer_name_fixed
+    type: fail_to_pass
+    origin: pr_diff
+    description: process_default_internal must use Layer::new with "webpack_loaders"
+
+  - id: test_buggy_name_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: The old buggy layer name "turbopack_use_loaders" must not appear in lib.rs
+
+  - id: test_cross_file_consistency
+    type: fail_to_pass
+    origin: pr_diff
+    description: Both lib.rs and module_options/mod.rs must use the same "webpack_loaders" layer name
+
+  # Pass-to-pass checks (static)
+  - id: test_not_stub
+    type: pass_to_pass
+    origin: static
+    description: lib.rs must be substantial — not gutted or replaced with a stub
+
+  - id: test_loader_pipeline_preserved
+    type: pass_to_pass
+    origin: pr_diff
+    description: Key loader pipeline constructs must still exist in lib.rs
+
+  - id: test_other_layers_untouched
+    type: pass_to_pass
+    origin: pr_diff
+    description: Other Layer::new calls (e.g. externals-tracing) must not be removed
+
+  - id: test_layer_new_call_syntax
+    type: pass_to_pass
+    origin: pr_diff
+    description: Layer::new call must use rcstr! macro with the layer name string
+
+  # Pass-to-pass checks (repo_tests) - git CI commands
+  - id: test_repo_git_status
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git repository status check
+
+  - id: test_repo_git_ls_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git can list tracked files
+
+  - id: test_repo_git_log
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git log shows expected commit
+
+  - id: test_repo_git_diff_empty
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git diff shows no uncommitted changes

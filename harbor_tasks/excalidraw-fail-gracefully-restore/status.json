@@ -1,21 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T04:47:48.805116",
-  "total_time": 12272.87,
-  "sandbox_id": "im9i1n5eodva74xofbqch",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:58:56.232094",
+  "total_time": 1801.0,
+  "sandbox_id": "i6oc2m6pio40g4d4pgvpz",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "improve": {
-      "backend": "fireworks",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "notes": "tests look good",
       "status": "skipped",
-      "time": 0
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
     },
     "p2p_enrichment": {
       "status": "ok",
@@ -25,32 +25,24 @@
       "notes": ""
     },
     "rubric_judge": {
-      "backend": "fireworks",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "notes": "ICR=0.50",
-      "status": "fail",
-      "time": 29.94
+      "backend": "fireworks",
+      "time": 2.5,
+      "notes": "ICR=1.00"
     },
     "validate": {
-      "attempts": 2,
-      "backend": "fireworks",
-      "gold_reward": 1,
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "nop_reward": 0,
-      "notes": "Fixed test_outputs.py: changed test file naming from _test.ts to .test.ts to match Vitest pattern, fixed import paths to use * as restore from ../../data/restore, fixed test_arrow_binding_with_invalid_data_is_filtered to use Object.defineProperty with throwing getter instead of invalid elementId. Docker build: OK. NOP test (base): reward=0 (5 failed, 5 passed as expected). Gold test (fixed): reward=1 (10 passed). Rubric judge: 0.5 due to missing ANTHROPIC_API_KEY (not a test issue).",
       "status": "pass",
-      "time": 6.63
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Docker build: OK. NOP test (base): reward=0 (5 failed, 5 passed as expected). Gold test (fixed): reward=1 (10 passed). Fixed test.sh path from /workspace/task/tests to /tests for Docker mount. Fixed pytest install with --break-system-packages. Rubric judge: 0.0 due to judge being designed for config files, not code files - this is a task type mismatch, not a fix issue. Fixed test_outputs.py: changed test file naming from _test.ts to .test.ts to match Vitest pattern, fixed import paths to use * as restore from ../../data/restore, fixed test_arrow_binding_with_invalid_data_is_filtered to use Object.defineProperty with throwing getter instead of invalid elementId. Docker build: OK. NOP test (base): reward=0 (5 failed, 5 passed as expected). Gold test (fixed): reward=1 (10 passed). Rubric judge: 0.5 due to missing ANTHROPIC_API_KEY (not a test issue).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 704.49
     }
   },
   "history": [
-    {
-      "at": "2026-04-09T14:42:29.747507",
-      "backend": "fireworks",
-      "gold": 1,
-      "nop": 0,
-      "time": 858.57,
-      "verdict": "pass"
-    },
     {
       "at": "2026-04-09T14:42:29.955508",
       "backend": "fireworks",
@@ -82,6 +74,14 @@
       "backend": "gemini",
       "time": 12272.87,
       "at": "2026-04-10T04:47:48.805116"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1801.0,
+      "at": "2026-04-10T17:58:56.232094"
     }
   ]
 }

@@ -25,30 +25,31 @@ if not content.endswith('\n'):
 open('.prettierignore', 'w').write(content)
 "
 
-# 3. Add .agent/**/{*,.*} to .pullapprove.yml
+# 3. Add .agent/**/{*,.*} to .pullapprove.yml if not already present
 python3 -c "
 content = open('.pullapprove.yml').read()
-content = content.replace(
-    \"          '{*,.*}',\n\",
-    \"          '{*,.*}',\n          '.agent/**/{*,.*}',\n\"
-)
-open('.pullapprove.yml', 'w').write(content)
+if '.agent/**/{*,.*}' not in content:
+    content = content.replace(
+        \"          '{*,.*}',\\n\",
+        \"          '{*,.*}',\\n          '.agent/**/{*,.*}',\\n\"
+    )
+    open('.pullapprove.yml', 'w').write(content)
 "
 
 # 4. Update AGENTS.md: add frontmatter, simplify text
 python3 -c "
 content = open('AGENTS.md').read()
 # Add YAML frontmatter
-content = '---\ntrigger: always_on\n---\n\n' + content
+content = '---\\ntrigger: always_on\\n---\\n\\n' + content
 # Simplify test command line
 content = content.replace(
     'to run tests. Do not use \`ng test\`, or just \`bazel\`',
     'to run tests.'
 )
 # Remove browser tools line
-lines = content.split('\n')
+lines = content.split('\\n')
 lines = [l for l in lines if 'Avoid using browser tools' not in l]
-content = '\n'.join(lines)
+content = '\\n'.join(lines)
 open('AGENTS.md', 'w').write(content)
 "
 
