@@ -1,123 +1,135 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28490
-  base_commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-  merge_commit: "b2a199c7a7e"
-
+  base_commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+  merge_commit: b2a199c7a7e
 checks:
-  - id: braces_zig_structure_intact
-    type: pass_to_pass
-    origin: static
-    description: "braces.zig exists and contains core Parser struct with key functions"
-
-  - id: flatten_tokens_empty_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "flattenTokens must guard against empty token list before first items[] access"
-
-  - id: advance_prev_no_underflow
-    type: fail_to_pass
-    origin: pr_diff
-    description: "advance()/prev() must not underflow u32 when current == 0"
-
-  - id: prev_normal_case_intact
-    type: pass_to_pass
-    origin: static
-    description: "prev() still accesses current-1 for the normal non-zero case"
-
-  - id: flatten_tokens_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "flattenTokens has real brace-expansion logic, not a stub"
-
-  - id: no_prohibited_std_apis
-    type: pass_to_pass
-    origin: agent_config
-    description: "New code must not use std.fs, std.posix, std.os, std.process"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "16"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-
-  - id: no_inline_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "@import() must not appear inline inside function bodies"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "11"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-
-  - id: no_catch_outofmemory_pattern
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must use bun.handleOom() not 'catch bun.outOfMemory()'"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "234"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-
-  - id: no_std_mem_for_strings
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not use std.mem.eql/indexOf/startsWith for string operations; use bun.strings.* instead"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "25"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-
-  - id: test_repo_oxlint_brace_test
-    type: pass_to_pass
-    origin: static
-    description: "Repo's oxlint passes on shell/brace.test.ts"
-
-  - id: test_repo_oxlint_shell_lex
-    type: pass_to_pass
-    origin: static
-    description: "Repo's oxlint passes on shell/lex.test.ts"
-
-  - id: test_repo_oxlint_shell_bunshell
-    type: pass_to_pass
-    origin: static
-    description: "Repo's oxlint passes on shell/bunshell.test.ts"
-
-  - id: test_repo_oxlint_shell_parse
-    type: pass_to_pass
-    origin: static
-    description: "Repo's oxlint passes on shell/parse.test.ts"
-
-  - id: test_repo_prettier_shell_tests
-    type: pass_to_pass
-    origin: static
-    description: "Repo's prettier check passes on shell test files"
-
-  - id: test_repo_banned_words_zig
-    type: pass_to_pass
-    origin: static
-    description: "Modified Zig files do not contain banned words from ban-words.test.ts"
-
-  - id: test_repo_git_status_clean
-    type: pass_to_pass
-    origin: static
-    description: "Git repository is at expected base commit"
-
+- id: braces_zig_structure_intact
+  type: pass_to_pass
+  origin: static
+  description: braces.zig exists and contains core Parser struct with key functions
+- id: flatten_tokens_empty_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: flattenTokens must guard against empty token list before first items[]
+    access
+- id: advance_prev_no_underflow
+  type: fail_to_pass
+  origin: pr_diff
+  description: advance()/prev() must not underflow u32 when current == 0
+- id: prev_normal_case_intact
+  type: pass_to_pass
+  origin: static
+  description: prev() still accesses current-1 for the normal non-zero case
+- id: flatten_tokens_not_stub
+  type: pass_to_pass
+  origin: static
+  description: flattenTokens has real brace-expansion logic, not a stub
+- id: no_prohibited_std_apis
+  type: pass_to_pass
+  origin: agent_config
+  description: New code must not use std.fs, std.posix, std.os, std.process
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- id: no_inline_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: '@import() must not appear inline inside function bodies'
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- id: no_catch_outofmemory_pattern
+  type: pass_to_pass
+  origin: agent_config
+  description: Must use bun.handleOom() not 'catch bun.outOfMemory()'
+  source:
+    path: src/CLAUDE.md
+    lines: '234'
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- id: no_std_mem_for_strings
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use std.mem.eql/indexOf/startsWith for string operations;
+    use bun.strings.* instead
+  source:
+    path: src/CLAUDE.md
+    lines: '25'
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- id: test_repo_oxlint_brace_test
+  type: pass_to_pass
+  origin: static
+  description: Repo's oxlint passes on shell/brace.test.ts
+- id: test_repo_oxlint_shell_lex
+  type: pass_to_pass
+  origin: static
+  description: Repo's oxlint passes on shell/lex.test.ts
+- id: test_repo_oxlint_shell_bunshell
+  type: pass_to_pass
+  origin: static
+  description: Repo's oxlint passes on shell/bunshell.test.ts
+- id: test_repo_oxlint_shell_parse
+  type: pass_to_pass
+  origin: static
+  description: Repo's oxlint passes on shell/parse.test.ts
+- id: test_repo_prettier_shell_tests
+  type: pass_to_pass
+  origin: static
+  description: Repo's prettier check passes on shell test files
+- id: test_repo_banned_words_zig
+  type: pass_to_pass
+  origin: static
+  description: Modified Zig files do not contain banned words from ban-words.test.ts
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: static
+  description: Git repository is at expected base commit
 rubric:
-  - rule: "In Zig code, be careful with allocators and use defer for cleanup."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "232"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-
-  - rule: "Use bun.default_allocator for almost everything (backed by mimalloc)."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "232"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-
-  - rule: "Follow existing code style — check neighboring files for patterns."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "228"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
+- rule: In Zig code, be careful with allocators and use defer for cleanup.
+  source:
+    path: src/CLAUDE.md
+    lines: '232'
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- rule: Use bun.default_allocator for almost everything (backed by mimalloc).
+  source:
+    path: src/CLAUDE.md
+    lines: '232'
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- rule: Follow existing code style — check neighboring files for patterns.
+  source:
+    path: src/CLAUDE.md
+    lines: '228'
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+distractors:
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output.
+  collision_type: would_cause_bug
+  why_distracting: The bug description explicitly mentions a 'runtime panic'. An agent
+    might try to write a test that spawns a process and checks that the output does
+    not contain 'panic' to verify the fix. The rule explicitly forbids this because
+    it creates tests that falsely pass in CI.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 98-100
+- rule: In Zig code, be careful with allocators and use defer for cleanup. Use bun.default_allocator
+    for almost everything.
+  collision_type: scope_ambiguity
+  why_distracting: The bug involves an empty string and returning `[""]`. An agent
+    might think it needs to allocate a new array or string using `bun.default_allocator`
+    to represent the empty result. However, the correct fix is purely control-flow
+    based (bounds checking and early return), requiring no new allocations.
+  severity: medium
+  source:
+    path: src/CLAUDE.md
+    lines: 64-65
+hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` focusing on testing
+  and build commands, and a `src/CLAUDE.md` focusing on Zig-specific conventions.
+  The agent must navigate the testing rules (specifically the prohibition against
+  testing for 'panic' output) while applying the Zig style rules to fix the out-of-bounds
+  errors. The fix itself is entirely within the Zig source, so the `src/CLAUDE.md`
+  rules take precedence for the implementation, while the root `CLAUDE.md` governs
+  any potential test additions.

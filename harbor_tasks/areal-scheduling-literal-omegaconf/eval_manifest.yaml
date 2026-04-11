@@ -1,118 +1,143 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 976
-  base_commit: "6860e70c08eae3014e12d9adf5411d648f7fceac"
-  merge_commit: "cd559a26b40989b50092864ea98b0ff4925e3ae6"
-
+  base_commit: 6860e70c08eae3014e12d9adf5411d648f7fceac
+  merge_commit: cd559a26b40989b50092864ea98b0ff4925e3ae6
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "areal/api/cli_args.py must parse as valid Python"
-
-  - id: omegaconf_structured_works
-    type: fail_to_pass
-    origin: pr_diff
-    description: "OmegaConf.structured(SchedulingSpec()) succeeds without ValidationError"
-
-  - id: invalid_strategy_rejected
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Invalid ray_placement_strategy values raise error at runtime"
-
-  - id: omegaconf_roundtrip
-    type: fail_to_pass
-    origin: pr_diff
-    description: "OmegaConf structured -> YAML -> reload roundtrip preserves strategy values"
-
-  - id: default_instantiation
-    type: pass_to_pass
-    origin: pr_diff
-    description: "SchedulingSpec() default works with ray_placement_strategy='shared'"
-
-  - id: valid_strategies_accepted
-    type: pass_to_pass
-    origin: pr_diff
-    description: "All three valid strategies (shared, separate, deferred) are accepted"
-
-  - id: core_fields_present
-    type: pass_to_pass
-    origin: pr_diff
-    description: "SchedulingSpec retains all expected dataclass fields"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in cli_args.py"
-    source:
-      path: "AGENTS.md"
-      lines: "25"
-      commit: "6860e70"
-
-  - id: unused_literal_cleaned
-    type: pass_to_pass
-    origin: agent_config
-    description: "Unused Literal import should be removed after fix"
-    source:
-      path: "AGENTS.md"
-      lines: "94-95"
-      commit: "6860e70"
-
-  - id: no_print_statements
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare print() calls in cli_args.py — use logging module"
-    source:
-      path: "AGENTS.md"
-      lines: "84-86"
-      commit: "6860e70"
-
-  - id: validation_raises_valueerror
-    type: fail_to_pass
-    origin: agent_config
-    description: "Validation must raise ValueError (not assert/RuntimeError) with clear message"
-    source:
-      path: "AGENTS.md"
-      lines: "156"
-      commit: "6860e70"
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python syntax compilation check on areal/api/cli_args.py"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on areal/api/cli_args.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on areal/api/cli_args.py"
-
-  - id: test_repo_datapack_and_train_controller
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for datapack and train_controller pass"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: areal/api/cli_args.py must parse as valid Python
+- id: omegaconf_structured_works
+  type: fail_to_pass
+  origin: pr_diff
+  description: OmegaConf.structured(SchedulingSpec()) succeeds without ValidationError
+- id: invalid_strategy_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: Invalid ray_placement_strategy values raise error at runtime
+- id: omegaconf_roundtrip
+  type: fail_to_pass
+  origin: pr_diff
+  description: OmegaConf structured -> YAML -> reload roundtrip preserves strategy
+    values
+- id: default_instantiation
+  type: pass_to_pass
+  origin: pr_diff
+  description: SchedulingSpec() default works with ray_placement_strategy='shared'
+- id: valid_strategies_accepted
+  type: pass_to_pass
+  origin: pr_diff
+  description: All three valid strategies (shared, separate, deferred) are accepted
+- id: core_fields_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: SchedulingSpec retains all expected dataclass fields
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in cli_args.py
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: 6860e70
+- id: unused_literal_cleaned
+  type: pass_to_pass
+  origin: agent_config
+  description: Unused Literal import should be removed after fix
+  source:
+    path: AGENTS.md
+    lines: 94-95
+    commit: 6860e70
+- id: no_print_statements
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare print() calls in cli_args.py — use logging module
+  source:
+    path: AGENTS.md
+    lines: 84-86
+    commit: 6860e70
+- id: validation_raises_valueerror
+  type: fail_to_pass
+  origin: agent_config
+  description: Validation must raise ValueError (not assert/RuntimeError) with clear
+    message
+  source:
+    path: AGENTS.md
+    lines: '156'
+    commit: 6860e70
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax compilation check on areal/api/cli_args.py
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on areal/api/cli_args.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on areal/api/cli_args.py
+- id: test_repo_datapack_and_train_controller
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for datapack and train_controller pass
 rubric:
-  - rule: "Follow existing code patterns in the same module. Match style, naming, and structure of surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "51-53"
-      commit: "6860e70"
-
-  - rule: "Field ordering in config dataclasses: required -> common optional -> rare optional -> internal (_ prefix)."
-    source:
-      path: "AGENTS.md"
-      lines: "156-160"
-      commit: "6860e70"
-
-  - rule: "Prefer __post_init__ validation for config dataclasses. Validation should raise ValueError with a clear, actionable error message."
-    source:
-      path: "AGENTS.md"
-      lines: "157-158"
-      commit: "6860e70"
+- rule: Follow existing code patterns in the same module. Match style, naming, and
+    structure of surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 51-53
+    commit: 6860e70
+- rule: 'Field ordering in config dataclasses: required -> common optional -> rare
+    optional -> internal (_ prefix).'
+  source:
+    path: AGENTS.md
+    lines: 156-160
+    commit: 6860e70
+- rule: Prefer __post_init__ validation for config dataclasses. Validation should
+    raise ValueError with a clear, actionable error message.
+  source:
+    path: AGENTS.md
+    lines: 157-158
+    commit: 6860e70
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: 46-47
+  evidence: The gold solution uses `__post_init__` to validate the string value, following
+    the existing pattern for enum-like fields in `cli_args.py` instead of relying
+    on type annotations.
+  category: style
+distractors:
+- rule: 'Ask First: Modifying config structures in `areal/api/cli_args.py`'
+  collision_type: meta_confusion
+  why_distracting: The prompt explicitly asks to fix the `SchedulingSpec` dataclass
+    in `areal/api/cli_args.py`. Following the 'Ask First' rule would cause the agent
+    to halt and ask for permission instead of completing the task.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 50-51
+- rule: 'Typing & imports: explicit type hints'
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to use `Enum` or retain `Literal` to satisfy
+    'explicit type hints', but the pinned version of omegaconf crashes on these annotations.
+    Downgrading to `str` is necessary to fix the bug.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 57-58
+- rule: 'Always Do: Add tests for new functionality'
+  collision_type: scope_ambiguity
+  why_distracting: This is a bug fix for an existing feature, not 'new functionality'.
+    Trying to add tests might lead to unnecessary modifications or test suite complications.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 46-48
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain similar rules regarding
+  modifying `cli_args.py` and adding tests. The agent must recognize that the specific
+  instructions in the issue description override the general 'Ask First' constraint
+  in the config files.

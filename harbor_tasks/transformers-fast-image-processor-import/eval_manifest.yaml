@@ -1,119 +1,142 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44926
-  base_commit: "29db503cdef2f00d1f0ecd5841c3a486708ed1dd"
-  merge_commit: "d03945fb8db6d2d41d2b27c06e65143038936f76"
-
+  base_commit: 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
+  merge_commit: d03945fb8db6d2d41d2b27c06e65143038936f76
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (__init__.py, check_repo.py) parse without syntax errors"
-
-  - id: import_fast_module
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Importing from image_processing_*_fast module paths no longer raises ModuleNotFoundError"
-
-  - id: class_redirect_fast_to_normal
-    type: fail_to_pass
-    origin: pr_diff
-    description: "XImageProcessorFast from alias module resolves to XImageProcessor via __getattr__ redirect"
-
-  - id: check_repo_ignores_fast_aliases
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ignore_undocumented() excludes image_processing_*_fast names from doc completeness checks"
-
-  - id: test_check_dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's dummy objects check passes"
-
-  - id: test_check_copies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's copies check passes"
-
-  - id: test_import_base_modules
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Base transformers imports work"
-
-  - id: test_import_image_processing_modules
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Image processing module imports work"
-
-  - id: existing_imports_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing imports (AutoImageProcessor, image_processing_utils_fast) still work"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified files retain original content, key symbols, and are not gutted"
-
-  - id: no_copied_from_blocks_edited
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changes must not alter lines inside '# Copied from' blocks"
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "29db503cdef2f00d1f0ecd5841c3a486708ed1dd"
-
-  - id: no_modular_generated_files_edited
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changes must not edit files generated from modular_*.py files"
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "29db503cdef2f00d1f0ecd5841c3a486708ed1dd"
-
-  - id: ruff_style_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files pass ruff style checks (make style is required before opening a PR)"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "29db503cdef2f00d1f0ecd5841c3a486708ed1dd"
-
-  - id: test_ruff_check_modified_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on modified files"
-
-  - id: test_ruff_format_modified_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified files"
-
-  - id: test_check_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's init file consistency check passes"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (__init__.py, check_repo.py) parse without syntax errors
+- id: import_fast_module
+  type: fail_to_pass
+  origin: pr_diff
+  description: Importing from image_processing_*_fast module paths no longer raises
+    ModuleNotFoundError
+- id: class_redirect_fast_to_normal
+  type: fail_to_pass
+  origin: pr_diff
+  description: XImageProcessorFast from alias module resolves to XImageProcessor via
+    __getattr__ redirect
+- id: check_repo_ignores_fast_aliases
+  type: fail_to_pass
+  origin: pr_diff
+  description: ignore_undocumented() excludes image_processing_*_fast names from doc
+    completeness checks
+- id: test_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dummy objects check passes
+- id: test_check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's copies check passes
+- id: test_import_base_modules
+  type: pass_to_pass
+  origin: repo_tests
+  description: Base transformers imports work
+- id: test_import_image_processing_modules
+  type: pass_to_pass
+  origin: repo_tests
+  description: Image processing module imports work
+- id: existing_imports_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing imports (AutoImageProcessor, image_processing_utils_fast)
+    still work
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files retain original content, key symbols, and are not gutted
+- id: no_copied_from_blocks_edited
+  type: pass_to_pass
+  origin: agent_config
+  description: Changes must not alter lines inside '# Copied from' blocks
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
+- id: no_modular_generated_files_edited
+  type: pass_to_pass
+  origin: agent_config
+  description: Changes must not edit files generated from modular_*.py files
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
+- id: ruff_style_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files pass ruff style checks (make style is required before
+    opening a PR)
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
+- id: test_ruff_check_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+- id: test_ruff_format_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files
+- id: test_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's init file consistency check passes
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "29db503cdef2f00d1f0ecd5841c3a486708ed1dd"
-
-  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "29db503cdef2f00d1f0ecd5841c3a486708ed1dd"
-
-  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "29db503cdef2f00d1f0ecd5841c3a486708ed1dd"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
+- rule: When a `modular` file is present, generated files should not be edited, as
+    changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file.
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
+- rule: The CI will run `make check-repo` and fail if any issues are found.
+  source:
+    path: CLAUDE.md
+    lines: 5-8
+  evidence: The gold solution modifies `utils/check_repo.py` to explicitly ignore
+    the dynamically created `image_processing_*_fast` modules, ensuring that the `make
+    check-repo` CI check does not fail due to undoc
+  category: tooling
+distractors:
+- rule: Manage code duplication in model-specific files using `# Copied from ...`
+    or `modular_<name>.py`.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to create physical `image_processing_*_fast.py`
+    files in each model directory using `# Copied from` or `modular_<name>.py` patterns
+    to duplicate the standard image processors, instead of using the dynamic module
+    aliasing approach in `__init__.py` as instructed.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 58-61
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to output the code solution because it cannot
+    find 'coordination evidence' or an 'approval link' in the prompt, triggering the
+    fail-closed behavior for agents instead of completing the evaluation task.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 51-55
+hierarchy_analysis: The config hierarchy consists of identical `CLAUDE.md` and `AGENTS.md`
+  files at the root level. The rules apply globally to the repository. The primary
+  conflict arises from the repository's strict agent contribution policies (requiring
+  coordination evidence and avoiding busywork) which conflict with the agent's role
+  as an automated solver in an evaluation environment.

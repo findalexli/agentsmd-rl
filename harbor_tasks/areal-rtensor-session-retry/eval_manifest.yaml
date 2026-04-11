@@ -1,145 +1,177 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1075
-  base_commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
-  merge_commit: "f293cebbd72ef32adf7671b09f5dc35fb0bdfdb1"
-
+  base_commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
+  merge_commit: f293cebbd72ef32adf7671b09f5dc35fb0bdfdb1
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without errors"
-
-  - id: ruff_lint_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass ruff linting (repo CI standard)"
-
-  - id: ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass ruff format check (repo CI standard)"
-
-  - id: no_large_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files are not unreasonably large (>1000KB)"
-
-  - id: no_private_keys
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files do not contain private keys"
-
-  - id: no_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have no trailing whitespace"
-
-  - id: files_end_with_newline
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files end with a newline"
-
-  - id: python_ast_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files have valid AST (repo CI syntax validation)"
-
-  - id: fetch_tensor_retries_on_transient_failure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_fetch_tensor retries transient errors with delays between attempts"
-
-  - id: fetch_tensor_error_message_after_retries
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After exhausting retries, error includes attempt count and last error"
-
-  - id: fetch_uses_create_session
-    type: fail_to_pass
-    origin: pr_diff
-    description: "fetch() uses _create_session instead of bare aiohttp.ClientSession()"
-
-  - id: delete_uses_create_session
-    type: fail_to_pass
-    origin: pr_diff
-    description: "delete() uses _create_session instead of bare aiohttp.ClientSession()"
-
-  - id: fetch_empty_returns_empty
-    type: pass_to_pass
-    origin: repo_tests
-    description: "fetch([]) returns an empty list without creating a session"
-
-  - id: create_session_returns_real_session
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_create_session returns a ClientSession with non-default timeout"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in modified files"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
-
-  - id: logger_registered_in_color_map
-    type: fail_to_pass
-    origin: agent_config
-    description: "HttpRTensor logger registered in areal/utils/logging.py color map"
-    source:
-      path: "AGENTS.md"
-      lines: "89-91"
-      commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
-
-  - id: module_has_logger
-    type: fail_to_pass
-    origin: agent_config
-    description: "rtensor module defines a module-level Logger instance"
-    source:
-      path: "AGENTS.md"
-      lines: "89-91"
-      commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
-
-  - id: no_print_in_rtensor
-    type: pass_to_pass
-    origin: agent_config
-    description: "No print() calls in rtensor.py (must use logger)"
-    source:
-      path: "AGENTS.md"
-      lines: "89-91"
-      commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
-
-  - id: no_hardcoded_endpoints
-    type: pass_to_pass
-    origin: agent_config
-    description: "No hardcoded IP addresses or URLs in rtensor.py"
-    source:
-      path: "AGENTS.md"
-      lines: "31"
-      commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
-
-  - id: create_session_has_return_type_annotation
-    type: fail_to_pass
-    origin: agent_config
-    description: "_create_session has an explicit return type annotation (explicit type hints required)"
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: ruff_lint_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass ruff linting (repo CI standard)
+- id: ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass ruff format check (repo CI standard)
+- id: no_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are not unreasonably large (>1000KB)
+- id: no_private_keys
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files do not contain private keys
+- id: no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no trailing whitespace
+- id: files_end_with_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files end with a newline
+- id: python_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have valid AST (repo CI syntax validation)
+- id: fetch_tensor_retries_on_transient_failure
+  type: fail_to_pass
+  origin: pr_diff
+  description: _fetch_tensor retries transient errors with delays between attempts
+- id: fetch_tensor_error_message_after_retries
+  type: fail_to_pass
+  origin: pr_diff
+  description: After exhausting retries, error includes attempt count and last error
+- id: fetch_uses_create_session
+  type: fail_to_pass
+  origin: pr_diff
+  description: fetch() uses _create_session instead of bare aiohttp.ClientSession()
+- id: delete_uses_create_session
+  type: fail_to_pass
+  origin: pr_diff
+  description: delete() uses _create_session instead of bare aiohttp.ClientSession()
+- id: fetch_empty_returns_empty
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch([]) returns an empty list without creating a session
+- id: create_session_returns_real_session
+  type: fail_to_pass
+  origin: pr_diff
+  description: _create_session returns a ClientSession with non-default timeout
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified files
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
+- id: logger_registered_in_color_map
+  type: fail_to_pass
+  origin: agent_config
+  description: HttpRTensor logger registered in areal/utils/logging.py color map
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
+- id: module_has_logger
+  type: fail_to_pass
+  origin: agent_config
+  description: rtensor module defines a module-level Logger instance
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
+- id: no_print_in_rtensor
+  type: pass_to_pass
+  origin: agent_config
+  description: No print() calls in rtensor.py (must use logger)
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
+- id: no_hardcoded_endpoints
+  type: pass_to_pass
+  origin: agent_config
+  description: No hardcoded IP addresses or URLs in rtensor.py
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
+- id: create_session_has_return_type_annotation
+  type: fail_to_pass
+  origin: agent_config
+  description: _create_session has an explicit return type annotation (explicit type
+    hints required)
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
 rubric:
-  - rule: "Follow existing code patterns in the same module"
-    source:
-      path: "AGENTS.md"
-      lines: "40"
-      commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
-
-  - rule: "Prefer composition over inheritance -- keep class hierarchies <= 2 levels; use delegation when adding behavior."
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "9639749e700ea278e0617589391cc3dda6ec3a5c"
+- rule: Follow existing code patterns in the same module
+  source:
+    path: AGENTS.md
+    lines: '40'
+    commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
+- rule: Prefer composition over inheritance -- keep class hierarchies <= 2 levels;
+    use delegation when adding behavior.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 9639749e700ea278e0617589391cc3dda6ec3a5c
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
+    `print` or `logging.__name__`.'
+  source:
+    path: AGENTS.md
+    lines: 48-49
+  evidence: The gold solution creates the logger using `logger = logging.getLogger("HttpRTensor")`,
+    strictly following the PascalCase naming convention and using the custom logging
+    module.
+  category: style
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: CLAUDE.md
+    lines: 48-49
+  evidence: The gold solution imports and reuses `DEFAULT_REQUEST_TIMEOUT` and `get_default_connector`
+    from `areal.infra.utils.http` instead of hardcoding new timeout and connector
+    settings.
+  category: architecture
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: This is a bug fix for network resilience, not new functionality.
+    Attempting to add tests for this retry logic would require complex `aiohttp` mocking
+    or spinning up a local test server, which is out of scope and overcomplicates
+    the PR.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 49-50
+- rule: No hardcoded secrets, paths, or endpoints.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see `url = f"http://{node_addr}/data/{shard_id}"`
+    and try to extract the `/data/` path or HTTP scheme into a configuration file.
+    This rule is meant for external API endpoints and secrets, not internal RPC routing
+    paths.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(tensor)`).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might consider tensor fetching a 'hot path' and try to
+    optimize the deserialization or avoid CPU operations. However, this is network
+    I/O where network latency dominates, and CPU processing of the payload is necessary
+    and expected.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 52-53
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` apply cumulatively. `AGENTS.md`
+  provides more specific, actionable rules for logging and performance, which complement
+  the general guidelines in `CLAUDE.md`. There are no direct conflicts between the
+  two files, but `AGENTS.md`'s strict logging rules dictate the exact implementation
+  of the logger in the gold solution.

@@ -1,109 +1,169 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: anomalyco/opencode
   pr: 19537
-  base_commit: "860531c275cf845f80ccf26bba5bad745fe98398"
-  merge_commit: "aa2d753e7edbf323baf635aec7972b673d2b64a3"
-
+  base_commit: 860531c275cf845f80ccf26bba5bad745fe98398
+  merge_commit: aa2d753e7edbf323baf635aec7972b673d2b64a3
 checks:
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes via bun run typecheck"
-
-  - id: test_repo_tui_prompt_part_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TUI prompt-part unit tests pass via bun test"
-
-  - id: test_repo_session_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Session module unit tests pass via bun test"
-
-  - id: test_repo_tui_thread_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TUI thread unit tests pass via bun test"
-
-  - id: test_repo_server_session_list_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Server session-list unit tests pass via bun test"
-
-  - id: test_repo_server_session_messages_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Server session-messages unit tests pass via bun test"
-
-  - id: test_repo_cli_keybind_plugin_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CLI keybind-plugin unit tests pass via bun test"
-
-  - id: files_exist_and_not_truncated
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must exist and have meaningful content"
-
-  - id: core_exports_intact
-    type: pass_to_pass
-    origin: static
-    description: "Key exports (Session, SubagentFooter, InlineTool) still exist"
-
-  - id: cycle_direction_fixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "cycleSession must subtract direction from index (inverted arithmetic)"
-
-  - id: subagent_footer_shows_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Footer extracts agent type from session title via regex and displays it"
-
-  - id: subagent_footer_shows_index
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Footer computes and displays sibling index (e.g. '2 of 5')"
-
-  - id: task_content_includes_subagent_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Task component includes subagent_type with capitalization and fallback"
-
-  - id: dead_code_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Unused ToolTitle function removed from session/index.tsx"
-
-  - id: functional_array_methods
-    type: fail_to_pass
-    origin: agent_config
-    description: "Sibling computation uses functional array methods per AGENTS.md:17"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
-
-  - id: no_try_catch_in_footer
-    type: pass_to_pass
-    origin: agent_config
-    description: "subagent-footer.tsx must not use try/catch blocks per AGENTS.md:12"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
-
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes via bun run typecheck
+- id: test_repo_tui_prompt_part_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI prompt-part unit tests pass via bun test
+- id: test_repo_session_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Session module unit tests pass via bun test
+- id: test_repo_tui_thread_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI thread unit tests pass via bun test
+- id: test_repo_server_session_list_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server session-list unit tests pass via bun test
+- id: test_repo_server_session_messages_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server session-messages unit tests pass via bun test
+- id: test_repo_cli_keybind_plugin_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI keybind-plugin unit tests pass via bun test
+- id: files_exist_and_not_truncated
+  type: pass_to_pass
+  origin: static
+  description: Modified files must exist and have meaningful content
+- id: core_exports_intact
+  type: pass_to_pass
+  origin: static
+  description: Key exports (Session, SubagentFooter, InlineTool) still exist
+- id: cycle_direction_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: cycleSession must subtract direction from index (inverted arithmetic)
+- id: subagent_footer_shows_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Footer extracts agent type from session title via regex and displays
+    it
+- id: subagent_footer_shows_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: Footer computes and displays sibling index (e.g. '2 of 5')
+- id: task_content_includes_subagent_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Task component includes subagent_type with capitalization and fallback
+- id: dead_code_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unused ToolTitle function removed from session/index.tsx
+- id: functional_array_methods
+  type: fail_to_pass
+  origin: agent_config
+  description: Sibling computation uses functional array methods per AGENTS.md:17
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 860531c275cf845f80ccf26bba5bad745fe98398
+- id: no_try_catch_in_footer
+  type: pass_to_pass
+  origin: agent_config
+  description: subagent-footer.tsx must not use try/catch blocks per AGENTS.md:12
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 860531c275cf845f80ccf26bba5bad745fe98398
 rubric:
-  - rule: "CODE VERIFIED: subagent-footer.tsx contains no try/catch blocks (AGENTS.md:12)"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
-
-  - rule: "CODE VERIFIED: Sibling computation uses functional array methods .filter() and .findIndex() (AGENTS.md:17)"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "860531c275cf845f80ccf26bba5bad745fe98398"
+- rule: 'CODE VERIFIED: subagent-footer.tsx contains no try/catch blocks (AGENTS.md:12)'
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 860531c275cf845f80ccf26bba5bad745fe98398
+- rule: 'CODE VERIFIED: Sibling computation uses functional array methods .filter()
+    and .findIndex() (AGENTS.md:17)'
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 860531c275cf845f80ccf26bba5bad745fe98398
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 73-82
+  evidence: In `subagent-footer.tsx`, the `subagentInfo` memo uses `if (!s) return
+    ...` and `if (!s.parentID) return ...` instead of wrapping the rest of the logic
+    in `else` blocks.
+  category: style
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  source:
+    path: AGENTS.md
+    lines: 17-18
+  evidence: In `subagent-footer.tsx`, the `siblings` array is computed using `.filter()`
+    and `.toSorted()` rather than a traditional `for` loop.
+  category: style
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 51-59
+  evidence: In `subagent-footer.tsx`, the gold solution accesses properties directly
+    via `s.title`, `s.parentID`, and `s.id` rather than destructuring the session
+    object.
+  category: style
+- rule: Rely on type inference when possible; avoid explicit type annotations
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: 'The `subagentInfo` memo in `subagent-footer.tsx` does not declare an
+    explicit return type, relying on TypeScript to infer the `{ label: string, index:
+    number, total: number }` shape.'
+  category: style
+distractors:
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  collision_type: scope_ambiguity
+  why_distracting: The existing `cycleSession` logic uses `let next` and reassigns
+    it for bounds checking. Refactoring this to `const` with ternaries just to satisfy
+    the style rule would expand the scope of a simple 1-character bugfix (`+` to `-`)
+    and risk introducing new bugs.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 61-71
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: rule_conflict
+  why_distracting: The gold solution introduces `subagentInfo` and `agentMatch`. Forcing
+    these to be single words like `info` or `match` would reduce clarity, as `info`
+    is too generic and `match` might shadow or be ambiguous. The rule allows multi-word
+    when ambiguous, but an agent might over-correct.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 24-36
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: architecture_boundary
+  why_distracting: The files being edited are SolidJS UI components for the TUI. Applying
+    Effect rules like `Effect.gen` or `Effect.cached` here would completely break
+    the SolidJS reactivity model and cross the boundary between the frontend UI and
+    backend services.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-19
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: would_cause_bug
+  why_distracting: If an agent tries to inline `agentMatch` (the regex match result)
+    to avoid creating a variable, it would have to run the regex twice (once for the
+    condition, once to extract the capture group), which is inefficient and bad practice.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-49
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and style guidelines,
+  while `packages/opencode/AGENTS.md` provides highly specific rules for Effect and
+  Drizzle. Since this PR modifies SolidJS TUI components, the Effect and Drizzle rules
+  in the package-level config are entirely irrelevant and represent an architecture
+  boundary. The agent must recognize that UI code follows the general TS/SolidJS patterns
+  rather than the backend Effect patterns.

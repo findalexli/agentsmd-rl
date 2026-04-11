@@ -1,80 +1,110 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 53639
-  base_commit: "43d0423b3f819335cfecfae1f1844ea883ba97ac"
-  merge_commit: "4ce482b0c20cadfe64e649f7cc42a04609e8e014"
-
+  base_commit: 43d0423b3f819335cfecfae1f1844ea883ba97ac
+  merge_commit: 4ce482b0c20cadfe64e649f7cc42a04609e8e014
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Target file parses without syntax errors"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file passes ruff linting"
-
-  - id: importable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target module can be imported without ImportError"
-
-  - id: test_repo_error_tracking_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Error tracking test file has valid syntax"
-
-  - id: test_repo_ruff_check_error_tracking
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Error tracking code passes ruff linting"
-
-  - id: test_repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Error tracking code is properly formatted"
-
-  - id: test_repo_viewset_schema_annotations
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ErrorTrackingIssueViewSet has schema annotations on custom actions per AGENTS.md"
-
-  - id: read_actions_includes_values
-    type: fail_to_pass
-    origin: pr_diff
-    description: 'scope_object_read_actions includes "values" so API tokens with error_tracking:read can access the values endpoint'
-
-  - id: write_actions_includes_custom_actions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scope_object_write_actions includes custom actions (merge, split, assign, cohort, bulk) so API tokens with error_tracking:write can use them"
-
-  - id: standard_read_actions_preserved
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Standard DRF read actions (list, retrieve) are preserved in scope_object_read_actions since setting the attribute overrides defaults"
-
-  - id: standard_write_actions_preserved
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Standard DRF write actions (create, update, partial_update) are preserved in scope_object_write_actions since setting the attribute overrides defaults"
-
-  - id: scope_object_still_error_tracking
-    type: pass_to_pass
-    origin: static
-    description: 'scope_object remains "error_tracking" for correct resource type mapping'
-
-  - id: viewset_class_has_substance
-    type: pass_to_pass
-    origin: static
-    description: "ErrorTrackingIssueViewSet has substantial body (not a stub)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target file parses without syntax errors
+- id: ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes ruff linting
+- id: importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target module can be imported without ImportError
+- id: test_repo_error_tracking_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error tracking test file has valid syntax
+- id: test_repo_ruff_check_error_tracking
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error tracking code passes ruff linting
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error tracking code is properly formatted
+- id: test_repo_viewset_schema_annotations
+  type: pass_to_pass
+  origin: repo_tests
+  description: ErrorTrackingIssueViewSet has schema annotations on custom actions
+    per AGENTS.md
+- id: read_actions_includes_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: scope_object_read_actions includes "values" so API tokens with error_tracking:read
+    can access the values endpoint
+- id: write_actions_includes_custom_actions
+  type: fail_to_pass
+  origin: pr_diff
+  description: scope_object_write_actions includes custom actions (merge, split, assign,
+    cohort, bulk) so API tokens with error_tracking:write can use them
+- id: standard_read_actions_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Standard DRF read actions (list, retrieve) are preserved in scope_object_read_actions
+    since setting the attribute overrides defaults
+- id: standard_write_actions_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Standard DRF write actions (create, update, partial_update) are preserved
+    in scope_object_write_actions since setting the attribute overrides defaults
+- id: scope_object_still_error_tracking
+  type: pass_to_pass
+  origin: static
+  description: scope_object remains "error_tracking" for correct resource type mapping
+- id: viewset_class_has_substance
+  type: pass_to_pass
+  origin: static
+  description: ErrorTrackingIssueViewSet has substantial body (not a stub)
 rubric:
-  - rule: "When adding or modifying viewset methods or serializer fields, ensure schema annotations are present (@extend_schema or @validated_request on viewset methods, help_text on serializer fields). Adding class-level permission attributes like scope_object_read_actions does not require schema annotations."
-    source:
-      path: "AGENTS.md"
-      lines: "85"
-      commit: "43d0423b3f819335cfecfae1f1844ea883ba97ac"
+- rule: When adding or modifying viewset methods or serializer fields, ensure schema
+    annotations are present (@extend_schema or @validated_request on viewset methods,
+    help_text on serializer fields). Adding class-level permission attributes like
+    scope_object_read_actions does not require schema annotations.
+  source:
+    path: AGENTS.md
+    lines: '85'
+    commit: 43d0423b3f819335cfecfae1f1844ea883ba97ac
+- rule: DO NOT GIVE ME HIGH LEVEL SHIT, IF I ASK FOR FIX OR EXPLANATION, I WANT ACTUAL
+    CODE OR EXPLANATION!
+  source:
+    path: .cursorrules
+    lines: 1-2
+  evidence: The gold solution provides a direct, executable bash script with a git
+    patch that precisely targets the missing class attributes, without any high-level
+    explanations or conversational filler.
+  category: style
+distractors:
+- rule: API views should declare request/response schemas — prefer `@validated_request`
+    from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to fix the API access issue by adding or modifying
+    `@extend_schema` or `@validated_request` decorators on the custom action methods
+    (`merge`, `split`, etc.). However, the issue is strictly about token scope mappings
+    handled by `TeamAndOrgViewSetMixin` via the `scope_object_read_actions` and `scope_object_write_actions`
+    class attributes, not the OpenAPI schema definitions.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-60
+- rule: 'OpenAPI/types: `hogli build:openapi` (regenerate after changing serializers/viewsets)'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `hogli build:openapi` and attempt to commit
+    generated TypeScript files because it modified a ViewSet. However, adding internal
+    permission scope mappings does not change the public API schema, so running this
+    command is unnecessary and could lead to unrelated generated code changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 28-28
+hierarchy_analysis: The `.cursorrules` file provides general behavioral instructions
+  (e.g., providing actual code, being terse), while `AGENTS.md` provides PostHog-specific
+  development guidelines. In this PR, the agent must follow the specific architecture
+  of `TeamAndOrgViewSetMixin` (which uses `scope_object_read_actions` and `scope_object_write_actions`)
+  rather than getting distracted by the general API schema rules in `AGENTS.md`.

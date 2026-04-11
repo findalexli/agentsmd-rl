@@ -1,108 +1,133 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19487
-  base_commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
-  merge_commit: "15a8c22a263b072a23e2fc0b2e840b2e12c220aa"
-
+  base_commit: 48326e8d9ca5648b6ab1ee15f0374434be56c4d4
+  merge_commit: 15a8c22a263b072a23e2fc0b2e840b2e12c220aa
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "bash.ts and bash.txt must exist, be non-empty, and be readable"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "bash.txt must be a substantial tool description (20+ lines, 100+ words, 5+ concepts)"
-
-  - id: no_directory_placeholder_in_template
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bash.txt must not contain ${directory} placeholder"
-
-  - id: template_static_after_substitutions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After replacing maxLines/maxBytes, no ${...} placeholders should remain"
-
-  - id: ts_no_directory_injection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bash.ts must not substitute directory into the tool description"
-
-  - id: describes_directory_behavior
-    type: pass_to_pass
-    origin: pr_diff
-    description: "bash.txt must still describe default working directory behavior"
-
-  - id: retains_global_placeholders
-    type: pass_to_pass
-    origin: pr_diff
-    description: "bash.txt must still contain ${maxLines} and ${maxBytes} placeholders"
-
-  - id: preserves_guidance_sections
-    type: pass_to_pass
-    origin: pr_diff
-    description: "bash.txt must retain key guidance sections (quoting, tool preference, timeout)"
-
-  - id: no_any_type
-    type: pass_to_pass
-    origin: agent_config
-    description: "bash.ts must not use the `any` type annotation"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "48326e8d9ca5648b6ab1ee15f0374434be56c4d4"
-
-  - id: bashtool_export_preserved
-    type: pass_to_pass
-    origin: static
-    description: "BashTool must still be exported from bash.ts"
-
-  - id: repo_bash_tool_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's bash tool has valid structure with balanced syntax"
-
-  - id: repo_prettier_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript files must pass prettier formatting check"
-
-  - id: repo_bash_txt_placeholders
-    type: pass_to_pass
-    origin: static
-    description: "Bash.txt must contain required template placeholders"
-
-  - id: repo_ts_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Bash.ts must have valid TypeScript syntax structure"
-
-  - id: repo_bash_txt_valid
-    type: pass_to_pass
-    origin: static
-    description: "Bash.txt must exist and be readable"
-
-  - id: repo_node_can_parse_ts
-    type: pass_to_pass
-    origin: static
-    description: "Node.js must be able to read and parse the TypeScript source file"
-
-  - id: repo_bash_tool_description_pattern
-    type: pass_to_pass
-    origin: static
-    description: "Bash.ts must follow the tool description pattern with DESCRIPTION constant"
-
-  - id: repo_bash_txt_sections
-    type: pass_to_pass
-    origin: static
-    description: "Bash.txt must contain required tool description sections"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: bash.ts and bash.txt must exist, be non-empty, and be readable
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: bash.txt must be a substantial tool description (20+ lines, 100+ words,
+    5+ concepts)
+- id: no_directory_placeholder_in_template
+  type: fail_to_pass
+  origin: pr_diff
+  description: bash.txt must not contain ${directory} placeholder
+- id: template_static_after_substitutions
+  type: fail_to_pass
+  origin: pr_diff
+  description: After replacing maxLines/maxBytes, no ${...} placeholders should remain
+- id: ts_no_directory_injection
+  type: fail_to_pass
+  origin: pr_diff
+  description: bash.ts must not substitute directory into the tool description
+- id: describes_directory_behavior
+  type: pass_to_pass
+  origin: pr_diff
+  description: bash.txt must still describe default working directory behavior
+- id: retains_global_placeholders
+  type: pass_to_pass
+  origin: pr_diff
+  description: bash.txt must still contain ${maxLines} and ${maxBytes} placeholders
+- id: preserves_guidance_sections
+  type: pass_to_pass
+  origin: pr_diff
+  description: bash.txt must retain key guidance sections (quoting, tool preference,
+    timeout)
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: bash.ts must not use the `any` type annotation
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 48326e8d9ca5648b6ab1ee15f0374434be56c4d4
+- id: bashtool_export_preserved
+  type: pass_to_pass
+  origin: static
+  description: BashTool must still be exported from bash.ts
+- id: repo_bash_tool_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bash tool has valid structure with balanced syntax
+- id: repo_prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript files must pass prettier formatting check
+- id: repo_bash_txt_placeholders
+  type: pass_to_pass
+  origin: static
+  description: Bash.txt must contain required template placeholders
+- id: repo_ts_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Bash.ts must have valid TypeScript syntax structure
+- id: repo_bash_txt_valid
+  type: pass_to_pass
+  origin: static
+  description: Bash.txt must exist and be readable
+- id: repo_node_can_parse_ts
+  type: pass_to_pass
+  origin: static
+  description: Node.js must be able to read and parse the TypeScript source file
+- id: repo_bash_tool_description_pattern
+  type: pass_to_pass
+  origin: static
+  description: Bash.ts must follow the tool description pattern with DESCRIPTION constant
+- id: repo_bash_txt_sections
+  type: pass_to_pass
+  origin: static
+  description: Bash.txt must contain required tool description sections
 rubric:
-  - rule: "Update AGENTS.md to document that tool descriptions should not use project-specific paths like ${directory} to ensure prompt caching works correctly."
-    source:
-      path: "AGENTS.md"
-    reference: "Do not inject project-specific paths like ${directory} into tool descriptions, as this breaks LLM prompt caching. Use static text (e.g., 'current working directory') instead."
+- rule: Update AGENTS.md to document that tool descriptions should not use project-specific
+    paths like ${directory} to ensure prompt caching works correctly.
+  source:
+    path: AGENTS.md
+  reference: Do not inject project-specific paths like ${directory} into tool descriptions,
+    as this breaks LLM prompt caching. Use static text (e.g., 'current working directory')
+    instead.
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: 42-51
+  evidence: The gold solution modifies the `description` property in `bash.ts` by
+    chaining `.replaceAll` calls directly on the `DESCRIPTION` constant, keeping the
+    value inlined rather than extracting the modified
+  category: style
+distractors:
+- rule: Use `InstanceState` (from `src/effect/instance-state.ts`) for per-directory
+    or per-project state that needs per-instance cleanup.
+  collision_type: architecture_boundary
+  why_distracting: The problem mentions that project-specific state (`Instance.directory`)
+    is breaking caching. An agent might try to refactor the tool to use `InstanceState`
+    to manage the directory context per-project, which is a massive overcomplication
+    when the fix is simply to remove the directory from the static tool description.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 25-26
+- rule: '`Instance.bind(fn)` captures the current Instance AsyncLocalStorage context...
+    Use it for native addon callbacks... that need to call `Bus.publish` or anything
+    that reads `Instance.directory`.'
+  collision_type: scope_ambiguity
+  why_distracting: The problem explicitly mentions `Instance.directory`. The rule
+    states that `Instance.bind` is needed for anything that reads `Instance.directory`.
+    An agent might mistakenly try to wrap the tool description generation in `Instance.bind`
+    to handle the directory context, rather than removing the directory from the description
+    entirely.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 48-52
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style guidelines
+  (like inlining variables), while `packages/opencode/AGENTS.md` provides highly specific
+  Effect and state management rules (`InstanceState`, `Instance.bind`). The specific
+  rules in the child config are dangerous distractors here because the problem mentions
+  `Instance.directory`, which triggers keywords in the child config, but the actual
+  solution requires a simple string manipulation following the root config's simplicity
+  guidelines.

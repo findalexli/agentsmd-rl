@@ -1,142 +1,147 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1107
-  base_commit: "722e235a37e4a9f3e288e54629179befa494156b"
-  merge_commit: "fdca82dc09e76052fd6ee2fe22afcdc5ff044743"
-
+  base_commit: 722e235a37e4a9f3e288e54629179befa494156b
+  merge_commit: fdca82dc09e76052fd6ee2fe22afcdc5ff044743
 checks:
-  - id: file_parses
-    type: fail_to_pass
-    origin: pr_diff
-    description: "megatron_engine.py must be valid Python syntax (duplicate kwarg = SyntaxError)"
-
-  - id: no_duplicate_kwargs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No function call in the file has duplicate keyword arguments"
-
-  - id: from_hf_pretrained_trust_remote_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: "from_hf_pretrained() passes trust_remote_code exactly once"
-
-  - id: from_hf_pretrained_has_dtype
-    type: fail_to_pass
-    origin: pr_diff
-    description: "from_hf_pretrained() passes a dtype argument"
-
-  - id: mbridge_path_has_trust_remote_code
-    type: pass_to_pass
-    origin: pr_diff
-    description: "mbridge from_pretrained call still passes trust_remote_code"
-
-  - id: megatron_bridge_path_exists
-    type: pass_to_pass
-    origin: pr_diff
-    description: "The megatron-bridge code path is still present"
-
-  - id: method_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "_build_hf_mcore_bridge has non-trivial body"
-
-  - id: file_not_gutted
-    type: pass_to_pass
-    origin: static
-    description: "File has not been gutted (> 300 lines)"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports (from x import *)"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "722e235a37e4a9f3e288e54629179befa494156b"
-
-  - id: no_bare_print_in_method
-    type: pass_to_pass
-    origin: agent_config
-    description: "_build_hf_mcore_bridge uses self.logger, not bare print()"
-    source:
-      path: "AGENTS.md"
-      lines: "90"
-      commit: "722e235a37e4a9f3e288e54629179befa494156b"
-
-  # Repo CI/CD pass-to-pass gates (added during p2p enrichment)
-  - id: test_repo_pyproject_toml_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: "pyproject.toml is valid TOML syntax"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Ruff linter passes on megatron_engine.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Ruff format check passes on megatron_engine.py"
-
-  - id: test_repo_engine_syntax_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: "All Python files in areal/engine have valid syntax"
-
-  - id: test_repo_no_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_ci
-    description: "megatron_engine.py has no trailing whitespace"
-
-  - id: test_repo_file_ends_with_newline
-    type: pass_to_pass
-    origin: repo_ci
-    description: "megatron_engine.py ends with a single newline"
-
-
-  - id: test_repo_yaml_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: All YAML files in the repo have valid syntax
-
-  - id: test_repo_json_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: All JSON files in the repo have valid syntax
-
-  - id: test_repo_no_private_keys
-    type: pass_to_pass
-    origin: repo_ci
-    description: No private keys detected in repo files
-
-  # Additional p2p tests added during enrichment
-  - id: test_repo_package_name_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Package name in pyproject.toml is 'areal'"
-
-  - id: test_repo_areal_init_ast_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: "areal/__init__.py has valid AST structure"
-
-  - id: test_repo_project_urls_valid
-    type: pass_to_pass
-    origin: repo_ci
-    description: "pyproject.toml has required project URLs"
-
+- id: file_parses
+  type: fail_to_pass
+  origin: pr_diff
+  description: megatron_engine.py must be valid Python syntax (duplicate kwarg = SyntaxError)
+- id: no_duplicate_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: No function call in the file has duplicate keyword arguments
+- id: from_hf_pretrained_trust_remote_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: from_hf_pretrained() passes trust_remote_code exactly once
+- id: from_hf_pretrained_has_dtype
+  type: fail_to_pass
+  origin: pr_diff
+  description: from_hf_pretrained() passes a dtype argument
+- id: mbridge_path_has_trust_remote_code
+  type: pass_to_pass
+  origin: pr_diff
+  description: mbridge from_pretrained call still passes trust_remote_code
+- id: megatron_bridge_path_exists
+  type: pass_to_pass
+  origin: pr_diff
+  description: The megatron-bridge code path is still present
+- id: method_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: _build_hf_mcore_bridge has non-trivial body
+- id: file_not_gutted
+  type: pass_to_pass
+  origin: static
+  description: File has not been gutted (> 300 lines)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports (from x import *)
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 722e235a37e4a9f3e288e54629179befa494156b
+- id: no_bare_print_in_method
+  type: pass_to_pass
+  origin: agent_config
+  description: _build_hf_mcore_bridge uses self.logger, not bare print()
+  source:
+    path: AGENTS.md
+    lines: '90'
+    commit: 722e235a37e4a9f3e288e54629179befa494156b
+- id: test_repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: pyproject.toml is valid TOML syntax
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_ci
+  description: Ruff linter passes on megatron_engine.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_ci
+  description: Ruff format check passes on megatron_engine.py
+- id: test_repo_engine_syntax_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: All Python files in areal/engine have valid syntax
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_ci
+  description: megatron_engine.py has no trailing whitespace
+- id: test_repo_file_ends_with_newline
+  type: pass_to_pass
+  origin: repo_ci
+  description: megatron_engine.py ends with a single newline
+- id: test_repo_yaml_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: All YAML files in the repo have valid syntax
+- id: test_repo_json_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: All JSON files in the repo have valid syntax
+- id: test_repo_no_private_keys
+  type: pass_to_pass
+  origin: repo_ci
+  description: No private keys detected in repo files
+- id: test_repo_package_name_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: Package name in pyproject.toml is 'areal'
+- id: test_repo_areal_init_ast_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: areal/__init__.py has valid AST structure
+- id: test_repo_project_urls_valid
+  type: pass_to_pass
+  origin: repo_ci
+  description: pyproject.toml has required project URLs
 rubric:
-  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
-    source:
-      path: "AGENTS.md"
-      lines: "81"
-      commit: "722e235a37e4a9f3e288e54629179befa494156b"
-
-  - rule: "No hardcoded secrets, paths, or endpoints -- use config objects (e.g. self.config.path) rather than string literals for file paths or URLs."
-    source:
-      path: "AGENTS.md"
-      lines: "31"
-      commit: "722e235a37e4a9f3e288e54629179befa494156b"
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 722e235a37e4a9f3e288e54629179befa494156b
+- rule: No hardcoded secrets, paths, or endpoints -- use config objects (e.g. self.config.path)
+    rather than string literals for file paths or URLs.
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 722e235a37e4a9f3e288e54629179befa494156b
+- rule: Run `pre-commit run --all-files` before committing
+  source:
+    path: CLAUDE.md
+    lines: 46-46
+  evidence: 'The gold solution reformats the `mbridge.AutoBridge.from_pretrained`
+    call on lines 356-358 to comply with line length limits, demonstrating that a
+    formatter (via pre-commit) was run alongside the bug '
+  category: tooling
+distractors:
+- rule: Add tests for new functionality
+  collision_type: scope_ambiguity
+  why_distracting: This is a bug fix for a duplicate keyword argument (a Python syntax/runtime
+    error), not new functionality. Attempting to add a test for `MegatronEngine` initialization
+    would likely require complex mocking or multi-node GPU hardware, wasting agent
+    effort on a trivial fix.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 48-48
+- rule: Integration tests require multi-node hardware; explain skips when unavailable
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run the test suite to verify the fix, encounter
+    failures due to missing multi-node hardware, and either get stuck trying to fix
+    the tests or add unnecessary skip explanations to the PR for a simple syntax error
+    fix.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 42-43
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` provide consistent, overlapping
+  rules. `AGENTS.md` is specifically tailored for AI agents and reinforces the constraints
+  in `CLAUDE.md`. There are no direct conflicts between the two files; they act accumulatively.

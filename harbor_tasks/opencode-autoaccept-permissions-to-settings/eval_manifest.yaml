@@ -1,113 +1,150 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 21308
-  base_commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
-  merge_commit: "41612b3dbea7b4e30a5a83678d2526dbeae9b61a"
-
+  base_commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+  merge_commit: 41612b3dbea7b4e30a5a83678d2526dbeae9b61a
 checks:
-  - id: typescript_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse as valid TypeScript"
-
-  - id: permissions_button_removed_from_composer
-    type: fail_to_pass
-    origin: pr_diff
-    description: "prompt-input.tsx must not render data-action prompt-permissions button"
-
-  - id: auto_accept_toggle_in_settings
-    type: fail_to_pass
-    origin: pr_diff
-    description: "settings-general.tsx must have settings-auto-accept-permissions data-action with Switch"
-
-  - id: settings_uses_permission_context
-    type: fail_to_pass
-    origin: pr_diff
-    description: "settings-general.tsx must import and call usePermission"
-
-  - id: settings_toggle_handles_session_and_directory
-    type: fail_to_pass
-    origin: pr_diff
-    description: "settings-general.tsx must handle both session-level and directory-level permission toggling"
-
-  - id: prompt_toggle_accept_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "prompt-input.tsx must no longer define toggleAccept or acceptLabel"
-
-  - id: prompt_input_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "prompt-input.tsx has substantial content (>1000 lines)"
-
-  - id: settings_general_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "settings-general.tsx has substantial content (>100 lines)"
-
-  - id: no_any_type_in_settings
-    type: pass_to_pass
-    origin: agent_config
-    description: "settings-general.tsx avoids using the any type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
-
-  - id: prefer_const_in_settings
-    type: pass_to_pass
-    origin: agent_config
-    description: "settings-general.tsx prefers const over let"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes via bun typecheck"
-
-  - id: test_repo_prompt_input_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "prompt-input unit tests pass"
-
-  - id: test_repo_permission_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "permission context unit tests pass"
-
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse as valid TypeScript
+- id: permissions_button_removed_from_composer
+  type: fail_to_pass
+  origin: pr_diff
+  description: prompt-input.tsx must not render data-action prompt-permissions button
+- id: auto_accept_toggle_in_settings
+  type: fail_to_pass
+  origin: pr_diff
+  description: settings-general.tsx must have settings-auto-accept-permissions data-action
+    with Switch
+- id: settings_uses_permission_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: settings-general.tsx must import and call usePermission
+- id: settings_toggle_handles_session_and_directory
+  type: fail_to_pass
+  origin: pr_diff
+  description: settings-general.tsx must handle both session-level and directory-level
+    permission toggling
+- id: prompt_toggle_accept_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: prompt-input.tsx must no longer define toggleAccept or acceptLabel
+- id: prompt_input_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: prompt-input.tsx has substantial content (>1000 lines)
+- id: settings_general_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: settings-general.tsx has substantial content (>100 lines)
+- id: no_any_type_in_settings
+  type: pass_to_pass
+  origin: agent_config
+  description: settings-general.tsx avoids using the any type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- id: prefer_const_in_settings
+  type: pass_to_pass
+  origin: agent_config
+  description: settings-general.tsx prefers const over let
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes via bun typecheck
+- id: test_repo_prompt_input_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: prompt-input unit tests pass
+- id: test_repo_permission_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: permission context unit tests pass
 rubric:
-  - rule: "Keep things in one function unless composable or reusable"
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
-  - rule: "Avoid else statements. Prefer early returns."
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
-  - rule: "Always prefer createStore over multiple createSignal calls"
-    source:
-      path: "packages/app/AGENTS.md"
-      lines: "15"
-      commit: "c2d2ca352252a922354c89bfbdb135cf1abfe1b6"
-
-  - id: test_repo_prettier_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files are correctly formatted with prettier"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Full unit test suite passes via bun test"
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- rule: Avoid else statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- rule: Always prefer createStore over multiple createSignal calls
+  source:
+    path: packages/app/AGENTS.md
+    lines: '15'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are correctly formatted with prettier
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full unit test suite passes via bun test
+- rule: Use provided action helpers like `openSettings(page)` and `closeDialog(page,
+    dialog)` for common UI interactions in tests.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 43-46
+  evidence: The gold solution imports `openSettings` and `closeDialog` from `../actions`
+    and uses them to open the settings dialog, interact with the toggle, and close
+    the dialog, rather than writing raw Playwrig
+  category: testing
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 24-30
+  evidence: The gold solution introduces new local variables using single-word names
+    such as `dialog`, `toggle`, `input`, and `checked`.
+  category: naming
+distractors:
+- rule: Use `agent-browser` for web automation.
+  collision_type: meta_confusion
+  why_distracting: The agent might confuse the instructions for its own tool usage
+    with the Playwright e2e test code it needs to write, attempting to use `agent-browser`
+    commands or concepts in the `.spec.ts` files instead of Playwright's `page.locator()`.
+  severity: high
+  source:
+    path: packages/app/AGENTS.md
+    lines: 15-21
+- rule: Avoid using the `any` type.
+  collision_type: scope_ambiguity
+  why_distracting: 'The existing `setAutoAccept` function in `session-composer-dock.spec.ts`
+    uses `page: any`. If the agent tries to fix this by importing Playwright''s `Page`
+    type, it might violate the rule ''Always import from `../fixtures`, not `@playwright/test`''
+    or waste effort refactoring out-of-scope code.'
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 10-12
+- rule: Always prefer `createStore` over multiple `createSignal` calls.
+  collision_type: scope_ambiguity
+  why_distracting: When moving the toggle state to `settings-general.tsx`, the agent
+    might see multiple `createSignal` calls and attempt to refactor the entire settings
+    component to use `createStore`, which is out of scope for simply moving a toggle.
+  severity: low
+  source:
+    path: packages/app/AGENTS.md
+    lines: 11-12
+hierarchy_analysis: The hierarchy progresses from general TypeScript/project rules
+  (`AGENTS.md`) to app-specific rules (`packages/app/AGENTS.md`) to e2e-specific rules
+  (`packages/app/e2e/AGENTS.md`). The e2e rules provide specific helpers (`openSettings`,
+  `closeDialog`) that should be prioritized over manually writing Playwright locators.
+  The `agent-browser` rule in the app-level config creates a significant meta-confusion
+  risk when writing e2e tests, as it describes the agent's own automation tool rather
+  than the Playwright framework used in the tests.

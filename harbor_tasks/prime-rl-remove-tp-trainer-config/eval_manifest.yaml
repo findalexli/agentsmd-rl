@@ -1,113 +1,127 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2109
-  base_commit: "80a52899ea6a74e0738c15228181ef7b9775dfe9"
-  merge_commit: "effa509cb3e8fff74bd53a7685309171c9751e67"
-
+  base_commit: 80a52899ea6a74e0738c15228181ef7b9775dfe9
+  merge_commit: effa509cb3e8fff74bd53a7685309171c9751e67
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified files parse without syntax errors"
-
-  # New repo_tests pass_to_pass checks
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files compile successfully via py_compile"
-
-  - id: test_repo_parallel_dims_ast
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ParallelDims class has required fields (AST check)"
-
-  - id: test_repo_model_config_ast
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ModelConfig class retains required fields (AST check)"
-
-  - id: test_repo_changelog_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CHANGELOG.md exists and has substantial content"
-
-  - id: test_repo_no_stubbed_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files are not hollowed out/stubbed"
-
-  # Existing fail_to_pass checks
-  - id: non_data_parallel_size_excludes_tp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "non_data_parallel_size returns cp*pp, not cp*tp*pp"
-
-  - id: seq_len_divisor_excludes_tp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "seq_len_divisor returns cp*2, not tp*cp*2"
-
-  - id: model_config_no_tp_field
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ModelConfig no longer has a tp field"
-
-  - id: parallel_dims_no_tp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ParallelDims has no tp field or tp_enabled property"
-
-  - id: sft_train_no_tp_multiplication
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SFT train.py does not reference model.tp in computations"
-
-  - id: rl_deployment_no_tp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "auto_setup_deployment does not reference model.tp"
-
-  - id: changelog_documents_tp_removal
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CHANGELOG.md documents the removal of the tp config field"
-
-  # Existing pass_to_pass checks
-  - id: parallel_dims_core_fields
-    type: pass_to_pass
-    origin: pr_diff
-    description: "ParallelDims retains dp_replicate, dp_shard, cp, pp, ep, world_size"
-
-  - id: parallel_dims_methods_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Key properties (dp_enabled, cp_enabled, etc.) still exist"
-
-  - id: model_config_retains_fields
-    type: pass_to_pass
-    origin: static
-    description: "ModelConfig retains cp, dp_replicate, ep and >=5 fields"
-
-  - id: parallel_dims_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "parallel_dims.py is not hollowed out (sufficient methods and lines)"
-
-  - id: no_excessive_try_except
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed files do not introduce excessive try/except blocks"
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "80a52899ea6a74e0738c15228181ef7b9775dfe9"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified files parse without syntax errors
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files compile successfully via py_compile
+- id: test_repo_parallel_dims_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: ParallelDims class has required fields (AST check)
+- id: test_repo_model_config_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: ModelConfig class retains required fields (AST check)
+- id: test_repo_changelog_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: CHANGELOG.md exists and has substantial content
+- id: test_repo_no_stubbed_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are not hollowed out/stubbed
+- id: non_data_parallel_size_excludes_tp
+  type: fail_to_pass
+  origin: pr_diff
+  description: non_data_parallel_size returns cp*pp, not cp*tp*pp
+- id: seq_len_divisor_excludes_tp
+  type: fail_to_pass
+  origin: pr_diff
+  description: seq_len_divisor returns cp*2, not tp*cp*2
+- id: model_config_no_tp_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: ModelConfig no longer has a tp field
+- id: parallel_dims_no_tp
+  type: fail_to_pass
+  origin: pr_diff
+  description: ParallelDims has no tp field or tp_enabled property
+- id: sft_train_no_tp_multiplication
+  type: fail_to_pass
+  origin: pr_diff
+  description: SFT train.py does not reference model.tp in computations
+- id: rl_deployment_no_tp
+  type: fail_to_pass
+  origin: pr_diff
+  description: auto_setup_deployment does not reference model.tp
+- id: changelog_documents_tp_removal
+  type: fail_to_pass
+  origin: pr_diff
+  description: CHANGELOG.md documents the removal of the tp config field
+- id: parallel_dims_core_fields
+  type: pass_to_pass
+  origin: pr_diff
+  description: ParallelDims retains dp_replicate, dp_shard, cp, pp, ep, world_size
+- id: parallel_dims_methods_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Key properties (dp_enabled, cp_enabled, etc.) still exist
+- id: model_config_retains_fields
+  type: pass_to_pass
+  origin: static
+  description: ModelConfig retains cp, dp_replicate, ep and >=5 fields
+- id: parallel_dims_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: parallel_dims.py is not hollowed out (sufficient methods and lines)
+- id: no_excessive_try_except
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files do not introduce excessive try/except blocks
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 80a52899ea6a74e0738c15228181ef7b9775dfe9
 rubric:
-  - rule: "Do not add unnecessary comments. Do not explain your work process or reference old code. Use targeted comments sparingly to clarify ambiguous logic."
-    source:
-      path: "AGENTS.md"
-      lines: "6"
-      commit: "80a52899ea6a74e0738c15228181ef7b9775dfe9"
-    reference: ""
+- rule: Do not add unnecessary comments. Do not explain your work process or reference
+    old code. Use targeted comments sparingly to clarify ambiguous logic.
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: 80a52899ea6a74e0738c15228181ef7b9775dfe9
+  reference: ''
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 5-7
+  evidence: The gold solution cleanly deletes the `tp` field from `ModelConfig` and
+    `ParallelDims`, and updates the math in `auto_setup_deployment` without leaving
+    any inline comments explaining that `tp` was rem
+  category: style
+distractors:
+- rule: 'When preparing release notes: Structure: organize notes into numbered highlight
+    sections (# 1., # 2., ...), then # Breaking Changes, # Bug Fixes, and # Misc.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is instructed to document the breaking change in `CHANGELOG.md`.
+    It might confuse this with 'preparing release notes' and attempt to add `# Breaking
+    Changes` headers or reformat the changelog into numbered sections, which would
+    disrupt the existing simple bulleted list format.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 43-51
+- rule: 'Skills: When you make changes to the codebase, check if any skills need to
+    be updated to stay accurate. You are responsible for maintaining the skills folder.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to search and modify the `skills/toml-config`
+    files to remove references to `tp` in example configs. While well-intentioned
+    based on this rule, it falls outside the explicit expected outcomes for this PR
+    and could lead to unnecessary file modifications.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 32-35
+hierarchy_analysis: The hierarchy is flat with only `AGENTS.md` providing rules. The
+  main challenge is distinguishing between general repository maintenance tasks (like
+  updating skills or formatting release notes) and the specific, scoped changes requested
+  for this PR.

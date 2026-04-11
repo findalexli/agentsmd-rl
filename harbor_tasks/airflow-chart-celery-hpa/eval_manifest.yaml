@@ -1,116 +1,128 @@
 source_pr: apache/airflow#64871
 base_commit: fc861cbf12857fbfed34d6e934706639d9d761f1
 merge_commit: 8dc4305675a6817f55d5ebcc88367859da21beca
-
-# Programmatic checks (match 1:1 with test_outputs.py functions)
 checks:
-  # Fail-to-pass tests
-  - id: test_new_celery_hpa_config_path_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: "workers.celery.hpa.enabled should create HPA resource for CeleryExecutor"
-
-  - id: test_celery_hpa_min_max_replicas
-    type: fail_to_pass
-    origin: behavioral
-    description: "workers.celery.hpa.min/maxReplicaCount should configure replica counts"
-
-  - id: test_celery_hpa_custom_metrics
-    type: fail_to_pass
-    origin: behavioral
-    description: "workers.celery.hpa.metrics should configure custom scaling metrics"
-
-  - id: test_celery_hpa_default_metrics
-    type: fail_to_pass
-    origin: behavioral
-    description: "workers.celery.hpa with defaults should use CPU 80% utilization metric"
-
-  - id: test_celery_hpa_behavior_config
-    type: fail_to_pass
-    origin: behavioral
-    description: "workers.celery.hpa.behavior should configure scaling behavior"
-
-  - id: test_worker_sets_celery_hpa_override
-    type: fail_to_pass
-    origin: behavioral
-    description: "Worker sets should support celery.hpa configuration override"
-
-  - id: test_values_schema_has_celery_hpa_section
-    type: fail_to_pass
-    origin: behavioral
-    description: "values.schema.json should define workers.celery.hpa structure"
-
-  # Pass-to-pass tests (backward compatibility)
-  - id: test_old_hpa_path_still_works
-    type: pass_to_pass
-    origin: behavioral
-    description: "Old workers.hpa.enabled should still create HPA (backward compatibility)"
-
-  - id: test_hpa_disabled_by_default
-    type: pass_to_pass
-    origin: behavioral
-    description: "HPA should not be created by default when not enabled"
-
-  - id: test_hpa_not_created_for_non_celery_executor
-    type: pass_to_pass
-    origin: behavioral
-    description: "HPA should not be created for non-Celery executors"
-
-  - id: test_hpa_scale_target_ref
-    type: pass_to_pass
-    origin: behavioral
-    description: "HPA scaleTargetRef should match worker persistence configuration"
-
-  - id: test_celery_hpa_disabled_when_keda_enabled
-    type: pass_to_pass
-    origin: behavioral
-    description: "HPA should not be created when KEDA is enabled"
-
-  - id: test_old_hpa_schema_has_deprecation_note
-    type: pass_to_pass
-    origin: behavioral
-    description: "Old workers.hpa schema should have deprecation notice in description"
-
-  # Pass-to-pass tests from repo CI/CD
-  - id: test_repo_helm_hpa_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Helm HPA tests pass"
-
-  - id: test_repo_helm_worker_hpa_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Helm Worker HPA autoscale tests pass"
-
-  - id: test_repo_helm_worker_sets_hpa_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Helm Worker Sets HPA tests pass"
-
-  - id: test_repo_helm_chart_quality
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Helm chart quality test passes"
-
-  - id: test_repo_helm_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Helm chart passes linting"
-
-# Rubric for subjective/soft rules from agent configs
+- id: test_new_celery_hpa_config_path_exists
+  type: fail_to_pass
+  origin: behavioral
+  description: workers.celery.hpa.enabled should create HPA resource for CeleryExecutor
+- id: test_celery_hpa_min_max_replicas
+  type: fail_to_pass
+  origin: behavioral
+  description: workers.celery.hpa.min/maxReplicaCount should configure replica counts
+- id: test_celery_hpa_custom_metrics
+  type: fail_to_pass
+  origin: behavioral
+  description: workers.celery.hpa.metrics should configure custom scaling metrics
+- id: test_celery_hpa_default_metrics
+  type: fail_to_pass
+  origin: behavioral
+  description: workers.celery.hpa with defaults should use CPU 80% utilization metric
+- id: test_celery_hpa_behavior_config
+  type: fail_to_pass
+  origin: behavioral
+  description: workers.celery.hpa.behavior should configure scaling behavior
+- id: test_worker_sets_celery_hpa_override
+  type: fail_to_pass
+  origin: behavioral
+  description: Worker sets should support celery.hpa configuration override
+- id: test_values_schema_has_celery_hpa_section
+  type: fail_to_pass
+  origin: behavioral
+  description: values.schema.json should define workers.celery.hpa structure
+- id: test_old_hpa_path_still_works
+  type: pass_to_pass
+  origin: behavioral
+  description: Old workers.hpa.enabled should still create HPA (backward compatibility)
+- id: test_hpa_disabled_by_default
+  type: pass_to_pass
+  origin: behavioral
+  description: HPA should not be created by default when not enabled
+- id: test_hpa_not_created_for_non_celery_executor
+  type: pass_to_pass
+  origin: behavioral
+  description: HPA should not be created for non-Celery executors
+- id: test_hpa_scale_target_ref
+  type: pass_to_pass
+  origin: behavioral
+  description: HPA scaleTargetRef should match worker persistence configuration
+- id: test_celery_hpa_disabled_when_keda_enabled
+  type: pass_to_pass
+  origin: behavioral
+  description: HPA should not be created when KEDA is enabled
+- id: test_old_hpa_schema_has_deprecation_note
+  type: pass_to_pass
+  origin: behavioral
+  description: Old workers.hpa schema should have deprecation notice in description
+- id: test_repo_helm_hpa_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Helm HPA tests pass
+- id: test_repo_helm_worker_hpa_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Helm Worker HPA autoscale tests pass
+- id: test_repo_helm_worker_sets_hpa_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Helm Worker Sets HPA tests pass
+- id: test_repo_helm_chart_quality
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Helm chart quality test passes
+- id: test_repo_helm_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Helm chart passes linting
 rubric:
-  - rule: "Follow existing Helm template patterns for conditional rendering"
-    source: "CLAUDE.md:Helm chart structure in chart/"
-    description: "HPA template should follow existing patterns for conditionals and resource generation"
-
-  - rule: "Add tests for new behavior covering success, failure, and edge cases"
-    source: "CLAUDE.md:Testing Standards"
-    description: "Tests should cover both old (deprecated) and new config paths, various executors, and parameter combinations"
-
-  - rule: "Use @pytest.mark.parametrize for multiple similar inputs"
-    source: "CLAUDE.md:Testing Standards"
-    description: "Tests should use parametrize for testing different executor types and config combinations"
-
-  - rule: "Update JSON schema descriptions to reflect deprecation status"
-    source: "CLAUDE.md:Coding Standards"
-    description: "Schema descriptions should indicate deprecated fields and point to new alternatives"
+- rule: Follow existing Helm template patterns for conditional rendering
+  source: CLAUDE.md:Helm chart structure in chart/
+  description: HPA template should follow existing patterns for conditionals and resource
+    generation
+- rule: Add tests for new behavior covering success, failure, and edge cases
+  source: CLAUDE.md:Testing Standards
+  description: Tests should cover both old (deprecated) and new config paths, various
+    executors, and parameter combinations
+- rule: Use @pytest.mark.parametrize for multiple similar inputs
+  source: CLAUDE.md:Testing Standards
+  description: Tests should use parametrize for testing different executor types and
+    config combinations
+- rule: Update JSON schema descriptions to reflect deprecation status
+  source: CLAUDE.md:Coding Standards
+  description: Schema descriptions should indicate deprecated fields and point to
+    new alternatives
+- rule: 'Run specific Helm test type: `breeze testing helm-tests --use-xdist --test-type
+    <type>`'
+  source:
+    path: CLAUDE.md
+    lines: 24-24
+  evidence: The PR modifies tests in `helm-tests/tests/helm_tests/airflow_core/` and
+    `helm-tests/tests/helm_tests/other/`, which correspond to the `airflow_core` and
+    `other` test types mentioned in the specific H
+  category: testing
+distractors:
+- rule: 'Run a test file: `uv run --project <PROJECT> pytest path/to/test.py -xvs`'
+  collision_type: rule_conflict
+  why_distracting: The agent might try to run Helm tests using `uv run --project helm-tests
+    pytest ...` because it looks like a standard Python project, but Helm tests require
+    the dedicated `breeze testing helm-tests` command to properly render the charts
+    and set up the environment.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 15-15
+- rule: 'If uv tests fail with missing system dependencies, run the tests with breeze:
+    `breeze run pytest <tests> -xvs`'
+  collision_type: rule_conflict
+  why_distracting: The agent might try to run `breeze run pytest <tests> -xvs` for
+    the Helm tests, but Helm tests should be run with `breeze testing helm-tests`
+    to ensure the Helm chart is properly built and available to the tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 18-18
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical. The main conflict
+  is between general Python test commands (`uv run pytest`) and specific Helm test
+  commands (`breeze testing helm-tests`). The agent must recognize that files in `helm-tests/`
+  require the specialized Helm testing commands rather than the generic Python testing
+  commands.'

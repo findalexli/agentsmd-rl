@@ -1,108 +1,134 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 971
-  base_commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
-
+  base_commit: 84eaef1292b2a3184d4a565d4abb0758408be018
 checks:
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python linting passes (ruff check areal/)"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python code formatting passes (ruff format --check areal/)"
-
-  - id: test_repo_workflow_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified workflow.py compiles without syntax errors"
-
-  - id: test_repo_proxy_gateway_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Proxy gateway module compiles without syntax errors"
-
-  - id: test_repo_online_agent_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Online agent module compiles without syntax errors"
-
-  - id: test_repo_pytest_available
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pytest is installed and functional"
-
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "workflow.py must parse without syntax errors"
-
-  - id: empty_interactions_returns_none
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Empty interactions dict returns None (rejected trajectory) instead of empty dict"
-
-  - id: empty_interactions_logs_warning
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A warning is logged when session has no interactions"
-
-  - id: nonempty_interactions_returns_dict
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-empty interactions are returned as-is with stats recorded"
-
-  - id: single_interaction_returns_dict
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Single-interaction session still works correctly"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "arun_episode has a substantial body (not a stub)"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in workflow.py"
-    source:
-      path: "AGENTS.md"
-      lines: "25"
-      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
-
-  - id: no_print_in_arun_episode
-    type: pass_to_pass
-    origin: agent_config
-    description: "No print() calls in arun_episode — use logger"
-    source:
-      path: "AGENTS.md"
-      lines: "84-86"
-      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
-
-  - id: no_gpu_cpu_sync_in_arun_episode
-    type: pass_to_pass
-    origin: agent_config
-    description: "No GPU-CPU sync calls (.item(), .tolist()) in arun_episode hot path"
-    source:
-      path: "AGENTS.md"
-      lines: "90"
-      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
-
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes (ruff check areal/)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code formatting passes (ruff format --check areal/)
+- id: test_repo_workflow_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified workflow.py compiles without syntax errors
+- id: test_repo_proxy_gateway_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Proxy gateway module compiles without syntax errors
+- id: test_repo_online_agent_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Online agent module compiles without syntax errors
+- id: test_repo_pytest_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: pytest is installed and functional
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: workflow.py must parse without syntax errors
+- id: empty_interactions_returns_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty interactions dict returns None (rejected trajectory) instead
+    of empty dict
+- id: empty_interactions_logs_warning
+  type: fail_to_pass
+  origin: pr_diff
+  description: A warning is logged when session has no interactions
+- id: nonempty_interactions_returns_dict
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-empty interactions are returned as-is with stats recorded
+- id: single_interaction_returns_dict
+  type: pass_to_pass
+  origin: pr_diff
+  description: Single-interaction session still works correctly
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: arun_episode has a substantial body (not a stub)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in workflow.py
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: 84eaef1292b2a3184d4a565d4abb0758408be018
+- id: no_print_in_arun_episode
+  type: pass_to_pass
+  origin: agent_config
+  description: No print() calls in arun_episode — use logger
+  source:
+    path: AGENTS.md
+    lines: 84-86
+    commit: 84eaef1292b2a3184d4a565d4abb0758408be018
+- id: no_gpu_cpu_sync_in_arun_episode
+  type: pass_to_pass
+  origin: agent_config
+  description: No GPU-CPU sync calls (.item(), .tolist()) in arun_episode hot path
+  source:
+    path: AGENTS.md
+    lines: '90'
+    commit: 84eaef1292b2a3184d4a565d4abb0758408be018
 rubric:
-  - rule: "Code changes follow the project's style and conventions: use async patterns, proper logging, no print statements, no wildcard imports, no GPU-CPU sync in hot paths."
-    source:
-      path: "workflow.py"
-      lines: "1-250"
-      commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
-    reference: |
-      # The code fix in workflow.py follows project conventions:
-      # 1. Uses logger.warning() instead of print()
-      # 2. Returns None for empty sessions (proper async pattern)
-      # 3. No wildcard imports
-      # 4. No GPU-CPU sync calls (.item(), .tolist())
-      # 5. Follows existing code patterns in the same module
+- rule: 'Code changes follow the project''s style and conventions: use async patterns,
+    proper logging, no print statements, no wildcard imports, no GPU-CPU sync in hot
+    paths.'
+  source:
+    path: workflow.py
+    lines: 1-250
+    commit: 84eaef1292b2a3184d4a565d4abb0758408be018
+  reference: '# The code fix in workflow.py follows project conventions:
+
+    # 1. Uses logger.warning() instead of print()
+
+    # 2. Returns None for empty sessions (proper async pattern)
+
+    # 3. No wildcard imports
+
+    # 4. No GPU-CPU sync calls (.item(), .tolist())
+
+    # 5. Follows existing code patterns in the same module
+
+    '
+- rule: 'Logging: ... never `print`'
+  source:
+    path: AGENTS.md
+    lines: 46-48
+  evidence: The gold solution uses `logger.warning` to output the message about the
+    empty session, avoiding the use of `print`.
+  category: style
+distractors:
+- rule: Add tests for new functionality
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a unit test for this edge case.
+    However, testing the online-mode proxy workflow requires complex mocking of async
+    sessions, stats trackers, and proxy servers. The prompt asks for a bug fix in
+    an experimental module, and adding tests would likely lead to a rabbit hole of
+    mocking errors.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '53'
+- rule: Use the `question` tool (structured options) when asking the user for decisions
+    or clarifications.
+  collision_type: meta_confusion
+  why_distracting: The agent might be tempted to ask the user whether to return `None`
+    or an empty dict, or how to format the warning message. However, the expected
+    behavior is explicitly defined in the prompt, so asking would be unnecessary and
+    waste a turn.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 29-30
+hierarchy_analysis: Both CLAUDE.md and AGENTS.md provide similar high-level guidelines.
+  AGENTS.md provides more specific constraints on logging and performance. The rules
+  are consistent across both files, with AGENTS.md acting as a more detailed operational
+  guide.

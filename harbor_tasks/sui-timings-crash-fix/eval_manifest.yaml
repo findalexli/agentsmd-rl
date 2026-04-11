@@ -36,3 +36,43 @@ rubric:
     path: CLAUDE.md
     lines: '44'
     commit: 6c3a7475b6fd4aea9b9f9443a6cfad01a135c036
+- rule: Check code without building (preferred) using cargo check
+  source:
+    path: CLAUDE.md
+    lines: 28-29
+  evidence: The agent should use `cargo check` (or `cargo check -p sui-core`) to quickly
+    verify the syntax and types of the array slicing fix without doing a full build.
+  category: tooling
+- rule: Use cargo nextest --lib to run only library tests and skip integration tests
+    for faster feedback
+  source:
+    path: CLAUDE.md
+    lines: 45-45
+  evidence: The agent should use `cargo nextest --lib` (or `cargo test --lib`) to
+    run the specific execution_time tests quickly, skipping integration tests.
+  category: testing
+distractors:
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: scope_ambiguity
+  why_distracting: Running full e2e simtests (`cargo simtest -p sui-e2e-tests`) for
+    a localized array slicing fix in `sui-core` will waste significant time (tests
+    take >10 mins) and is unnecessary for this scope.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 35-36
+- rule: 'Formats & lints all Rust & Move, run before commit: ./scripts/lint.sh'
+  collision_type: scope_ambiguity
+  why_distracting: Running the global `./scripts/lint.sh` script formats and lints
+    all Rust and Move code across the entire repository, which is extremely slow and
+    overkill for a single-file fix.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 51-52
+hierarchy_analysis: The repository uses a flat configuration structure with a single
+  root `CLAUDE.md` and `AGENTS.md`. The `CLAUDE.md` provides comprehensive tooling
+  and testing commands. There are no conflicting rules between files, but agents must
+  carefully select the appropriately scoped testing and linting commands (e.g., `cargo
+  check` and `cargo nextest --lib`) rather than the global repository scripts to maintain
+  fast iteration cycles.

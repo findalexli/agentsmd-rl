@@ -1,134 +1,174 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19299
-  base_commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-  merge_commit: "ec20efc11a256444d5359d4520f24239d4dd36b1"
-
+  base_commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+  merge_commit: ec20efc11a256444d5359d4520f24239d4dd36b1
 checks:
-  - id: syntax_all_modified_files
-    type: pass_to_pass
-    origin: static
-    description: "All three modified files (flag.ts, server.ts, build.ts) parse without syntax errors"
-
-  - id: flag_disable_embedded_webui_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI is exported and falsy by default"
-
-  - id: flag_truthy_when_env_set
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Flag responds to OPENCODE_DISABLE_EMBEDDED_WEB_UI env var with truthy values"
-
-  - id: build_script_skip_embed_flag
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Build script has --skip-embed-web-ui flag as a parsed string literal"
-
-  - id: build_script_asset_bundling_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Build script has asset bundling function that scans dist files via Glob/scan"
-
-  - id: build_entrypoints_include_generated_module
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Build config entrypoints array includes the generated web UI module"
-
-  - id: server_catch_all_branches_on_embedded_ui
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Server catch-all route branches on embedded UI availability with file serving"
-
-  - id: server_spa_fallback_to_index_html
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Server has SPA fallback to index.html within the catch-all route"
-
-  - id: server_csp_for_embedded_html
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Server sets Content-Security-Policy header when serving HTML from embedded UI"
-
-  - id: proxy_fallback_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Proxy fallback to app.opencode.ai is preserved in server code"
-
-  - id: dynamic_import_uses_catch_chain
-    type: fail_to_pass
-    origin: agent_config
-    description: "Dynamic import() uses .catch() promise chain, not try/catch block"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - id: server_uses_bun_file_api
-    type: fail_to_pass
-    origin: agent_config
-    description: "Server uses Bun.file() API for serving embedded files in catch-all route"
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - id: build_uses_functional_array_methods
-    type: fail_to_pass
-    origin: agent_config
-    description: "Asset bundling function uses functional array methods (.map/.join), not for-loops"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
+- id: syntax_all_modified_files
+  type: pass_to_pass
+  origin: static
+  description: All three modified files (flag.ts, server.ts, build.ts) parse without
+    syntax errors
+- id: flag_disable_embedded_webui_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: Flag.OPENCODE_DISABLE_EMBEDDED_WEB_UI is exported and falsy by default
+- id: flag_truthy_when_env_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: Flag responds to OPENCODE_DISABLE_EMBEDDED_WEB_UI env var with truthy
+    values
+- id: build_script_skip_embed_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build script has --skip-embed-web-ui flag as a parsed string literal
+- id: build_script_asset_bundling_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build script has asset bundling function that scans dist files via
+    Glob/scan
+- id: build_entrypoints_include_generated_module
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build config entrypoints array includes the generated web UI module
+- id: server_catch_all_branches_on_embedded_ui
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server catch-all route branches on embedded UI availability with file
+    serving
+- id: server_spa_fallback_to_index_html
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server has SPA fallback to index.html within the catch-all route
+- id: server_csp_for_embedded_html
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server sets Content-Security-Policy header when serving HTML from embedded
+    UI
+- id: proxy_fallback_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Proxy fallback to app.opencode.ai is preserved in server code
+- id: dynamic_import_uses_catch_chain
+  type: fail_to_pass
+  origin: agent_config
+  description: Dynamic import() uses .catch() promise chain, not try/catch block
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- id: server_uses_bun_file_api
+  type: fail_to_pass
+  origin: agent_config
+  description: Server uses Bun.file() API for serving embedded files in catch-all
+    route
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- id: build_uses_functional_array_methods
+  type: fail_to_pass
+  origin: agent_config
+  description: Asset bundling function uses functional array methods (.map/.join),
+    not for-loops
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
 rubric:
-  - rule: "Keep things in one function unless composable or reusable"
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - rule: "Avoid using the `any` type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - rule: "Prefer single word variable names where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations unless necessary for exports"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - rule: "Avoid else statements. Prefer early returns."
-    source:
-      path: "AGENTS.md"
-      lines: "83-84"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "83ed1c4414859b53c91f1e2f6985c3498bac1e84"
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- rule: Prefer single word variable names where possible
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- rule: Rely on type inference when possible; avoid explicit type annotations unless
+    necessary for exports
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- rule: Avoid else statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 83-84
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: 83ed1c4414859b53c91f1e2f6985c3498bac1e84
+- rule: Use Bun APIs when possible
+  source:
+    path: AGENTS.md
+    lines: 13-14
+  evidence: The gold solution uses `new Bun.Glob("**/*").scan(...)` in `build.ts`
+    to find all files in the dist directory instead of relying on Node.js `fs` or
+    external glob libraries.
+  category: tooling
+- rule: Avoid `try`/`catch` where possible
+  source:
+    path: AGENTS.md
+    lines: 10-11
+  evidence: The gold solution handles the potential failure of the dynamic import
+    in `server.ts` by chaining `.catch(() => null)` instead of wrapping the import
+    in a `try/catch` block.
+  category: style
+distractors:
+- rule: Use single word names by default for new locals, params, and helper functions
+  collision_type: rule_conflict
+  why_distracting: The PR introduces specific concepts like 'embedded web UI' and
+    'skip embed web UI'. Forcing single-word names like `skip`, `bundle`, `map`, or
+    `promise` would make the build script and server logic highly ambiguous and unreadable,
+    despite the rule being marked as mandatory.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 23-30
+- rule: Prefer Effect services (FileSystem, ChildProcessSpawner) over platform APIs
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to use Effect's `FileSystem` or `ChildProcessSpawner`
+    to run the build command or scan files. However, `build.ts` is a standard Bun
+    script using `$` and `Bun.Glob`, and the PR does not involve migrating these files
+    to Effect. Using Effect here would be an unnecessary architectural shift.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 38-42
+- rule: Keep things in one function unless composable or reusable
+  collision_type: scope_ambiguity
+  why_distracting: The `createEmbeddedWebUIBundle` function in `build.ts` is only
+    used once. An agent strictly following this rule might inline the entire 15-line
+    bundle generation logic directly into the `embeddedFileMap` ternary or top-level
+    script, severely degrading readability.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 9-10
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript/Bun guidelines
+  (naming, const, ternaries, Bun APIs), which are highly applicable to this PR. The
+  `packages/opencode/AGENTS.md` provides Effect-specific rules. Since the files being
+  edited (`build.ts`, `server.ts`) are not currently effectified in the scope of this
+  PR's changes, the Effect rules in the child config act as a trap/distractor. The
+  agent must recognize the architectural boundary and stick to the root config's Bun
+  API recommendations instead of the child config's Effect recommendations.

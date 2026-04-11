@@ -1,79 +1,103 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45109
-  base_commit: "38593c2e83964079576eb646fe9b68cce16114dc"
-  merge_commit: "d55f0350a25333406daeafb7c250bb4ba3bf43a1"
-
+  base_commit: 38593c2e83964079576eb646fe9b68cce16114dc
+  merge_commit: d55f0350a25333406daeafb7c250bb4ba3bf43a1
 checks:
-  - id: test_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without errors"
-
-  - id: test_t5attention_tp_compatible
-    type: fail_to_pass
-    origin: pr_diff
-    description: "T5Attention correctly infers n_heads from tensor shape when inner_dim is sharded"
-
-  - id: test_kv_attention_shape_correct
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Key/value attention uses dynamic shape from current_states instead of config n_heads"
-
-  - id: test_position_bias_dynamic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "position_bias shape uses query_states.shape[1] instead of config n_heads"
-
-  - id: test_attn_output_reshape
-    type: fail_to_pass
-    origin: pr_diff
-    description: "attn_output.view uses seq_length as fixed dim and -1 for heads dimension"
-
-  - id: test_view_operations_runtime_semantics
-    type: fail_to_pass
-    origin: pr_diff
-    description: "View operations produce correct shapes under TP-like conditions"
-
-  - id: test_copied_files_updated
-    type: fail_to_pass
-    origin: agent_config
-    description: "T5-family model copies (mt5, longt5, etc.) have been updated with the same fix"
-    source:
-      path: "CLAUDE.md"
-      lines: "45-55"
-      commit: "38593c2e83964079576eb646fe9b68cce16114dc"
-
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "T5Attention.forward has real logic, not just pass/return"
-
-  - id: test_repo_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All modified Python files must parse without syntax errors"
-
-  - id: test_repo_imports_resolvable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have no unresolvable import dependencies"
-
-  - id: test_repo_t5_classes_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "T5-family model files contain required Attention classes"
-
-  - id: test_repo_no_undefined_names
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have no obvious undefined name errors (py_compile check)"
-
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: test_t5attention_tp_compatible
+  type: fail_to_pass
+  origin: pr_diff
+  description: T5Attention correctly infers n_heads from tensor shape when inner_dim
+    is sharded
+- id: test_kv_attention_shape_correct
+  type: fail_to_pass
+  origin: pr_diff
+  description: Key/value attention uses dynamic shape from current_states instead
+    of config n_heads
+- id: test_position_bias_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: position_bias shape uses query_states.shape[1] instead of config n_heads
+- id: test_attn_output_reshape
+  type: fail_to_pass
+  origin: pr_diff
+  description: attn_output.view uses seq_length as fixed dim and -1 for heads dimension
+- id: test_view_operations_runtime_semantics
+  type: fail_to_pass
+  origin: pr_diff
+  description: View operations produce correct shapes under TP-like conditions
+- id: test_copied_files_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: T5-family model copies (mt5, longt5, etc.) have been updated with the
+    same fix
+  source:
+    path: CLAUDE.md
+    lines: 45-55
+    commit: 38593c2e83964079576eb646fe9b68cce16114dc
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: T5Attention.forward has real logic, not just pass/return
+- id: test_repo_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified Python files must parse without syntax errors
+- id: test_repo_imports_resolvable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no unresolvable import dependencies
+- id: test_repo_t5_classes_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: T5-family model files contain required Attention classes
+- id: test_repo_no_undefined_names
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no obvious undefined name errors (py_compile check)
 rubric:
-  - rule: "When fixing code that is copied across model files, ensure all copies are updated or the copy link is properly broken."
-    source:
-      path: "CLAUDE.md"
-      lines: "45-55"
-      commit: "38593c2e83964079576eb646fe9b68cce16114dc"
+- rule: When fixing code that is copied across model files, ensure all copies are
+    updated or the copy link is properly broken.
+  source:
+    path: CLAUDE.md
+    lines: 45-55
+    commit: 38593c2e83964079576eb646fe9b68cce16114dc
+- rule: Ideally you should edit the code it's copying from and propagate the change
+  source:
+    path: CLAUDE.md
+    lines: '64'
+  evidence: The gold solution correctly targets the source model `src/transformers/models/t5/modeling_t5.py`
+    for the initial fix, which is the canonical source that other T5-family models
+    copy their attention imp
+  category: architecture
+distractors:
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly forbids editing `# Copied from` blocks, stating
+    they will be reverted by `make fix-repo`. However, the prompt explicitly instructs
+    the agent to 'apply the same changes to other T5-family models that have copied
+    code'. An agent strictly following the config might refuse to edit the copied
+    files manually, leading to an incomplete patch.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '64'
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to 'fail-closed' and refuse to proceed
+    to PR-ready output if coordination evidence (like issue approval) is missing.
+    In a headless evaluation environment, following this rule causes the agent to
+    refuse the task entirely instead of generating the requested code fix.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 55-58
+hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain identical rules. The primary
+  conflict arises between the repository's strict agent contribution policies (which
+  demand human coordination and forbid direct edits to copied blocks) and the evaluation
+  prompt's explicit instructions to generate the fix and apply it to copied files.

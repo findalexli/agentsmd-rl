@@ -12,7 +12,8 @@ checks:
 - id: standard_schema_validation
   type: fail_to_pass
   origin: pr_diff
-  description: createTable produces Standard Schema-compatible tables with parseSafe support
+  description: createTable produces Standard Schema-compatible tables with parseSafe
+    support
 - id: validate_partial_row_exported
   type: fail_to_pass
   origin: pr_diff
@@ -28,7 +29,8 @@ checks:
 - id: timestamp_schema_uses_create_schema
   type: fail_to_pass
   origin: pr_diff
-  description: timestampSchema uses createSchema from data-schema instead of inline ~standard
+  description: timestampSchema uses createSchema from data-schema instead of inline
+    ~standard
 - id: agents_md_cross_package_rule
   type: fail_to_pass
   origin: pr_diff
@@ -96,3 +98,42 @@ rubric:
     lines: 219-259
     commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
 - rule: timestampSchema uses createSchema from data-schema instead of inline ~standard
+- rule: When defining functions in object literals, use shorthand method syntax (`{
+    method() {} }`) instead of arrow functions
+  source:
+    path: AGENTS.md
+    lines: 22-22
+  evidence: The `validate` function inside the `~standard` object property of the
+    table uses shorthand method syntax (`validate(value) { ... }`) rather than an
+    arrow function.
+  category: style
+- rule: Always use `import type { X }` for types (separate from value imports)
+  source:
+    path: AGENTS.md
+    lines: 19-19
+  evidence: When replacing the re-exported `DataSchema` with `Schema` from `data-schema`,
+    the import is written as `import type { Schema }`.
+  category: style
+- rule: Prefer `let` for locals, `const` only at module scope; never use `var`
+  source:
+    path: AGENTS.md
+    lines: 20-20
+  evidence: Local variables defined within the newly extracted shared validator function
+    use `let` instead of `const`.
+  category: style
+distractors:
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt explicitly lists the documentation files to update (AGENTS.md
+    and README.md). Creating a changes file might seem required by the general repo
+    rules, but doing so introduces out-of-scope files not requested in the specific
+    PR instructions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 40-40
+hierarchy_analysis: The AGENTS.md file provides global architectural and stylistic
+  rules. The prompt introduces a new architectural rule (not re-exporting types across
+  package boundaries) that must be appended to AGENTS.md, demonstrating that the agent
+  must both follow the existing rules and mutate the rule file itself.

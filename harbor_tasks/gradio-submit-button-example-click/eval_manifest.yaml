@@ -1,88 +1,108 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12975
-  base_commit: "fe955348f24115744015d85639e170b8518b28c1"
-  merge_commit: "c1e96b3fe0"
-
+  base_commit: fe955348f24115744015d85639e170b8518b28c1
+  merge_commit: c1e96b3fe0
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "chat_interface.py must parse as valid Python"
-
-  - id: example_select_not_in_stop_triggers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "example_select must not be in _setup_stop_events event_triggers — removes the separate handler causing the race"
-
-  - id: submit_btn_false_in_example_chain
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A .then() step with submit_btn=False must exist in the example select chain — keeps restore sequential"
-
-  - id: events_to_cancel_conditional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "events_to_cancel must use compound condition, not just is-not-None — populate-only examples should not be cancelled"
-
-  - id: setup_events_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "_setup_events must have substantial implementation, not a stub"
-
-  - id: ruff_formatting
-    type: pass_to_pass
-    origin: agent_config
-    description: "Python code must be formatted with ruff"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "fe955348f24115744015d85639e170b8518b28c1"
-
-  - id: repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff check passes on gradio module"
-
-  - id: repo_chat_interface_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Chat interface unit tests pass"
-
-  - id: repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on chat_interface.py"
-
-  - id: repo_chat_interface_init_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Chat interface init unit tests pass (tests that don't require frontend build)"
-
-  - id: repo_chat_interface_textbox_conflict_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Chat interface textbox conflict tests pass"
-
-  - id: repo_chat_interface_example_messages_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Chat interface example messages tests pass (tests that don't require frontend build)"
-
-  - id: repo_gradio_import
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Gradio module imports successfully"
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: chat_interface.py must parse as valid Python
+- id: example_select_not_in_stop_triggers
+  type: fail_to_pass
+  origin: pr_diff
+  description: example_select must not be in _setup_stop_events event_triggers — removes
+    the separate handler causing the race
+- id: submit_btn_false_in_example_chain
+  type: fail_to_pass
+  origin: pr_diff
+  description: A .then() step with submit_btn=False must exist in the example select
+    chain — keeps restore sequential
+- id: events_to_cancel_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: events_to_cancel must use compound condition, not just is-not-None
+    — populate-only examples should not be cancelled
+- id: setup_events_not_stub
+  type: pass_to_pass
+  origin: static
+  description: _setup_events must have substantial implementation, not a stub
+- id: ruff_formatting
+  type: pass_to_pass
+  origin: agent_config
+  description: Python code must be formatted with ruff
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: fe955348f24115744015d85639e170b8518b28c1
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff check passes on gradio module
+- id: repo_chat_interface_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chat interface unit tests pass
+- id: repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on chat_interface.py
+- id: repo_chat_interface_init_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chat interface init unit tests pass (tests that don't require frontend
+    build)
+- id: repo_chat_interface_textbox_conflict_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chat interface textbox conflict tests pass
+- id: repo_chat_interface_example_messages_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chat interface example messages tests pass (tests that don't require
+    frontend build)
+- id: repo_gradio_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradio module imports successfully
 rubric:
-  # The pass_to_pass tests already verify style compliance:
-  # - test_ruff_formatting, test_repo_ruff_check, test_repo_ruff_format_check
-  # This rule is a placeholder to ensure rubric section is non-empty
-  # as required by the harness, while actual validation happens in checks.
-  - rule: "Python code must pass ruff format and lint checks (enforced by pass_to_pass tests)"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "fe955348f24115744015d85639e170b8518b28c1"
+- rule: Python code must pass ruff format and lint checks (enforced by pass_to_pass
+    tests)
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: fe955348f24115744015d85639e170b8518b28c1
+- rule: Python code is formatted with `ruff`... Be consistent with the style of the
+    surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 36-38
+  evidence: The gold solution formats the new `.then()` call with proper indentation,
+    trailing commas, and line breaks consistent with `ruff` formatting, and uses `utils.async_lambda`
+    and `api_visibility="undocum
+  category: style
+distractors:
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use the GitHub CLI or API to create
+    an issue or search for an issue number to include in the code/commit, which is
+    out of scope for this code-fixing task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-20
+- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+  collision_type: meta_confusion
+  why_distracting: The agent might try to create, modify, or fill out `.github/PULL_REQUEST_TEMPLATE.md`
+    or write a PR description in a markdown file, wasting effort on PR metadata instead
+    of fixing the bug.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 22-25
+hierarchy_analysis: The repository has a single configuration file (`AGENTS.md`) at
+  the root level. The rules are mostly high-level PR and contribution guidelines.
+  There are no conflicting rules within the hierarchy, but the PR-centric rules create
+  meta-level confusion for an agent focused purely on code generation.

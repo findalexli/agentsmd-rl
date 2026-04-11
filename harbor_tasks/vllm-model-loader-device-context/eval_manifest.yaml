@@ -1,69 +1,96 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 38426
-  base_commit: "af89140efc06c462ae531999b9f2db6ba0c7a528"
-  merge_commit: "aa4eb0db78ec469438a7a18147b0372fe2eb7cf4"
-
+  base_commit: af89140efc06c462ae531999b9f2db6ba0c7a528
+  merge_commit: aa4eb0db78ec469438a7a18147b0372fe2eb7cf4
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "base_loader.py must parse without syntax errors"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on base_loader.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on base_loader.py"
-
-  - id: test_repo_typos
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's typos spell checker passes on base_loader.py"
-
-  - id: log_inspection_outside_device_context
-    type: fail_to_pass
-    origin: pr_diff
-    description: "log_model_inspection must NOT run inside the target_device context manager"
-
-  - id: device_context_narrower_than_dtype
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Device context must be a strict subset of dtype context (nested, not combined)"
-
-  - id: initialize_model_inside_device_context
-    type: pass_to_pass
-    origin: pr_diff
-    description: "initialize_model must still run inside the target_device context manager"
-
-  - id: log_inspection_inside_dtype_context
-    type: pass_to_pass
-    origin: pr_diff
-    description: "log_model_inspection must remain inside the set_default_torch_dtype context"
-
-  - id: key_structure_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "BaseModelLoader class, load_model, load_weights, and key calls preserved"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "base_loader.py has real content — not a gutted stub"
-
-  - id: no_bare_pip_install
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed files must not introduce bare pip install (must use uv)"
-    source:
-      path: "AGENTS.md"
-      lines: "42"
-      commit: "af89140efc06c462ae531999b9f2db6ba0c7a528"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: base_loader.py must parse without syntax errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on base_loader.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on base_loader.py
+- id: test_repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's typos spell checker passes on base_loader.py
+- id: log_inspection_outside_device_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: log_model_inspection must NOT run inside the target_device context
+    manager
+- id: device_context_narrower_than_dtype
+  type: fail_to_pass
+  origin: pr_diff
+  description: Device context must be a strict subset of dtype context (nested, not
+    combined)
+- id: initialize_model_inside_device_context
+  type: pass_to_pass
+  origin: pr_diff
+  description: initialize_model must still run inside the target_device context manager
+- id: log_inspection_inside_dtype_context
+  type: pass_to_pass
+  origin: pr_diff
+  description: log_model_inspection must remain inside the set_default_torch_dtype
+    context
+- id: key_structure_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: BaseModelLoader class, load_model, load_weights, and key calls preserved
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: base_loader.py has real content — not a gutted stub
+- id: no_bare_pip_install
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files must not introduce bare pip install (must use uv)
+  source:
+    path: AGENTS.md
+    lines: '42'
+    commit: af89140efc06c462ae531999b9f2db6ba0c7a528
 rubric: []
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
+    one mutable default, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The fix involves un-combining a `with` statement and changing indentation,
+    which looks exactly like an 'isolated style change'. The agent might refuse to
+    make the change, missing that it actually alters the execution scope of `log_model_inspection`
+    and fixes a critical memory bug.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 22-23
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
+  collision_type: meta_confusion
+  why_distracting: The agent is acting as an autonomous code-agent in this evaluation
+    environment. It might take this instruction literally and refuse to generate the
+    fix, insisting a human must do it.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 26-27
+- rule: If work is duplicate/trivial busywork, do not proceed. Return a short explanation
+    of what is missing.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might classify the small indentation and context manager
+    change as 'trivial busywork' and trigger the fail-closed behavior, returning an
+    explanation instead of the required patch.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 35-36
+hierarchy_analysis: The hierarchy consists of `CLAUDE.md` which simply includes `AGENTS.md`.
+  `AGENTS.md` contains strict contribution policies aimed at human contributors using
+  AI, which creates meta-confusion for an autonomous agent being evaluated on its
+  ability to generate code fixes. The rules heavily emphasize refusing trivial changes,
+  which conflicts with the nature of this specific bug fix.

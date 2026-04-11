@@ -50,14 +50,71 @@ checks:
   origin: repo_tests
   description: Repo's AgentToolsEngine unit tests pass
 rubric:
-- rule: CLI SKILL.md documents dev mode with LOBEHUB_CLI_HOME isolation and local server connection
-  reference: |
-    ### Running in Dev Mode
-    Dev mode uses `LOBEHUB_CLI_HOME=.lobehub-dev` to isolate credentials from the global `~/.lobehub/` directory...
+- rule: CLI SKILL.md documents dev mode with LOBEHUB_CLI_HOME isolation and local
+    server connection
+  reference: '### Running in Dev Mode
+
+    Dev mode uses `LOBEHUB_CLI_HOME=.lobehub-dev` to isolate credentials from the
+    global `~/.lobehub/` directory...
+
 
     ### Connecting to Local Dev Server
+
     To test CLI against a local dev server (e.g. `localhost:3011`)...
-- rule: db-migrations SKILL.md Step 4 should say Update Journal Tag not Regenerate Client
-  reference: |
-    ## Step 4: Update Journal Tag
+
+    '
+- rule: db-migrations SKILL.md Step 4 should say Update Journal Tag not Regenerate
+    Client
+  reference: '## Step 4: Update Journal Tag
+
     After renaming the migration SQL file in Step 2, update the `tag` field in `packages/database/migrations/meta/_journal.json`...
+
+    '
+- rule: All AI development skills are available in `.agents/skills/` directory and
+    auto-loaded by Claude Code.
+  source:
+    path: AGENTS.md
+    lines: 61-62
+  evidence: The gold solution correctly modifies and creates documentation files specifically
+    in the `.agents/skills/` directory (e.g., `cli/SKILL.md`, `db-migrations/SKILL.md`,
+    `trpc-router/SKILL.md`) as request
+  category: documentation
+- rule: Maintain test coverage for Model Runtime Package according to testing strategies.
+  source:
+    path: packages/model-runtime/CLAUDE.md
+    lines: 3-4
+  evidence: The gold solution updates `generateObject.test.ts` and `index.test.ts`
+    alongside the implementation changes to `generateObject.ts` and `resolveMaxTokens.ts`
+    to maintain test coverage for the package.
+  category: testing
+distractors:
+- rule: 'i18n Keys: Add to src/locales/default/namespace.ts'
+  collision_type: architecture_boundary
+  why_distracting: The agent is modifying `packages/agent-tracing/src/viewer/index.ts`
+    to show tool errors by default. It might try to add i18n keys for these error
+    messages to `src/locales/default/namespace.ts`, but `agent-tracing` is an internal
+    package/CLI tool, not part of the main user-facing Next.js app that uses the global
+    i18n system.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 52-54
+- rule: 'When adding or changing SPA routes: Implement layout and page content under
+    src/features/<Domain>/ and export from there.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the modifications to the `agent-tracing`
+    viewer UI as a frontend change and attempt to move its layout or components into
+    `src/features/` or `src/routes/`. However, the tracing viewer is a standalone
+    tool within `packages/` and does not follow the main app's SPA routing conventions.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 47-52
+hierarchy_analysis: The project has root-level `CLAUDE.md` and `AGENTS.md` files that
+  define global conventions, heavily focused on the Next.js frontend (SPA vs features,
+  i18n, Zustand). However, the modifications in this PR span across standalone packages
+  (`packages/model-runtime`, `packages/agent-tracing`) and backend server modules
+  (`src/server/modules/`). The global frontend rules do not apply to these backend
+  packages or internal CLI tools. The agent must recognize the architectural boundaries
+  between the Next.js app and the workspace packages, relying on package-specific
+  instructions (like `packages/model-runtime/CLAUDE.md`) where applicable.

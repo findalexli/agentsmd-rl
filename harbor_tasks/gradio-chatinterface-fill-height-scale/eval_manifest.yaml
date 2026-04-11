@@ -1,131 +1,131 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12956
-  base_commit: "bb127c74bd6301e3782e0ce4744161ae976a8481"
-  merge_commit: "e8dadd648483b6016913a9b7fa2580dbc08cb823"
-
+  base_commit: bb127c74bd6301e3782e0ce4744161ae976a8481
+  merge_commit: e8dadd648483b6016913a9b7fa2580dbc08cb823
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "chat_interface.py must parse without syntax errors"
-
-  - id: fill_height_no_hardcoded_400
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ChatInterface(fill_height=True) chatbot height must equal Chatbot default, not 400"
-
-  - id: fill_height_height_not_conditional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Chatbot height must be the same regardless of fill_height value"
-
-  - id: init_svelte_scale_from_fill_height
-    type: fail_to_pass
-    origin: pr_diff
-    description: "init.svelte.ts sets scale on root column based on fill_height config"
-
-  - id: blocks_svelte_forwards_fill_height
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Blocks.svelte forwards fill_height in config to AppTree in >=2 contexts"
-
-  - id: types_ts_fill_height_in_appconfig
-    type: fail_to_pass
-    origin: pr_diff
-    description: "types.ts AppConfig interface must include fill_height property"
-
-  - id: fill_height_true_basic_functionality
-    type: pass_to_pass
-    origin: pr_diff
-    description: "ChatInterface(fill_height=True) preserves basic chatbot functionality"
-
-  - id: default_config_includes_fill_height
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Default ChatInterface config includes fill_height=True"
-
-  - id: fill_height_false_config_propagation
-    type: pass_to_pass
-    origin: pr_diff
-    description: "ChatInterface(fill_height=False) config reflects fill_height=False"
-
-  - id: chat_interface_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "chat_interface.py is substantive, not an empty stub"
-
-  - id: ruff_format_chat_interface
-    type: pass_to_pass
-    origin: agent_config
-    description: "Python code must be formatted with ruff"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "bb127c74bd6301e3782e0ce4744161ae976a8481"
-
-  - id: prettier_format_frontend_files
-    type: pass_to_pass
-    origin: agent_config
-    description: "Frontend code must be formatted with prettier (Blocks.svelte, init.svelte.ts, types.ts)"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "bb127c74bd6301e3782e0ce4744161ae976a8481"
-
-  - id: repo_chat_interface_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ChatInterface unit tests pass (from test-python.yml)"
-    source:
-      path: ".github/workflows/test-python.yml"
-      command: "python -m pytest test/test_chat_interface.py -k '<unit_tests>'"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified file (from test-python.yml)"
-    source:
-      path: ".github/workflows/test-python.yml"
-      command: "python -m ruff format --check gradio/chat_interface.py"
-
-  - id: repo_generate_skill
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's skill generation check passes (from test-hygiene.yml)"
-    source:
-      path: ".github/workflows/test-hygiene.yml"
-      command: "python scripts/generate_skill.py --check"
-
-  - id: repo_ruff_lint_chat_interface
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check passes on modified file (from test-python.yml)"
-    source:
-      path: ".github/workflows/test-python.yml"
-      command: "python -m ruff check gradio/chat_interface.py"
-
-  - id: repo_chatbot_component_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Chatbot component unit tests pass (from test-python.yml)"
-    source:
-      path: ".github/workflows/test-python.yml"
-      command: "python -m pytest test/components/test_chatbot.py::TestChatbot::test_component_functions"
-
-  - id: repo_chatbot_avatar_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Chatbot avatar tests pass (from test-python.yml)"
-    source:
-      path: ".github/workflows/test-python.yml"
-      command: "python -m pytest test/components/test_chatbot.py -k avatar"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: chat_interface.py must parse without syntax errors
+- id: fill_height_no_hardcoded_400
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChatInterface(fill_height=True) chatbot height must equal Chatbot default,
+    not 400
+- id: fill_height_height_not_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: Chatbot height must be the same regardless of fill_height value
+- id: init_svelte_scale_from_fill_height
+  type: fail_to_pass
+  origin: pr_diff
+  description: init.svelte.ts sets scale on root column based on fill_height config
+- id: blocks_svelte_forwards_fill_height
+  type: fail_to_pass
+  origin: pr_diff
+  description: Blocks.svelte forwards fill_height in config to AppTree in >=2 contexts
+- id: types_ts_fill_height_in_appconfig
+  type: fail_to_pass
+  origin: pr_diff
+  description: types.ts AppConfig interface must include fill_height property
+- id: fill_height_true_basic_functionality
+  type: pass_to_pass
+  origin: pr_diff
+  description: ChatInterface(fill_height=True) preserves basic chatbot functionality
+- id: default_config_includes_fill_height
+  type: pass_to_pass
+  origin: pr_diff
+  description: Default ChatInterface config includes fill_height=True
+- id: fill_height_false_config_propagation
+  type: pass_to_pass
+  origin: pr_diff
+  description: ChatInterface(fill_height=False) config reflects fill_height=False
+- id: chat_interface_not_stub
+  type: pass_to_pass
+  origin: static
+  description: chat_interface.py is substantive, not an empty stub
+- id: ruff_format_chat_interface
+  type: pass_to_pass
+  origin: agent_config
+  description: Python code must be formatted with ruff
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: bb127c74bd6301e3782e0ce4744161ae976a8481
+- id: prettier_format_frontend_files
+  type: pass_to_pass
+  origin: agent_config
+  description: Frontend code must be formatted with prettier (Blocks.svelte, init.svelte.ts,
+    types.ts)
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: bb127c74bd6301e3782e0ce4744161ae976a8481
+- id: repo_chat_interface_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ChatInterface unit tests pass (from test-python.yml)
+  source:
+    path: .github/workflows/test-python.yml
+    command: python -m pytest test/test_chat_interface.py -k '<unit_tests>'
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified file (from test-python.yml)
+  source:
+    path: .github/workflows/test-python.yml
+    command: python -m ruff format --check gradio/chat_interface.py
+- id: repo_generate_skill
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's skill generation check passes (from test-hygiene.yml)
+  source:
+    path: .github/workflows/test-hygiene.yml
+    command: python scripts/generate_skill.py --check
+- id: repo_ruff_lint_chat_interface
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on modified file (from test-python.yml)
+  source:
+    path: .github/workflows/test-python.yml
+    command: python -m ruff check gradio/chat_interface.py
+- id: repo_chatbot_component_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Chatbot component unit tests pass (from test-python.yml)
+  source:
+    path: .github/workflows/test-python.yml
+    command: python -m pytest test/components/test_chatbot.py::TestChatbot::test_component_functions
+- id: repo_chatbot_avatar_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Chatbot avatar tests pass (from test-python.yml)
+  source:
+    path: .github/workflows/test-python.yml
+    command: python -m pytest test/components/test_chatbot.py -k avatar
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "bb127c74bd6301e3782e0ce4744161ae976a8481"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: bb127c74bd6301e3782e0ce4744161ae976a8481
+distractors:
+- rule: 'Repository Structure: `gradio/` — Python source (backend), `js/` — frontend
+    code (Svelte/TypeScript)'
+  collision_type: architecture_boundary
+  why_distracting: The explicit separation of the Python backend (`gradio/`) and Svelte
+    frontend (`js/`) might cause an agent to try fixing the layout issue entirely
+    within one boundary (e.g., only changing Python component props or only modifying
+    Svelte CSS). The actual fix requires crossing this boundary by updating the Python
+    component, the TypeScript interface (`types.ts`), and the Svelte frontend logic
+    to properly pass and handle the `fill_height` configuration.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 7-12
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
+  The rules are straightforward, but the repository structure implies a strict separation
+  of concerns between backend and frontend that must be bridged to fix this specific
+  bug.

@@ -1,97 +1,121 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45079
-  base_commit: "57e84139542c8c297873f35fcd25f66ffcf132ae"
-  merge_commit: "4932e9721e230bea915341e7f04db32885b6c6af"
-
+  base_commit: 57e84139542c8c297873f35fcd25f66ffcf132ae
+  merge_commit: 4932e9721e230bea915341e7f04db32885b6c6af
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified modeling_utils.py must parse without syntax errors"
-
-  - id: import_transformers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Transformers library can be imported without errors"
-
-  - id: test_repo_check_dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo dummy objects check passes (CI check_dummies)"
-
-  - id: test_repo_check_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo init files check passes (CI check_inits)"
-
-  - id: test_repo_check_deps_table
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo dependency table check passes (CI check_deps_table)"
-
-  - id: test_repo_check_pipeline_typing
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo pipeline typing check passes (CI check_pipeline_typing)"
-
-  - id: resize_embeddings_weights_preserved_after_post_init
-    type: fail_to_pass
-    origin: pr_diff
-    description: "LM head weights are preserved through resize_token_embeddings() then post_init()"
-
-  - id: resize_embeddings_expands_and_shrinks_correctly
-    type: fail_to_pass
-    origin: pr_diff
-    description: "LM head weights preserved for both vocab expansion and shrinking"
-
-  - id: fix_is_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "The fix actually sets _is_hf_initialized, not a no-op"
-
-  - id: tied_embeddings_unaffected
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Models with tie_word_embeddings=True still work correctly"
-
-  - id: model_forward_pass_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Basic model inference still works after the fix"
-
-  - id: test_repo_check_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo public imports check passes (CI check_imports)"
-
-  - id: test_repo_check_config_docstrings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo config docstrings check passes (CI check_config_docstrings)"
-
-  - id: test_repo_check_config_attributes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo config attributes check passes (CI check_config_attributes)"
-
-  - id: test_repo_check_modeling_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo modeling file structure check passes (CI check_modeling_structure)"
-
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified modeling_utils.py must parse without syntax errors
+- id: import_transformers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Transformers library can be imported without errors
+- id: test_repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dummy objects check passes (CI check_dummies)
+- id: test_repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo init files check passes (CI check_inits)
+- id: test_repo_check_deps_table
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency table check passes (CI check_deps_table)
+- id: test_repo_check_pipeline_typing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pipeline typing check passes (CI check_pipeline_typing)
+- id: resize_embeddings_weights_preserved_after_post_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: LM head weights are preserved through resize_token_embeddings() then
+    post_init()
+- id: resize_embeddings_expands_and_shrinks_correctly
+  type: fail_to_pass
+  origin: pr_diff
+  description: LM head weights preserved for both vocab expansion and shrinking
+- id: fix_is_not_stub
+  type: pass_to_pass
+  origin: static
+  description: The fix actually sets _is_hf_initialized, not a no-op
+- id: tied_embeddings_unaffected
+  type: pass_to_pass
+  origin: repo_tests
+  description: Models with tie_word_embeddings=True still work correctly
+- id: model_forward_pass_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic model inference still works after the fix
+- id: test_repo_check_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo public imports check passes (CI check_imports)
+- id: test_repo_check_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo config docstrings check passes (CI check_config_docstrings)
+- id: test_repo_check_config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo config attributes check passes (CI check_config_attributes)
+- id: test_repo_check_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo modeling file structure check passes (CI check_modeling_structure)
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "57e84139542c8c297873f35fcd25f66ffcf132ae"
-
-  - rule: "Code style is enforced in the CI. You can install the style tools with `pip install -e .[quality]`. You can then run `make fixup` to apply style and consistency fixes to your code."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "34"
-      commit: "57e84139542c8c297873f35fcd25f66ffcf132ae"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 57e84139542c8c297873f35fcd25f66ffcf132ae
+- rule: Code style is enforced in the CI. You can install the style tools with `pip
+    install -e .[quality]`. You can then run `make fixup` to apply style and consistency
+    fixes to your code.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '34'
+    commit: 57e84139542c8c297873f35fcd25f66ffcf132ae
+distractors:
+- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits
+  collision_type: scope_ambiguity
+  why_distracting: The required fix is literally a single line of code (`new_lm_head._is_hf_initialized
+    = True`). An agent might misinterpret this critical bug fix as a 'tiny edit' or
+    'low-value busywork' and either refuse to generate the patch or artificially expand
+    the scope of the PR with unrelated cleanups to justify it.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 41-43
+- rule: Fail-closed behavior for agents - If coordination evidence cannot be found,
+    do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in an isolated evaluation environment without
+    access to live GitHub issues or coordination threads. Following the 'fail-closed'
+    directive would cause the agent to refuse to output the solution because it cannot
+    verify coordination evidence.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 55-58
+- rule: Copies and Modular Models - managing code duplication between model-specific
+    files
+  collision_type: architecture_boundary
+  why_distracting: The issue description mentions `gpt2`. The agent might be distracted
+    by the 'Copies and Modular Models' instructions and attempt to find and modify
+    model-specific files (like `modeling_gpt2.py`) or `# Copied from` blocks, rather
+    than correctly identifying that the fix belongs in the core `modeling_utils.py`
+    base file.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 60-65
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are located at the root level
+  and contain identical content. There are no hierarchical conflicts, but the duplication
+  means the agent will see the strict contribution policies twice, potentially reinforcing
+  the meta-confusion distractors.

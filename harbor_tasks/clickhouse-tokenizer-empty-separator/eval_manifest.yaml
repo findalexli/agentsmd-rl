@@ -4,125 +4,133 @@ source_pr:
   pr_number: 102093
   base_commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
   merge_commit: ab0bc159aa3820ebe906a2acacf1838d39f13481
-
 task_metadata:
   name: clickhouse-tokenizer-empty-separator
   title: Extend argument validation in splitByString tokenizer
-  description: Add validation to reject empty strings as separators in the splitByString tokenizer, throwing BAD_ARGUMENTS exception
-  tags: [c++, validation, error-handling, clickhouse]
-
+  description: Add validation to reject empty strings as separators in the splitByString
+    tokenizer, throwing BAD_ARGUMENTS exception
+  tags:
+  - c++
+  - validation
+  - error-handling
+  - clickhouse
 checks:
-  - id: test_empty_separator_validation_added
-    name: "Empty separator validation added"
-    description: "Verify that empty string check exists in the separator validation loop"
-    category: fail_to_pass
-    weight: 3
-
-  - id: test_error_message_improved
-    name: "Error message improved"
-    description: "Verify improved error message for empty separators argument"
-    category: pass_to_pass
-    weight: 1
-
-  - id: test_validation_in_loop
-    name: "Validation in correct location"
-    description: "Verify validation happens inside loop before emplace_back"
-    category: fail_to_pass
-    weight: 2
-
-  - id: test_allman_brace_style
-    name: "Allman brace style"
-    description: "Verify Allman brace style is used for new code blocks"
-    category: pass_to_pass
-    origin: agent_config
-    source: ".claude/CLAUDE.md, AGENTS.md: When writing C++ code, always use Allman-style braces"
-    weight: 1
-
-  - id: test_exception_uses_correct_error_code
-    name: "Correct error code used"
-    description: "Verify exception uses BAD_ARGUMENTS error code"
-    category: pass_to_pass
-    weight: 1
-
-  - id: test_code_compiles
-    name: "Code compiles"
-    description: "Verify modified code compiles successfully"
-    category: fail_to_pass
-    weight: 2
-
-  # Pass-to-pass tests from repo CI/CD
-  - id: test_repo_file_exists
-    name: "Repository files exist"
-    description: "Verify modified files exist in the repository structure"
-    category: pass_to_pass
-    origin: repo_tests
-    weight: 1
-
-  - id: test_repo_compiles_cmake
-    name: "CMake configuration works"
-    description: "Verify CMake can configure the project successfully"
-    category: pass_to_pass
-    origin: repo_tests
-    weight: 1
-
-  - id: test_repo_ninja_syntax
-    name: "Ninja build graph valid"
-    description: "Verify ninja build files are syntactically valid via dry run"
-    category: pass_to_pass
-    origin: repo_tests
-    weight: 1
-
-  - id: test_repo_cpp_syntax
-    name: "C++ syntax validation"
-    description: "Verify C++ code passes repo's basic syntax checks"
-    category: pass_to_pass
-    origin: repo_tests
-    weight: 1
-
-  - id: test_repo_clang_format_available
-    name: "clang-format can parse C++ code"
-    description: "Verify clang-format can parse the modified C++ file"
-    category: pass_to_pass
-    origin: repo_tests
-    weight: 1
-
-  - id: test_repo_sql_test_file_valid
-    name: "SQL test file valid"
-    description: "Verify SQL test file exists with proper test structure"
-    category: pass_to_pass
-    origin: repo_tests
-    weight: 1
-
+- id: test_empty_separator_validation_added
+  name: Empty separator validation added
+  description: Verify that empty string check exists in the separator validation loop
+  category: fail_to_pass
+  weight: 3
+- id: test_error_message_improved
+  name: Error message improved
+  description: Verify improved error message for empty separators argument
+  category: pass_to_pass
+  weight: 1
+- id: test_validation_in_loop
+  name: Validation in correct location
+  description: Verify validation happens inside loop before emplace_back
+  category: fail_to_pass
+  weight: 2
+- id: test_allman_brace_style
+  name: Allman brace style
+  description: Verify Allman brace style is used for new code blocks
+  category: pass_to_pass
+  origin: agent_config
+  source: '.claude/CLAUDE.md, AGENTS.md: When writing C++ code, always use Allman-style
+    braces'
+  weight: 1
+- id: test_exception_uses_correct_error_code
+  name: Correct error code used
+  description: Verify exception uses BAD_ARGUMENTS error code
+  category: pass_to_pass
+  weight: 1
+- id: test_code_compiles
+  name: Code compiles
+  description: Verify modified code compiles successfully
+  category: fail_to_pass
+  weight: 2
+- id: test_repo_file_exists
+  name: Repository files exist
+  description: Verify modified files exist in the repository structure
+  category: pass_to_pass
+  origin: repo_tests
+  weight: 1
+- id: test_repo_compiles_cmake
+  name: CMake configuration works
+  description: Verify CMake can configure the project successfully
+  category: pass_to_pass
+  origin: repo_tests
+  weight: 1
+- id: test_repo_ninja_syntax
+  name: Ninja build graph valid
+  description: Verify ninja build files are syntactically valid via dry run
+  category: pass_to_pass
+  origin: repo_tests
+  weight: 1
+- id: test_repo_cpp_syntax
+  name: C++ syntax validation
+  description: Verify C++ code passes repo's basic syntax checks
+  category: pass_to_pass
+  origin: repo_tests
+  weight: 1
+- id: test_repo_clang_format_available
+  name: clang-format can parse C++ code
+  description: Verify clang-format can parse the modified C++ file
+  category: pass_to_pass
+  origin: repo_tests
+  weight: 1
+- id: test_repo_sql_test_file_valid
+  name: SQL test file valid
+  description: Verify SQL test file exists with proper test structure
+  category: pass_to_pass
+  origin: repo_tests
+  weight: 1
 agent_config:
-  - rule: "Use Allman-style braces (opening brace on a new line)"
-    source: ".claude/CLAUDE.md, AGENTS.md"
-    type: programmatic
-    severity: error
-
-  - rule: "Write names of functions and methods as `f` instead of `f()` in comments/messages"
-    source: ".claude/CLAUDE.md, AGENTS.md"
-    type: rubric
-    severity: info
-
+- rule: Use Allman-style braces (opening brace on a new line)
+  source: .claude/CLAUDE.md, AGENTS.md
+  type: programmatic
+  severity: error
+- rule: Write names of functions and methods as `f` instead of `f()` in comments/messages
+  source: .claude/CLAUDE.md, AGENTS.md
+  type: rubric
+  severity: info
 rubric:
-  - rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "143"
-      commit: "7dad4d8f7af43976fa63a062d20225aad04842c8"
-
-  - rule: "When writing text such as documentation, comments, or commit messages, write names of functions and methods as `f` instead of `f()` - prefer it for mathematical purity when it refers a function itself rather than its application"
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "7"
-      commit: "7dad4d8f7af43976fa63a062d20225aad04842c8"
-
-  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks, such as: `MergeTree`"
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "5"
-      commit: "7dad4d8f7af43976fa63a062d20225aad04842c8"
-
+- rule: When writing C++ code, always use Allman-style braces (opening brace on a
+    new line)
+  source:
+    path: .claude/CLAUDE.md
+    lines: '143'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()` - prefer it for mathematical
+    purity when it refers a function itself rather than its application
+  source:
+    path: .claude/CLAUDE.md
+    lines: '7'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+- rule: 'When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`'
+  source:
+    path: .claude/CLAUDE.md
+    lines: '5'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
 scoring:
   max_score: 10
   passing_threshold: 8
+distractors:
+- rule: 'When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might incorrectly apply this markdown formatting rule
+    to C++ string literals used for exception messages, changing the existing `'{}'`
+    formatting to use backticks (`` `{}` ``), which violates the C++ error message
+    conventions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-5
+hierarchy_analysis: The AGENTS.md file contains general guidelines for documentation,
+  commit messages, and CI analysis. There are no specific C++ coding style rules in
+  the config hierarchy, so the agent must rely on the task instructions and existing
+  code context for C++ conventions.

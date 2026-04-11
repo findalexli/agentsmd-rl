@@ -1,223 +1,205 @@
 task:
   name: kotlin-swift-export-asyncsequence-compat
   source_pr: https://github.com/JetBrains/kotlin/pull/5779
-  description: Add asyncSequence(for:) compatibility function for Swift Export to provide source compatibility with KMP-NativeCoroutines
-
+  description: Add asyncSequence(for:) compatibility function for Swift Export to
+    provide source compatibility with KMP-NativeCoroutines
 checks:
-  # Fail-to-pass tests
-  - id: test_asyncsequence_function_exists
-    type: fail_to_pass
-    origin: agent_config
-    description: asyncSequence(for:) function must exist in KotlinCoroutineSupport.swift
-    source:
-      config_file: .ai/guidelines.md
-      rule: "Run tests after code changes"
-
-  - id: test_asyncsequence_has_deprecated_attribute
-    type: fail_to_pass
-    origin: agent_config
-    description: asyncSequence function must have @available(*, deprecated) attribute
-    source:
-      config_file: .ai/guidelines.md
-      rule: "Run tests after code changes"
-
-  - id: test_asyncsequence_calls_asasyncsequence
-    type: fail_to_pass
-    origin: agent_config
-    description: asyncSequence function body must call asAsyncSequence()
-    source:
-      config_file: .ai/guidelines.md
-      rule: "Run tests after code changes"
-
-  - id: test_asyncsequence_returns_kotlinflowsequence
-    type: fail_to_pass
-    origin: agent_config
-    description: asyncSequence function must return KotlinFlowSequence<T>
-    source:
-      config_file: .ai/guidelines.md
-      rule: "Run tests after code changes"
-
-  - id: test_asyncsequence_has_documentation_comment
-    type: fail_to_pass
-    origin: agent_config
-    description: asyncSequence function must have documentation comment
-    source:
-      config_file: .ai/guidelines.md
-      rule: "Run tests after code changes"
-
-  # Pass-to-pass tests - Static file content checks (origin: static)
-  - id: test_file_exists
-    type: pass_to_pass
-    origin: static
-    description: Target Swift file exists
-
-  - id: test_swift_file_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: Swift file syntax should be valid (skipped - no swiftc in container)
-
-  - id: test_swift_braces_balanced
-    type: pass_to_pass
-    origin: static
-    description: Swift file has balanced braces, parentheses, and brackets
-
-  - id: test_swift_imports_valid
-    type: pass_to_pass
-    origin: static
-    description: Swift file has valid import statements
-
-  - id: test_swift_no_trailing_whitespace
-    type: pass_to_pass
-    origin: static
-    description: Swift file has minimal trailing whitespace issues
-
-  - id: test_swift_function_declarations_valid
-    type: pass_to_pass
-    origin: static
-    description: Swift file has syntactically valid function declarations
-
-  - id: test_swift_comments_valid
-    type: pass_to_pass
-    origin: static
-    description: Swift file has valid comment syntax and balanced block comments
-
-  - id: test_swift_class_struct_protocol_valid
-    type: pass_to_pass
-    origin: static
-    description: Swift file has valid class/struct/protocol declarations
-
-  - id: test_file_not_empty
-    type: pass_to_pass
-    origin: static
-    description: Swift file has substantial content and is not empty
-
-  # Pass-to-pass tests - Repository CI/CD command checks (origin: repo_tests)
-  - id: test_repo_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo git repository status command works
-    command: "git status --short"
-
-  - id: test_repo_git_fsck
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo git repository passes integrity check
-    command: "git fsck --full"
-
-  - id: test_repo_swift_resources_exist
-    type: pass_to_pass
-    origin: static
-    description: All required Swift resource files exist
-    command: "ls native/swift/swift-export-standalone/resources/swift/"
-
-  - id: test_repo_swift_files_have_content
-    type: pass_to_pass
-    origin: static
-    description: Swift resource files have substantial content and valid structure
-    command: "wc -l native/swift/swift-export-standalone/resources/swift/*.swift"
-
-  # Enriched CI/CD Pass-to-Pass Tests (actual subprocess.run() commands)
-  - id: test_repo_gradle_help
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Gradle build system responds to help command
-    command: "./gradlew help --quiet"
-
-  - id: test_repo_git_log_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo git log command works and shows recent commits
-    command: "git log --oneline -5"
-
-  - id: test_repo_swift_file_line_counts
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Swift files have expected line counts using wc
-    command: "wc -l native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift"
-
-  - id: test_repo_grep_finds_swift_functions
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Swift files contain expected function patterns via grep
-    command: "grep -c 'public func' native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift"
-
-  - id: test_repo_swift_imports_valid_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Swift files have valid import statements via grep
-    command: "grep -E '^import|^@_implementationOnly import' native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift"
-
-  - id: test_repo_git_diff_base_commit
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo git diff can compare with parent commit
-    command: "git diff HEAD~1 --stat"
-
-  # New enriched CI/CD Pass-to-Pass Tests (added during enrichment)
-  - id: test_repo_git_show_commit
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo git show displays commit info
-    command: "git show --stat -s HEAD"
-
-  - id: test_repo_swift_file_line_endings
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Swift files use consistent Unix line endings
-    command: "cat -A native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift"
-
-  - id: test_repo_swift_file_valid_line_lengths
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Swift files have reasonable line lengths
-    command: 'awk ''length > 200 { print NR ": " $0 }'' native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift'
-
-  - id: test_repo_resources_dir_listing
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Swift resources directory can be listed
-    command: "ls -la native/swift/swift-export-standalone/resources/swift"
-
-  - id: test_repo_swift_files_not_empty
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Swift files are not empty using find command
-    command: "find native/swift/swift-export-standalone/resources/swift -name '*.swift' -type f ! -empty"
-
-  - id: test_repo_git_branch_list
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo git branch command works
-    command: "git branch -a"
-
-  - id: test_repo_git_rev_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo git rev-parse shows current commit
-    command: "git rev-parse --short HEAD"
-
-# Rubric for soft/subjective checks (from agent configs)
+- id: test_asyncsequence_function_exists
+  type: fail_to_pass
+  origin: agent_config
+  description: asyncSequence(for:) function must exist in KotlinCoroutineSupport.swift
+  source:
+    config_file: .ai/guidelines.md
+    rule: Run tests after code changes
+- id: test_asyncsequence_has_deprecated_attribute
+  type: fail_to_pass
+  origin: agent_config
+  description: asyncSequence function must have @available(*, deprecated) attribute
+  source:
+    config_file: .ai/guidelines.md
+    rule: Run tests after code changes
+- id: test_asyncsequence_calls_asasyncsequence
+  type: fail_to_pass
+  origin: agent_config
+  description: asyncSequence function body must call asAsyncSequence()
+  source:
+    config_file: .ai/guidelines.md
+    rule: Run tests after code changes
+- id: test_asyncsequence_returns_kotlinflowsequence
+  type: fail_to_pass
+  origin: agent_config
+  description: asyncSequence function must return KotlinFlowSequence<T>
+  source:
+    config_file: .ai/guidelines.md
+    rule: Run tests after code changes
+- id: test_asyncsequence_has_documentation_comment
+  type: fail_to_pass
+  origin: agent_config
+  description: asyncSequence function must have documentation comment
+  source:
+    config_file: .ai/guidelines.md
+    rule: Run tests after code changes
+- id: test_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Target Swift file exists
+- id: test_swift_file_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Swift file syntax should be valid (skipped - no swiftc in container)
+- id: test_swift_braces_balanced
+  type: pass_to_pass
+  origin: static
+  description: Swift file has balanced braces, parentheses, and brackets
+- id: test_swift_imports_valid
+  type: pass_to_pass
+  origin: static
+  description: Swift file has valid import statements
+- id: test_swift_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: Swift file has minimal trailing whitespace issues
+- id: test_swift_function_declarations_valid
+  type: pass_to_pass
+  origin: static
+  description: Swift file has syntactically valid function declarations
+- id: test_swift_comments_valid
+  type: pass_to_pass
+  origin: static
+  description: Swift file has valid comment syntax and balanced block comments
+- id: test_swift_class_struct_protocol_valid
+  type: pass_to_pass
+  origin: static
+  description: Swift file has valid class/struct/protocol declarations
+- id: test_file_not_empty
+  type: pass_to_pass
+  origin: static
+  description: Swift file has substantial content and is not empty
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git repository status command works
+  command: git status --short
+- id: test_repo_git_fsck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git repository passes integrity check
+  command: git fsck --full
+- id: test_repo_swift_resources_exist
+  type: pass_to_pass
+  origin: static
+  description: All required Swift resource files exist
+  command: ls native/swift/swift-export-standalone/resources/swift/
+- id: test_repo_swift_files_have_content
+  type: pass_to_pass
+  origin: static
+  description: Swift resource files have substantial content and valid structure
+  command: wc -l native/swift/swift-export-standalone/resources/swift/*.swift
+- id: test_repo_gradle_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Gradle build system responds to help command
+  command: ./gradlew help --quiet
+- id: test_repo_git_log_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git log command works and shows recent commits
+  command: git log --oneline -5
+- id: test_repo_swift_file_line_counts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Swift files have expected line counts using wc
+  command: wc -l native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift
+- id: test_repo_grep_finds_swift_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Swift files contain expected function patterns via grep
+  command: grep -c 'public func' native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift
+- id: test_repo_swift_imports_valid_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Swift files have valid import statements via grep
+  command: grep -E '^import|^@_implementationOnly import' native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift
+- id: test_repo_git_diff_base_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git diff can compare with parent commit
+  command: git diff HEAD~1 --stat
+- id: test_repo_git_show_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git show displays commit info
+  command: git show --stat -s HEAD
+- id: test_repo_swift_file_line_endings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Swift files use consistent Unix line endings
+  command: cat -A native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift
+- id: test_repo_swift_file_valid_line_lengths
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Swift files have reasonable line lengths
+  command: 'awk ''length > 200 { print NR ": " $0 }'' native/swift/swift-export-standalone/resources/swift/KotlinCoroutineSupport.swift'
+- id: test_repo_resources_dir_listing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Swift resources directory can be listed
+  command: ls -la native/swift/swift-export-standalone/resources/swift
+- id: test_repo_swift_files_not_empty
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Swift files are not empty using find command
+  command: find native/swift/swift-export-standalone/resources/swift -name '*.swift'
+    -type f ! -empty
+- id: test_repo_git_branch_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git branch command works
+  command: git branch -a
+- id: test_repo_git_rev_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git rev-parse shows current commit
+  command: git rev-parse --short HEAD
 rubric:
-  - rule: "Function provides proper migration path from KMP-NativeCoroutines"
-    description: "The function should be clearly marked as deprecated with guidance to use asAsyncSequence()"
-    source:
-      path: ".ai/guidelines.md"
-      lines: "77-86"
-      commit: "715bf60a9a2580d55253eb3bfebcd9be5e27a2aa"
-    reference: "@available(*, deprecated, message: \"Use `asAsyncSequence()` from Swift Export\")"
-
-  - rule: "Code follows Swift naming conventions"
-    description: "Function name and parameters follow Swift API design guidelines"
-    source:
-      path: ".ai/guidelines.md"
-      lines: "28-40"
-      commit: "715bf60a9a2580d55253eb3bfebcd9be5e27a2aa"
-    reference: "public func asyncSequence<T>(for flow: any KotlinTypedFlow<T>) -> KotlinFlowSequence<T>"
-
-  - rule: "Documentation explains migration context"
-    description: "Documentation comment should explain why this function exists and when to replace it"
-    source:
-      path: ".ai/guidelines.md"
-      lines: "77-86"
-      commit: "715bf60a9a2580d55253eb3bfebcd9be5e27a2aa"
-    reference: "This function provides source compatibility with KMP-NativeCoroutines during the migration to Swift Export"
+- rule: Function provides proper migration path from KMP-NativeCoroutines
+  description: The function should be clearly marked as deprecated with guidance to
+    use asAsyncSequence()
+  source:
+    path: .ai/guidelines.md
+    lines: 77-86
+    commit: 715bf60a9a2580d55253eb3bfebcd9be5e27a2aa
+  reference: '@available(*, deprecated, message: "Use `asAsyncSequence()` from Swift
+    Export")'
+- rule: Code follows Swift naming conventions
+  description: Function name and parameters follow Swift API design guidelines
+  source:
+    path: .ai/guidelines.md
+    lines: 28-40
+    commit: 715bf60a9a2580d55253eb3bfebcd9be5e27a2aa
+  reference: 'public func asyncSequence<T>(for flow: any KotlinTypedFlow<T>) -> KotlinFlowSequence<T>'
+- rule: Documentation explains migration context
+  description: Documentation comment should explain why this function exists and when
+    to replace it
+  source:
+    path: .ai/guidelines.md
+    lines: 77-86
+    commit: 715bf60a9a2580d55253eb3bfebcd9be5e27a2aa
+  reference: This function provides source compatibility with KMP-NativeCoroutines
+    during the migration to Swift Export
+distractors:
+- rule: 'languages: [Kotlin, Java]'
+  collision_type: scope_ambiguity
+  why_distracting: The config specifies the project languages are Kotlin and Java,
+    but the task explicitly requires editing a Swift file (`KotlinCoroutineSupport.swift`).
+    An agent might hesitate to write Swift code or attempt to implement the compatibility
+    layer in Kotlin instead.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+hierarchy_analysis: The provided config files (`CLAUDE.md` and `AGENTS.md`) act primarily
+  as pointers to external guideline files (e.g., `.ai/guidelines.md`) which are not
+  present in the context. They do not contain explicit coding style, naming, or architectural
+  rules. The only constraints present are metadata about the project's primary languages
+  and build system.

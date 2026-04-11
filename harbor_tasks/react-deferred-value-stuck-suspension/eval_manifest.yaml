@@ -1,107 +1,99 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 36134
-  base_commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
-  merge_commit: "c0d218f0f3e02ed581f74096e56baa947213135d"
-
+  base_commit: ed69815cebae33b0326cc69faa90f813bb924f3b
+  merge_commit: c0d218f0f3e02ed581f74096e56baa947213135d
 checks:
-  - id: deferred_value_catches_up
-    type: fail_to_pass
-    origin: pr_diff
-    description: "useDeferredValue catches up when a suspension is resolved during the same render"
-
-  - id: deferred_value_catches_up_variant
-    type: fail_to_pass
-    origin: pr_diff
-    description: "useDeferredValue catches up with different parameter values"
-
-  - id: existing_deferred_value_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing deferred value tests still pass"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint passes on base commit"
-
-  - id: test_repo_flow
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Flow typecheck passes on base commit"
-
-  - id: test_repo_reconciler_hooks_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's react-reconciler hooks basic tests pass on base commit"
-
-  - id: test_repo_version_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's version check passes on base commit"
-
-  - id: test_repo_license_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's license check passes on base commit"
-
-  - id: test_repo_flags_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's feature flags check passes on base commit"
-
-  - id: test_repo_full_deferred_value_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Full ReactDeferredValue test suite passes on base commit"
-
-  - id: test_repo_hooks_useDeferredValue
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactHooksWithNoopRenderer useDeferredValue tests pass on base commit"
-
-  - id: test_repo_transition_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactTransition basic tests pass on base commit"
-
-  - id: test_repo_suspense_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactSuspenseWithNoopRenderer basic tests pass on base commit"
-
-  - id: prettier_formatting
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed file must pass prettier formatting"
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "10"
-      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
-
+- id: deferred_value_catches_up
+  type: fail_to_pass
+  origin: pr_diff
+  description: useDeferredValue catches up when a suspension is resolved during the
+    same render
+- id: deferred_value_catches_up_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: useDeferredValue catches up with different parameter values
+- id: existing_deferred_value_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing deferred value tests still pass
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on base commit
+- id: test_repo_flow
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Flow typecheck passes on base commit
+- id: test_repo_reconciler_hooks_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's react-reconciler hooks basic tests pass on base commit
+- id: test_repo_version_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's version check passes on base commit
+- id: test_repo_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's license check passes on base commit
+- id: test_repo_flags_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's feature flags check passes on base commit
+- id: test_repo_full_deferred_value_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full ReactDeferredValue test suite passes on base commit
+- id: test_repo_hooks_useDeferredValue
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactHooksWithNoopRenderer useDeferredValue tests pass on base commit
+- id: test_repo_transition_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactTransition basic tests pass on base commit
+- id: test_repo_suspense_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactSuspenseWithNoopRenderer basic tests pass on base commit
+- id: prettier_formatting
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed file must pass prettier formatting
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '10'
+    commit: ed69815cebae33b0326cc69faa90f813bb924f3b
 rubric:
-  - rule: "Run yarn prettier to format code before submitting changes."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "10"
-      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
-
-  - rule: "Run yarn linc to check for lint issues and fix them before committing."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "11"
-      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
-
-  - rule: "When running tests, use --silent flag to limit output to failures only."
-    source:
-      path: ".claude/skills/test/SKILL.md"
-      lines: "40"
-      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
-
-  - rule: "When running tests, use --no-watchman flag to avoid sandboxing issues."
-    source:
-      path: ".claude/skills/test/SKILL.md"
-      lines: "41"
-      commit: "ed69815cebae33b0326cc69faa90f813bb924f3b"
+- rule: Run yarn prettier to format code before submitting changes.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '10'
+    commit: ed69815cebae33b0326cc69faa90f813bb924f3b
+- rule: Run yarn linc to check for lint issues and fix them before committing.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '11'
+    commit: ed69815cebae33b0326cc69faa90f813bb924f3b
+- rule: When running tests, use --silent flag to limit output to failures only.
+  source:
+    path: .claude/skills/test/SKILL.md
+    lines: '40'
+    commit: ed69815cebae33b0326cc69faa90f813bb924f3b
+- rule: When running tests, use --no-watchman flag to avoid sandboxing issues.
+  source:
+    path: .claude/skills/test/SKILL.md
+    lines: '41'
+    commit: ed69815cebae33b0326cc69faa90f813bb924f3b
+- rule: React core files are located outside the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: The gold solution modifies `packages/react-reconciler/src/ReactFiberWorkLoop.js`,
+    which is outside the `/compiler/` directory, aligning with the monorepo structure
+    for React core.
+  category: architecture
+hierarchy_analysis: Only the root CLAUDE.md file is present, providing basic monorepo
+  structure guidance. There are no conflicting rules or deeper file guidance to override.

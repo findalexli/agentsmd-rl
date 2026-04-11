@@ -1,82 +1,125 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44970
-  base_commit: "b3d7942fbaedda791668d7fe42eaaa323ed7a089"
-  merge_commit: "c3b41c6c57be42e5dc2834af25c0c15be98a6678"
-
+  base_commit: b3d7942fbaedda791668d7fe42eaaa323ed7a089
+  merge_commit: c3b41c6c57be42e5dc2834af25c0c15be98a6678
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without errors"
-
-  - id: misaligned_weight_returns_false
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_can_use_grouped_mm returns False when weight tensor is not 16-byte aligned"
-
-  - id: misaligned_input_returns_false
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_can_use_grouped_mm returns False when input tensor is not 16-byte aligned"
-
-  - id: force16bytes_removed_from_mappings
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Force16BytesAlignment no longer used in any weight conversion mapping"
-
-  - id: aligned_tensors_return_true
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Aligned tensors of various sizes still return True from _can_use_grouped_mm"
-
-  - id: no_grouped_mm_returns_false
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Returns False when grouped_mm API is unavailable (regression guard)"
-
-  - id: conversion_mapping_builds
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Weight conversion mapping loads cleanly with known MoE models"
-
-  - id: ruff_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed files pass ruff linter"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "b3d7942fbaedda791668d7fe42eaaa323ed7a089"
-
-  # Repo CI tests (pass_to_pass gates from actual CI commands)
-  - id: ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Changed files pass ruff format check (make style)"
-
-  - id: moe_module_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "MoE integration module imports successfully"
-
-  - id: conversion_mapping_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Conversion mapping module imports and builds mappings"
-
-  - id: core_model_loading_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Core model loading classes import successfully"
-
-  - id: grouped_mm_functional
-    type: pass_to_pass
-    origin: repo_tests
-    description: "_can_use_grouped_mm works with aligned tensors"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: misaligned_weight_returns_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: _can_use_grouped_mm returns False when weight tensor is not 16-byte
+    aligned
+- id: misaligned_input_returns_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: _can_use_grouped_mm returns False when input tensor is not 16-byte
+    aligned
+- id: force16bytes_removed_from_mappings
+  type: fail_to_pass
+  origin: pr_diff
+  description: Force16BytesAlignment no longer used in any weight conversion mapping
+- id: aligned_tensors_return_true
+  type: pass_to_pass
+  origin: pr_diff
+  description: Aligned tensors of various sizes still return True from _can_use_grouped_mm
+- id: no_grouped_mm_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: Returns False when grouped_mm API is unavailable (regression guard)
+- id: conversion_mapping_builds
+  type: pass_to_pass
+  origin: pr_diff
+  description: Weight conversion mapping loads cleanly with known MoE models
+- id: ruff_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files pass ruff linter
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: b3d7942fbaedda791668d7fe42eaaa323ed7a089
+- id: ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Changed files pass ruff format check (make style)
+- id: moe_module_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: MoE integration module imports successfully
+- id: conversion_mapping_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Conversion mapping module imports and builds mappings
+- id: core_model_loading_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core model loading classes import successfully
+- id: grouped_mm_functional
+  type: pass_to_pass
+  origin: repo_tests
+  description: _can_use_grouped_mm works with aligned tensors
 rubric:
-  - rule: "The fix modifies only necessary files (moe.py, conversion_mapping.py, core_model_loading.py, vlm_tester.py) without touching unrelated code. The gold solution removes Force16BytesAlignment class and its usages, and adds alignment checks directly in _can_use_grouped_mm - this is a minimal, focused change that follows the guideline to keep PRs brief."
-    reference: "Gold solution modifies: src/transformers/integrations/moe.py, src/transformers/conversion_mapping.py, src/transformers/core_model_loading.py, tests/vlm_tester.py, docs/source/en/weightconverter.md. No changes to CLAUDE.md or copilot-instructions.md needed."
+- rule: The fix modifies only necessary files (moe.py, conversion_mapping.py, core_model_loading.py,
+    vlm_tester.py) without touching unrelated code. The gold solution removes Force16BytesAlignment
+    class and its usages, and adds alignment checks directly in _can_use_grouped_mm
+    - this is a minimal, focused change that follows the guideline to keep PRs brief.
+  reference: 'Gold solution modifies: src/transformers/integrations/moe.py, src/transformers/conversion_mapping.py,
+    src/transformers/core_model_loading.py, tests/vlm_tester.py, docs/source/en/weightconverter.md.
+    No changes to CLAUDE.md or copilot-instructions.md needed.'
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: In an automated evaluation or benchmark environment, the agent
+    is expected to generate the fix immediately. Following this rule and refusing
+    to proceed due to a lack of human coordination evidence will cause the agent to
+    fail the task by not producing a patch.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 49-52
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed;
+    a human submitter must understand and defend the change.'
+  collision_type: meta_confusion
+  why_distracting: The agent is acting autonomously in a sandbox. It cannot involve
+    a human submitter. Adhering to this rule might cause the agent to output conversational
+    text asking for a human to take over, rather than outputting the required code
+    solution.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 41-47
+- rule: 'Mandatory duplicate-work checks: Before proposing a PR, check for overlapping
+    open PRs and issue ownership using the GitHub CLI.'
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run `gh issue view` or `gh pr list`
+    to check for duplicates. In an isolated test environment without network access
+    or GitHub credentials, these commands will fail, wasting execution time and potentially
+    derailing the agent's context.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 26-31
+- rule: 'Copies and Modular Models: Avoid direct inheritance between model-specific
+    files in `src/transformers/models/` and use `modular_<name>.py` or `# Copied from`.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying `src/transformers/integrations/moe.py` and
+    `src/transformers/conversion_mapping.py`. It might mistakenly think these files
+    fall under the modular models policy and attempt to create a `modular_moe.py`
+    file or look for `# Copied from` statements, which is incorrect for integration
+    and core files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 56-61
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical content regarding
+  agent contribution policies. These files are designed to govern real-world agent
+  behavior on the Hugging Face repository, explicitly forbidding autonomous PR creation
+  without human coordination. In a benchmark context, these rules act as a massive
+  meta-distractor, as the agent must ignore the repository's explicit instructions
+  to 'fail-closed' and instead act autonomously to generate the patch.

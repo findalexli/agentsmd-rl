@@ -2,78 +2,104 @@ source_pr:
   owner: MystenLabs
   repo: sui
   number: 26123
-  title: "test for coin res with shared object"
+  title: test for coin res with shared object
   merge_commit: a9773b63b34983935554286a637dc8a62b2233c8
   base_commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
-
 agent_config: []
-
 rubric:
-  - rule: "Do NOT comment the obvious. Comments should explain non-obvious algorithms, business logic, temporary timeouts/thresholds, complex calculations, subtle race conditions, and assumptions. Do NOT comment simple variable assignments, standard library usage, self-descriptive function calls, or basic control flow."
-    source:
-      path: "CLAUDE.md"
-      lines: "116-131"
-      commit: "bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2"
-
-  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions. Fix the underlying issues instead."
-    source:
-      path: "CLAUDE.md"
-      lines: "113"
-      commit: "bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2"
-
-  - rule: "For async tests, use #[tokio::test] instead of #[test]."
-    source:
-      path: "CLAUDE.md"
-      lines: "114"
-      commit: "bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2"
-
+- rule: Do NOT comment the obvious. Comments should explain non-obvious algorithms,
+    business logic, temporary timeouts/thresholds, complex calculations, subtle race
+    conditions, and assumptions. Do NOT comment simple variable assignments, standard
+    library usage, self-descriptive function calls, or basic control flow.
+  source:
+    path: CLAUDE.md
+    lines: 116-131
+    commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
+- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions.
+    Fix the underlying issues instead.'
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
+- rule: 'For async tests, use #[tokio::test] instead of #[test].'
+  source:
+    path: CLAUDE.md
+    lines: '114'
+    commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
 checks:
-  - id: test_rust_syntax_valid
-    type: pass_to_pass
-    origin: implementation
-    description: Target Rust file has valid syntax and structure
-
-  - id: test_no_panic_assert_in_code
-    type: fail_to_pass
-    origin: implementation
-    description: Old panic-inducing assert! removed from execution_time_estimator
-
-  - id: test_defensive_timing_handling_exists
-    type: fail_to_pass
-    origin: implementation
-    description: Defensive logic added to handle excess timings by slicing trailing entries
-
-  - id: test_warning_log_for_excess_timings
-    type: fail_to_pass
-    origin: implementation
-    description: Warning log added when execution produces more timings than original commands
-
-  - id: test_epoch_store_check_preserved
-    type: pass_to_pass
-    origin: implementation
-    description: Epoch store upgrade check preserved and positioned correctly
-
-  - id: test_function_signature_unchanged
-    type: pass_to_pass
-    origin: implementation
-    description: Function signature remains compatible with existing callers
-
-  - id: test_cargo_fmt_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's Rust code passes cargo fmt --check
-
-  - id: test_target_file_has_tests_module
-    type: pass_to_pass
-    origin: repo_tests
-    description: Target file contains test module with unit tests
-
-  - id: test_cargo_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-core Cargo.toml is valid and readable
-
-  - id: test_repo_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repository has clean git status
+- id: test_rust_syntax_valid
+  type: pass_to_pass
+  origin: implementation
+  description: Target Rust file has valid syntax and structure
+- id: test_no_panic_assert_in_code
+  type: fail_to_pass
+  origin: implementation
+  description: Old panic-inducing assert! removed from execution_time_estimator
+- id: test_defensive_timing_handling_exists
+  type: fail_to_pass
+  origin: implementation
+  description: Defensive logic added to handle excess timings by slicing trailing
+    entries
+- id: test_warning_log_for_excess_timings
+  type: fail_to_pass
+  origin: implementation
+  description: Warning log added when execution produces more timings than original
+    commands
+- id: test_epoch_store_check_preserved
+  type: pass_to_pass
+  origin: implementation
+  description: Epoch store upgrade check preserved and positioned correctly
+- id: test_function_signature_unchanged
+  type: pass_to_pass
+  origin: implementation
+  description: Function signature remains compatible with existing callers
+- id: test_cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code passes cargo fmt --check
+- id: test_target_file_has_tests_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file contains test module with unit tests
+- id: test_cargo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-core Cargo.toml is valid and readable
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository has clean git status
+distractors:
+- rule: '`cargo xclippy does not recognize -p option`'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run `cargo xclippy -p sui-core` to check
+    its work, which will fail because `cargo xclippy` doesn't support `-p`. This could
+    lead the agent down a rabbit hole of trying to fix the command or the linting
+    setup.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 48-49
+- rule: skip simulation tests as they may cause false negatives with `cargo nextest`
+  collision_type: would_cause_bug
+  why_distracting: The agent might run `cargo nextest run` without setting `SUI_SKIP_SIMTESTS=1`,
+    which can cause false negatives (spurious test failures) and distract the agent
+    from the actual task.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 31-32
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see the license header requirement and try to prepend
+    it to `execution_time_estimator.rs` if it doesn't see one, even though it's not
+    a new file.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 18-21
+hierarchy_analysis: The repository has a root CLAUDE.md and AGENTS.md. The AGENTS.md
+  defers to CLAUDE.md. The root CLAUDE.md provides essential commands for building,
+  testing, and linting, along with high-level architectural context. There are no
+  conflicting rules between the provided config files.

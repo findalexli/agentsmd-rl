@@ -1,80 +1,80 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13205
-  base_commit: "0cbbbce8348cbb3254d4f93c48580151fe048daf"
-  merge_commit: "348327f6d7014feaf3f0b4cfb7e2653a1078ea33"
-
+  base_commit: 0cbbbce8348cbb3254d4f93c48580151fe048daf
+  merge_commit: 348327f6d7014feaf3f0b4cfb7e2653a1078ea33
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without errors"
-
-  - id: dict_invalid_response_detected
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dict validation_response with is_valid=False must be detected as invalid"
-
-  - id: dict_invalid_response_data_preserved
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Invalid dict response must appear in returned validation_data list"
-
-  - id: dict_invalid_varied_inputs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple different dict inputs with is_valid=False all detected"
-
-  - id: list_validation_response_works
-    type: pass_to_pass
-    origin: pr_diff
-    description: "List validation responses are still processed correctly"
-
-  - id: dict_valid_fallthrough
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Dict without is_valid=False falls through as valid"
-
-  - id: ruff_format_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified Python file passes ruff linting"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "0cbbbce8348cbb3254d4f93c48580151fe048daf"
-
-  # Repo CI tests (pass_to_pass) - added via p2p_enrichment
-  - id: test_repo_ruff_check_queueing
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint passes on modified file gradio/queueing.py"
-
-  - id: test_repo_ruff_format_check_queueing
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified file gradio/queueing.py"
-
-  - id: test_repo_py_compile_queueing
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file gradio/queueing.py compiles without syntax errors"
-
-  - id: test_repo_ruff_check_gradio_core
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint passes on core gradio/ directory"
-
-  - id: test_repo_block_function_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Related file gradio/block_function.py compiles without errors"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: dict_invalid_response_detected
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dict validation_response with is_valid=False must be detected as invalid
+- id: dict_invalid_response_data_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Invalid dict response must appear in returned validation_data list
+- id: dict_invalid_varied_inputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple different dict inputs with is_valid=False all detected
+- id: list_validation_response_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: List validation responses are still processed correctly
+- id: dict_valid_fallthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: Dict without is_valid=False falls through as valid
+- id: ruff_format_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified Python file passes ruff linting
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 0cbbbce8348cbb3254d4f93c48580151fe048daf
+- id: test_repo_ruff_check_queueing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint passes on modified file gradio/queueing.py
+- id: test_repo_ruff_format_check_queueing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified file gradio/queueing.py
+- id: test_repo_py_compile_queueing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file gradio/queueing.py compiles without syntax errors
+- id: test_repo_ruff_check_gradio_core
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint passes on core gradio/ directory
+- id: test_repo_block_function_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Related file gradio/block_function.py compiles without errors
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "0cbbbce8348cbb3254d4f93c48580151fe048daf"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 0cbbbce8348cbb3254d4f93c48580151fe048daf
+distractors:
+- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits (single
+    typo, isolated lint cleanup, one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The fix requires changing a single variable name (`validation_data`
+    to `validation_response`). An agent might misinterpret this as a 'tiny edit' or
+    'typo' and refuse to make the change or try to bundle it with unrelated cleanups,
+    but it is actually a critical bug fix for validation response handling.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 46-48
+hierarchy_analysis: The repository has a single root-level `AGENTS.md` file containing
+  general PR guidelines, style rules, and agent-specific contribution policies. No
+  deeper config files exist to override these rules.

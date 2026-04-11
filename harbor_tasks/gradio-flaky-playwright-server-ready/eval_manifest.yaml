@@ -1,77 +1,101 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13049
-  base_commit: "a35f5896e43d2585d9206e8256b4d7e321fcd0fe"
-  merge_commit: "9ea8359458afbbae5431e581486fa739b85366a2"
-
+  base_commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
+  merge_commit: 9ea8359458afbbae5431e581486fa739b85366a2
 checks:
-  - id: verify_rejects_tcp_only_server
-    type: fail_to_pass
-    origin: pr_diff
-    description: "verify_server_startup rejects TCP-only server that doesn't speak HTTP"
-
-  - id: verify_rejects_500_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "verify_server_startup rejects server returning HTTP 500"
-
-  - id: verify_default_timeout_increased
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Default timeout increased from 5s to handle slower startups"
-
-  - id: ts_http_readiness_polling
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TypeScript app-launcher uses HTTP polling for server readiness"
-
-  - id: verify_accepts_healthy_server
-    type: pass_to_pass
-    origin: pr_diff
-    description: "verify_server_startup accepts a healthy HTTP server returning 200"
-
-  - id: verify_returns_false_no_server
-    type: pass_to_pass
-    origin: pr_diff
-    description: "verify_server_startup returns False when no server is running"
-
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python file parses without syntax errors"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository Python linting (ruff) passes on modified file"
-
-  - id: test_repo_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository Python format check (ruff) passes on modified file"
-
-  - id: test_repo_pytest_http_server
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository HTTP server tests pass"
-
-  - id: test_repo_pytest_analytics
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository analytics tests pass"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository Python typecheck (ty) passes on modified file"
-
-  - id: test_repo_ts_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript file exists and has expected structure"
-
+- id: verify_rejects_tcp_only_server
+  type: fail_to_pass
+  origin: pr_diff
+  description: verify_server_startup rejects TCP-only server that doesn't speak HTTP
+- id: verify_rejects_500_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: verify_server_startup rejects server returning HTTP 500
+- id: verify_default_timeout_increased
+  type: fail_to_pass
+  origin: pr_diff
+  description: Default timeout increased from 5s to handle slower startups
+- id: ts_http_readiness_polling
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypeScript app-launcher uses HTTP polling for server readiness
+- id: verify_accepts_healthy_server
+  type: pass_to_pass
+  origin: pr_diff
+  description: verify_server_startup accepts a healthy HTTP server returning 200
+- id: verify_returns_false_no_server
+  type: pass_to_pass
+  origin: pr_diff
+  description: verify_server_startup returns False when no server is running
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python file parses without syntax errors
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository Python linting (ruff) passes on modified file
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository Python format check (ruff) passes on modified file
+- id: test_repo_pytest_http_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository HTTP server tests pass
+- id: test_repo_pytest_analytics
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository analytics tests pass
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository Python typecheck (ty) passes on modified file
+- id: test_repo_ts_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript file exists and has expected structure
 rubric:
-  - rule: "Code changes should follow repository style: use proper imports (http.client.HTTPConnection), float defaults for timeouts (15.0), triple-quoted docstrings with explanation, async/await in TypeScript, and JSDoc comments."
-    reference: "gradio/node_server.py: adds 'from http.client import HTTPConnection' with other imports, uses timeout=15.0 default, adds proper docstring. js/tootils/src/app-launcher.ts: adds http import, async waitForServerReady function with JSDoc explaining the fix."
+- rule: 'Code changes should follow repository style: use proper imports (http.client.HTTPConnection),
+    float defaults for timeouts (15.0), triple-quoted docstrings with explanation,
+    async/await in TypeScript, and JSDoc comments.'
+  reference: 'gradio/node_server.py: adds ''from http.client import HTTPConnection''
+    with other imports, uses timeout=15.0 default, adds proper docstring. js/tootils/src/app-launcher.ts:
+    adds http import, async waitForServerReady function with JSDoc explaining the
+    fix.'
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 37-39
+  evidence: The Python solution uses the built-in `http.client.HTTPConnection` rather
+    than introducing a new dependency like `requests` or `httpx`, maintaining the
+    lightweight, standard-library-only approach of t
+  category: style
+distractors:
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  collision_type: architecture_boundary
+  why_distracting: The rule states that `js/` contains frontend code. An agent might
+    assume `js/tootils/src/app-launcher.ts` runs in the browser and attempt to use
+    browser APIs like `fetch()` for the HTTP request. However, this is a Node.js test
+    launcher script, so it must use Node's `http` module.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 9-11
+- rule: Be consistent with the style of the surrounding code.
+  collision_type: would_cause_bug
+  why_distracting: An agent might try to make the Python and TypeScript HTTP checks
+    consistent by using the same endpoint (`/`) for both. However, using `HEAD /`
+    in the TS launcher triggers SSR rendering which can block Gradio's own startup
+    health check. The TS code must use `/gradio_api/info` instead.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 37-39
+hierarchy_analysis: The AGENTS.md file provides high-level repository structure and
+  PR guidelines. The primary conflict arises from the repository structure definitions,
+  which oversimplify the `js/` directory as purely frontend code, ignoring the Node.js
+  tooling and test infrastructure contained within it.

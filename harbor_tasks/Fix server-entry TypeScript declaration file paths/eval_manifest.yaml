@@ -1,146 +1,157 @@
 task_id: tanstack-router-7035
 name: Fix server-entry TypeScript declaration file paths
-
 source:
   repo: TanStack/router
   pr_number: 7035
   base_commit: 77ad7925d4a6ea88ecd523ca7445ca192ce7a91a
   merge_commit: 5016e4e4c7387a1c0342e474e3e83bdf664e2f1d
-
-# One check per test in test_outputs.py
 checks:
-  # Behavioral tests: TypeScript declaration files at correct paths
-  - id: react-start-server-dts-exists
-    name: React Start server entry declaration file exists at correct path
-    description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts for react-start
-    type: behavioral
-    origin: task_requirement
-
-  - id: solid-start-server-dts-exists
-    name: Solid Start server entry declaration file exists at correct path
-    description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts for solid-start
-    type: behavioral
-    origin: task_requirement
-
-  - id: vue-start-server-dts-exists
-    name: Vue Start server entry declaration file exists at correct path
-    description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts for vue-start
-    type: behavioral
-    origin: task_requirement
-
-  # Behavioral tests: Package validation
-  - id: react-start-publint-pass
-    name: React Start package passes publint validation
-    description: Verify that react-start package passes strict publint checks
-    type: behavioral
-    origin: task_requirement
-
-  - id: solid-start-publint-pass
-    name: Solid Start package passes publint validation
-    description: Verify that solid-start package passes strict publint checks
-    type: behavioral
-    origin: task_requirement
-
-  - id: vue-start-publint-pass
-    name: Vue Start package passes publint validation
-    description: Verify that vue-start package passes strict publint checks
-    type: behavioral
-    origin: task_requirement
-
-  # Structural tests: Vite config files updated
-  - id: react-start-vite-config-has-tsconfig-path
-    name: React Start vite.config.server-entry.ts references tsconfig.server-entry.json
-    description: Verify that react-start's vite config has tsconfigPath set correctly
-    type: structural
-    origin: agent_config
-    source:
-      file: AGENTS.md
-      note: Build configuration standards
-
-  - id: solid-start-vite-config-has-tsconfig-path
-    name: Solid Start vite.config.server-entry.ts references tsconfig.server-entry.json
-    description: Verify that solid-start's vite config has tsconfigPath set correctly
-    type: structural
-    origin: agent_config
-    source:
-      file: AGENTS.md
-      note: Build configuration standards
-
-  - id: vue-start-vite-config-has-tsconfig-path
-    name: Vue Start vite.config.server-entry.ts references tsconfig.server-entry.json
-    description: Verify that vue-start's vite config has tsconfigPath set correctly
-    type: structural
-    origin: agent_config
-    source:
-      file: AGENTS.md
-      note: Build configuration standards
-
-  # Structural tests: tsconfig files created
-  - id: react-start-tsconfig-server-entry-exists
-    name: React Start has tsconfig.server-entry.json with correct rootDir
-    description: Verify that react-start's tsconfig.server-entry.json exists with rootDir set to ./src/default-entry
-    type: structural
-    origin: task_requirement
-
-  - id: solid-start-tsconfig-server-entry-exists
-    name: Solid Start has tsconfig.server-entry.json with correct rootDir
-    description: Verify that solid-start's tsconfig.server-entry.json exists with rootDir set to ./src/default-entry
-    type: structural
-    origin: task_requirement
-
-  - id: vue-start-tsconfig-server-entry-exists
-    name: Vue Start has tsconfig.server-entry.json with correct rootDir
-    description: Verify that vue-start's tsconfig.server-entry.json exists with rootDir set to ./src/default-entry
-    type: structural
-    origin: task_requirement
-
-  # Pass-to-Pass Tests: Repo CI Commands (prettier formatting checks)
-  - id: test_repo_react_start_format
-    name: React-start vite config passes prettier formatting check
-    description: Verify that react-start vite.config.server-entry.ts is properly formatted
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_solid_start_format
-    name: Solid-start vite config passes prettier formatting check
-    description: Verify that solid-start vite.config.server-entry.ts is properly formatted
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_vue_start_format
-    name: Vue-start vite config passes prettier formatting check
-    description: Verify that vue-start vite.config.server-entry.ts is properly formatted
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_react_start_package_format
-    name: React-start package.json passes prettier formatting check
-    description: Verify that react-start package.json is properly formatted
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_solid_start_package_format
-    name: Solid-start package.json passes prettier formatting check
-    description: Verify that solid-start package.json is properly formatted
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_vue_start_package_format
-    name: Vue-start package.json passes prettier formatting check
-    description: Verify that vue-start package.json is properly formatted
-    type: pass_to_pass
-    origin: repo_tests
-
-# Rubric for LLM-judge evaluation of partial solutions
+- id: react-start-server-dts-exists
+  name: React Start server entry declaration file exists at correct path
+  description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts
+    for react-start
+  type: behavioral
+  origin: task_requirement
+- id: solid-start-server-dts-exists
+  name: Solid Start server entry declaration file exists at correct path
+  description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts
+    for solid-start
+  type: behavioral
+  origin: task_requirement
+- id: vue-start-server-dts-exists
+  name: Vue Start server entry declaration file exists at correct path
+  description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts
+    for vue-start
+  type: behavioral
+  origin: task_requirement
+- id: react-start-publint-pass
+  name: React Start package passes publint validation
+  description: Verify that react-start package passes strict publint checks
+  type: behavioral
+  origin: task_requirement
+- id: solid-start-publint-pass
+  name: Solid Start package passes publint validation
+  description: Verify that solid-start package passes strict publint checks
+  type: behavioral
+  origin: task_requirement
+- id: vue-start-publint-pass
+  name: Vue Start package passes publint validation
+  description: Verify that vue-start package passes strict publint checks
+  type: behavioral
+  origin: task_requirement
+- id: react-start-vite-config-has-tsconfig-path
+  name: React Start vite.config.server-entry.ts references tsconfig.server-entry.json
+  description: Verify that react-start's vite config has tsconfigPath set correctly
+  type: structural
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    note: Build configuration standards
+- id: solid-start-vite-config-has-tsconfig-path
+  name: Solid Start vite.config.server-entry.ts references tsconfig.server-entry.json
+  description: Verify that solid-start's vite config has tsconfigPath set correctly
+  type: structural
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    note: Build configuration standards
+- id: vue-start-vite-config-has-tsconfig-path
+  name: Vue Start vite.config.server-entry.ts references tsconfig.server-entry.json
+  description: Verify that vue-start's vite config has tsconfigPath set correctly
+  type: structural
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    note: Build configuration standards
+- id: react-start-tsconfig-server-entry-exists
+  name: React Start has tsconfig.server-entry.json with correct rootDir
+  description: Verify that react-start's tsconfig.server-entry.json exists with rootDir
+    set to ./src/default-entry
+  type: structural
+  origin: task_requirement
+- id: solid-start-tsconfig-server-entry-exists
+  name: Solid Start has tsconfig.server-entry.json with correct rootDir
+  description: Verify that solid-start's tsconfig.server-entry.json exists with rootDir
+    set to ./src/default-entry
+  type: structural
+  origin: task_requirement
+- id: vue-start-tsconfig-server-entry-exists
+  name: Vue Start has tsconfig.server-entry.json with correct rootDir
+  description: Verify that vue-start's tsconfig.server-entry.json exists with rootDir
+    set to ./src/default-entry
+  type: structural
+  origin: task_requirement
+- id: test_repo_react_start_format
+  name: React-start vite config passes prettier formatting check
+  description: Verify that react-start vite.config.server-entry.ts is properly formatted
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_solid_start_format
+  name: Solid-start vite config passes prettier formatting check
+  description: Verify that solid-start vite.config.server-entry.ts is properly formatted
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_vue_start_format
+  name: Vue-start vite config passes prettier formatting check
+  description: Verify that vue-start vite.config.server-entry.ts is properly formatted
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_react_start_package_format
+  name: React-start package.json passes prettier formatting check
+  description: Verify that react-start package.json is properly formatted
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_solid_start_package_format
+  name: Solid-start package.json passes prettier formatting check
+  description: Verify that solid-start package.json is properly formatted
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_vue_start_package_format
+  name: Vue-start package.json passes prettier formatting check
+  description: Verify that vue-start package.json is properly formatted
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
-  - criterion: Proper tsconfig files created
-    description: Each package has a tsconfig.server-entry.json with correct rootDir
-    weight: 0.3
-
-  - criterion: Vite configs updated
-    description: All three vite.config.server-entry.ts files reference the new tsconfig
-    weight: 0.3
-
-  - criterion: Package validation passes
-    description: Build-time validation with publint/attw is configured and passes
-    weight: 0.4
+- criterion: Proper tsconfig files created
+  description: Each package has a tsconfig.server-entry.json with correct rootDir
+  weight: 0.3
+- criterion: Vite configs updated
+  description: All three vite.config.server-entry.ts files reference the new tsconfig
+  weight: 0.3
+- criterion: Package validation passes
+  description: Build-time validation with publint/attw is configured and passes
+  weight: 0.4
+- rule: 'Test types: `pnpm test:unit`, `pnpm test:types`, `pnpm test:eslint`, `pnpm
+    test:e2e`, `pnpm test:build`'
+  source:
+    path: AGENTS.md
+    lines: 54-54
+  evidence: The gold solution updates the `test:build` script in the `package.json`
+    files to run package validation (`publint` and `attw`), which aligns with the
+    defined test types.
+  category: testing
+hierarchy_analysis: The `AGENTS.md` file provides general guidelines for testing and
+  formatting. However, for this specific PR, the focus is on fixing build configuration
+  (`tsconfig` and `vite.config`) and updating the `test:build` script. The agent should
+  prioritize the specific task instructions over general formatting or exhaustive
+  unit testing rules.
+distractors:
+- rule: 'Fix formatting: `pnpm format`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `pnpm format` and include unrelated formatting
+    changes in the PR, which is out of scope for fixing the TypeScript declaration
+    file paths.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 56-56
+- rule: 'Critical: Always run unit and type tests during development - do not proceed
+    if they fail'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the full unit and type test suite and
+    get distracted by unrelated failures, or try to write unit tests for this purely
+    configuration/build-related change.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 53-53

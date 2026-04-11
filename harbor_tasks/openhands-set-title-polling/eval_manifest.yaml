@@ -3,83 +3,105 @@ source:
   pr_number: 13577
   base_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
   merge_commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
-
-rubric: []
-
+rubric:
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: The gold solution updates `tests/unit/app_server/test_set_title_callback_processor.py`
+    to patch `_logger.warning` instead of `_logger.debug`, ensuring that the existing
+    test passes after the logging l
+  category: testing
 checks:
-  - id: test_polling_constants_exist
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md - constants should be clearly defined for maintainability
-    description: _POLL_DELAY_S = 3 and _NUM_POLL_ATTEMPTS = 4 constants exist
-
-  - id: test_total_polling_time
-    type: fail_to_pass
-    origin: behavior
-    description: Total polling time is ~12 seconds (4 attempts x 3 seconds delay)
-
-  - id: test_poll_for_title_function_exists
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md - extract reusable logic to separate functions
-    description: _poll_for_title async function is extracted with correct parameters
-
-  - id: test_old_polling_tuple_removed
-    type: fail_to_pass
-    origin: behavior
-    description: Old _TITLE_POLL_DELAYS_S tuple is removed and replaced
-
-  - id: test_logging_level_changed_to_warning
-    type: fail_to_pass
-    origin: behavior
-    description: Log level changed from debug to warning for failed title polls
-
-  - id: test_poll_for_title_used_in_processor
-    type: fail_to_pass
-    origin: behavior
-    description: Main processor calls _poll_for_title instead of inline polling logic
-
-  - id: test_repo_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: Existing unit tests for SetTitleCallbackProcessor pass
-
-  - id: test_imports_work
-    type: pass_to_pass
-    origin: repo_tests
-    description: Module imports work correctly (SetTitleCallbackProcessor can be imported)
-
-  - id: test_repo_ruff_linting_modified_file
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff linting passes on the modified set_title_callback_processor.py file
-
-  - id: test_repo_ruff_linting
-    type: pass_to_pass
-    origin: repo_ci
-    description: Repo's ruff linting passes on openhands/ directory
-
-  - id: test_repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff format check passes on the modified file
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: Python syntax check passes on the modified file
-
-  - id: test_repo_unit_tests_modified_file
-    type: pass_to_pass
-    origin: repo_tests
-    description: Unit tests for the modified SetTitleCallbackProcessor pass
-
-  - id: test_repo_app_server_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's app_server unit tests pass
-
-  - id: test_repo_precommit_hooks
-    type: pass_to_pass
-    origin: repo_ci
-    description: Repo's pre-commit hooks (ruff, mypy, format) pass
+- id: test_polling_constants_exist
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md - constants should be clearly defined for maintainability
+  description: _POLL_DELAY_S = 3 and _NUM_POLL_ATTEMPTS = 4 constants exist
+- id: test_total_polling_time
+  type: fail_to_pass
+  origin: behavior
+  description: Total polling time is ~12 seconds (4 attempts x 3 seconds delay)
+- id: test_poll_for_title_function_exists
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md - extract reusable logic to separate functions
+  description: _poll_for_title async function is extracted with correct parameters
+- id: test_old_polling_tuple_removed
+  type: fail_to_pass
+  origin: behavior
+  description: Old _TITLE_POLL_DELAYS_S tuple is removed and replaced
+- id: test_logging_level_changed_to_warning
+  type: fail_to_pass
+  origin: behavior
+  description: Log level changed from debug to warning for failed title polls
+- id: test_poll_for_title_used_in_processor
+  type: fail_to_pass
+  origin: behavior
+  description: Main processor calls _poll_for_title instead of inline polling logic
+- id: test_repo_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing unit tests for SetTitleCallbackProcessor pass
+- id: test_imports_work
+  type: pass_to_pass
+  origin: repo_tests
+  description: Module imports work correctly (SetTitleCallbackProcessor can be imported)
+- id: test_repo_ruff_linting_modified_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on the modified set_title_callback_processor.py
+    file
+- id: test_repo_ruff_linting
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo's ruff linting passes on openhands/ directory
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on the modified file
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check passes on the modified file
+- id: test_repo_unit_tests_modified_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for the modified SetTitleCallbackProcessor pass
+- id: test_repo_app_server_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's app_server unit tests pass
+- id: test_repo_precommit_hooks
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo's pre-commit hooks (ruff, mypy, format) pass
+distractors:
+- rule: When working on a PR that requires design documents, scripts meant for development-only,
+    or other temporary artifacts that should NOT be merged to main, store them in
+    a `.pr/` directory at the repository root.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time creating a `.pr/design.md` or `.pr/analysis.md`
+    to document the new polling logic or the debugging of the title callback processor,
+    which is overkill for a simple bug fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 36-37
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to spin up the entire application (frontend
+    and backend) using `make build && make run` to manually test the title polling,
+    which is unnecessary and time-consuming since the issue is well-defined and covered
+    by unit tests.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 8-11
+hierarchy_analysis: The repository has a single root-level `AGENTS.md` file. The rules
+  are straightforward, but the agent must discern which rules apply to the current
+  scope. The instructions for running the full application or creating `.pr/` artifacts
+  are meant for larger features or complex debugging, not simple bug fixes with existing
+  unit tests.

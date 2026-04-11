@@ -1,147 +1,165 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 57807
-  base_commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-  merge_commit: "aff6883f93abcbfd18ebb743871bc804b10f5728"
-
+  base_commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+  merge_commit: aff6883f93abcbfd18ebb743871bc804b10f5728
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified .mjs files must parse without syntax errors"
-
-  - id: filter_helper_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both files define a helper combining countExplicitEntryFilters with includeFiles fallback"
-
-  - id: include_files_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Helper returns includeFiles.length when explicit CLI filters are null"
-
-  - id: explicit_filters_take_priority
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Helper prefers explicit CLI filter count over includeFiles count"
-
-  - id: executor_call_sites_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "executor.mjs call sites no longer use raw countExplicitEntryFilters(unit.args)"
-
-  - id: planner_call_sites_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "planner.mjs call sites no longer use raw countExplicitEntryFilters(unit.args)"
-
-  - id: single_file_batches_get_shard_assignment
-    type: fail_to_pass
-    origin: repo_tests
-    description: "Single-file include batches get proper shard assignments via topLevelSingleShardAssignments"
-
-  - id: null_for_no_include_files
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Helper returns null when includeFiles is empty, undefined, or null"
-
-  - id: explicit_filter_import_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "countExplicitEntryFilters still imported from vitest-args.mjs in both files"
-
-  - id: parallel_tests_still_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Related test-parallel tests continue to work after the fix"
-
-  - id: no_lint_suppressions
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files must not add inline lint suppressions (@ts-nocheck, eslint-disable, etc.)"
-    source:
-      path: "CLAUDE.md"
-      lines: "146"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
-  - id: no_explicit_any_disable
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files must not disable no-explicit-any"
-    source:
-      path: "CLAUDE.md"
-      lines: "147"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
-  - id: no_prototype_mutation
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files must not share behavior via prototype mutation"
-    source:
-      path: "CLAUDE.md"
-      lines: "160"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo build (pnpm build) passes without errors"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo linting (pnpm lint) passes without errors"
-
-  - id: test_repo_test_planner
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo test-planner tests pass (test/scripts/test-planner.test.ts)"
-  - id: test_repo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo check (pnpm check) passes"
-
-  - id: test_repo_executor_fallback
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo test-planner.executor-fallback tests pass"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified .mjs files must parse without syntax errors
+- id: filter_helper_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both files define a helper combining countExplicitEntryFilters with
+    includeFiles fallback
+- id: include_files_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Helper returns includeFiles.length when explicit CLI filters are null
+- id: explicit_filters_take_priority
+  type: fail_to_pass
+  origin: pr_diff
+  description: Helper prefers explicit CLI filter count over includeFiles count
+- id: executor_call_sites_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: executor.mjs call sites no longer use raw countExplicitEntryFilters(unit.args)
+- id: planner_call_sites_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: planner.mjs call sites no longer use raw countExplicitEntryFilters(unit.args)
+- id: single_file_batches_get_shard_assignment
+  type: fail_to_pass
+  origin: repo_tests
+  description: Single-file include batches get proper shard assignments via topLevelSingleShardAssignments
+- id: null_for_no_include_files
+  type: pass_to_pass
+  origin: pr_diff
+  description: Helper returns null when includeFiles is empty, undefined, or null
+- id: explicit_filter_import_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: countExplicitEntryFilters still imported from vitest-args.mjs in both
+    files
+- id: parallel_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Related test-parallel tests continue to work after the fix
+- id: no_lint_suppressions
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not add inline lint suppressions (@ts-nocheck,
+    eslint-disable, etc.)
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- id: no_explicit_any_disable
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not disable no-explicit-any
+  source:
+    path: CLAUDE.md
+    lines: '147'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- id: no_prototype_mutation
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not share behavior via prototype mutation
+  source:
+    path: CLAUDE.md
+    lines: '160'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build (pnpm build) passes without errors
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo linting (pnpm lint) passes without errors
+- id: test_repo_test_planner
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test-planner tests pass (test/scripts/test-planner.test.ts)
+- id: test_repo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo check (pnpm check) passes
+- id: test_repo_executor_fallback
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test-planner.executor-fallback tests pass
 rubric:
-  - rule: "Keep files concise; extract helpers instead of 'V2' copies."
-    source:
-      path: "CLAUDE.md"
-      lines: "164"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "163"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
-  - rule: "Aim to keep files under ~700 LOC; guideline only. Split/refactor when it improves clarity or testability."
-    source:
-      path: "CLAUDE.md"
-      lines: "165"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
-  - rule: "Do not use freeform strings as the source of truth for internal branching; keep human-readable strings for logs and UI only."
-    source:
-      path: "CLAUDE.md"
-      lines: "151"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
-  - rule: "Avoid ?? 0, empty-string, empty-object, or magic-string sentinels when they can change runtime meaning silently."
-    source:
-      path: "CLAUDE.md"
-      lines: "152"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
-  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
-    source:
-      path: "CLAUDE.md"
-      lines: "167"
-      commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
+- rule: Keep files concise; extract helpers instead of 'V2' copies.
+  source:
+    path: CLAUDE.md
+    lines: '164'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- rule: Aim to keep files under ~700 LOC; guideline only. Split/refactor when it improves
+    clarity or testability.
+  source:
+    path: CLAUDE.md
+    lines: '165'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- rule: Do not use freeform strings as the source of truth for internal branching;
+    keep human-readable strings for logs and UI only.
+  source:
+    path: CLAUDE.md
+    lines: '151'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- rule: Avoid ?? 0, empty-string, empty-object, or magic-string sentinels when they
+    can change runtime meaning silently.
+  source:
+    path: CLAUDE.md
+    lines: '152'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- rule: 'Written English: use American spelling and grammar in code, comments, docs,
+    and UI strings.'
+  source:
+    path: CLAUDE.md
+    lines: '167'
+    commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
+- rule: 'Source code: `src/` (CLI wiring in `src/cli`, commands in `src/commands`...)'
+  source:
+    path: CLAUDE.md
+    lines: '9'
+  evidence: The gold solution modifies the test planner in its existing `scripts/test-planner/`
+    directory rather than moving it to `src/`, correctly interpreting that the `src/`
+    rule applies to the main applicati
+  category: architecture
+distractors:
+- rule: 'Tests: colocated `*.test.ts`.'
+  collision_type: scope_ambiguity
+  why_distracting: 'The rule states ''Tests: colocated *.test.ts'', which applies
+    to the main source code in `src/`. However, the verification instructions show
+    that tests for scripts are located in `test/scripts/` (e.g., `test/scripts/test-planner.test.ts`).
+    An agent might try to move these tests to `scripts/test-planner/` or create new
+    colocated tests, which would violate the established pattern for scripts.'
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '10'
+- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
+    plus local `api.ts` / `runtime-api.ts` barrels as the public surface.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule enforces strict import boundaries for 'extension production
+    code'. An agent might mistakenly apply these plugin/extension import rules to
+    the CI scripts in `scripts/test-planner/`, leading to confusion about how to import
+    shared utilities or whether the scripts are allowed to import from certain paths.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: '16'
+hierarchy_analysis: The configuration files (`CLAUDE.md` and `AGENTS.md`) are identical
+  and primarily focus on the main application architecture (`src/`), plugins, and
+  channels. They lack specific guidance for the `scripts/` directory. This creates
+  scope ambiguity where rules intended for `src/` (like colocated tests) might be
+  incorrectly applied to CI scripts.

@@ -1,109 +1,146 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2080
-  base_commit: "c2dfc338c30d04286284b67cf87e73d534e43f3e"
-  merge_commit: "53a8b456601455194d622b47b29ad6aa2d716485"
-
+  base_commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+  merge_commit: 53a8b456601455194d622b47b29ad6aa2d716485
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "model.py must parse without syntax errors"
-
-  - id: vlm_no_toplevel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "VLM config with num_hidden_layers only under text_config must not crash"
-
-  - id: vlm_both_attrs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When both levels have num_hidden_layers, text_config must be modified"
-
-  - id: vlm_min_clamp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "debug.num_layers > actual VLM layers should clamp via min()"
-
-  - id: vlm_warning_message
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Warning log must not crash for VLMs and report correct skipped layer count"
-
-  - id: non_vlm_backward_compat
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Standard LM config (no text_config) still works"
-
-  - id: non_vlm_min_clamp
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-VLM debug.num_layers > actual layers should clamp"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "get_model function has real logic, not just pass/return"
-
-  - id: no_unnecessary_try_except
-    type: pass_to_pass
-    origin: agent_config
-    description: "Fix must not wrap debug.num_layers block in try/except"
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "c2dfc338c30d04286284b67cf87e73d534e43f3e"
-
-  - id: repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on model.py"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on model.py"
-
-  - id: repo_model_py_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's model.py compiles without syntax errors"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: model.py must parse without syntax errors
+- id: vlm_no_toplevel
+  type: fail_to_pass
+  origin: pr_diff
+  description: VLM config with num_hidden_layers only under text_config must not crash
+- id: vlm_both_attrs
+  type: fail_to_pass
+  origin: pr_diff
+  description: When both levels have num_hidden_layers, text_config must be modified
+- id: vlm_min_clamp
+  type: fail_to_pass
+  origin: pr_diff
+  description: debug.num_layers > actual VLM layers should clamp via min()
+- id: vlm_warning_message
+  type: fail_to_pass
+  origin: pr_diff
+  description: Warning log must not crash for VLMs and report correct skipped layer
+    count
+- id: non_vlm_backward_compat
+  type: pass_to_pass
+  origin: pr_diff
+  description: Standard LM config (no text_config) still works
+- id: non_vlm_min_clamp
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-VLM debug.num_layers > actual layers should clamp
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: get_model function has real logic, not just pass/return
+- id: no_unnecessary_try_except
+  type: pass_to_pass
+  origin: agent_config
+  description: Fix must not wrap debug.num_layers block in try/except
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on model.py
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on model.py
+- id: repo_model_py_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's model.py compiles without syntax errors
 rubric:
-  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "c2dfc338c30d04286284b67cf87e73d534e43f3e"
-
-  - rule: "Simple is better than complex."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "c2dfc338c30d04286284b67cf87e73d534e43f3e"
-
-  - rule: "Explicit is better than implicit."
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "c2dfc338c30d04286284b67cf87e73d534e43f3e"
-
-  - rule: "Readability counts."
-    source:
-      path: "AGENTS.md"
-      lines: "20"
-      commit: "c2dfc338c30d04286284b67cf87e73d534e43f3e"
-
-  - rule: "Flat is better than nested."
-    source:
-      path: "AGENTS.md"
-      lines: "18"
-      commit: "c2dfc338c30d04286284b67cf87e73d534e43f3e"
-
-  - rule: "Errors should never pass silently. Unless explicitly silenced."
-    source:
-      path: "AGENTS.md"
-      lines: "23-24"
-      commit: "c2dfc338c30d04286284b67cf87e73d534e43f3e"
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+- rule: Simple is better than complex.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+- rule: Explicit is better than implicit.
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+- rule: Readability counts.
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+- rule: Flat is better than nested.
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+- rule: Errors should never pass silently. Unless explicitly silenced.
+  source:
+    path: AGENTS.md
+    lines: 23-24
+    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+- rule: Avoid try/except blocks unless it's really necessary.
+  source:
+    path: AGENTS.md
+    lines: 5-7
+  evidence: The solution uses `getattr(model_config, "text_config", model_config)`
+    to safely access the nested configuration instead of wrapping the access in a
+    `try...except AttributeError:` block.
+  category: style
+- rule: Prefer to use targeted comments sparingly to explain ambiguous code, without
+    referring to old code or work process.
+  source:
+    path: AGENTS.md
+    lines: 9-11
+  evidence: The solution adds a single, concise comment (`# VLM configs nest num_hidden_layers
+    under text_config`) to explain the potentially ambiguous `getattr` logic, without
+    referencing the old code or the bug
+  category: documentation
+distractors:
+- rule: It's fine that a program fails if something goes wrong as this helps us to
+    catch non-obvious bugs and unforeseen side-effects earlier.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states 'It's fine that a program fails if something goes
+    wrong as this helps us to catch non-obvious bugs'. An agent might misinterpret
+    this as a reason to not fix the `AttributeError` crash for VLMs, thinking the
+    crash is desirable behavior for unsupported model architectures rather than a
+    bug to be fixed.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 5-7
+- rule: Flat is better than nested.
+  collision_type: architecture_boundary
+  why_distracting: The Zen of Python rule 'Flat is better than nested' might lead
+    an agent to try and flatten the HuggingFace config object or complain about the
+    nested `text_config.num_hidden_layers`, rather than just accepting the external
+    library's nested structure and accessing it via `getattr`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 22-22
+- rule: Special cases aren't special enough to break the rules.
+  collision_type: scope_ambiguity
+  why_distracting: The rule 'Special cases aren't special enough to break the rules'
+    might cause an agent to view VLMs as a 'special case' and try to force a unified
+    approach that doesn't check for `text_config`, or refuse to add the VLM-specific
+    `getattr` fallback.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 25-25
+hierarchy_analysis: The hierarchy is simple, with `CLAUDE.md` pointing to `AGENTS.md`.
+  The rules in `AGENTS.md` provide general Python guidelines. The main tension is
+  between avoiding try/except blocks and handling the missing attribute gracefully,
+  which the gold solution resolves elegantly using `getattr` with a default fallback.

@@ -1,151 +1,149 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/uv"
+  repo: astral-sh/uv
   pr: 18645
-  base_commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-  merge_commit: "8b1a15eae6aa51f25f7dfefd247d5592201b78a0"
-
+  base_commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+  merge_commit: 8b1a15eae6aa51f25f7dfefd247d5592201b78a0
 checks:
-  - id: rust_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified Rust files must parse without syntax errors"
-
-  - id: compilation
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Modified crate compiles without errors"
-
-  - id: new_stderr_important_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Printer has new stderr_important method (besides stderr())"
-
-  - id: stderr_important_quiet_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stderr_important returns Stderr::Enabled for Quiet variant (the core fix)"
-
-  - id: stderr_important_silent_disabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stderr_important returns Stderr::Disabled for Silent (double-quiet suppresses all)"
-
-  - id: stderr_important_non_silent_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stderr_important returns Enabled for Default, Verbose, and NoProgress"
-
-  - id: stderr_quiet_still_disabled
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Original stderr() still returns Disabled for Quiet and Silent (no regression)"
-
-  - id: repo_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo code passes Rust formatting check (cargo fmt)"
-
-  - id: repo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo code passes Clippy lints (cargo clippy --package uv)"
-
-  - id: repo_cargo_check_lib
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo uv library compiles without errors (cargo check --lib)"
-
-  - id: repo_clippy_workspace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Full workspace passes Clippy lints (cargo clippy --workspace)"
-
-  - id: repo_cargo_check_locked
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cargo.lock is up to date (cargo check --locked)"
-
-  - id: self_update_uses_stderr_important
-    type: fail_to_pass
-    origin: pr_diff
-    description: "self_update.rs uses stderr_important() for important messages in >=3 call sites"
-
-  - id: stderr_important_not_stub
-    type: fail_to_pass
-    origin: static
-    description: "stderr_important has real branching logic with match/if, not a trivial stub"
-
-  - id: no_panic_unwrap_in_new_method
-    type: fail_to_pass
-    origin: agent_config
-    description: "New method must not use panic!, unreachable!, or .unwrap()"
-    source:
-      path: "CLAUDE.md"
-      lines: "7"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
-  - id: no_unsafe_in_new_method
-    type: fail_to_pass
-    origin: agent_config
-    description: "New method must not use unsafe code"
-    source:
-      path: "CLAUDE.md"
-      lines: "7"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
-  - id: no_allow_attribute_in_new_code
-    type: fail_to_pass
-    origin: agent_config
-    description: "New code must not use #[allow(...)] — prefer #[expect()]"
-    source:
-      path: "CLAUDE.md"
-      lines: "10"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
-  - id: no_local_imports_in_new_method
-    type: pass_to_pass
-    origin: agent_config
-    description: "New method must not use local 'use' statements — prefer top-level imports"
-    source:
-      path: "CLAUDE.md"
-      lines: "16"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
+- id: rust_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files must parse without syntax errors
+- id: compilation
+  type: pass_to_pass
+  origin: pr_diff
+  description: Modified crate compiles without errors
+- id: new_stderr_important_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Printer has new stderr_important method (besides stderr())
+- id: stderr_important_quiet_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: stderr_important returns Stderr::Enabled for Quiet variant (the core
+    fix)
+- id: stderr_important_silent_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: stderr_important returns Stderr::Disabled for Silent (double-quiet
+    suppresses all)
+- id: stderr_important_non_silent_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: stderr_important returns Enabled for Default, Verbose, and NoProgress
+- id: stderr_quiet_still_disabled
+  type: pass_to_pass
+  origin: pr_diff
+  description: Original stderr() still returns Disabled for Quiet and Silent (no regression)
+- id: repo_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code passes Rust formatting check (cargo fmt)
+- id: repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code passes Clippy lints (cargo clippy --package uv)
+- id: repo_cargo_check_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo uv library compiles without errors (cargo check --lib)
+- id: repo_clippy_workspace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full workspace passes Clippy lints (cargo clippy --workspace)
+- id: repo_cargo_check_locked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.lock is up to date (cargo check --locked)
+- id: self_update_uses_stderr_important
+  type: fail_to_pass
+  origin: pr_diff
+  description: self_update.rs uses stderr_important() for important messages in >=3
+    call sites
+- id: stderr_important_not_stub
+  type: fail_to_pass
+  origin: static
+  description: stderr_important has real branching logic with match/if, not a trivial
+    stub
+- id: no_panic_unwrap_in_new_method
+  type: fail_to_pass
+  origin: agent_config
+  description: New method must not use panic!, unreachable!, or .unwrap()
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+- id: no_unsafe_in_new_method
+  type: fail_to_pass
+  origin: agent_config
+  description: New method must not use unsafe code
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+- id: no_allow_attribute_in_new_code
+  type: fail_to_pass
+  origin: agent_config
+  description: 'New code must not use #[allow(...)] — prefer #[expect()]'
+  source:
+    path: CLAUDE.md
+    lines: '10'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+- id: no_local_imports_in_new_method
+  type: pass_to_pass
+  origin: agent_config
+  description: New method must not use local 'use' statements — prefer top-level imports
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
 rubric:
-  - rule: "PREFER patterns like `if let` to handle fallibility"
-    source:
-      path: "CLAUDE.md"
-      lines: "8"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
-  - rule: "PREFER `#[expect()]` over `[allow()]` if clippy must be disabled"
-    source:
-      path: "CLAUDE.md"
-      lines: "10"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
-  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
-    source:
-      path: "CLAUDE.md"
-      lines: "11"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
-  - rule: "PREFER top-level imports over local imports or fully qualified names"
-    source:
-      path: "CLAUDE.md"
-      lines: "16"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
-  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`"
-    source:
-      path: "CLAUDE.md"
-      lines: "17-18"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
-  - rule: "PREFER [`TypeName`] references when writing Rust doc comments"
-    source:
-      path: "CLAUDE.md"
-      lines: "19"
-      commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
+- rule: PREFER patterns like `if let` to handle fallibility
+  source:
+    path: CLAUDE.md
+    lines: '8'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+- rule: PREFER `#[expect()]` over `[allow()]` if clippy must be disabled
+  source:
+    path: CLAUDE.md
+    lines: '10'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+- rule: PREFER let chains (`if let` combined with `&&`) over nested `if let` statements
+  source:
+    path: CLAUDE.md
+    lines: '11'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+- rule: PREFER [`TypeName`] references when writing Rust doc comments
+  source:
+    path: CLAUDE.md
+    lines: '19'
+    commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The rule demands adding a test case for changed behavior. However,
+    testing `uv self update` is notoriously difficult because it involves network
+    requests, GitHub API rate limits, and binary replacement. The prompt hints at
+    needing a version-filtering utility for snapshot tests, which is a complex undertaking.
+    The gold solution intentionally omits tests to focus on the core fix. An agent
+    strictly following this rule will likely waste significant time trying to mock
+    the updater or write flaky integration tests.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 2-3
+hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root level,
+  so there are no hierarchical conflicts between multiple config files. The primary
+  tension lies between the general directive to 'ALWAYS attempt to add a test case'
+  and the practical difficulty of testing the self-update mechanism, which the gold
+  solution bypasses.

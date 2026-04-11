@@ -1,100 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44924
-  base_commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
-  merge_commit: "dda546845f97eb4c6e22df6a2b7fbd865199ada4"
-
+  base_commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+  merge_commit: dda546845f97eb4c6e22df6a2b7fbd865199ada4
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Target file must parse without syntax errors"
-
-  - id: capture_error_mode_thread_safe
-    type: fail_to_pass
-    origin: pr_diff
-    description: "torch.cuda.graph() must be called with a non-global capture_error_mode for thread safety"
-
-  - id: capture_error_mode_recognized_safe
-    type: fail_to_pass
-    origin: pr_diff
-    description: "capture_error_mode must be a recognized thread-safe mode (thread_local or relaxed)"
-
-  - id: generation_step_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "_generation_step has meaningful logic (not stubbed or deleted)"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: static
-    description: "No wildcard imports in modified file"
-
-  - id: no_bare_type_ignore
-    type: pass_to_pass
-    origin: agent_config
-    description: "Any # type: ignore must include a specific error code (e.g. # type: ignore[call-arg])"
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "180-186"
-      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
-
-  - id: no_assert_for_type_narrowing
-    type: pass_to_pass
-    origin: agent_config
-    description: "Do not use assert for type narrowing; use if ...: raise instead"
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "188-190"
-      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
-
-  - id: no_getattr_torch_dynamic_backend
-    type: pass_to_pass
-    origin: agent_config
-    description: "Do not use getattr(torch, 'backend') to access dynamic device backends (npu, xpu, hpu, musa, mlu, neuron, compiler); use type guards instead"
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "192-193"
-      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
-
-  # Repo CI/CD checks (pass_to_pass)
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check passes on modified file area"
-
-  - id: test_repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified file area"
-
-  - id: test_repo_ty_type_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ty type check passes on modified file area"
-
-  - id: test_repo_modeling_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's modeling structure check passes"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target file must parse without syntax errors
+- id: capture_error_mode_thread_safe
+  type: fail_to_pass
+  origin: pr_diff
+  description: torch.cuda.graph() must be called with a non-global capture_error_mode
+    for thread safety
+- id: capture_error_mode_recognized_safe
+  type: fail_to_pass
+  origin: pr_diff
+  description: capture_error_mode must be a recognized thread-safe mode (thread_local
+    or relaxed)
+- id: generation_step_not_stub
+  type: pass_to_pass
+  origin: static
+  description: _generation_step has meaningful logic (not stubbed or deleted)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: static
+  description: No wildcard imports in modified file
+- id: no_bare_type_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Any # type: ignore must include a specific error code (e.g. # type:
+    ignore[call-arg])'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 180-186
+    commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+- id: no_assert_for_type_narrowing
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Do not use assert for type narrowing; use if ...: raise instead'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 188-190
+    commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+- id: no_getattr_torch_dynamic_backend
+  type: pass_to_pass
+  origin: agent_config
+  description: Do not use getattr(torch, 'backend') to access dynamic device backends
+    (npu, xpu, hpu, musa, mlu, neuron, compiler); use type guards instead
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 192-193
+    commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on modified file area
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified file area
+- id: test_repo_ty_type_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ty type check passes on modified file area
+- id: test_repo_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modeling structure check passes
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
-
-  - rule: "Code style is enforced in the CI. Run make fixup to apply style and consistency fixes to your code."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "17"
-      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
-
-  - rule: "make style or make fix-repo should be run as the final step before opening a PR."
-    source:
-      path: "CLAUDE.md"
-      lines: "8"
-      commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+- rule: Code style is enforced in the CI. Run make fixup to apply style and consistency
+    fixes to your code.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '17'
+    commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+- rule: make style or make fix-repo should be run as the final step before opening
+    a PR.
+  source:
+    path: CLAUDE.md
+    lines: '8'
+    commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  source:
+    path: CLAUDE.md
+    lines: 42-44
+  evidence: The gold solution addresses a complex multi-threading CUDA graph capture
+    crash, which is a high-value functional bug fix, adhering to the prohibition against
+    low-value busywork or tiny edits.
+  category: architecture
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in a benchmark/evaluation setting where
+    it must output the fix, but the config strictly mandates failing closed and refusing
+    to output PR-ready code if coordination evidence (like an issue approval link)
+    is missing. Following this rule would cause the agent to output a refusal instead
+    of the required code patch.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 57-60
+- rule: 'We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
+    We have two mechanisms to manage the resulting code duplication: ... `# Copied
+    from ...`'
+  collision_type: architecture_boundary
+  why_distracting: The rule discusses avoiding direct inheritance and using `# Copied
+    from` or `modular_<name>.py` for model-specific files. An agent might mistakenly
+    apply this to `continuous_api.py` because it is in the transformers repository,
+    but this file is in `generation/continuous_batching/`, not `models/`, so the rule
+    does not apply.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 62-67
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules at the
+  root level. The primary challenge is that the repository's strict agent contribution
+  policies (requiring coordination evidence and human validation) conflict directly
+  with the autonomous benchmark environment, requiring the agent to ignore the 'fail-closed'
+  directives to successfully complete the task.

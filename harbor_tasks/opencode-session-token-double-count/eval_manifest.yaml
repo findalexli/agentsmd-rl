@@ -1,153 +1,167 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19758
-  base_commit: "5c15755a10fecf15630232c478302a766d295012"
-  merge_commit: "72c77d0e7b488dd1c0c62287b56623915b469506"
-
+  base_commit: 5c15755a10fecf15630232c478302a766d295012
+  merge_commit: 72c77d0e7b488dd1c0c62287b56623915b469506
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "session/index.ts must parse without errors"
-
-  - id: anthropic_input_subtracts_cache
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Anthropic provider subtracts cached tokens from inputTokens"
-
-  - id: bedrock_input_subtracts_cache
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Bedrock provider subtracts both cacheRead and cacheWrite from inputTokens"
-
-  - id: anthropic_total_uses_sdk_value
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Anthropic total uses SDK totalTokens instead of recomputing from components"
-
-  - id: vertex_anthropic_total_uses_sdk_value
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Google Vertex Anthropic total uses SDK totalTokens"
-
-  - id: bedrock_total_uses_sdk_value
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Bedrock total uses SDK totalTokens"
-
-  - id: generic_provider_cache_extraction
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Generic provider cache read extraction and input subtraction still work"
-
-  - id: reasoning_tokens_extracted
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Reasoning tokens correctly extracted from usage data"
-
-  - id: zero_usage_handled
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Zero/undefined usage values handled without NaN or crashes"
-
-  - id: cost_calculation
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cost calculation produces correct dollar amounts"
-
-  - id: no_any_type_in_getusage
-    type: pass_to_pass
-    origin: agent_config
-    description: "getUsage must not use the any type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
-
-  - id: no_let_in_getusage
-    type: pass_to_pass
-    origin: agent_config
-    description: "getUsage must prefer const over let"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
-
-  - id: no_else_in_getusage
-    type: pass_to_pass
-    origin: agent_config
-    description: "getUsage must not use else statements"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
-
-  - id: no_try_catch_in_getusage
-    type: pass_to_pass
-    origin: agent_config
-    description: "getUsage must not use try/catch"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
-
-  - id: no_for_loops_in_getusage
-    type: pass_to_pass
-    origin: agent_config
-    description: "getUsage must use functional array methods, not for loops"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo TypeScript typecheck passes
-
-  - id: test_repo_session_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo session LLM and provider transform tests pass
-
-  - id: test_repo_session_core_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo session core tests pass
-
-  - id: test_repo_provider_bedrock_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Amazon Bedrock provider tests pass
-
-  - id: test_repo_session_system_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo session system tests pass
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: session/index.ts must parse without errors
+- id: anthropic_input_subtracts_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: Anthropic provider subtracts cached tokens from inputTokens
+- id: bedrock_input_subtracts_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bedrock provider subtracts both cacheRead and cacheWrite from inputTokens
+- id: anthropic_total_uses_sdk_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Anthropic total uses SDK totalTokens instead of recomputing from components
+- id: vertex_anthropic_total_uses_sdk_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Google Vertex Anthropic total uses SDK totalTokens
+- id: bedrock_total_uses_sdk_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bedrock total uses SDK totalTokens
+- id: generic_provider_cache_extraction
+  type: pass_to_pass
+  origin: repo_tests
+  description: Generic provider cache read extraction and input subtraction still
+    work
+- id: reasoning_tokens_extracted
+  type: pass_to_pass
+  origin: repo_tests
+  description: Reasoning tokens correctly extracted from usage data
+- id: zero_usage_handled
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zero/undefined usage values handled without NaN or crashes
+- id: cost_calculation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cost calculation produces correct dollar amounts
+- id: no_any_type_in_getusage
+  type: pass_to_pass
+  origin: agent_config
+  description: getUsage must not use the any type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- id: no_let_in_getusage
+  type: pass_to_pass
+  origin: agent_config
+  description: getUsage must prefer const over let
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- id: no_else_in_getusage
+  type: pass_to_pass
+  origin: agent_config
+  description: getUsage must not use else statements
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- id: no_try_catch_in_getusage
+  type: pass_to_pass
+  origin: agent_config
+  description: getUsage must not use try/catch
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- id: no_for_loops_in_getusage
+  type: pass_to_pass
+  origin: agent_config
+  description: getUsage must use functional array methods, not for loops
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: test_repo_session_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo session LLM and provider transform tests pass
+- id: test_repo_session_core_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo session core tests pass
+- id: test_repo_provider_bedrock_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Amazon Bedrock provider tests pass
+- id: test_repo_session_system_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo session system tests pass
 rubric:
-  - rule: "Reduce total variable count by inlining when a value is only used once"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
-
-  - rule: "Keep things in one function unless composable or reusable."
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "5c15755a10fecf15630232c478302a766d295012"
+- rule: Reduce total variable count by inlining when a value is only used once
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- rule: Keep things in one function unless composable or reusable.
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 5c15755a10fecf15630232c478302a766d295012
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: 13-14
+  evidence: The gold solution removes the `iife` (Immediately Invoked Function Expression)
+    wrapper used to calculate `total`, moving the simplified assignment directly into
+    the main function body.
+  category: style
+distractors:
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to rename `adjustedInputTokens` to a single
+    word like `adjusted` or `input` to comply with the strict naming rule. However,
+    this variable already exists and its name is highly descriptive for the domain
+    logic; renaming it would cause unnecessary churn and potentially break downstream
+    object shorthand assignments.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 28-32
+- rule: Use `Effect.gen(function* () { ... })` for composition and `Effect.fn` for
+    named/traced effects.
+  collision_type: architecture_boundary
+  why_distracting: The file imports `Effect` and is part of the `opencode` package
+    which has strict Effect rules. An agent might see these rules and try to refactor
+    the `getUsage` function to use `Effect.gen` or `Effect.fnUntraced`. However, `getUsage`
+    is a synchronous utility function, and effectifying it would break downstream
+    consumers that expect a synchronous return value.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 15-18
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style and naming
+  conventions, while `packages/opencode/AGENTS.md` introduces strict Effect-specific
+  patterns. The Effect rules are highly prescriptive but only apply to code that is
+  already within the Effect ecosystem. Agents must be careful not to apply Effect
+  wrappers to pure synchronous functions just because the file imports Effect utilities.

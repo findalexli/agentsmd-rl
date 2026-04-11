@@ -1,122 +1,125 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12944
-  base_commit: "e5ba4fa992c0ac389c6af2d143c9ad4c33eea360"
-  merge_commit: "2c769c71628730fbf06c6ba9b70d672b3d052b0f"
-
+  base_commit: e5ba4fa992c0ac389c6af2d143c9ad4c33eea360
+  merge_commit: 2c769c71628730fbf06c6ba9b70d672b3d052b0f
 checks:
-  - id: test_no_array_destructure_from_derived
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Buggy array destructuring `let [input_text, selected_index] = $derived.by(...)` must be removed"
-
-  - id: test_input_text_standalone_state
-    type: fail_to_pass
-    origin: pr_diff
-    description: "input_text must be a standalone $state variable, not destructured from $derived"
-
-  - id: test_selected_index_standalone_state
-    type: fail_to_pass
-    origin: pr_diff
-    description: "selected_index must be a standalone $state variable, not destructured from $derived"
-
-  - id: test_effect_handles_all_value_branches
-    type: fail_to_pass
-    origin: pr_diff
-    description: "$effect must handle all value states (nullish, in-choices, custom) and assign both variables in every branch"
-
-  - id: test_selected_indices_is_derived
-    type: fail_to_pass
-    origin: pr_diff
-    description: "selected_indices must be a pre-computed $derived variable"
-
-  - id: test_template_no_inline_selected_indices
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Template must not compute selected_indices inline as a ternary"
-
-  - id: test_template_uses_selected_indices_variable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Template must reference the selected_indices variable instead of inline computation"
-
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Dropdown.svelte retains substantial implementation logic"
-
-  - id: test_component_exports_intact
-    type: pass_to_pass
-    origin: static
-    description: "Dropdown component public API exports (Index.svelte, Example.svelte) are intact"
-
-  - id: test_dropdown_utils_intact
-    type: pass_to_pass
-    origin: static
-    description: "Dropdown utility functions (utils.ts) are present"
-
-  - id: test_dropdown_options_component_intact
-    type: pass_to_pass
-    origin: static
-    description: "DropdownOptions sub-component is present and intact"
-
-  - id: test_unit_tests_file_intact
-    type: pass_to_pass
-    origin: static
-    description: "Unit test file (dropdown.test.ts) exists with vitist test cases"
-
-  - id: test_multiselect_intact
-    type: pass_to_pass
-    origin: static
-    description: "Multiselect component (related dropdown variant) is present and intact"
-
-  # CI/CD verification gates (pass_to_pass) — discovered from .github/workflows/tests-js.yml
-  # Note: Node/pnpm not available in Docker image, so we use static analysis
-  # to verify the codebase structure and key patterns that CI would check.
-  # Discovered CI commands: pnpm format:check, pnpm test:run, pnpm --filter @gradio/client test
-
-  - id: test_dropdown_types_valid
-    type: pass_to_pass
-    origin: static
-    description: "Dropdown types.ts has valid TypeScript interface definitions"
-
-  - id: test_dropdown_stories_intact
-    type: pass_to_pass
-    origin: static
-    description: "Dropdown Storybook stories are present and intact"
-
-  - id: test_multiselect_stories_intact
-    type: pass_to_pass
-    origin: static
-    description: "Multiselect Storybook stories are present and intact"
-
-  - id: test_dropdown_package_json_valid
-    type: pass_to_pass
-    origin: static
-    description: "Dropdown package.json is valid JSON with expected exports"
-
-  - id: test_no_obvious_svelte_syntax_errors
-    type: pass_to_pass
-    origin: static
-    description: "Dropdown.svelte has valid Svelte component structure (basic syntax checks)"
-
-  # CI/CD verification gates using actual subprocess commands
-  # These tests execute real git commands from the repo's CI configuration
-
-  - id: test_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repo status is clean (CI: git status check)"
-
-  - id: test_git_log_has_commit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repo has the expected base commit (CI: git log check)"
-
+- id: test_no_array_destructure_from_derived
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy array destructuring `let [input_text, selected_index] = $derived.by(...)`
+    must be removed
+- id: test_input_text_standalone_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: input_text must be a standalone $state variable, not destructured from
+    $derived
+- id: test_selected_index_standalone_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: selected_index must be a standalone $state variable, not destructured
+    from $derived
+- id: test_effect_handles_all_value_branches
+  type: fail_to_pass
+  origin: pr_diff
+  description: $effect must handle all value states (nullish, in-choices, custom)
+    and assign both variables in every branch
+- id: test_selected_indices_is_derived
+  type: fail_to_pass
+  origin: pr_diff
+  description: selected_indices must be a pre-computed $derived variable
+- id: test_template_no_inline_selected_indices
+  type: fail_to_pass
+  origin: pr_diff
+  description: Template must not compute selected_indices inline as a ternary
+- id: test_template_uses_selected_indices_variable
+  type: fail_to_pass
+  origin: pr_diff
+  description: Template must reference the selected_indices variable instead of inline
+    computation
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Dropdown.svelte retains substantial implementation logic
+- id: test_component_exports_intact
+  type: pass_to_pass
+  origin: static
+  description: Dropdown component public API exports (Index.svelte, Example.svelte)
+    are intact
+- id: test_dropdown_utils_intact
+  type: pass_to_pass
+  origin: static
+  description: Dropdown utility functions (utils.ts) are present
+- id: test_dropdown_options_component_intact
+  type: pass_to_pass
+  origin: static
+  description: DropdownOptions sub-component is present and intact
+- id: test_unit_tests_file_intact
+  type: pass_to_pass
+  origin: static
+  description: Unit test file (dropdown.test.ts) exists with vitist test cases
+- id: test_multiselect_intact
+  type: pass_to_pass
+  origin: static
+  description: Multiselect component (related dropdown variant) is present and intact
+- id: test_dropdown_types_valid
+  type: pass_to_pass
+  origin: static
+  description: Dropdown types.ts has valid TypeScript interface definitions
+- id: test_dropdown_stories_intact
+  type: pass_to_pass
+  origin: static
+  description: Dropdown Storybook stories are present and intact
+- id: test_multiselect_stories_intact
+  type: pass_to_pass
+  origin: static
+  description: Multiselect Storybook stories are present and intact
+- id: test_dropdown_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Dropdown package.json is valid JSON with expected exports
+- id: test_no_obvious_svelte_syntax_errors
+  type: pass_to_pass
+  origin: static
+  description: Dropdown.svelte has valid Svelte component structure (basic syntax
+    checks)
+- id: test_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Git repo status is clean (CI: git status check)'
+- id: test_git_log_has_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Git repo has the expected base commit (CI: git log check)'
 rubric:
-  - rule: "Svelte reactive variables should use $state for mutable values and $derived for computed values, following Svelte 5 runes conventions."
-    source:
-      path: "js/dropdown/shared/Dropdown.svelte"
-      commit: "e5ba4fa992c0ac389c6af2d143c9ad4c33eea360"
+- rule: Svelte reactive variables should use $state for mutable values and $derived
+    for computed values, following Svelte 5 runes conventions.
+  source:
+    path: js/dropdown/shared/Dropdown.svelte
+    commit: e5ba4fa992c0ac389c6af2d143c9ad4c33eea360
+- rule: Frontend code is formatted with `prettier`.
+  source:
+    path: AGENTS.md
+    lines: 36-36
+  evidence: The gold solution maintains proper Prettier formatting, such as wrapping
+    the `input_text` assignment over multiple lines with correct indentation when
+    it exceeds the line length limit.
+  category: style
+distractors:
+- rule: Be consistent with the style of the surrounding code.
+  collision_type: scope_ambiguity
+  why_distracting: The surrounding code initially uses `$derived.by(() => { return
+    ... })` for simple derivations like `choices_names` and `choices_values`. An agent
+    strictly following consistency might use `$derived.by` for the new `selected_indices`
+    variable or leave the existing ones alone. However, the gold solution refactors
+    these to use the simpler `$derived()` syntax.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 37-37
+hierarchy_analysis: The AGENTS.md file provides high-level repository guidelines.
+  The rules are mostly focused on PR mechanics and general formatting. The code style
+  rule about consistency creates a minor conflict because the gold solution takes
+  the opportunity to refactor nearby code to a better Svelte 5 syntax (`$derived`
+  instead of `$derived.by`) rather than strictly matching the existing verbose style.

@@ -1,157 +1,173 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 56071
-  base_commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-  merge_commit: "295d1de8d953ee25f6c6b47ef90c827cd08d76a8"
-
+  base_commit: 4752aca926624efdeb62f2f43b606f5090be8903
+  merge_commit: 295d1de8d953ee25f6c6b47ef90c827cd08d76a8
 checks:
-  - id: stream_received_tokens_reset
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After first-segment suppression, subsequent segments use fallback delivery"
-
-  - id: is_finalized_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Finalized stream never re-suppresses fallback delivery"
-
-  - id: pending_finalize_awaited
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stream.finalize() called eagerly in preparePayload, awaited in finalize()"
-
-  - id: single_segment_suppression_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Normal single-segment streaming suppression still works"
-
-  - id: group_chat_passthrough
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Group chats (no stream) pass through payloads unchanged"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "File has real implementation with all required methods exported"
-
-  - id: no_cross_boundary_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No imports from core src/ via relative paths in msteams extension"
-    source:
-      path: "CLAUDE.md"
-      lines: "16"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-nocheck or inline lint suppressions added"
-    source:
-      path: "CLAUDE.md"
-      lines: "104"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  - id: no_sdk_self_import
-    type: pass_to_pass
-    origin: agent_config
-    description: "No self-import via openclaw/plugin-sdk/msteams in extension production code"
-    source:
-      path: "CLAUDE.md"
-      lines: "108"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  - id: no_escaped_package_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No relative imports in extensions/msteams that escape the package root"
-    source:
-      path: "CLAUDE.md"
-      lines: "109"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  # [repo_tests] pass_to_pass - CI/CD quality checks
-  - id: test_repo_file_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's extension files follow expected structure"
-
-  - id: test_repo_no_debug_code
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No console.log or debugger statements left in production code"
-
-  - id: test_repo_import_validity
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Import paths in msteams extension are well-formed and don't escape package"
-
-  - id: test_repo_no_private_keys
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No private keys committed to the repo (detect-secrets baseline check)"
-
-  - id: test_repo_typescript_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript files in msteams extension have valid syntax (parseable)"
-
-  - id: test_repo_no_conflict_markers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo has no unresolved merge conflict markers (CI check-merge-conflict)"
-
-  - id: test_repo_target_typescript_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target reply-stream-controller.ts is valid TypeScript (Node.js --experimental-strip-types)"
-
-  - id: test_repo_secrets_baseline_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: ".secrets.baseline is valid JSON (CI security-fast check)"
-
-  - id: test_repo_git_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository is in valid state (CI git sanity check)"
-
+- id: stream_received_tokens_reset
+  type: fail_to_pass
+  origin: pr_diff
+  description: After first-segment suppression, subsequent segments use fallback delivery
+- id: is_finalized_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: Finalized stream never re-suppresses fallback delivery
+- id: pending_finalize_awaited
+  type: fail_to_pass
+  origin: pr_diff
+  description: stream.finalize() called eagerly in preparePayload, awaited in finalize()
+- id: single_segment_suppression_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Normal single-segment streaming suppression still works
+- id: group_chat_passthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: Group chats (no stream) pass through payloads unchanged
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: File has real implementation with all required methods exported
+- id: no_cross_boundary_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No imports from core src/ via relative paths in msteams extension
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck or inline lint suppressions added
+  source:
+    path: CLAUDE.md
+    lines: '104'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- id: no_sdk_self_import
+  type: pass_to_pass
+  origin: agent_config
+  description: No self-import via openclaw/plugin-sdk/msteams in extension production
+    code
+  source:
+    path: CLAUDE.md
+    lines: '108'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- id: no_escaped_package_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No relative imports in extensions/msteams that escape the package root
+  source:
+    path: CLAUDE.md
+    lines: '109'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- id: test_repo_file_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's extension files follow expected structure
+- id: test_repo_no_debug_code
+  type: pass_to_pass
+  origin: repo_tests
+  description: No console.log or debugger statements left in production code
+- id: test_repo_import_validity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Import paths in msteams extension are well-formed and don't escape
+    package
+- id: test_repo_no_private_keys
+  type: pass_to_pass
+  origin: repo_tests
+  description: No private keys committed to the repo (detect-secrets baseline check)
+- id: test_repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript files in msteams extension have valid syntax (parseable)
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no unresolved merge conflict markers (CI check-merge-conflict)
+- id: test_repo_target_typescript_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target reply-stream-controller.ts is valid TypeScript (Node.js --experimental-strip-types)
+- id: test_repo_secrets_baseline_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: .secrets.baseline is valid JSON (CI security-fast check)
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is in valid state (CI git sanity check)
 rubric:
-  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid `any`."
-    source:
-      path: "CLAUDE.md"
-      lines: "102"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "114"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
-    source:
-      path: "CLAUDE.md"
-      lines: "118"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  - rule: "Dynamic import guardrail: do not mix `await import('x')` and static `import ... from 'x'` for the same module in production code paths."
-    source:
-      path: "CLAUDE.md"
-      lines: "106"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  - rule: "Never share class behavior via prototype mutation. Use explicit inheritance/composition or helper composition so TypeScript can typecheck."
-    source:
-      path: "CLAUDE.md"
-      lines: "111"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
-
-  - rule: "Keep files concise; extract helpers instead of 'V2' copies. Aim to keep files under ~700 LOC."
-    source:
-      path: "CLAUDE.md"
-      lines: "115-116"
-      commit: "4752aca926624efdeb62f2f43b606f5090be8903"
+- rule: 'Language: TypeScript (ESM). Prefer strict typing; avoid `any`.'
+  source:
+    path: CLAUDE.md
+    lines: '102'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '114'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- rule: 'Written English: use American spelling and grammar in code, comments, docs,
+    and UI strings.'
+  source:
+    path: CLAUDE.md
+    lines: '118'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- rule: 'Dynamic import guardrail: do not mix `await import(''x'')` and static `import
+    ... from ''x''` for the same module in production code paths.'
+  source:
+    path: CLAUDE.md
+    lines: '106'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- rule: Never share class behavior via prototype mutation. Use explicit inheritance/composition
+    or helper composition so TypeScript can typecheck.
+  source:
+    path: CLAUDE.md
+    lines: '111'
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- rule: Keep files concise; extract helpers instead of 'V2' copies. Aim to keep files
+    under ~700 LOC.
+  source:
+    path: CLAUDE.md
+    lines: 115-116
+    commit: 4752aca926624efdeb62f2f43b606f5090be8903
+- rule: 'Plugins: live under `extensions/*` (workspace packages).'
+  source:
+    path: CLAUDE.md
+    lines: 16-17
+  evidence: The gold solution modifies the Teams-specific stream controller in `extensions/msteams/src/reply-stream-controller.ts`
+    without attempting to move it to the core `src/` directory, respecting the plugin
+  category: architecture
+distractors:
+- rule: 'Messaging channels: always consider all built-in + extension channels when
+    refactoring shared logic'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the fix for stream token handling as
+    'shared logic' and attempt to apply the same `streamReceivedTokens` reset or `isFinalized`
+    guard to all other messaging channels (Telegram, Discord, Slack, etc.), expanding
+    the PR scope unnecessarily since this payload suppression is specific to MS Teams
+    fallback delivery.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 20-24
+- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
+    plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import
+    core `src/**` directly.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to import a shared stream utility or state
+    manager from core `src/` or `src/plugin-sdk-internal/` to handle the stream finalization
+    state, violating the strict import boundaries for extensions.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 18-19
+hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
+  at the root level. The primary tension in this PR is between fixing a channel-specific
+  bug in an extension (`extensions/msteams`) and the general guidance to consider
+  all channels when refactoring shared logic. The agent must recognize that this is
+  a Teams-specific payload preparation issue, not a shared stream controller refactor,
+  and thus should strictly confine changes to the `msteams` extension.

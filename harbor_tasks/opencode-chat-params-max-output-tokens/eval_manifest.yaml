@@ -1,69 +1,95 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 21220
-  base_commit: "5a6d10cd5363bd47c8e666bbc63435853a1f25b5"
-  merge_commit: "40e4cd27a19f41f65e21056dc6eb19fa6399bbff"
-
+  base_commit: 5a6d10cd5363bd47c8e666bbc63435853a1f25b5
+  merge_commit: 40e4cd27a19f41f65e21056dc6eb19fa6399bbff
 checks:
-  - id: modified_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files exist and have substantial content"
-
-  - id: max_output_tokens_in_hook_params
-    type: fail_to_pass
-    origin: pr_diff
-    description: "maxOutputTokens included in Plugin.trigger('chat.params') output object"
-
-  - id: stream_text_uses_params_max_output_tokens
-    type: fail_to_pass
-    origin: pr_diff
-    description: "streamText call uses params.maxOutputTokens, not a bare local variable"
-
-  - id: hook_type_includes_max_output_tokens
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hooks interface for chat.params output type includes maxOutputTokens"
-
-  - id: max_output_tokens_computed_before_hook
-    type: fail_to_pass
-    origin: pr_diff
-    description: "maxOutputTokens is computed before Plugin.trigger('chat.params'), not after"
-
-  - id: hook_preserves_existing_params
-    type: pass_to_pass
-    origin: repo_tests
-    description: "chat.params hook output type still includes temperature, topP, topK, options"
-
-  - id: stream_text_still_passes_core_params
-    type: pass_to_pass
-    origin: static
-    description: "streamText call still passes temperature, topP, topK from params"
-
-  - id: repo_typecheck_plugin
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Plugin package typecheck passes"
-
-  - id: repo_typecheck_opencode
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Opencode package typecheck passes"
-
-  - id: repo_llm_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "LLM session tests pass"
-
+- id: modified_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Both modified files exist and have substantial content
+- id: max_output_tokens_in_hook_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: maxOutputTokens included in Plugin.trigger('chat.params') output object
+- id: stream_text_uses_params_max_output_tokens
+  type: fail_to_pass
+  origin: pr_diff
+  description: streamText call uses params.maxOutputTokens, not a bare local variable
+- id: hook_type_includes_max_output_tokens
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hooks interface for chat.params output type includes maxOutputTokens
+- id: max_output_tokens_computed_before_hook
+  type: fail_to_pass
+  origin: pr_diff
+  description: maxOutputTokens is computed before Plugin.trigger('chat.params'), not
+    after
+- id: hook_preserves_existing_params
+  type: pass_to_pass
+  origin: repo_tests
+  description: chat.params hook output type still includes temperature, topP, topK,
+    options
+- id: stream_text_still_passes_core_params
+  type: pass_to_pass
+  origin: static
+  description: streamText call still passes temperature, topP, topK from params
+- id: repo_typecheck_plugin
+  type: pass_to_pass
+  origin: repo_tests
+  description: Plugin package typecheck passes
+- id: repo_typecheck_opencode
+  type: pass_to_pass
+  origin: repo_tests
+  description: Opencode package typecheck passes
+- id: repo_llm_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: LLM session tests pass
 rubric:
-  - rule: "Avoid using the `any` type"
-    source:
-      path: "AGENTS.md"
-  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
-    source:
-      path: "AGENTS.md"
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  source:
+    path: AGENTS.md
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 64-73
+  evidence: The gold solution accesses `params.maxOutputTokens` directly using dot
+    notation when passing it to the provider payload, rather than destructuring `maxOutputTokens`
+    from `params`.
+  category: style
+distractors:
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to rename `maxOutputTokens` to a single word
+    like `tokens` or `limit` to satisfy the strict single-word naming rule. However,
+    `maxOutputTokens` is an existing property name in the provider API and the `chat.params`
+    hook output. Changing it would break the API contract and cause bugs.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 34-45
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: scope_ambiguity
+  why_distracting: 'The agent might avoid adding the explicit type `maxOutputTokens:
+    number | undefined` to the `Hooks` interface in `packages/plugin/src/index.ts`,
+    thinking it should be inferred. But since it''s an exported interface defining
+    a plugin hook contract, explicit typing is required.'
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 20-21
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript styling rules
+  (naming, destructuring, variables). The `packages/opencode/AGENTS.md` provides Effect
+  and Drizzle specific rules which are not applicable here since the modified code
+  does not use Effect or Drizzle. The agent must carefully apply the root styling
+  rules without breaking existing API contracts (like `maxOutputTokens`).

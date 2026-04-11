@@ -1,92 +1,100 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 24486
-  base_commit: "162852609ad01f171ba868900d18e57236573785"
-  merge_commit: "539b23e5b52e7d856e8756a9fd266d928d2a2fea"
-
+  base_commit: 162852609ad01f171ba868900d18e57236573785
+  merge_commit: 539b23e5b52e7d856e8756a9fd266d928d2a2fea
 checks:
-  - id: truncate_long_unions_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dead code: truncate_long_unions method must be removed"
-
-  - id: specialization_display_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dead code: no-arg Specialization::display() method must be removed"
-
-  - id: no_unnecessary_pub_on_structs_enums
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Display helper structs/enums must not have unnecessary pub/pub(crate)"
-
-  - id: no_unnecessary_pub_on_methods
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Internal helper methods must not have unnecessary pub/pub(crate)"
-
-  - id: cargo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Crate must compile after visibility changes"
-
-  - id: cargo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Crate must pass clippy lints"
-
-  - id: cargo_test_lib
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Crate library unit tests must pass"
-
-  - id: cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Crate must be formatted according to rustfmt"
-
-  - id: cargo_doc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Crate documentation must build without warnings"
-
-  - id: cargo_check_all_features
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Crate must compile with all features enabled"
-
-  - id: cargo_clippy_all_features
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Crate must pass clippy lints with all features enabled"
-
-  - id: cargo_test_doc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Crate documentation tests must pass"
-
-  - id: qualified_fields_not_pub
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DisplaySettings.qualified and qualified_type_aliases fields must be private"
-
+- id: truncate_long_unions_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Dead code: truncate_long_unions method must be removed'
+- id: specialization_display_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Dead code: no-arg Specialization::display() method must be removed'
+- id: no_unnecessary_pub_on_structs_enums
+  type: fail_to_pass
+  origin: pr_diff
+  description: Display helper structs/enums must not have unnecessary pub/pub(crate)
+- id: no_unnecessary_pub_on_methods
+  type: fail_to_pass
+  origin: pr_diff
+  description: Internal helper methods must not have unnecessary pub/pub(crate)
+- id: cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate must compile after visibility changes
+- id: cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate must pass clippy lints
+- id: cargo_test_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate library unit tests must pass
+- id: cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate must be formatted according to rustfmt
+- id: cargo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate documentation must build without warnings
+- id: cargo_check_all_features
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate must compile with all features enabled
+- id: cargo_clippy_all_features
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate must pass clippy lints with all features enabled
+- id: cargo_test_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate documentation tests must pass
+- id: qualified_fields_not_pub
+  type: fail_to_pass
+  origin: pr_diff
+  description: DisplaySettings.qualified and qualified_type_aliases fields must be
+    private
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "162852609ad01f171ba868900d18e57236573785"
-
-  - rule: "If you have to suppress a Clippy lint, prefer to use #[expect()] over #[allow()], where possible. But if a lint is complaining about unused/dead code, it's usually best to just delete the unused code."
-    source:
-      path: "AGENTS.md"
-      lines: "81"
-      commit: "162852609ad01f171ba868900d18e57236573785"
-
-  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
-    source:
-      path: "AGENTS.md"
-      lines: "82"
-      commit: "162852609ad01f171ba868900d18e57236573785"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 162852609ad01f171ba868900d18e57236573785
+- rule: 'If you have to suppress a Clippy lint, prefer to use #[expect()] over #[allow()],
+    where possible. But if a lint is complaining about unused/dead code, it''s usually
+    best to just delete the unused code.'
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 162852609ad01f171ba868900d18e57236573785
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: 162852609ad01f171ba868900d18e57236573785
+- rule: Avoid writing significant amounts of new code.
+  source:
+    path: AGENTS.md
+    lines: 57-58
+  evidence: The gold solution only removes `pub` modifiers and deletes dead code,
+    adding no new logic or significant code.
+  category: style
+distractors:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The task is a pure refactoring (reducing visibility and removing
+    dead code) that doesn't change observable behavior. Attempting to write new tests
+    for this would be impossible or wasted effort, as existing tests already cover
+    the compilation and functionality.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 51-51
+hierarchy_analysis: Only `AGENTS.md` contains rules, so there are no cross-file conflicts.
+  The rules apply globally to the repository.

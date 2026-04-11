@@ -1,103 +1,127 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: gradio-app/gradio
   pr: 13028
   base_commit: 6f8a0533ad0247e709fefe406961b864473d344d
   merge_commit: 30af84cdd100855999281de8720cbb6d58b48556
-
 checks:
-  # Gates
-  - id: modified_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "All files touched by the fix must exist and not be empty"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified files have substantive content (not gutted/stubbed)"
-
-  # Core behavioral (fail-to-pass)
-  - id: noop_dispatcher_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Remove __GRADIO_BROWSER_TEST__ no-op dispatcher override from Gradio class constructor; wire dispatcher and register_component from shared props"
-
-  - id: listener_registry
-    type: fail_to_pass
-    origin: pr_diff
-    description: "render.ts has a Map-based listener registry with registration function using Map operations"
-
-  - id: render_returns_event_helpers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "render() returns listen, set_data, get_data helpers in addition to container/component"
-
-  - id: dispatcher_notifies_listeners
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dispatcher iterates over registered listeners to notify them, not just firing CustomEvent"
-
-  - id: register_component_wired
-    type: fail_to_pass
-    origin: pr_diff
-    description: "register_component in shared props is not a no-op; accepts set_data/get_data callbacks"
-
-  - id: clipboard_error_handling
-    type: fail_to_pass
-    origin: pr_diff
-    description: "handle_copy in Textbox.svelte wraps clipboard API in try/catch so copy_feedback still runs on error"
-
-  - id: vitest_browser_permissions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Permissions moved from browser instance context to playwright provider contextOptions"
-
-  - id: custom_button_prop_wired
-    type: fail_to_pass
-    origin: pr_diff
-    description: "IconButtonWrapper receives on_custom_button_click prop (not the wrong name)"
-
-  # Regression (pass-to-pass)
-  - id: render_cleanup_exports
-    type: pass_to_pass
-    origin: pr_diff
-    description: "render and cleanup functions still exported from render.ts"
-
-  - id: fire_event_export
-    type: pass_to_pass
-    origin: pr_diff
-    description: "fireEvent still exported from render.ts"
-
-  # Repo CI/CD checks (pass-to-pass)
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier format check passes"
-
-  - id: test_repo_client_node_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @gradio/client node tests pass"
-  - id: test_repo_client_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @gradio/client build passes"
-
+- id: modified_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All files touched by the fix must exist and not be empty
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files have substantive content (not gutted/stubbed)
+- id: noop_dispatcher_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Remove __GRADIO_BROWSER_TEST__ no-op dispatcher override from Gradio
+    class constructor; wire dispatcher and register_component from shared props
+- id: listener_registry
+  type: fail_to_pass
+  origin: pr_diff
+  description: render.ts has a Map-based listener registry with registration function
+    using Map operations
+- id: render_returns_event_helpers
+  type: fail_to_pass
+  origin: pr_diff
+  description: render() returns listen, set_data, get_data helpers in addition to
+    container/component
+- id: dispatcher_notifies_listeners
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dispatcher iterates over registered listeners to notify them, not just
+    firing CustomEvent
+- id: register_component_wired
+  type: fail_to_pass
+  origin: pr_diff
+  description: register_component in shared props is not a no-op; accepts set_data/get_data
+    callbacks
+- id: clipboard_error_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: handle_copy in Textbox.svelte wraps clipboard API in try/catch so copy_feedback
+    still runs on error
+- id: vitest_browser_permissions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Permissions moved from browser instance context to playwright provider
+    contextOptions
+- id: custom_button_prop_wired
+  type: fail_to_pass
+  origin: pr_diff
+  description: IconButtonWrapper receives on_custom_button_click prop (not the wrong
+    name)
+- id: render_cleanup_exports
+  type: pass_to_pass
+  origin: pr_diff
+  description: render and cleanup functions still exported from render.ts
+- id: fire_event_export
+  type: pass_to_pass
+  origin: pr_diff
+  description: fireEvent still exported from render.ts
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes
+- id: test_repo_client_node_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/client node tests pass
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/client build passes
 rubric:
-  - rule: "Frontend code must be formatted with prettier. Follow the existing code style of surrounding files."
-    source:
-      path: "AGENTS.md"
-      lines: "41-45"
-      commit: "6f8a0533ad0247e709fefe406961b864473d344d"
-  - rule: "Svelte components should use proper svelte-ignore comments for intentional patterns (e.g., a11y_autofocus for accessibility exceptions)."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "6f8a0533ad0247e709fefe406961b864473d344d"
-  - rule: "Test utilities should provide clean APIs with proper TypeScript types and follow patterns established in the test infrastructure."
-    source:
-      path: "AGENTS.md"
-      lines: "41-45"
-      commit: "6f8a0533ad0247e709fefe406961b864473d344d"
+- rule: Frontend code must be formatted with prettier. Follow the existing code style
+    of surrounding files.
+  source:
+    path: AGENTS.md
+    lines: 41-45
+    commit: 6f8a0533ad0247e709fefe406961b864473d344d
+- rule: Svelte components should use proper svelte-ignore comments for intentional
+    patterns (e.g., a11y_autofocus for accessibility exceptions).
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 6f8a0533ad0247e709fefe406961b864473d344d
+- rule: Test utilities should provide clean APIs with proper TypeScript types and
+    follow patterns established in the test infrastructure.
+  source:
+    path: AGENTS.md
+    lines: 41-45
+    commit: 6f8a0533ad0247e709fefe406961b864473d344d
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 40-42
+  evidence: The gold solution fixes the prop mismatch by changing `oncustombuttonclick`
+    to `on_custom_button_click` in `IconButtonWrapper`, aligning with the snake_case
+    prop naming convention used in the surround
+  category: style
+distractors:
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: architecture_boundary
+  why_distracting: The bug is entirely in the frontend (`js/` directory) and browser
+    test infrastructure. Running backend tests would waste time and compute, as the
+    Python backend is not affected by these changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 28-29
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see the `IconButtonWrapper` prop mismatch (`oncustombuttonclick`
+    vs `on_custom_button_click`) or the missing `svelte-ignore` comments as 'tiny
+    edits' or 'isolated lint cleanup' and decide not to fix them, leaving the bug
+    partially unresolved or the build with warnings.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 52-53
+hierarchy_analysis: The repository uses a single `AGENTS.md` file at the root level.
+  The rules are generally applicable, but the agent must distinguish between frontend
+  and backend workflows. The instruction to run backend tests is a global rule that
+  should be ignored for this purely frontend PR.

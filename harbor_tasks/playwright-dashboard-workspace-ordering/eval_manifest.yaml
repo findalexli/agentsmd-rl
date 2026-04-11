@@ -55,3 +55,38 @@ rubric:
     path: CLAUDE.md
     lines: 90-96
     commit: 883825e4d62aac69939b8f4c0f1cf41e72882079
+- rule: Import boundaries are enforced via DEPS.list files
+  source:
+    path: CLAUDE.md
+    lines: 68-70
+  evidence: The gold solution updates `packages/playwright-core/src/tools/dashboard/DEPS.list`
+    to include `../cli-client/registry.ts` before importing `createClientInfo` from
+    it in `dashboardApp.ts`.
+  category: architecture
+distractors:
+- rule: Tooling Packages table listing specific packages for tools
+  collision_type: scope_ambiguity
+  why_distracting: The 'Tooling Packages' table lists several tools (html-reporter,
+    trace-viewer, recorder, web) but omits 'dashboard'. An agent might assume the
+    dashboard is not a tooling package or try to move the dashboard UI code into the
+    'web' package based on this incomplete list.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 16-23
+- rule: tests/mcp/ is for testing MCP tools via client.callTool()
+  collision_type: architecture_boundary
+  why_distracting: The rule states that `tests/mcp/` is for testing 'MCP tools via
+    client.callTool()'. Since the issue mentions the 'Playwright MCP dashboard', an
+    agent might waste time trying to write a test in `tests/mcp/` using `client.callTool()`,
+    even though the dashboard is an HTTP server/UI and its `/api/sessions/list` endpoint
+    is not an MCP tool itself.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 62-66
+hierarchy_analysis: The repository uses a strict dependency enforcement system (`DEPS.list`)
+  that agents must respect when importing across internal boundaries. The `CLAUDE.md`
+  file provides a good overview of the architecture, but its omission of the `dashboard`
+  package in the tooling list and its specific definition of MCP tests can mislead
+  an agent working on the MCP dashboard's HTTP backend and React frontend.

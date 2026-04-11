@@ -1,116 +1,134 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1053
-  base_commit: "421e4e5d9816f9a173374331df96d5d799a40844"
-
+  base_commit: 421e4e5d9816f9a173374331df96d5d799a40844
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "proxy_rollout_server.py compiles without syntax errors"
-
-  - id: stream_stripped_from_kwargs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_call_client_create strips body 'stream' field to prevent kwargs leak into create_fn"
-
-  - id: sse_generator_format
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Streaming path produces SSE events with 'data: {json}\\n\\n' format and [DONE] sentinel"
-
-  - id: response_model_allows_streaming
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Endpoint decorator allows StreamingResponse via response_model=None or union return type"
-
-  - id: not_stub_call_client_create
-    type: pass_to_pass
-    origin: static
-    description: "_call_client_create has substantial implementation (not a stub)"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports (from x import *)"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "421e4e5d9816f9a173374331df96d5d799a40844"
-
-  - id: no_bare_print
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare print() — use areal.utils.logging.getLogger instead"
-    source:
-      path: "AGENTS.md"
-      lines: "89-91"
-      commit: "421e4e5d9816f9a173374331df96d5d799a40844"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on the target file"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff formatter passes on the target file"
-
-  - id: test_repo_mdformat
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's markdown files pass mdformat check"
-
-  - id: test_repo_yaml_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's YAML files pass syntax check"
-
-  - id: test_repo_json_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JSON files pass syntax check"
-
-  - id: test_repo_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python files have no trailing whitespace"
-
-  - id: test_repo_eof_newline
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python files end with newline"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: proxy_rollout_server.py compiles without syntax errors
+- id: stream_stripped_from_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: _call_client_create strips body 'stream' field to prevent kwargs leak
+    into create_fn
+- id: sse_generator_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Streaming path produces SSE events with ''data: {json}\n\n'' format
+    and [DONE] sentinel'
+- id: response_model_allows_streaming
+  type: fail_to_pass
+  origin: pr_diff
+  description: Endpoint decorator allows StreamingResponse via response_model=None
+    or union return type
+- id: not_stub_call_client_create
+  type: pass_to_pass
+  origin: static
+  description: _call_client_create has substantial implementation (not a stub)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports (from x import *)
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 421e4e5d9816f9a173374331df96d5d799a40844
+- id: no_bare_print
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare print() — use areal.utils.logging.getLogger instead
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 421e4e5d9816f9a173374331df96d5d799a40844
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on the target file
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatter passes on the target file
+- id: test_repo_mdformat
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's markdown files pass mdformat check
+- id: test_repo_yaml_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML files pass syntax check
+- id: test_repo_json_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JSON files pass syntax check
+- id: test_repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files have no trailing whitespace
+- id: test_repo_eof_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files end with newline
 rubric:
-  - rule: "Follow existing code patterns in the same module."
-    source:
-      path: "AGENTS.md"
-      lines: "40"
-      commit: "421e4e5d9816f9a173374331df96d5d799a40844"
-
-  - rule: "No hardcoded secrets, paths, or endpoints."
-    source:
-      path: "AGENTS.md"
-      lines: "31"
-      commit: "421e4e5d9816f9a173374331df96d5d799a40844"
-
-  - rule: "Rollout workflows must stay non-blocking (await + aiofiles); no sync I/O in async handlers."
-    source:
-      path: "AGENTS.md"
-      lines: "102-103"
-      commit: "421e4e5d9816f9a173374331df96d5d799a40844"
-
-  - rule: "Explicit type hints on function signatures."
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "421e4e5d9816f9a173374331df96d5d799a40844"
-
-  - rule: "Composition over inheritance -- keep class hierarchies <= 2 levels; prefer delegation and closures over subclassing."
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "421e4e5d9816f9a173374331df96d5d799a40844"
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: '40'
+    commit: 421e4e5d9816f9a173374331df96d5d799a40844
+- rule: No hardcoded secrets, paths, or endpoints.
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 421e4e5d9816f9a173374331df96d5d799a40844
+- rule: Rollout workflows must stay non-blocking (await + aiofiles); no sync I/O in
+    async handlers.
+  source:
+    path: AGENTS.md
+    lines: 102-103
+    commit: 421e4e5d9816f9a173374331df96d5d799a40844
+- rule: Explicit type hints on function signatures.
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 421e4e5d9816f9a173374331df96d5d799a40844
+- rule: Composition over inheritance -- keep class hierarchies <= 2 levels; prefer
+    delegation and closures over subclassing.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 421e4e5d9816f9a173374331df96d5d799a40844
+- rule: 'Logging: ... never `print`'
+  source:
+    path: AGENTS.md
+    lines: 46-47
+  evidence: 'The gold solution uses `logger.error(f"Error setting up streaming response:
+    {e}")` to log the exception during streaming setup, adhering to the rule to never
+    use `print`.'
+  category: style
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The prompt asks to fix a specific bug in the proxy server. Attempting
+    to add tests for this FastAPI endpoint would require setting up complex mocks
+    for the OpenAI client and AsyncGenerators, which is out of scope for this specific
+    bug fix PR and not present in the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 25-25
+- rule: Register new loggers with color in `areal/utils/logging.py`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see the need to log an error in the new streaming
+    branch and think it needs to create a new PascalCase logger and register it in
+    `areal/utils/logging.py`. However, it should just reuse the existing `logger`
+    already instantiated in the module.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 47-48
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain overlapping rules (e.g.,
+  'Add tests for new functionality', 'never print'). `AGENTS.md` provides more specific
+  details on logging registration. The rules are consistent across both files, acting
+  accumulatively without direct conflicts.

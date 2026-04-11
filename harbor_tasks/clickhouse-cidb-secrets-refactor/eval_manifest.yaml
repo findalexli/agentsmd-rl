@@ -7,12 +7,24 @@ source_pr:
 task_metadata:
   name: clickhouse-cidb-secrets-refactor
   title: Refactor CIDB secrets to use Settings instead of hardcoded values
-  description: "The collect_statistics.py script hardcoded public CIDB secret names\n\
-    (clickhouse-test-stat-url, etc.), so the NightlyStatistics job always\nqueried\
-    \ the public CIDB \u2014 even in private forks that override\nSettings.SECRET_CI_DB_*\
-    \ via private_settings_overrides.py.\n\nThis task replaces the hardcoded Secret.Config\
-    \ calls with\nInfo().get_secret(Settings.SECRET_CI_DB_URL) / SECRET_CI_DB_USER\
-    \ /\nSECRET_CI_DB_PASSWORD, matching the pattern used in runner.py and\ncidb_cluster.py.\n"
+  description: 'The collect_statistics.py script hardcoded public CIDB secret names
+
+    (clickhouse-test-stat-url, etc.), so the NightlyStatistics job always
+
+    queried the public CIDB — even in private forks that override
+
+    Settings.SECRET_CI_DB_* via private_settings_overrides.py.
+
+
+    This task replaces the hardcoded Secret.Config calls with
+
+    Info().get_secret(Settings.SECRET_CI_DB_URL) / SECRET_CI_DB_USER /
+
+    SECRET_CI_DB_PASSWORD, matching the pattern used in runner.py and
+
+    cidb_cluster.py.
+
+    '
   difficulty: easy
   estimated_time: 15 min
   tags:
@@ -163,3 +175,31 @@ rubric:
     path: .claude/skills/clickhouse-pr-description/SKILL.md
     lines: 85-90
     commit: bc855b917b3f456bfd6198c5bc29a1bc5672aabf
+distractors:
+- rule: Links to ClickHouse CI should be analyzed using the tool at .claude/tools/fetch_ci_report.js
+  collision_type: scope_ambiguity
+  why_distracting: The problem description mentions the 'NightlyStatistics job' and
+    CI DB behavior. An agent might be tempted to use the fetch_ci_report.js tool to
+    analyze CI logs for this job to understand the issue. However, the problem provides
+    the exact file and the exact refactoring needed, making CI analysis an unnecessary
+    distraction.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 21-23
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()`
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly instructs the agent to "Use `Info().get_secret(...)`"
+    with parentheses. The rule in AGENTS.md dictates writing function names without
+    parentheses (e.g., `f` instead of `f()`) in comments and commit messages. This
+    creates a conflict if the agent documents its changes, as it must choose between
+    the prompt's literal string and the repository's style guide.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 14-16
+hierarchy_analysis: The AGENTS.md file contains general guidelines for documentation,
+  git workflow, and CI analysis. None of the rules directly apply to the specific
+  Python refactoring task required in this PR, as the gold solution only modifies
+  code without adding comments, documentation, or performing git operations.

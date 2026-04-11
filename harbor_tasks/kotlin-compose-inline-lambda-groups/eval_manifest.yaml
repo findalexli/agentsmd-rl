@@ -2,123 +2,102 @@ source_pr:
   owner: JetBrains
   repo: kotlin
   number: 5679
-  title: "Cherry-pick \"Add groups to inline functions with two or more inline parameters\" to Kotlin 2.3.20"
+  title: Cherry-pick "Add groups to inline functions with two or more inline parameters"
+    to Kotlin 2.3.20
   merge_commit: 3657c00274a9252a8b71e6434cd6c63cf3770803
   base_commit: 49e930021babee259abbe37b4073305c96254b23
-
 checks:
-  # Fail-to-pass tests: These verify the fix is properly implemented
-  - id: test_visit_inlined_lambda_function_exists
-    type: fail_to_pass
-    origin: code_structure
-    description: New visitInlinedLambdaInComposableScope function exists
-    source:
-      config_file: .ai/guidelines.md
-      lines: "When working with compiler internals (FIR, IR, backends): READ compiler/AGENTS.md"
-
-  - id: test_force_inlined_lambda_group_field
-    type: fail_to_pass
-    origin: code_structure
-    description: forceInlinedLambdaGroup field exists in CaptureScope
-
-  - id: test_inline_lambda_count_logic
-    type: fail_to_pass
-    origin: code_structure
-    description: Logic to count inline lambdas and force groups exists
-
-  - id: test_leaving_inlined_lambda_renamed
-    type: fail_to_pass
-    origin: code_structure
-    description: leavingInlinedLambda renamed to leavingInlinedComposableLambda
-
-  - id: test_rollback_group_condition_fixed
-    type: fail_to_pass
-    origin: code_structure
-    description: Rollback group condition order is fixed for early return handling
-
-  - id: test_block_scope_marks_adds_inlined_lambda
-    type: fail_to_pass
-    origin: code_structure
-    description: Block scope marks now properly add inlined lambda scopes
-
-  - id: test_has_captured_call_check_updated
-    type: fail_to_pass
-    origin: code_structure
-    description: Captured composable call check considers forceInlinedLambdaGroup
-
-  # Pass-to-pass tests: These verify repo integrity
-  - id: test_compose_compiler_tests_exist
-    type: pass_to_pass
-    origin: static
-    description: Repo test directories exist and are discoverable
-
-  - id: test_transformer_file_structure
-    type: pass_to_pass
-    origin: static
-    description: Transformer file has expected structure
-
-  - id: test_repo_git_integrity
-    type: pass_to_pass
-    origin: repo_tests
-    description: Git repository is intact and at expected base commit
-
-  - id: test_compose_compiler_testdata_exists
-    type: pass_to_pass
-    origin: static
-    description: Compose compiler test data files exist
-
-  - id: test_key_compose_source_files_exist
-    type: pass_to_pass
-    origin: static
-    description: Key Compose compiler source files exist and are non-empty
-
-  - id: test_compose_compiler_build_files_exist
-    type: pass_to_pass
-    origin: static
-    description: Compose compiler build configuration files exist
-
-  - id: test_kotlin_test_files_exist
-    type: pass_to_pass
-    origin: static
-    description: Kotlin test source files exist and are non-empty
-
-  # New pass-to-pass tests using actual CI commands
-  - id: test_repo_gradle_version
-    type: pass_to_pass
-    origin: repo_tests
-    description: Gradle wrapper works and returns version info
-
-  - id: test_repo_compose_transformer_exists
-    type: pass_to_pass
-    origin: static
-    description: Compose transformer source file exists with valid Kotlin structure
-
-# Agent config rules to check
+- id: test_visit_inlined_lambda_function_exists
+  type: fail_to_pass
+  origin: code_structure
+  description: New visitInlinedLambdaInComposableScope function exists
+  source:
+    config_file: .ai/guidelines.md
+    lines: 'When working with compiler internals (FIR, IR, backends): READ compiler/AGENTS.md'
+- id: test_force_inlined_lambda_group_field
+  type: fail_to_pass
+  origin: code_structure
+  description: forceInlinedLambdaGroup field exists in CaptureScope
+- id: test_inline_lambda_count_logic
+  type: fail_to_pass
+  origin: code_structure
+  description: Logic to count inline lambdas and force groups exists
+- id: test_leaving_inlined_lambda_renamed
+  type: fail_to_pass
+  origin: code_structure
+  description: leavingInlinedLambda renamed to leavingInlinedComposableLambda
+- id: test_rollback_group_condition_fixed
+  type: fail_to_pass
+  origin: code_structure
+  description: Rollback group condition order is fixed for early return handling
+- id: test_block_scope_marks_adds_inlined_lambda
+  type: fail_to_pass
+  origin: code_structure
+  description: Block scope marks now properly add inlined lambda scopes
+- id: test_has_captured_call_check_updated
+  type: fail_to_pass
+  origin: code_structure
+  description: Captured composable call check considers forceInlinedLambdaGroup
+- id: test_compose_compiler_tests_exist
+  type: pass_to_pass
+  origin: static
+  description: Repo test directories exist and are discoverable
+- id: test_transformer_file_structure
+  type: pass_to_pass
+  origin: static
+  description: Transformer file has expected structure
+- id: test_repo_git_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is intact and at expected base commit
+- id: test_compose_compiler_testdata_exists
+  type: pass_to_pass
+  origin: static
+  description: Compose compiler test data files exist
+- id: test_key_compose_source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Key Compose compiler source files exist and are non-empty
+- id: test_compose_compiler_build_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Compose compiler build configuration files exist
+- id: test_kotlin_test_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Kotlin test source files exist and are non-empty
+- id: test_repo_gradle_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradle wrapper works and returns version info
+- id: test_repo_compose_transformer_exists
+  type: pass_to_pass
+  origin: static
+  description: Compose transformer source file exists with valid Kotlin structure
 agent_config:
-  - rule: "When working with compiler internals (FIR, IR, backends): READ compiler/AGENTS.md"
-    applies: true
-    origin:
-      config_file: .ai/guidelines.md
-      commit: 639c9b39ef3543e46732a6aa66822916f6663555
-
-  - rule: "Use ./gradlew with -q (quiet) flag to reduce output noise"
-    applies: true
-    origin:
-      config_file: .ai/guidelines.md
-      commit: 639c9b39ef3543e46732a6aa66822916f6663555
-
-  - rule: "BEFORE creating any commit, read docs/code_authoring_and_core_review.md"
-    applies: true
-    origin:
-      config_file: .ai/guidelines.md
-      commit: 639c9b39ef3543e46732a6aa66822916f6663555
-
-# Rubric for LLM-judged aspects
+- rule: 'When working with compiler internals (FIR, IR, backends): READ compiler/AGENTS.md'
+  applies: true
+  origin:
+    config_file: .ai/guidelines.md
+    commit: 639c9b39ef3543e46732a6aa66822916f6663555
+- rule: Use ./gradlew with -q (quiet) flag to reduce output noise
+  applies: true
+  origin:
+    config_file: .ai/guidelines.md
+    commit: 639c9b39ef3543e46732a6aa66822916f6663555
+- rule: BEFORE creating any commit, read docs/code_authoring_and_core_review.md
+  applies: true
+  origin:
+    config_file: .ai/guidelines.md
+    commit: 639c9b39ef3543e46732a6aa66822916f6663555
 rubric:
-  - criterion: "Code follows Kotlin compiler plugin patterns"
-    description: "Changes follow existing patterns in ComposableFunctionBodyTransformer"
-    required: true
-
-  - criterion: "Comments explain the fix"
-    description: "The fix includes explanatory comments about why groups are needed"
-    required: true
+- criterion: Code follows Kotlin compiler plugin patterns
+  description: Changes follow existing patterns in ComposableFunctionBodyTransformer
+  required: true
+- criterion: Comments explain the fix
+  description: The fix includes explanatory comments about why groups are needed
+  required: true
+hierarchy_analysis: The provided configuration files (`CLAUDE.md` and `AGENTS.md`)
+  only contain pointers to external guideline files (`./.ai/guidelines.md` and `./.claude/local.md`)
+  which are not present in the context. There are no specific coding conventions,
+  architectural rules, or style guidelines defined directly within the provided text.

@@ -1,55 +1,72 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/uv"
+  repo: astral-sh/uv
   pr: 18919
-  base_commit: "84a854c169ef8acdcc90692e40f6f540be74b956"
-  merge_commit: "6eb5fe09cc9999fc9c42f780ca8bdf56d7e30624"
-
+  base_commit: 84a854c169ef8acdcc90692e40f6f540be74b956
+  merge_commit: 6eb5fe09cc9999fc9c42f780ca8bdf56d7e30624
 checks:
-  - id: uv_keyring_cargo_check
-    type: pass_to_pass
-    origin: repo_ci
-    description: "uv-keyring crate compiles with cargo check"
-
-  - id: uv_keyring_cargo_clippy
-    type: pass_to_pass
-    origin: repo_ci
-    description: "uv-keyring crate passes clippy linting"
-
-  - id: cargo_fmt_check
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Workspace code is formatted correctly"
-
-  - id: cargo_toml_valid
-    type: pass_to_pass
-    origin: static
-    description: "Cargo.toml must remain valid TOML"
-
-  - id: readme_exists_with_docs
-    type: pass_to_pass
-    origin: static
-    description: "README.md must still exist and contain usage documentation"
-
-  - id: readme_no_wrong_crate_imports
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README code blocks must not import from non-existent 'keyring' crate"
-
-  - id: readme_no_await_in_sync_fn
-    type: fail_to_pass
-    origin: pr_diff
-    description: "README code blocks must not use .await in a non-async fn main"
-
-  - id: mock_no_wrong_crate_refs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "mock.rs doc code examples must not reference non-existent 'keyring' crate"
-
+- id: uv_keyring_cargo_check
+  type: pass_to_pass
+  origin: repo_ci
+  description: uv-keyring crate compiles with cargo check
+- id: uv_keyring_cargo_clippy
+  type: pass_to_pass
+  origin: repo_ci
+  description: uv-keyring crate passes clippy linting
+- id: cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_ci
+  description: Workspace code is formatted correctly
+- id: cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Cargo.toml must remain valid TOML
+- id: readme_exists_with_docs
+  type: pass_to_pass
+  origin: static
+  description: README.md must still exist and contain usage documentation
+- id: readme_no_wrong_crate_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: README code blocks must not import from non-existent 'keyring' crate
+- id: readme_no_await_in_sync_fn
+  type: fail_to_pass
+  origin: pr_diff
+  description: README code blocks must not use .await in a non-async fn main
+- id: mock_no_wrong_crate_refs
+  type: fail_to_pass
+  origin: pr_diff
+  description: mock.rs doc code examples must not reference non-existent 'keyring'
+    crate
 rubric:
-  - rule: "PREFER [`TypeName`] references when writing Rust doc comments"
-    source:
-      path: "AGENTS.md"
-      lines: "20"
-      commit: "84a854c169ef8acdcc90692e40f6f540be74b956"
+- rule: PREFER [`TypeName`] references when writing Rust doc comments
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: 84a854c169ef8acdcc90692e40f6f540be74b956
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The PR is specifically about fixing broken doctests (which are
+    themselves tests) and documentation examples. There is no new runtime behavior
+    being added or changed, so attempting to add a new test case would be wasted effort
+    and a misunderstanding of the task's scope.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 2-2
+- rule: NEVER update all dependencies in the lockfile and ALWAYS use `cargo update
+    --precise` to make lockfile changes
+  collision_type: rule_conflict
+  why_distracting: The gold solution removes the `doc-comment` dependency entirely,
+    which naturally results in `Cargo.lock` updates. An agent might misinterpret this
+    rule and either try to use `cargo update --precise` (which is for version bumps,
+    not removals) or avoid committing the `Cargo.lock` changes altogether.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 13-14
+hierarchy_analysis: The configuration consists of a single active file (`AGENTS.md`)
+  referenced by `CLAUDE.md`. There are no hierarchical conflicts, but the agent must
+  carefully interpret the scope of general rules (like adding tests or updating lockfiles)
+  when performing a documentation and dependency-removal task.

@@ -85,3 +85,31 @@ metadata:
   difficulty: easy
   category: release-script
   language: javascript
+distractors:
+- rule: TypeScript strict mode with extensive type safety
+  collision_type: architecture_boundary
+  why_distracting: The file being edited (`scripts/create-github-release.mjs`) is
+    a plain Node.js JavaScript file used for CI, not part of the core library. Attempting
+    to enforce TypeScript strict mode, add type annotations, or convert the file to
+    `.ts` would break the script execution and violate the existing architecture.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 16-16
+- rule: 'Critical: Always run unit and type tests during development - do not proceed
+    if they fail'
+  collision_type: scope_ambiguity
+  why_distracting: The instructions mandate running unit and type tests during development.
+    However, this PR modifies a standalone CI release script that does not have associated
+    unit or type tests. An agent might waste time trying to write tests for this script
+    or running the core library test suite, which is irrelevant to this specific fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-45
+hierarchy_analysis: The AGENTS.md file provides extensive guidance on the TypeScript
+  core library, Nx monorepo testing, and React/Solid bindings. However, this PR targets
+  a root-level `.mjs` CI script. The global rules regarding TypeScript and testing
+  are out of scope for this specific file, creating a boundary where the agent must
+  recognize that standard library development rules do not apply to infrastructure
+  scripts.

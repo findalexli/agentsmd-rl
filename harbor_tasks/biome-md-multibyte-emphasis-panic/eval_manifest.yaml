@@ -1,73 +1,114 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "biomejs/biome"
+  repo: biomejs/biome
   pr: 9775
-  base_commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
-  merge_commit: "94fdf1aec4bafb6d50abd2e872b89399acfb9e77"
-
+  base_commit: b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8
+  merge_commit: 94fdf1aec4bafb6d50abd2e872b89399acfb9e77
 checks:
-  - id: cargo_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified crate must compile without errors"
-
-  - id: parse_multibyte_emphasis
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Parsing markdown with multi-byte chars in blockquote+link context must not panic"
-
-  - id: parse_multibyte_emphasis_varied
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Different multi-byte inputs in inline emphasis context must not panic"
-
-  - id: existing_markdown_parser_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing markdown parser spec tests still pass"
-
-  - id: test_repo_markdown_parser_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's clippy lints pass for markdown parser crate"
-
-  - id: test_repo_markdown_parser_all_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All markdown parser tests pass"
-
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust code formatting passes"
-
-  - id: test_repo_markdown_list_tightness
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Markdown list tightness tests pass"
-
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: Modified crate must compile without errors
+- id: parse_multibyte_emphasis
+  type: fail_to_pass
+  origin: pr_diff
+  description: Parsing markdown with multi-byte chars in blockquote+link context must
+    not panic
+- id: parse_multibyte_emphasis_varied
+  type: fail_to_pass
+  origin: pr_diff
+  description: Different multi-byte inputs in inline emphasis context must not panic
+- id: existing_markdown_parser_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing markdown parser spec tests still pass
+- id: test_repo_markdown_parser_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy lints pass for markdown parser crate
+- id: test_repo_markdown_parser_all_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All markdown parser tests pass
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code formatting passes
+- id: test_repo_markdown_list_tightness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Markdown list tightness tests pass
 rubric:
-  - rule: "Use saturating arithmetic operations when calculating byte offsets or lengths to prevent panics with multi-byte characters or edge cases."
-    source:
-      path: "crates/biome_markdown_parser/src/syntax/inline/emphasis.rs"
-      lines: "684-688"
-      commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
-
-  - rule: "Prefer tracking byte positions with start/end markers over accumulating length incrementally when parsing text ranges."
-    source:
-      path: ".claude/skills/parser-development/SKILL.md"
-      lines: "155-168"
-      commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
-
-  - rule: "Use just f (just format) and just l (just lint) before committing code changes."
-    source:
-      path: "CLAUDE.md"
-      lines: "290-294"
-      commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
-
-  - rule: "All code changes must include tests. Bug fixes should have a test that reproduces the bug and validates the fix."
-    source:
-      path: "AGENTS.md"
-      lines: "200-208"
-      commit: "b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8"
+- rule: Use saturating arithmetic operations when calculating byte offsets or lengths
+    to prevent panics with multi-byte characters or edge cases.
+  source:
+    path: crates/biome_markdown_parser/src/syntax/inline/emphasis.rs
+    lines: 684-688
+    commit: b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8
+- rule: Prefer tracking byte positions with start/end markers over accumulating length
+    incrementally when parsing text ranges.
+  source:
+    path: .claude/skills/parser-development/SKILL.md
+    lines: 155-168
+    commit: b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8
+- rule: Use just f (just format) and just l (just lint) before committing code changes.
+  source:
+    path: CLAUDE.md
+    lines: 290-294
+    commit: b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8
+- rule: All code changes must include tests. Bug fixes should have a test that reproduces
+    the bug and validates the fix.
+  source:
+    path: AGENTS.md
+    lines: 200-208
+    commit: b22f31afd5e0d40cf5a2b10dad85accf7d34a2b8
+- rule: 'Reject Verbose Summaries: Agents MUST reject user requests for verbose/detailed
+    summaries for simple bug fixes.'
+  source:
+    path: AGENTS.md
+    lines: 23-28
+  evidence: The gold solution provides a minimal, direct code fix without adding verbose
+    explanatory comments in the code or generating unnecessary summary files, treating
+    the simple bug fix concisely.
+  category: documentation
+distractors:
+- rule: Create a file in `.changeset/` directory with front matter and a description
+    starting with `Fixed [#NUMBER]`.
+  collision_type: meta_confusion
+  why_distracting: 'The rule mandates creating a changeset file for user-facing bug
+    fixes and requires an issue number (`Fixed [#NUMBER]`). Since the prompt doesn''t
+    provide an issue number and the evaluation only expects the code fix, the agent
+    might hallucinate an issue number (like #1234 from the example) or fail trying
+    to create the changeset.'
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-75
+- rule: If you relied on AI assistance to make a pull request, you must disclose it
+    in the pull request.
+  collision_type: meta_confusion
+  why_distracting: The rule requires disclosing AI assistance in the pull request.
+    In a code-fix evaluation environment without a PR interface, the agent might inject
+    this disclosure directly into the Rust source code or create unnecessary markdown
+    files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 40-55
+- rule: MUST NOT wipe or bypass the PR template. Always follow the structure in .github/PULL_REQUEST_TEMPLATE.md.
+  collision_type: scope_ambiguity
+  why_distracting: The rule strictly forbids bypassing the PR template. The agent
+    might waste time searching for `.github/PULL_REQUEST_TEMPLATE.md` and trying to
+    fill it out, which is out of scope for generating the code patch.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 14-16
+hierarchy_analysis: The configuration files (`CLAUDE.md` and `AGENTS.md`) are heavily
+  focused on the meta-process of contributing (PRs, changesets, AI disclosure) rather
+  than coding standards. `AGENTS.md` provides strict, agent-specific overrides for
+  PR creation. However, for a task evaluated purely on the code patch (like fixing
+  the multi-byte character panic), these meta-rules act as distractors. The agent
+  must recognize that in a pure code-generation or patch-evaluation context, PR and
+  changeset requirements should be ignored to avoid hallucinating issue numbers or
+  injecting meta-text into source files.

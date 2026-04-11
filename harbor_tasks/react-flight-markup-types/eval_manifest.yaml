@@ -1,72 +1,71 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35634
-  base_commit: "10680271fab565e0edf948d3a6dc9d30e83df94c"
-  merge_commit: "8c34556ca8df0dab34bbaf68e0dd15cd4a5e3f7f"
-
+  base_commit: 10680271fab565e0edf948d3a6dc9d30e83df94c
+  merge_commit: 8c34556ca8df0dab34bbaf68e0dd15cd4a5e3f7f
 checks:
-  - id: server_reference_id_not_opaque
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ServerReferenceId type must not use the 'opaque' modifier — it must be a plain exported type alias for string"
-
-  - id: resolve_server_reference_parameter_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveServerReference id parameter must be typed as ServerReferenceId, not mixed"
-
-  - id: load_server_reference_metadata_id_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "loadServerReference metaData.id must be typed as ServerReferenceId, not bare string"
-
-  - id: server_manifest_remains_opaque
-    type: pass_to_pass
-    origin: static
-    description: "ServerManifest type must remain opaque — it was not changed by this fix"
-
-  - id: resolve_server_reference_throws_error
-    type: pass_to_pass
-    origin: static
-    description: "resolveServerReference must still contain its throw statement — only the type annotation changed"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint passes on the codebase"
-
-  - id: test_repo_flow_markup
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Flow type checking passes for markup renderer"
-
-  - id: test_repo_react_flight_server
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactFlightServer unit tests pass"
-
-  - id: test_repo_react_flight
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactFlight client unit tests pass"
-
+- id: server_reference_id_not_opaque
+  type: fail_to_pass
+  origin: pr_diff
+  description: ServerReferenceId type must not use the 'opaque' modifier — it must
+    be a plain exported type alias for string
+- id: resolve_server_reference_parameter_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveServerReference id parameter must be typed as ServerReferenceId,
+    not mixed
+- id: load_server_reference_metadata_id_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: loadServerReference metaData.id must be typed as ServerReferenceId,
+    not bare string
+- id: server_manifest_remains_opaque
+  type: pass_to_pass
+  origin: static
+  description: ServerManifest type must remain opaque — it was not changed by this
+    fix
+- id: resolve_server_reference_throws_error
+  type: pass_to_pass
+  origin: static
+  description: resolveServerReference must still contain its throw statement — only
+    the type annotation changed
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on the codebase
+- id: test_repo_flow_markup
+  type: pass_to_pass
+  origin: repo_tests
+  description: Flow type checking passes for markup renderer
+- id: test_repo_react_flight_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactFlightServer unit tests pass
+- id: test_repo_react_flight
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactFlight client unit tests pass
 rubric:
-  - rule: "Run Flow type checking with the correct renderer. For markup renderer changes, use: yarn flow dom-node"
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "22"
-      commit: "10680271fab565e0edf948d3a6dc9d30e83df94c"
-
-  - rule: "When using types from other packages, import them from the correct source. Do not redefine types locally as `any`."
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "29-30"
-      commit: "10680271fab565e0edf948d3a6dc9d30e83df94c"
-
-  - rule: "Fix code formatting with `yarn prettier` and lint issues with `yarn linc` before submitting changes."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "10-11"
-      commit: "10680271fab565e0edf948d3a6dc9d30e83df94c"
+- rule: 'Run Flow type checking with the correct renderer. For markup renderer changes,
+    use: yarn flow dom-node'
+  source:
+    path: .claude/skills/flow/SKILL.md
+    lines: '22'
+    commit: 10680271fab565e0edf948d3a6dc9d30e83df94c
+- rule: When using types from other packages, import them from the correct source.
+    Do not redefine types locally as `any`.
+  source:
+    path: .claude/skills/flow/SKILL.md
+    lines: 29-30
+    commit: 10680271fab565e0edf948d3a6dc9d30e83df94c
+- rule: Fix code formatting with `yarn prettier` and lint issues with `yarn linc`
+    before submitting changes.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: 10-11
+    commit: 10680271fab565e0edf948d3a6dc9d30e83df94c
+hierarchy_analysis: The only configuration file provided is `CLAUDE.md`, which contains
+  a brief monorepo overview but no actionable coding rules, style guidelines, or architectural
+  constraints. Therefore, no positive or negative rubrics can be extracted from the
+  config hierarchy.

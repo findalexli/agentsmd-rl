@@ -113,3 +113,38 @@ rubric:
     path: CLAUDE.md
     lines: '98'
     commit: 06101dc5daa2f4a3e4b6020b6e2f305566816e8a
+- rule: Format with ruff only
+  source:
+    path: CLAUDE.md
+    lines: 28-29
+  evidence: The gold solution explicitly runs `ruff format` on the modified migration
+    file to ensure the formatting complies with the project's ruff-only formatting
+    rule.
+  category: tooling
+distractors:
+- rule: Never run pytest, python, or airflow commands directly on the host — always
+    use `breeze`.
+  collision_type: meta_confusion
+  why_distracting: The agent might think it cannot use standard python file I/O or
+    simple python scripts to modify files during its workflow, or it might try to
+    run the evaluation patch script through breeze, causing meta-level confusion about
+    host vs container execution for simple file edits.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+- rule: SQLite is the default backend. Use `--backend postgres` or `--backend mysql`
+    for integration tests that need those databases.
+  collision_type: scope_ambiguity
+  why_distracting: Since the bug is specifically about SQLite foreign key constraints,
+    the agent might search for a `--backend sqlite` flag to run tests, not realizing
+    SQLite is already the default, potentially wasting time trying to configure the
+    test environment.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 35-36
+hierarchy_analysis: The configuration hierarchy consists of identical `CLAUDE.md`
+  and `AGENTS.md` files at the root level. There are no conflicts between the files
+  as they contain the exact same instructions regarding environment setup, testing
+  commands, and repository structure.

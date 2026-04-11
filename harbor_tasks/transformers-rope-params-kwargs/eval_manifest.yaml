@@ -1,103 +1,131 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45049
-  base_commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
-  merge_commit: "12b6b57cac0397db0afda56f3ab0101729bc5f0f"
-
+  base_commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+  merge_commit: 12b6b57cac0397db0afda56f3ab0101729bc5f0f
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "configuration_utils.py must parse without syntax errors"
-
-  - id: legacy_rope_kwargs_converted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Config without rope_parameters attr but with rope_scaling+rope_theta kwargs gets conversion applied"
-
-  - id: warning_emitted_for_legacy_rope
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Warning/log emitted when legacy RoPE kwargs used on config lacking rope_parameters"
-
-  - id: config_with_rope_parameters_attr
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Config class defining rope_parameters still works with rope_scaling+rope_theta kwargs"
-
-  - id: config_without_rope_kwargs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Config without any RoPE kwargs initializes normally"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "__post_init__ method has real logic, not a stub"
-
-  - id: ruff_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed file passes ruff linting"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed file passes ruff format check"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff check passes on the target file"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file compiles without syntax errors via py_compile"
-
-  - id: test_repo_config_common_kwargs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ConfigTestUtils::test_config_common_kwargs_is_complete passes"
-
-  - id: test_repo_config_from_string
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ConfigTestUtils::test_config_from_string passes"
-
-
-  - id: test_repo_check_config_attributes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's check_config_attributes script passes - validates config attributes are used"
-
-  - id: test_repo_check_config_docstrings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's check_config_docstrings script passes - validates config docstrings"
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: configuration_utils.py must parse without syntax errors
+- id: legacy_rope_kwargs_converted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Config without rope_parameters attr but with rope_scaling+rope_theta
+    kwargs gets conversion applied
+- id: warning_emitted_for_legacy_rope
+  type: fail_to_pass
+  origin: pr_diff
+  description: Warning/log emitted when legacy RoPE kwargs used on config lacking
+    rope_parameters
+- id: config_with_rope_parameters_attr
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config class defining rope_parameters still works with rope_scaling+rope_theta
+    kwargs
+- id: config_without_rope_kwargs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config without any RoPE kwargs initializes normally
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: __post_init__ method has real logic, not a stub
+- id: ruff_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed file passes ruff linting
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+- id: ruff_format
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed file passes ruff format check
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff check passes on the target file
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file compiles without syntax errors via py_compile
+- id: test_repo_config_common_kwargs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ConfigTestUtils::test_config_common_kwargs_is_complete passes
+- id: test_repo_config_from_string
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ConfigTestUtils::test_config_from_string passes
+- id: test_repo_check_config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_config_attributes script passes - validates config attributes
+    are used
+- id: test_repo_check_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_config_docstrings script passes - validates config docstrings
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
-  - rule: 'Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.'
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
-  - rule: "Use getattr()/setattr() for dynamic model/config attributes. For runtime-injected fields, use getattr(obj, 'field', default) for reads and setattr(obj, 'field', value) for writes."
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "162-167"
-      commit: "d65c2b138a3d27a3321f7bbced0efc9bfb5a9688"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+- rule: Use getattr()/setattr() for dynamic model/config attributes. For runtime-injected
+    fields, use getattr(obj, 'field', default) for reads and setattr(obj, 'field',
+    value) for writes.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 162-167
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+distractors:
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the patch, classifying a 6-line
+    addition as a 'tiny edit' or 'low-value busywork', even though it fixes a critical
+    bug in config validation for legacy RoPE parameters.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 40-42
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to output the fix because it cannot find
+    coordination evidence or issue approval in the prompt, blocking the generation
+    of the solution.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 55-59
+- rule: 'Copies and Modular Models: We try to avoid direct inheritance between model-specific
+    files in src/transformers/models/.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to avoid modifying the base `PreTrainedConfig`
+    class and instead look for model-specific files to patch, misunderstanding the
+    boundary between core utilities (`configuration_utils.py`) and model-specific
+    implementations.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 61-67
+hierarchy_analysis: The repository contains identical rules in `CLAUDE.md` and `AGENTS.md`.
+  The rules are heavily focused on contribution policies, PR coordination, and avoiding
+  busywork, rather than specific coding styles. This creates a high risk of agents
+  refusing to complete the task due to missing 'coordination evidence' or perceiving
+  the small bug fix as 'low-value busywork'.

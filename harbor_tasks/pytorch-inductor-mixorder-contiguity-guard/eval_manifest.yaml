@@ -102,3 +102,46 @@ rubric:
     path: CLAUDE.md
     lines: 49-50
     commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: Comments should be useful, for example, comments that remind the reader about
+    some global context that is non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 46-47
+  evidence: The gold solution adds a comment explaining that 'Since node1 is from
+    the current mix order reduction, if node1 is contiguous, the fused node should
+    also be contiguous', which provides necessary globa
+  category: documentation
+distractors:
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: rule_conflict
+  why_distracting: An agent might try to omit the explanatory comment about the contiguity
+    invariant to keep the code 'self-explanatory', but the invariant is a global context
+    that cannot be inferred locally.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 45-45
+- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
+  collision_type: rule_conflict
+  why_distracting: AGENTS.md instructs the agent to use `lintrunner -a` for linting,
+    which directly conflicts with CLAUDE.md's strict instruction to 'Only use commands
+    provided via `spin` for linting'.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 11-11
+- rule: When adding debug logging for errors or diagnostic info... use `trace_structured`
+    to log artifacts
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to add `trace_structured` logging when the fusion
+    is rejected to provide diagnostic info, but rejecting a fusion is a normal heuristic
+    operation, not an error or artifact requiring structured tracing.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 98-103
+hierarchy_analysis: Both CLAUDE.md and AGENTS.md are at Level 0, which creates a direct
+  conflict regarding linting tools. CLAUDE.md explicitly mandates `spin lint` and
+  `spin fixlint`, while AGENTS.md instructs the use of `lintrunner -a`. The agent
+  must navigate this contradiction. Additionally, there is an internal tension in
+  CLAUDE.md between minimizing comments and providing necessary global context.

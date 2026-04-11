@@ -4,124 +4,129 @@ source:
   base_commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
   merge_commit: 43bb8b615ce645c611a63f0ebd4f2729c3ee1ba4
   description: Add VM-level argument count check to Move VM execute_function
-
 checks:
-  # Fail-to-pass tests: These verify the fix exists and works
-  - id: test_compilation
-    type: fail_to_pass
-    origin: code_fix
-    description: Code compiles successfully after applying the fix
-
-  - id: test_argument_count_validation_in_code
-    type: fail_to_pass
-    origin: code_fix
-    description: NUMBER_OF_ARGUMENTS_MISMATCH check exists in vm.rs
-
-  - id: test_type_argument_count_validation_in_code
-    type: fail_to_pass
-    origin: code_fix
-    description: INTERNAL_TYPE_ERROR check exists in vm.rs for type args
-
-  - id: test_unit_test_updated_to_direct_call
-    type: fail_to_pass
-    origin: code_fix
-    description: Unit tests call execute_function_bypass_visibility directly instead of ValueFrame wrapper
-
-  - id: test_new_type_argument_tests_exist
-    type: fail_to_pass
-    origin: code_fix
-    description: New type argument count mismatch tests exist (expected_0_ty_args_got_1, etc.)
-
-  - id: test_argument_count_test_behavior
-    type: fail_to_pass
-    origin: code_fix
-    description: expected_0_args_got_1 test passes and validates NUMBER_OF_ARGUMENTS_MISMATCH
-
-  - id: test_type_argument_count_test_behavior
-    type: fail_to_pass
-    origin: code_fix
-    description: expected_0_ty_args_got_1 test passes and validates NUMBER_OF_TYPE_ARGUMENTS_MISMATCH
-
-  # Pass-to-pass tests: These verify existing functionality still works
-  - id: test_happy_path_u64_arg
-    type: pass_to_pass
-    origin: repo_tests
-    description: Valid u64 argument still works correctly after the fix
-
-  - id: test_happy_path_generic_T
-    type: pass_to_pass
-    origin: repo_tests
-    description: Generic function calls with correct type args still work
-
-  - id: test_function_arg_tests_suite
-    type: pass_to_pass
-    origin: repo_tests
-    description: Full function_arg_tests test suite passes
-
-  # Repo CI/CD pass-to-pass tests: These verify repo CI checks still pass
-  - id: test_repo_cargo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI cargo check passes on move-vm-runtime crate
-
-  - id: test_repo_cargo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI cargo clippy passes on move-vm-runtime crate
-
-  - id: test_repo_cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI cargo fmt --check passes
-
-  # Additional repo CI/CD pass-to-pass tests added during enrichment
-  - id: test_repo_move_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI cargo move-clippy passes on external-crates/move workspace
-
-  - id: test_repo_value_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI value_tests module passes - validates VM value operations
-
-  - id: test_repo_return_value_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI return_value_tests module passes - validates VM return value handling
-
-  - id: test_repo_loader_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI loader_tests module passes - validates VM module loading
-
+- id: test_compilation
+  type: fail_to_pass
+  origin: code_fix
+  description: Code compiles successfully after applying the fix
+- id: test_argument_count_validation_in_code
+  type: fail_to_pass
+  origin: code_fix
+  description: NUMBER_OF_ARGUMENTS_MISMATCH check exists in vm.rs
+- id: test_type_argument_count_validation_in_code
+  type: fail_to_pass
+  origin: code_fix
+  description: INTERNAL_TYPE_ERROR check exists in vm.rs for type args
+- id: test_unit_test_updated_to_direct_call
+  type: fail_to_pass
+  origin: code_fix
+  description: Unit tests call execute_function_bypass_visibility directly instead
+    of ValueFrame wrapper
+- id: test_new_type_argument_tests_exist
+  type: fail_to_pass
+  origin: code_fix
+  description: New type argument count mismatch tests exist (expected_0_ty_args_got_1,
+    etc.)
+- id: test_argument_count_test_behavior
+  type: fail_to_pass
+  origin: code_fix
+  description: expected_0_args_got_1 test passes and validates NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_type_argument_count_test_behavior
+  type: fail_to_pass
+  origin: code_fix
+  description: expected_0_ty_args_got_1 test passes and validates NUMBER_OF_TYPE_ARGUMENTS_MISMATCH
+- id: test_happy_path_u64_arg
+  type: pass_to_pass
+  origin: repo_tests
+  description: Valid u64 argument still works correctly after the fix
+- id: test_happy_path_generic_T
+  type: pass_to_pass
+  origin: repo_tests
+  description: Generic function calls with correct type args still work
+- id: test_function_arg_tests_suite
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full function_arg_tests test suite passes
+- id: test_repo_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI cargo check passes on move-vm-runtime crate
+- id: test_repo_cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI cargo clippy passes on move-vm-runtime crate
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI cargo fmt --check passes
+- id: test_repo_move_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI cargo move-clippy passes on external-crates/move workspace
+- id: test_repo_value_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI value_tests module passes - validates VM value operations
+- id: test_repo_return_value_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI return_value_tests module passes - validates VM return value
+    handling
+- id: test_repo_loader_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI loader_tests module passes - validates VM module loading
 rubric:
-  - rule: "Always run cargo xclippy after finishing development to ensure code passes all linting checks"
-    source:
-      path: "CLAUDE.md"
-      lines: "111"
-      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
-
-  - rule: "Never disable or ignore tests - all tests must pass and be enabled"
-    source:
-      path: "CLAUDE.md"
-      lines: "112"
-      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
-
-  - rule: "Never use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead"
-    source:
-      path: "CLAUDE.md"
-      lines: "113"
-      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
-
-  - rule: "Do NOT comment the obvious - comments should not simply repeat what the code does. Comment non-obvious algorithms, temporary exclusions, or subtle race conditions"
-    source:
-      path: "CLAUDE.md"
-      lines: "118-131"
-      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
-
-  - rule: "All new files must start with the Apache-2.0 license header: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0"
-    source:
-      path: "CLAUDE.md"
-      lines: "17-20"
-      commit: "44e12d2c78cf6724a80fc06828bfa89b98c8de8f"
+- rule: Always run cargo xclippy after finishing development to ensure code passes
+    all linting checks
+  source:
+    path: CLAUDE.md
+    lines: '111'
+    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
+- rule: Never disable or ignore tests - all tests must pass and be enabled
+  source:
+    path: CLAUDE.md
+    lines: '112'
+    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
+- rule: 'Never use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
+    - fix the underlying issues instead'
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
+- rule: Do NOT comment the obvious - comments should not simply repeat what the code
+    does. Comment non-obvious algorithms, temporary exclusions, or subtle race conditions
+  source:
+    path: CLAUDE.md
+    lines: 118-131
+    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
+- rule: 'All new files must start with the Apache-2.0 license header: Copyright (c)
+    Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
+  source:
+    path: CLAUDE.md
+    lines: 17-20
+    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
+distractors:
+- rule: For faster iteration, use -p to select only the most relevant packages for
+    testing. Use multiple `-p` flags if necessary, e.g. `cargo nextest run -p sui-types
+    -p sui-core`
+  collision_type: meta_confusion
+  why_distracting: The example suggests using `-p sui-types -p sui-core` for testing,
+    but this PR modifies `move-vm-runtime` in `external-crates`. An agent might blindly
+    copy the example and fail to run the relevant tests for the modified crate.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 38-39
+- rule: sui-execution/ - Move execution layer with versions (v0, v1, v2 and latest)
+  collision_type: architecture_boundary
+  why_distracting: The architecture section describes `sui-execution/` as the 'Move
+    execution layer'. An agent might mistakenly try to implement the VM argument count
+    checks there instead of in `external-crates/move/crates/move-vm-runtime/`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 63-63
+hierarchy_analysis: The root CLAUDE.md provides general repository guidelines, but
+  its examples for testing (`sui-core`, `sui-types`) and architecture descriptions
+  (`sui-execution/`) can be misleading for changes in the `external-crates/` directory.

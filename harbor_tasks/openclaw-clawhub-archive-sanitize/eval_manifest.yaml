@@ -1,138 +1,151 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 56779
-  base_commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
-  merge_commit: "eee8e9679e9e77f2f46ec45e5688eb8ccc42ffa7"
-
+  base_commit: 7a16a481983e62bc3394c7c5f90d320b6be82f0e
+  merge_commit: eee8e9679e9e77f2f46ec45e5688eb8ccc42ffa7
 checks:
-  - id: target_exists
-    type: pass_to_pass
-    origin: static
-    description: "Target file src/infra/clawhub.ts must exist"
-
-  - id: package_archive_flat_filename
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Scoped package names like @scope/name produce flat archive temp filenames"
-
-  - id: skill_archive_flat_filename
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Slash-containing skill slugs like ops/calendar produce flat archive filenames"
-
-  - id: functions_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Both download functions have substantial bodies, not stubs"
-
-  - id: repo_lint_clawhub
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo oxlint passes on target file"
-
-  - id: repo_format_clawhub
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo oxfmt format check passes on target file"
-
-  - id: repo_unit_tests_install_safe_path
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo unit tests for install-safe-path module pass"
-
-  - id: repo_unit_tests_clawhub
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo unit tests for clawhub module pass"
-
-  - id: repo_typescript_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo TypeScript type checking passes"
-
-  - id: repo_lint_full
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo full lint suite passes"
-
-  - id: repo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo comprehensive check suite passes"
-
-  - id: repo_no_conflict_markers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo has no conflict markers"
-
-  - id: repo_bundled_plugin_metadata
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo bundled plugin metadata is up to date"
-
-  - id: repo_plugin_boundaries
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo plugin extension boundaries are respected"
-
-  - id: repo_base_config_schema
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo base config schema is up to date"
-
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-nocheck or @ts-ignore directives in target file"
-    source:
-      path: "CLAUDE.md"
-      lines: "146"
-      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
-
-  - id: no_eslint_disable_explicit_any
-    type: pass_to_pass
-    origin: agent_config
-    description: "no-explicit-any must not be disabled in the target file"
-    source:
-      path: "CLAUDE.md"
-      lines: "147"
-      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
-
-  - id: no_mixed_dynamic_static_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "Do not mix await import(x) and static import from x for the same module"
-    source:
-      path: "CLAUDE.md"
-      lines: "148"
-      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
-
-  - id: no_prototype_mutation
-    type: pass_to_pass
-    origin: agent_config
-    description: "No prototype mutation (applyPrototypeMixins, Object.defineProperty on .prototype, or Class.prototype exports) in the target file"
-    source:
-      path: "CLAUDE.md"
-      lines: "153"
-      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
-
+- id: target_exists
+  type: pass_to_pass
+  origin: static
+  description: Target file src/infra/clawhub.ts must exist
+- id: package_archive_flat_filename
+  type: fail_to_pass
+  origin: pr_diff
+  description: Scoped package names like @scope/name produce flat archive temp filenames
+- id: skill_archive_flat_filename
+  type: fail_to_pass
+  origin: pr_diff
+  description: Slash-containing skill slugs like ops/calendar produce flat archive
+    filenames
+- id: functions_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Both download functions have substantial bodies, not stubs
+- id: repo_lint_clawhub
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo oxlint passes on target file
+- id: repo_format_clawhub
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo oxfmt format check passes on target file
+- id: repo_unit_tests_install_safe_path
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for install-safe-path module pass
+- id: repo_unit_tests_clawhub
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for clawhub module pass
+- id: repo_typescript_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript type checking passes
+- id: repo_lint_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo full lint suite passes
+- id: repo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo comprehensive check suite passes
+- id: repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no conflict markers
+- id: repo_bundled_plugin_metadata
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo bundled plugin metadata is up to date
+- id: repo_plugin_boundaries
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo plugin extension boundaries are respected
+- id: repo_base_config_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo base config schema is up to date
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck or @ts-ignore directives in target file
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 7a16a481983e62bc3394c7c5f90d320b6be82f0e
+- id: no_eslint_disable_explicit_any
+  type: pass_to_pass
+  origin: agent_config
+  description: no-explicit-any must not be disabled in the target file
+  source:
+    path: CLAUDE.md
+    lines: '147'
+    commit: 7a16a481983e62bc3394c7c5f90d320b6be82f0e
+- id: no_mixed_dynamic_static_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Do not mix await import(x) and static import from x for the same module
+  source:
+    path: CLAUDE.md
+    lines: '148'
+    commit: 7a16a481983e62bc3394c7c5f90d320b6be82f0e
+- id: no_prototype_mutation
+  type: pass_to_pass
+  origin: agent_config
+  description: No prototype mutation (applyPrototypeMixins, Object.defineProperty
+    on .prototype, or Class.prototype exports) in the target file
+  source:
+    path: CLAUDE.md
+    lines: '153'
+    commit: 7a16a481983e62bc3394c7c5f90d320b6be82f0e
 rubric:
-  - rule: "Keep files concise; extract helpers instead of V2 copies."
-    source:
-      path: "CLAUDE.md"
-      lines: "157"
-      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
-
-  - rule: "Aim to keep files under ~700 LOC; split or refactor when it improves clarity or testability."
-    source:
-      path: "CLAUDE.md"
-      lines: "158"
-      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
-
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "156"
-      commit: "7a16a481983e62bc3394c7c5f90d320b6be82f0e"
+- rule: Keep files concise; extract helpers instead of V2 copies.
+  source:
+    path: CLAUDE.md
+    lines: '157'
+    commit: 7a16a481983e62bc3394c7c5f90d320b6be82f0e
+- rule: Aim to keep files under ~700 LOC; split or refactor when it improves clarity
+    or testability.
+  source:
+    path: CLAUDE.md
+    lines: '158'
+    commit: 7a16a481983e62bc3394c7c5f90d320b6be82f0e
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '156'
+    commit: 7a16a481983e62bc3394c7c5f90d320b6be82f0e
+- rule: 'Source code: `src/` (... infra in `src/infra` ...)'
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+  evidence: The gold solution modifies `src/infra/clawhub.ts` to fix the download
+    logic, adhering to the convention that infrastructure code belongs in `src/infra`.
+  category: architecture
+distractors:
+- rule: 'Architecture Boundaries: `src/plugins/*` = plugin discovery, manifest validation,
+    loader, registry, and contract enforcement'
+  collision_type: architecture_boundary
+  why_distracting: The issue is about fixing `openclaw plugins install`. An agent
+    might try to apply the fix in `src/plugins/*` since it handles plugin discovery
+    and loading, but the actual download infrastructure is in `src/infra/clawhub.ts`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 33-33
+- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`...
+    as the public surface. Do not import core `src/**`... directly.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent needs to import `safeDirName` from another file in `src/infra`.
+    It might incorrectly apply the import boundary rule and avoid importing a core
+    `src/**` file directly, but this rule only restricts *extension* production code,
+    not core-to-core imports.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 15-15
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical rules. The rules
+  clearly delineate between core code (`src/`) and extensions (`extensions/`). The
+  agent must correctly identify that `src/infra/clawhub.ts` is core code and therefore
+  not subject to the strict import boundaries applied to extensions.'

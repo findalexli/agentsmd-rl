@@ -1,70 +1,103 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92029
-  base_commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
-  merge_commit: "eab7a23533d9009f24694016d2bdbdc1318df52d"
-
+  base_commit: 7bce97d6485599cab2964ef58fde8a55d19904d3
+  merge_commit: eab7a23533d9009f24694016d2bdbdc1318df52d
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified JS/MJS files parse without Node.js syntax errors"
-
-  - id: artifact_url_vercel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "turbo-cache.mjs artifactUrl() returns correct vercel.com API path with /api/v8/artifacts/ prefix"
-
-  - id: artifact_url_selfhosted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "turbo-cache.mjs artifactUrl() returns /v8/artifacts/ path (no /api/) for self-hosted servers"
-
-  - id: artifact_url_team_param
-    type: fail_to_pass
-    origin: pr_diff
-    description: "turbo-cache.mjs artifactUrl() appends teamId query parameter for vercel.com"
-
-  - id: turbo_cache_exports
-    type: fail_to_pass
-    origin: pr_diff
-    description: "turbo-cache.mjs exports all required API functions (exists, get, getStream, put, artifactUrl, healthCheck)"
-
-  - id: no_build_docker_script
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/next-swc/package.json no longer has build-docker-image script entry"
-
-  - id: native_build_direct_invocation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "docker-native-build.js calls docker-image-cache.js directly instead of pnpm turbo task"
-
-  - id: build_image_preserved
-    type: pass_to_pass
-    origin: static
-    description: "docker-image-cache.js preserves the buildImage function with real docker build logic"
-
-  - id: turbo_jsonc_no_docker_task
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/next-swc/turbo.jsonc no longer defines the build-docker-image task"
-
-  - id: repo_scripts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All repo script files have valid Node.js syntax"
-
-  - id: repo_scripts_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All repo script files are properly formatted with Prettier"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified JS/MJS files parse without Node.js syntax errors
+- id: artifact_url_vercel
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo-cache.mjs artifactUrl() returns correct vercel.com API path with
+    /api/v8/artifacts/ prefix
+- id: artifact_url_selfhosted
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo-cache.mjs artifactUrl() returns /v8/artifacts/ path (no /api/)
+    for self-hosted servers
+- id: artifact_url_team_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo-cache.mjs artifactUrl() appends teamId query parameter for vercel.com
+- id: turbo_cache_exports
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo-cache.mjs exports all required API functions (exists, get, getStream,
+    put, artifactUrl, healthCheck)
+- id: no_build_docker_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/next-swc/package.json no longer has build-docker-image script
+    entry
+- id: native_build_direct_invocation
+  type: fail_to_pass
+  origin: pr_diff
+  description: docker-native-build.js calls docker-image-cache.js directly instead
+    of pnpm turbo task
+- id: build_image_preserved
+  type: pass_to_pass
+  origin: static
+  description: docker-image-cache.js preserves the buildImage function with real docker
+    build logic
+- id: turbo_jsonc_no_docker_task
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/next-swc/turbo.jsonc no longer defines the build-docker-image
+    task
+- id: repo_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All repo script files have valid Node.js syntax
+- id: repo_scripts_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: All repo script files are properly formatted with Prettier
 rubric:
-  - rule: "Always treat environment variable values as sensitive unless they are known test-mode flags. Never print or paste secret values (tokens, API keys, cookies) in chat responses, commits, or shared logs."
-    source:
-      path: "CLAUDE.md"
-      lines: "302-310"
-      commit: "7bce97d6485599cab2964ef58fde8a55d19904d3"
+- rule: Always treat environment variable values as sensitive unless they are known
+    test-mode flags. Never print or paste secret values (tokens, API keys, cookies)
+    in chat responses, commits, or shared logs.
+  source:
+    path: CLAUDE.md
+    lines: 302-310
+    commit: 7bce97d6485599cab2964ef58fde8a55d19904d3
+- rule: scripts/ directory is used for Build and maintenance scripts
+  source:
+    path: CLAUDE.md
+    lines: 15-16
+  evidence: The gold solution correctly keeps the rewritten Docker image caching logic
+    in `scripts/docker-image-cache.js` rather than moving it into a package, adhering
+    to the directory structure for build script
+  category: architecture
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits (unless it is already
+    running). If you skip this, explicitly state why.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think it needs to start the dev server or write
+    an explicit justification for skipping it. However, this task is strictly about
+    CI/build scripts (`scripts/docker-image-cache.js`) and turbo configuration, not
+    Next.js framework source code or integration tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 71-75
+- rule: Before editing or creating files in any subdirectory (e.g., `packages/*`,
+    `crates/*`), read all `README.md` files in the directory path from the repo root
+    up to and including the target file's directory.
+  collision_type: meta_confusion
+  why_distracting: The agent might waste tool calls reading READMEs in `packages/next-swc/`
+    when the task only requires deleting a few lines in `package.json` and `turbo.jsonc`
+    to remove the `build-docker-image` task.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 43-48
+hierarchy_analysis: The config hierarchy consists of identical `CLAUDE.md` and `AGENTS.md`
+  files at the root level. The rules provided are heavily focused on the Next.js core
+  framework development workflow (running dev servers, skipping isolation for tests).
+  Because this PR is an infrastructure/CI fix dealing with Turborepo and Docker, most
+  of the core framework rules act as distractors or have ambiguous scope.

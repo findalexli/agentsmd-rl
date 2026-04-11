@@ -57,3 +57,20 @@ checks:
   description: Repo CI - Alembic configuration file exists
   origin: repo_tests
 rubric: []
+distractors:
+- rule: If you've made changes to the backend, you should run `pre-commit run --config
+    ./dev_config/python/.pre-commit-config.yaml`
+  collision_type: scope_ambiguity
+  why_distracting: The rule specifies running a specific pre-commit config for backend
+    changes, but explicitly defines the backend as being located in the `openhands`
+    directory. The agent is tasked with editing `enterprise/migrations/env.py`, which
+    is outside `openhands`, causing ambiguity about whether to run this pre-commit
+    hook or if it even applies to the enterprise directory.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 17-18
+hierarchy_analysis: The AGENTS.md file provides general repository guidelines, but
+  its strict definition of the backend (`openhands` directory) creates ambiguity when
+  working in the `enterprise` directory, as agents may be unsure which linting or
+  testing rules apply.

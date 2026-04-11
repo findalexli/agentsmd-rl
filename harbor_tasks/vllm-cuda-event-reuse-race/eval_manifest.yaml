@@ -1,69 +1,86 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 39115
-  base_commit: "b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e"
-  merge_commit: "62095e82c1ef7ed91be5223d36c6109958e9aec6"
-
+  base_commit: b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e
+  merge_commit: 62095e82c1ef7ed91be5223d36c6109958e9aec6
 checks:
-  - id: repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on modified files"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified files"
-
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without errors"
-
-  - id: async_output_no_shared_event_param
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AsyncOutput.__init__ must not accept a required copy_event parameter"
-
-  - id: async_pooling_no_shared_event_param
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AsyncPoolingOutput.__init__ must not accept a required copy_event parameter"
-
-  - id: async_output_creates_own_event
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AsyncOutput.__init__ must create its own torch.cuda.Event() internally"
-
-  - id: async_pooling_creates_own_event
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AsyncPoolingOutput.__init__ must create its own torch.cuda.Event() internally"
-
-  - id: model_runner_no_shared_event
-    type: fail_to_pass
-    origin: pr_diff
-    description: "GPUModelRunner must not store a shared output_copy_event attribute"
-
-  - id: async_output_init_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "AsyncOutput.__init__ has real logic, not just pass/return"
-
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: async_output_no_shared_event_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: AsyncOutput.__init__ must not accept a required copy_event parameter
+- id: async_pooling_no_shared_event_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: AsyncPoolingOutput.__init__ must not accept a required copy_event parameter
+- id: async_output_creates_own_event
+  type: fail_to_pass
+  origin: pr_diff
+  description: AsyncOutput.__init__ must create its own torch.cuda.Event() internally
+- id: async_pooling_creates_own_event
+  type: fail_to_pass
+  origin: pr_diff
+  description: AsyncPoolingOutput.__init__ must create its own torch.cuda.Event()
+    internally
+- id: model_runner_no_shared_event
+  type: fail_to_pass
+  origin: pr_diff
+  description: GPUModelRunner must not store a shared output_copy_event attribute
+- id: async_output_init_not_stub
+  type: pass_to_pass
+  origin: static
+  description: AsyncOutput.__init__ has real logic, not just pass/return
 rubric:
-  - rule: "Code fix removes the shared copy_event parameter from AsyncOutput and AsyncPoolingOutput __init__ methods."
-    source:
-      path: "vllm/v1/worker/gpu/async_utils.py"
-      commit: "b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e"
-
-  - rule: "Code fix makes each AsyncOutput and AsyncPoolingOutput instance create its own torch.cuda.Event() instead of sharing one."
-    source:
-      path: "vllm/v1/worker/gpu/async_utils.py"
-      commit: "b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e"
-
-  - rule: "Code fix removes self.output_copy_event from GPUModelRunner and stops passing it to async output constructors."
-    source:
-      path: "vllm/v1/worker/gpu/model_runner.py"
-      commit: "b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e"
+- rule: Code fix removes the shared copy_event parameter from AsyncOutput and AsyncPoolingOutput
+    __init__ methods.
+  source:
+    path: vllm/v1/worker/gpu/async_utils.py
+    commit: b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e
+- rule: Code fix makes each AsyncOutput and AsyncPoolingOutput instance create its
+    own torch.cuda.Event() instead of sharing one.
+  source:
+    path: vllm/v1/worker/gpu/async_utils.py
+    commit: b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e
+- rule: Code fix removes self.output_copy_event from GPUModelRunner and stops passing
+    it to async output constructors.
+  source:
+    path: vllm/v1/worker/gpu/model_runner.py
+    commit: b2b2c5239ec65fc6ba1109b0d06cb7462d99b70e
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
+    one mutable default, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might classify this small 4-line change as a 'tiny edit'
+    or 'low-value busywork' and refuse to implement it, failing to recognize that
+    fixing a CUDA event race condition is a substantive and critical concurrency fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 21-23
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the patch entirely, stating
+    that 'Pure code-agent PRs are not allowed' and a human must do it, misunderstanding
+    its role as an AI assistant generating the code for the human to review and submit.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 25-27
+hierarchy_analysis: The AGENTS.md file provides repository-wide contribution guidelines.
+  Since the gold solution is a direct code patch fixing a specific bug, the workflow
+  and PR submission rules in AGENTS.md primarily act as meta-distractors, potentially
+  causing the agent to refuse the task due to misinterpreting the scope of the fix
+  or its role as an assistant.

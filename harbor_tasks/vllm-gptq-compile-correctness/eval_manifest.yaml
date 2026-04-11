@@ -1,94 +1,117 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 38161
-  base_commit: "37a83007fef9925609a8d9b7c7b86bb41dab4e5d"
-  merge_commit: "f2d16207c794e40c323adec50245ceecc4e6b635"
-
+  base_commit: 37a83007fef9925609a8d9b7c7b86bb41dab4e5d
+  merge_commit: f2d16207c794e40c323adec50245ceecc4e6b635
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without errors"
-
-  - id: int_params_zeroed_on_rocm
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Integer params (int32/int64) are zeroed on ROCm platform"
-
-  - id: list_construction_matching_lengths
-    type: fail_to_pass
-    origin: pr_diff
-    description: "all_args and all_envs have matching lengths in compare_all_settings"
-
-  - id: inductor_comparison_not_dead_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Inductor comparison section produces non-empty pairs with backend args"
-
-  - id: float_params_initialized_correctly
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Float params still initialized in [low, high] with reproducible seeds"
-
-  - id: non_rocm_int_params_unchanged
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-ROCm integer params are returned untouched (early return)"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Both modified functions have non-trivial bodies"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on modified files"
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files compile without syntax errors"
-
-  - id: test_repo_ast_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files parse as valid Python AST"
-
-  - id: test_repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files satisfy ruff format requirements"
-
-  - id: test_repo_spdx_header
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified test file has SPDX license header"
-
-  - id: test_repo_pyproject_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pyproject.toml is valid TOML with required sections"
-
-  - id: test_repo_shellcheck_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Shell scripts in tools/ pass shellcheck"
-
-  - id: test_repo_no_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have no trailing whitespace"
-
-  - id: ruff_lint_clean
-    type: pass_to_pass
-    origin: agent_config
-    description: "ruff lint passes on modified files"
-    source:
-      path: "AGENTS.md"
-      lines: "86-98"
-      commit: "37a83007fef9925609a8d9b7c7b86bb41dab4e5d"
-
-rubric: []
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: int_params_zeroed_on_rocm
+  type: fail_to_pass
+  origin: pr_diff
+  description: Integer params (int32/int64) are zeroed on ROCm platform
+- id: list_construction_matching_lengths
+  type: fail_to_pass
+  origin: pr_diff
+  description: all_args and all_envs have matching lengths in compare_all_settings
+- id: inductor_comparison_not_dead_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: Inductor comparison section produces non-empty pairs with backend args
+- id: float_params_initialized_correctly
+  type: pass_to_pass
+  origin: pr_diff
+  description: Float params still initialized in [low, high] with reproducible seeds
+- id: non_rocm_int_params_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-ROCm integer params are returned untouched (early return)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Both modified functions have non-trivial bodies
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files compile without syntax errors
+- id: test_repo_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files parse as valid Python AST
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files satisfy ruff format requirements
+- id: test_repo_spdx_header
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified test file has SPDX license header
+- id: test_repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml is valid TOML with required sections
+- id: test_repo_shellcheck_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in tools/ pass shellcheck
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no trailing whitespace
+- id: ruff_lint_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: ruff lint passes on modified files
+  source:
+    path: AGENTS.md
+    lines: 86-98
+    commit: 37a83007fef9925609a8d9b7c7b86bb41dab4e5d
+rubric:
+- rule: No low-value busywork PRs
+  source:
+    path: AGENTS.md
+    lines: 21-22
+  evidence: The gold solution implements a substantive fix for a flaky test and uninitialized
+    memory bug on ROCm, rather than a trivial mechanical cleanup, aligning with the
+    requirement to avoid low-value busywor
+  category: testing
+distractors:
+- rule: Pure code-agent PRs are not allowed
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in an autonomous evaluation sandbox. If
+    it follows the rule that 'Pure code-agent PRs are not allowed', it will refuse
+    to generate the patch, incorrectly failing the evaluation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 25-27
+- rule: Duplicate-work checks using gh CLI
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run `gh` commands in the `solve.sh`
+    script or refuse to proceed because it lacks internet access to check for duplicate
+    PRs.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 11-18
+- rule: Never use system python3 or bare pip; use uv
+  collision_type: meta_confusion
+  why_distracting: The agent might try to include `uv` installation, environment setup,
+    and test execution commands inside `solve.sh`, which is only meant to apply the
+    code patch. This could cause the script to fail or timeout.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-42
+hierarchy_analysis: The `AGENTS.md` file contains workflow instructions intended for
+  human contributors using AI assistants, rather than instructions for an autonomous
+  agent generating a patch script. This creates a meta-level conflict where the agent
+  must ignore the human-in-the-loop and workflow requirements (like `uv`, `gh` CLI,
+  and human submission) and focus solely on the code changes.

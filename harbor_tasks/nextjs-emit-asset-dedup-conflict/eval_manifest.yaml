@@ -1,104 +1,131 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92292
-  base_commit: "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"
-  merge_commit: "81d5e070f4a84b34bb0efe2524c200584fed3215"
-
+  base_commit: 5a922bc9bb9b4435da87f5b6783e3b14e26aadf9
+  merge_commit: 81d5e070f4a84b34bb0efe2524c200584fed3215
 checks:
-  - id: repo_git_state_clean
-    type: pass_to_pass
-    origin: repo_state
-    description: "Repository has clean git state with no uncommitted changes"
-
-  - id: repo_base_commit_verified
-    type: pass_to_pass
-    origin: repo_state
-    description: "Repository is at the expected base commit"
-
-  - id: files_exist_and_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified files exist with real Rust code (anti-stub gate)"
-
-  - id: emit_and_emit_rebase_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "emit() and emit_rebase() turbo_tasks functions still exist (verified via cargo check)"
-
-  - id: emit_assets_function_signature
-    type: pass_to_pass
-    origin: pr_diff
-    description: "emit_assets function signature preserved with all original parameters"
-
-  - id: emit_conflict_issue_struct
-    type: fail_to_pass
-    origin: pr_diff
-    description: "EmitConflictIssue struct exists with asset_path: FileSystemPath and detail: RcStr fields (verified via cargo check)"
-
-  - id: emit_conflict_issue_impls_issue
-    type: fail_to_pass
-    origin: pr_diff
-    description: "EmitConflictIssue implements Issue trait with Emit stage, Error severity, and conflict title (verified via cargo check)"
-
-  - id: assets_diff_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "assets_diff turbo_tasks function compares two assets' content and writes conflicting versions (verified via cargo check)"
-
-  - id: issue_stage_emit_variant
-    type: fail_to_pass
-    origin: pr_diff
-    description: "IssueStage::Emit variant exists and displays as 'emit' (verified via cargo check)"
-
-  - id: emit_assets_dedup_logic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "emit_assets groups assets by path, checks for duplicate conflicts, uses join! for parallel emission (verified via cargo check)"
-
-  - id: imports_cargo_fmt_sorted
-    type: fail_to_pass
-    origin: agent_config
-    description: "New imports in emit.rs follow ASCII sort order per cargo fmt convention"
-    source:
-      path: "CLAUDE.md"
-      lines: "414"
-      commit: "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"
-
-  - id: rust_files_no_merge_conflicts
-    type: pass_to_pass
-    origin: static
-    description: "Modified Rust files have no merge conflict markers"
-
-  - id: rust_files_valid_braces
-    type: pass_to_pass
-    origin: static
-    description: "Modified Rust files have balanced braces (basic syntax check)"
-
-  - id: emit_rs_no_broken_imports
-    type: pass_to_pass
-    origin: static
-    description: "emit.rs has no obviously broken import paths"
-
-  - id: next_core_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "next-core package compiles without errors via cargo check"
-
-  - id: turbopack_core_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "turbopack-core package compiles without errors via cargo check"
-
+- id: repo_git_state_clean
+  type: pass_to_pass
+  origin: repo_state
+  description: Repository has clean git state with no uncommitted changes
+- id: repo_base_commit_verified
+  type: pass_to_pass
+  origin: repo_state
+  description: Repository is at the expected base commit
+- id: files_exist_and_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files exist with real Rust code (anti-stub gate)
+- id: emit_and_emit_rebase_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: emit() and emit_rebase() turbo_tasks functions still exist (verified
+    via cargo check)
+- id: emit_assets_function_signature
+  type: pass_to_pass
+  origin: pr_diff
+  description: emit_assets function signature preserved with all original parameters
+- id: emit_conflict_issue_struct
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'EmitConflictIssue struct exists with asset_path: FileSystemPath and
+    detail: RcStr fields (verified via cargo check)'
+- id: emit_conflict_issue_impls_issue
+  type: fail_to_pass
+  origin: pr_diff
+  description: EmitConflictIssue implements Issue trait with Emit stage, Error severity,
+    and conflict title (verified via cargo check)
+- id: assets_diff_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: assets_diff turbo_tasks function compares two assets' content and writes
+    conflicting versions (verified via cargo check)
+- id: issue_stage_emit_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: IssueStage::Emit variant exists and displays as 'emit' (verified via
+    cargo check)
+- id: emit_assets_dedup_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: emit_assets groups assets by path, checks for duplicate conflicts,
+    uses join! for parallel emission (verified via cargo check)
+- id: imports_cargo_fmt_sorted
+  type: fail_to_pass
+  origin: agent_config
+  description: New imports in emit.rs follow ASCII sort order per cargo fmt convention
+  source:
+    path: CLAUDE.md
+    lines: '414'
+    commit: 5a922bc9bb9b4435da87f5b6783e3b14e26aadf9
+- id: rust_files_no_merge_conflicts
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files have no merge conflict markers
+- id: rust_files_valid_braces
+  type: pass_to_pass
+  origin: static
+  description: Modified Rust files have balanced braces (basic syntax check)
+- id: emit_rs_no_broken_imports
+  type: pass_to_pass
+  origin: static
+  description: emit.rs has no obviously broken import paths
+- id: next_core_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-core package compiles without errors via cargo check
+- id: turbopack_core_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbopack-core package compiles without errors via cargo check
 rubric:
-  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
-    source:
-      path: "CLAUDE.md"
-      lines: "414"
-      commit: "5a922bc9bb9b4435da87f5b6783e3b14e26aadf9"
-
-  - id: repo_check_error_codes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Next.js error codes script passes"
+- rule: cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo
+    fmt`
+  source:
+    path: CLAUDE.md
+    lines: '414'
+    commit: 5a922bc9bb9b4435da87f5b6783e3b14e26aadf9
+- id: repo_check_error_codes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Next.js error codes script passes
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits for iterative development.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests running `pnpm --filter=next dev` for fast local
+    development when changing Next.js source. However, the PR modifies Rust code in
+    `crates/next-core`. The JS/TS dev server watch mode does not automatically recompile
+    Rust Turbopack changes in the background in the same way, which could confuse
+    an agent expecting instant reloads.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 65-67
+- rule: 'For type errors only: Use `pnpm --filter=next types` instead of `pnpm --filter=next
+    build`.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule advises using `pnpm --filter=next types` to check for
+    type errors. An agent might run this to verify its Rust changes in `emit.rs`,
+    but this command only runs TypeScript type checking (`tsc`) for the JS/TS packages,
+    not `cargo check` for Rust.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 81-81
+- rule: Run tests fast using NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<mode> pnpm testheadless
+    test/path/to/test.ts.
+  collision_type: scope_ambiguity
+  why_distracting: The rule provides a command (`pnpm testheadless test/path/to/test.ts`)
+    for running tests fast. An agent might try to use this JS/TS testing command to
+    test its Rust changes, rather than using `cargo test` for the Turbopack crates.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-77
+hierarchy_analysis: The config files (`CLAUDE.md` and `AGENTS.md`) are identical and
+  primarily focus on the JS/TS parts of the Next.js monorepo (e.g., `packages/next`).
+  They lack specific guidance for the Rust codebase (`crates/`, `turbopack/`). This
+  creates a significant scope ambiguity where agents might apply JS/TS workflow commands
+  (like `pnpm --filter=next types` or `pnpm testheadless`) to Rust development tasks.

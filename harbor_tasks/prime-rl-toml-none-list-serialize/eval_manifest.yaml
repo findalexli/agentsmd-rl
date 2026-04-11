@@ -1,113 +1,137 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2094
-  base_commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
-  merge_commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
-
+  base_commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+  merge_commit: 4f612601f6447b3df1ee17e535ac698b5cc3d16c
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "config.py must parse without syntax errors"
-
-  - id: none_inside_flat_list
-    type: fail_to_pass
-    origin: pr_diff
-    description: "None values inside a flat list are converted to 'None' strings"
-
-  - id: none_inside_dict_in_list
-    type: fail_to_pass
-    origin: pr_diff
-    description: "None inside a dict nested in a list is converted"
-
-  - id: deeply_nested_list_of_list
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Deeply nested None (list of list) is converted"
-
-  - id: toml_roundtrip_with_none_in_list
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TOML serialization succeeds after converting None in lists"
-
-  - id: top_level_none_converted
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Top-level None values are still converted"
-
-  - id: nested_dict_none_converted
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Nested dict None values are still converted"
-
-  - id: non_none_values_unchanged
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Non-None values pass through without modification"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "none_to_none_str returns meaningful output, not a trivial stub"
-
-  - id: no_unnecessary_try_except
-    type: pass_to_pass
-    origin: agent_config
-    description: "No try/except blocks in config.py — let errors propagate"
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
-
-  - id: no_work_process_comments
-    type: pass_to_pass
-    origin: agent_config
-    description: "No comments referencing old code or work process"
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
-
-  - id: test_repo_syntax_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All Python files in the repo have valid syntax (p2p_enrichment)"
-
-  - id: test_config_module_loads
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Config module can be parsed and loaded (p2p_enrichment)"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linter passes on the modified config.py (p2p_enrichment)"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff format check passes on the modified config.py (p2p_enrichment)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: config.py must parse without syntax errors
+- id: none_inside_flat_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: None values inside a flat list are converted to 'None' strings
+- id: none_inside_dict_in_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: None inside a dict nested in a list is converted
+- id: deeply_nested_list_of_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deeply nested None (list of list) is converted
+- id: toml_roundtrip_with_none_in_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: TOML serialization succeeds after converting None in lists
+- id: top_level_none_converted
+  type: pass_to_pass
+  origin: repo_tests
+  description: Top-level None values are still converted
+- id: nested_dict_none_converted
+  type: pass_to_pass
+  origin: repo_tests
+  description: Nested dict None values are still converted
+- id: non_none_values_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: Non-None values pass through without modification
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: none_to_none_str returns meaningful output, not a trivial stub
+- id: no_unnecessary_try_except
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/except blocks in config.py — let errors propagate
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+- id: no_work_process_comments
+  type: pass_to_pass
+  origin: agent_config
+  description: No comments referencing old code or work process
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+- id: test_repo_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in the repo have valid syntax (p2p_enrichment)
+- id: test_config_module_loads
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config module can be parsed and loaded (p2p_enrichment)
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on the modified config.py (p2p_enrichment)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on the modified config.py (p2p_enrichment)
 rubric:
-  - rule: "Simple is better than complex."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
-  - rule: "Flat is better than nested."
-    source:
-      path: "AGENTS.md"
-      lines: "18"
-      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
-  - rule: "Readability counts."
-    source:
-      path: "AGENTS.md"
-      lines: "20"
-      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
-  - rule: "Errors should never pass silently."
-    source:
-      path: "AGENTS.md"
-      lines: "23"
-      commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
+- rule: Simple is better than complex.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+- rule: Flat is better than nested.
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+- rule: Readability counts.
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+- rule: Errors should never pass silently.
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 6-7
+  evidence: The gold solution adds a clean docstring to `_convert_none` without any
+    inline comments explaining the bug fix, the previous behavior, or the work process.
+  category: style
+- rule: Avoid try/except blocks unless it's really necessary.
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: The gold solution uses explicit `isinstance` checks to handle dicts and
+    lists rather than using `try/except` blocks to catch `AttributeError` when calling
+    `.items()` on non-dict objects.
+  category: style
+distractors:
+- rule: Flat is better than nested.
+  collision_type: scope_ambiguity
+  why_distracting: The data structure being processed is inherently nested (dicts
+    containing lists containing dicts). An agent strictly adhering to 'Flat is better
+    than nested' might try to write an iterative flattener or avoid the recursive
+    `_convert_none` helper, leading to much more complicated and bug-prone code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 15-15
+- rule: Errors should never pass silently.
+  collision_type: would_cause_bug
+  why_distracting: The agent might interpret 'Errors should never pass silently' as
+    a mandate to raise an exception for unhandled types in the recursive helper. However,
+    the correct behavior is to pass other types (like int, str) through unmodified
+    (`return value`). Raising an error would break config serialization.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 20-20
+hierarchy_analysis: The hierarchy is flat with `CLAUDE.md` simply including `AGENTS.md`.
+  The rules in `AGENTS.md` provide general Python guidelines (Zen of Python, testing,
+  comments). The main challenge is interpreting the Zen of Python principles correctly
+  in the context of a recursive data structure transformation.

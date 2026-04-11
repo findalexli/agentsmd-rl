@@ -5,40 +5,70 @@ source:
   merge_commit: 896d11b841c6fec62221954dde1084a7277ccbe2
   task_name: sui-coin-reservation-gating
   description: Gate coin reservation JSON-RPC responses on protocol config
-
 checks:
-  - id: test_cargo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-json-rpc compiles successfully
-
-  - id: test_get_object_read_has_protocol_gating
-    type: fail_to_pass
-    origin: agent_config
-    description: get_object_read checks enable_coin_reservation_obj_refs() before returning fake coins
-    source:
-      file: CLAUDE.md
-      lines: "Protocol Config Changes"
-
-  - id: test_get_owned_coins_has_protocol_gating
-    type: fail_to_pass
-    origin: agent_config
-    description: get_owned_coins checks enable_coin_reservation_obj_refs() before building fake coins
-    source:
-      file: CLAUDE.md
-      lines: "Protocol Config Changes"
-
-  - id: test_clippy_passes
-    type: pass_to_pass
-    origin: agent_config
-    description: Code passes cargo xclippy linting
-    source:
-      file: CLAUDE.md
-      lines: "ALWAYS run `cargo xclippy` after finishing development"
-
-  - id: test_git_checks
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo git checks pass
-
-rubric: []
+- id: test_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-json-rpc compiles successfully
+- id: test_get_object_read_has_protocol_gating
+  type: fail_to_pass
+  origin: agent_config
+  description: get_object_read checks enable_coin_reservation_obj_refs() before returning
+    fake coins
+  source:
+    file: CLAUDE.md
+    lines: Protocol Config Changes
+- id: test_get_owned_coins_has_protocol_gating
+  type: fail_to_pass
+  origin: agent_config
+  description: get_owned_coins checks enable_coin_reservation_obj_refs() before building
+    fake coins
+  source:
+    file: CLAUDE.md
+    lines: Protocol Config Changes
+- id: test_clippy_passes
+  type: pass_to_pass
+  origin: agent_config
+  description: Code passes cargo xclippy linting
+  source:
+    file: CLAUDE.md
+    lines: ALWAYS run `cargo xclippy` after finishing development
+- id: test_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git checks pass
+rubric:
+- rule: Use `#[sim_test]` and `cargo simtest` for e2e tests to avoid false negatives.
+  source:
+    path: CLAUDE.md
+    lines: 32-33
+  evidence: The gold solution adds new tests using the `#[sim_test]` macro in `crates/sui-e2e-tests/tests/address_balance_rpc_tests.rs`,
+    which aligns with the repository's standard for e2e tests that are run with
+  category: testing
+distractors:
+- rule: '`cargo xclippy does not recognize -p option` - This is a known issue with
+    some clippy command variations'
+  collision_type: rule_conflict
+  why_distracting: The task instructions explicitly tell the agent to run `cargo xclippy
+    -p sui-json-rpc`, but `CLAUDE.md` warns that `cargo xclippy` does not recognize
+    the `-p` option. This creates a direct conflict between the prompt's tooling instructions
+    and the repo's documented tooling quirks, potentially causing the agent to fail
+    linting or waste time debugging the command.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 55-55
+- rule: skip simulation tests as they may cause false negatives with `cargo nextest`
+  collision_type: meta_confusion
+  why_distracting: The instruction to 'skip simulation tests' when running `cargo
+    nextest` might confuse an agent into thinking simulation tests shouldn't be written,
+    or it might try to run the newly added `#[sim_test]` tests with `cargo nextest`
+    and fail to see them execute because of the `SUI_SKIP_SIMTESTS=1` flag.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 35-36
+hierarchy_analysis: The repository uses a standard root-level `CLAUDE.md` file, while
+  `AGENTS.md` simply defers to it. The most significant conflict exists between the
+  user prompt's explicit instruction to use `cargo xclippy -p sui-json-rpc` and the
+  `CLAUDE.md` warning that `cargo xclippy` doesn't support the `-p` flag.

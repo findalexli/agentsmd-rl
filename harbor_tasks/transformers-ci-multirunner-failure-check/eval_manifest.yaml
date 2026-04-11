@@ -1,123 +1,160 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45032
-  base_commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
-  merge_commit: "e3f7cc3b4a5499c52ad56c72cad295de562f5b54"
-
+  base_commit: 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
+  merge_commit: e3f7cc3b4a5499c52ad56c72cad295de562f5b54
 checks:
-  - id: python_syntax
-    type: pass_to_pass
-    origin: static
-    description: "check_bad_commit.py must parse without syntax errors"
-
-  - id: yaml_syntax
-    type: pass_to_pass
-    origin: static
-    description: "check_failed_tests.yml must be valid YAML"
-
-  - id: partition_across_runners
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script partitions 12 tests across 3 runners via run_idx/n_runners env vars"
-
-  - id: partition_with_different_runner_counts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Partitioning works with 2 and 4 runners, not just 3"
-
-  - id: output_keyed_by_model
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Output from each runner is a dict keyed by model name, not a flat list"
-
-  - id: merge_step_combines_runners
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Merge step in workflow correctly merges multi-runner JSON outputs"
-
-  - id: backward_compatible_without_env_vars
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Script processes all tests when run_idx/n_runners are NOT set"
-
-  - id: workflow_structure_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Workflow retains core jobs (check/process) and required inputs (docker, job)"
-
-  - id: max_num_runners_input
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Workflow has max_num_runners input with number type and default"
-
-  - id: dynamic_matrix
-    type: fail_to_pass
-    origin: pr_diff
-    description: "check_new_failures uses dynamic matrix from setup job, not hardcoded [1]"
-
-  - id: script_not_bloated
-    type: pass_to_pass
-    origin: static
-    description: "check_bad_commit.py is not bloated (under 500 lines)"
-
-  - id: no_bare_type_ignore
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare # type: ignore without error code in check_bad_commit.py"
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "185-186"
-      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
-
-  - id: no_assert_type_narrowing
-    type: pass_to_pass
-    origin: agent_config
-    description: "No assert used for type narrowing (isinstance/is not None) in check_bad_commit.py"
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "188-189"
-      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
-
-  # Repo CI/CD tests (p2p enrichment)
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on check_bad_commit.py per AGENTS.md style requirements"
-    command: "ruff check utils/check_bad_commit.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff formatting passes on check_bad_commit.py per AGENTS.md style requirements"
-    command: "ruff format --check utils/check_bad_commit.py"
-
-  - id: test_workflow_schema_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_failed_tests.yml has valid GitHub Actions workflow structure"
-
-  - id: test_script_has_expected_functions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_bad_commit.py defines expected public API functions (find_bad_commit, get_commit_info)"
-
+- id: python_syntax
+  type: pass_to_pass
+  origin: static
+  description: check_bad_commit.py must parse without syntax errors
+- id: yaml_syntax
+  type: pass_to_pass
+  origin: static
+  description: check_failed_tests.yml must be valid YAML
+- id: partition_across_runners
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script partitions 12 tests across 3 runners via run_idx/n_runners env
+    vars
+- id: partition_with_different_runner_counts
+  type: fail_to_pass
+  origin: pr_diff
+  description: Partitioning works with 2 and 4 runners, not just 3
+- id: output_keyed_by_model
+  type: fail_to_pass
+  origin: pr_diff
+  description: Output from each runner is a dict keyed by model name, not a flat list
+- id: merge_step_combines_runners
+  type: fail_to_pass
+  origin: pr_diff
+  description: Merge step in workflow correctly merges multi-runner JSON outputs
+- id: backward_compatible_without_env_vars
+  type: pass_to_pass
+  origin: pr_diff
+  description: Script processes all tests when run_idx/n_runners are NOT set
+- id: workflow_structure_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Workflow retains core jobs (check/process) and required inputs (docker,
+    job)
+- id: max_num_runners_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: Workflow has max_num_runners input with number type and default
+- id: dynamic_matrix
+  type: fail_to_pass
+  origin: pr_diff
+  description: check_new_failures uses dynamic matrix from setup job, not hardcoded
+    [1]
+- id: script_not_bloated
+  type: pass_to_pass
+  origin: static
+  description: check_bad_commit.py is not bloated (under 500 lines)
+- id: no_bare_type_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No bare # type: ignore without error code in check_bad_commit.py'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 185-186
+    commit: 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
+- id: no_assert_type_narrowing
+  type: pass_to_pass
+  origin: agent_config
+  description: No assert used for type narrowing (isinstance/is not None) in check_bad_commit.py
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 188-189
+    commit: 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on check_bad_commit.py per AGENTS.md style
+    requirements
+  command: ruff check utils/check_bad_commit.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatting passes on check_bad_commit.py per AGENTS.md
+    style requirements
+  command: ruff format --check utils/check_bad_commit.py
+- id: test_workflow_schema_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_failed_tests.yml has valid GitHub Actions workflow structure
+- id: test_script_has_expected_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_bad_commit.py defines expected public API functions (find_bad_commit,
+    get_commit_info)
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
-
-  - rule: "Do not add helper methods or abstractions just to satisfy the type checker (especially for only 1-2 occurrences)."
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "196"
-      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
-
-  - rule: "make style or make fix-repo should be run as the final step before opening a PR — code should pass ruff formatting and linting."
-    source:
-      path: "AGENTS.md"
-      lines: "2,8"
-      commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
+- rule: Do not add helper methods or abstractions just to satisfy the type checker
+    (especially for only 1-2 occurrences).
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '196'
+    commit: 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
+- rule: make style or make fix-repo should be run as the final step before opening
+    a PR — code should pass ruff formatting and linting.
+  source:
+    path: AGENTS.md
+    lines: 2,8
+    commit: 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
+- rule: PRs should be as brief as possible... Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 12-13
+  evidence: The gold solution embeds the matrix calculation Python script directly
+    into the `check_failed_tests.yml` workflow using a heredoc (`python3 - << 'EOF'`)
+    instead of creating a new separate Python file,
+  category: style
+distractors:
+- rule: Bugfix PRs in particular can often be only one or two lines long, and do not
+    need large comments, docstrings or new functions in this case.
+  collision_type: rule_conflict
+  why_distracting: The rule suggests bugfixes should be 1-2 lines and avoid new functions.
+    An agent might try to hack the existing `check_new_failures` job instead of properly
+    adding the required `setup_check_new_failures` job to dynamically compute the
+    matrix, failing to achieve the required parallelization.
+  severity: high
+  source:
+    path: .github/copilot-instructions.md
+    lines: 12-13
+- rule: If work maps to an existing issue, coordinate on that issue before opening
+    a PR... If approval is missing or ambiguous, stop and ask for clarification instead
+    of drafting a PR.
+  collision_type: meta_confusion
+  why_distracting: The strict policy requires coordination on an issue before opening
+    a PR and mandates fail-closed behavior if approval is missing. An agent might
+    refuse to generate the solution because it lacks issue context or explicit approval
+    in the prompt.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 23-27
+- rule: When writing tests, they should be added to an existing file. The only exception
+    is for PRs to add a new model...
+  collision_type: scope_ambiguity
+  why_distracting: The prompt discusses 'Many Failing Tests'. An agent might misinterpret
+    this rule and attempt to modify the actual test files or add tests for the CI
+    script, rather than focusing purely on the CI workflow infrastructure.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 14-15
+hierarchy_analysis: The config hierarchy is heavily optimized for model development
+  (`src/transformers/models/`) and strict AI contribution policies. The root `CLAUDE.md`
+  enforces meta-rules about issue coordination, while `.github/copilot-instructions.md`
+  focuses on model inheritance (`# Copied from`, `modular_*.py`) and PR size. There
+  is a significant gap in guidance for CI/infrastructure changes. The agent must override
+  the '1-2 line bugfix' rule from `.github/copilot-instructions.md` because CI parallelization
+  inherently requires adding new jobs and structural changes to the workflow.

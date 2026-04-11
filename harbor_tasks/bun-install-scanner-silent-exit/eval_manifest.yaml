@@ -1,118 +1,144 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28196
-  base_commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-  merge_commit: "af24e281ebacd6ac77c0f14b4206599cf4ae1c9f"
-
+  base_commit: 1d50d640f8fec6ce2d144f0cfd204e30da373c64
+  merge_commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
 checks:
-  # --- fail_to_pass (pr_diff) ---
-  - id: catch_all_produces_output
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Empty else => {} catch-all in scanner error switch replaced with Output.* error messages"
-
-  - id: error_variant_coverage
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All error variants (3+ named or dynamic catch-all) produce diagnostic output"
-
-  - id: error_printing_centralized
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Error printing removed from security_scanner.zig, centralized in install_with_manager.zig"
-
-  - id: error_variant_propagated
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".error variant from retry result propagated instead of collapsed into SecurityScannerRetryFailed"
-
-  - id: uses_err_generic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Error messages use Output.errGeneric, not Output.pretty with raw <red> formatting"
-
-  # --- fail_to_pass (agent_config) ---
-  - id: regression_test_location
-    type: fail_to_pass
-    origin: agent_config
-    description: "Regression test placed at test/regression/issue/28193.test.ts per CLAUDE.md rule"
-    source:
-      path: "CLAUDE.md"
-      lines: "28"
-      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-
-  - id: regression_test_uses_harness
-    type: fail_to_pass
-    origin: agent_config
-    description: "Regression test imports bunExe/bunEnv from 'harness' per test/CLAUDE.md rule"
-    source:
-      path: "test/CLAUDE.md"
-      lines: "28"
-      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-
-  - id: regression_test_uses_tempdir
-    type: fail_to_pass
-    origin: agent_config
-    description: "Regression test uses tempDir from 'harness', not tmpdirSync/mkdtempSync"
-    source:
-      path: "CLAUDE.md"
-      lines: "100"
-      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-
-  - id: exit_code_assertion_last
-    type: pass_to_pass
-    origin: agent_config
-    description: "Regression test asserts stdout/stderr content before asserting exit code"
-    source:
-      path: "CLAUDE.md"
-      lines: "101"
-      commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-
-  # --- pass_to_pass ---
-  - id: workspace_error_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "SecurityScannerInWorkspace error handling still present in install_with_manager.zig"
-
-  - id: error_types_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "security_scanner.zig still returns proper error types"
-
-  - id: anti_stub
-    type: pass_to_pass
-    origin: static
-    description: "Both Zig source files have substantial content"
-
-  # --- pass_to_pass (repo_tests) ---
-  - id: test_repo_banned_words
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo banned words check passes (CI check from package.json scripts)"
-
-  - id: test_repo_source_files_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified source files exist and have valid content structure"
-
-  - id: test_repo_zig_files_parseable
-    type: pass_to_pass
-    origin: static
-    description: "Zig source files are syntactically valid (basic parse check)"
-
-  - id: test_repo_typescript_check
-    type: pass_to_pass
-    origin: static
-    description: "TypeScript regression test file exists and is readable"
-
-  - id: test_repo_glob_sources
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo glob-sources script passes (CI check from package.json scripts)"
-
+- id: catch_all_produces_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty else => {} catch-all in scanner error switch replaced with Output.*
+    error messages
+- id: error_variant_coverage
+  type: fail_to_pass
+  origin: pr_diff
+  description: All error variants (3+ named or dynamic catch-all) produce diagnostic
+    output
+- id: error_printing_centralized
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error printing removed from security_scanner.zig, centralized in install_with_manager.zig
+- id: error_variant_propagated
+  type: fail_to_pass
+  origin: pr_diff
+  description: .error variant from retry result propagated instead of collapsed into
+    SecurityScannerRetryFailed
+- id: uses_err_generic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error messages use Output.errGeneric, not Output.pretty with raw <red>
+    formatting
+- id: regression_test_location
+  type: fail_to_pass
+  origin: agent_config
+  description: Regression test placed at test/regression/issue/28193.test.ts per CLAUDE.md
+    rule
+  source:
+    path: CLAUDE.md
+    lines: '28'
+    commit: 1d50d640f8fec6ce2d144f0cfd204e30da373c64
+- id: regression_test_uses_harness
+  type: fail_to_pass
+  origin: agent_config
+  description: Regression test imports bunExe/bunEnv from 'harness' per test/CLAUDE.md
+    rule
+  source:
+    path: test/CLAUDE.md
+    lines: '28'
+    commit: 1d50d640f8fec6ce2d144f0cfd204e30da373c64
+- id: regression_test_uses_tempdir
+  type: fail_to_pass
+  origin: agent_config
+  description: Regression test uses tempDir from 'harness', not tmpdirSync/mkdtempSync
+  source:
+    path: CLAUDE.md
+    lines: '100'
+    commit: 1d50d640f8fec6ce2d144f0cfd204e30da373c64
+- id: exit_code_assertion_last
+  type: pass_to_pass
+  origin: agent_config
+  description: Regression test asserts stdout/stderr content before asserting exit
+    code
+  source:
+    path: CLAUDE.md
+    lines: '101'
+    commit: 1d50d640f8fec6ce2d144f0cfd204e30da373c64
+- id: workspace_error_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: SecurityScannerInWorkspace error handling still present in install_with_manager.zig
+- id: error_types_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: security_scanner.zig still returns proper error types
+- id: anti_stub
+  type: pass_to_pass
+  origin: static
+  description: Both Zig source files have substantial content
+- id: test_repo_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo banned words check passes (CI check from package.json scripts)
+- id: test_repo_source_files_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified source files exist and have valid content structure
+- id: test_repo_zig_files_parseable
+  type: pass_to_pass
+  origin: static
+  description: Zig source files are syntactically valid (basic parse check)
+- id: test_repo_typescript_check
+  type: pass_to_pass
+  origin: static
+  description: TypeScript regression test file exists and is readable
+- id: test_repo_glob_sources
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo glob-sources script passes (CI check from package.json scripts)
 rubric:
-  - rule: "Update README.md with the latest changes."
-    source:
-      path: "README.md"
+- rule: Update README.md with the latest changes.
+  source:
+    path: README.md
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    test/regression/issue/${issueNumber}.test.ts
+  source:
+    path: CLAUDE.md
+    lines: 32-32
+  evidence: The gold solution places the test for this bug in `test/regression/issue/28193.test.ts`,
+    following the strict issue-number naming convention.
+  category: testing
+- rule: Use bun:test with files that end in *.test.{ts,js,jsx,tsx,mjs,cjs}
+  source:
+    path: test/CLAUDE.md
+    lines: 14-14
+  evidence: The test file uses the `.test.ts` extension as required for files using
+    the `bun:test` runner.
+  category: naming
+distractors:
+- rule: When a test file spawns a Bun process, we like for that file to end in *-fixture.ts
+  collision_type: rule_conflict
+  why_distracting: The agent might try to name the regression test file `28193-fixture.ts`
+    because it spawns a Bun process to test `bun install`. This conflicts with the
+    strict `issue/${issueNumber}.test.ts` naming convention required for regression
+    tests.
+  severity: medium
+  source:
+    path: test/CLAUDE.md
+    lines: 69-69
+- rule: Always use bun.* APIs instead of std.* and use bun.sys for system calls
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to write to stderr using `bun.sys.write(bun.FD.stderr(),
+    ...)` or similar low-level system calls to avoid `std.debug.print`, missing the
+    existing `Output.errGeneric` abstraction that is standard for the package manager
+    architecture.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 16-31
+hierarchy_analysis: The root `CLAUDE.md` defines a strict naming convention for regression
+  tests (`test/regression/issue/${issueNumber}.test.ts`). The child `test/CLAUDE.md`
+  suggests naming files that spawn processes with `*-fixture.ts`. In this case, the
+  root rule for regression tests takes precedence over the child rule for fixture
+  naming, as the issue number format is a strict requirement for the regression test
+  runner.

@@ -2,81 +2,114 @@ source_pr:
   owner: All-Hands-AI
   repo: OpenHands
   number: 13599
-  title: "feat: add /new to slash command menu for V1 conversations"
+  title: 'feat: add /new to slash command menu for V1 conversations'
   merge_commit: c210d5294fa82459443e6163b9b1c9c9f55073fc
   base_commit: c7190ddb308de5a8c00b790049c5027d122159f7
-
 agent_config: []
-
 rubric:
-  - rule: "Use TanStack Query (React Query) for data fetching and cache management. Data Access Layer API client methods in frontend/src/api must never be called directly from UI components - always wrap with TanStack Query hooks in frontend/src/hooks/query/."
-    source:
-      path: "AGENTS.md"
-      lines: "117-122"
-      commit: "c7190ddb308de5a8c00b790049c5027d122159f7"
-
-  - rule: "Query hooks should follow the pattern use[Resource] (e.g., useConversationSkills) and must be placed in frontend/src/hooks/query/."
-    source:
-      path: "AGENTS.md"
-      lines: "119-120"
-      commit: "c7190ddb308de5a8c00b790049c5027d122159f7"
-
-  - rule: "Follow the existing hook patterns when adding new TanStack Query hooks: use the useQuery pattern with proper typing and consistent naming conventions."
-    source:
-      path: "AGENTS.md"
-      lines: "117-122"
-      commit: "c7190ddb308de5a8c00b790049c5027d122159f7"
-
-  - rule: "Frontend changes must pass linting. Run npm run lint:fix and npm run build in the frontend directory before submitting."
-    source:
-      path: "AGENTS.md"
-      lines: "42-44"
-      commit: "c7190ddb308de5a8c00b790049c5027d122159f7"
-
+- rule: Use TanStack Query (React Query) for data fetching and cache management. Data
+    Access Layer API client methods in frontend/src/api must never be called directly
+    from UI components - always wrap with TanStack Query hooks in frontend/src/hooks/query/.
+  source:
+    path: AGENTS.md
+    lines: 117-122
+    commit: c7190ddb308de5a8c00b790049c5027d122159f7
+- rule: Query hooks should follow the pattern use[Resource] (e.g., useConversationSkills)
+    and must be placed in frontend/src/hooks/query/.
+  source:
+    path: AGENTS.md
+    lines: 119-120
+    commit: c7190ddb308de5a8c00b790049c5027d122159f7
+- rule: 'Follow the existing hook patterns when adding new TanStack Query hooks: use
+    the useQuery pattern with proper typing and consistent naming conventions.'
+  source:
+    path: AGENTS.md
+    lines: 117-122
+    commit: c7190ddb308de5a8c00b790049c5027d122159f7
+- rule: Frontend changes must pass linting. Run npm run lint:fix and npm run build
+    in the frontend directory before submitting.
+  source:
+    path: AGENTS.md
+    lines: 42-44
+    commit: c7190ddb308de5a8c00b790049c5027d122159f7
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  evidence: The gold solution modifies frontend files (`frontend/src/hooks/chat/use-slash-command.ts`
+    and `frontend/src/utils/constants.ts`), which triggers the rule to run frontend
+    linting and building.
+  category: tooling
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: The gold solution includes a comprehensive test file `frontend/__tests__/hooks/chat/use-slash-command.test.ts`
+    to verify the new `/new` command logic, ensuring tests pass before pushing.
+  category: testing
 checks:
-  # Fail-to-pass tests
-  - id: test_test_file_exists
-    type: fail_to_pass
-    origin: task_tests
-    description: "Test file use-slash-command.test.ts exists"
-
-  - id: test_v1_conversation_has_new_command
-    type: fail_to_pass
-    origin: task_tests
-    description: "/new command appears for V1 conversations"
-
-  - id: test_v0_conversation_no_new_command
-    type: fail_to_pass
-    origin: task_tests
-    description: "/new command does NOT appear for V0 conversations"
-
-  - id: test_empty_items_while_loading
-    type: fail_to_pass
-    origin: task_tests
-    description: "Returns empty items while skills are loading (prevents staggered menu bug)"
-
-  # Pass-to-pass tests (repo CI/CD)
-  - id: test_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript type checking passes"
-
-  - id: test_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Linting passes (npm run lint)"
-
-  - id: test_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Production build compiles successfully"
-
-  - id: test_translation_completeness
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All translation keys have complete language coverage"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Frontend slash-command unit tests pass (vitest run)"
+- id: test_test_file_exists
+  type: fail_to_pass
+  origin: task_tests
+  description: Test file use-slash-command.test.ts exists
+- id: test_v1_conversation_has_new_command
+  type: fail_to_pass
+  origin: task_tests
+  description: /new command appears for V1 conversations
+- id: test_v0_conversation_no_new_command
+  type: fail_to_pass
+  origin: task_tests
+  description: /new command does NOT appear for V0 conversations
+- id: test_empty_items_while_loading
+  type: fail_to_pass
+  origin: task_tests
+  description: Returns empty items while skills are loading (prevents staggered menu
+    bug)
+- id: test_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking passes
+- id: test_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Linting passes (npm run lint)
+- id: test_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Production build compiles successfully
+- id: test_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: All translation keys have complete language coverage
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend slash-command unit tests pass (vitest run)
+distractors:
+- rule: When working on a PR that requires design documents, scripts meant for development-only,
+    or other temporary artifacts that should NOT be merged to main, store them in
+    a `.pr/` directory at the repository root.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a `.pr/` directory to document its plan
+    for adding the `/new` command, but this is a straightforward UI/hook change that
+    doesn't need temporary artifacts or design docs.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 34-34
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to start the full application using `make build
+    && make run` to manually test the `/new` command in the UI, but the instructions
+    specify to verify via unit tests (`npm run test`). Starting the full app is unnecessary
+    and time-consuming.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 9-13
+hierarchy_analysis: The repository has a single root-level `AGENTS.md` file containing
+  general setup, testing, and PR artifact guidelines. There are no conflicting child
+  configs.

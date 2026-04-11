@@ -5,138 +5,162 @@ source_pr:
   pr_number: 17222
   merge_commit: 1303596bccafc9f39708d8ac61b52424c7d00394
   base_commit: fbe388118cff80484638b724aaec3ee86c6eb0cd
-
-# Agent configuration rules from java/AGENTS.md
 agent_config:
-  - file: "java/AGENTS.md"
-    rules:
-      - id: "logging"
-        description: "Use java.util.logging.Logger with LOG.info/warning/fine pattern"
-        relevant: true
-      - id: "deprecation"
-        description: "Use @Deprecated(forRemoval = true) for deprecated methods"
-        relevant: true
-      - id: "javadoc"
-        description: "Use Javadoc for public APIs with @param, @return, @throws tags"
-        relevant: true
-
-# Functional checks
+- file: java/AGENTS.md
+  rules:
+  - id: logging
+    description: Use java.util.logging.Logger with LOG.info/warning/fine pattern
+    relevant: true
+  - id: deprecation
+    description: Use @Deprecated(forRemoval = true) for deprecated methods
+    relevant: true
+  - id: javadoc
+    description: Use Javadoc for public APIs with @param, @return, @throws tags
+    relevant: true
 checks:
-  # Fail-to-pass: Core fix - try-finally protection
-  - id: test_docker_session_has_try_finally
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerSession.stop() uses try-finally for guaranteed cleanup
-
-  - id: test_docker_session_has_duration_fields
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerSession has containerStopTimeout and videoContainerStopTimeout Duration fields
-
-  - id: test_docker_session_constructor_accepts_durations
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerSession constructor accepts Duration timeout parameters
-
-  - id: test_docker_session_no_hardcoded_timeouts
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerSession.stop() no longer uses hardcoded Duration values
-
-  - id: test_docker_options_has_get_stop_grace_period
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerOptions has getStopGracePeriod() method with validation
-
-  - id: test_docker_options_passes_grace_period_to_factory
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerOptions passes stopGracePeriod to DockerSessionFactory
-
-  - id: test_docker_flags_has_stop_grace_period_parameter
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerFlags has --docker-stop-grace-period parameter
-
-  - id: test_docker_session_factory_accepts_stop_grace_period
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerSessionFactory accepts and stores stopGracePeriod Duration
-
-  - id: test_docker_session_factory_passes_timeout_to_session
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerSessionFactory passes stopGracePeriod to DockerSession
-
-  - id: test_debug_uses_static_logger
-    type: fail_to_pass
-    origin: code_structure
-    description: Debug.configureLogger() uses static SELENIUM_LOGGER for thread safety
-
-  - id: test_parse_multiplexed_stream_uses_read_fully
-    type: fail_to_pass
-    origin: code_structure
-    description: parseMultiplexedStream uses readFully() instead of skipBytes()
-
-  # Pass-to-pass: Repo tests
-  - id: test_docker_session_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: DockerSession and related classes compile successfully
-
-  - id: test_docker_session_unit_tests_exist
-    type: fail_to_pass
-    origin: code_structure
-    description: DockerSessionTest.java exists with comprehensive tests after fix
-
-  - id: test_bazel_build_targets_include_new_deps
-    type: fail_to_pass
-    origin: code_structure
-    description: BUILD.bazel files include new dependencies after fix
-
-  - id: test_docker_library_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: Docker library compiles with all changes
-
-  # Additional pass-to-pass: Repo CI/CD tests
-  - id: test_repo_bazel_build_docker_targets
-    type: pass_to_pass
-    origin: repo_tests
-    description: Bazel docker targets build successfully
-
-  - id: test_repo_docker_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Docker unit tests pass
-
-  - id: test_repo_docker_options_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: DockerOptionsTest passes
-
-# LLM-judge rubric for soft/subjective checks
+- id: test_docker_session_has_try_finally
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerSession.stop() uses try-finally for guaranteed cleanup
+- id: test_docker_session_has_duration_fields
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerSession has containerStopTimeout and videoContainerStopTimeout
+    Duration fields
+- id: test_docker_session_constructor_accepts_durations
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerSession constructor accepts Duration timeout parameters
+- id: test_docker_session_no_hardcoded_timeouts
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerSession.stop() no longer uses hardcoded Duration values
+- id: test_docker_options_has_get_stop_grace_period
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerOptions has getStopGracePeriod() method with validation
+- id: test_docker_options_passes_grace_period_to_factory
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerOptions passes stopGracePeriod to DockerSessionFactory
+- id: test_docker_flags_has_stop_grace_period_parameter
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerFlags has --docker-stop-grace-period parameter
+- id: test_docker_session_factory_accepts_stop_grace_period
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerSessionFactory accepts and stores stopGracePeriod Duration
+- id: test_docker_session_factory_passes_timeout_to_session
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerSessionFactory passes stopGracePeriod to DockerSession
+- id: test_debug_uses_static_logger
+  type: fail_to_pass
+  origin: code_structure
+  description: Debug.configureLogger() uses static SELENIUM_LOGGER for thread safety
+- id: test_parse_multiplexed_stream_uses_read_fully
+  type: fail_to_pass
+  origin: code_structure
+  description: parseMultiplexedStream uses readFully() instead of skipBytes()
+- id: test_docker_session_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: DockerSession and related classes compile successfully
+- id: test_docker_session_unit_tests_exist
+  type: fail_to_pass
+  origin: code_structure
+  description: DockerSessionTest.java exists with comprehensive tests after fix
+- id: test_bazel_build_targets_include_new_deps
+  type: fail_to_pass
+  origin: code_structure
+  description: BUILD.bazel files include new dependencies after fix
+- id: test_docker_library_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Docker library compiles with all changes
+- id: test_repo_bazel_build_docker_targets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel docker targets build successfully
+- id: test_repo_docker_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Docker unit tests pass
+- id: test_repo_docker_options_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: DockerOptionsTest passes
 rubric:
-  - rule: "Use java.util.logging.Logger with LOG.info/warning/fine pattern for logging"
-    source:
-      path: "java/AGENTS.md"
-      lines: "16-24"
-      commit: "fbe388118cff80484638b724aaec3ee86c6eb0cd"
-
-  - rule: "Use Javadoc for public APIs with @param, @return, @throws tags"
-    source:
-      path: "java/AGENTS.md"
-      lines: "32-42"
-      commit: "fbe388118cff80484638b724aaec3ee86c6eb0cd"
-
-  - rule: "Comments should explain why, not what - prefer well-named methods over comments"
-    source:
-      path: "AGENTS.md"
-      lines: "47"
-      commit: "fbe388118cff80484638b724aaec3ee86c6eb0cd"
-
-  - rule: "Maintain API/ABI compatibility - avoid breaking changes to public interfaces"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "fbe388118cff80484638b724aaec3ee86c6eb0cd"
+- rule: Use java.util.logging.Logger with LOG.info/warning/fine pattern for logging
+  source:
+    path: java/AGENTS.md
+    lines: 16-24
+    commit: fbe388118cff80484638b724aaec3ee86c6eb0cd
+- rule: Use Javadoc for public APIs with @param, @return, @throws tags
+  source:
+    path: java/AGENTS.md
+    lines: 32-42
+    commit: fbe388118cff80484638b724aaec3ee86c6eb0cd
+- rule: Comments should explain why, not what - prefer well-named methods over comments
+  source:
+    path: AGENTS.md
+    lines: '47'
+    commit: fbe388118cff80484638b724aaec3ee86c6eb0cd
+- rule: Maintain API/ABI compatibility - avoid breaking changes to public interfaces
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: fbe388118cff80484638b724aaec3ee86c6eb0cd
+- rule: Maintain API/ABI compatibility - users upgrade by changing only version number
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: The gold solution sets `DEFAULT_STOP_GRACE_PERIOD = 60` in `DockerOptions.java`,
+    preserving the previous hardcoded 60-second timeout for the browser container,
+    ensuring backward compatibility for exis
+  category: architecture
+- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+  source:
+    path: AGENTS.md
+    lines: 13-13
+  evidence: The gold solution makes targeted changes only to the specific Docker Grid
+    classes (`DockerFlags`, `DockerOptions`, `DockerSession`) to pass the new configuration,
+    without rewriting the broader session
+  category: style
+distractors:
+- rule: When implementing solutions prefer writing a test for it first / Avoid mocks
+  collision_type: rule_conflict
+  why_distracting: Testing Docker container lifecycle and resource leaks requires
+    either heavy integration tests (spinning up actual Docker containers) or mocks.
+    However, the rules explicitly state to 'Avoid mocks' and 'Prefer small (unit)
+    tests'. An agent might get stuck trying to write a test for this or violate the
+    no-mocking rule.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 40-43
+- rule: When changing user-visible behavior, compare with at least one other binding
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to search for Docker Grid implementations in
+    Python, Ruby, or C# to add the same `--docker-stop-grace-period` flag. However,
+    the Selenium Grid server is primarily implemented in Java, making cross-binding
+    comparisons irrelevant and a waste of effort for this specific feature.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 36-38
+- rule: Add logging where users may need insight into what's happening
+  collision_type: scope_ambiguity
+  why_distracting: An agent might add logging inside the `finally` block or when the
+    timeout is applied to provide 'insight'. This would likely spam the logs during
+    normal, successful session teardowns, degrading the user experience.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 50-51
+hierarchy_analysis: The configuration hierarchy is flat for this task, as all rules
+  are contained within the root `AGENTS.md` file. The primary tension lies within
+  `AGENTS.md` itself, specifically between the mandate to write tests first and the
+  strict prohibition against using mocks, which makes testing infrastructure-level
+  code (like Docker container management) highly problematic for an AI agent.

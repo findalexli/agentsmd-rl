@@ -1,70 +1,98 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/uv"
+  repo: astral-sh/uv
   pr: 18707
-  base_commit: "867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c"
-  merge_commit: "262a50bb4c952cf2461d4073ae21081ed516f21c"
-
+  base_commit: 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c
+  merge_commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
 checks:
-  - id: test_repo_cargo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust code compiles with cargo check"
-
-  - id: test_repo_cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust code is formatted correctly"
-
-  - id: no_unwrap_on_downloaded_script
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No .unwrap() call on downloaded_script in as_command; crate compiles"
-
-  - id: python_remote_not_url_only
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PythonRemote variant no longer holds just a bare URL"
-
-  - id: as_command_no_option_downloaded_script
-    type: fail_to_pass
-    origin: pr_diff
-    description: "as_command no longer takes downloaded_script as an Option parameter"
-
-  - id: run_fn_no_downloaded_script_param
-    type: fail_to_pass
-    origin: pr_diff
-    description: "run() function no longer takes downloaded_script as a parameter"
-
-  - id: lib_no_downloaded_script_threading
-    type: fail_to_pass
-    origin: pr_diff
-    description: "run_project() in lib.rs no longer threads downloaded_script"
-
-  - id: as_command_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "as_command has a real implementation with meaningful logic"
-
-  - id: python_remote_variant_exists
-    type: pass_to_pass
-    origin: static
-    description: "PythonRemote variant still exists in RunCommand enum"
-
-  - id: as_command_handles_all_variants
-    type: pass_to_pass
-    origin: static
-    description: "as_command still handles PythonRemote alongside other variants"
-
-  - id: no_panic_apis_in_remote_handling
-    type: fail_to_pass
-    origin: agent_config
-    description: "No .unwrap() or panic!() in PythonRemote arm of as_command"
-    source:
-      path: "CLAUDE.md"
-      lines: "7"
-      commit: "867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c"
-
-# Rubric removed - this is a code-only fix task where agents don't modify agent config files.
-# The rubric judge is designed for pass-to-pass tasks involving documentation updates.
+- id: test_repo_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code compiles with cargo check
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code is formatted correctly
+- id: no_unwrap_on_downloaded_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: No .unwrap() call on downloaded_script in as_command; crate compiles
+- id: python_remote_not_url_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: PythonRemote variant no longer holds just a bare URL
+- id: as_command_no_option_downloaded_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: as_command no longer takes downloaded_script as an Option parameter
+- id: run_fn_no_downloaded_script_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: run() function no longer takes downloaded_script as a parameter
+- id: lib_no_downloaded_script_threading
+  type: fail_to_pass
+  origin: pr_diff
+  description: run_project() in lib.rs no longer threads downloaded_script
+- id: as_command_not_stub
+  type: pass_to_pass
+  origin: static
+  description: as_command has a real implementation with meaningful logic
+- id: python_remote_variant_exists
+  type: pass_to_pass
+  origin: static
+  description: PythonRemote variant still exists in RunCommand enum
+- id: as_command_handles_all_variants
+  type: pass_to_pass
+  origin: static
+  description: as_command still handles PythonRemote alongside other variants
+- id: no_panic_apis_in_remote_handling
+  type: fail_to_pass
+  origin: agent_config
+  description: No .unwrap() or panic!() in PythonRemote arm of as_command
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c
+rubric:
+- rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
+    rule ignores
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+  evidence: The gold solution removes the `.unwrap()` on the downloaded script by
+    refactoring `RunCommand` to hold the `NamedTempFile` directly, making the unwrap
+    unnecessary and impossible.
+  category: style
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: 15-15
+  evidence: The gold solution adds imports like `use uv_cli::{ExternalCommand, GlobalArgs};`
+    and `use uv_scripts::{Pep723Error, Pep723Item, Pep723Metadata, Pep723Script};`
+    at the top of `crates/uv/src/commands/pr
+  category: style
+distractors:
+- rule: PREFER patterns like `if let` to handle fallibility
+  collision_type: architecture_boundary
+  why_distracting: An agent might try to replace the `.unwrap()` with an `if let Some(...)`
+    check and return an error. However, the architectural problem is that the type
+    system doesn't guarantee the download has happened. The correct fix is to refactor
+    `RunCommand` and introduce `ParsedRunCommand` to enforce this at the type level,
+    rather than just patching the symptom with `if let`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 9-9
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: Testing a remote script execution (`uv run https://...`) requires
+    setting up a mock HTTP server or network requests in the test suite. The core
+    fix is a structural type-system change that makes the panic impossible by design.
+    Trying to add a test for this specific panic would distract the agent into complex
+    network mocking.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+hierarchy_analysis: Only a single root-level `CLAUDE.md` file is present, so there
+  are no hierarchical conflicts. All rules apply globally to the edited files.

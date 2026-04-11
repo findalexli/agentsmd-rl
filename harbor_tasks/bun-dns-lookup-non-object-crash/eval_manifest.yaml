@@ -1,101 +1,115 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28424
-  base_commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
-  merge_commit: "9ead1e121d5cca2eaddad66d439ab3c0a74225f2"
-
+  base_commit: 7fb789749edc96504fda8043e82a88eb88592d4e
+  merge_commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
 checks:
-  - id: dns_zig_structural_integrity
-    type: pass_to_pass
-    origin: static
-    description: "dns.zig exists and is structurally intact (balanced braces, key symbols)"
-
-  - id: non_object_guard_on_second_arg
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Guard on arguments.ptr[1] rejects non-object cells (not just isCell)"
-
-  - id: guard_uses_valid_object_method
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Guard uses a real, object-discriminating JSValue method (not isCell)"
-
-  - id: options_parsing_intact
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Options parsing block still extracts port and family via getTruthy"
-
-  - id: core_resolver_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Core Resolver struct and key methods are still present"
-
-  - id: no_std_apis_in_changes
-    type: pass_to_pass
-    origin: agent_config
-    description: "No use of std.* APIs where bun.* equivalents exist"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "16"
-      commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
-
-  - id: no_inline_imports_in_changes
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @import() inline inside functions"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "11"
-      commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
-
-  # New CI/CD-derived pass_to_pass tests
-  - id: zig_fmt_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "dns.zig has valid syntax (balanced braces, no unclosed blocks) for zig fmt compatibility"
-    source:
-      path: ".github/workflows/format.yml"
-      workflow: "Format"
-
-  - id: no_banned_words_in_dns_zig
-    type: pass_to_pass
-    origin: repo_tests
-    description: "dns.zig does not contain banned words/patterns (CI ban-words check)"
-    source:
-      path: "test/internal/ban-words.test.ts"
-      workflow: "Format"
-
-  - id: dns_js_no_oxlint_violations
-    type: pass_to_pass
-    origin: repo_tests
-    description: "JS/TS files in dns-related paths pass basic linting rules (from oxlint.json)"
-    source:
-      path: "oxlint.json"
-      config: "correctness"
-
-  - id: no_banned_words_in_js_dns
-    type: pass_to_pass
-    origin: repo_tests
-    description: "DNS JS files do not contain banned words/patterns (CI ban-words check)"
-    source:
-      path: "test/internal/ban-words.test.ts"
-      workflow: "Format"
-
-  - id: dns_js_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "DNS JS files have valid syntax"
-    source:
-      path: "src/js/node/dns.ts"
-      validation: "syntax"
-
-
+- id: dns_zig_structural_integrity
+  type: pass_to_pass
+  origin: static
+  description: dns.zig exists and is structurally intact (balanced braces, key symbols)
+- id: non_object_guard_on_second_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: Guard on arguments.ptr[1] rejects non-object cells (not just isCell)
+- id: guard_uses_valid_object_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: Guard uses a real, object-discriminating JSValue method (not isCell)
+- id: options_parsing_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Options parsing block still extracts port and family via getTruthy
+- id: core_resolver_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core Resolver struct and key methods are still present
+- id: no_std_apis_in_changes
+  type: pass_to_pass
+  origin: agent_config
+  description: No use of std.* APIs where bun.* equivalents exist
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 7fb789749edc96504fda8043e82a88eb88592d4e
+- id: no_inline_imports_in_changes
+  type: pass_to_pass
+  origin: agent_config
+  description: No @import() inline inside functions
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 7fb789749edc96504fda8043e82a88eb88592d4e
+- id: zig_fmt_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: dns.zig has valid syntax (balanced braces, no unclosed blocks) for
+    zig fmt compatibility
+  source:
+    path: .github/workflows/format.yml
+    workflow: Format
+- id: no_banned_words_in_dns_zig
+  type: pass_to_pass
+  origin: repo_tests
+  description: dns.zig does not contain banned words/patterns (CI ban-words check)
+  source:
+    path: test/internal/ban-words.test.ts
+    workflow: Format
+- id: dns_js_no_oxlint_violations
+  type: pass_to_pass
+  origin: repo_tests
+  description: JS/TS files in dns-related paths pass basic linting rules (from oxlint.json)
+  source:
+    path: oxlint.json
+    config: correctness
+- id: no_banned_words_in_js_dns
+  type: pass_to_pass
+  origin: repo_tests
+  description: DNS JS files do not contain banned words/patterns (CI ban-words check)
+  source:
+    path: test/internal/ban-words.test.ts
+    workflow: Format
+- id: dns_js_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: DNS JS files have valid syntax
+  source:
+    path: src/js/node/dns.ts
+    validation: syntax
 rubric:
-  - rule: "When modifying type checks on JSValue, use semantically correct methods (isObject vs isCell)."
-    source:
-      path: "src/bun.js/api/bun/dns.zig"
-      lines: "2719"
-      commit: "7fb789749edc96504fda8043e82a88eb88592d4e"
-    reference: "arguments.ptr[1].isObject()"
+- rule: When modifying type checks on JSValue, use semantically correct methods (isObject
+    vs isCell).
+  source:
+    path: src/bun.js/api/bun/dns.zig
+    lines: '2719'
+    commit: 7fb789749edc96504fda8043e82a88eb88592d4e
+  reference: arguments.ptr[1].isObject()
+distractors:
+- rule: Ensure the issue number is REAL and not a placeholder!
+  collision_type: rule_conflict
+  why_distracting: The bug description does not provide an issue number. The agent
+    might try to create a regression test with a placeholder issue number, which explicitly
+    violates the rule against using placeholders.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 30-30
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The bug is about a crash when passing invalid arguments. An agent
+    might naturally try to write a test that ensures the code doesn't crash or panic,
+    but the rules explicitly forbid writing tests that check for no 'panic' or 'uncaught
+    exception'.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 84-84
+hierarchy_analysis: The hierarchy consists of `CLAUDE.md` and `AGENTS.md` at the root,
+  and `src/CLAUDE.md` and `src/AGENTS.md` at the `src/` level. The root files focus
+  on building, testing, and test organization. The `src/` level files focus on Zig
+  conventions and using Bun APIs over `std`. The gold solution is a minimal 1-line
+  fix in Zig that doesn't trigger most of these rules, but the testing rules in the
+  root config create significant distractors for an agent trying to verify the crash
+  fix.

@@ -4,143 +4,153 @@ source_pr:
   number: 13658
   merge_commit: 9c0f5d785ee71c7d16d157333994245cb242a885
   base_commit: 73ba66faeae1520fc2671b07677db4b5e3e235d3
-
 source_commit:
   relevant_diff_files:
-    - enterprise/storage/user.py
-    - enterprise/migrations/versions/104_add_disabled_skills_to_user.py
-
+  - enterprise/storage/user.py
+  - enterprise/migrations/versions/104_add_disabled_skills_to_user.py
   agent_config_files:
-    - path: AGENTS.md
-      lines_referenced: [1-100]
-
+  - path: AGENTS.md
+    lines_referenced:
+    - 1-100
 checks:
-  - id: test_user_model_has_disabled_skills_column
-    type: fail_to_pass
-    origin: pr_diff
-    description: User model must have disabled_skills column that is accessible and typed as Column(JSON, nullable=True)
-
-  - id: test_user_model_imports_json_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: User model must successfully import and load with JSON type from sqlalchemy
-
-  - id: test_migration_file_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: Migration 104 must exist and be a valid loadable Python module
-
-  - id: test_migration_has_upgrade_downgrade
-    type: fail_to_pass
-    origin: pr_diff
-    description: Migration 104 must have callable upgrade() and downgrade() functions
-
-  - id: test_migration_upgrade_adds_column
-    type: fail_to_pass
-    origin: pr_diff
-    description: Migration upgrade function must add disabled_skills column to user table via op.add_column
-
-  # =============================================================================
-  # PASS-TO-PASS: Static checks (file reads, AST parsing) - origin: static
-  # =============================================================================
-
-  - id: test_repo_structure
-    type: pass_to_pass
-    origin: static
-    description: Enterprise storage directory structure is correct
-
-  - id: test_user_model_basic_columns
-    type: pass_to_pass
-    origin: static
-    description: User model has expected basic columns (id, email, current_org_id, sandbox_grouping_strategy)
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: static
-    description: All enterprise/storage Python files have valid syntax (AST parsing)
-
-  - id: test_repo_migration_syntax
-    type: pass_to_pass
-    origin: static
-    description: All Alembic migration files have valid Python syntax (AST parsing)
-
-  - id: test_repo_alembic_latest_migration
-    type: pass_to_pass
-    origin: static
-    description: Latest Alembic migration is properly formatted with revision and down_revision
-
-  - id: test_repo_sqlalchemy_model_conventions
-    type: pass_to_pass
-    origin: static
-    description: SQLAlchemy models follow enterprise conventions (__tablename__ attribute present)
-
-  - id: test_repo_migration_conventions
-    type: pass_to_pass
-    origin: static
-    description: Migration files follow naming and structure conventions (upgrade/downgrade functions)
-
-  - id: test_storage_user_column_order
-    type: pass_to_pass
-    origin: static
-    description: User model column ordering follows enterprise conventions
-
-  - id: test_repo_migration_chain_integrity
-    type: pass_to_pass
-    origin: static
-    description: Alembic migration chain has consecutive numbering without gaps
-
-  - id: test_repo_enterprise_imports_consistency
-    type: pass_to_pass
-    origin: static
-    description: Enterprise storage SQLAlchemy models have consistent imports (Column present)
-
-  - id: test_repo_no_bare_excepts_in_migrations
-    type: pass_to_pass
-    origin: static
-    description: Migration files do not use bare except clauses (AST parsing)
-
-  # =============================================================================
-  # PASS-TO-PASS: Repo CI/CD commands (subprocess.run) - origin: repo_tests
-  # =============================================================================
-
-  - id: test_repo_py_compile_enterprise_storage
-    type: pass_to_pass
-    origin: repo_tests
-    description: All enterprise/storage Python files compile without errors (py_compile)
-
-  - id: test_repo_ruff_check_enterprise_storage
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff linting passes on enterprise/storage files (CI linter)
-
-  - id: test_repo_ruff_check_migrations
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff linting passes on migration files (CI linter)
-
-  - id: test_repo_py_compile_migrations
-    type: pass_to_pass
-    origin: repo_tests
-    description: All migration files compile without errors (py_compile)
-
-  - id: test_repo_ruff_check_user_py
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff linting passes on user.py (CI linter)
-
+- id: test_user_model_has_disabled_skills_column
+  type: fail_to_pass
+  origin: pr_diff
+  description: User model must have disabled_skills column that is accessible and
+    typed as Column(JSON, nullable=True)
+- id: test_user_model_imports_json_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: User model must successfully import and load with JSON type from sqlalchemy
+- id: test_migration_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Migration 104 must exist and be a valid loadable Python module
+- id: test_migration_has_upgrade_downgrade
+  type: fail_to_pass
+  origin: pr_diff
+  description: Migration 104 must have callable upgrade() and downgrade() functions
+- id: test_migration_upgrade_adds_column
+  type: fail_to_pass
+  origin: pr_diff
+  description: Migration upgrade function must add disabled_skills column to user
+    table via op.add_column
+- id: test_repo_structure
+  type: pass_to_pass
+  origin: static
+  description: Enterprise storage directory structure is correct
+- id: test_user_model_basic_columns
+  type: pass_to_pass
+  origin: static
+  description: User model has expected basic columns (id, email, current_org_id, sandbox_grouping_strategy)
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: static
+  description: All enterprise/storage Python files have valid syntax (AST parsing)
+- id: test_repo_migration_syntax
+  type: pass_to_pass
+  origin: static
+  description: All Alembic migration files have valid Python syntax (AST parsing)
+- id: test_repo_alembic_latest_migration
+  type: pass_to_pass
+  origin: static
+  description: Latest Alembic migration is properly formatted with revision and down_revision
+- id: test_repo_sqlalchemy_model_conventions
+  type: pass_to_pass
+  origin: static
+  description: SQLAlchemy models follow enterprise conventions (__tablename__ attribute
+    present)
+- id: test_repo_migration_conventions
+  type: pass_to_pass
+  origin: static
+  description: Migration files follow naming and structure conventions (upgrade/downgrade
+    functions)
+- id: test_storage_user_column_order
+  type: pass_to_pass
+  origin: static
+  description: User model column ordering follows enterprise conventions
+- id: test_repo_migration_chain_integrity
+  type: pass_to_pass
+  origin: static
+  description: Alembic migration chain has consecutive numbering without gaps
+- id: test_repo_enterprise_imports_consistency
+  type: pass_to_pass
+  origin: static
+  description: Enterprise storage SQLAlchemy models have consistent imports (Column
+    present)
+- id: test_repo_no_bare_excepts_in_migrations
+  type: pass_to_pass
+  origin: static
+  description: Migration files do not use bare except clauses (AST parsing)
+- id: test_repo_py_compile_enterprise_storage
+  type: pass_to_pass
+  origin: repo_tests
+  description: All enterprise/storage Python files compile without errors (py_compile)
+- id: test_repo_ruff_check_enterprise_storage
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on enterprise/storage files (CI linter)
+- id: test_repo_ruff_check_migrations
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on migration files (CI linter)
+- id: test_repo_py_compile_migrations
+  type: pass_to_pass
+  origin: repo_tests
+  description: All migration files compile without errors (py_compile)
+- id: test_repo_ruff_check_user_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on user.py (CI linter)
 rubric:
-  - rule: "Add disabled_skills column to User model with JSON type"
-    weight: 40
-    description: The User model must have a disabled_skills column defined as Column(JSON, nullable=True)
-
-  - rule: "Import JSON type from sqlalchemy in user.py"
-    weight: 20
-    description: The user.py file must include JSON in its sqlalchemy imports
-
-  - rule: "Create Alembic migration 104"
-    weight: 30
-    description: A migration file must be created to add the disabled_skills column to the user table
-
-  - rule: "Follow enterprise code conventions"
-    weight: 10
-    description: Code should follow the patterns in AGENTS.md for enterprise directory
+- rule: Add disabled_skills column to User model with JSON type
+  weight: 40
+  description: The User model must have a disabled_skills column defined as Column(JSON,
+    nullable=True)
+- rule: Import JSON type from sqlalchemy in user.py
+  weight: 20
+  description: The user.py file must include JSON in its sqlalchemy imports
+- rule: Create Alembic migration 104
+  weight: 30
+  description: A migration file must be created to add the disabled_skills column
+    to the user table
+- rule: Follow enterprise code conventions
+  weight: 10
+  description: Code should follow the patterns in AGENTS.md for enterprise directory
+- rule: Ensure no lint errors such as trailing whitespace or missing newlines at the
+    end of files are introduced.
+  source:
+    path: AGENTS.md
+    lines: 31-35
+  evidence: The gold solution creates the migration file `104_add_disabled_skills_to_user.py`
+    and modifies `user.py` ensuring proper formatting without trailing whitespace
+    and with a newline at the end of the fil
+  category: style
+distractors:
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
+  collision_type: scope_ambiguity
+  why_distracting: The root cause of the bug (missing `disabled_skills` column) is
+    explicitly provided in the task description. The agent might waste significant
+    time and resources trying to build and run the entire application to reproduce
+    or debug the issue instead of just applying the known fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 7-12
+- rule: When working on a PR that requires design documents, scripts meant for development-only,
+    or other temporary artifacts that should NOT be merged to main, store them in
+    a `.pr/` directory at the repository root.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might mistakenly classify the Alembic migration script
+    as a 'script meant for development-only' or create unnecessary analysis documents,
+    placing them in the `.pr/` directory instead of putting the migration in the required
+    `enterprise/migrations/versions/` directory.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 66-81
+hierarchy_analysis: The `AGENTS.md` file provides general repository guidelines at
+  the root level. The instructions for debugging and PR artifacts are broad and could
+  distract an agent from the specific, targeted fix required for this issue, especially
+  since the root cause is already identified in the prompt.

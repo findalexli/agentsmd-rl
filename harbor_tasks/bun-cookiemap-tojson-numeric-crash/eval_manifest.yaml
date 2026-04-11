@@ -1,100 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28314
-  base_commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-  merge_commit: "9933f7a9aa375150947ab3e4bf725e46a7348c64"
-
+  base_commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+  merge_commit: 9933f7a9aa375150947ab3e4bf725e46a7348c64
 checks:
-  - id: no_bare_putdirect_in_tojson
-    type: fail_to_pass
-    origin: pr_diff
-    description: "toJSON must not use bare putDirect — crashes on numeric cookie names"
-
-  - id: all_insertion_paths_safe
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both modified-cookie and original-cookie insertion paths must be index-safe"
-
-  - id: dedup_avoids_hasproperty
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Deduplication must not call hasProperty on JSObject (also crashes on numeric keys)"
-
-  - id: tojson_preserves_functionality
-    type: pass_to_pass
-    origin: pr_diff
-    description: "toJSON still constructs JS object, handles exceptions, iterates cookies"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "toJSON has a real implementation (>=8 non-blank lines), not a stub"
-
-  - id: other_methods_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Other CookieMap methods still present — file not replaced wholesale"
-
-  - id: put_inside_loop
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Property insertion occurs inside iteration loop — coherent implementation"
-
-  - id: exception_scope_in_tojson
-    type: pass_to_pass
-    origin: agent_config
-    description: "toJSON must use JSC exception scope pattern (DECLARE_THROW_SCOPE)"
-    source:
-      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
-      lines: "94-101"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
-  # [repo_tests] p2p checks - subprocess-based CI commands from the repo
-  - id: git_no_conflict_markers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Source files have no merge conflict markers or trailing whitespace (git diff --check)"
-    source:
-      path: ".github/workflows/format.yml"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
-  - id: git_valid_repo_state
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository has valid git state with commit history"
-    source:
-      path: ".github/workflows/format.yml"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
-  - id: no_banned_patterns_in_cookiemap
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CookieMap.cpp has no banned C++ anti-patterns (git grep check)"
-    source:
-      path: "test/internal/ban-words.test.ts"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
-  - id: cookiemap_tracked_in_git
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CookieMap.cpp is tracked in git at expected path"
-    source:
-      path: "src/bun.js/bindings/CookieMap.cpp"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
-  - id: cookiemap_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "CookieMap.cpp file exists at expected path"
-    source:
-      path: "src/bun.js/bindings/CookieMap.cpp"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
+- id: no_bare_putdirect_in_tojson
+  type: fail_to_pass
+  origin: pr_diff
+  description: toJSON must not use bare putDirect — crashes on numeric cookie names
+- id: all_insertion_paths_safe
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both modified-cookie and original-cookie insertion paths must be index-safe
+- id: dedup_avoids_hasproperty
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deduplication must not call hasProperty on JSObject (also crashes on
+    numeric keys)
+- id: tojson_preserves_functionality
+  type: pass_to_pass
+  origin: pr_diff
+  description: toJSON still constructs JS object, handles exceptions, iterates cookies
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: toJSON has a real implementation (>=8 non-blank lines), not a stub
+- id: other_methods_preserved
+  type: pass_to_pass
+  origin: static
+  description: Other CookieMap methods still present — file not replaced wholesale
+- id: put_inside_loop
+  type: pass_to_pass
+  origin: pr_diff
+  description: Property insertion occurs inside iteration loop — coherent implementation
+- id: exception_scope_in_tojson
+  type: pass_to_pass
+  origin: agent_config
+  description: toJSON must use JSC exception scope pattern (DECLARE_THROW_SCOPE)
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 94-101
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: git_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source files have no merge conflict markers or trailing whitespace
+    (git diff --check)
+  source:
+    path: .github/workflows/format.yml
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: git_valid_repo_state
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository has valid git state with commit history
+  source:
+    path: .github/workflows/format.yml
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: no_banned_patterns_in_cookiemap
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.cpp has no banned C++ anti-patterns (git grep check)
+  source:
+    path: test/internal/ban-words.test.ts
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: cookiemap_tracked_in_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.cpp is tracked in git at expected path
+  source:
+    path: src/bun.js/bindings/CookieMap.cpp
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: cookiemap_file_exists
+  type: pass_to_pass
+  origin: static
+  description: CookieMap.cpp file exists at expected path
+  source:
+    path: src/bun.js/bindings/CookieMap.cpp
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
 rubric:
-  - rule: "Follow existing code style — check neighboring files for patterns (e.g., FormData, FetchHeaders, NodeHTTP use putDirectMayBeIndex for user-controlled property names)."
-    source:
-      path: "AGENTS.md"
-      lines: "228"
-      commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
+- rule: Follow existing code style — check neighboring files for patterns (e.g., FormData,
+    FetchHeaders, NodeHTTP use putDirectMayBeIndex for user-controlled property names).
+  source:
+    path: AGENTS.md
+    lines: '228'
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- rule: JavaScript exception scope verification
+  source:
+    path: CLAUDE.md
+    lines: 13-14
+  evidence: The gold solution includes `RETURN_IF_EXCEPTION(scope, {});` immediately
+    after calling `object->putDirectMayBeIndex`, ensuring compliance with JSC exception
+    scope verification.
+  category: architecture
+- rule: C++ is used for JavaScriptCore integration
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+  evidence: The gold solution modifies `src/bun.js/bindings/CookieMap.cpp` and uses
+    WebKit/JSC APIs like `JSC::Identifier` and `putDirectMayBeIndex`, correctly identifying
+    that JSC integration is done in C++.
+  category: architecture
+distractors:
+- rule: Always use bun.* APIs instead of std.*
+  collision_type: scope_ambiguity
+  why_distracting: This rule mandates using `bun.*` APIs instead of `std.*`, but it
+    is intended for Zig code. An agent modifying C++ might incorrectly try to use
+    a non-existent `bun::` namespace for data structures instead of `WTF::HashSet`
+    or standard C++ types.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 15-18
+- rule: For single-file tests, prefer -e over tempDir (using Bun.spawn)
+  collision_type: scope_ambiguity
+  why_distracting: The config provides an example of a 'single-file test' that uses
+    `Bun.spawn` with `-e`. For a simple JavaScript API crash like `Bun.CookieMap.toJSON()`,
+    an agent might overcomplicate the test by spawning a subprocess instead of writing
+    a standard in-process test.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 43-60
+hierarchy_analysis: The root `CLAUDE.md` provides general architecture and testing
+  guidelines, while `src/CLAUDE.md` provides highly specific Zig conventions. Because
+  the bug is in a C++ file (`src/bun.js/bindings/CookieMap.cpp`), the agent must recognize
+  that the Zig-specific rules in the `src/` directory config do not apply to C++ files,
+  despite them sharing the same parent directory. The agent must rely on WebKit/WTF
+  C++ patterns instead.

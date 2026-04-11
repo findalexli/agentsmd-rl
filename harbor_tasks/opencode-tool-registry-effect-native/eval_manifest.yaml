@@ -1,178 +1,213 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19363
-  base_commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
+  base_commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
 checks:
-  - id: no_facade_in_state_init
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Module-level Config/Plugin facades must not be called in InstanceState.make"
-
-  - id: all_is_effectful
-    type: fail_to_pass
-    origin: pr_diff
-    description: "all() must be an Effect function (Effect.fn or Effect.gen), not async"
-
-  - id: effect_concurrency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Promise.all replaced with Effect.forEach or Effect.all for concurrent tool init"
-
-  - id: services_yielded_in_layer
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Config.Service and Plugin.Service must be obtained via Effect dependency graph"
-
-  - id: plugin_default_layer_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Plugin module must export defaultLayer for layer composition"
-
-  - id: registry_default_layer_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ToolRegistry must export a composed defaultLayer providing dependencies"
-
-  - id: service_class_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "ToolRegistry.Service class definition must still exist"
-
-  - id: public_facades_exported
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Public facade functions (register, ids, tools) must remain exported"
-
-  - id: effect_fn_usage
-    type: pass_to_pass
-    origin: agent_config
-    description: "Service methods should use Effect.fn for named/traced effects (>= 3 uses)"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "21"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - id: effect_fn_untraced_usage
-    type: fail_to_pass
-    origin: agent_config
-    description: "Effect.fnUntraced must be used for internal/anonymous helper effects"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "21"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - id: filter_usage
-    type: pass_to_pass
-    origin: agent_config
-    description: "Tool filtering should use .filter() (functional array method)"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must have substantial implementation"
-
-  # Repo CI/CD pass_to_pass checks
-  - id: repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes (bun turbo typecheck)"
-
-  - id: repo_tool_registry_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Tool registry tests pass (bun test test/tool/registry.test.ts)"
-
-  - id: repo_opencode_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Opencode package typecheck passes (bun turbo typecheck --filter opencode)"
-
-  - id: repo_effect_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Effect-related tests pass (bun test test/effect/)"
-
-  - id: repo_plugin_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Plugin tests pass (bun test test/plugin/)"
-
+- id: no_facade_in_state_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: Module-level Config/Plugin facades must not be called in InstanceState.make
+- id: all_is_effectful
+  type: fail_to_pass
+  origin: pr_diff
+  description: all() must be an Effect function (Effect.fn or Effect.gen), not async
+- id: effect_concurrency
+  type: fail_to_pass
+  origin: pr_diff
+  description: Promise.all replaced with Effect.forEach or Effect.all for concurrent
+    tool init
+- id: services_yielded_in_layer
+  type: fail_to_pass
+  origin: pr_diff
+  description: Config.Service and Plugin.Service must be obtained via Effect dependency
+    graph
+- id: plugin_default_layer_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin module must export defaultLayer for layer composition
+- id: registry_default_layer_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: ToolRegistry must export a composed defaultLayer providing dependencies
+- id: service_class_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: ToolRegistry.Service class definition must still exist
+- id: public_facades_exported
+  type: pass_to_pass
+  origin: pr_diff
+  description: Public facade functions (register, ids, tools) must remain exported
+- id: effect_fn_usage
+  type: pass_to_pass
+  origin: agent_config
+  description: Service methods should use Effect.fn for named/traced effects (>= 3
+    uses)
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '21'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- id: effect_fn_untraced_usage
+  type: fail_to_pass
+  origin: agent_config
+  description: Effect.fnUntraced must be used for internal/anonymous helper effects
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '21'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- id: filter_usage
+  type: pass_to_pass
+  origin: agent_config
+  description: Tool filtering should use .filter() (functional array method)
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files must have substantial implementation
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (bun turbo typecheck)
+- id: repo_tool_registry_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tool registry tests pass (bun test test/tool/registry.test.ts)
+- id: repo_opencode_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Opencode package typecheck passes (bun turbo typecheck --filter opencode)
+- id: repo_effect_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Effect-related tests pass (bun test test/effect/)
+- id: repo_plugin_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Plugin tests pass (bun test test/plugin/)
 rubric:
-  - rule: "Avoid `try`/`catch` where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Avoid using the `any` type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Prefer single word variable names where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Prefer `const` over `let`; use ternaries or early returns instead of reassignment"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Avoid `else` statements; prefer early returns"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "In effectified services, prefer yielding existing Effect services over dropping down to ad hoc platform APIs"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "45"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Use `Effect.gen(function* () { ... })` for composition"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "20"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Avoid unnecessary .pipe() wrappers around Effect.fn / Effect.fnUntraced"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "22"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Do the work directly in the InstanceState.make closure — don't add fibers, ensure() callbacks, or started flags on top"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "39"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
-  - rule: "Avoid unnecessary destructuring; use dot notation to preserve context"
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
+- rule: Avoid `try`/`catch` where possible
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Prefer single word variable names where possible
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Rely on type inference when possible; avoid explicit type annotations unless
+    necessary for exports or clarity
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Prefer `const` over `let`; use ternaries or early returns instead of reassignment
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Avoid `else` statements; prefer early returns
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: In effectified services, prefer yielding existing Effect services over dropping
+    down to ad hoc platform APIs
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '45'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Use `Effect.gen(function* () { ... })` for composition
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '20'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Avoid unnecessary .pipe() wrappers around Effect.fn / Effect.fnUntraced
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '22'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Do the work directly in the InstanceState.make closure — don't add fibers,
+    ensure() callbacks, or started flags on top
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '39'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Reduce total variable count by inlining when a value is only used once
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Avoid unnecessary destructuring; use dot notation to preserve context
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
+- rule: Use `Effect.fn("Domain.method")` for named/traced effects and `Effect.fnUntraced`
+    for internal helpers.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 21-21
+  evidence: 'The `all` function is converted from an `async function` to `const all
+    = Effect.fn("ToolRegistry.all")(function* (custom: Tool.Info[]) { ... })`.'
+  category: architecture
+- rule: In effectified services, prefer yielding existing Effect services over dropping
+    down to ad hoc platform APIs.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 41-41
+  evidence: The generator yields `Config.Service` and `Plugin.Service` directly at
+    the top of the layer, and uses their methods (e.g., `yield* config.directories()`)
+    instead of the async facades (`Config.director
+  category: architecture
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 27-27
+  evidence: The yielded services are assigned to single-word locals `config` and `plugin`,
+    and the inner loop variable is renamed to `p` to avoid shadowing `plugin`.
+  category: naming
+distractors:
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  collision_type: rule_conflict
+  why_distracting: The original code uses `Promise.all(array.map(async ...))`. Following
+    this rule might encourage the agent to keep `.map` and wrap it in `Effect.all`,
+    rather than using the idiomatic `Effect.forEach` with concurrency options as required
+    by the Effect migration.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 17-17
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to inline the service resolution (e.g., `yield*
+    (yield* Config.Service).directories()`) instead of binding `config` and `plugin`
+    to variables at the top of the generator, which would be unreadable and evaluate
+    the service dependency multiple times.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-44
+- rule: Use Bun APIs when possible, like `Bun.file()`
+  collision_type: scope_ambiguity
+  why_distracting: The code uses `Glob.scanSync` and `import()`. The agent might try
+    to replace these with `Bun.file()` or `Bun.glob()`, which is out of scope for
+    this Effect migration PR and could introduce cross-platform bugs (since the code
+    explicitly handles `process.platform === "win32"` for imports).
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 15-15
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript/JS guidelines
+  (like preferring functional array methods and inlining variables), while `packages/opencode/AGENTS.md`
+  provides specific Effect patterns. The Effect patterns must take precedence, as
+  Effect has its own idioms for concurrency (`Effect.forEach` instead of `.map`) and
+  dependency injection (yielding services to variables instead of inlining).

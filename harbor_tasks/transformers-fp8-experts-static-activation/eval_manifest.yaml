@@ -1,80 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44895
-  base_commit: "f6195948b47f06444a7bdf5f169197ed64b64de2"
-  merge_commit: "e5ad3946209fb96db5e9965b3eb67d69cc3749e0"
-
+  base_commit: f6195948b47f06444a7bdf5f169197ed64b64de2
+  merge_commit: e5ad3946209fb96db5e9965b3eb67d69cc3749e0
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified file (finegrained_fp8.py) must parse without errors"
-
-  - id: static_scheme_accepted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FP8Experts can be constructed with activation_scheme='static'"
-
-  - id: static_activation_scale_params
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Static mode registers gate_up and down activation scale params with correct shape/dtype"
-
-  - id: static_quantizes_to_fp8
-    type: fail_to_pass
-    origin: pr_diff
-    description: "linear() with static scheme + activation_scale quantizes input to FP8 dtype"
-
-  - id: static_scale_affects_output
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Different activation scales produce different quantized values (scale is actually used)"
-
-  - id: dynamic_mode_no_static_params
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Dynamic mode still works and does NOT register activation_scale params"
-
-  - id: set_device_calls
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multi-GPU code paths call torch.cuda.set_device (AST-verified; needs GPU to test behaviorally)"
-
-  # New repo_tests pass_to_pass checks
-  - id: test_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: Modified file passes ruff format check"
-
-  - id: test_check_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: utils/check_inits.py passes"
-
-  - id: test_check_dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: utils/check_dummies.py passes"
-
-  - id: test_check_copies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: utils/check_copies.py passes"
-
-  - id: ruff_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified file passes ruff linting (make style runs ruff)"
-    source:
-      path: ".ai/AGENTS.md"
-      lines: "2"
-      commit: "f6195948b47f06444a7bdf5f169197ed64b64de2"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file (finegrained_fp8.py) must parse without errors
+- id: static_scheme_accepted
+  type: fail_to_pass
+  origin: pr_diff
+  description: FP8Experts can be constructed with activation_scheme='static'
+- id: static_activation_scale_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: Static mode registers gate_up and down activation scale params with
+    correct shape/dtype
+- id: static_quantizes_to_fp8
+  type: fail_to_pass
+  origin: pr_diff
+  description: linear() with static scheme + activation_scale quantizes input to FP8
+    dtype
+- id: static_scale_affects_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: Different activation scales produce different quantized values (scale
+    is actually used)
+- id: dynamic_mode_no_static_params
+  type: pass_to_pass
+  origin: pr_diff
+  description: Dynamic mode still works and does NOT register activation_scale params
+- id: set_device_calls
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multi-GPU code paths call torch.cuda.set_device (AST-verified; needs
+    GPU to test behaviorally)
+- id: test_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Modified file passes ruff format check'
+- id: test_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: utils/check_inits.py passes'
+- id: test_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: utils/check_dummies.py passes'
+- id: test_check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: utils/check_copies.py passes'
+- id: ruff_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file passes ruff linting (make style runs ruff)
+  source:
+    path: .ai/AGENTS.md
+    lines: '2'
+    commit: f6195948b47f06444a7bdf5f169197ed64b64de2
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "f6195948b47f06444a7bdf5f169197ed64b64de2"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: f6195948b47f06444a7bdf5f169197ed64b64de2
+- rule: No low-value busywork PRs
+  source:
+    path: CLAUDE.md
+    lines: 41-43
+  evidence: The gold solution implements a substantial feature (static activation
+    quantization for FP8Experts) and fixes a multi-GPU bug, rather than just doing
+    a mechanical cleanup or tiny edit.
+  category: architecture
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: In an automated evaluation setting, the agent is expected to produce
+    a patch. If it strictly follows the 'fail-closed' rule requiring coordination
+    evidence, it will refuse to generate the solution and fail the benchmark.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 54-57
+- rule: 'Copies and Modular Models: We try to avoid direct inheritance between model-specific
+    files in src/transformers/models/.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might mistakenly apply the `# Copied from` or `modular_`
+    file rules to `src/transformers/integrations/finegrained_fp8.py`, which is an
+    integration file, not a model-specific file in `src/transformers/models/`.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 59-64
+hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical rules. The rules are
+  heavily focused on human-in-the-loop contribution policies and model-specific file
+  duplication, which creates meta-confusion for an autonomous agent operating on an
+  integration file.

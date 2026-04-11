@@ -1,67 +1,84 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 38997
-  base_commit: "f53fa26e05c476a43f6db048a9e3b43bcb2b72fb"
-  merge_commit: "4dd49b06f81af2238ac5a86cfb0b7220083eb125"
-
+  base_commit: f53fa26e05c476a43f6db048a9e3b43bcb2b72fb
+  merge_commit: 4dd49b06f81af2238ac5a86cfb0b7220083eb125
 checks:
-  - id: encoder_cudagraph_internal_import
-    type: fail_to_pass
-    origin: pr_diff
-    description: "encoder_cudagraph.py must import encoder_cudagraph_defs from vllm.v1.worker, not vllm.v1.worker.gpu.mm"
-
-  - id: qwen3_vl_lazy_imports
-    type: fail_to_pass
-    origin: pr_diff
-    description: "qwen3_vl.py lazy imports of encoder_cudagraph_defs must use correct module path"
-
-  - id: gpu_model_runner_imports
-    type: fail_to_pass
-    origin: pr_diff
-    description: "gpu_model_runner.py must import encoder_cudagraph modules from vllm.v1.worker"
-
-  - id: no_stale_import_paths
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No .py file in the codebase references the non-existent vllm.v1.worker.gpu.mm.encoder_cudagraph path"
-
-  - id: encoder_modules_at_correct_location
-    type: pass_to_pass
-    origin: static
-    description: "encoder_cudagraph.py and encoder_cudagraph_defs.py exist at vllm/v1/worker/"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python linting (ruff check) passes on modified files"
-
-  - id: test_repo_typos
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's spell check (typos) passes on modified files"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python syntax is valid for all modified files"
-
+- id: encoder_cudagraph_internal_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: encoder_cudagraph.py must import encoder_cudagraph_defs from vllm.v1.worker,
+    not vllm.v1.worker.gpu.mm
+- id: qwen3_vl_lazy_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: qwen3_vl.py lazy imports of encoder_cudagraph_defs must use correct
+    module path
+- id: gpu_model_runner_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: gpu_model_runner.py must import encoder_cudagraph modules from vllm.v1.worker
+- id: no_stale_import_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: No .py file in the codebase references the non-existent vllm.v1.worker.gpu.mm.encoder_cudagraph
+    path
+- id: encoder_modules_at_correct_location
+  type: pass_to_pass
+  origin: static
+  description: encoder_cudagraph.py and encoder_cudagraph_defs.py exist at vllm/v1/worker/
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting (ruff check) passes on modified files
+- id: test_repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's spell check (typos) passes on modified files
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax is valid for all modified files
 rubric:
-  - rule: "All Python commands must go through `uv` and `.venv/bin/python`. Never use system `python3` or bare `pip`."
-    source:
-      path: "AGENTS.md"
-      lines: "34"
-      commit: "f53fa26e05c476a43f6db048a9e3b43bcb2b72fb"
-
-  - rule: "Run pre-commit linters (ruff, mypy) on modified files to ensure code quality."
-    source:
-      path: "AGENTS.md"
-      lines: "71-79"
-      commit: "f53fa26e05c476a43f6db048a9e3b43bcb2b72fb"
-
-  - rule: "When modifying imports, ensure all references are updated consistently across the codebase."
-    source:
-      path: "AGENTS.md"
-      lines: "15-19"
-      commit: "f53fa26e05c476a43f6db048a9e3b43bcb2b72fb"
+- rule: All Python commands must go through `uv` and `.venv/bin/python`. Never use
+    system `python3` or bare `pip`.
+  source:
+    path: AGENTS.md
+    lines: '34'
+    commit: f53fa26e05c476a43f6db048a9e3b43bcb2b72fb
+- rule: Run pre-commit linters (ruff, mypy) on modified files to ensure code quality.
+  source:
+    path: AGENTS.md
+    lines: 71-79
+    commit: f53fa26e05c476a43f6db048a9e3b43bcb2b72fb
+- rule: When modifying imports, ensure all references are updated consistently across
+    the codebase.
+  source:
+    path: AGENTS.md
+    lines: 15-19
+    commit: f53fa26e05c476a43f6db048a9e3b43bcb2b72fb
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
+    one mutable default, etc.). Mechanical cleanups are acceptable only when bundled
+    with substantive work.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might refuse to fix the import paths, misclassifying
+    the change as a 'tiny edit' or 'mechanical cleanup', even though it resolves a
+    critical ModuleNotFoundError at runtime.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the fix entirely, stating that
+    'Pure code-agent PRs are not allowed', misunderstanding its role as an AI assistant
+    generating a patch for a human submitter.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 22-23
+hierarchy_analysis: The AGENTS.md file provides high-level contribution guidelines.
+  There are no deeper domain-specific files provided that override these rules.

@@ -3,55 +3,85 @@ source:
   pr_number: 17233
   base_commit: 4bb23f484eec6f986b563fb3146cb64dcbcc0187
   merge_commit: d4fb256426eed10e0b0e37c8d16a7b969d1e1848
-
-# Map each test_* function to a check
 checks:
-  # Fail-to-pass: RuntimeException handling
-  - id: test_runtime_exception_not_wrapped
-    type: fail_to_pass
-    origin: behavioral
-    description: RuntimeException from supplier is NOT wrapped in InitializationException
-
-  - id: test_various_runtime_exceptions
-    type: fail_to_pass
-    origin: behavioral
-    description: Various RuntimeException subclasses (IllegalArgument, NullPointer, etc.) are preserved
-
-  - id: test_checked_exception_still_wrapped
-    type: fail_to_pass
-    origin: behavioral
-    description: Checked exceptions are still properly wrapped in InitializationException
-
-  # Pass-to-pass: Build/compilation
-  - id: test_file_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: Lazy.java compiles successfully
-
-  - id: test_bazel_build_concurrent
-    type: pass_to_pass
-    origin: repo_tests
-    description: Bazel build for concurrent package succeeds
-
-  - id: test_bazel_test_concurrent_smalltests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo unit tests for concurrent package (LazyTest) pass
-
-  - id: test_java_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: Java code follows google-java-format style
-
-  # Agent config checks (from AGENTS.md)
-  - id: agent_config_exception_handling
-    type: fail_to_pass
-    origin: agent_config
-    source: java/AGENTS.md
-    description: Preserve RuntimeException types instead of wrapping in InitializationException
-
-# Rubric for soft/subjective rules from agent configs
+- id: test_runtime_exception_not_wrapped
+  type: fail_to_pass
+  origin: behavioral
+  description: RuntimeException from supplier is NOT wrapped in InitializationException
+- id: test_various_runtime_exceptions
+  type: fail_to_pass
+  origin: behavioral
+  description: Various RuntimeException subclasses (IllegalArgument, NullPointer,
+    etc.) are preserved
+- id: test_checked_exception_still_wrapped
+  type: fail_to_pass
+  origin: behavioral
+  description: Checked exceptions are still properly wrapped in InitializationException
+- id: test_file_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Lazy.java compiles successfully
+- id: test_bazel_build_concurrent
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel build for concurrent package succeeds
+- id: test_bazel_test_concurrent_smalltests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for concurrent package (LazyTest) pass
+- id: test_java_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Java code follows google-java-format style
+- id: agent_config_exception_handling
+  type: fail_to_pass
+  origin: agent_config
+  source: java/AGENTS.md
+  description: Preserve RuntimeException types instead of wrapping in InitializationException
 rubric:
-  - rule: "Follow Java code conventions from java/AGENTS.md"
-    description: "Logging, deprecation, and documentation style"
-    weight: optional
+- rule: Follow Java code conventions from java/AGENTS.md
+  description: Logging, deprecation, and documentation style
+  weight: optional
+- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+  source:
+    path: AGENTS.md
+    lines: 11-13
+  evidence: The gold solution adds exactly two lines to catch and rethrow the exception,
+    without altering any surrounding code, formatting, or adding unnecessary imports.
+  category: style
+distractors:
+- rule: When implementing solutions prefer writing a test for it first
+  collision_type: scope_ambiguity
+  why_distracting: The prompt explicitly suggests testing via a 'small Java program'
+    (manual test). Attempting to integrate a formal unit test into the Bazel test
+    suite for this specific fix would expand the scope unnecessarily and could lead
+    to build configuration issues.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-45
+- rule: When changing user-visible behavior, compare with at least one other binding
+  collision_type: architecture_boundary
+  why_distracting: Lazy.java is an internal concurrent utility for the Java binding,
+    not a user-facing WebDriver feature. Attempting to cross-reference this behavior
+    in Python, Ruby, or .NET would waste time and cause confusion.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 38-40
+- rule: Add logging where users may need insight into what's happening
+  collision_type: would_cause_bug
+  why_distracting: An agent might try to add a Logger to Lazy.java and log the RuntimeException
+    before rethrowing it. As a low-level concurrency utility, Lazy should not make
+    assumptions about logging; it should simply propagate the exception silently.
+  severity: medium
+  source:
+    path: java/AGENTS.md
+    lines: 16-24
+hierarchy_analysis: The root `AGENTS.md` provides general guidelines on testing, logging,
+  and cross-binding consistency, while `java/AGENTS.md` provides specific Java logging
+  syntax. In this PR, the agent must recognize that `Lazy.java` is an internal utility,
+  meaning cross-binding checks and logging rules should be ignored despite being present
+  in the config hierarchy. Furthermore, the prompt's instruction to write a 'small
+  Java program' for testing overrides the general 'prefer writing a test for it first'
+  rule which implies adding a test to the repo.

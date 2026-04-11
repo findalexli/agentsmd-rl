@@ -1,114 +1,119 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12904
-  base_commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
-  merge_commit: "7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba"
-
+  base_commit: 6011b00d0154b85532fa901dd73cf8fa7d86fd04
+  merge_commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
 checks:
-  # CI-derived pass_to_pass tests - format check (fastest)
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier format check passes"
-    command: "pnpm format:check"
-
-  # CI-derived pass_to_pass tests - build client
-  - id: test_repo_client_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's client package builds successfully"
-    command: "pnpm --filter @gradio/client build"
-
-  # CI-derived pass_to_pass tests - client tests
-  - id: test_repo_client_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's client package tests pass"
-    command: "pnpm --filter @gradio/client test"
-
-  # CI-derived pass_to_pass tests - unit tests
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests pass"
-    command: "pnpm test:run"
-
-  # Static file checks
-  - id: test_file_exists_with_apptree
-    type: pass_to_pass
-    origin: static
-    description: "init.svelte.ts must exist and contain the AppTree class"
-
-  - id: test_core_methods_present
-    type: pass_to_pass
-    origin: static
-    description: "All core AppTree methods still present"
-
-  - id: test_helper_functions_intact
-    type: pass_to_pass
-    origin: static
-    description: "Standalone helper functions and tab/accordion handling intact"
-
-  # Fail-to-pass tests (PR diff derived)
-  - id: test_spread_replace_bug_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Spread-replace pattern removed from update_state !_set_data branch"
-
-  - id: test_deferred_state_stored
-    type: fail_to_pass
-    origin: pr_diff
-    description: "update_state stores deferred state on class instance for unmounted components"
-
-  - id: test_register_component_applies_deferred
-    type: fail_to_pass
-    origin: pr_diff
-    description: "register_component applies deferred state when component mounts"
-
-  - id: test_no_full_tree_traversal_in_render
-    type: fail_to_pass
-    origin: pr_diff
-    description: "render_previously_invisible_children avoids full tree traversal with root reassignment"
-
-  # Agent config derived checks
-  - id: test_consistent_indentation
-    type: pass_to_pass
-    origin: agent_config
-    description: "File uses tabs consistent with surrounding code style"
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
-
-  - id: test_no_debug_artifacts
-    type: pass_to_pass
-    origin: agent_config
-    description: "No debug logging artifacts in AppTree; no excessive trailing whitespace"
-    source:
-      path: "js/README.md"
-      lines: "65"
-      commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
-
-  - id: test_typescript_quality
-    type: pass_to_pass
-    origin: agent_config
-    description: "No excessive @ts-ignore or any types"
-    source:
-      path: "js/README.md"
-      lines: "80-81"
-      commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
-
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes
+  command: pnpm format:check
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client package builds successfully
+  command: pnpm --filter @gradio/client build
+- id: test_repo_client_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client package tests pass
+  command: pnpm --filter @gradio/client test
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests pass
+  command: pnpm test:run
+- id: test_file_exists_with_apptree
+  type: pass_to_pass
+  origin: static
+  description: init.svelte.ts must exist and contain the AppTree class
+- id: test_core_methods_present
+  type: pass_to_pass
+  origin: static
+  description: All core AppTree methods still present
+- id: test_helper_functions_intact
+  type: pass_to_pass
+  origin: static
+  description: Standalone helper functions and tab/accordion handling intact
+- id: test_spread_replace_bug_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Spread-replace pattern removed from update_state !_set_data branch
+- id: test_deferred_state_stored
+  type: fail_to_pass
+  origin: pr_diff
+  description: update_state stores deferred state on class instance for unmounted
+    components
+- id: test_register_component_applies_deferred
+  type: fail_to_pass
+  origin: pr_diff
+  description: register_component applies deferred state when component mounts
+- id: test_no_full_tree_traversal_in_render
+  type: fail_to_pass
+  origin: pr_diff
+  description: render_previously_invisible_children avoids full tree traversal with
+    root reassignment
+- id: test_consistent_indentation
+  type: pass_to_pass
+  origin: agent_config
+  description: File uses tabs consistent with surrounding code style
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 6011b00d0154b85532fa901dd73cf8fa7d86fd04
+- id: test_no_debug_artifacts
+  type: pass_to_pass
+  origin: agent_config
+  description: No debug logging artifacts in AppTree; no excessive trailing whitespace
+  source:
+    path: js/README.md
+    lines: '65'
+    commit: 6011b00d0154b85532fa901dd73cf8fa7d86fd04
+- id: test_typescript_quality
+  type: pass_to_pass
+  origin: agent_config
+  description: No excessive @ts-ignore or any types
+  source:
+    path: js/README.md
+    lines: 80-81
+    commit: 6011b00d0154b85532fa901dd73cf8fa7d86fd04
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
-
-  - rule: "Frontend code is formatted with prettier (pnpm format:write / pnpm format:check)."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 6011b00d0154b85532fa901dd73cf8fa7d86fd04
+- rule: Frontend code is formatted with prettier (pnpm format:write / pnpm format:check).
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 6011b00d0154b85532fa901dd73cf8fa7d86fd04
+distractors:
+- rule: '`gradio/` — Python source for the Gradio library (backend)'
+  collision_type: architecture_boundary
+  why_distracting: The reproduction code is written in Python, which might lead an
+    agent to try fixing the bug in the Python backend (`gradio/` or `gradio/components/`)
+    by delaying the load event. However, the root cause is a frontend reactivity issue
+    in Svelte 5, so the fix must be in the `js/` directory.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 7-8
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that each component is in its own subdirectory.
+    Since the bug involves `gr.Tab` and `gr.Textbox`, an agent might try to fix the
+    issue by modifying the specific component files (e.g., `js/tab/` or `js/textbox/`).
+    However, the root cause is in the core state management (`js/core/src/init.svelte.ts`),
+    not the individual components.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 12-12
+hierarchy_analysis: The repository has a single `AGENTS.md` file at the root. The
+  primary challenge for an agent is correctly identifying the architectural boundary
+  (frontend core vs. frontend components vs. Python backend) since the reproduction
+  is in Python but the bug is in the Svelte core state management.

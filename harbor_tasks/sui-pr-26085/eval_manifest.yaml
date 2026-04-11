@@ -5,135 +5,123 @@ source:
     number: 26085
     merge_commit: b9b9628b2040de6b8f02af1e59d7a119dd4bbc10
     base_commit: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-
 agent_config:
   files:
-    - source: "CLAUDE.md"
-      ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-    - source: "AGENTS.md"
-      ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-    - source: "crates/sui-framework/README.md"
-      ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-
-# Agent-specific rules from agent config files
+  - source: CLAUDE.md
+    ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
+  - source: AGENTS.md
+    ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
+  - source: crates/sui-framework/README.md
+    ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
 rules:
-  - id: license_header
-    type: programmatic
-    origin: agent_config
-    source:
-      file: "CLAUDE.md"
-      line: 15-18
-    description: All new files must include the Mysten Labs Apache-2.0 license header
-    applicable: true
-
-  - id: run_tests
-    type: programmatic
-    origin: agent_config
-    source:
-      file: "CLAUDE.md"
-      line: 35-44
-    description: Framework changes require running tests and potentially updating snapshots
-    applicable: true
-
-  - id: cargo_xclippy
-    type: programmatic
-    origin: agent_config
-    source:
-      file: "CLAUDE.md"
-      line: 60-61
-    description: Always run cargo xclippy after finishing development
-    applicable: true
-
-# Verification checks (maps 1:1 to test_outputs.py functions)
+- id: license_header
+  type: programmatic
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    line: 15-18
+  description: All new files must include the Mysten Labs Apache-2.0 license header
+  applicable: true
+- id: run_tests
+  type: programmatic
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    line: 35-44
+  description: Framework changes require running tests and potentially updating snapshots
+  applicable: true
+- id: cargo_xclippy
+  type: programmatic
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    line: 60-61
+  description: Always run cargo xclippy after finishing development
+  applicable: true
 checks:
-  # Fail-to-pass: New macro function existence
-  - id: test_map_mut_macro_exists
-    type: fail_to_pass
-    origin: code_check
-    description: map_mut macro must exist in option.move with correct signature
-
-  - id: test_is_none_or_macro_exists
-    type: fail_to_pass
-    origin: code_check
-    description: is_none_or macro must exist in option.move
-
-  - id: test_fold_macro_exists
-    type: fail_to_pass
-    origin: code_check
-    description: fold macro must exist in option.move with consume semantics
-
-  - id: test_fold_ref_macro_exists
-    type: fail_to_pass
-    origin: code_check
-    description: fold_ref macro must exist in option.move
-
-  - id: test_fold_mut_macro_exists
-    type: fail_to_pass
-    origin: code_check
-    description: fold_mut macro must exist in option.move
-
-  # Fail-to-pass: Test coverage
-  - id: test_map_mut_functionality
-    type: fail_to_pass
-    origin: code_check
-    description: map_mut tests must cover Some, None, and mutation cases
-
-  - id: test_is_none_or_functionality
-    type: fail_to_pass
-    origin: code_check
-    description: is_none_or tests must cover all three cases (Some+match, Some+no-match, None)
-
-  - id: test_fold_functionality
-    type: fail_to_pass
-    origin: code_check
-    description: fold tests must cover both Some and None cases
-
-  - id: test_fold_ref_functionality
-    type: fail_to_pass
-    origin: code_check
-    description: fold_ref tests must exist
-
-  - id: test_fold_mut_functionality
-    type: fail_to_pass
-    origin: code_check
-    description: fold_mut tests must cover mutation validation
-
-  # Pass-to-pass: Repo tests
-  - id: test_move_tests_compile
-    type: pass_to_pass
-    origin: static
-    description: sui-framework Move code has valid syntax
-
-  - id: test_repo_cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Rust code passes cargo fmt --check
-
-  - id: test_repo_cargo_check_sui_framework
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-framework crate passes cargo check
-
-  - id: test_repo_cargo_check_sui_framework_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-framework-tests crate passes cargo check
-
-  - id: test_repo_cargo_check_sui_move
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-move crate passes cargo check
-
-# Soft/subjective rules for LLM judge
+- id: test_map_mut_macro_exists
+  type: fail_to_pass
+  origin: code_check
+  description: map_mut macro must exist in option.move with correct signature
+- id: test_is_none_or_macro_exists
+  type: fail_to_pass
+  origin: code_check
+  description: is_none_or macro must exist in option.move
+- id: test_fold_macro_exists
+  type: fail_to_pass
+  origin: code_check
+  description: fold macro must exist in option.move with consume semantics
+- id: test_fold_ref_macro_exists
+  type: fail_to_pass
+  origin: code_check
+  description: fold_ref macro must exist in option.move
+- id: test_fold_mut_macro_exists
+  type: fail_to_pass
+  origin: code_check
+  description: fold_mut macro must exist in option.move
+- id: test_map_mut_functionality
+  type: fail_to_pass
+  origin: code_check
+  description: map_mut tests must cover Some, None, and mutation cases
+- id: test_is_none_or_functionality
+  type: fail_to_pass
+  origin: code_check
+  description: is_none_or tests must cover all three cases (Some+match, Some+no-match,
+    None)
+- id: test_fold_functionality
+  type: fail_to_pass
+  origin: code_check
+  description: fold tests must cover both Some and None cases
+- id: test_fold_ref_functionality
+  type: fail_to_pass
+  origin: code_check
+  description: fold_ref tests must exist
+- id: test_fold_mut_functionality
+  type: fail_to_pass
+  origin: code_check
+  description: fold_mut tests must cover mutation validation
+- id: test_move_tests_compile
+  type: pass_to_pass
+  origin: static
+  description: sui-framework Move code has valid syntax
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Rust code passes cargo fmt --check
+- id: test_repo_cargo_check_sui_framework
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-framework crate passes cargo check
+- id: test_repo_cargo_check_sui_framework_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-framework-tests crate passes cargo check
+- id: test_repo_cargo_check_sui_move
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-move crate passes cargo check
 rubric:
-  - id: doc_comments
-    description: New macros should have proper doc comments explaining behavior
-    required: true
-
-  - id: consistent_style
-    description: Implementation should follow existing macro patterns in the file
-    required: true
-
-  - id: test_quality
-    description: Tests should be comprehensive and validate edge cases
-    required: false
+- id: doc_comments
+  description: New macros should have proper doc comments explaining behavior
+  required: true
+- id: consistent_style
+  description: Implementation should follow existing macro patterns in the file
+  required: true
+- id: test_quality
+  description: Tests should be comprehensive and validate edge cases
+  required: false
+distractors:
+- rule: Use `#[cfg(test)]` for test-only code used within the same crate.
+  collision_type: would_cause_bug
+  why_distracting: The PR requires adding tests to a Move file (`option_tests.move`).
+    The global config specifies using `#[cfg(test)]` for test-only code, which is
+    a Rust-specific attribute. Applying this to Move code instead of Move's native
+    `#[test]` attribute would cause syntax/compilation errors.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 65-67
+hierarchy_analysis: The repository uses a root CLAUDE.md file that primarily focuses
+  on Rust development patterns (like `cargo nextest` and `#[cfg(test)]`). Since the
+  target files for this task are Move source code (`.move`), agents must be careful
+  not to blindly apply Rust-specific rules to Move files.

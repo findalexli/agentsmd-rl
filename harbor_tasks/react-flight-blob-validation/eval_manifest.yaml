@@ -1,49 +1,62 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 36055
-  base_commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
-  merge_commit: "12ba7d81297abac61012a36f20d4a9d22b9210d9"
-
+  base_commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  merge_commit: 12ba7d81297abac61012a36f20d4a9d22b9210d9
 checks:
-  - id: blob_validation_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "$B reference backed by a string must be rejected by decodeReply"
-
-  - id: blob_guard_in_source
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The $B case in parseModelString must validate instanceof Blob"
-
-  - id: error_code_registered
-    type: fail_to_pass
-    origin: agent_config
-    description: "Error codes file must contain an entry for the Blob validation error"
-    source:
-      path: ".claude/skills/extract-errors/SKILL.md"
-      lines: "3,8-12"
-      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
-
-  - id: existing_reply_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream ReactFlightDOMReply tests still pass"
-
-  - id: repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint checks pass"
-
-  - id: repo_react_flight_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ReactFlight tests pass"
-
-  - id: repo_react_server_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's react-server package tests pass"
-
-rubric: []
+- id: blob_validation_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: $B reference backed by a string must be rejected by decodeReply
+- id: blob_guard_in_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: The $B case in parseModelString must validate instanceof Blob
+- id: error_code_registered
+  type: fail_to_pass
+  origin: agent_config
+  description: Error codes file must contain an entry for the Blob validation error
+  source:
+    path: .claude/skills/extract-errors/SKILL.md
+    lines: 3,8-12
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+- id: existing_reply_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream ReactFlightDOMReply tests still pass
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint checks pass
+- id: repo_react_flight_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ReactFlight tests pass
+- id: repo_react_server_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's react-server package tests pass
+rubric:
+- rule: 'React: All files outside `/compiler/`'
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: The gold solution modifies `packages/react-server/src/ReactFlightReplyServer.js`
+    and `scripts/error-codes/codes.json`, which are outside the `/compiler/` directory,
+    correctly identifying this as a Rea
+  category: architecture
+distractors:
+- rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
+  collision_type: scope_ambiguity
+  why_distracting: The issue involves parsing models and handling references (`$B`),
+    which might sound like compiler-related terminology. An agent might be distracted
+    into looking for compiler instructions or trying to modify files in the `/compiler/`
+    directory, but this is strictly a runtime/server issue.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+hierarchy_analysis: The configuration hierarchy is very flat, consisting only of a
+  root `CLAUDE.md` file that defines the high-level monorepo boundary between React
+  core and the React Compiler.

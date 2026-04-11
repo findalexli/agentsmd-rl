@@ -1,75 +1,98 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "biomejs/biome"
+  repo: biomejs/biome
   pr: 9780
-  base_commit: "aafca2d086eb24226a9cf1a69179561f70d02773"
-  merge_commit: "e0e4aac053b34e3c26d0f3ea7b40295f965479eb"
-
+  base_commit: aafca2d086eb24226a9cf1a69179561f70d02773
+  merge_commit: e0e4aac053b34e3c26d0f3ea7b40295f965479eb
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must compile without errors"
-
-  - id: reject_trailing_text
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Parser rejects '[label]: /url invalid' as a link reference definition"
-
-  - id: reject_varied_trailing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple trailing non-title text patterns after destination are all rejected"
-
-  - id: valid_defs_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Valid link reference definitions with proper titles still parse correctly"
-
-  - id: existing_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream markdown parser test suite still passes"
-
-  - id: repo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's clippy linting passes on biome_markdown_parser"
-
-  - id: repo_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's code formatting passes"
-
-  - id: repo_doc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's documentation builds without errors for markdown parser"
-
-  - id: repo_markdown_syntax_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's clippy linting passes on biome_markdown_syntax crate"
-
-  - id: repo_markdown_factory_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's clippy linting passes on biome_markdown_factory crate"
-
-  - id: repo_markdown_formatter_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's clippy linting passes on biome_markdown_formatter crate"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must compile without errors
+- id: reject_trailing_text
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Parser rejects ''[label]: /url invalid'' as a link reference definition'
+- id: reject_varied_trailing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple trailing non-title text patterns after destination are all
+    rejected
+- id: valid_defs_preserved
+  type: pass_to_pass
+  origin: static
+  description: Valid link reference definitions with proper titles still parse correctly
+- id: existing_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream markdown parser test suite still passes
+- id: repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes on biome_markdown_parser
+- id: repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes
+- id: repo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation builds without errors for markdown parser
+- id: repo_markdown_syntax_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes on biome_markdown_syntax crate
+- id: repo_markdown_factory_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes on biome_markdown_factory crate
+- id: repo_markdown_formatter_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes on biome_markdown_formatter crate
 rubric:
-  - rule: "Explain code that is hard to read, or document exceptions and edge cases. Provide context when names alone are not descriptive enough."
-    source:
-      path: ".claude/skills/biome-developer/SKILL.md"
-      lines: "146-148"
-      commit: "aafca2d086eb24226a9cf1a69179561f70d02773"
-  - rule: "All code changes MUST include tests. Parser: Test files covering valid and error cases."
-    source:
-      path: "AGENTS.md"
-      lines: "181-186"
-      commit: "aafca2d086eb24226a9cf1a69179561f70d02773"
+- rule: Explain code that is hard to read, or document exceptions and edge cases.
+    Provide context when names alone are not descriptive enough.
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 146-148
+    commit: aafca2d086eb24226a9cf1a69179561f70d02773
+- rule: 'All code changes MUST include tests. Parser: Test files covering valid and
+    error cases.'
+  source:
+    path: AGENTS.md
+    lines: 181-186
+    commit: aafca2d086eb24226a9cf1a69179561f70d02773
+- rule: Tests prove the fix works
+  source:
+    path: AGENTS.md
+    lines: 29-30
+  evidence: The gold solution updates the snapshot test `link_definition_edge_cases.md.snap`
+    to demonstrate that the fix works and the invalid link reference definition is
+    now correctly parsed as a paragraph.
+  category: testing
+distractors:
+- rule: Create a changeset for user-facing changes (bug fixes that affect behavior)
+  collision_type: meta_confusion
+  why_distracting: The rule mandates creating a changeset file in `.changeset/` for
+    bug fixes that affect behavior. However, the gold solution only contains the code
+    fix and snapshot update. An agent might waste effort generating a changeset markdown
+    file, which is a PR-level administrative task outside the scope of the core algorithmic
+    fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 46-72
+- rule: Disclose AI assistance in the pull request
+  collision_type: meta_confusion
+  why_distracting: The rule requires disclosing AI assistance in the pull request.
+    An agent might try to create or modify a PR description file or add comments to
+    the code to disclose its AI nature, which is irrelevant to the actual code fix.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 45-50
+hierarchy_analysis: The config files (CLAUDE.md and AGENTS.md) focus heavily on PR
+  creation, changesets, and repository management. Since the task is evaluated purely
+  on the code fix and test updates, these PR-level instructions create meta-confusion
+  for an agent that might try to act as a full PR author rather than just a code patcher.

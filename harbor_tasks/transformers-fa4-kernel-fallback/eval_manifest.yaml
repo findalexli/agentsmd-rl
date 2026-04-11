@@ -1,106 +1,138 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44797
-  base_commit: "a269c990e8571d9b9f8adfc1add9472eec3f252d"
-  merge_commit: "e6ed96c7e93a6408a151e3177793212b02b8bb53"
-
+  base_commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+  merge_commit: e6ed96c7e93a6408a151e3177793212b02b8bb53
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files must parse without errors"
-
-  - id: fa4_in_fallback_dict
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FLASH_ATTN_KERNEL_FALLBACK contains flash_attention_4 entry"
-
-  - id: fa4_fallback_value_format
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FA4 fallback value is a kernels-community package with FA-related name"
-
-  - id: fa4_not_skipped_in_loop
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Fallback loop in _check_and_adjust_attn_implementation does not skip version 4"
-
-  - id: fa2_fa3_entries_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "FA2 and FA3 kernel fallback entries remain unchanged"
-
-  - id: compat_matrix_has_all_versions
-    type: pass_to_pass
-    origin: pr_diff
-    description: "FLASH_ATTENTION_COMPATIBILITY_MATRIX includes versions 2, 3, and 4"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ruff format check passes on modified files"
-
-  - id: repo_check_copies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_copies.py validates # Copied from blocks are consistent"
-
-  - id: repo_check_dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_dummies.py validates dummy objects for optional dependencies"
-
-  - id: repo_check_doc_toc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_doc_toc.py validates documentation structure"
-
-  - id: repo_check_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_inits.py validates __init__.py files expose public APIs correctly"
-
-  - id: ruff_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "ruff check passes on modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "a269c990e8571d9b9f8adfc1add9472eec3f252d"
-
-  - id: minimal_diff
-    type: pass_to_pass
-    origin: agent_config
-    description: "Diff touches at most 3 files"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "a269c990e8571d9b9f8adfc1add9472eec3f252d"
-
-  - id: no_copied_from_edits
-    type: pass_to_pass
-    origin: agent_config
-    description: "Diff does not modify lines inside a '# Copied from' block"
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "a269c990e8571d9b9f8adfc1add9472eec3f252d"
-
-  - id: no_modular_file_edits
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed files are not auto-generated from modular files"
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "a269c990e8571d9b9f8adfc1add9472eec3f252d"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modified files must parse without errors
+- id: fa4_in_fallback_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: FLASH_ATTN_KERNEL_FALLBACK contains flash_attention_4 entry
+- id: fa4_fallback_value_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: FA4 fallback value is a kernels-community package with FA-related name
+- id: fa4_not_skipped_in_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fallback loop in _check_and_adjust_attn_implementation does not skip
+    version 4
+- id: fa2_fa3_entries_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: FA2 and FA3 kernel fallback entries remain unchanged
+- id: compat_matrix_has_all_versions
+  type: pass_to_pass
+  origin: pr_diff
+  description: FLASH_ATTENTION_COMPATIBILITY_MATRIX includes versions 2, 3, and 4
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: ruff format check passes on modified files
+- id: repo_check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'check_copies.py validates # Copied from blocks are consistent'
+- id: repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_dummies.py validates dummy objects for optional dependencies
+- id: repo_check_doc_toc
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_doc_toc.py validates documentation structure
+- id: repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_inits.py validates __init__.py files expose public APIs correctly
+- id: ruff_check
+  type: pass_to_pass
+  origin: agent_config
+  description: ruff check passes on modified files
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+- id: minimal_diff
+  type: pass_to_pass
+  origin: agent_config
+  description: Diff touches at most 3 files
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+- id: no_copied_from_edits
+  type: pass_to_pass
+  origin: agent_config
+  description: Diff does not modify lines inside a '# Copied from' block
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+- id: no_modular_file_edits
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files are not auto-generated from modular files
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs can often be only one or two lines long. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "a269c990e8571d9b9f8adfc1add9472eec3f252d"
+- rule: PRs should be as brief as possible. Bugfix PRs can often be only one or two
+    lines long. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+- rule: Manage code duplication by avoiding direct inheritance between model-specific
+    files, utilizing shared core utilities where appropriate.
+  source:
+    path: CLAUDE.md
+    lines: 62-67
+  evidence: The gold solution modifies the shared utility files (`modeling_utils.py`
+    and `modeling_flash_attention_utils.py`) to implement the fallback logic globally,
+    rather than attempting to modify model-speci
+  category: architecture
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: In an automated evaluation environment, the agent is given a bug
+    report and expected to produce a patch autonomously. There is no human to coordinate
+    with and no issue thread provided. If the agent follows this 'fail-closed' rule
+    strictly, it will refuse to output the patch and instead output a message asking
+    for coordination evidence.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 57-60
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end. Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The rule explicitly forbids 'pure code-agent PRs' and mandates
+    human validation. An autonomous agent in a benchmark might read this and halt
+    execution, stating it needs a human to validate the changes before it can output
+    the patch.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 46-55
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The bug fix requires changing only 4 lines of code (removing a
+    3-line `continue` block and adding a 1-line dictionary entry). An agent might
+    misinterpret this small diff as a 'tiny edit' or 'low-value busywork' and refuse
+    to fix it, even though it resolves a legitimate feature fallback bug.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 42-44
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules at the
+  root level. The rules are heavily focused on the PR submission process, human accountability,
+  and preventing spam. There are no conflicting rules between the files, but the entire
+  ruleset is highly restrictive for autonomous agents.

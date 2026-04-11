@@ -1,70 +1,85 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13172
-  base_commit: "9487b60670f6532eaccb3251d15f5505fa23d4e3"
-  merge_commit: "03a9d4c99f3c9466e4fc162d02800850ed67a29e"
-
+  base_commit: 9487b60670f6532eaccb3251d15f5505fa23d4e3
+  merge_commit: 03a9d4c99f3c9466e4fc162d02800850ed67a29e
 checks:
-  - id: file_exists
-    type: pass_to_pass
-    origin: static
-    description: "Target file gradio_helper.ts exists and contains formatter function"
-
-  - id: function_extractable
-    type: pass_to_pass
-    origin: static
-    description: "formatter function can be extracted and loaded by Node"
-
-  - id: repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier format check passes (pnpm format:check)"
-
-  - id: repo_unit_formatter_i18n_markers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's formatter correctly translates i18n markers (based on js/core/src/i18n.test.ts)"
-
-  - id: repo_unit_formatter_malformed_markers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's formatter handles malformed i18n markers gracefully (based on js/core/src/i18n.test.ts)"
-
-  - id: nested_key_returns_string_not_object
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When translate() returns an object (nested i18n key), formatter returns the original string instead of the object"
-
-  - id: various_nested_keys_return_strings
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple labels matching nested i18n keys (file, audio, common) all return strings"
-
-  - id: array_translate_returns_string
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When translate() returns an array (non-string), formatter returns original string"
-
-  - id: normal_string_translation_works
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Normal i18n translations (string to string) still work correctly"
-
-  - id: null_undefined_return_empty
-    type: pass_to_pass
-    origin: pr_diff
-    description: "formatter(null) and formatter(undefined) return empty string"
-
-  - id: untranslated_label_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "When translate returns the same string (no translation), original label preserved"
-
+- id: file_exists
+  type: pass_to_pass
+  origin: static
+  description: Target file gradio_helper.ts exists and contains formatter function
+- id: function_extractable
+  type: pass_to_pass
+  origin: static
+  description: formatter function can be extracted and loaded by Node
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes (pnpm format:check)
+- id: repo_unit_formatter_i18n_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter correctly translates i18n markers (based on js/core/src/i18n.test.ts)
+- id: repo_unit_formatter_malformed_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter handles malformed i18n markers gracefully (based on
+    js/core/src/i18n.test.ts)
+- id: nested_key_returns_string_not_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: When translate() returns an object (nested i18n key), formatter returns
+    the original string instead of the object
+- id: various_nested_keys_return_strings
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple labels matching nested i18n keys (file, audio, common) all
+    return strings
+- id: array_translate_returns_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: When translate() returns an array (non-string), formatter returns original
+    string
+- id: normal_string_translation_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: Normal i18n translations (string to string) still work correctly
+- id: null_undefined_return_empty
+  type: pass_to_pass
+  origin: pr_diff
+  description: formatter(null) and formatter(undefined) return empty string
+- id: untranslated_label_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: When translate returns the same string (no translation), original label
+    preserved
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "9487b60670f6532eaccb3251d15f5505fa23d4e3"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 9487b60670f6532eaccb3251d15f5505fa23d4e3
+distractors:
+- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits
+  collision_type: scope_ambiguity
+  why_distracting: The bug fix requires a very small, one-line change (adding a `typeof`
+    check). An agent might misinterpret this as a 'tiny edit' or 'low-value busywork'
+    and either refuse to fix it or attempt to bundle it with unrelated mechanical
+    cleanups, expanding the PR scope unnecessarily.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 50-52
+- rule: Tests must pass. Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: architecture_boundary
+  why_distracting: The rule explicitly instructs to run backend tests locally (`bash
+    scripts/run_backend_tests.sh`) to ensure tests pass. Since the change is entirely
+    in the frontend TypeScript code (`js/core/src/gradio_helper.ts`), running backend
+    tests is irrelevant and wastes time/resources.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 27-28
+hierarchy_analysis: Only `AGENTS.md` is provided, so there are no conflicts between
+  multiple config files. The rules apply globally across the repository.

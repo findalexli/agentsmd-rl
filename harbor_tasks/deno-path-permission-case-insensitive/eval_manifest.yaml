@@ -1,101 +1,129 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "denoland/deno"
+  repo: denoland/deno
   pr: 33073
-  base_commit: "7c57830506e4ded88a7bfee2a03a5e0530787fbe"
-  merge_commit: "2bb06663c1d7ee6532f6737d721ea1adb89fd884"
-
+  base_commit: 7c57830506e4ded88a7bfee2a03a5e0530787fbe
+  merge_commit: 2bb06663c1d7ee6532f6737d721ea1adb89fd884
 checks:
-  - id: comparison_path_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "comparison_path() function exists with cfg!(windows) branch and non-Windows fallback"
-
-  - id: cmp_path_field_in_path_query_descriptor
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PathQueryDescriptor struct has a cmp_path: PathBuf field"
-
-  - id: cmp_path_field_in_path_descriptor
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PathDescriptor struct has a cmp_path: PathBuf field"
-
-  - id: equality_uses_cmp_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All 3 PartialEq impls compare cmp_path instead of path"
-
-  - id: hash_uses_cmp_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hash impl for PathDescriptor hashes cmp_path, not path"
-
-  - id: starts_with_uses_cmp_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both starts_with methods use cmp_path for prefix checking"
-
-  - id: ordering_uses_cmp_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "cmp_allow_allow and cmp_allow_deny use cmp_path for ordering"
-
-  - id: not_stub_comparison_path
-    type: pass_to_pass
-    origin: static
-    description: "comparison_path function has real logic (not a stub)"
-
-  - id: test_repo_cargo_check_permissions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo check passes for deno_permissions package"
-
-  - id: test_repo_cargo_clippy_permissions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo clippy passes for deno_permissions package"
-
-  - id: test_repo_cargo_fmt_permissions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo fmt check passes for deno_permissions package"
-
-  - id: test_repo_cargo_test_permissions_lib
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo test --lib passes for deno_permissions package"
-
-  - id: test_repo_rustfmt_permissions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's rustfmt check passes for permissions lib.rs"
-
-  - id: test_repo_cargo_check_locked_permissions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo check --locked passes for deno_permissions package (ensures Cargo.lock is up to date)"
-
-  - id: test_repo_cargo_doc_permissions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo doc builds for deno_permissions package (catches doc errors)"
-
-  - id: test_repo_cargo_test_locked_permissions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo test --locked --lib passes for deno_permissions package (matches actual CI)"
-
+- id: comparison_path_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: comparison_path() function exists with cfg!(windows) branch and non-Windows
+    fallback
+- id: cmp_path_field_in_path_query_descriptor
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'PathQueryDescriptor struct has a cmp_path: PathBuf field'
+- id: cmp_path_field_in_path_descriptor
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'PathDescriptor struct has a cmp_path: PathBuf field'
+- id: equality_uses_cmp_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: All 3 PartialEq impls compare cmp_path instead of path
+- id: hash_uses_cmp_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hash impl for PathDescriptor hashes cmp_path, not path
+- id: starts_with_uses_cmp_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both starts_with methods use cmp_path for prefix checking
+- id: ordering_uses_cmp_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: cmp_allow_allow and cmp_allow_deny use cmp_path for ordering
+- id: not_stub_comparison_path
+  type: pass_to_pass
+  origin: static
+  description: comparison_path function has real logic (not a stub)
+- id: test_repo_cargo_check_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check passes for deno_permissions package
+- id: test_repo_cargo_clippy_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo clippy passes for deno_permissions package
+- id: test_repo_cargo_fmt_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo fmt check passes for deno_permissions package
+- id: test_repo_cargo_test_permissions_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test --lib passes for deno_permissions package
+- id: test_repo_rustfmt_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's rustfmt check passes for permissions lib.rs
+- id: test_repo_cargo_check_locked_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check --locked passes for deno_permissions package (ensures
+    Cargo.lock is up to date)
+- id: test_repo_cargo_doc_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo doc builds for deno_permissions package (catches doc errors)
+- id: test_repo_cargo_test_locked_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test --locked --lib passes for deno_permissions package
+    (matches actual CI)
 rubric:
-  - rule: "Keep your changes minimal, don't do drive-by changes in a PR."
-    source:
-      path: "CLAUDE.md"
-      lines: "39"
-      commit: "7c57830506e4ded88a7bfee2a03a5e0530787fbe"
-
-  - rule: "Match existing patterns in the codebase. When suggesting changes to a function, look for similar functions nearby that solve analogous problems."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "308-315"
-      commit: "7c57830506e4ded88a7bfee2a03a5e0530787fbe"
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: '39'
+    commit: 7c57830506e4ded88a7bfee2a03a5e0530787fbe
+- rule: Match existing patterns in the codebase. When suggesting changes to a function,
+    look for similar functions nearby that solve analogous problems.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 308-315
+    commit: 7c57830506e4ded88a7bfee2a03a5e0530787fbe
+- rule: tests/specs/ - Integration tests (spec tests)
+  source:
+    path: CLAUDE.md
+    lines: 68-68
+  evidence: 'The gold solution places the new test files (`__test__.jsonc` and `main.ts`)
+    in the `tests/specs/permission/path_case_insensitive/` directory, correctly identifying
+    it as the location for integration '
+  category: testing
+distractors:
+- rule: The extensions themselves are in the `ext/` directory, and provide system
+    access to JavaScript – for instance filesystem operations and networking.
+  collision_type: architecture_boundary
+  why_distracting: The rule states that extensions providing system access (like filesystem
+    operations) are in the `ext/` directory. An agent might mistakenly try to implement
+    the path permission case-insensitivity logic in `ext/fs` or similar, but the core
+    permission descriptor logic actually resides in `runtime/permissions/lib.rs`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 59-61
+- rule: Open a pull request (PR) against the main branch on GitHub.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in an environment where it needs to generate
+    a patch or edit files directly to solve the issue. Instructing it to open a pull
+    request on GitHub is meta-instructional and irrelevant to the coding task.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 28-28
+- rule: Create as many commits as you need, all of them get squashed when the PR is
+    merged, so there is no need to rewrite history.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to generate git commit commands or split
+    its output into multiple logical commits, which is unnecessary and unsupported
+    in the evaluation environment.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 39-41
+hierarchy_analysis: The configuration consists of a single `CLAUDE.md` file at the
+  root level. There are no conflicting child configurations. The primary challenge
+  is distinguishing between high-level architectural descriptions (which can be misleading
+  for core runtime modifications) and actionable development guidelines.

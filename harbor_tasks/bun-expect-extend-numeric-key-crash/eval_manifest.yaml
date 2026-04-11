@@ -1,132 +1,151 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28504
-  base_commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
-  merge_commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"
-
+  base_commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+  merge_commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
 checks:
-  - id: test_no_bare_put_on_registration_targets
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Buggy .put() calls on expect_proto/constructor/static_proto are removed or guarded"
-
-  - id: test_index_safe_property_setting
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Properties registered via a method that handles index keys (putMayBeIndex, etc.)"
-
-  - id: test_all_three_targets_use_safe_setter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All three registration targets are updated, not just one or two"
-
-  - id: test_extend_preserves_core_logic
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Extend function still iterates properties and creates wrapper functions"
-
-  - id: test_key_functions_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Core expect functions (applyCustomMatcher, extend, call, getNot) still exist"
-
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "expect.zig has substantial Zig content (not stubbed out)"
-
-  - id: test_no_inline_import_in_functions
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @import() inline inside the extend() function body (scoped to agent's change)"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "11"
-      commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
-
-  - id: test_no_std_direct_usage
-    type: pass_to_pass
-    origin: agent_config
-    description: "No std.fs/std.posix/std.os introduced in extend() — must use bun.* equivalents"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "16"
-      commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
-
-  - id: test_no_wrong_allocator
-    type: pass_to_pass
-    origin: agent_config
-    description: "New allocator usage should use bun.default_allocator, not std.heap"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "232"
-      commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
-
-  - id: test_no_catch_outofmemory_pattern
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not use 'catch bun.outOfMemory()' — use bun.handleOom() instead"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "234"
-      commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
-
-  # Repo CI/CD derived pass_to_pass tests — REAL subprocess.run() commands
-  # These mirror actual CI checks using Python subprocess (zig/bun not available in Docker)
-
-  # Mirrors: package.json zig-format:check (uses Python subprocess)
-  - id: test_repo_zig_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Zig code follows basic formatting rules (no tabs, no trailing whitespace) via Python subprocess"
-
-  # Mirrors: bun test test/internal/ban-words.test.ts -- extends function only
-  - id: test_repo_zig_ban_words_extend
-    type: pass_to_pass
-    origin: repo_tests
-    description: "extend() function passes ban-words check (no std.debug.print, std.log, allocator.ptr comparisons, catch bun.outOfMemory) via Python subprocess"
-
-  # Mirrors: bun test test/internal/ban-words.test.ts -- full file zero-tolerance patterns
-  - id: test_repo_zig_ban_words_full
-    type: pass_to_pass
-    origin: repo_tests
-    description: "expect.zig passes full ban-words test suite (zero-tolerance patterns) via Python subprocess"
-
-  # Mirrors: bun run zig:check -- basic syntax validation
-  - id: test_repo_zig_syntax_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Zig code has valid basic syntax (balanced braces/parens/brackets) via Python subprocess"
-
-  # Mirrors: bun run zig:check -- structure validation
-  - id: test_repo_expect_zig_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "expect.zig has required structure (Expect struct, applyCustomMatcher, extend, call) via Python subprocess"
-
-  # Mirrors: bun run prettier -- package.json validation
-  - id: test_repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "package.json is valid JSON with required CI scripts (lint, fmt, typecheck) via Python subprocess"
-
-  # Mirrors: bun run clang-format:check -- C++ formatting
-  - id: test_repo_cpp_basic_style
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C++ files follow basic style conventions (no trailing whitespace, no tabs) via Python subprocess"
-
+- id: test_no_bare_put_on_registration_targets
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy .put() calls on expect_proto/constructor/static_proto are removed
+    or guarded
+- id: test_index_safe_property_setting
+  type: fail_to_pass
+  origin: pr_diff
+  description: Properties registered via a method that handles index keys (putMayBeIndex,
+    etc.)
+- id: test_all_three_targets_use_safe_setter
+  type: fail_to_pass
+  origin: pr_diff
+  description: All three registration targets are updated, not just one or two
+- id: test_extend_preserves_core_logic
+  type: pass_to_pass
+  origin: pr_diff
+  description: Extend function still iterates properties and creates wrapper functions
+- id: test_key_functions_preserved
+  type: pass_to_pass
+  origin: static
+  description: Core expect functions (applyCustomMatcher, extend, call, getNot) still
+    exist
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: expect.zig has substantial Zig content (not stubbed out)
+- id: test_no_inline_import_in_functions
+  type: pass_to_pass
+  origin: agent_config
+  description: No @import() inline inside the extend() function body (scoped to agent's
+    change)
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- id: test_no_std_direct_usage
+  type: pass_to_pass
+  origin: agent_config
+  description: No std.fs/std.posix/std.os introduced in extend() — must use bun.*
+    equivalents
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- id: test_no_wrong_allocator
+  type: pass_to_pass
+  origin: agent_config
+  description: New allocator usage should use bun.default_allocator, not std.heap
+  source:
+    path: src/CLAUDE.md
+    lines: '232'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- id: test_no_catch_outofmemory_pattern
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use 'catch bun.outOfMemory()' — use bun.handleOom() instead
+  source:
+    path: src/CLAUDE.md
+    lines: '234'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- id: test_repo_zig_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig code follows basic formatting rules (no tabs, no trailing whitespace)
+    via Python subprocess
+- id: test_repo_zig_ban_words_extend
+  type: pass_to_pass
+  origin: repo_tests
+  description: extend() function passes ban-words check (no std.debug.print, std.log,
+    allocator.ptr comparisons, catch bun.outOfMemory) via Python subprocess
+- id: test_repo_zig_ban_words_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: expect.zig passes full ban-words test suite (zero-tolerance patterns)
+    via Python subprocess
+- id: test_repo_zig_syntax_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig code has valid basic syntax (balanced braces/parens/brackets) via
+    Python subprocess
+- id: test_repo_expect_zig_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: expect.zig has required structure (Expect struct, applyCustomMatcher,
+    extend, call) via Python subprocess
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json is valid JSON with required CI scripts (lint, fmt, typecheck)
+    via Python subprocess
+- id: test_repo_cpp_basic_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ files follow basic style conventions (no trailing whitespace, no
+    tabs) via Python subprocess
 rubric:
-  - rule: "Decl literals in Zig are recommended."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "6"
-      commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
-
-  - rule: "Follow existing code style — check neighboring files for patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "228"
-      commit: "6034bd82b1a0d9b3635560405354e931b7e0e192"
+- rule: Decl literals in Zig are recommended.
+  source:
+    path: src/CLAUDE.md
+    lines: '6'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- rule: Follow existing code style — check neighboring files for patterns.
+  source:
+    path: CLAUDE.md
+    lines: '228'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- rule: Prefer Bun APIs over `std`
+  source:
+    path: src/CLAUDE.md
+    lines: 15-17
+  evidence: The gold solution uses the existing JSC method `putMayBeIndex` rather
+    than importing `std.fmt` to stringify the numeric index, adhering to the principle
+    of avoiding direct `std` usage when built-in or
+  category: style
+distractors:
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output.
+  collision_type: would_cause_bug
+  why_distracting: The bug describes a crash/assertion failure. An agent might naturally
+    try to write a test that captures stdout/stderr and asserts it doesn't contain
+    'panic' or 'crash', which explicitly violates this rule because such tests don't
+    work reliably in Bun's CI.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 68-68
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    `test/regression/issue/${issueNumber}.test.ts`. Ensure the issue number is REAL
+    and not a placeholder!
+  collision_type: rule_conflict
+  why_distracting: The prompt describes a bug but does not provide a GitHub issue
+    number. If the agent tries to create a regression test in `test/regression/issue/`,
+    it might use a placeholder issue number, which explicitly violates the rule against
+    using placeholders.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 26-26
+hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` and `AGENTS.md`
+  (which are identical and focus on testing/building) and `src/CLAUDE.md` and `src/AGENTS.md`
+  (which focus on Zig conventions). The rules are complementary. The root-level testing
+  rules create significant distractors because the agent might try to write a test
+  for a crash without an issue number, running afoul of multiple strict testing constraints.

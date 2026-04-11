@@ -1,113 +1,145 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 36159
-  base_commit: "74568e8627aa43469b74f2972f427a209639d0b6"
-  merge_commit: "2c2fd9d12c7159efef81e7ea6ec899943cf7ca33"
-
+  base_commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  merge_commit: 2c2fd9d12c7159efef81e7ea6ec899943cf7ca33
 checks:
-  # Fail-to-pass (pr_diff) — core behavioral tests that prove the fix
-
-  - id: test_parse_config_overrides_rejects_xss_patterns
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseConfigOverrides uses JSON5.parse (not new Function) - proven by XSS rejection"
-
-  - id: test_parse_config_overrides_parses_valid_json5
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseConfigOverrides correctly parses valid JSON5 configs including comments and trailing commas"
-
-  - id: test_default_config_is_valid_json5
-    type: fail_to_pass
-    origin: pr_diff
-    description: "defaultStore.ts default config can be parsed as valid JSON5 without TypeScript syntax"
-
-  - id: test_json5_dependency_in_package_json
-    type: fail_to_pass
-    origin: pr_diff
-    description: "json5 is listed as a dependency in playground package.json"
-
-  - id: test_parse_config_unit_tests_pass
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseConfigOverrides unit tests exist and pass"
-
-  # Pass-to-pass (static) — regression + security property checks
-
-  - id: test_config_editor_uses_json_language
-    type: pass_to_pass
-    origin: static
-    description: "ConfigEditor.tsx uses JSON language mode for config"
-
-  - id: test_json5_safely_rejects_injection
-    type: pass_to_pass
-    origin: static
-    description: "JSON5 parsing rejects common XSS/injection patterns"
-
-  - id: test_json5_parses_valid_configs
-    type: pass_to_pass
-    origin: static
-    description: "JSON5 correctly parses valid JSON5 config patterns"
-
-  # Pass-to-pass (repo_tests) — CI/CD checks from the repo
-
-  - id: test_repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo playground package.json is valid JSON via node JSON.parse"
-
-  - id: test_repo_compilation_ts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo compilation.ts has valid JavaScript/TypeScript syntax via node --check"
-
-  - id: test_repo_default_store_ts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo defaultStore.ts has valid JavaScript/TypeScript syntax via node --check"
-
-  - id: test_repo_prettier_check_compilation
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo compilation.ts passes prettier formatting check via npx prettier --check"
-
-  - id: test_repo_prettier_check_default_store
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo defaultStore.ts passes prettier formatting check via npx prettier --check"
-
-  - id: test_repo_prettier_check_config_editor
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ConfigEditor.tsx passes prettier formatting check via npx prettier --check"
-
-  - id: test_repo_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo has no uncommitted changes at base commit via git status --porcelain"
-
-  - id: test_repo_node_modules_json5_available
-    type: pass_to_pass
-    origin: repo_tests
-    description: "json5 dependency is available for repo tests"
-
+- id: test_parse_config_overrides_rejects_xss_patterns
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseConfigOverrides uses JSON5.parse (not new Function) - proven by
+    XSS rejection
+- id: test_parse_config_overrides_parses_valid_json5
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseConfigOverrides correctly parses valid JSON5 configs including
+    comments and trailing commas
+- id: test_default_config_is_valid_json5
+  type: fail_to_pass
+  origin: pr_diff
+  description: defaultStore.ts default config can be parsed as valid JSON5 without
+    TypeScript syntax
+- id: test_json5_dependency_in_package_json
+  type: fail_to_pass
+  origin: pr_diff
+  description: json5 is listed as a dependency in playground package.json
+- id: test_parse_config_unit_tests_pass
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseConfigOverrides unit tests exist and pass
+- id: test_config_editor_uses_json_language
+  type: pass_to_pass
+  origin: static
+  description: ConfigEditor.tsx uses JSON language mode for config
+- id: test_json5_safely_rejects_injection
+  type: pass_to_pass
+  origin: static
+  description: JSON5 parsing rejects common XSS/injection patterns
+- id: test_json5_parses_valid_configs
+  type: pass_to_pass
+  origin: static
+  description: JSON5 correctly parses valid JSON5 config patterns
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo playground package.json is valid JSON via node JSON.parse
+- id: test_repo_compilation_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo compilation.ts has valid JavaScript/TypeScript syntax via node
+    --check
+- id: test_repo_default_store_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo defaultStore.ts has valid JavaScript/TypeScript syntax via node
+    --check
+- id: test_repo_prettier_check_compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo compilation.ts passes prettier formatting check via npx prettier
+    --check
+- id: test_repo_prettier_check_default_store
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo defaultStore.ts passes prettier formatting check via npx prettier
+    --check
+- id: test_repo_prettier_check_config_editor
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ConfigEditor.tsx passes prettier formatting check via npx prettier
+    --check
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no uncommitted changes at base commit via git status --porcelain
+- id: test_repo_node_modules_json5_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: json5 dependency is available for repo tests
 rubric:
-  - rule: "Run compiler tests with `yarn snap` when modifying compiler files. Tests should pass before submitting."
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "21-36"
-      commit: "74568e8627aa43469b74f2972f427a209639d0b6"
-
-  - rule: "Format code with `yarn prettier-all` when modifying compiler files. Code must pass formatting checks."
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "45-50"
-      commit: "74568e8627aa43469b74f2972f427a209639d0b6"
-
-  - rule: "Use Sapling (`sl`) commands for version control, not git. Use `sl addremove` to track new/deleted files and `sl commit` to commit changes."
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "77-98"
-      commit: "74568e8627aa43469b74f2972f427a209639d0b6"
+- rule: Run compiler tests with `yarn snap` when modifying compiler files. Tests should
+    pass before submitting.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 21-36
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+- rule: Format code with `yarn prettier-all` when modifying compiler files. Code must
+    pass formatting checks.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 45-50
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+- rule: Use Sapling (`sl`) commands for version control, not git. Use `sl addremove`
+    to track new/deleted files and `sl commit` to commit changes.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 77-98
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+- rule: React Compiler files are located in the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+  evidence: The gold solution correctly targets files within the `/compiler/` directory
+    (`compiler/apps/playground/...`) for React Compiler related changes, respecting
+    the monorepo structure.
+  category: architecture
+distractors:
+- rule: Use Sapling (`sl`) for version control (e.g., `sl status`, `sl addremove`,
+    `sl commit`).
+  collision_type: meta_confusion
+  why_distracting: The instructions state to use Sapling (`sl`) for version control,
+    but the standard evaluation environment uses `git` (as seen in the gold solution's
+    `git status` and `git commit` commands). Attempting to use `sl` will fail and
+    waste agent effort.
+  severity: high
+  source:
+    path: compiler/CLAUDE.md
+    lines: 61-75
+- rule: Run tests using `yarn snap` or `yarn snap -p <pattern>`.
+  collision_type: architecture_boundary
+  why_distracting: The instructions tell the developer to use `yarn snap` to run tests.
+    However, `yarn snap` is specific to the `babel-plugin-react-compiler` package
+    and its fixture tests. The changes in this PR are in `compiler/apps/playground/`,
+    which has its own tests. Running `yarn snap` will not test the playground changes.
+  severity: high
+  source:
+    path: compiler/CLAUDE.md
+    lines: 20-33
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in `docs/passes/`.
+  collision_type: scope_ambiguity
+  why_distracting: The instructions mandate reading documentation in `docs/passes/`
+    when modifying the compiler. This PR modifies the playground app's config parsing,
+    not the compiler's internal passes, making this rule irrelevant and distracting.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 11-18
+hierarchy_analysis: The root `CLAUDE.md` correctly routes React Compiler tasks to
+  the `/compiler/` directory. However, `compiler/CLAUDE.md` is heavily biased towards
+  the `babel-plugin-react-compiler` package (the core compiler) rather than the `apps/playground`
+  package. This creates significant scope ambiguity and architecture boundary collisions,
+  as the tooling (`yarn snap`), linting, and documentation rules in `compiler/CLAUDE.md`
+  do not apply to the playground app being modified in this PR. Additionally, the
+  version control instructions (`sl`) conflict with the standard git environment.

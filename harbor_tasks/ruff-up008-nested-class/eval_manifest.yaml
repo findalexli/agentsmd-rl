@@ -1,119 +1,158 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 24273
-  base_commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
-  merge_commit: "09f645d49f1337866d63e62570cb9a43a4a875b3"
-
+  base_commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+  merge_commit: 09f645d49f1337866d63e62570cb9a43a4a875b3
 checks:
-  - id: nested_class_super_no_false_positive
-    type: fail_to_pass
-    origin: pr_diff
-    description: "super(Inner, self) inside a nested class must not trigger UP008"
-
-  - id: dotted_chain_super_no_false_positive
-    type: fail_to_pass
-    origin: pr_diff
-    description: "super(Inner.C, self) with extra outer nesting must not trigger UP008"
-
-  - id: todo_comments_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TODO(charlie) comments about nested class false positives removed from fixture"
-
-  - id: top_level_super_still_triggers
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Regular super(ClassName, self) at top level still triggers UP008"
-
-  - id: full_chain_dotted_super_triggers
-    type: pass_to_pass
-    origin: pr_diff
-    description: "super(A.B.C, self) where chain matches full nesting still triggers UP008"
-
-  - id: up008_snapshot_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream UP008 snapshot tests pass (snapshots updated correctly)"
-
-  - id: cargo_check_ruff_linter
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo check passes on ruff_linter package"
-
-  - id: cargo_test_ruff_linter
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo test passes on ruff_linter package"
-
-  - id: cargo_test_pyupgrade
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo test passes on pyupgrade module tests"
-
-  - id: cargo_test_super_call_with_parameters
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo test passes on SuperCallWithParameters rule tests"
-
-  - id: no_unwrap_or_panic
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified rule file must not use panic!(), unreachable!(), or .unwrap()"
-    source:
-      path: "AGENTS.md"
-      lines: "79"
-      commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
-
-  - id: rust_imports_at_top
-    type: pass_to_pass
-    origin: agent_config
-    description: "Rust imports must be at file top, not locally inside functions"
-    source:
-      path: "AGENTS.md"
-      lines: "76"
-      commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
-
-  - id: clippy_expect_not_allow
-    type: pass_to_pass
-    origin: agent_config
-    description: "If suppressing a Clippy lint, must use #[expect()] not #[allow()]"
-    source:
-      path: "AGENTS.md"
-      lines: "81"
-      commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
-
-  - id: no_nested_if_let
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified rule file must not use nested if-let blocks where a let chain would suffice"
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
-
+- id: nested_class_super_no_false_positive
+  type: fail_to_pass
+  origin: pr_diff
+  description: super(Inner, self) inside a nested class must not trigger UP008
+- id: dotted_chain_super_no_false_positive
+  type: fail_to_pass
+  origin: pr_diff
+  description: super(Inner.C, self) with extra outer nesting must not trigger UP008
+- id: todo_comments_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: TODO(charlie) comments about nested class false positives removed from
+    fixture
+- id: top_level_super_still_triggers
+  type: pass_to_pass
+  origin: pr_diff
+  description: Regular super(ClassName, self) at top level still triggers UP008
+- id: full_chain_dotted_super_triggers
+  type: pass_to_pass
+  origin: pr_diff
+  description: super(A.B.C, self) where chain matches full nesting still triggers
+    UP008
+- id: up008_snapshot_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream UP008 snapshot tests pass (snapshots updated correctly)
+- id: cargo_check_ruff_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check passes on ruff_linter package
+- id: cargo_test_ruff_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test passes on ruff_linter package
+- id: cargo_test_pyupgrade
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test passes on pyupgrade module tests
+- id: cargo_test_super_call_with_parameters
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test passes on SuperCallWithParameters rule tests
+- id: no_unwrap_or_panic
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified rule file must not use panic!(), unreachable!(), or .unwrap()
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+- id: rust_imports_at_top
+  type: pass_to_pass
+  origin: agent_config
+  description: Rust imports must be at file top, not locally inside functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+- id: clippy_expect_not_allow
+  type: pass_to_pass
+  origin: agent_config
+  description: 'If suppressing a Clippy lint, must use #[expect()] not #[allow()]'
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+- id: no_nested_if_let
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified rule file must not use nested if-let blocks where a let chain
+    would suffice
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
-
-  - rule: "Look to see if your tests could go in an existing file before adding a new file for your tests."
-    source:
-      path: "AGENTS.md"
-      lines: "73"
-      commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
-
-  - rule: "Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
-    source:
-      path: "AGENTS.md"
-      lines: "78"
-      commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
-
-  - rule: "Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability."
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "0f41bc554bd89d14dbeb7e1791b34dc7319339bc"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: '73'
+    commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem. Look
+    for existing utilities first.
+  source:
+    path: AGENTS.md
+    lines: '78'
+    commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements
+    to reduce indentation and improve readability.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 0f41bc554bd89d14dbeb7e1791b34dc7319339bc
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: '76'
+  evidence: The gold solution adds `ScopeKind` to the existing `ruff_python_semantic`
+    import at the top of `super_call_with_parameters.rs` rather than importing it
+    locally within the function.
+  category: style
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  source:
+    path: AGENTS.md
+    lines: '78'
+  evidence: The gold solution leverages the existing `checker.semantic().current_scopes()`
+    utility to iterate over scopes and filter for `ScopeKind::Class`, rather than
+    writing a custom AST traversal to find encl
+  category: architecture
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+  source:
+    path: AGENTS.md
+    lines: '79'
+  evidence: The gold solution uses `let ScopeKind::Class(class_def) = &scope.kind
+    else { return None; };` and `let Some(...) = enclosing_classes.next() else { return;
+    };` to safely handle options without unwrappi
+  category: style
+distractors:
+- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
+    the `ty` GitHub label.
+  collision_type: scope_ambiguity
+  why_distracting: This issue is about `UP008`, which is a `pyupgrade` rule in Ruff
+    (`ruff_linter`), not the `ty` type checker. An agent might mistakenly apply `ty`
+    guidelines (like PR titles or running `ty` specific tests) to this Ruff issue.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '68'
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The tests for this bug already exist in `UP008.py` but were marked
+    with `TODO(charlie)` comments because they were known false positives. An agent
+    might think it needs to write new test cases, duplicating the existing ones, instead
+    of just uncommenting/fixing the existing ones.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: '72'
+hierarchy_analysis: The configuration is flat with only `AGENTS.md` providing rules.
+  There are no conflicts between files, but there is a clear distinction between `ruff`
+  and `ty` projects within the same repository. Agents must correctly identify that
+  this is a `ruff` issue and ignore `ty`-specific instructions.

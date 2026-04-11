@@ -1,79 +1,89 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12984
-  base_commit: "429a9fad5207fb27648d860a4802ff52a5b38746"
-  merge_commit: "f1cd0644d2608b493db07cd204c0831a111f9fb2"
-
+  base_commit: 429a9fad5207fb27648d860a4802ff52a5b38746
+  merge_commit: f1cd0644d2608b493db07cd204c0831a111f9fb2
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files (events.py, renderable.py) parse without errors"
-
-  - id: event_listener_callable_still_importable
-    type: pass_to_pass
-    origin: static
-    description: "EventListenerCallable is still present in events.py (backward compat)"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified files have real logic (sufficient lines and functions)"
-
-  - id: trigger_type_alias_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A `Trigger` type alias is defined in gradio/events.py"
-
-  - id: trigger_includes_callable_returning_dependency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Trigger alias references both EventListenerCallable and Callable[..., Dependency]"
-
-  - id: on_function_triggers_uses_trigger_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "gr.on() triggers parameter annotation uses Trigger, not EventListenerCallable"
-
-  - id: render_function_triggers_uses_trigger_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "gr.render() triggers parameter annotation uses Trigger, not EventListenerCallable"
-
-  - id: renderable_imports_trigger_not_event_listener_callable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "renderable.py imports Trigger (not EventListenerCallable) from gradio.events"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified Python files pass ruff formatting check"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "429a9fad5207fb27648d860a4802ff52a5b38746"
-
-  - id: ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files pass ruff lint check (repo CI)"
-
-  - id: ty_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files pass ty type check (repo CI)"
-
-  - id: repo_pytest_events
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for events module pass (selected tests from test/test_events.py)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modified files (events.py, renderable.py) parse without errors
+- id: event_listener_callable_still_importable
+  type: pass_to_pass
+  origin: static
+  description: EventListenerCallable is still present in events.py (backward compat)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files have real logic (sufficient lines and functions)
+- id: trigger_type_alias_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: A `Trigger` type alias is defined in gradio/events.py
+- id: trigger_includes_callable_returning_dependency
+  type: fail_to_pass
+  origin: pr_diff
+  description: Trigger alias references both EventListenerCallable and Callable[...,
+    Dependency]
+- id: on_function_triggers_uses_trigger_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: gr.on() triggers parameter annotation uses Trigger, not EventListenerCallable
+- id: render_function_triggers_uses_trigger_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: gr.render() triggers parameter annotation uses Trigger, not EventListenerCallable
+- id: renderable_imports_trigger_not_event_listener_callable
+  type: fail_to_pass
+  origin: pr_diff
+  description: renderable.py imports Trigger (not EventListenerCallable) from gradio.events
+- id: ruff_format
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified Python files pass ruff formatting check
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 429a9fad5207fb27648d860a4802ff52a5b38746
+- id: ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff lint check (repo CI)
+- id: ty_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ty type check (repo CI)
+- id: repo_pytest_events
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for events module pass (selected tests from test/test_events.py)
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "429a9fad5207fb27648d860a4802ff52a5b38746"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 429a9fad5207fb27648d860a4802ff52a5b38746
+distractors:
+- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits.
+  collision_type: scope_ambiguity
+  why_distracting: The bug requires a small type hint fix. An agent might misinterpret
+    this as a 'tiny edit' or 'isolated lint cleanup' and refuse to fix it, or try
+    to bundle it with unrelated cleanups to avoid a 'one-off PR'.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 58-61
+- rule: Human accountability - Pure code-agent PRs are not allowed.
+  collision_type: meta_confusion
+  why_distracting: The rule states 'Pure code-agent PRs are not allowed.' An autonomous
+    agent might read this and refuse to generate the code or PR, thinking it violates
+    the repository's contribution policy.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 63-65
+hierarchy_analysis: Only the root `AGENTS.md` config file applies to this backend
+  Python fix. The rules are straightforward, but the agent must carefully distinguish
+  between a legitimate bug fix (even if small, like a type hint fix) and 'low-value
+  busywork' to avoid scope expansion or refusal.

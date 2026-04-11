@@ -1,154 +1,153 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28823
-  base_commit: "3f41407f47eb009c654e45def5f3f67d6ce6c8ee"
-  merge_commit: "ea83a741b4fd78331a8163a377cceccb0129e15f"
-
+  base_commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
+  merge_commit: ea83a741b4fd78331a8163a377cceccb0129e15f
 checks:
-  - id: test_c_file_readable
-    type: pass_to_pass
-    origin: static
-    description: "Modified C file exists and has expected structure"
-
-  - id: test_hardcoded_1024_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hardcoded 1024 in epoll/kevent calls replaced with LIBUS_MAX_READY_POLLS"
-
-  - id: test_drain_function_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "us_internal_drain_ready_polls function exists with proper signature"
-
-  - id: test_drain_logic_implemented
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Drain function has complete implementation with loop and dispatch"
-
-  - id: test_drain_uses_zero_timeout
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Drain logic re-polls with zero/non-blocking timeout"
-
-  - id: test_drain_has_iteration_cap
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Drain loop is capped to prevent unbounded spinning"
-
-  - id: test_drain_checks_saturation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Drain loop checks for buffer saturation before re-polling"
-
-  - id: test_drain_called_after_dispatch_in_both_functions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both us_loop_run and us_loop_run_bun_tick call drain after dispatch"
-
-  - id: test_drain_has_real_logic
-    type: pass_to_pass
-    origin: static
-    description: "Drain function has substantial implementation, not a stub"
-
-  - id: test_saturation_guard_present
-    type: pass_to_pass
-    origin: static
-    description: "Drain checks for buffer saturation before re-polling"
-
-  # Behavioral tests using subprocess (required for fail_to_pass code execution)
-  - id: test_drain_behavior_via_code_execution
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Drain behavior verified by executing Python code analysis"
-
-  - id: test_hardcoded_1024_behavioral
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No hardcoded 1024 verified via behavioral code analysis"
-
-  # Repository structure verification tests
-  - id: test_c_source_file_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C source file has valid structure (balanced braces, no corruption)"
-
-  - id: test_libus_max_ready_polls_defined
-    type: pass_to_pass
-    origin: repo_tests
-    description: "LIBUS_MAX_READY_POLLS constant is defined in internal headers"
-
-  - id: test_key_functions_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Key event loop functions exist with proper signatures"
-
-  - id: test_loop_structure_has_epoll_and_kqueue_paths
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Source has both epoll and kqueue code paths"
-
-  - id: test_no_truncated_functions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No function appears to be truncated mid-implementation"
-
-  - id: test_critical_macros_defined
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Critical compiler macros are used appropriately"
-
-  # CI/CD verification tests (pass_to_pass gates)
-  - id: test_modified_c_file_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified C file exists and is valid (verified via git show and Python brace check)"
-
-  - id: test_c_code_grep_patterns
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C code has expected patterns verified via grep (key functions, epoll/kqueue calls)"
-
-  - id: test_header_file_grep_patterns
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Header file has expected patterns verified via grep (LIBUS_MAX_READY_POLLS, guards)"
-
-  - id: test_repo_git_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository git status is valid (no conflicts or broken state)"
-
-  - id: test_repo_file_permissions_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Source files have valid permissions and are readable"
-
-  - id: test_repo_directory_structure_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Required directories exist with expected structure"
-
-  - id: test_c_code_no_syntax_errors_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C code has basic structural validity (balanced braces, comments)"
-
-  - id: test_c_header_file_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C header file has valid structure with proper guards"
-
+- id: test_c_file_readable
+  type: pass_to_pass
+  origin: static
+  description: Modified C file exists and has expected structure
+- id: test_hardcoded_1024_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hardcoded 1024 in epoll/kevent calls replaced with LIBUS_MAX_READY_POLLS
+- id: test_drain_function_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: us_internal_drain_ready_polls function exists with proper signature
+- id: test_drain_logic_implemented
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain function has complete implementation with loop and dispatch
+- id: test_drain_uses_zero_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain logic re-polls with zero/non-blocking timeout
+- id: test_drain_has_iteration_cap
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain loop is capped to prevent unbounded spinning
+- id: test_drain_checks_saturation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain loop checks for buffer saturation before re-polling
+- id: test_drain_called_after_dispatch_in_both_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both us_loop_run and us_loop_run_bun_tick call drain after dispatch
+- id: test_drain_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: Drain function has substantial implementation, not a stub
+- id: test_saturation_guard_present
+  type: pass_to_pass
+  origin: static
+  description: Drain checks for buffer saturation before re-polling
+- id: test_drain_behavior_via_code_execution
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain behavior verified by executing Python code analysis
+- id: test_hardcoded_1024_behavioral
+  type: fail_to_pass
+  origin: pr_diff
+  description: No hardcoded 1024 verified via behavioral code analysis
+- id: test_c_source_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: C source file has valid structure (balanced braces, no corruption)
+- id: test_libus_max_ready_polls_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: LIBUS_MAX_READY_POLLS constant is defined in internal headers
+- id: test_key_functions_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key event loop functions exist with proper signatures
+- id: test_loop_structure_has_epoll_and_kqueue_paths
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source has both epoll and kqueue code paths
+- id: test_no_truncated_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: No function appears to be truncated mid-implementation
+- id: test_critical_macros_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: Critical compiler macros are used appropriately
+- id: test_modified_c_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C file exists and is valid (verified via git show and Python
+    brace check)
+- id: test_c_code_grep_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: C code has expected patterns verified via grep (key functions, epoll/kqueue
+    calls)
+- id: test_header_file_grep_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: Header file has expected patterns verified via grep (LIBUS_MAX_READY_POLLS,
+    guards)
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository git status is valid (no conflicts or broken state)
+- id: test_repo_file_permissions_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source files have valid permissions and are readable
+- id: test_repo_directory_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required directories exist with expected structure
+- id: test_c_code_no_syntax_errors_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: C code has basic structural validity (balanced braces, comments)
+- id: test_c_header_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: C header file has valid structure with proper guards
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "198"
-      commit: "3f41407f47eb009c654e45def5f3f67d6ce6c8ee"
-
-  - rule: "Use comments to explain invariants and design decisions, not to narrate what the code does."
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "13-16"
-      commit: "3f41407f47eb009c654e45def5f3f67d6ce6c8ee"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: CLAUDE.md
+    lines: '198'
+    commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
+- rule: Use comments to explain invariants and design decisions, not to narrate what
+    the code does.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 13-16
+    commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
+distractors:
+- rule: Write regression tests for specific numbered GitHub issues in test/regression/issue/
+  collision_type: would_cause_bug
+  why_distracting: The agent might attempt to write a JS test to reproduce the >1024
+    fd issue. However, creating >1024 simultaneous ready file descriptors in a test
+    environment will likely hit default OS `ulimit -n` limits (often 256 or 1024)
+    and fail or be flaky. The gold solution correctly omits a test for this low-level
+    event loop saturation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 43-44
+- rule: Bun is written primarily in Zig with C++ for JavaScriptCore integration
+  collision_type: architecture_boundary
+  why_distracting: The config states Bun is written primarily in Zig with C++ for
+    JSC. An agent might try to fix the event loop polling logic in Zig or C++, but
+    `bun-usockets` is a C library fork. The fix must be implemented in C within the
+    existing `epoll_kqueue.c` file.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+hierarchy_analysis: CLAUDE.md and AGENTS.md are identical and focus heavily on testing
+  and Zig/C++ architecture. However, this specific issue requires modifying a vendored
+  C library (`bun-usockets`). The agent must ignore the general testing directives
+  (due to OS ulimit constraints on FDs) and the Zig architecture norms to patch the
+  C code directly.

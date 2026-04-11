@@ -1,84 +1,91 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 24472
-  base_commit: "4859b00bca95c004d8adb2efe93af4bdf552e110"
-  merge_commit: "d3c8ddb1dbecc47996f353bb62cf41fb9aa4c52c"
-
+  base_commit: 4859b00bca95c004d8adb2efe93af4bdf552e110
+  merge_commit: d3c8ddb1dbecc47996f353bb62cf41fb9aa4c52c
 checks:
-  - id: cargo_check
-    type: pass_to_pass
-    origin: static
-    description: "ty_python_semantic crate compiles after the refactoring"
-
-  - id: cargo_clippy
-    type: pass_to_pass
-    origin: repo_ci
-    description: "ty_python_semantic crate passes clippy linting"
-
-  - id: cargo_test_lib
-    type: pass_to_pass
-    origin: repo_ci
-    description: "ty_python_semantic library tests pass"
-
-  - id: cargo_fmt_check
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo code is properly formatted"
-
-  - id: scope_field_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Scope struct no longer contains in_type_checking_block field"
-
-  - id: scope_getter_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Scope no longer exposes in_type_checking_block() getter method"
-
-  - id: type_checking_uses_ancestor_iteration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "is_in_type_checking_block iterates ancestor scopes instead of using per-scope flag"
-
-  - id: function_callers_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "function.rs uses is_in_type_checking_block method, not scope field"
-
-  - id: overloaded_function_callers_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "overloaded_function.rs uses index.is_in_type_checking_block, not scope field"
-
-  - id: is_in_type_checking_block_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "is_in_type_checking_block has real implementation using use_def_map"
-
-  - id: no_panic_unwrap_in_modified
-    type: pass_to_pass
-    origin: agent_config
-    description: "No panic!/unwrap()/unreachable!() in is_in_type_checking_block"
-    source:
-      path: "AGENTS.md"
-      lines: "79"
-      commit: "4859b00bca95c004d8adb2efe93af4bdf552e110"
-
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: ty_python_semantic crate compiles after the refactoring
+- id: cargo_clippy
+  type: pass_to_pass
+  origin: repo_ci
+  description: ty_python_semantic crate passes clippy linting
+- id: cargo_test_lib
+  type: pass_to_pass
+  origin: repo_ci
+  description: ty_python_semantic library tests pass
+- id: cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo code is properly formatted
+- id: scope_field_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Scope struct no longer contains in_type_checking_block field
+- id: scope_getter_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Scope no longer exposes in_type_checking_block() getter method
+- id: type_checking_uses_ancestor_iteration
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_in_type_checking_block iterates ancestor scopes instead of using
+    per-scope flag
+- id: function_callers_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: function.rs uses is_in_type_checking_block method, not scope field
+- id: overloaded_function_callers_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: overloaded_function.rs uses index.is_in_type_checking_block, not scope
+    field
+- id: is_in_type_checking_block_not_stub
+  type: pass_to_pass
+  origin: static
+  description: is_in_type_checking_block has real implementation using use_def_map
+- id: no_panic_unwrap_in_modified
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!/unwrap()/unreachable!() in is_in_type_checking_block
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 4859b00bca95c004d8adb2efe93af4bdf552e110
 rubric:
-  - rule: "Avoid writing significant amounts of new code. Look for existing utilities first."
-    source:
-      path: "AGENTS.md"
-      lines: "77"
-      commit: "4859b00bca95c004d8adb2efe93af4bdf552e110"
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "74"
-      commit: "4859b00bca95c004d8adb2efe93af4bdf552e110"
-  - rule: "If a lint is complaining about unused/dead code, it's usually best to just delete the unused code."
-    source:
-      path: "AGENTS.md"
-      lines: "81"
-      commit: "4859b00bca95c004d8adb2efe93af4bdf552e110"
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  source:
+    path: AGENTS.md
+    lines: '77'
+    commit: 4859b00bca95c004d8adb2efe93af4bdf552e110
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '74'
+    commit: 4859b00bca95c004d8adb2efe93af4bdf552e110
+- rule: If a lint is complaining about unused/dead code, it's usually best to just
+    delete the unused code.
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 4859b00bca95c004d8adb2efe93af4bdf552e110
+distractors:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The prompt explicitly states this is a behavior-preserving refactoring.
+    An agent strictly following the 'must be tested' rule might waste effort trying
+    to write new tests for this internal structural change, when the existing TYPE_CHECKING
+    test suite already provides the necessary coverage.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 52-52
+hierarchy_analysis: The configuration consists of a single root file (`AGENTS.md`)
+  included via `CLAUDE.md`. There are no hierarchical conflicts, but agents must carefully
+  interpret general rules (like testing requirements) in the context of pure refactoring
+  tasks.

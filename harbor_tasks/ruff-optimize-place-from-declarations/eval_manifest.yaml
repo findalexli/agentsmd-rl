@@ -1,89 +1,121 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 24444
-  base_commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
-  merge_commit: "2deaa47e5f3006e81d13567ba8f74ae930bfa080"
-
+  base_commit: 398e2a79c488cf2ae59512ea31e00626d7dd8833
+  merge_commit: 2deaa47e5f3006e81d13567ba8f74ae930bfa080
 checks:
-  - id: cargo_check
-    type: pass_to_pass
-    origin: static
-    description: "ty_python_semantic crate compiles without errors"
-
-  - id: or_else_method_semantics
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Truthiness::or_else lazy method exists and has correct semantics"
-
-  - id: lazy_deleted_reachability_eval
-    type: fail_to_pass
-    origin: pr_diff
-    description: "deleted_reachability uses or_else for lazy evaluation in place_from_bindings_impl"
-
-  - id: declarations_boundness_evaluator
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DeclarationsBoundnessEvaluator enum defined to defer reachability evaluation"
-
-  - id: is_non_exported_standalone
-    type: fail_to_pass
-    origin: pr_diff
-    description: "is_non_exported extracted as standalone function from closure"
-
-  - id: existing_crate_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing ty_python_semantic tests still pass"
-
-  - id: cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's code formatting passes"
-
-  - id: cargo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's clippy linting passes"
-
-  - id: cargo_doc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's documentation builds without warnings"
-
-  - id: cargo_lib_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ty_python_semantic library tests pass"
-
-  - id: cargo_mdtest
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Markdown-based tests pass"
-
-  - id: no_local_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "Rust imports are at the top of the file, not inside functions"
-    source:
-      path: "AGENTS.md"
-      lines: "76"
-      commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
-
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: ty_python_semantic crate compiles without errors
+- id: or_else_method_semantics
+  type: fail_to_pass
+  origin: pr_diff
+  description: Truthiness::or_else lazy method exists and has correct semantics
+- id: lazy_deleted_reachability_eval
+  type: fail_to_pass
+  origin: pr_diff
+  description: deleted_reachability uses or_else for lazy evaluation in place_from_bindings_impl
+- id: declarations_boundness_evaluator
+  type: fail_to_pass
+  origin: pr_diff
+  description: DeclarationsBoundnessEvaluator enum defined to defer reachability evaluation
+- id: is_non_exported_standalone
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_non_exported extracted as standalone function from closure
+- id: existing_crate_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing ty_python_semantic tests still pass
+- id: cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes
+- id: cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes
+- id: cargo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation builds without warnings
+- id: cargo_lib_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic library tests pass
+- id: cargo_mdtest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Markdown-based tests pass
+- id: no_local_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Rust imports are at the top of the file, not inside functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 398e2a79c488cf2ae59512ea31e00626d7dd8833
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
-  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
-    source:
-      path: "AGENTS.md"
-      lines: "82"
-      commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
-  - rule: "Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
-    source:
-      path: "AGENTS.md"
-      lines: "78"
-      commit: "398e2a79c488cf2ae59512ea31e00626d7dd8833"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 398e2a79c488cf2ae59512ea31e00626d7dd8833
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: 398e2a79c488cf2ae59512ea31e00626d7dd8833
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem. Look
+    for existing utilities first.
+  source:
+    path: AGENTS.md
+    lines: '78'
+    commit: 398e2a79c488cf2ae59512ea31e00626d7dd8833
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: 54-54
+  evidence: The gold solution adds `use itertools::Either;` and `use ruff_index::IndexVec;`
+    at the top of `crates/ty_python_semantic/src/place.rs` rather than importing them
+    locally within the functions where the
+  category: style
+distractors:
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+    Instead, try to encode those constraints in the type system. Don't be afraid to
+    write code that's more verbose or requires largeish refactors if it enables you
+    to avoid these unsafe calls.
+  collision_type: scope_ambiguity
+  why_distracting: The gold solution explicitly uses `unreachable!("If we have at
+    least one declaration...")` when handling `Truthiness::AlwaysTrue` for undeclared
+    reachability. Attempting to encode this specific invariant into the type system
+    would require a massive refactor of how reachability constraints and truthiness
+    are represented, completely derailing the targeted performance optimization of
+    this PR.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 57-57
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem. Look
+    for existing utilities first.
+  collision_type: scope_ambiguity
+  why_distracting: The PR specifically requires introducing a new abstraction (`DeclarationsBoundnessEvaluator`)
+    to separate the concern of *what* boundness analysis strategy to use from *when*
+    to evaluate it. An agent strictly following the rule to 'avoid writing significant
+    amounts of new code' might try to hack the existing eager evaluation or reuse
+    existing iterators inappropriately instead of properly implementing the necessary
+    lazy evaluation structure.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 56-56
+hierarchy_analysis: The configuration is flat, with all rules residing in the root
+  `AGENTS.md` file. The primary tension in this PR is between the general architectural
+  guidelines (avoiding `unreachable!`, avoiding new code) and the specific requirements
+  of the performance optimization, which necessitates introducing a new enum and using
+  `unreachable!` for an invariant that is impractical to encode in the type system.

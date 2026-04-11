@@ -2,67 +2,87 @@ source_pr:
   owner: TanStack
   repo: router
   number: 6948
-  title: "ci: add back upsert-pr-comment"
+  title: 'ci: add back upsert-pr-comment'
   merge_commit: 97dc9f66f3a0e48719f9a167d7e707e432371506
   base_commit: 13ef4c2e7c92e276185c112d486248b7447535de
-
 target_files:
-  - scripts/benchmarks/common/upsert-pr-comment.mjs
-
+- scripts/benchmarks/common/upsert-pr-comment.mjs
 checks:
-  # F2P (Fail-to-Pass) checks - verify the fix works
-  - id: file_exists
-    type: f2p
-    description: "upsert-pr-comment.mjs file is created"
-  - id: node_syntax_valid
-    type: f2p
-    description: "Script has valid Node.js syntax and can be parsed"
-  - id: parseArgs_function_works
-    type: f2p
-    description: "parseArgs function correctly parses CLI arguments"
-  - id: required_args_validated
-    type: f2p
-    description: "Required arguments (--pr, --body-file) are validated"
-  - id: env_fallback_works
-    type: f2p
-    description: "Environment variables are used as fallback for repo, token, apiUrl"
-  - id: githubRequest_structure
-    type: f2p
-    description: "githubRequest function makes proper API calls with correct headers"
-  - id: marker_logic_works
-    type: f2p
-    description: "Marker is added to body content when not present"
-  - id: listIssueComments_pagination
-    type: f2p
-    description: "listIssueComments handles pagination correctly"
-
-  # P2P (Pass-to-Pass) checks - verify existing CI/CD still works
-  - id: repo_benchmarks_node_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's benchmark scripts have valid Node.js syntax"
-  - id: repo_scripts_node_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's utility scripts have valid Node.js syntax"
-  - id: repo_prettier_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's scripts follow Prettier formatting rules"
-
+- id: file_exists
+  type: f2p
+  description: upsert-pr-comment.mjs file is created
+- id: node_syntax_valid
+  type: f2p
+  description: Script has valid Node.js syntax and can be parsed
+- id: parseArgs_function_works
+  type: f2p
+  description: parseArgs function correctly parses CLI arguments
+- id: required_args_validated
+  type: f2p
+  description: Required arguments (--pr, --body-file) are validated
+- id: env_fallback_works
+  type: f2p
+  description: Environment variables are used as fallback for repo, token, apiUrl
+- id: githubRequest_structure
+  type: f2p
+  description: githubRequest function makes proper API calls with correct headers
+- id: marker_logic_works
+  type: f2p
+  description: Marker is added to body content when not present
+- id: listIssueComments_pagination
+  type: f2p
+  description: listIssueComments handles pagination correctly
+- id: repo_benchmarks_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's benchmark scripts have valid Node.js syntax
+- id: repo_scripts_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utility scripts have valid Node.js syntax
+- id: repo_prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's scripts follow Prettier formatting rules
 rubric:
-  - rule: "Use Node.js built-in modules with the 'node:' prefix (e.g., 'node:fs', 'node:path', 'node:util')."
-    source:
-      path: "AGENTS.md"
-      lines: "18-24"
-      commit: "13ef4c2e7c92e276185c112d486248b7447535de"
-  - rule: "Include the shebang '#!/usr/bin/env node' at the top of executable scripts."
-    source:
-      path: "AGENTS.md"
-      lines: "18-24"
-      commit: "13ef4c2e7c92e276185c112d486248b7447535de"
-  - rule: "Validate required CLI arguments and environment variables with clear error messages."
-    source:
-      path: "AGENTS.md"
-      lines: "18-24"
-      commit: "13ef4c2e7c92e276185c112d486248b7447535de"
+- rule: Use Node.js built-in modules with the 'node:' prefix (e.g., 'node:fs', 'node:path',
+    'node:util').
+  source:
+    path: AGENTS.md
+    lines: 18-24
+    commit: 13ef4c2e7c92e276185c112d486248b7447535de
+- rule: Include the shebang '#!/usr/bin/env node' at the top of executable scripts.
+  source:
+    path: AGENTS.md
+    lines: 18-24
+    commit: 13ef4c2e7c92e276185c112d486248b7447535de
+- rule: Validate required CLI arguments and environment variables with clear error
+    messages.
+  source:
+    path: AGENTS.md
+    lines: 18-24
+    commit: 13ef4c2e7c92e276185c112d486248b7447535de
+distractors:
+- rule: TypeScript strict mode with extensive type safety
+  collision_type: rule_conflict
+  why_distracting: The PR explicitly requests a `.mjs` file (`upsert-pr-comment.mjs`),
+    which is a JavaScript module. Applying the TypeScript rule would lead the agent
+    to create a `.ts` file instead, violating the PR requirements.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 20-20
+- rule: 'Critical: Always run unit and type tests during development - do not proceed
+    if they fail'
+  collision_type: scope_ambiguity
+  why_distracting: The PR is for a simple utility script in the `scripts/` directory.
+    The agent might waste time trying to write unit tests for this script or get stuck
+    trying to run the test suite for a standalone script that isn't integrated into
+    the main testing graph.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 53-53
+hierarchy_analysis: Only AGENTS.md is present. The rules in AGENTS.md are heavily
+  focused on the core library (TypeScript, Nx, testing), which creates scope ambiguity
+  when the agent is asked to write a standalone Node.js script in the scripts/ directory.

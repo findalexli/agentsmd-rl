@@ -1,166 +1,173 @@
-version: "1.0"
-
+version: '1.0'
 source:
   pr:
     owner: JetBrains
     repo: kotlin
     number: 5818
-    title: "Remove dead autoShutdownMemoryThreshold"
+    title: Remove dead autoShutdownMemoryThreshold
     merge_commit: a75b250150d2415d78b470345ba866aa419164a5
     base_commit: 4dacdd37f64ec8643eea5b22f12a8256e7b5ced9
-
-# Fail-to-pass tests: these fail at base_commit, pass at merge_commit
 tests:
   fail_to_pass:
-    - id: "constant_removed"
-      name: "COMPILE_DAEMON_MEMORY_THRESHOLD_INFINITE constant removed"
-      description: "Verify the unused memory threshold constant is removed"
-      test_function: "test_constant_removed"
-      file: "tests/test_outputs.py"
-
-    - id: "field_removed"
-      name: "autoshutdownMemoryThreshold field removed"
-      description: "Verify the autoshutdownMemoryThreshold field is removed from DaemonOptions"
-      test_function: "test_field_removed_from_daemon_options"
-      file: "tests/test_outputs.py"
-
-    - id: "prop_mapper_removed"
-      name: "PropMapper for memory threshold removed"
-      description: "Verify the PropMapper for autoshutdownMemoryThreshold is removed"
-      test_function: "test_prop_mapper_removed"
-      file: "tests/test_outputs.py"
-
-    - id: "no_references_remaining"
-      name: "No references to removed memory threshold"
-      description: "Verify no remaining references to the removed memory threshold functionality"
-      test_function: "test_no_references_to_removed_memory_threshold"
-      file: "tests/test_outputs.py"
-
-  # Pass-to-pass tests: these pass at both commits (regression tests)
+  - id: constant_removed
+    name: COMPILE_DAEMON_MEMORY_THRESHOLD_INFINITE constant removed
+    description: Verify the unused memory threshold constant is removed
+    test_function: test_constant_removed
+    file: tests/test_outputs.py
+  - id: field_removed
+    name: autoshutdownMemoryThreshold field removed
+    description: Verify the autoshutdownMemoryThreshold field is removed from DaemonOptions
+    test_function: test_field_removed_from_daemon_options
+    file: tests/test_outputs.py
+  - id: prop_mapper_removed
+    name: PropMapper for memory threshold removed
+    description: Verify the PropMapper for autoshutdownMemoryThreshold is removed
+    test_function: test_prop_mapper_removed
+    file: tests/test_outputs.py
+  - id: no_references_remaining
+    name: No references to removed memory threshold
+    description: Verify no remaining references to the removed memory threshold functionality
+    test_function: test_no_references_to_removed_memory_threshold
+    file: tests/test_outputs.py
   pass_to_pass:
-    - id: "daemon_options_structure"
-      name: "DaemonOptions structure valid"
-      description: "Verify DaemonOptions class has correct remaining fields"
-      test_function: "test_daemon_options_data_class_structure"
-      file: "tests/test_outputs.py"
-
-    - id: "mappers_list_valid"
-      name: "Mappers list structure valid"
-      description: "Verify the mappers list has correct remaining PropMappers"
-      test_function: "test_mappers_list_structure"
-      file: "tests/test_outputs.py"
-
-    - id: "file_compiles"
-      name: "Kotlin file compiles"
-      description: "Verify the modified Kotlin file is syntactically valid"
-      test_function: "test_kotlin_file_compiles"
-      file: "tests/test_outputs.py"
-
-    - id: "valid_prop_mappers"
-      name: "Remaining PropMappers are valid"
-      description: "Verify remaining PropMapper instances are properly formed"
-      test_function: "test_file_has_valid_prop_mappers"
-      file: "tests/test_outputs.py"
-
-    # Static file structure tests (pass_to_pass) - file content checks, not subprocess
-    - id: "repo_kotlin_syntax_balanced_brackets"
-      name: "Kotlin syntax: balanced brackets"
-      description: "Static check: Verify Kotlin file has balanced brackets and braces"
-      test_function: "test_repo_kotlin_syntax_balanced_brackets"
-      file: "tests/test_outputs.py"
-      origin: static
-
-    - id: "repo_kotlin_package_declaration_valid"
-      name: "Kotlin package declaration valid"
-      description: "Static check: Verify Kotlin package declaration is present and valid"
-      test_function: "test_repo_kotlin_package_declaration_valid"
-      file: "tests/test_outputs.py"
-      origin: static
-
-    - id: "repo_kotlin_imports_valid"
-      name: "Kotlin imports valid"
-      description: "Static check: Verify Kotlin imports are syntactically valid"
-      test_function: "test_repo_kotlin_imports_valid"
-      file: "tests/test_outputs.py"
-      origin: static
-
-    - id: "repo_data_class_syntax_valid"
-      name: "Data class syntax valid"
-      description: "Static check: Verify DaemonOptions data class syntax is valid"
-      test_function: "test_repo_data_class_syntax_valid"
-      file: "tests/test_outputs.py"
-      origin: static
-
-    - id: "repo_constant_declarations_valid"
-      name: "Constant declarations valid"
-      description: "Static check: Verify const val declarations are syntactically valid"
-      test_function: "test_repo_constant_declarations_valid"
-      file: "tests/test_outputs.py"
-      origin: static
-
-    - id: "repo_propmapper_usage_valid"
-      name: "PropMapper usage valid"
-      description: "Static check: Verify PropMapper class usage is valid"
-      test_function: "test_repo_propmapper_usage_valid"
-      file: "tests/test_outputs.py"
-      origin: static
-
-    - id: "repo_file_structure_integrity"
-      name: "File structure integrity"
-      description: "Static check: Verify overall file structure is intact after modification"
-      test_function: "test_repo_file_structure_integrity"
-      file: "tests/test_outputs.py"
-      origin: static
-
-    - id: "repo_no_double_commas"
-      name: "No double commas in code"
-      description: "Static check: Verify no double commas in Kotlin code"
-      test_function: "test_repo_no_double_commas"
-      file: "tests/test_outputs.py"
-      origin: static
-
-    # Repo CI/CD tests (pass_to_pass) - these use subprocess.run() for actual CI commands
-    - id: "repo_git_file_exists"
-      name: "Target file exists in repo"
-      description: "Repo CI check: Verify DaemonParams.kt exists via git ls-files"
-      test_function: "test_repo_git_file_exists"
-      file: "tests/test_outputs.py"
-      origin: repo_tests
-
-    - id: "repo_kotlin_files_present"
-      name: "Kotlin source files present"
-      description: "Repo CI check: Verify daemon-common Kotlin files exist"
-      test_function: "test_repo_kotlin_files_present"
-      file: "tests/test_outputs.py"
-      origin: repo_tests
-
-# Agent configuration compliance (from CLAUDE.md, AGENTS.md, .ai/guidelines.md)
+  - id: daemon_options_structure
+    name: DaemonOptions structure valid
+    description: Verify DaemonOptions class has correct remaining fields
+    test_function: test_daemon_options_data_class_structure
+    file: tests/test_outputs.py
+  - id: mappers_list_valid
+    name: Mappers list structure valid
+    description: Verify the mappers list has correct remaining PropMappers
+    test_function: test_mappers_list_structure
+    file: tests/test_outputs.py
+  - id: file_compiles
+    name: Kotlin file compiles
+    description: Verify the modified Kotlin file is syntactically valid
+    test_function: test_kotlin_file_compiles
+    file: tests/test_outputs.py
+  - id: valid_prop_mappers
+    name: Remaining PropMappers are valid
+    description: Verify remaining PropMapper instances are properly formed
+    test_function: test_file_has_valid_prop_mappers
+    file: tests/test_outputs.py
+  - id: repo_kotlin_syntax_balanced_brackets
+    name: 'Kotlin syntax: balanced brackets'
+    description: 'Static check: Verify Kotlin file has balanced brackets and braces'
+    test_function: test_repo_kotlin_syntax_balanced_brackets
+    file: tests/test_outputs.py
+    origin: static
+  - id: repo_kotlin_package_declaration_valid
+    name: Kotlin package declaration valid
+    description: 'Static check: Verify Kotlin package declaration is present and valid'
+    test_function: test_repo_kotlin_package_declaration_valid
+    file: tests/test_outputs.py
+    origin: static
+  - id: repo_kotlin_imports_valid
+    name: Kotlin imports valid
+    description: 'Static check: Verify Kotlin imports are syntactically valid'
+    test_function: test_repo_kotlin_imports_valid
+    file: tests/test_outputs.py
+    origin: static
+  - id: repo_data_class_syntax_valid
+    name: Data class syntax valid
+    description: 'Static check: Verify DaemonOptions data class syntax is valid'
+    test_function: test_repo_data_class_syntax_valid
+    file: tests/test_outputs.py
+    origin: static
+  - id: repo_constant_declarations_valid
+    name: Constant declarations valid
+    description: 'Static check: Verify const val declarations are syntactically valid'
+    test_function: test_repo_constant_declarations_valid
+    file: tests/test_outputs.py
+    origin: static
+  - id: repo_propmapper_usage_valid
+    name: PropMapper usage valid
+    description: 'Static check: Verify PropMapper class usage is valid'
+    test_function: test_repo_propmapper_usage_valid
+    file: tests/test_outputs.py
+    origin: static
+  - id: repo_file_structure_integrity
+    name: File structure integrity
+    description: 'Static check: Verify overall file structure is intact after modification'
+    test_function: test_repo_file_structure_integrity
+    file: tests/test_outputs.py
+    origin: static
+  - id: repo_no_double_commas
+    name: No double commas in code
+    description: 'Static check: Verify no double commas in Kotlin code'
+    test_function: test_repo_no_double_commas
+    file: tests/test_outputs.py
+    origin: static
+  - id: repo_git_file_exists
+    name: Target file exists in repo
+    description: 'Repo CI check: Verify DaemonParams.kt exists via git ls-files'
+    test_function: test_repo_git_file_exists
+    file: tests/test_outputs.py
+    origin: repo_tests
+  - id: repo_kotlin_files_present
+    name: Kotlin source files present
+    description: 'Repo CI check: Verify daemon-common Kotlin files exist'
+    test_function: test_repo_kotlin_files_present
+    file: tests/test_outputs.py
+    origin: repo_tests
 agent_config:
   checks:
-    - id: "follow_compiler_guidelines"
-      name: "Follow compiler/AGENTS.md guidelines"
-      description: "Changes should follow compiler area guidelines: FIR prefix for FIR changes, test-before-fix approach"
-      source:
-        file: "compiler/AGENTS.md"
-        lines: "17-20"
-        commit: "4dacdd37f64ec8643eea5b22f12a8256e7b5ced9"
-
-    - id: "no_ide_tools_used"
-      name: "Use proper tools for repository"
-      description: "For this repo, JetBrains IDE MCP tools should be preferred over standard file tools"
-      source:
-        file: ".ai/guidelines.md"
-        lines: "67-95"
-        commit: "4dacdd37f64ec8643eea5b22f12a8256e7b5ced9"
-
-# Rubric for soft/subjective rules (LLM-judge only)
+  - id: follow_compiler_guidelines
+    name: Follow compiler/AGENTS.md guidelines
+    description: 'Changes should follow compiler area guidelines: FIR prefix for FIR
+      changes, test-before-fix approach'
+    source:
+      file: compiler/AGENTS.md
+      lines: 17-20
+      commit: 4dacdd37f64ec8643eea5b22f12a8256e7b5ced9
+  - id: no_ide_tools_used
+    name: Use proper tools for repository
+    description: For this repo, JetBrains IDE MCP tools should be preferred over standard
+      file tools
+    source:
+      file: .ai/guidelines.md
+      lines: 67-95
+      commit: 4dacdd37f64ec8643eea5b22f12a8256e7b5ced9
 rubric:
   rules: []
-
 scoring:
-  # Each fail_to_pass test is worth 25 points (4 tests = 100 points)
   fail_to_pass_weight: 25
-  # Pass-to_pass tests are worth 0 points (regression tests only)
   pass_to_pass_weight: 0
-  # Agent config checks don't affect score (informational)
   agent_config_weight: 0
+distractors:
+- rule: When asked to update memory, you must update `./.claude/CLAUDE.md` if it is
+    not specified that another file should be modified.
+  collision_type: meta_confusion
+  why_distracting: The task involves removing 'memory threshold' code. An agent might
+    trigger on the keyword 'memory' and incorrectly attempt to update the agent's
+    memory file (CLAUDE.md) instead of just modifying the Kotlin source files.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 16-16
+- rule: 'FIR prefix: When changes are mostly related to FIR (`compiler/fir/`), use
+    `FIR: ` prefix in the commit subject line.'
+  collision_type: scope_ambiguity
+  why_distracting: 'The file being edited is in `compiler/daemon/`, not `compiler/fir/`.
+    An agent might see the file is under `compiler/` and mistakenly apply the `FIR:
+    ` prefix to the commit message.'
+  severity: medium
+  source:
+    path: compiler/AGENTS.md
+    lines: 24-24
+- rule: 'Test-before-fix: When fixing an issue and adding a test, commit the test
+    data as a separate commit before the fix.'
+  collision_type: scope_ambiguity
+  why_distracting: This is a dead code removal task, not a bug fix that requires new
+    test data. An agent might try to create a test for the removed functionality or
+    split the changes into multiple commits unnecessarily.
+  severity: low
+  source:
+    path: compiler/AGENTS.md
+    lines: 25-26
+hierarchy_analysis: The hierarchy includes root-level CLAUDE.md and AGENTS.md, which
+  are extended by compiler/CLAUDE.md and compiler/AGENTS.md. The rules in compiler/AGENTS.md
+  are specific to compiler architecture (FIR, IR) and commit guidelines. The root
+  CLAUDE.md contains a meta-rule about updating memory. The task modifies compiler/daemon/,
+  which falls under the compiler/ directory but is not part of the FIR frontend (compiler/fir/),
+  meaning the FIR-specific commit and testing rules in compiler/AGENTS.md do not apply.

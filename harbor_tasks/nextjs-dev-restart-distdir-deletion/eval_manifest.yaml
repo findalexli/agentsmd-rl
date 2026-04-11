@@ -1,101 +1,132 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92135
-  base_commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
-  merge_commit: "35f26a2fac583b84baee785d680e4acf0a217b34"
-
+  base_commit: cb0d88f6e3e340216d478e0ba0c201ec23f7c15c
+  merge_commit: 35f26a2fac583b84baee785d680e4acf0a217b34
 checks:
-  - id: remove_event_handler
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Watchpack 'remove' handler exists and triggers process exit on directory deletion"
-
-  - id: missing_option_in_watchpack
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Watchpack watch call includes 'missing' option for directory deletion detection"
-
-  - id: distdir_ancestor_walking
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Ancestor directories of absDistDir inside dir are collected for watching"
-
-  - id: change_handler_guards_config_files
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Change handler only responds to config file changes, not directory changes"
-
-  - id: file_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "start-server.ts has balanced braces and no obvious syntax issues"
-
-  - id: restart_exit_code_in_remove
-    type: pass_to_pass
-    origin: static
-    description: "Remove handler uses RESTART_EXIT_CODE for process exit"
-
-  - id: dev_only_code_guard
-    type: pass_to_pass
-    origin: agent_config
-    description: "File watching code is inside the if (isDev) guard"
-    source:
-      path: "AGENTS.md"
-      lines: "300"
-      commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
-
-  - id: repo_start_server_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Repo's start-server.ts has balanced braces and valid syntax"
-
-  - id: repo_valid_imports_in_start_server
-    type: pass_to_pass
-    origin: static
-    description: "start-server.ts imports are well-formed"
-
-  - id: repo_no_debugger_in_start_server
-    type: pass_to_pass
-    origin: static
-    description: "start-server.ts has no debugger statements or console.log left behind"
-
-  - id: repo_node_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Node.js can parse start-server.ts without major syntax errors"
-
-  - id: repo_git_status
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository has clean status at base commit"
-
-  - id: repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "package.json is valid JSON"
-
-  - id: repo_critical_files_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Critical source files exist and are readable"
-
+- id: remove_event_handler
+  type: fail_to_pass
+  origin: pr_diff
+  description: Watchpack 'remove' handler exists and triggers process exit on directory
+    deletion
+- id: missing_option_in_watchpack
+  type: fail_to_pass
+  origin: pr_diff
+  description: Watchpack watch call includes 'missing' option for directory deletion
+    detection
+- id: distdir_ancestor_walking
+  type: fail_to_pass
+  origin: pr_diff
+  description: Ancestor directories of absDistDir inside dir are collected for watching
+- id: change_handler_guards_config_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Change handler only responds to config file changes, not directory
+    changes
+- id: file_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: start-server.ts has balanced braces and no obvious syntax issues
+- id: restart_exit_code_in_remove
+  type: pass_to_pass
+  origin: static
+  description: Remove handler uses RESTART_EXIT_CODE for process exit
+- id: dev_only_code_guard
+  type: pass_to_pass
+  origin: agent_config
+  description: File watching code is inside the if (isDev) guard
+  source:
+    path: AGENTS.md
+    lines: '300'
+    commit: cb0d88f6e3e340216d478e0ba0c201ec23f7c15c
+- id: repo_start_server_syntax
+  type: pass_to_pass
+  origin: static
+  description: Repo's start-server.ts has balanced braces and valid syntax
+- id: repo_valid_imports_in_start_server
+  type: pass_to_pass
+  origin: static
+  description: start-server.ts imports are well-formed
+- id: repo_no_debugger_in_start_server
+  type: pass_to_pass
+  origin: static
+  description: start-server.ts has no debugger statements or console.log left behind
+- id: repo_node_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js can parse start-server.ts without major syntax errors
+- id: repo_git_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository has clean status at base commit
+- id: repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json is valid JSON
+- id: repo_critical_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Critical source files exist and are readable
 rubric:
-  - rule: "File watching with directory deletion detection should be inside an isDev or __NEXT_DEV_SERVER guard (dev-server-only behavior)"
-    source:
-      path: "AGENTS.md"
-      lines: "265-270"
-      commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
-
-  - rule: "File watching code for config changes should be inside the if (isDev) guard and use process.exit(RESTART_EXIT_CODE) for restarts"
-    source:
-      path: "AGENTS.md"
-      lines: "428-432"
-      commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
-
-  - rule: "Use Log.warn() for config change warnings and Log.error() for directory deletion errors, not console.log"
-    source:
-      path: "packages/next/src/server/lib/start-server.ts"
-      lines: "73-86"
-      commit: "cb0d88f6e3e340216d478e0ba0c201ec23f7c15c"
+- rule: File watching with directory deletion detection should be inside an isDev
+    or __NEXT_DEV_SERVER guard (dev-server-only behavior)
+  source:
+    path: AGENTS.md
+    lines: 265-270
+    commit: cb0d88f6e3e340216d478e0ba0c201ec23f7c15c
+- rule: File watching code for config changes should be inside the if (isDev) guard
+    and use process.exit(RESTART_EXIT_CODE) for restarts
+  source:
+    path: AGENTS.md
+    lines: 428-432
+    commit: cb0d88f6e3e340216d478e0ba0c201ec23f7c15c
+- rule: Use Log.warn() for config change warnings and Log.error() for directory deletion
+    errors, not console.log
+  source:
+    path: packages/next/src/server/lib/start-server.ts
+    lines: 73-86
+    commit: cb0d88f6e3e340216d478e0ba0c201ec23f7c15c
+- rule: The main Next.js framework lives in `packages/next/`. Source code is in `packages/next/src/`.
+  source:
+    path: CLAUDE.md
+    lines: 19-23
+  evidence: The gold solution correctly modifies the source file in `packages/next/src/server/lib/start-server.ts`
+    to implement the fix within the core framework package's source directory.
+  category: architecture
+distractors:
+- rule: 'Key entry points: Dev server: `src/cli/next-dev.ts` → `src/server/dev/next-dev-server.ts`'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to add the directory watching logic in `next-dev-server.ts`
+    or `next-dev.ts` because they are explicitly listed as the key entry points for
+    the dev server. However, the file watching logic for config files (which is where
+    the `.next` directory watching should be added) is actually located in `src/server/lib/start-server.ts`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 25-27
+- rule: Compiled output goes to `packages/next/dist/` (mirrors src/ structure).
+  collision_type: meta_confusion
+  why_distracting: The issue is about the `.next` directory (the user app's build
+    output) being deleted. The agent might confuse this with the framework's compiled
+    output directory (`packages/next/dist/`) mentioned in the instructions, leading
+    to watching the wrong directory.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 31-31
+- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start>
+    pnpm testheadless test/path/to/test.ts'
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to write a test using `testheadless` (which
+    runs without worker isolation to be fast), but testing a process exit (`process.exit(RESTART_EXIT_CODE)`)
+    would kill the test runner itself if not properly isolated.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 66-70
+hierarchy_analysis: The config files `CLAUDE.md` and `AGENTS.md` are identical symlinks.
+  They provide high-level architectural guidance and development workflows. The main
+  challenge is that the architectural guidance points to `next-dev-server.ts` as the
+  dev server entry point, which conflicts with the actual location of the file watching
+  logic in `start-server.ts`.

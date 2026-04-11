@@ -1,148 +1,159 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28309
-  base_commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
-  merge_commit: "581d45c267edeeeba53595f1663d73a8d90dec4e"
-
+  base_commit: 9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8
+  merge_commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
 checks:
-  # -----------------------------------------------------------------------------
-  # fail_to_pass - pr_diff
-  # -----------------------------------------------------------------------------
-  - id: fix_adds_return_if_exception
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RETURN_IF_EXCEPTION(throwScope, {}) must exist between toJSNewlyCreated and jsCast"
-
-  - id: fix_is_minimal
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Fix must be a pure insertion - no deletions of existing code in BunString.cpp"
-
-  - id: guard_prevents_null_deref_on_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Guard must divert control flow (return/branch) so jsCast is skipped on error"
-
-  # -----------------------------------------------------------------------------
-  # pass_to_pass - pr_diff
-  # -----------------------------------------------------------------------------
-  - id: success_path_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "jsCast, reportExtraMemoryAllocated, RELEASE_AND_RETURN still present in order"
-
-  # -----------------------------------------------------------------------------
-  # pass_to_pass - static (file content checks)
-  # -----------------------------------------------------------------------------
-  - id: file_not_gutted
-    type: pass_to_pass
-    origin: static
-    description: "BunString.cpp retains substantial content (>400 lines)"
-
-  - id: repo_package_json_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's package.json is valid JSON"
-
-  - id: repo_typos_toml_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's .typos.toml is valid TOML"
-
-  - id: repo_build_zig_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's build.zig exists and has structural integrity"
-
-  - id: repo_editorconfig_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's .editorconfig is valid and has required sections"
-
-  - id: repo_claude_md_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's CLAUDE.md exists and has substantial content"
-
-  # -----------------------------------------------------------------------------
-  # pass_to_pass - repo_tests (CI/CD commands that use subprocess.run())
-  # -----------------------------------------------------------------------------
-  - id: repo_prettier_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript scripts are properly formatted (prettier --check)"
-
-  - id: repo_prettier_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's packages TypeScript files have no parse errors (prettier --check)"
-
-  - id: repo_shell_scripts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's shell scripts have valid syntax (bash -n)"
-
-  - id: repo_git_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's git repository is intact and has expected commit"
-
-  - id: repo_oxlint_packages_bun_types
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's bun-types package passes oxlint checks"
-
-  - id: repo_oxlint_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's scripts pass oxlint checks for critical errors"
-
-  - id: repo_prettier_test_internal
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's internal test files are properly formatted (prettier --check)"
-
-  - id: repo_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's git status command works correctly at base commit"
-
-  - id: repo_git_ls_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's git file tracking works correctly for BunString.cpp"
-
-  # -----------------------------------------------------------------------------
-  # agent_config
-  # -----------------------------------------------------------------------------
-  - id: uses_return_if_exception_macro
-    type: fail_to_pass
-    origin: agent_config
-    description: "Fix uses RETURN_IF_EXCEPTION macro per JSC bindings idiom in SKILL.md"
-    source:
-      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
-      lines: "1-80"
-      commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
-
-  - id: includes_root_header
-    type: pass_to_pass
-    origin: agent_config
-    description: "BunString.cpp must include root.h as required for C++ bindings files"
-    source:
-      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
-      lines: "184"
-      commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
-
+- id: fix_adds_return_if_exception
+  type: fail_to_pass
+  origin: pr_diff
+  description: RETURN_IF_EXCEPTION(throwScope, {}) must exist between toJSNewlyCreated
+    and jsCast
+- id: fix_is_minimal
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix must be a pure insertion - no deletions of existing code in BunString.cpp
+- id: guard_prevents_null_deref_on_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: Guard must divert control flow (return/branch) so jsCast is skipped
+    on error
+- id: success_path_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: jsCast, reportExtraMemoryAllocated, RELEASE_AND_RETURN still present
+    in order
+- id: file_not_gutted
+  type: pass_to_pass
+  origin: static
+  description: BunString.cpp retains substantial content (>400 lines)
+- id: repo_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's package.json is valid JSON
+- id: repo_typos_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's .typos.toml is valid TOML
+- id: repo_build_zig_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's build.zig exists and has structural integrity
+- id: repo_editorconfig_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's .editorconfig is valid and has required sections
+- id: repo_claude_md_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's CLAUDE.md exists and has substantial content
+- id: repo_prettier_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript scripts are properly formatted (prettier --check)
+- id: repo_prettier_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's packages TypeScript files have no parse errors (prettier --check)
+- id: repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's shell scripts have valid syntax (bash -n)
+- id: repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git repository is intact and has expected commit
+- id: repo_oxlint_packages_bun_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun-types package passes oxlint checks
+- id: repo_oxlint_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's scripts pass oxlint checks for critical errors
+- id: repo_prettier_test_internal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's internal test files are properly formatted (prettier --check)
+- id: repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git status command works correctly at base commit
+- id: repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git file tracking works correctly for BunString.cpp
+- id: uses_return_if_exception_macro
+  type: fail_to_pass
+  origin: agent_config
+  description: Fix uses RETURN_IF_EXCEPTION macro per JSC bindings idiom in SKILL.md
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 1-80
+    commit: 9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8
+- id: includes_root_header
+  type: pass_to_pass
+  origin: agent_config
+  description: BunString.cpp must include root.h as required for C++ bindings files
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: '184'
+    commit: 9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8
 rubric:
-  - rule: "Return early with `return {};` (empty encoded JS value) when error conditions are detected in binding functions, rather than continuing with potentially null pointers."
-    source:
-      path: ".claude/skills/implementing-jsc-classes-cpp/SKILL.md"
-      lines: "93-101"
-      commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
-  - rule: "Follow WebCore/JavaScriptCore patterns and conventions established in the codebase when modifying C++ bindings code."
-    source:
-      path: "CLAUDE.md"
-      lines: "109-110"
-      commit: "9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8"
+- rule: Return early with `return {};` (empty encoded JS value) when error conditions
+    are detected in binding functions, rather than continuing with potentially null
+    pointers.
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 93-101
+    commit: 9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8
+- rule: Follow WebCore/JavaScriptCore patterns and conventions established in the
+    codebase when modifying C++ bindings code.
+  source:
+    path: CLAUDE.md
+    lines: 109-110
+    commit: 9e93bfa1b69a2f9b8c05acb15e02c5506dd4cbc8
+- rule: C++ is used for JavaScriptCore integration
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+  evidence: The fix is implemented in `src/bun.js/bindings/BunString.cpp` using JavaScriptCore
+    C++ APIs rather than attempting to fix the URL parsing in Zig.
+  category: architecture
+- rule: Run with JavaScript exception scope verification
+  source:
+    path: CLAUDE.md
+    lines: 13-14
+  evidence: The gold solution adds `RETURN_IF_EXCEPTION(throwScope, {});` immediately
+    after `toJSNewlyCreated`, which is the exact C++ pattern required to properly
+    handle exceptions and pass the project's JavaScr
+  category: architecture
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`
+  collision_type: architecture_boundary
+  why_distracting: This rule dictates avoiding `std.*` in favor of `bun.*` APIs. Because
+    the agent is editing a C++ file, it might mistakenly avoid C++ `std::` namespace
+    features or attempt to call Zig `bun.*` wrappers from C++, causing compilation
+    failures.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 15-26
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output
+  collision_type: scope_ambiguity
+  why_distracting: The bug causes a hard crash/segfault. If the agent decides to write
+    a test for this fix, this rule forbidding checks for 'panic' or 'uncaught exception'
+    might confuse them on how to assert that the crash is resolved, potentially leading
+    to a brittle test or wasted effort.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 63-64
+hierarchy_analysis: The root `CLAUDE.md` provides general project structure and testing
+  commands, while `src/CLAUDE.md` provides highly specific Zig conventions. Because
+  this PR modifies a C++ file (`BunString.cpp`), the Zig-specific rules in `src/CLAUDE.md`
+  act as distractors. The agent must recognize the architecture boundary between Zig
+  and C++ and selectively ignore the `src/CLAUDE.md` rules while applying the JSC
+  exception handling concepts implied by the root config.

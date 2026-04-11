@@ -1,122 +1,140 @@
-version: "1.0"
-
+version: '1.0'
 source:
-  repo: "ant-design/ant-design"
+  repo: ant-design/ant-design
   pr: 57540
-  title: "fix: correct Cascader menu item ellipsis styles"
-  base_commit: "1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299"
-  merge_commit: "ffe7ccf17f689af990c4757c8197c8727c8f4184"
-  author: "ant-design"
-  description: |
-    Fixes Cascader menu item ellipsis styles for long option labels in flex layout.
+  title: 'fix: correct Cascader menu item ellipsis styles'
+  base_commit: 1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299
+  merge_commit: ffe7ccf17f689af990c4757c8197c8727c8f4184
+  author: ant-design
+  description: 'Fixes Cascader menu item ellipsis styles for long option labels in
+    flex layout.
+
     The ellipsis styles were incorrectly applied on the parent node instead of
+
     the content node, causing long text labels not to display ellipsis correctly.
 
+    '
 target:
-  primary_file: "components/cascader/style/columns.ts"
-  distinct_line: "minWidth: 0"
-
+  primary_file: components/cascader/style/columns.ts
+  distinct_line: 'minWidth: 0'
 agent_configs:
-  - file: "CLAUDE.md"
-    rules:
-      - "Demo import convention: use absolute paths like 'antd', 'antd/es/*', never relative paths like '../xxx'"
-      - "Test import convention: use relative paths like '..', '../index', never absolute paths like 'antd'"
-      - "API table format: use backticks for string defaults, booleans as literals, no colons after component names"
-      - "Changelog: use emoji at start, no colons after component names, include both English and Chinese versions"
-      - "PR title: use English format like 'type: description'"
-  - file: "AGENTS.md"
-    rules:
-      - "Demo import convention: use absolute paths like 'antd', 'antd/es/*', never relative paths"
-      - "Test import convention: use relative paths like '..', '../index', never absolute paths"
-  - file: ".github/copilot-instructions.md"
-    rules:
-      - "Use CSS-in-JS with @ant-design/cssinjs, never hardcode colors/sizes"
-      - "Support both light and dark themes using design tokens"
-      - "Use CSS logical properties for RTL support (margin-inline-start vs margin-left)"
-      - "Respect prefers-reduced-motion for animations"
-      - "Component props interfaces named ComponentNameProps"
-      - "Never use 'any' type - define precise types"
-
+- file: CLAUDE.md
+  rules:
+  - 'Demo import convention: use absolute paths like ''antd'', ''antd/es/*'', never
+    relative paths like ''../xxx'''
+  - 'Test import convention: use relative paths like ''..'', ''../index'', never absolute
+    paths like ''antd'''
+  - 'API table format: use backticks for string defaults, booleans as literals, no
+    colons after component names'
+  - 'Changelog: use emoji at start, no colons after component names, include both
+    English and Chinese versions'
+  - 'PR title: use English format like ''type: description'''
+- file: AGENTS.md
+  rules:
+  - 'Demo import convention: use absolute paths like ''antd'', ''antd/es/*'', never
+    relative paths'
+  - 'Test import convention: use relative paths like ''..'', ''../index'', never absolute
+    paths'
+- file: .github/copilot-instructions.md
+  rules:
+  - Use CSS-in-JS with @ant-design/cssinjs, never hardcode colors/sizes
+  - Support both light and dark themes using design tokens
+  - Use CSS logical properties for RTL support (margin-inline-start vs margin-left)
+  - Respect prefers-reduced-motion for animations
+  - Component props interfaces named ComponentNameProps
+  - Never use 'any' type - define precise types
 checks:
-  # Fail-to-pass tests - these verify the actual fix
-  - id: test_text_ellipsis_moved_to_content
-    type: fail_to_pass
-    origin: task_tests
-    description: "textEllipsis should be in &-content block, not directly in &-item"
-
-  - id: test_content_has_minWidth_zero
-    type: fail_to_pass
-    origin: task_tests
-    description: "&-content should have minWidth: 0 for proper flex ellipsis behavior"
-
-  - id: test_content_has_text_ellipsis
-    type: fail_to_pass
-    origin: task_tests
-    description: "&-content should have textEllipsis spread for ellipsis styling"
-
-  - id: test_item_has_maxWidth
-    type: fail_to_pass
-    origin: task_tests
-    description: "&-item should have maxWidth: 400 to constrain the flex item"
-
-  # Pass-to-pass tests - these verify the code structure and quality
-  - id: test_file_exists
-    type: pass_to_pass
-    origin: task_tests
-    description: "The columns.ts file exists"
-
-  - id: test_item_has_flex_display
-    type: pass_to_pass
-    origin: task_tests
-    description: "&-item uses display: 'flex' for proper layout"
-
-  - id: test_typescript_compiles
-    type: pass_to_pass
-    origin: task_tests
-    description: "TypeScript compiles without syntax errors"
-
-  - id: test_style_exports_correctly
-    type: pass_to_pass
-    origin: task_tests
-    description: "The style module exports getColumnsStyle correctly"
-
-  - id: test_imports_are_valid
-    type: pass_to_pass
-    origin: task_tests
-    description: "Required imports are present"
-
-  # Repo CI tests - these run actual CI commands
-  - id: test_repo_biome_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Biome linting passes on Cascader style file (npx @biomejs/biome lint)"
-
-  - id: test_repo_biome_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Biome format check passes on Cascader style file (npx @biomejs/biome format)"
-
-  - id: test_repo_cascader_tests_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cascader component has __tests__ directory"
-
-  - id: test_repo_cascader_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cascader component has index.test.tsx unit tests"
-
-  - id: test_repo_node_version
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Node.js version is compatible (v18+)"
-
-  - id: test_repo_tsc_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript syntax is valid (balanced braces via Node.js)"
-
-# Note: No rubric rules defined for this code fix task. The rubric judge is designed
-# for config/documentation file edit evaluation, not code quality/style checking.
-# CSS convention compliance (CSS-in-JS, logical properties, motion preferences) is
-# verified by the existing tests and the repo's CI (Biome lint/format checks).
+- id: test_text_ellipsis_moved_to_content
+  type: fail_to_pass
+  origin: task_tests
+  description: textEllipsis should be in &-content block, not directly in &-item
+- id: test_content_has_minWidth_zero
+  type: fail_to_pass
+  origin: task_tests
+  description: '&-content should have minWidth: 0 for proper flex ellipsis behavior'
+- id: test_content_has_text_ellipsis
+  type: fail_to_pass
+  origin: task_tests
+  description: '&-content should have textEllipsis spread for ellipsis styling'
+- id: test_item_has_maxWidth
+  type: fail_to_pass
+  origin: task_tests
+  description: '&-item should have maxWidth: 400 to constrain the flex item'
+- id: test_file_exists
+  type: pass_to_pass
+  origin: task_tests
+  description: The columns.ts file exists
+- id: test_item_has_flex_display
+  type: pass_to_pass
+  origin: task_tests
+  description: '&-item uses display: ''flex'' for proper layout'
+- id: test_typescript_compiles
+  type: pass_to_pass
+  origin: task_tests
+  description: TypeScript compiles without syntax errors
+- id: test_style_exports_correctly
+  type: pass_to_pass
+  origin: task_tests
+  description: The style module exports getColumnsStyle correctly
+- id: test_imports_are_valid
+  type: pass_to_pass
+  origin: task_tests
+  description: Required imports are present
+- id: test_repo_biome_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome linting passes on Cascader style file (npx @biomejs/biome lint)
+- id: test_repo_biome_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome format check passes on Cascader style file (npx @biomejs/biome
+    format)
+- id: test_repo_cascader_tests_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cascader component has __tests__ directory
+- id: test_repo_cascader_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cascader component has index.test.tsx unit tests
+- id: test_repo_node_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js version is compatible (v18+)
+- id: test_repo_tsc_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript syntax is valid (balanced braces via Node.js)
+rubric:
+- rule: 采用 CSS-in-JS 架构（基于 `@ant-design/cssinjs`）
+  source:
+    path: CLAUDE.md
+    lines: 10-10
+  evidence: The gold solution modifies the CSS-in-JS style file `components/cascader/style/columns.ts`
+    using object-based styling syntax rather than traditional CSS or LESS.
+  category: architecture
+distractors:
+- rule: Changelog 规范：必须同时提供中英文两个版本的更新日志
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to update the `CHANGELOG.en-US.md` and
+    `CHANGELOG.zh-CN.md` files to document the bug fix, but the gold solution focuses
+    strictly on the code fix. Modifying changelogs is out of scope for this specific
+    code-level patch.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 110-113
+- rule: PR 规范：标题与内容格式及 PR 模板的使用
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use the `antd-create-pr` skill or format
+    a PR description using the provided templates, but the task only requires fixing
+    the code. This leads to wasted effort on meta-tasks.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 75-83
+hierarchy_analysis: The configuration hierarchy consists of `CLAUDE.md` and `AGENTS.md`,
+  which are identical in content. The rules primarily focus on meta-tasks (PRs, changelogs,
+  documentation, and imports) rather than specific CSS-in-JS implementation details.
+  There are no conflicts between the files, but the heavy emphasis on repository management
+  tasks creates a risk of the agent overstepping the scope of a simple bug fix.

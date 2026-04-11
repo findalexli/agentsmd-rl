@@ -1,85 +1,108 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 38414
-  base_commit: "171775f306a333a9cf105bfd533bf3e113d401d9"
-  merge_commit: "6dad4c57226d522b1af0b12ae6a2ba66e4fc7d5d"
-
+  base_commit: 171775f306a333a9cf105bfd533bf3e113d401d9
+  merge_commit: 6dad4c57226d522b1af0b12ae6a2ba66e4fc7d5d
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified file must parse without errors"
-
-  - id: no_standalone_fixed_sleep
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Buggy asyncio.sleep(0.1) outside any loop is removed"
-
-  - id: polling_loop_with_file_read
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A while loop that reads the status file exists in the test function"
-
-  - id: timeout_mechanism_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Polling loop has a timeout to avoid hanging forever"
-
-  - id: polling_captures_delayed_status
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Polling loop captures FINISHED_ABORTED written after a 300ms delay"
-
-  - id: finished_aborted_assertion_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "FINISHED_ABORTED assertion still exists in test function"
-
-  - id: function_signature_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Test function and async_scheduling parametrize preserved"
-
-  - id: timeout_completes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Polling completes within timeout when status never appears (no hang)"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "File has substantial content (not trivially emptied)"
-
-  - id: repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter check passes on modified file"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified file"
-
-  - id: repo_typos
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's typos check passes on modified file"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without errors
+- id: no_standalone_fixed_sleep
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy asyncio.sleep(0.1) outside any loop is removed
+- id: polling_loop_with_file_read
+  type: fail_to_pass
+  origin: pr_diff
+  description: A while loop that reads the status file exists in the test function
+- id: timeout_mechanism_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Polling loop has a timeout to avoid hanging forever
+- id: polling_captures_delayed_status
+  type: fail_to_pass
+  origin: pr_diff
+  description: Polling loop captures FINISHED_ABORTED written after a 300ms delay
+- id: finished_aborted_assertion_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: FINISHED_ABORTED assertion still exists in test function
+- id: function_signature_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Test function and async_scheduling parametrize preserved
+- id: timeout_completes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Polling completes within timeout when status never appears (no hang)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: File has substantial content (not trivially emptied)
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter check passes on modified file
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified file
+- id: repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's typos check passes on modified file
 rubric:
-  - rule: "Run pre-commit hooks (ruff, mypy) on changed files to ensure code style and type safety."
-    source:
-      path: "AGENTS.md"
-      lines: "86-102"
-      commit: "171775f306a333a9cf105bfd533bf3e113d401d9"
-  - rule: "Use `uv` and `.venv/bin/python` for Python commands; never use system `python3` or bare `pip install`."
-    source:
-      path: "AGENTS.md"
-      lines: "42"
-      commit: "171775f306a333a9cf105bfd533bf3e113d401d9"
-  - rule: "Prefer 'search for X' patterns instead of hardcoding file paths that may change."
-    source:
-      path: "docs/contributing/editing-agent-instructions.md"
-      lines: "51-52"
-      commit: "171775f306a333a9cf105bfd533bf3e113d401d9"
+- rule: Run pre-commit hooks (ruff, mypy) on changed files to ensure code style and
+    type safety.
+  source:
+    path: AGENTS.md
+    lines: 86-102
+    commit: 171775f306a333a9cf105bfd533bf3e113d401d9
+- rule: Use `uv` and `.venv/bin/python` for Python commands; never use system `python3`
+    or bare `pip install`.
+  source:
+    path: AGENTS.md
+    lines: '42'
+    commit: 171775f306a333a9cf105bfd533bf3e113d401d9
+- rule: Prefer 'search for X' patterns instead of hardcoding file paths that may change.
+  source:
+    path: docs/contributing/editing-agent-instructions.md
+    lines: 51-52
+    commit: 171775f306a333a9cf105bfd533bf3e113d401d9
+distractors:
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in an automated evaluation environment where
+    it is expected to generate the code fix. Following the rule that 'Pure code-agent
+    PRs are not allowed' would cause the agent to refuse the task entirely.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 24-25
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
+    one mutable default, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret fixing a single flaky test (changing
+    a sleep to a polling loop) as a 'tiny edit' or 'low-value busywork' and refuse
+    to implement the fix, triggering the fail-closed behavior.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 20-21
+- rule: Before proposing a PR, run duplicate-work checks using the `gh` CLI.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run `gh` CLI commands to check for duplicate
+    PRs before writing the code. In an isolated evaluation sandbox, this is unnecessary
+    and likely to fail or waste execution time.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 10-14
+hierarchy_analysis: 'The hierarchy is simple: `CLAUDE.md` includes `AGENTS.md`. `AGENTS.md`
+  contains project-wide contribution and workflow rules. Since the task is evaluated
+  in an isolated sandbox, many of the workflow and contribution rules (like no pure
+  code-agent PRs, checking for duplicates via `gh`) conflict with the meta-goal of
+  the evaluation, creating significant meta-confusion.'

@@ -203,3 +203,43 @@ rubric:
     path: .claude/CLAUDE.md
     lines: '5'
     commit: 283163272e7318fb1825ebf1b68fdc510cd984d9
+- rule: Use Allman-style braces
+  source:
+    path: Problem Description
+    lines: N/A
+  evidence: The `for` loop introduced in the patch places the opening brace `{` on
+    a new line, adhering to the Allman style.
+  category: style
+distractors:
+- rule: When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions... inside inline
+    code blocks
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to wrap literal names of classes and functions
+    in inline code blocks (backticks) in comments. An agent might apply this to the
+    C++ source code comments (`///`), writing `` `selectRangesToRead` `` or `` `filterPartsByQueryConditionCache`
+    ``. However, the gold solution does not use markdown backticks in C++ comments,
+    indicating this rule is likely intended for PR descriptions, markdown documentation,
+    or commit messages rather than source code comments.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-5
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()`
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to write names of functions and methods as `f`
+    instead of `f()` in comments. An agent might strictly remove the parentheses from
+    `selectRangesToRead()` in the C++ comment. The gold solution includes the parentheses
+    (`selectRangesToRead()`), showing that in source code comments explaining execution
+    flow, standard C++ function notation is preferred over the mathematical purity
+    rule meant for documentation.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 7-7
+hierarchy_analysis: The AGENTS.md file contains rules about documentation and comment
+  formatting (using backticks, omitting parentheses for functions). These rules create
+  scope ambiguity because 'comments' could mean GitHub PR comments or C++ source code
+  comments. The gold solution demonstrates that these markdown-specific formatting
+  rules do not strictly apply to C++ source code comments (`///`).

@@ -82,3 +82,52 @@ rubric:
     path: CLAUDE.md
     lines: 116-124
     commit: 4edd79bb00bb472bf7cfb56a891b7d6ab3e9db25
+- rule: sui-indexer-alt-graphql/ is the GraphQL API server
+  source:
+    path: CLAUDE.md
+    lines: 65-65
+  evidence: The fix modifies `crates/sui-indexer-alt-graphql/src/api/types/display.rs`
+    to correct the GraphQL API's display resolution logic, aligning with the directory's
+    purpose as the GraphQL API server.
+  category: architecture
+- rule: Check code without building (preferred) cargo check
+  source:
+    path: CLAUDE.md
+    lines: 30-31
+  evidence: The expected validation step `cargo check -p sui-indexer-alt-graphql`
+    follows the instruction to check code without building.
+  category: tooling
+distractors:
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add the license header to `display.rs` if
+    it doesn't see one, even though the rule strictly applies only to new files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 18-21
+- rule: '`cargo xclippy does not recognize -p option`'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run `cargo xclippy -p sui-indexer-alt-graphql`
+    to lint its changes, but the config explicitly warns that `cargo xclippy` does
+    not recognize the `-p` option. This could lead to command failures or the agent
+    running clippy on the entire massive workspace.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 54-55
+- rule: Always consult CLAUDE.md files in sub-crates.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to read `crates/sui-indexer-alt-graphql/CLAUDE.md`
+    or `AGENTS.md`, which are not provided in the context, leading to wasted tool
+    calls or hallucinated rules.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 10-11
+hierarchy_analysis: The root `CLAUDE.md` provides general guidelines, while `AGENTS.md`
+  reinforces checking crate-specific files. Since no crate-specific config is provided
+  for `sui-indexer-alt-graphql`, the root rules apply. The agent must be careful not
+  to over-apply the new file license rule to existing files and should heed the warning
+  about `cargo xclippy` not supporting `-p`.

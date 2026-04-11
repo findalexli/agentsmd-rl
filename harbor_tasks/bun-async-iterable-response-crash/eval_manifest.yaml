@@ -39,7 +39,7 @@ checks:
 - id: no_bare_call_apply
   type: pass_to_pass
   origin: agent_config
-  description: "No bare .call/.apply in JS builtins \u2014 must use .$call/.$apply"
+  description: No bare .call/.apply in JS builtins — must use .$call/.$apply
   source:
     path: src/js/CLAUDE.md
     lines: '56'
@@ -61,7 +61,7 @@ checks:
 - id: no_bare_jsboolean
   type: pass_to_pass
   origin: repo_tests
-  description: "No bare .jsBoolean(true/false) calls in builtins \u2014 use .true/.false"
+  description: No bare .jsBoolean(true/false) calls in builtins — use .true/.false
   source:
     path: test/internal/ban-words.test.ts
 - id: no_std_debug_in_builtins
@@ -105,3 +105,46 @@ rubric:
     lines: '105'
     commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
   reference: Updated CLAUDE.md to emphasize using JSC intrinsics for performance.
+- rule: Use `$` prefix for private APIs and properties in JS builtins.
+  source:
+    path: src/js/CLAUDE.md
+    lines: 41-46
+  evidence: The gold solution accesses internal stream state using the `$` prefix
+    (e.g., `this.$sink`, `stream.$state`) in `ReadableStreamInternals.ts`.
+  category: naming
+- rule: Ensure JavaScript exception scopes are properly validated and handled in C++
+    bindings.
+  source:
+    path: CLAUDE.md
+    lines: 13-14
+  evidence: The gold solution adds `DECLARE_THROW_SCOPE` and `RETURN_IF_EXCEPTION(throwScope,
+    {});` after `call(...)` in `ReadableStream.cpp` to properly handle JS exceptions,
+    which prevents crashes that the exce
+  category: architecture
+distractors:
+- rule: Export via `export default {}`
+  collision_type: scope_ambiguity
+  why_distracting: The 'Key Rules' section states to 'Export via `export default {}`',
+    but this only applies to Node/Bun modules. Builtin functions in `src/js/builtins/`
+    must use `export function` so the C++ code generator can find them. Changing them
+    to `export default` would break the build.
+  severity: high
+  source:
+    path: src/js/CLAUDE.md
+    lines: 71-76
+- rule: Modules are NOT ES modules, use string literal `require()` only.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states 'Modules are NOT ES modules' and mandates 'String
+    literal require() only'. An agent might try to refactor the imports in `ReadableStream.ts`
+    or `ReadableStreamInternals.ts` to use `require()`, but builtins use ES module
+    syntax for internal imports.
+  severity: medium
+  source:
+    path: src/js/CLAUDE.md
+    lines: 15-24
+hierarchy_analysis: 'The config hierarchy correctly separates concerns: Level 0 (`CLAUDE.md`)
+  handles global build/test commands and C++ JSC exception rules, while Level 2 (`src/js/CLAUDE.md`)
+  handles JS builtin specifics. However, Level 2''s ''Key Rules'' section is overly
+  broad, presenting module-specific rules (like `export default {}` and `require()`)
+  as global rules for the entire `src/js/` directory, which conflicts with the `builtins/`
+  directory requirements.'

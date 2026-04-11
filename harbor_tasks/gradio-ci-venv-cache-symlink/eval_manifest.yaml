@@ -1,85 +1,115 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13029
-  base_commit: "30af84cdd100855999281de8720cbb6d58b48556"
-  merge_commit: "735a6a6bfe63e27af84fc632da64eeb609eb2324"
-
+  base_commit: 30af84cdd100855999281de8720cbb6d58b48556
+  merge_commit: 735a6a6bfe63e27af84fc632da64eeb609eb2324
 checks:
-  - id: action_yaml_valid
-    type: pass_to_pass
-    origin: static
-    description: "action.yml must be valid YAML"
-
-  - id: venv_created_after_cache_restore
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Venv creation (uv venv) must execute after the cache restore step"
-
-  - id: cache_key_includes_exact_python_version
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cache key must include exact installed Python version, not just requested minor version"
-
-  - id: step_output_refs_resolve
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Step output references in cache key must resolve to existing step ids"
-
-  - id: textbox_await_tick_active
-    type: fail_to_pass
-    origin: pr_diff
-    description: "await tick() must be active (not commented) in the textbox copy test"
-
-  - id: core_ci_steps_present
-    type: pass_to_pass
-    origin: static
-    description: "Core CI action steps (Install Python, ffmpeg, cache, uv venv) still present"
-
-  - id: textbox_copy_test_exists
-    type: pass_to_pass
-    origin: static
-    description: "Textbox copy test case and assertion still exist"
-
-  - id: cache_key_includes_hashfiles
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Cache key still includes hashFiles for dependency tracking"
-
-  - id: cache_paths_include_venv
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Cache paths still include venv directory"
-
-  - id: test_action_shell_commands_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Shell commands in action.yml must have valid syntax"
-
-  - id: test_action_file_references_valid
-    type: pass_to_pass
-    origin: static
-    description: "Files referenced in action.yml must exist"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python linter (ruff check) runs successfully"
-
-  - id: test_repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python format check (ruff format --check) runs successfully"
-
+- id: action_yaml_valid
+  type: pass_to_pass
+  origin: static
+  description: action.yml must be valid YAML
+- id: venv_created_after_cache_restore
+  type: fail_to_pass
+  origin: pr_diff
+  description: Venv creation (uv venv) must execute after the cache restore step
+- id: cache_key_includes_exact_python_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cache key must include exact installed Python version, not just requested
+    minor version
+- id: step_output_refs_resolve
+  type: pass_to_pass
+  origin: pr_diff
+  description: Step output references in cache key must resolve to existing step ids
+- id: textbox_await_tick_active
+  type: fail_to_pass
+  origin: pr_diff
+  description: await tick() must be active (not commented) in the textbox copy test
+- id: core_ci_steps_present
+  type: pass_to_pass
+  origin: static
+  description: Core CI action steps (Install Python, ffmpeg, cache, uv venv) still
+    present
+- id: textbox_copy_test_exists
+  type: pass_to_pass
+  origin: static
+  description: Textbox copy test case and assertion still exist
+- id: cache_key_includes_hashfiles
+  type: pass_to_pass
+  origin: pr_diff
+  description: Cache key still includes hashFiles for dependency tracking
+- id: cache_paths_include_venv
+  type: pass_to_pass
+  origin: pr_diff
+  description: Cache paths still include venv directory
+- id: test_action_shell_commands_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell commands in action.yml must have valid syntax
+- id: test_action_file_references_valid
+  type: pass_to_pass
+  origin: static
+  description: Files referenced in action.yml must exist
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linter (ruff check) runs successfully
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python format check (ruff format --check) runs successfully
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "30af84cdd100855999281de8720cbb6d58b48556"
-  - rule: "Frontend code is formatted with prettier."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "30af84cdd100855999281de8720cbb6d58b48556"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 30af84cdd100855999281de8720cbb6d58b48556
+- rule: Frontend code is formatted with prettier.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 30af84cdd100855999281de8720cbb6d58b48556
+- rule: Tests must pass. PRs are only merged when CI is green.
+  source:
+    path: AGENTS.md
+    lines: 30-30
+  evidence: The gold solution directly addresses CI failures by fixing the caching
+    logic in `.github/actions/install-all-deps/action.yml` and resolves a flaky frontend
+    test in `js/textbox/Textbox.test.ts` to ensu
+  category: testing
+distractors:
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The bug is isolated to GitHub Actions CI caching and a frontend
+    Svelte test. Running the entire Python backend test suite locally is irrelevant
+    to the problem and would waste significant time and compute resources.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 30-30
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: In an automated evaluation environment, the agent is only expected
+    to produce a code patch. Attempting to use GitHub APIs or CLI tools to create
+    an issue will fail or waste time.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-18
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
+  collision_type: meta_confusion
+  why_distracting: The agent is evaluated strictly on the code changes it produces.
+    Trying to create a PR or edit a non-existent PR description file to include the
+    'kumquat' keyword is out of scope for the evaluation environment.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 56-58
+hierarchy_analysis: The repository has a single `AGENTS.md` file at the root level.
+  There are no conflicting rules between different levels, but the agent must distinguish
+  between rules applicable to the backend (Python) and frontend (JS/Svelte), as well
+  as CI configuration. The agent must also ignore PR-creation and issue-management
+  rules that do not apply in a headless evaluation environment.

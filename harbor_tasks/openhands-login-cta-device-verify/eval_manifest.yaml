@@ -4,85 +4,104 @@ source_pr:
   pr_number: 13606
   base_commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
   merge_commit: 05a3916c98105f47953e3481c73df09dac1ad925
-
 agent_configs:
-  - file: AGENTS.md
-    lines: "Frontend: Located in the frontend directory"
-    description: Follow frontend dev patterns (npm run lint:fix, npm run build)
-
+- file: AGENTS.md
+  lines: 'Frontend: Located in the frontend directory'
+  description: Follow frontend dev patterns (npm run lint:fix, npm run build)
 rubric:
-  - rule: "Run linting and build before submitting frontend changes. Use: npm run lint:fix && npm run build"
-    source:
-      path: "AGENTS.md"
-      lines: "21-22"
-      commit: "eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be"
-
-  - rule: "Use <a> tag for external URLs, react-router <Link> for internal app routes only"
-    source:
-      path: "AGENTS.md"
-      lines: "100-104"
-      commit: "eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be"
-
-  - rule: "Follow component testing best practices: use userEvent for interactions, query by role/label/testId, mock external dependencies"
-    source:
-      path: "frontend/README.md"
-      lines: "162-181"
-      commit: "eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be"
-
+- rule: 'Run linting and build before submitting frontend changes. Use: npm run lint:fix
+    && npm run build'
+  source:
+    path: AGENTS.md
+    lines: 21-22
+    commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
+- rule: Use <a> tag for external URLs, react-router <Link> for internal app routes
+    only
+  source:
+    path: AGENTS.md
+    lines: 100-104
+    commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
+- rule: 'Follow component testing best practices: use userEvent for interactions,
+    query by role/label/testId, mock external dependencies'
+  source:
+    path: frontend/README.md
+    lines: 162-181
+    commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution updates `frontend/__tests__/components/features/auth/login-cta.test.tsx`
+    and `frontend/__tests__/routes/device-verify.test.tsx` to ensure tests pass with
+    the new `source` prop and co
+  category: testing
 checks:
-  # Fail-to-pass tests - structural and behavioral changes
-  - id: test_login_cta_has_source_prop
-    type: fail_to_pass
-    origin: code_structure
-    description: LoginCTA component has LoginCTAProps type with source prop
-
-  - id: test_login_cta_renders_external_link_for_device_verify
-    type: fail_to_pass
-    origin: code_behavior
-    description: LoginCTA renders external <a> tag with enterprise URL for device_verify source
-
-  - id: test_device_verify_uses_login_cta
-    type: fail_to_pass
-    origin: code_structure
-    description: Device verify page imports and uses LoginCTA instead of EnterpriseBanner
-
-  - id: test_device_verify_passes_correct_props
-    type: fail_to_pass
-    origin: code_behavior
-    description: Device verify page passes source='device_verify' to LoginCTA
-
-  - id: test_layout_classes_updated
-    type: fail_to_pass
-    origin: code_structure
-    description: Layout classes updated for stretch behavior and consistent styling
-
-  # Pass-to-pass tests - repo CI/CD
-  - id: test_repo_frontend_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend unit tests pass (vitest)
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend linter passes (npm run lint)
-
-  - id: test_repo_typescript_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: TypeScript typecheck passes (npm run typecheck)
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend production build succeeds (npm run build)
-
-  - id: test_repo_translation_completeness
-    type: pass_to_pass
-    origin: repo_tests
-    description: Translation completeness check passes
-
-  - id: test_repo_tests_login_cta
-    type: pass_to_pass
-    origin: repo_tests
-    description: LoginCTA and device-verify specific tests pass
+- id: test_login_cta_has_source_prop
+  type: fail_to_pass
+  origin: code_structure
+  description: LoginCTA component has LoginCTAProps type with source prop
+- id: test_login_cta_renders_external_link_for_device_verify
+  type: fail_to_pass
+  origin: code_behavior
+  description: LoginCTA renders external <a> tag with enterprise URL for device_verify
+    source
+- id: test_device_verify_uses_login_cta
+  type: fail_to_pass
+  origin: code_structure
+  description: Device verify page imports and uses LoginCTA instead of EnterpriseBanner
+- id: test_device_verify_passes_correct_props
+  type: fail_to_pass
+  origin: code_behavior
+  description: Device verify page passes source='device_verify' to LoginCTA
+- id: test_layout_classes_updated
+  type: fail_to_pass
+  origin: code_structure
+  description: Layout classes updated for stretch behavior and consistent styling
+- id: test_repo_frontend_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend unit tests pass (vitest)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend linter passes (npm run lint)
+- id: test_repo_typescript_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes (npm run typecheck)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend production build succeeds (npm run build)
+- id: test_repo_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Translation completeness check passes
+- id: test_repo_tests_login_cta
+  type: pass_to_pass
+  origin: repo_tests
+  description: LoginCTA and device-verify specific tests pass
+distractors:
+- rule: Store design documents, scripts, or temporary artifacts in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret this component refactor as needing a
+    design document or analysis notes in the `.pr/` directory, wasting time on documentation
+    for a straightforward frontend change.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 33-35
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+  collision_type: meta_confusion
+  why_distracting: The agent might run `make build` to set up the repo, which builds
+    both frontend and backend, wasting time when the user prompt explicitly provides
+    faster, frontend-only testing commands.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-6
+hierarchy_analysis: The AGENTS.md file provides general repository guidelines. The
+  user prompt provides specific, localized instructions for testing the frontend changes.
+  The agent must prioritize the prompt's specific frontend commands over the general
+  `make build` setup instructions in AGENTS.md.

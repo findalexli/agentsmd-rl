@@ -1,74 +1,107 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13126
-  base_commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
-  merge_commit: "a09c0e891709e007e4f265fc48f466175f5a2a22"
-
+  base_commit: 8bc75137b24ba8a8571b49b9b006741819c0518b
+  merge_commit: a09c0e891709e007e4f265fc48f466175f5a2a22
 checks:
-  - id: utils_syntax
-    type: pass_to_pass
-    origin: static
-    description: "utils.ts must have balanced braces (no syntax errors)"
-
-  - id: colorpicker_utils_file_structure
-    type: pass_to_pass
-    origin: static
-    description: "utils.ts must have proper structure: tinycolor import and exported functions"
-
-  - id: colorpicker_svelte_file_structure
-    type: pass_to_pass
-    origin: static
-    description: "Colorpicker.svelte must have proper imports and structure"
-
-  - id: hsva_to_rgba_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "hsva_to_rgba function must execute without errors on base commit via Node.js runtime"
-
-  - id: format_color_regression
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing format_color function still produces correct output via Node.js runtime"
-
-  - id: tinycolor_runtime_available
-    type: pass_to_pass
-    origin: repo_tests
-    description: "tinycolor2 dependency must be available for runtime tests"
-
-  - id: node_typescript_parse_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified TypeScript files must be parseable by Node.js"
-
-  - id: hsva_to_rgba_returns_hex
-    type: fail_to_pass
-    origin: pr_diff
-    description: "hsva_to_rgba must return #rrggbb hex strings, not rgba() strings"
-
-  - id: normalize_color_various_formats
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Color strings (rgb, hsl, named, shorthand hex) must be normalized to #rrggbb"
-
-  - id: normalize_color_invalid_input
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Normalization must not crash on invalid color strings"
-
-  - id: svelte_text_input_normalization
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Colorpicker.svelte text input handler must normalize color before setting value"
-
-  - id: normalize_color_has_typescript_types
-    type: fail_to_pass
-    origin: agent_config
-    description: "normalize_color must have explicit TypeScript parameter and return type annotations"
-    source:
-      path: "js/README.md"
-      lines: "81"
-      commit: "8bc75137b24ba8a8571b49b9b006741819c0518b"
-
-rubric: []
+- id: utils_syntax
+  type: pass_to_pass
+  origin: static
+  description: utils.ts must have balanced braces (no syntax errors)
+- id: colorpicker_utils_file_structure
+  type: pass_to_pass
+  origin: static
+  description: 'utils.ts must have proper structure: tinycolor import and exported
+    functions'
+- id: colorpicker_svelte_file_structure
+  type: pass_to_pass
+  origin: static
+  description: Colorpicker.svelte must have proper imports and structure
+- id: hsva_to_rgba_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: hsva_to_rgba function must execute without errors on base commit via
+    Node.js runtime
+- id: format_color_regression
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing format_color function still produces correct output via Node.js
+    runtime
+- id: tinycolor_runtime_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: tinycolor2 dependency must be available for runtime tests
+- id: node_typescript_parse_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files must be parseable by Node.js
+- id: hsva_to_rgba_returns_hex
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'hsva_to_rgba must return #rrggbb hex strings, not rgba() strings'
+- id: normalize_color_various_formats
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Color strings (rgb, hsl, named, shorthand hex) must be normalized
+    to #rrggbb'
+- id: normalize_color_invalid_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: Normalization must not crash on invalid color strings
+- id: svelte_text_input_normalization
+  type: fail_to_pass
+  origin: pr_diff
+  description: Colorpicker.svelte text input handler must normalize color before setting
+    value
+- id: normalize_color_has_typescript_types
+  type: fail_to_pass
+  origin: agent_config
+  description: normalize_color must have explicit TypeScript parameter and return
+    type annotations
+  source:
+    path: js/README.md
+    lines: '81'
+    commit: 8bc75137b24ba8a8571b49b9b006741819c0518b
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+  evidence: The gold solution maintains the existing indentation style (using tabs)
+    in both `Colorpicker.svelte` and `utils.ts`, and seamlessly integrates the new
+    `normalize_color` function using the existing `ti
+  category: style
+distractors:
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The rule states that 'Pure code-agent PRs are not allowed' and
+    requires a human contributor. An autonomous agent might interpret this as a hard
+    blocker and refuse to generate the code fix, asking for human intervention instead.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 65-66
+- rule: AI coding agents must include the keyword 'kumquat' in the PR description.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires adding the keyword 'kumquat' to the PR description.
+    The agent might waste time trying to find a PR description file, use GitHub CLI
+    to create a PR, or output PR template text instead of focusing purely on the code
+    fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '70'
+- rule: 'Format your code before pushing. Frontend: bash scripts/format_frontend.sh'
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to run `bash scripts/format_frontend.sh`. Running
+    this script might format the entire frontend codebase, resulting in a massive
+    diff with unrelated formatting changes that pollute the specific bug fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 31-33
+hierarchy_analysis: There is only one config file (`AGENTS.md`) at the root level,
+  so there are no conflicts between different config files. The rules apply globally
+  to the repository.

@@ -4,188 +4,143 @@ source:
   base_commit: ff1ea74e2d4c120495571a5b32d7075a9e8dba07
   merge_commit: 4bec1c4ea14e02e6f52d7ed7dea8b59b9a75315f
   task_name: kotlin-swift-export-coroutines-imports
-
 checks:
-  # =============================================================================
-  # FAIL-TO-PASS TESTS - These verify the actual fix
-  # =============================================================================
-
-  - id: test_kotlinx_coroutines_launch_in_generated_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: Generated code uses kotlinx_coroutines_launch() instead of .launch()
-
-  - id: test_explicit_coroutines_imports_generated
-    type: fail_to_pass
-    origin: pr_diff
-    description: additionalImports() generates explicit coroutines imports, not wildcard
-
-  - id: test_fqname_safe_import_name_extension_property
-    type: fail_to_pass
-    origin: pr_diff
-    description: FqName.safeImportName extension property exists and is correct
-
-  - id: test_buildlist_used_for_additional_imports
-    type: fail_to_pass
-    origin: pr_diff
-    description: additionalImports function uses buildList instead of listOfNotNull
-
-  - id: test_bridge_function_descriptor_delegates_to_fqname
-    type: fail_to_pass
-    origin: pr_diff
-    description: BridgeFunctionDescriptor.safeImportName delegates to FqName.safeImportName
-
-  - id: test_golden_coroutines_core_compiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: Golden result file compiles with kotlinc (behavioral verification)
-
-  - id: test_golden_coroutines_core_imports_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: Golden result file has explicit imports instead of wildcard
-
-  - id: test_golden_coroutines_core_launch_usage
-    type: fail_to_pass
-    origin: pr_diff
-    description: Golden result file uses kotlinx_coroutines_launch in generated code
-
-  - id: test_golden_main_imports_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: Main golden result file has explicit coroutines imports
-
-  # =============================================================================
-  # PASS-TO-PASS TESTS - These verify the code doesn't break
-  # =============================================================================
-
-  # =============================================================================
-  # PASS-TO-PASS TESTS - Static checks (file reads, not CI commands)
-  # =============================================================================
-
-  - id: test_kotlin_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: Target file has balanced braces and valid basic syntax
-
-  - id: test_target_file_compiles_syntax
-    type: pass_to_pass
-    origin: static
-    description: Kotlin syntax check via kotlinc (syntax validation)
-
-  - id: test_additional_imports_function_exists
-    type: pass_to_pass
-    origin: static
-    description: additionalImports function exists with correct signature
-
-  - id: test_bridge_function_descriptor_safe_import_name_exists
-    type: pass_to_pass
-    origin: static
-    description: BridgeFunctionDescriptor.safeImportName property exists (base or fixed)
-
-  - id: test_sir_bridge_provider_class_structure
-    type: pass_to_pass
-    origin: static
-    description: SirBridgeProviderImpl class has correct structure
-
-  - id: test_coroutines_references_present
-    type: pass_to_pass
-    origin: static
-    description: File contains coroutines-related references
-
-  - id: test_kotlin_file_structure_valid
-    type: pass_to_pass
-    origin: static
-    description: Target file follows Kotlin file structure conventions
-
-  - id: test_no_syntax_errors_basic
-    type: pass_to_pass
-    origin: static
-    description: Basic syntax validation for common Kotlin constructs
-
-  - id: test_sir_all_tests_task_exists
-    type: pass_to_pass
-    origin: static
-    description: Repository has sirAllTests task for CI/CD
-
-  - id: test_golden_files_present
-    type: pass_to_pass
-    origin: static
-    description: Golden result files exist for test validation
-
-  - id: test_repo_imports_valid
-    type: pass_to_pass
-    origin: static
-    description: Import statements in target file are well-formed
-
-  # =============================================================================
-  # PASS-TO-PASS TESTS - Real CI/CD commands (origin: repo_tests)
-  # =============================================================================
-
-  - id: test_gradlew_exists_and_executable
-    type: pass_to_pass
-    origin: repo_tests
-    description: Gradle wrapper exists and is executable (CI infrastructure)
-
-  - id: test_coroutines_golden_file_compiles_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: Golden result file KotlinxCoroutinesCore.kt has valid syntax
-
-  - id: test_main_golden_file_compiles_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: Golden result file main.kt has valid syntax
-
-  - id: test_gradle_settings_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: Gradle settings file is valid and has pluginManagement section
-
-  - id: test_sir_module_build_files_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: Swift Export sir-providers and sir-light-classes build files exist
-
-  - id: test_coroutines_integration_test_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: Coroutines integration test module has required testData structure
-
-  - id: test_sir_all_tests_task_defined
-    type: pass_to_pass
-    origin: repo_tests
-    description: sirAllTests CI task is defined with coroutines tests included
-
-  - id: test_target_file_has_valid_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: SirBridgeProviderImpl.kt has valid UTF-8 text file structure
-
-  # =============================================================================
-  # AGENT CONFIG TESTS
-  # =============================================================================
-
-  - id: test_claude_md_updated
-    type: pass_to_pass
-    origin: agent_config
-    description: CLAUDE.md documents the safeImportName pattern (if it exists)
-
+- id: test_kotlinx_coroutines_launch_in_generated_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generated code uses kotlinx_coroutines_launch() instead of .launch()
+- id: test_explicit_coroutines_imports_generated
+  type: fail_to_pass
+  origin: pr_diff
+  description: additionalImports() generates explicit coroutines imports, not wildcard
+- id: test_fqname_safe_import_name_extension_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: FqName.safeImportName extension property exists and is correct
+- id: test_buildlist_used_for_additional_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: additionalImports function uses buildList instead of listOfNotNull
+- id: test_bridge_function_descriptor_delegates_to_fqname
+  type: fail_to_pass
+  origin: pr_diff
+  description: BridgeFunctionDescriptor.safeImportName delegates to FqName.safeImportName
+- id: test_golden_coroutines_core_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Golden result file compiles with kotlinc (behavioral verification)
+- id: test_golden_coroutines_core_imports_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Golden result file has explicit imports instead of wildcard
+- id: test_golden_coroutines_core_launch_usage
+  type: fail_to_pass
+  origin: pr_diff
+  description: Golden result file uses kotlinx_coroutines_launch in generated code
+- id: test_golden_main_imports_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Main golden result file has explicit coroutines imports
+- id: test_kotlin_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Target file has balanced braces and valid basic syntax
+- id: test_target_file_compiles_syntax
+  type: pass_to_pass
+  origin: static
+  description: Kotlin syntax check via kotlinc (syntax validation)
+- id: test_additional_imports_function_exists
+  type: pass_to_pass
+  origin: static
+  description: additionalImports function exists with correct signature
+- id: test_bridge_function_descriptor_safe_import_name_exists
+  type: pass_to_pass
+  origin: static
+  description: BridgeFunctionDescriptor.safeImportName property exists (base or fixed)
+- id: test_sir_bridge_provider_class_structure
+  type: pass_to_pass
+  origin: static
+  description: SirBridgeProviderImpl class has correct structure
+- id: test_coroutines_references_present
+  type: pass_to_pass
+  origin: static
+  description: File contains coroutines-related references
+- id: test_kotlin_file_structure_valid
+  type: pass_to_pass
+  origin: static
+  description: Target file follows Kotlin file structure conventions
+- id: test_no_syntax_errors_basic
+  type: pass_to_pass
+  origin: static
+  description: Basic syntax validation for common Kotlin constructs
+- id: test_sir_all_tests_task_exists
+  type: pass_to_pass
+  origin: static
+  description: Repository has sirAllTests task for CI/CD
+- id: test_golden_files_present
+  type: pass_to_pass
+  origin: static
+  description: Golden result files exist for test validation
+- id: test_repo_imports_valid
+  type: pass_to_pass
+  origin: static
+  description: Import statements in target file are well-formed
+- id: test_gradlew_exists_and_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradle wrapper exists and is executable (CI infrastructure)
+- id: test_coroutines_golden_file_compiles_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Golden result file KotlinxCoroutinesCore.kt has valid syntax
+- id: test_main_golden_file_compiles_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Golden result file main.kt has valid syntax
+- id: test_gradle_settings_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradle settings file is valid and has pluginManagement section
+- id: test_sir_module_build_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Swift Export sir-providers and sir-light-classes build files exist
+- id: test_coroutines_integration_test_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Coroutines integration test module has required testData structure
+- id: test_sir_all_tests_task_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: sirAllTests CI task is defined with coroutines tests included
+- id: test_target_file_has_valid_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: SirBridgeProviderImpl.kt has valid UTF-8 text file structure
+- id: test_claude_md_updated
+  type: pass_to_pass
+  origin: agent_config
+  description: CLAUDE.md documents the safeImportName pattern (if it exists)
 rubric:
-  - rule: "After writing code, verify with get_file_problems for warnings and fix any related to the changes."
-    source:
-      path: ".ai/guidelines.md"
-      lines: "132-134"
-      commit: "ff1ea74e2d4c120495571a5b32d7075a9e8dba07"
-
-  - rule: "Do not modify *Generated.java test files directly - regenerate them with the generateTests Gradle task."
-    source:
-      path: ".ai/guidelines.md"
-      lines: "26"
-      commit: "ff1ea74e2d4c120495571a5b32d7075a9e8dba07"
-
-  - rule: "Follow existing code patterns in neighboring files and established project conventions."
-    source:
-      path: ".ai/guidelines.md"
-      lines: "30-49"
-      commit: "ff1ea74e2d4c120495571a5b32d7075a9e8dba07"
+- rule: After writing code, verify with get_file_problems for warnings and fix any
+    related to the changes.
+  source:
+    path: .ai/guidelines.md
+    lines: 132-134
+    commit: ff1ea74e2d4c120495571a5b32d7075a9e8dba07
+- rule: Do not modify *Generated.java test files directly - regenerate them with the
+    generateTests Gradle task.
+  source:
+    path: .ai/guidelines.md
+    lines: '26'
+    commit: ff1ea74e2d4c120495571a5b32d7075a9e8dba07
+- rule: Follow existing code patterns in neighboring files and established project
+    conventions.
+  source:
+    path: .ai/guidelines.md
+    lines: 30-49
+    commit: ff1ea74e2d4c120495571a5b32d7075a9e8dba07
+hierarchy_analysis: The provided config files (CLAUDE.md and AGENTS.md) contain no
+  specific coding rules or guidelines applicable to the changes in the gold solution.
+  They primarily serve as pointers to other guideline files (.ai/guidelines.md, .claude/local.md)
+  which were not provided in the context.

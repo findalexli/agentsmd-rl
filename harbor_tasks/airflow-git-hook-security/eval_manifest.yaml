@@ -175,3 +175,43 @@ rubric:
   reference: '- urllib.parse import should be at top of file
 
     '
+- rule: providers/ — 100+ provider packages, each with its own...
+  source:
+    path: CLAUDE.md
+    lines: 42-42
+  evidence: The gold solution correctly modifies the Git provider code in `providers/git/src/airflow/providers/git/hooks/git.py`,
+    adhering to the monorepo structure where providers are isolated in the `providers/
+  category: architecture
+distractors:
+- rule: Keep provider.yaml metadata, docs, and tests in sync.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to bump the provider version or update metadata
+    in `provider.yaml` because of the security fix, but version bumps are typically
+    handled by release managers, not in individual PRs.
+  severity: high
+  source:
+    path: providers/AGENTS.md
+    lines: 16-16
+- rule: Use `version_compat.py` patterns for cross-version compatibility.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to import `shlex` or `urllib.parse` through
+    a `version_compat.py` file to ensure cross-version compatibility, but these are
+    standard library modules that don't require compatibility wrappers.
+  severity: medium
+  source:
+    path: providers/AGENTS.md
+    lines: 12-12
+- rule: Tests live alongside the provider — mirror source paths in test directories.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add tests for the new validation logic,
+    but the gold solution focuses purely on the security patch without expanding test
+    coverage.
+  severity: medium
+  source:
+    path: providers/AGENTS.md
+    lines: 18-18
+hierarchy_analysis: The config hierarchy starts with general Airflow monorepo instructions
+  in `CLAUDE.md` and `AGENTS.md`, and narrows down to provider-specific instructions
+  in `providers/AGENTS.md`. The provider-specific instructions introduce potential
+  distractions around metadata synchronization and compatibility patterns that are
+  out of scope for a targeted security patch.

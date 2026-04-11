@@ -1,103 +1,128 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2225
-  base_commit: "2648c19e21f949812afbf6e42a42c57decbf4b94"
-  merge_commit: "29a9a1ca43c357e12c672ec04aa67cce4ca0a94e"
-
+  base_commit: 2648c19e21f949812afbf6e42a42c57decbf4b94
+  merge_commit: 29a9a1ca43c357e12c672ec04aa67cce4ca0a94e
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files must parse without errors"
-
-  - id: kv_cache_offload_config_defaults
-    type: fail_to_pass
-    origin: pr_diff
-    description: "KVCacheOffloadConfig exists with block_size=64 and cpu_bytes=1_000_000_000 defaults"
-
-  - id: enable_dbo_field_and_default
-    type: fail_to_pass
-    origin: pr_diff
-    description: "InferenceConfig has enable_dbo bool field defaulting to False"
-
-  - id: enable_dbo_in_vllm_namespace
-    type: fail_to_pass
-    origin: pr_diff
-    description: "to_vllm() forwards enable_dbo into the vLLM Namespace"
-
-  - id: disaggregated_kv_cache_offload_field
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DisaggregatedInferenceDeploymentConfig has kv_cache_offload field defaulting to None"
-
-  - id: kv_cache_offload_custom_values
-    type: fail_to_pass
-    origin: pr_diff
-    description: "KVCacheOffloadConfig accepts various valid block_size and cpu_bytes combinations"
-
-  - id: kv_cache_offload_rejects_invalid_block_size
-    type: fail_to_pass
-    origin: agent_config
-    description: "Fail early: KVCacheOffloadConfig rejects block_size < 1"
-    source:
-      path: "skills/config/SKILL.md"
-      lines: "72"
-      commit: "2648c19e21f949812afbf6e42a42c57decbf4b94"
-
-  - id: kv_cache_offload_forbids_extra_fields
-    type: fail_to_pass
-    origin: agent_config
-    description: "Fail early: KVCacheOffloadConfig rejects unknown fields (extra=forbid)"
-    source:
-      path: "skills/config/SKILL.md"
-      lines: "72"
-      commit: "2648c19e21f949812afbf6e42a42c57decbf4b94"
-
-  - id: inference_config_existing_fields
-    type: pass_to_pass
-    origin: static
-    description: "Existing InferenceConfig fields and to_vllm() still work"
-
-  - id: ruff_check_modified_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on modified files"
-
-  - id: ruff_check_configs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on configs directory"
-
-  - id: configs_import
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Configs module imports work (InferenceConfig, DisaggregatedInferenceDeploymentConfig)"
-
-  - id: ruff_format_modified_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified files"
-
-  - id: ruff_format_configs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on configs directory"
-
-  - id: ruff_check_entrypoints
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on entrypoints directory"
-
-  - id: ruff_format_entrypoints
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on entrypoints directory"
-
-  - id: pytest_unit_configs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for configs pass (test_defaults, test_toml_partial_nested_override, test_cli_overrides_defaults)"
-
-rubric: []
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: kv_cache_offload_config_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: KVCacheOffloadConfig exists with block_size=64 and cpu_bytes=1_000_000_000
+    defaults
+- id: enable_dbo_field_and_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: InferenceConfig has enable_dbo bool field defaulting to False
+- id: enable_dbo_in_vllm_namespace
+  type: fail_to_pass
+  origin: pr_diff
+  description: to_vllm() forwards enable_dbo into the vLLM Namespace
+- id: disaggregated_kv_cache_offload_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: DisaggregatedInferenceDeploymentConfig has kv_cache_offload field defaulting
+    to None
+- id: kv_cache_offload_custom_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: KVCacheOffloadConfig accepts various valid block_size and cpu_bytes
+    combinations
+- id: kv_cache_offload_rejects_invalid_block_size
+  type: fail_to_pass
+  origin: agent_config
+  description: 'Fail early: KVCacheOffloadConfig rejects block_size < 1'
+  source:
+    path: skills/config/SKILL.md
+    lines: '72'
+    commit: 2648c19e21f949812afbf6e42a42c57decbf4b94
+- id: kv_cache_offload_forbids_extra_fields
+  type: fail_to_pass
+  origin: agent_config
+  description: 'Fail early: KVCacheOffloadConfig rejects unknown fields (extra=forbid)'
+  source:
+    path: skills/config/SKILL.md
+    lines: '72'
+    commit: 2648c19e21f949812afbf6e42a42c57decbf4b94
+- id: inference_config_existing_fields
+  type: pass_to_pass
+  origin: static
+  description: Existing InferenceConfig fields and to_vllm() still work
+- id: ruff_check_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on modified files
+- id: ruff_check_configs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on configs directory
+- id: configs_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Configs module imports work (InferenceConfig, DisaggregatedInferenceDeploymentConfig)
+- id: ruff_format_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files
+- id: ruff_format_configs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on configs directory
+- id: ruff_check_entrypoints
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on entrypoints directory
+- id: ruff_format_entrypoints
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on entrypoints directory
+- id: pytest_unit_configs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for configs pass (test_defaults, test_toml_partial_nested_override,
+    test_cli_overrides_defaults)
+rubric:
+- rule: 'Targeted comments: Use targeted comments sparingly to clarify ambiguous logic.'
+  source:
+    path: AGENTS.md
+    lines: '6'
+  evidence: 'The gold solution adds a targeted docstring to `KVCacheOffloadConfig`
+    clarifying the potentially ambiguous logic that ''prefill nodes use MultiConnector...
+    Decode nodes always use NixlConnector only'', '
+  category: documentation
+- rule: 'Zen of Python: Explicit is better than implicit.'
+  source:
+    path: AGENTS.md
+    lines: 7-28
+  evidence: In `entrypoints/inference.py`, the gold solution explicitly extracts `kv_offload`,
+    `kv_offload_block_size`, and `kv_offload_cpu_bytes` into separate template variables
+    with explicit fallback values, r
+  category: style
+distractors:
+- rule: 'Skills: update skills when modifying code to keep implicit knowledge explicit.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule explicitly states 'You are responsible for keeping the
+    skills up to date whenever you or anyone else modifies the code.' An agent might
+    waste time trying to update `skills/config` or `skills/entrypoints` to document
+    the new `enable_dbo` or `kv_cache_offload` fields, but the gold solution does
+    not modify any skills files.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 37-41
+- rule: 'Testing: Write tests as plain functions with pytest fixtures.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write new pytest functions to verify the
+    new config fields or the SLURM script generation logic, but the gold solution
+    does not include any tests for these changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 43-45
+hierarchy_analysis: The configuration hierarchy is flat with only `AGENTS.md` providing
+  rules. The rules are generally high-level principles (Zen of Python) and workflow
+  instructions (Skills, Testing).

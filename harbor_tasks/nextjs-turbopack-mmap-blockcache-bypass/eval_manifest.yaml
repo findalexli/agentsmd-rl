@@ -1,77 +1,109 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92390
-  base_commit: "16dd58fa25abf87ae891628ce018114a4c333db6"
-  merge_commit: "d75f07b3518a69691d3190f055ca2d30d700c56c"
-
+  base_commit: 16dd58fa25abf87ae891628ce018114a4c333db6
+  merge_commit: d75f07b3518a69691d3190f055ca2d30d700c56c
 checks:
-  - id: test_source_file_valid
-    type: pass_to_pass
-    origin: static
-    description: "Source file exists with StaticSortedFile struct and core structure"
-
-  - id: test_verified_blocks_field
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Behavioral check: StaticSortedFile struct has verified_blocks: Box<[AtomicU64]> field for CRC bitmap"
-
-  - id: test_arc_block_cache_reader_struct
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Behavioral check: ArcBlockCacheReader struct bundles cache + verified_blocks bitmap"
-
-  - id: test_get_or_cache_block_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Behavioral check: get_or_cache_block free function is available"
-
-  - id: test_verify_checksum_once_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Behavioral check: verify_checksum_once function is available"
-
-  - id: test_block_weighter_debug_assert
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Behavioral check: BlockWeighter::weight has debug_assert"
-
-  - id: test_core_api_intact
-    type: pass_to_pass
-    origin: static
-    description: "Core types and methods (StaticSortedFile, BlockCache, verify_checksum) still exist"
-
-  - id: test_imports_include_atomic
-    type: pass_to_pass
-    origin: static
-    description: "Source file imports AtomicU64 from std::sync::atomic (added in PR)"
-
-  - id: test_repo_rust_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust syntax is valid (cargo check -p turbo-persistence passes)"
-
-  - id: test_repo_rust_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust code passes clippy lints (cargo clippy -p turbo-persistence passes)"
-
+- id: test_source_file_valid
+  type: pass_to_pass
+  origin: static
+  description: Source file exists with StaticSortedFile struct and core structure
+- id: test_verified_blocks_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Behavioral check: StaticSortedFile struct has verified_blocks: Box<[AtomicU64]>
+    field for CRC bitmap'
+- id: test_arc_block_cache_reader_struct
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Behavioral check: ArcBlockCacheReader struct bundles cache + verified_blocks
+    bitmap'
+- id: test_get_or_cache_block_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Behavioral check: get_or_cache_block free function is available'
+- id: test_verify_checksum_once_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Behavioral check: verify_checksum_once function is available'
+- id: test_block_weighter_debug_assert
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Behavioral check: BlockWeighter::weight has debug_assert'
+- id: test_core_api_intact
+  type: pass_to_pass
+  origin: static
+  description: Core types and methods (StaticSortedFile, BlockCache, verify_checksum)
+    still exist
+- id: test_imports_include_atomic
+  type: pass_to_pass
+  origin: static
+  description: Source file imports AtomicU64 from std::sync::atomic (added in PR)
+- id: test_repo_rust_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust syntax is valid (cargo check -p turbo-persistence passes)
+- id: test_repo_rust_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code passes clippy lints (cargo clippy -p turbo-persistence
+    passes)
 rubric:
-  - rule: "Read all README.md files in the directory path from repo root up to and including the target file's directory before editing. This identifies local patterns and conventions."
-    source:
-      path: "CLAUDE.md"
-      lines: "46-47"
-      commit: "16dd58fa25abf87ae891628ce018114a4c333db6"
-
-  - rule: "Use comments to explain invariants, not narrate code. Comments should explain WHY, not WHAT the code does."
-    source:
-      path: "CLAUDE.md"
-      lines: "46-47"
-      commit: "16dd58fa25abf87ae891628ce018114a4c333db6"
-
-  - rule: "For Rust code in turbopack/crates/turbo-persistence, follow the block format conventions: uncompressed blocks (header=0) bypass cache, compressed blocks use cache with CRC verification via bitmap."
-    source:
-      path: "turbopack/crates/turbo-persistence/README.md"
-      lines: "1-50"
-      commit: "16dd58fa25abf87ae891628ce018114a4c333db6"
+- rule: Read all README.md files in the directory path from repo root up to and including
+    the target file's directory before editing. This identifies local patterns and
+    conventions.
+  source:
+    path: CLAUDE.md
+    lines: 46-47
+    commit: 16dd58fa25abf87ae891628ce018114a4c333db6
+- rule: Use comments to explain invariants, not narrate code. Comments should explain
+    WHY, not WHAT the code does.
+  source:
+    path: CLAUDE.md
+    lines: 46-47
+    commit: 16dd58fa25abf87ae891628ce018114a4c333db6
+- rule: 'For Rust code in turbopack/crates/turbo-persistence, follow the block format
+    conventions: uncompressed blocks (header=0) bypass cache, compressed blocks use
+    cache with CRC verification via bitmap.'
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 1-50
+    commit: 16dd58fa25abf87ae891628ce018114a4c333db6
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run `pnpm --filter=next dev` to watch for
+    changes, but this command is for the Next.js TypeScript/JavaScript source, not
+    the Turbopack Rust crates. Running it would waste time and not provide feedback
+    on the Rust changes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 65-69
+- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start>
+    pnpm testheadless test/path/to/test.ts'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run tests using `pnpm testheadless`, but
+    this is for Next.js integration tests, whereas Turbopack Rust crates use `cargo
+    test`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-78
+- rule: 'For type errors only: Use `pnpm --filter=next types` (~10s) instead of `pnpm
+    --filter=next build` (~60s).'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run `pnpm --filter=next types` to check
+    for compilation errors, but this only checks TypeScript types, not Rust compilation
+    errors.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 82-83
+hierarchy_analysis: The config files `CLAUDE.md` and `AGENTS.md` are identical. They
+  provide guidance heavily skewed towards the TypeScript/JavaScript parts of the Next.js
+  monorepo (`packages/next`). For a PR modifying the Turbopack Rust crates (`turbopack/crates/*`),
+  many of the JS-centric build and test commands are inapplicable and could distract
+  the agent from using standard Rust tooling (`cargo`).

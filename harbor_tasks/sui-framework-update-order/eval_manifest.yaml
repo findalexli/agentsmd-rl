@@ -4,103 +4,118 @@ source:
   base_commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
   merge_commit: 6a391733c6a07cda5d3c9939ef3ee306490d16bd
   test_file: crates/sui-framework/tests/build-system-packages.rs
-
-# Programmatic checks (from test_outputs.py)
 checks:
-  - id: build_order
-    description: "Build happens before file operations when UPDATE is set"
-    type: programmatic
-    origin: behavioral
-
-  - id: update_deletion_timing
-    description: "File deletion happens after build, not before"
-    type: programmatic
-    origin: behavioral
-
-  - id: temp_dir_copy
-    description: "UPDATE copies files from temp dir to crate root"
-    type: programmatic
-    origin: behavioral
-
-  - id: existence_checks
-    description: "File deletion checks path existence first"
-    type: programmatic
-    origin: behavioral
-
-  - id: compilation
-    description: "Modified test file compiles without errors"
-    type: programmatic
-    origin: behavioral
-
-  - id: async_test_attr
-    description: "Async tests use #[tokio::test], not #[test]"
-    type: programmatic
-    origin: agent_config
-    source:
-      file: CLAUDE.md
-      lines: "56-57"
-      commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
-
-  - id: license_header
-    description: "File has required license header (for new files)"
-    type: programmatic
-    origin: agent_config
-    source:
-      file: CLAUDE.md
-      lines: "11-14"
-      commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
-
-  - id: cargo_clippy
-    description: "Code passes cargo xclippy linting"
-    type: programmatic
-    origin: agent_config
-    source:
-      file: CLAUDE.md
-      lines: "49-50"
-      commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
-
-  # Pass-to-pass tests (repo CI/CD checks)
-  - id: test_repo_cargo_check_sui_framework
-    description: "sui-framework crate passes cargo check"
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_rustfmt_check
-    description: "Code passes rustfmt formatting check"
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_cargo_check_test_build_system_packages
-    description: "Modified test file compiles with cargo check"
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_git_checks
-    description: "Git checks pass (no submodules, whitespace, case-insensitive filenames)"
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_cargo_clippy_sui_framework
-    description: "sui-framework crate passes cargo clippy linting"
-    type: pass_to_pass
-    origin: repo_tests
-
-  - id: test_repo_cargo_clippy_test_build_system_packages
-    description: "build-system-packages test passes cargo clippy linting"
-    type: pass_to_pass
-    origin: repo_tests
-
-# Rubric for LLM-judged soft criteria
+- id: build_order
+  description: Build happens before file operations when UPDATE is set
+  type: programmatic
+  origin: behavioral
+- id: update_deletion_timing
+  description: File deletion happens after build, not before
+  type: programmatic
+  origin: behavioral
+- id: temp_dir_copy
+  description: UPDATE copies files from temp dir to crate root
+  type: programmatic
+  origin: behavioral
+- id: existence_checks
+  description: File deletion checks path existence first
+  type: programmatic
+  origin: behavioral
+- id: compilation
+  description: Modified test file compiles without errors
+  type: programmatic
+  origin: behavioral
+- id: async_test_attr
+  description: 'Async tests use #[tokio::test], not #[test]'
+  type: programmatic
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 56-57
+    commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+- id: license_header
+  description: File has required license header (for new files)
+  type: programmatic
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 11-14
+    commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+- id: cargo_clippy
+  description: Code passes cargo xclippy linting
+  type: programmatic
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 49-50
+    commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+- id: test_repo_cargo_check_sui_framework
+  description: sui-framework crate passes cargo check
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_rustfmt_check
+  description: Code passes rustfmt formatting check
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_cargo_check_test_build_system_packages
+  description: Modified test file compiles with cargo check
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_git_checks
+  description: Git checks pass (no submodules, whitespace, case-insensitive filenames)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_cargo_clippy_sui_framework
+  description: sui-framework crate passes cargo clippy linting
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_cargo_clippy_test_build_system_packages
+  description: build-system-packages test passes cargo clippy linting
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
-  - criterion: "Appropriate comments for non-obvious logic"
-    description: "Comments explain WHY file operations are ordered this way, not just what they do"
-    reference:
-      file: CLAUDE.md
-      section: "Comment Writing Guidelines"
-
-  - criterion: "Clean code without lint suppressions"
-    description: "No #[allow(...)] attributes or clippy suppressions added"
-    reference:
-      file: CLAUDE.md
-      lines: "51-52"
-      commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+- criterion: Appropriate comments for non-obvious logic
+  description: Comments explain WHY file operations are ordered this way, not just
+    what they do
+  reference:
+    file: CLAUDE.md
+    section: Comment Writing Guidelines
+- criterion: Clean code without lint suppressions
+  description: 'No #[allow(...)] attributes or clippy suppressions added'
+  reference:
+    file: CLAUDE.md
+    lines: 51-52
+    commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+- rule: sui-framework/ contains Move system packages & stdlib
+  source:
+    path: CLAUDE.md
+    lines: 61-64
+  evidence: The gold solution correctly manages the build artifacts for the Move system
+    packages (compiled packages, docs, published api) by ensuring they are built to
+    a temp directory first before updating the c
+  category: architecture
+distractors:
+- rule: Use `cargo nextest --lib` to run only library tests and skip integration tests
+    for faster feedback
+  collision_type: scope_ambiguity
+  why_distracting: The file being modified (`crates/sui-framework/tests/build-system-packages.rs`)
+    is an integration test. If the agent follows the rule to use `--lib` for faster
+    feedback, the test they are trying to fix will be skipped entirely, leading to
+    false positives where the agent thinks their code works but it was never executed.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 39-40
+- rule: simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: meta_confusion
+  why_distracting: The test being modified is a standard async tokio test (`#[tokio::test]`),
+    not a simtest. An agent might get confused and try to run it using `cargo simtest`
+    or attempt to convert it to a simtest, which is unnecessary and could fail.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 28-29
+hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md` which apply
+  globally. The `AGENTS.md` defers to `CLAUDE.md` for repo defaults. There are no
+  crate-specific config files provided for `sui-framework`, so the root `CLAUDE.md`
+  rules apply directly.

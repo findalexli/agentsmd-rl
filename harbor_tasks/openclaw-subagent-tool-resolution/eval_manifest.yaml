@@ -1,181 +1,206 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 56240
-  base_commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-  merge_commit: "27188fa39f6020dd71ddb7b9006d993c06db8309"
-
+  base_commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+  merge_commit: 27188fa39f6020dd71ddb7b9006d993c06db8309
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "src/plugins/tools.ts must parse without errors (balanced braces, expected exports)"
-
-  - id: subagent_uses_active_registry
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Sub-agent tool resolution must reuse the gateway's active plugin registry instead of calling the loader directly (vitest behavioral test)"
-
-  - id: active_registry_import
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tools.ts must import getActivePluginRegistry from ./runtime.js for subagent fallback"
-
-  - id: resolve_tools_delegates_registry
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolvePluginTools must not call resolveRuntimePluginRegistry directly; must delegate through logic that checks active registry"
-
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-nocheck directives in src/plugins/"
-    source:
-      path: "CLAUDE.md"
-      lines: "146"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - id: no_unexplained_lint_suppressions
-    type: pass_to_pass
-    origin: agent_config
-    description: "No eslint-disable or oxlint-ignore without explanatory comment in src/plugins/"
-    source:
-      path: "CLAUDE.md"
-      lines: "146"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - id: no_prototype_mutation
-    type: pass_to_pass
-    origin: agent_config
-    description: "No prototype mutation in tools.ts -- use inheritance/composition"
-    source:
-      path: "CLAUDE.md"
-      lines: "153"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - id: no_mixed_static_dynamic_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No module is both statically and dynamically imported in tools.ts"
-    source:
-      path: "CLAUDE.md"
-      lines: "148"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - id: no_deep_plugin_internal_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "tools.ts must not deep-import bundled plugin internals (extensions/*/src/**)"
-    source:
-      path: "CLAUDE.md"
-      lines: "42"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - id: no_explicit_any_disable
-    type: pass_to_pass
-    origin: agent_config
-    description: "tools.ts must not disable no-explicit-any; prefer real types or unknown"
-    source:
-      path: "CLAUDE.md"
-      lines: "147"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - id: no_direct_plugin_config_reads
-    type: pass_to_pass
-    origin: agent_config
-    description: "tools.ts must not read plugins.entries.<id>.config directly"
-    source:
-      path: "src/plugins/CLAUDE.md"
-      lines: "28-31"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  # Repo CI/CD pass_to_pass gates (p2p enrichment)
-  - id: test_repo_oxlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's oxlint passes on the codebase"
-
-  - id: test_repo_plugins_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's plugin unit tests pass (81 test files, ~711 tests)"
-
-  - id: test_repo_contracts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's contracts tests pass (13 test files, ~124 tests)"
-
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's formatting check passes on tools.ts"
-
-  - id: test_repo_bundled_plugin_metadata
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's bundled plugin metadata check passes"
-
-  - id: test_repo_bundled_provider_auth
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's bundled provider auth env vars check passes"
-
-  - id: test_repo_no_conflict_markers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's no-conflict-markers check passes"
-
-  - id: test_repo_tools_optional
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's tools.optional tests pass - directly tests resolvePluginTools (optional tool resolution, active registry reuse, gateway subagent binding)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: src/plugins/tools.ts must parse without errors (balanced braces, expected
+    exports)
+- id: subagent_uses_active_registry
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sub-agent tool resolution must reuse the gateway's active plugin registry
+    instead of calling the loader directly (vitest behavioral test)
+- id: active_registry_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: tools.ts must import getActivePluginRegistry from ./runtime.js for
+    subagent fallback
+- id: resolve_tools_delegates_registry
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolvePluginTools must not call resolveRuntimePluginRegistry directly;
+    must delegate through logic that checks active registry
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck directives in src/plugins/
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- id: no_unexplained_lint_suppressions
+  type: pass_to_pass
+  origin: agent_config
+  description: No eslint-disable or oxlint-ignore without explanatory comment in src/plugins/
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- id: no_prototype_mutation
+  type: pass_to_pass
+  origin: agent_config
+  description: No prototype mutation in tools.ts -- use inheritance/composition
+  source:
+    path: CLAUDE.md
+    lines: '153'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- id: no_mixed_static_dynamic_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No module is both statically and dynamically imported in tools.ts
+  source:
+    path: CLAUDE.md
+    lines: '148'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- id: no_deep_plugin_internal_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: tools.ts must not deep-import bundled plugin internals (extensions/*/src/**)
+  source:
+    path: CLAUDE.md
+    lines: '42'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- id: no_explicit_any_disable
+  type: pass_to_pass
+  origin: agent_config
+  description: tools.ts must not disable no-explicit-any; prefer real types or unknown
+  source:
+    path: CLAUDE.md
+    lines: '147'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- id: no_direct_plugin_config_reads
+  type: pass_to_pass
+  origin: agent_config
+  description: tools.ts must not read plugins.entries.<id>.config directly
+  source:
+    path: src/plugins/CLAUDE.md
+    lines: 28-31
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- id: test_repo_oxlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint passes on the codebase
+- id: test_repo_plugins_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's plugin unit tests pass (81 test files, ~711 tests)
+- id: test_repo_contracts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's contracts tests pass (13 test files, ~124 tests)
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatting check passes on tools.ts
+- id: test_repo_bundled_plugin_metadata
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bundled plugin metadata check passes
+- id: test_repo_bundled_provider_auth
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bundled provider auth env vars check passes
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's no-conflict-markers check passes
+- id: test_repo_tools_optional
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tools.optional tests pass - directly tests resolvePluginTools
+    (optional tool resolution, active registry reuse, gateway subagent binding)
 rubric:
-  - rule: "Keep loader behavior aligned with the documented Plugin SDK and manifest contracts. Do not create private backdoors that bundled plugins can use but external plugins cannot."
-    source:
-      path: "src/plugins/CLAUDE.md"
-      lines: "23-25"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - rule: "When plugin-owned tools or provider fallbacks need core participation, keep the contract generic and honor plugin disablement plus SecretRef semantics."
-    source:
-      path: "src/plugins/CLAUDE.md"
-      lines: "32-33"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - rule: "New plugin seams are allowed, but they must be added as documented, backwards-compatible, versioned contracts."
-    source:
-      path: "CLAUDE.md"
-      lines: "43"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - rule: "Vendor-owned tools and settings belong in the owning plugin. Do not add provider-specific tool config, secret collection, or runtime enablement to core tools.* surfaces unless the tool is intentionally core-owned."
-    source:
-      path: "CLAUDE.md"
-      lines: "53"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "156"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - rule: "Keep manifest metadata, runtime registration, public SDK exports, and contract tests aligned. Do not create a hidden path around the declared plugin interfaces."
-    source:
-      path: "CLAUDE.md"
-      lines: "61"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - rule: "If a loader or registry change affects plugin authors, update the public SDK, docs, and contract tests instead of relying on incidental internals."
-    source:
-      path: "src/plugins/CLAUDE.md"
-      lines: "26-27"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
-
-  - rule: "Keep contract loading and contract tests on the dedicated bundled registry path. Do not make contract validation depend on activating providers through unrelated production resolution flows."
-    source:
-      path: "src/plugins/CLAUDE.md"
-      lines: "34-36"
-      commit: "6883f688e8da11481a5d0f91dfab4e4ba6e9f871"
+- rule: Keep loader behavior aligned with the documented Plugin SDK and manifest contracts.
+    Do not create private backdoors that bundled plugins can use but external plugins
+    cannot.
+  source:
+    path: src/plugins/CLAUDE.md
+    lines: 23-25
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- rule: When plugin-owned tools or provider fallbacks need core participation, keep
+    the contract generic and honor plugin disablement plus SecretRef semantics.
+  source:
+    path: src/plugins/CLAUDE.md
+    lines: 32-33
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- rule: New plugin seams are allowed, but they must be added as documented, backwards-compatible,
+    versioned contracts.
+  source:
+    path: CLAUDE.md
+    lines: '43'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- rule: Vendor-owned tools and settings belong in the owning plugin. Do not add provider-specific
+    tool config, secret collection, or runtime enablement to core tools.* surfaces
+    unless the tool is intentionally core-owned.
+  source:
+    path: CLAUDE.md
+    lines: '53'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '156'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- rule: Keep manifest metadata, runtime registration, public SDK exports, and contract
+    tests aligned. Do not create a hidden path around the declared plugin interfaces.
+  source:
+    path: CLAUDE.md
+    lines: '61'
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- rule: If a loader or registry change affects plugin authors, update the public SDK,
+    docs, and contract tests instead of relying on incidental internals.
+  source:
+    path: src/plugins/CLAUDE.md
+    lines: 26-27
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- rule: Keep contract loading and contract tests on the dedicated bundled registry
+    path. Do not make contract validation depend on activating providers through unrelated
+    production resolution flows.
+  source:
+    path: src/plugins/CLAUDE.md
+    lines: 34-36
+    commit: 6883f688e8da11481a5d0f91dfab4e4ba6e9f871
+- rule: 'Architecture Boundaries: `src/plugins/*` = plugin discovery, manifest validation,
+    loader, registry, and contract enforcement'
+  source:
+    path: CLAUDE.md
+    lines: 33-38
+  evidence: 'The gold solution correctly places the registry resolution logic and
+    active registry fallback within `src/plugins/tools.ts` and imports from `./runtime.js`,
+    respecting the boundary that `src/plugins` '
+  category: architecture
+distractors:
+- rule: Keep loader behavior aligned with the documented Plugin SDK and manifest contracts.
+    Do not create private backdoors that bundled plugins can use but external plugins
+    cannot.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret adding `allowGatewaySubagentBinding`
+    and bypassing the standard loader as creating a 'private backdoor'. However, this
+    is an internal core-to-core optimization (gateway to plugin loader) to fix a lifecycle
+    bug, not a backdoor for bundled plugins.
+  severity: high
+  source:
+    path: src/plugins/CLAUDE.md
+    lines: 18-20
+- rule: If a loader or registry change affects plugin authors, update the public SDK,
+    docs, and contract tests instead of relying on incidental internals.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to update `docs/plugins/sdk-overview.md` or
+    `src/plugin-sdk/*` because it is modifying the plugin registry resolution. This
+    is purely an internal lifecycle fix for sub-agents and does not affect the public
+    SDK or plugin authors.
+  severity: medium
+  source:
+    path: src/plugins/CLAUDE.md
+    lines: 21-22
+hierarchy_analysis: The root `CLAUDE.md` defines the high-level architecture boundaries,
+  while `src/plugins/CLAUDE.md` provides strict rules about the plugin loader and
+  registry contracts. The tension here is that `src/plugins/CLAUDE.md` strongly discourages
+  'incidental internals' and 'private backdoors', which an agent might misapply to
+  internal core-to-core communication (like the gateway passing `allowGatewaySubagentBinding`
+  to the plugin loader).

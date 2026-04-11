@@ -1,141 +1,164 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1091
-  base_commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
-  merge_commit: "6113c022595ac5ff538292c46060f771b486d4bc"
-
+  base_commit: 45e805ba8d274ec2c3cbb0699658449c2c6e163a
+  merge_commit: 6113c022595ac5ff538292c46060f771b486d4bc
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified file must parse without errors"
-
-  - id: weight_update_call_ordering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Weight update endpoints call pause_generation -> collective_rpc -> resume_generation in order (x4 endpoints, parametrized)"
-
-  - id: weight_update_pause_kwargs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pause_generation called with wait_for_inflight_requests=False, clear_cache=True (x4 endpoints, parametrized)"
-
-  - id: weight_update_error_resilience
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resume_generation called even when collective_rpc raises, pause called before attempt (x4 endpoints, parametrized)"
-
-  - id: pause_endpoint_uses_native_api
-    type: fail_to_pass
-    origin: pr_diff
-    description: "areal_pause_generation calls llm.pause_generation instead of abort_all_reqs"
-
-  - id: continue_endpoint_calls_resume
-    type: fail_to_pass
-    origin: pr_diff
-    description: "areal_continue_generation calls llm.resume_generation on engine client"
-
-  - id: no_monkey_patching
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No setattr(EngineCore, ...) or hook() function remains"
-
-  - id: no_abort_all_reqs_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Standalone abort_all_reqs function definition removed"
-
-  - id: removed_vllm_internals_imports
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Imports of EngineCore, EngineCoreOutput, EngineCoreOutputs, FinishReason, RequestStatus, LoRARequestStates removed"
-
-  - id: routes_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "All original API route decorator paths still declared"
-
-  - id: request_models_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Pydantic request model classes still defined"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python linting passes (ruff check)"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python formatting passes (ruff format --check)"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file has valid Python syntax"
-
-  - id: test_repo_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file has no trailing whitespace"
-
-  - id: test_repo_eof_newline
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file ends with a newline"
-
-  - id: test_repo_yaml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI workflow YAML files are syntactically valid"
-
-  - id: test_repo_pyproject_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pyproject.toml is syntactically valid"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports (from x import *)"
-    source:
-      path: "CLAUDE.md"
-      lines: "93"
-      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
-
-  - id: endpoint_functions_typed
-    type: pass_to_pass
-    origin: agent_config
-    description: "Async endpoint functions have explicit type annotations on all parameters"
-    source:
-      path: "AGENTS.md"
-      lines: "100-101"
-      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without errors
+- id: weight_update_call_ordering
+  type: fail_to_pass
+  origin: pr_diff
+  description: Weight update endpoints call pause_generation -> collective_rpc ->
+    resume_generation in order (x4 endpoints, parametrized)
+- id: weight_update_pause_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: pause_generation called with wait_for_inflight_requests=False, clear_cache=True
+    (x4 endpoints, parametrized)
+- id: weight_update_error_resilience
+  type: fail_to_pass
+  origin: pr_diff
+  description: resume_generation called even when collective_rpc raises, pause called
+    before attempt (x4 endpoints, parametrized)
+- id: pause_endpoint_uses_native_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: areal_pause_generation calls llm.pause_generation instead of abort_all_reqs
+- id: continue_endpoint_calls_resume
+  type: fail_to_pass
+  origin: pr_diff
+  description: areal_continue_generation calls llm.resume_generation on engine client
+- id: no_monkey_patching
+  type: fail_to_pass
+  origin: pr_diff
+  description: No setattr(EngineCore, ...) or hook() function remains
+- id: no_abort_all_reqs_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: Standalone abort_all_reqs function definition removed
+- id: removed_vllm_internals_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: Imports of EngineCore, EngineCoreOutput, EngineCoreOutputs, FinishReason,
+    RequestStatus, LoRARequestStates removed
+- id: routes_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: All original API route decorator paths still declared
+- id: request_models_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pydantic request model classes still defined
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes (ruff check)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python formatting passes (ruff format --check)
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file has valid Python syntax
+- id: test_repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file has no trailing whitespace
+- id: test_repo_eof_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file ends with a newline
+- id: test_repo_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI workflow YAML files are syntactically valid
+- id: test_repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml is syntactically valid
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports (from x import *)
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: 45e805ba8d274ec2c3cbb0699658449c2c6e163a
+- id: endpoint_functions_typed
+  type: pass_to_pass
+  origin: agent_config
+  description: Async endpoint functions have explicit type annotations on all parameters
+  source:
+    path: AGENTS.md
+    lines: 100-101
+    commit: 45e805ba8d274ec2c3cbb0699658449c2c6e163a
 rubric:
-  - rule: "Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name, NOT print or stdlib logging"
-    source:
-      path: "AGENTS.md"
-      lines: "88-92"
-      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
-
-  - rule: "No hardcoded secrets, paths, or endpoints"
-    source:
-      path: "AGENTS.md"
-      lines: "28-31"
-      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
-
-  - rule: "Follow existing code patterns in the same module when making changes"
-    source:
-      path: "CLAUDE.md"
-      lines: "40-42"
-      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
-
-  - rule: "Use try/finally blocks to ensure cleanup code (like resume_generation) runs even when exceptions occur"
-    source:
-      path: "AGENTS.md"
-      lines: "36-37"
-      commit: "45e805ba8d274ec2c3cbb0699658449c2c6e163a"
+- rule: Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name,
+    NOT print or stdlib logging
+  source:
+    path: AGENTS.md
+    lines: 88-92
+    commit: 45e805ba8d274ec2c3cbb0699658449c2c6e163a
+- rule: No hardcoded secrets, paths, or endpoints
+  source:
+    path: AGENTS.md
+    lines: 28-31
+    commit: 45e805ba8d274ec2c3cbb0699658449c2c6e163a
+- rule: Follow existing code patterns in the same module when making changes
+  source:
+    path: CLAUDE.md
+    lines: 40-42
+    commit: 45e805ba8d274ec2c3cbb0699658449c2c6e163a
+- rule: Use try/finally blocks to ensure cleanup code (like resume_generation) runs
+    even when exceptions occur
+  source:
+    path: AGENTS.md
+    lines: 36-37
+    commit: 45e805ba8d274ec2c3cbb0699658449c2c6e163a
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: 45-50
+  evidence: The gold solution maintains the existing endpoint structure (e.g., `async
+    def areal_update_weight`), logging statements (`logger.info`), and response formatting
+    (`return build_response(ret_list)`), on
+  category: style
+- rule: No wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 21-24
+  evidence: The gold solution does not introduce any wildcard imports when refactoring
+    the vLLM server endpoints, relying on existing specific imports.
+  category: style
+distractors:
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
+    `print` or `logging.__name__`.'
+  collision_type: architecture_boundary
+  why_distracting: The file `areal_vllm_server.py` is an extension of vLLM and uses
+    vLLM's native `init_logger("areal_vllm_server")`. If the agent tries to enforce
+    the AReaL logging rule here, it will unnecessarily refactor the logger, potentially
+    breaking vLLM's logging format expectations or creating a messy diff.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 60-62
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: This PR refactors existing endpoints to use native vLLM APIs rather
+    than adding new functionality. Furthermore, testing this requires multi-node GPU
+    hardware, so attempting to write unit tests for these distributed RPC calls would
+    likely lead to complex, fragile mocks or wasted effort.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 33-33
+hierarchy_analysis: Both CLAUDE.md and AGENTS.md provide similar high-level constraints.
+  The primary conflict arises from AReaL-specific rules (like custom logging and testing
+  requirements) clashing with the architecture boundary of a vLLM extension script.
+  The agent must recognize that `areal_vllm_server.py` bridges AReaL and vLLM, and
+  should defer to vLLM's conventions (like `vllm.logger`) where appropriate.

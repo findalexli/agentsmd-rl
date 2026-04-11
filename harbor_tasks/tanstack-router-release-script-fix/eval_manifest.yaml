@@ -2,113 +2,118 @@ source_pr:
   owner: TanStack
   repo: router
   number: 6895
-  merge_commit: "986776cd27dbab6d032d764933242936f68103f5"
-  base_commit: "ab46b5ec42296c60dc46d97481f038b8df68ed84"
-
-# Agent config rules from AGENTS.md and CONTRIBUTING.md
-# These are soft/subjective rules - included in rubric for LLM judge
+  merge_commit: 986776cd27dbab6d032d764933242936f68103f5
+  base_commit: ab46b5ec42296c60dc46d97481f038b8df68ed84
 rubric:
-  - id: "code_quality"
-    description: "Code should follow the project's style and include helpful comments"
-    criteria:
-      - "Changes include explanatory comments"
-      - "Code is clean and readable"
-      - "Variable names are descriptive (releaseLogs, currentRelease, previousRelease)"
-
-# Programmatic checks (1:1 mapping with test_outputs.py)
+- id: code_quality
+  description: Code should follow the project's style and include helpful comments
+  criteria:
+  - Changes include explanatory comments
+  - Code is clean and readable
+  - Variable names are descriptive (releaseLogs, currentRelease, previousRelease)
 checks:
-  - id: "release_logs_uses_array_parsing"
-    description: "releaseLogs parsed as array with split and filter"
-    type: "pytest"
-    origin: "agent_config"
-    source: "AGENTS.md - Code style: clean and readable code"
-
-  - id: "range_from_logic"
-    description: "rangeFrom uses currentRelease/previousRelease variables"
-    type: "pytest"
-    origin: "auto"
-
-  - id: "commit_range_uses_current_release"
-    description: "Git log range uses currentRelease instead of HEAD~1"
-    type: "pytest"
-    origin: "auto"
-
-  - id: "non_conventional_commit_uses_split"
-    description: "Non-conventional commits use split() not indexOf()"
-    type: "pytest"
-    origin: "auto"
-
-  - id: "latest_flag_conditional"
-    description: "--latest flag is conditional on isPrerelease"
-    type: "pytest"
-    origin: "auto"
-
-  - id: "prerelease_flag_unchanged"
-    description: "prereleaseFlag logic is preserved"
-    type: "pytest"
-    origin: "auto"
-
-  - id: "script_syntax_valid"
-    description: "Script has valid JavaScript syntax"
-    type: "pytest"
-    origin: "agent_config"
-    source: "AGENTS.md - Testing instructions: verify code works"
-
-  - id: "comments_explain_changes"
-    description: "Comments explain git range and commit parsing logic"
-    type: "pytest"
-    origin: "agent_config"
-    source: "AGENTS.md - Code style: include helpful comments"
-
-  - id: "conventional_commit_regex_comment"
-    description: "Comment explains conventional commit format pattern"
-    type: "pytest"
-    origin: "agent_config"
-    source: "AGENTS.md - Code style: clear documentation"
-
-  # Pass-to-Pass checks: Repo CI/CD tests
-  - id: "test_repo_script_syntax"
-    description: "Repo's release script has valid JavaScript syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source: "node --check scripts/create-github-release.mjs"
-
-  - id: "test_repo_script_formatting"
-    description: "Repo's release script follows Prettier formatting"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source: "npx prettier --check scripts/create-github-release.mjs"
-
-  - id: "test_repo_all_mjs_scripts_syntax"
-    description: "All .mjs scripts have valid JavaScript syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source: "node --check scripts/*.mjs"
-
-  - id: "test_repo_all_scripts_formatting"
-    description: "All scripts follow Prettier formatting"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source: "npx prettier --check scripts/"
-
-  - id: "test_repo_markdown_formatting"
-    description: "Markdown files follow Prettier formatting"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source: "npx prettier --check *.md"
-
-  - id: "test_repo_package_json_formatting"
-    description: "package.json follows Prettier formatting"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source: "npx prettier --check package.json"
-
-  - id: "test_repo_git_valid"
-    description: "Repo has a valid git repository with commits"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source: "git log --oneline -1"
-
+- id: release_logs_uses_array_parsing
+  description: releaseLogs parsed as array with split and filter
+  type: pytest
+  origin: agent_config
+  source: 'AGENTS.md - Code style: clean and readable code'
+- id: range_from_logic
+  description: rangeFrom uses currentRelease/previousRelease variables
+  type: pytest
+  origin: auto
+- id: commit_range_uses_current_release
+  description: Git log range uses currentRelease instead of HEAD~1
+  type: pytest
+  origin: auto
+- id: non_conventional_commit_uses_split
+  description: Non-conventional commits use split() not indexOf()
+  type: pytest
+  origin: auto
+- id: latest_flag_conditional
+  description: --latest flag is conditional on isPrerelease
+  type: pytest
+  origin: auto
+- id: prerelease_flag_unchanged
+  description: prereleaseFlag logic is preserved
+  type: pytest
+  origin: auto
+- id: script_syntax_valid
+  description: Script has valid JavaScript syntax
+  type: pytest
+  origin: agent_config
+  source: 'AGENTS.md - Testing instructions: verify code works'
+- id: comments_explain_changes
+  description: Comments explain git range and commit parsing logic
+  type: pytest
+  origin: agent_config
+  source: 'AGENTS.md - Code style: include helpful comments'
+- id: conventional_commit_regex_comment
+  description: Comment explains conventional commit format pattern
+  type: pytest
+  origin: agent_config
+  source: 'AGENTS.md - Code style: clear documentation'
+- id: test_repo_script_syntax
+  description: Repo's release script has valid JavaScript syntax
+  type: pass_to_pass
+  origin: repo_tests
+  source: node --check scripts/create-github-release.mjs
+- id: test_repo_script_formatting
+  description: Repo's release script follows Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source: npx prettier --check scripts/create-github-release.mjs
+- id: test_repo_all_mjs_scripts_syntax
+  description: All .mjs scripts have valid JavaScript syntax
+  type: pass_to_pass
+  origin: repo_tests
+  source: node --check scripts/*.mjs
+- id: test_repo_all_scripts_formatting
+  description: All scripts follow Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source: npx prettier --check scripts/
+- id: test_repo_markdown_formatting
+  description: Markdown files follow Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source: npx prettier --check *.md
+- id: test_repo_package_json_formatting
+  description: package.json follows Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source: npx prettier --check package.json
+- id: test_repo_git_valid
+  description: Repo has a valid git repository with commits
+  type: pass_to_pass
+  origin: repo_tests
+  source: git log --oneline -1
 scoring:
   max_points: 16
   points_per_check: 1
+distractors:
+- rule: TypeScript strict mode with extensive type safety
+  collision_type: scope_ambiguity
+  why_distracting: The file being edited (`scripts/create-github-release.mjs`) is
+    a standalone Node.js script used for CI releases, not part of the core library.
+    Attempting to enforce TypeScript strict mode, add type annotations, or convert
+    it to `.ts` would be out of scope and could break the CI pipeline.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-20
+- rule: 'Critical: Always run unit and type tests during development - do not proceed
+    if they fail'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time trying to find, run, or write unit/type
+    tests for this specific release script using Nx. However, this is a standalone
+    CI script without a dedicated test suite, so standard package-level testing instructions
+    do not apply.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 42-44
+hierarchy_analysis: The AGENTS.md file provides rules heavily focused on the core
+  TanStack Router packages (TypeScript, Nx, React/Solid). However, the target file
+  is a standalone `.mjs` script in the `scripts/` directory. The agent must recognize
+  that core library guidelines (like TS strict mode and Nx testing) do not apply to
+  utility scripts.

@@ -1,89 +1,106 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13004
-  base_commit: "4a4c7f3b0d6fd8009fdafc580d5852984f961db1"
-  merge_commit: "73d4065db6a75961693fad60dd26e8dbaa2a56d1"
-
+  base_commit: 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
+  merge_commit: 73d4065db6a75961693fad60dd26e8dbaa2a56d1
 checks:
-  - id: svelte_syntax
-    type: pass_to_pass
-    origin: static
-    description: "ImagePreview.svelte must have valid Svelte structure"
-
-  - id: onclick_prop_present
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FullscreenButton must receive an onclick prop"
-
-  - id: onclick_updates_state
-    type: fail_to_pass
-    origin: pr_diff
-    description: "onclick handler sets fullscreen to the value passed by FullscreenButton"
-
-  - id: onclick_dispatches_event
-    type: fail_to_pass
-    origin: pr_diff
-    description: "onclick handler dispatches a fullscreen event for parent components"
-
-  - id: no_on_fullscreen_directive
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Broken on:fullscreen event directive removed from FullscreenButton"
-
-  - id: download_link_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "DownloadLink component still rendered in template"
-
-  - id: share_button_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "ShareButton component still rendered in template"
-
-  - id: tab_indentation
-    type: pass_to_pass
-    origin: agent_config
-    description: "File uses tab indentation consistent with surrounding code"
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "4a4c7f3b0d6fd8009fdafc580d5852984f961db1"
-
-  - id: no_trailing_whitespace
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified Svelte file must not have trailing whitespace"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "4a4c7f3b0d6fd8009fdafc580d5852984f961db1"
-
-  - id: test_repo_prettier_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's frontend code must be formatted with prettier (CI gate)"
-
-  - id: test_repo_client_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's client library must build successfully (CI gate)"
-
-  - id: test_repo_client_tests_node
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's client library unit tests pass in node mode (CI gate)"
-
+- id: svelte_syntax
+  type: pass_to_pass
+  origin: static
+  description: ImagePreview.svelte must have valid Svelte structure
+- id: onclick_prop_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: FullscreenButton must receive an onclick prop
+- id: onclick_updates_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: onclick handler sets fullscreen to the value passed by FullscreenButton
+- id: onclick_dispatches_event
+  type: fail_to_pass
+  origin: pr_diff
+  description: onclick handler dispatches a fullscreen event for parent components
+- id: no_on_fullscreen_directive
+  type: fail_to_pass
+  origin: pr_diff
+  description: Broken on:fullscreen event directive removed from FullscreenButton
+- id: download_link_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: DownloadLink component still rendered in template
+- id: share_button_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: ShareButton component still rendered in template
+- id: tab_indentation
+  type: pass_to_pass
+  origin: agent_config
+  description: File uses tab indentation consistent with surrounding code
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
+- id: no_trailing_whitespace
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified Svelte file must not have trailing whitespace
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
+- id: test_repo_prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's frontend code must be formatted with prettier (CI gate)
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client library must build successfully (CI gate)
+- id: test_repo_client_tests_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client library unit tests pass in node mode (CI gate)
 rubric:
-  - rule: "Frontend code must be formatted with prettier (bash scripts/format_frontend.sh)."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "4a4c7f3b0d6fd8009fdafc580d5852984f961db1"
-
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "4a4c7f3b0d6fd8009fdafc580d5852984f961db1"
+- rule: Frontend code must be formatted with prettier (bash scripts/format_frontend.sh).
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
+distractors:
+- rule: 'Repository Structure: `gradio/components/` — all Gradio components'
+  collision_type: architecture_boundary
+  why_distracting: The issue mentions `gr.Image`, which might lead the agent to search
+    and attempt fixes in the Python backend `gradio/components/` directory. However,
+    the bug is a JavaScript error in the frontend Svelte component.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 7-8
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to run backend tests to verify the fix, but
+    the fix is purely in the frontend Svelte code. Running backend tests would waste
+    time and compute.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 34-34
+- rule: Frontend code is formatted with `prettier`. Run `bash scripts/format_frontend.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run the global frontend formatting script, which
+    could format unrelated files and create a massive diff, cluttering the PR with
+    out-of-scope changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 43-43
+hierarchy_analysis: The repository has a single AGENTS.md config file at the root
+  level. It clearly separates the backend (Python) and frontend (Svelte/JS) architectures,
+  which is crucial for agents to understand when debugging a frontend issue on a component
+  that has both Python and Svelte representations.

@@ -1,116 +1,159 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 176954
-  base_commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-  merge_commit: "687a1f415bc3b7f73acd743cdb156b27f96ab717"
-
+  base_commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+  merge_commit: 687a1f415bc3b7f73acd743cdb156b27f96ab717
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Target test file must parse without syntax errors"
-
-  - id: test_p2p_repo_ast_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo test file must have valid AST structure (CI/CD gate)"
-
-  - id: test_p2p_repo_imports_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo test file imports must be syntactically valid (CI/CD gate)"
-
-  - id: has_ignore_raw_node_tests
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Agent adds >=1 test method that references ignore_raw_node"
-
-  - id: default_raises_covered
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A test verifies GraphPickler.dumps raises by default on raw Node metadata"
-
-  - id: ignore_true_round_trip
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A test exercises ignore_raw_node=True and calls loads() for round-trip"
-
-  - id: raw_node_in_meta
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Tests inject raw Node into node.meta to trigger the feature code path"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Agent has >=2 test methods with real assertions and at least one pickler call"
-
-  - id: uses_pytorch_test_class
-    type: fail_to_pass
-    origin: agent_config
-    description: "Tests inherit from PyTorch's TestCase, not unittest.TestCase"
-    source:
-      path: "CLAUDE.md"
-      lines: "17-27"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-
-  - id: uses_assert_raises_for_errors
-    type: fail_to_pass
-    origin: agent_config
-    description: "Error test uses assertRaises/assertRaisesRegex, not bare try/except"
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "68"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-
-  - id: has_owner_label
-    type: pass_to_pass
-    origin: agent_config
-    description: "Test file has a valid # Owner(s): label (not 'module: unknown')"
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "57"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-
-  - id: has_run_tests
-    type: pass_to_pass
-    origin: agent_config
-    description: "Test file ends with 'if __name__ == \"__main__\": run_tests()'"
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "60"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target test file must parse without syntax errors
+- id: test_p2p_repo_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test file must have valid AST structure (CI/CD gate)
+- id: test_p2p_repo_imports_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test file imports must be syntactically valid (CI/CD gate)
+- id: has_ignore_raw_node_tests
+  type: fail_to_pass
+  origin: pr_diff
+  description: Agent adds >=1 test method that references ignore_raw_node
+- id: default_raises_covered
+  type: fail_to_pass
+  origin: pr_diff
+  description: A test verifies GraphPickler.dumps raises by default on raw Node metadata
+- id: ignore_true_round_trip
+  type: fail_to_pass
+  origin: pr_diff
+  description: A test exercises ignore_raw_node=True and calls loads() for round-trip
+- id: raw_node_in_meta
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tests inject raw Node into node.meta to trigger the feature code path
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Agent has >=2 test methods with real assertions and at least one pickler
+    call
+- id: uses_pytorch_test_class
+  type: fail_to_pass
+  origin: agent_config
+  description: Tests inherit from PyTorch's TestCase, not unittest.TestCase
+  source:
+    path: CLAUDE.md
+    lines: 17-27
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- id: uses_assert_raises_for_errors
+  type: fail_to_pass
+  origin: agent_config
+  description: Error test uses assertRaises/assertRaisesRegex, not bare try/except
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '68'
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- id: has_owner_label
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Test file has a valid # Owner(s): label (not ''module: unknown'')'
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '57'
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- id: has_run_tests
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Test file ends with ''if __name__ == "__main__": run_tests()'''
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '60'
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
 rubric:
-  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
-    source:
-      path: "CLAUDE.md"
-      lines: "54"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
-    source:
-      path: "CLAUDE.md"
-      lines: "57-58"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-  - rule: "Match existing code style and architectural patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "63"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-  - rule: "Test method names should be descriptive of what is being tested."
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "62"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-  - rule: "No duplicated test logic - similar tests should share a private helper method called from individual tests with different configs."
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "69"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
-  - rule: "Edge cases covered - tests include boundary conditions, empty inputs, and error cases."
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "67"
-      commit: "e931ab4802816cec55aa5a25b51f27cb941c924e"
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '54'
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  source:
+    path: CLAUDE.md
+    lines: 57-58
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: '63'
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- rule: Test method names should be descriptive of what is being tested.
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '62'
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- rule: No duplicated test logic - similar tests should share a private helper method
+    called from individual tests with different configs.
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '69'
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- rule: Edge cases covered - tests include boundary conditions, empty inputs, and
+    error cases.
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '67'
+    commit: e931ab4802816cec55aa5a25b51f27cb941c924e
+- rule: 'Use our test class and test runner: `from torch.testing._internal.common_utils
+    import run_tests, TestCase`'
+  source:
+    path: CLAUDE.md
+    lines: 16-26
+  evidence: The gold solution defines `class TestIgnoreRawNode(TestCase):`, inheriting
+    from the standard PyTorch test class as instructed.
+  category: testing
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+    Comments should be useful for non-obvious global context.
+  source:
+    path: CLAUDE.md
+    lines: 53-55
+  evidence: The gold solution uses minimal comments, relying on clear docstrings for
+    the test methods and only adding one explanatory comment (`# Store a raw Node
+    reference in meta – this is the problematic case.
+  category: style
+distractors:
+- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
+  collision_type: rule_conflict
+  why_distracting: AGENTS.md instructs the agent to use `lintrunner -a` for linting,
+    which directly conflicts with CLAUDE.md's instruction to 'Only use commands provided
+    via `spin` for linting' (lines 31-34).
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 10-10
+- rule: Use `torch._dynamo.config.patch` for temporarily changing config.
+  collision_type: would_cause_bug
+  why_distracting: The PR involves testing an `ignore_raw_node` option. An agent might
+    mistakenly assume this is a global Dynamo config and attempt to use `torch._dynamo.config.patch(ignore_raw_node=True)`,
+    which would fail because it is actually an attribute of `GraphPickler.Options`
+    passed directly to `dumps()`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 70-72
+- rule: When you are working on a bug, first create a standalone file that reproduces
+    the bug... Once the change is passing, find an appropriate test file to add the
+    test to
+  collision_type: scope_ambiguity
+  why_distracting: The user explicitly requested adding test coverage to an existing
+    file (`test/fx/test_graph_pickler.py`) for a known feature. Instructing the agent
+    to first create a standalone reproduction file wastes time and tokens on an unnecessary
+    step.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 3-7
+hierarchy_analysis: Both CLAUDE.md and AGENTS.md are at Level 0, leading to direct
+  conflicts in tooling instructions. Specifically, CLAUDE.md mandates `spin` for linting,
+  while AGENTS.md mandates `lintrunner`. Agents must navigate these conflicting root-level
+  directives.

@@ -1,131 +1,159 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19337
-  base_commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-  merge_commit: "ef7d1f7efa2e682cf0e3e322009fe84b577bbe02"
-
+  base_commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+  merge_commit: ef7d1f7efa2e682cf0e3e322009fe84b577bbe02
 checks:
-  - id: import_specifiers_relative
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Import specifiers must be relative paths (./... or ../...), not absolute"
-
-  - id: export_keys_sorted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Export keys must be sorted alphabetically for deterministic output"
-
-  - id: backslash_normalization
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Source must handle backslash-to-forward-slash normalization for Windows"
-
-  - id: all_dist_files_present
-    type: pass_to_pass
-    origin: pr_diff
-    description: "All scanned dist files appear in the generated module output"
-
-  - id: valid_module_structure
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Generated module has import statements, export default, and type: file"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Function body has >= 5 meaningful statements"
-
-  - id: const_only
-    type: pass_to_pass
-    origin: agent_config
-    description: "Function uses const only, no let/var"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - id: no_imperative_loops
-    type: pass_to_pass
-    origin: agent_config
-    description: "No for/while loops — use functional array methods"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - id: no_any_type
-    type: pass_to_pass
-    origin: agent_config
-    description: "No use of the 'any' type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - id: no_try_catch
-    type: pass_to_pass
-    origin: agent_config
-    description: "No try/catch blocks — handle errors via returns or throws"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - id: no_else_statements
-    type: pass_to_pass
-    origin: agent_config
-    description: "No else statements — prefer early returns"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-  - id: uses_bun_glob_api
-    type: pass_to_pass
-    origin: agent_config
-    description: "Function uses Bun.Glob for file scanning (prefer Bun APIs over native fs)"
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-
-
-  # [repo_tests] pass_to_pass — CI-derived gates
-  - id: test_repo_typescript_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript files must have valid syntax (bun build can parse them)"
-
-  - id: test_repo_bun_lockfile_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's bun.lock must be valid and parseable by bun"
-
-  - id: test_repo_prettier_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's code must be formatted with prettier"
-
-  - id: test_repo_bun_parse_build_ts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Bun must be able to parse the build.ts file syntax"
-
-  - id: test_repo_import_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All imports in build.ts must use valid syntax"
-
+- id: import_specifiers_relative
+  type: fail_to_pass
+  origin: pr_diff
+  description: Import specifiers must be relative paths (./... or ../...), not absolute
+- id: export_keys_sorted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Export keys must be sorted alphabetically for deterministic output
+- id: backslash_normalization
+  type: fail_to_pass
+  origin: pr_diff
+  description: Source must handle backslash-to-forward-slash normalization for Windows
+- id: all_dist_files_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: All scanned dist files appear in the generated module output
+- id: valid_module_structure
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Generated module has import statements, export default, and type:
+    file'
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Function body has >= 5 meaningful statements
+- id: const_only
+  type: pass_to_pass
+  origin: agent_config
+  description: Function uses const only, no let/var
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: no_imperative_loops
+  type: pass_to_pass
+  origin: agent_config
+  description: No for/while loops — use functional array methods
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: No use of the 'any' type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: no_try_catch
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/catch blocks — handle errors via returns or throws
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: no_else_statements
+  type: pass_to_pass
+  origin: agent_config
+  description: No else statements — prefer early returns
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: uses_bun_glob_api
+  type: pass_to_pass
+  origin: agent_config
+  description: Function uses Bun.Glob for file scanning (prefer Bun APIs over native
+    fs)
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: test_repo_typescript_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript files must have valid syntax (bun build can parse
+    them)
+- id: test_repo_bun_lockfile_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun.lock must be valid and parseable by bun
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code must be formatted with prettier
+- id: test_repo_bun_parse_build_ts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun must be able to parse the build.ts file syntax
+- id: test_repo_import_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All imports in build.ts must use valid syntax
 rubric:
-  - rule: "The solution modifies build.ts to fix Windows path issues: uses relative import specifiers, sorts export keys, and normalizes backslashes."
-    source:
-      path: "packages/opencode/script/build.ts"
-      lines: "68-90"
-      commit: "b7a06e193952a66a8efa07feb4e105f44bf7ea8b"
-    reference: |
-      const dist = path.join(appDir, "dist")
-      const files = (await Array.fromAsync(new Bun.Glob("**/*").scan({ cwd: dist })))
-        .map((file) => file.replaceAll("\\", "/"))
-        .sort()
+- rule: 'The solution modifies build.ts to fix Windows path issues: uses relative
+    import specifiers, sorts export keys, and normalizes backslashes.'
+  source:
+    path: packages/opencode/script/build.ts
+    lines: 68-90
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+  reference: "const dist = path.join(appDir, \"dist\")\nconst files = (await Array.fromAsync(new\
+    \ Bun.Glob(\"**/*\").scan({ cwd: dist })))\n  .map((file) => file.replaceAll(\"\
+    \\\\\", \"/\"))\n  .sort()\n"
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 21-32
+  evidence: The gold solution introduces new variables `dist`, `files`, `imports`,
+    `entries`, and `spec`, all of which are single words.
+  category: naming
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  source:
+    path: AGENTS.md
+    lines: 17-18
+  evidence: The gold solution uses `.map()` to transform the `files` array into `imports`
+    and `entries` arrays instead of using a `for` loop.
+  category: style
+- rule: Prefer `const` over `let`.
+  source:
+    path: AGENTS.md
+    lines: 60-61
+  evidence: The gold solution uses `const` for all new variables (`dist`, `files`,
+    `imports`, `entries`, `spec`) and avoids reassignment.
+  category: style
+distractors:
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The variables `imports` and `entries` are only used once in the
+    final return array. Inlining them would make the return statement a massive nested
+    structure, reducing readability. The gold solution explicitly extracts them for
+    clarity.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-49
+- rule: Prefer `Path.Path`, `Config`, `Clock`, and `DateTime` when those concerns
+    are already inside Effect code.
+  collision_type: architecture_boundary
+  why_distracting: The agent might see path manipulation (`path.join`, `path.relative`)
+    and try to import `Path` from `@effect/platform` or effectify the script. However,
+    this is a simple Node/Bun build script, not an Effect service.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 33-34
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and Node/Bun
+  guidelines, while `packages/opencode/AGENTS.md` introduces strict Effect rules.
+  Since this is a build script (`script/build.ts`) and not part of the core application
+  logic (`src/`), the Effect rules in the package-level config should be ignored in
+  favor of standard Node/Bun APIs.

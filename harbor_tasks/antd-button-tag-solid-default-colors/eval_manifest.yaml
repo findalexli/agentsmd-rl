@@ -1,111 +1,130 @@
-source_pr: "https://github.com/ant-design/ant-design/pull/57495"
-source_repo: "ant-design/ant-design"
-base_commit: "df5547f2ade5fe0bd9906bb9a386e7865afa4835"
-merge_commit: "8e10c284f1780a5caa0e646bd0bba9875da63573"
-task_name: "antd-button-tag-solid-default-colors"
-
-# Checks - each maps to a test in test_outputs.py
+source_pr: https://github.com/ant-design/ant-design/pull/57495
+source_repo: ant-design/ant-design
+base_commit: df5547f2ade5fe0bd9906bb9a386e7865afa4835
+merge_commit: 8e10c284f1780a5caa0e646bd0bba9875da63573
+task_name: antd-button-tag-solid-default-colors
 checks:
-  - id: test_button_solid_default_code
-    type: fail_to_pass
-    origin: behavior
-    description: "Button.tsx contains logic for variant='solid' default color"
-
-  - id: test_button_context_solid_default_code
-    type: fail_to_pass
-    origin: behavior
-    description: "Button.tsx contains logic for contextVariant='solid' default color"
-
-  - id: test_tag_solid_default_code
-    type: fail_to_pass
-    origin: behavior
-    description: "useColor.ts contains logic for nextVariant='solid' and nextColor=undefined"
-
-  - id: test_tag_uses_nextcolor_for_preset
-    type: fail_to_pass
-    origin: behavior
-    description: "useColor.ts uses nextColor for isPresetColor check"
-
-  - id: test_tag_uses_nextcolor_for_status
-    type: fail_to_pass
-    origin: behavior
-    description: "useColor.ts uses nextColor for isPresetStatusColor check"
-
-  - id: test_button_returns_primary_for_solid
-    type: fail_to_pass
-    origin: behavior
-    description: "Button.tsx returns 'primary' as default color for solid variant"
-
-  - id: test_tag_returns_default_for_solid
-    type: fail_to_pass
-    origin: behavior
-    description: "useColor.ts sets nextColor='default' for solid variant"
-
-  - id: test_repo_typescript_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes"
-
-  - id: test_button_structure_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Button component structure is preserved"
-
-  - id: test_repo_lint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint checks pass"
-
-  - id: test_repo_biome_lint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Biome lint checks pass"
-
-  - id: test_repo_button_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Button component tests pass"
-
-  - id: test_repo_tag_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Tag component tests pass"
-
-  - id: test_repo_node_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Node.js-specific tests pass"
-
-# Rubric - soft/subjective rules from agent configs
+- id: test_button_solid_default_code
+  type: fail_to_pass
+  origin: behavior
+  description: Button.tsx contains logic for variant='solid' default color
+- id: test_button_context_solid_default_code
+  type: fail_to_pass
+  origin: behavior
+  description: Button.tsx contains logic for contextVariant='solid' default color
+- id: test_tag_solid_default_code
+  type: fail_to_pass
+  origin: behavior
+  description: useColor.ts contains logic for nextVariant='solid' and nextColor=undefined
+- id: test_tag_uses_nextcolor_for_preset
+  type: fail_to_pass
+  origin: behavior
+  description: useColor.ts uses nextColor for isPresetColor check
+- id: test_tag_uses_nextcolor_for_status
+  type: fail_to_pass
+  origin: behavior
+  description: useColor.ts uses nextColor for isPresetStatusColor check
+- id: test_button_returns_primary_for_solid
+  type: fail_to_pass
+  origin: behavior
+  description: Button.tsx returns 'primary' as default color for solid variant
+- id: test_tag_returns_default_for_solid
+  type: fail_to_pass
+  origin: behavior
+  description: useColor.ts sets nextColor='default' for solid variant
+- id: test_repo_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes
+- id: test_button_structure_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Button component structure is preserved
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint checks pass
+- id: test_repo_biome_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Biome lint checks pass
+- id: test_repo_button_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Button component tests pass
+- id: test_repo_tag_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Tag component tests pass
+- id: test_repo_node_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Node.js-specific tests pass
 rubric:
-  - rule: "Follow test import convention - use relative paths in __tests__"
-    source: "CLAUDE.md:Test import specification"
-    description: "Tests should use relative imports, not absolute paths like 'antd'"
-
-  - rule: "Follow demo import convention - use absolute paths in demo/"
-    source: "CLAUDE.md:Demo import specification"
-    description: "Demo files should use absolute imports like 'antd', not relative paths"
-
-  - rule: "Follow API documentation table format"
-    source: "CLAUDE.md:API Documentation format"
-    description: "API tables should have correct columns: Property/Description/Type/Default/Version/Global Config"
-
-  - rule: "Default values should be documented in backticks"
-    source: "CLAUDE.md:API table format"
-    description: "String defaults in backticks, boolean/number as literals"
-
-  - rule: "Maintain backward compatibility"
-    source: ".github/copilot-instructions.md:React Component Guidelines"
-    description: "Changes should not break existing behavior"
-
-  - rule: "Use TypeScript with strict typing"
-    source: ".github/copilot-instructions.md:TypeScript Requirements"
-    description: "No 'any' types, use precise types and interfaces"
-
-  - rule: "Use functional components with hooks exclusively"
-    source: ".github/copilot-instructions.md:React Component Guidelines"
-    description: "No class components"
-
-  - rule: "Support ref forwarding with ComponentRef pattern"
-    source: ".github/copilot-instructions.md:React Component Guidelines"
-    description: "Components must support ref forwarding"
+- rule: Follow test import convention - use relative paths in __tests__
+  source: CLAUDE.md:Test import specification
+  description: Tests should use relative imports, not absolute paths like 'antd'
+- rule: Follow demo import convention - use absolute paths in demo/
+  source: CLAUDE.md:Demo import specification
+  description: Demo files should use absolute imports like 'antd', not relative paths
+- rule: Follow API documentation table format
+  source: CLAUDE.md:API Documentation format
+  description: 'API tables should have correct columns: Property/Description/Type/Default/Version/Global
+    Config'
+- rule: Default values should be documented in backticks
+  source: CLAUDE.md:API table format
+  description: String defaults in backticks, boolean/number as literals
+- rule: Maintain backward compatibility
+  source: .github/copilot-instructions.md:React Component Guidelines
+  description: Changes should not break existing behavior
+- rule: Use TypeScript with strict typing
+  source: .github/copilot-instructions.md:TypeScript Requirements
+  description: No 'any' types, use precise types and interfaces
+- rule: Use functional components with hooks exclusively
+  source: .github/copilot-instructions.md:React Component Guidelines
+  description: No class components
+- rule: Support ref forwarding with ComponentRef pattern
+  source: .github/copilot-instructions.md:React Component Guidelines
+  description: Components must support ref forwarding
+- rule: 使用 TypeScript 和 React 开发，采用 CSS-in-JS 架构
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: The gold solution implements the default color logic directly within the
+    React component (`Button.tsx`) and hook (`useColor.ts`) using TypeScript, returning
+    the correct token pairs (`['primary', varia
+  category: architecture
+distractors:
+- rule: Changelog 规范：必须同时提供中英文两个版本
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to update `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md`
+    to document the new default color behavior for solid variants, but the task explicitly
+    limits modifications to `Button.tsx` and `useColor.ts`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 114-118
+- rule: 文档规范：API 表格格式及默认值更新
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to update the API documentation tables
+    in `index.en-US.md` and `index.zh-CN.md` to reflect the new default color for
+    the solid variant, which is out of scope for this specific code-only task.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 48-68
+- rule: Test 导入规范
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add unit tests in the `__tests__` directory
+    to verify the new default color logic, following the test import conventions,
+    but test files are not in the list of files to modify.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 38-44
+hierarchy_analysis: The config hierarchy consists of `CLAUDE.md` and `AGENTS.md` which
+  contain identical rules. The rules primarily focus on meta-level repository maintenance
+  (docs, tests, changelogs, PRs). For this specific code-only task, these meta-rules
+  act as distractors, as the agent must recognize the narrow scope of the requested
+  fix (only modifying two source files) and ignore the broader repository guidelines
+  that would typically apply to a full PR submission.

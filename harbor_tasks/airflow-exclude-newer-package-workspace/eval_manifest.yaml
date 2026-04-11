@@ -4,131 +4,153 @@ source_pr:
   number: 64859
   merge_commit: cacc2eb8dcac7e0343f26685e00f3d5700899a69
   base_commit: fc315f3d77f4029c469ebc7d8be35983edcbfc27
-
-task_name: "airflow-exclude-newer-package-workspace"
-
-# Verification checks
+task_name: airflow-exclude-newer-package-workspace
 checks:
-  - id: test_pyproject_has_exclude_newer_package_section
-    type: fail_to_pass
-    origin: task_spec
-    description: "pyproject.toml must have [tool.uv.exclude-newer-package] section"
-
-  - id: test_pyproject_has_exclude_newer_package_pip_section
-    type: fail_to_pass
-    origin: task_spec
-    description: "pyproject.toml must have [tool.uv.pip.exclude-newer-package] section"
-
-  - id: test_exclude_newer_package_entries_exist
-    type: fail_to_pass
-    origin: task_spec
-    description: "Workspace components must have exclude-newer-package = false entries"
-
-  - id: test_exclude_newer_package_pip_entries_exist
-    type: fail_to_pass
-    origin: task_spec
-    description: "Workspace components must have exclude-newer-package = false in pip section"
-
-  - id: test_update_script_has_get_workspace_components
-    type: fail_to_pass
-    origin: task_spec
-    description: "update_airflow_pyproject_toml.py must have get_all_workspace_component_names function"
-
-  - id: test_update_script_generates_exclude_newer_entries
-    type: fail_to_pass
-    origin: task_spec
-    description: "update script must generate exclude-newer-package entries for workspace components"
-
-  - id: test_install_script_no_exclude_newer_datetime
-    type: fail_to_pass
-    origin: task_spec
-    description: "install_airflow_and_providers.py must not use datetime.now().isoformat() with --exclude-newer"
-
-  - id: test_docker_compose_has_pyproject_mount
-    type: fail_to_pass
-    origin: task_spec
-    description: "docker-compose must mount pyproject.toml for uv config access"
-
-  - id: test_ruff_format_check
-    type: pass_to_pass
-    origin: agent_config
-    source:
-      config_file: "CLAUDE.md"
-      lines: "Always format and check Python files with ruff immediately after writing or editing them"
-    description: "Python files should pass ruff format check"
-
-  - id: test_script_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python scripts should have valid syntax"
-
-  - id: test_pyproject_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pyproject.toml must be valid TOML"
-
-  - id: test_ruff_check_critical
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python files should pass ruff critical checks (E9, F63)"
-
-  - id: test_prek_scripts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All CI prek scripts have valid Python syntax"
-
-  - id: test_prek_scripts_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All CI prek scripts pass ruff format check"
-
-  - id: test_prek_scripts_ruff_critical
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All CI prek scripts pass ruff critical checks (E9, F63)"
-
-  - id: test_modified_scripts_ruff_critical
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python scripts pass ruff critical checks E9 F63"
-
-  - id: test_modified_scripts_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python scripts pass ruff format check"
-
-  - id: test_common_prek_utils_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "common_prek_utils unit tests pass"
-
-  - id: test_uv_check_pyproject_toml
-    type: pass_to_pass
-    origin: repo_tests
-    description: "uv can parse and validate pyproject.toml"
-
-# Rubric from agent configs
+- id: test_pyproject_has_exclude_newer_package_section
+  type: fail_to_pass
+  origin: task_spec
+  description: pyproject.toml must have [tool.uv.exclude-newer-package] section
+- id: test_pyproject_has_exclude_newer_package_pip_section
+  type: fail_to_pass
+  origin: task_spec
+  description: pyproject.toml must have [tool.uv.pip.exclude-newer-package] section
+- id: test_exclude_newer_package_entries_exist
+  type: fail_to_pass
+  origin: task_spec
+  description: Workspace components must have exclude-newer-package = false entries
+- id: test_exclude_newer_package_pip_entries_exist
+  type: fail_to_pass
+  origin: task_spec
+  description: Workspace components must have exclude-newer-package = false in pip
+    section
+- id: test_update_script_has_get_workspace_components
+  type: fail_to_pass
+  origin: task_spec
+  description: update_airflow_pyproject_toml.py must have get_all_workspace_component_names
+    function
+- id: test_update_script_generates_exclude_newer_entries
+  type: fail_to_pass
+  origin: task_spec
+  description: update script must generate exclude-newer-package entries for workspace
+    components
+- id: test_install_script_no_exclude_newer_datetime
+  type: fail_to_pass
+  origin: task_spec
+  description: install_airflow_and_providers.py must not use datetime.now().isoformat()
+    with --exclude-newer
+- id: test_docker_compose_has_pyproject_mount
+  type: fail_to_pass
+  origin: task_spec
+  description: docker-compose must mount pyproject.toml for uv config access
+- id: test_ruff_format_check
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    config_file: CLAUDE.md
+    lines: Always format and check Python files with ruff immediately after writing
+      or editing them
+  description: Python files should pass ruff format check
+- id: test_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python scripts should have valid syntax
+- id: test_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml must be valid TOML
+- id: test_ruff_check_critical
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python files should pass ruff critical checks (E9, F63)
+- id: test_prek_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All CI prek scripts have valid Python syntax
+- id: test_prek_scripts_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: All CI prek scripts pass ruff format check
+- id: test_prek_scripts_ruff_critical
+  type: pass_to_pass
+  origin: repo_tests
+  description: All CI prek scripts pass ruff critical checks (E9, F63)
+- id: test_modified_scripts_ruff_critical
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python scripts pass ruff critical checks E9 F63
+- id: test_modified_scripts_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python scripts pass ruff format check
+- id: test_common_prek_utils_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: common_prek_utils unit tests pass
+- id: test_uv_check_pyproject_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv can parse and validate pyproject.toml
 rubric:
-  - rule: "Always format and check Python files with ruff immediately after writing or editing them"
-    weight: 1
-    source:
-      config_file: "CLAUDE.md"
-      section: "Coding Standards"
-
-  - rule: "No assert in production code"
-    weight: 0
-    source:
-      config_file: "CLAUDE.md"
-      section: "Coding Standards"
-
-  - rule: "Imports at top of file (valid exceptions: circular imports, lazy loading, TYPE_CHECKING blocks)"
-    weight: 0
-    source:
-      config_file: "CLAUDE.md"
-      section: "Coding Standards"
-
-  - rule: "Scripts must be Python (not bash) in scripts/ci/prek/"
-    weight: 0
-    source:
-      config_file: "scripts/ci/prek/AGENTS.md"
-      section: "Adding new hooks"
+- rule: Always format and check Python files with ruff immediately after writing or
+    editing them
+  weight: 1
+  source:
+    config_file: CLAUDE.md
+    section: Coding Standards
+- rule: No assert in production code
+  weight: 0
+  source:
+    config_file: CLAUDE.md
+    section: Coding Standards
+- rule: 'Imports at top of file (valid exceptions: circular imports, lazy loading,
+    TYPE_CHECKING blocks)'
+  weight: 0
+  source:
+    config_file: CLAUDE.md
+    section: Coding Standards
+- rule: Scripts must be Python (not bash) in scripts/ci/prek/
+  weight: 0
+  source:
+    config_file: scripts/ci/prek/AGENTS.md
+    section: Adding new hooks
+- rule: Shared utilities live in `common_prek_utils.py` — always check there before
+    duplicating logic.
+  source:
+    path: scripts/ci/prek/AGENTS.md
+    lines: 7-8
+  evidence: The gold solution uses the existing `insert_documentation()` function
+    to inject the generated TOML entries between the `START_EXCLUDE_NEWER_PACKAGE`
+    and `END_EXCLUDE_NEWER_PACKAGE` markers, rather tha
+  category: tooling
+distractors:
+- rule: Never run pytest, python, or airflow commands directly on the host — always
+    use `breeze`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the `update_airflow_pyproject_toml.py`
+    script via `breeze` or `breeze shell` to regenerate the `pyproject.toml` file.
+    However, pre-commit scripts that don't explicitly require breeze (like this one)
+    are designed to be run on the host (e.g., via `prek run` or directly with `python`).
+    Forcing it through breeze could cause path resolution issues or be unnecessarily
+    complex.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 9-9
+- rule: Import and use `run_command_via_breeze_shell` from `common_prek_utils` — do
+    not shell out to `breeze` directly.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think the `update_airflow_pyproject_toml.py` script
+    needs to be executed inside Breeze and try to wrap its execution or internal logic
+    with `run_command_via_breeze_shell`. However, this script just parses and updates
+    a local TOML file and doesn't require the Breeze CI image.
+  severity: medium
+  source:
+    path: scripts/ci/prek/AGENTS.md
+    lines: 10-16
+hierarchy_analysis: The hierarchy defines general rules in `CLAUDE.md` and `AGENTS.md`
+  (Level 0) and specific pre-commit hook rules in `scripts/ci/prek/AGENTS.md` (Level
+  3). The Level 0 rule to 'Never run python directly on the host' conflicts with the
+  nature of fast, local pre-commit hooks which are designed to run on the host. The
+  Level 3 config clarifies that only *some* prek scripts require Breeze, implying
+  others run locally, which overrides the strict Level 0 prohibition for this specific
+  context.

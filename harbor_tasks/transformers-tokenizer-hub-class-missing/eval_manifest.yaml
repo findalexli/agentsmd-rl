@@ -1,93 +1,117 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44801
-  base_commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
-  merge_commit: "16a5b0936dcaae6efbc03ab1a4fd98dc324bfb9e"
-
+  base_commit: c55f65056becad6df5f7eef7ce74ac0811fdfac6
+  merge_commit: 16a5b0936dcaae6efbc03ab1a4fd98dc324bfb9e
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "tokenization_auto.py must parse without syntax errors"
-
-  - id: deepseek_v2_in_incorrect_hub_set
-    type: fail_to_pass
-    origin: pr_diff
-    description: "deepseek_v2 must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS"
-
-  - id: deepseek_v3_in_incorrect_hub_set
-    type: fail_to_pass
-    origin: pr_diff
-    description: "deepseek_v3 must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS"
-
-  - id: modernbert_in_incorrect_hub_set
-    type: fail_to_pass
-    origin: pr_diff
-    description: "modernbert must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS"
-
-  - id: new_models_resolve_in_tokenizer_mapping
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All three new model types must have entries in TOKENIZER_MAPPING_NAMES"
-
-  - id: existing_incorrect_hub_entries_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-existing entries in the override set must not be removed"
-
-  - id: core_tokenizer_mapping_entries_intact
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Core model types (bert, gpt2, etc.) still in TOKENIZER_MAPPING_NAMES"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: agent_config
-    description: "Code passes ruff format check"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: agent_config
-    description: "Code passes ruff lint check (make style runs linters)"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
-
-  - id: no_copied_from_blocks_modified
-    type: pass_to_pass
-    origin: agent_config
-    description: "'# Copied from' blocks must not be edited"
-    source:
-      path: "CLAUDE.md"
-      lines: "65"
-      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
-
-  - id: repo_sort_auto_mappings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Auto mappings must be sorted (make check-repo style gate)"
-
-  - id: repo_tokenization_auto_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Tokenization auto module imports must work (repo import check)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: tokenization_auto.py must parse without syntax errors
+- id: deepseek_v2_in_incorrect_hub_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: deepseek_v2 must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS
+- id: deepseek_v3_in_incorrect_hub_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: deepseek_v3 must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS
+- id: modernbert_in_incorrect_hub_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: modernbert must be in MODELS_WITH_INCORRECT_HUB_TOKENIZER_CLASS
+- id: new_models_resolve_in_tokenizer_mapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: All three new model types must have entries in TOKENIZER_MAPPING_NAMES
+- id: existing_incorrect_hub_entries_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing entries in the override set must not be removed
+- id: core_tokenizer_mapping_entries_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core model types (bert, gpt2, etc.) still in TOKENIZER_MAPPING_NAMES
+- id: ruff_format
+  type: pass_to_pass
+  origin: agent_config
+  description: Code passes ruff format check
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: c55f65056becad6df5f7eef7ce74ac0811fdfac6
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: Code passes ruff lint check (make style runs linters)
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: c55f65056becad6df5f7eef7ce74ac0811fdfac6
+- id: no_copied_from_blocks_modified
+  type: pass_to_pass
+  origin: agent_config
+  description: '''# Copied from'' blocks must not be edited'
+  source:
+    path: CLAUDE.md
+    lines: '65'
+    commit: c55f65056becad6df5f7eef7ce74ac0811fdfac6
+- id: repo_sort_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Auto mappings must be sorted (make check-repo style gate)
+- id: repo_tokenization_auto_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tokenization auto module imports must work (repo import check)
 rubric:
-  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`!"
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
-
-  - rule: "Bugfix PRs should be as brief as possible and minimize the size of the diff. Do not add large comments, docstrings or new functions for brief fixes."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "c55f65056becad6df5f7eef7ce74ac0811fdfac6"
+- rule: When a `modular` file is present, generated files should not be edited, as
+    changes will be overwritten by `make fix-repo`!
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: c55f65056becad6df5f7eef7ce74ac0811fdfac6
+- rule: Bugfix PRs should be as brief as possible and minimize the size of the diff.
+    Do not add large comments, docstrings or new functions for brief fixes.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: c55f65056becad6df5f7eef7ce74ac0811fdfac6
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in an isolated evaluation environment where
+    coordination evidence (issue links, maintainer approval) is inherently absent.
+    Following this rule would cause the agent to refuse to generate the patch, failing
+    the evaluation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 48-51
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+  collision_type: scope_ambiguity
+  why_distracting: The required fix is extremely small (adding three strings to a
+    set). An agent might misinterpret this as a 'tiny edit' or 'low-value busywork'
+    and refuse to implement it, even though it is a critical bug fix for loading specific
+    tokenizers.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 34-36
+- rule: 'Copies and Modular Models: Use `# Copied from` or `modular_<name>.py` to
+    manage code duplication in model-specific files.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might mistakenly believe it needs to edit model-specific
+    files (like `modular_deepseek_v2.py`) or look for `# Copied from` statements to
+    fix the tokenizer issue, whereas the correct fix belongs in the central `tokenization_auto.py`
+    registry.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 53-59
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are at the root level and contain
+  identical content. There are no conflicts between the files themselves, but their
+  heavy emphasis on PR coordination and meta-behavior strongly conflicts with the
+  isolated nature of a coding evaluation task.

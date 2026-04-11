@@ -1,86 +1,118 @@
 source_pr:
-  repo: "All-Hands-AI/OpenHands"
+  repo: All-Hands-AI/OpenHands
   pr_number: 13592
-  base_commit: "679460396315ee10ad7384c5a97d441b2844db1b"
-  merge_commit: "8a61fc824b7a18935f3b10c1a96c0156dc362494"
-
+  base_commit: 679460396315ee10ad7384c5a97d441b2844db1b
+  merge_commit: 8a61fc824b7a18935f3b10c1a96c0156dc362494
 checks:
-  # Fail-to-pass tests (behavioral changes)
-  - id: test_calculateToastDuration_null_handling
-    type: fail_to_pass
-    origin: code_behavior
-    description: calculateToastDuration must have null/undefined guard returning minDuration
-    source: frontend/src/utils/toast-duration.ts
-
-  - id: test_calculateToastDuration_various_inputs
-    type: fail_to_pass
-    origin: code_behavior
-    description: calculateToastDuration handles various null/undefined/empty inputs
-    source: frontend/src/utils/toast-duration.ts
-
-  - id: test_displayErrorToast_accepts_null
-    type: fail_to_pass
-    origin: code_behavior
-    description: displayErrorToast accepts null/undefined and provides fallback message
-    source: frontend/src/utils/custom-toast-handlers.tsx
-
-  # Pass-to-pass tests (repo quality gates - from actual CI tests)
-  - id: test_frontend_lint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend linting passes (npm run lint from .github/workflows/lint.yml)
-
-  - id: test_frontend_typecheck_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend TypeScript type checking passes (npm run typecheck)
-
-  - id: test_frontend_build_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend build succeeds (npm run build from CI)
-
-  - id: test_repo_unit_tests_toast_duration
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo unit tests for toast-duration pass (from __tests__/utils/toast-duration.test.ts)
-
-  - id: test_repo_unit_tests_custom_toast_handlers
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo unit tests for custom-toast-handlers pass (from __tests__/utils/custom-toast-handlers.test.ts)
-
-  - id: test_repo_unit_tests_modified_hooks
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo unit tests for modified hooks pass (use-handle-plan-click, use-sandbox-recovery)
-
-  - id: test_translation_completeness_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: Translation completeness check passes (from .github/workflows/lint.yml)
-
-  - id: test_make_i18n_builds
-    type: pass_to_pass
-    origin: repo_tests
-    description: i18n translation generation succeeds (npm run make-i18n from frontend build pipeline)
-
-# Agent configuration compliance (rubric for soft rules)
+- id: test_calculateToastDuration_null_handling
+  type: fail_to_pass
+  origin: code_behavior
+  description: calculateToastDuration must have null/undefined guard returning minDuration
+  source: frontend/src/utils/toast-duration.ts
+- id: test_calculateToastDuration_various_inputs
+  type: fail_to_pass
+  origin: code_behavior
+  description: calculateToastDuration handles various null/undefined/empty inputs
+  source: frontend/src/utils/toast-duration.ts
+- id: test_displayErrorToast_accepts_null
+  type: fail_to_pass
+  origin: code_behavior
+  description: displayErrorToast accepts null/undefined and provides fallback message
+  source: frontend/src/utils/custom-toast-handlers.tsx
+- id: test_frontend_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend linting passes (npm run lint from .github/workflows/lint.yml)
+- id: test_frontend_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend TypeScript type checking passes (npm run typecheck)
+- id: test_frontend_build_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend build succeeds (npm run build from CI)
+- id: test_repo_unit_tests_toast_duration
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for toast-duration pass (from __tests__/utils/toast-duration.test.ts)
+- id: test_repo_unit_tests_custom_toast_handlers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for custom-toast-handlers pass (from __tests__/utils/custom-toast-handlers.test.ts)
+- id: test_repo_unit_tests_modified_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for modified hooks pass (use-handle-plan-click, use-sandbox-recovery)
+- id: test_translation_completeness_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Translation completeness check passes (from .github/workflows/lint.yml)
+- id: test_make_i18n_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: i18n translation generation succeeds (npm run make-i18n from frontend
+    build pipeline)
 rubric:
-  - rule: "Before pushing frontend changes, run linting and build: cd frontend && npm run lint:fix && npm run build"
-    source:
-      path: "AGENTS.md"
-      lines: "21-22"
-      commit: "679460396315ee10ad7384c5a97d441b2844db1b"
-
-  - rule: "The pre-commit hooks MUST pass successfully before pushing any changes to the repository"
-    source:
-      path: "AGENTS.md"
-      lines: "24"
-      commit: "679460396315ee10ad7384c5a97d441b2844db1b"
-
-  - rule: "Use AsyncMock for async operations and MagicMock for complex objects in unit tests"
-    source:
-      path: "AGENTS.md"
-      lines: "214"
-      commit: "679460396315ee10ad7384c5a97d441b2844db1b"
+- rule: 'Before pushing frontend changes, run linting and build: cd frontend && npm
+    run lint:fix && npm run build'
+  source:
+    path: AGENTS.md
+    lines: 21-22
+    commit: 679460396315ee10ad7384c5a97d441b2844db1b
+- rule: The pre-commit hooks MUST pass successfully before pushing any changes to
+    the repository
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 679460396315ee10ad7384c5a97d441b2844db1b
+- rule: Use AsyncMock for async operations and MagicMock for complex objects in unit
+    tests
+  source:
+    path: AGENTS.md
+    lines: '214'
+    commit: 679460396315ee10ad7384c5a97d441b2844db1b
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: The gold solution updates `frontend/__tests__/hooks/use-handle-plan-click.test.tsx`
+    and `frontend/__tests__/hooks/use-sandbox-recovery.test.tsx` to mock `initReactI18next`,
+    ensuring that the new `i18n
+  category: testing
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  evidence: The gold solution correctly types the `error` and `message` parameters
+    as `string | null | undefined` and handles the null cases, which satisfies the
+    TypeScript compiler and ensures the frontend build
+  category: tooling
+distractors:
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the full application using `make build
+    && make run ...` to reproduce the toast error, which is unnecessary and time-consuming
+    since the bug is a simple null-check in a utility function that can be verified
+    via unit tests and type checking.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-14
+- rule: Store design documents, analysis, or debugging notes in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: 'The agent might create a `.pr/analysis.md` or `.pr/notes.md` to
+    document the investigation of the `TypeError: Cannot read properties of undefined`
+    error, but this is a straightforward bug fix that doesn''t require temporary PR
+    artifacts.'
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 34-44
+hierarchy_analysis: The `AGENTS.md` file provides general repository guidelines. The
+  instructions are clear, but some rules (like running the full application or creating
+  PR artifacts) are scoped for larger features or complex debugging sessions. For
+  a simple frontend utility bug fix, these broader rules can distract the agent from
+  a quick, localized fix.

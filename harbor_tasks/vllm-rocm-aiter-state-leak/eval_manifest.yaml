@@ -1,107 +1,145 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 20255
-  base_commit: "0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff"
-  merge_commit: "6cc1e7d96dab6b9c344ec87dec6dc9ab07ad5d21"
-
+  base_commit: 0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff
+  merge_commit: 6cc1e7d96dab6b9c344ec87dec6dc9ab07ad5d21
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All three modified files must parse without errors"
-
-  - id: rocm_env_setup_not_gated_on_use_rocm_aiter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AITER env-var setup runs for all ROCm cases, not just use_rocm_aiter=True"
-
-  - id: cleanup_calls_refresh_env_variables
-    type: fail_to_pass
-    origin: pr_diff
-    description: "cleanup_dist_env_and_memory calls refresh_env_variables() to reset AITER state"
-
-  - id: routing_simulator_no_direct_dict_mutation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "test_routing_strategy_integration does not directly mutate environment_variables dict"
-
-  - id: cleanup_retains_existing_calls
-    type: pass_to_pass
-    origin: pr_diff
-    description: "cleanup_dist_env_and_memory still calls disable_envs_cache() and gc.unfreeze()"
-
-  - id: aiter_env_var_names_present
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Test file still references both VLLM_ROCM_USE_AITER and VLLM_ROCM_USE_AITER_MOE"
-
-  - id: cleanup_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "cleanup_dist_env_and_memory has meaningful code, not emptied out"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass ruff linting (repo CI check)"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files have valid syntax (repo CI check)"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass ruff format check (repo CI check)"
-
-  - id: test_repo_spdx_headers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files have SPDX headers (repo CI check)"
-
-  - id: test_repo_no_forbidden_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have no forbidden imports (repo CI check)"
-
-  - id: test_repo_no_torch_cuda_calls
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files don't use forbidden torch.cuda APIs (repo CI check)"
-
-  - id: test_repo_check_init_lazy_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass root lazy imports check (repo CI check)"
-
-  - id: test_repo_check_boolean_context_manager
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass boolean context manager check (repo CI check)"
-
-  - id: test_repo_typos_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass typos check (repo CI check)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All three modified files must parse without errors
+- id: rocm_env_setup_not_gated_on_use_rocm_aiter
+  type: fail_to_pass
+  origin: pr_diff
+  description: AITER env-var setup runs for all ROCm cases, not just use_rocm_aiter=True
+- id: cleanup_calls_refresh_env_variables
+  type: fail_to_pass
+  origin: pr_diff
+  description: cleanup_dist_env_and_memory calls refresh_env_variables() to reset
+    AITER state
+- id: routing_simulator_no_direct_dict_mutation
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_routing_strategy_integration does not directly mutate environment_variables
+    dict
+- id: cleanup_retains_existing_calls
+  type: pass_to_pass
+  origin: pr_diff
+  description: cleanup_dist_env_and_memory still calls disable_envs_cache() and gc.unfreeze()
+- id: aiter_env_var_names_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: Test file still references both VLLM_ROCM_USE_AITER and VLLM_ROCM_USE_AITER_MOE
+- id: cleanup_not_stub
+  type: pass_to_pass
+  origin: static
+  description: cleanup_dist_env_and_memory has meaningful code, not emptied out
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass ruff linting (repo CI check)
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have valid syntax (repo CI check)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass ruff format check (repo CI check)
+- id: test_repo_spdx_headers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have SPDX headers (repo CI check)
+- id: test_repo_no_forbidden_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no forbidden imports (repo CI check)
+- id: test_repo_no_torch_cuda_calls
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files don't use forbidden torch.cuda APIs (repo CI check)
+- id: test_repo_check_init_lazy_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass root lazy imports check (repo CI check)
+- id: test_repo_check_boolean_context_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass boolean context manager check (repo CI check)
+- id: test_repo_typos_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass typos check (repo CI check)
 rubric:
-  - rule: "ROCmn aiter environment setup must run for all ROCm cases, not gated on use_rocm_aiter=True"
-    source:
-      path: "tests/kernels/moe/test_shared_fused_moe_routed_transform.py"
-      lines: "43-48"
-      commit: "0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff"
-
-  - rule: "cleanup_dist_env_and_memory must call refresh_env_variables() to reset AITER state"
-    source:
-      path: "vllm/distributed/parallel_state.py"
-      lines: "1905-1916"
-      commit: "0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff"
-
-  - rule: "test_routing_strategy_integration must not directly mutate environment_variables dict"
-    source:
-      path: "tests/kernels/moe/test_routing_simulator.py"
-      lines: "125-135"
-      commit: "0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff"
+- rule: ROCmn aiter environment setup must run for all ROCm cases, not gated on use_rocm_aiter=True
+  source:
+    path: tests/kernels/moe/test_shared_fused_moe_routed_transform.py
+    lines: 43-48
+    commit: 0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff
+- rule: cleanup_dist_env_and_memory must call refresh_env_variables() to reset AITER
+    state
+  source:
+    path: vllm/distributed/parallel_state.py
+    lines: 1905-1916
+    commit: 0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff
+- rule: test_routing_strategy_integration must not directly mutate environment_variables
+    dict
+  source:
+    path: tests/kernels/moe/test_routing_simulator.py
+    lines: 125-135
+    commit: 0aac2048bf3a7e60eaddf1ebcb4165ed777eb8ff
+- rule: Do not open one-off PRs for tiny edits. Mechanical cleanups are acceptable
+    only when bundled with substantive work.
+  source:
+    path: AGENTS.md
+    lines: 18-20
+  evidence: The patch addresses a complex state leak bug causing numerical differences
+    in ROCm MOE tests across multiple files, representing a substantive fix rather
+    than a mechanical cleanup or tiny edit.
+  category: testing
+distractors:
+- rule: Never use system python3 or bare pip/pip install. All Python commands must
+    go through uv and .venv/bin/python.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to install `uv`, create a virtual environment,
+    and install dependencies inside `solve.sh`. This is unnecessary for a patch script
+    and could fail or time out in the evaluation sandbox.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 34-45
+- rule: 'Run all pre-commit hooks on staged files: pre-commit run'
+  collision_type: meta_confusion
+  why_distracting: The agent might append `pre-commit run` to `solve.sh` to ensure
+    code quality, but this could fail on unrelated files or missing dependencies in
+    the isolated patch-application environment.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 65-75
+- rule: Run a specific test file (use .venv/bin/python directly...)
+  collision_type: meta_confusion
+  why_distracting: The agent might add `pytest` commands to `solve.sh` to verify the
+    fix. The evaluation framework handles test execution separately; running tests
+    in the patch script wastes time and might fail if ROCm hardware is not available
+    during the patch phase.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 56-62
+- rule: Add attribution using commit trailers such as Co-authored-by
+  collision_type: meta_confusion
+  why_distracting: The agent might try to create a git commit with the specified trailers
+    (e.g., `Co-authored-by`) instead of just applying the patch, which modifies git
+    history unnecessarily and falls outside the scope of `solve.sh`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 78-86
+hierarchy_analysis: '`CLAUDE.md` simply includes `AGENTS.md`. `AGENTS.md` provides
+  repository-wide contribution guidelines, mostly focused on human workflows (PR submission,
+  local testing, commit messages). Since the agent is tasked with writing a `solve.sh`
+  patch script for an automated evaluation, these human-centric workflow rules create
+  meta-confusion, as the agent might try to automate the human workflow (running tests,
+  linters, setting up envs) inside the patch script.'

@@ -1,76 +1,70 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35629
-  base_commit: "3e319a943cff862b8fbb8e96868f9f153a9e199d"
-  merge_commit: "699abc89cea33d5aa0b443050ae27c2fea7cb3cb"
-
+  base_commit: 3e319a943cff862b8fbb8e96868f9f153a9e199d
+  merge_commit: 699abc89cea33d5aa0b443050ae27c2fea7cb3cb
 checks:
-  - id: files_exist
-    type: pass_to_pass
-    origin: static
-    description: "All four feature flag fork files must be present"
-
-  # Repo CI/CD pass_to_pass tests
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ESLint check passes"
-
-  - id: test_repo_license
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo license check passes"
-
-  - id: test_repo_print_warnings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo print warnings check passes"
-
-  - id: test_repo_version_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo version check passes"
-
-  - id: test_repo_tests_shared
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo shared package tests pass"
-
-  - id: native_fb_dynamic_flag_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableComponentPerformanceTrack is no longer exported as __VARIANT__ in native-fb-dynamic.js"
-
-  - id: www_dynamic_flag_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableComponentPerformanceTrack is no longer exported as __VARIANT__ in www-dynamic.js"
-
-  - id: native_fb_static_true
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableComponentPerformanceTrack is statically set to true in native-fb.js with no __PROFILE__ gating"
-
-  - id: www_static_true
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableComponentPerformanceTrack is statically set to true in www.js"
-
-  - id: www_not_destructured_from_dynamic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableComponentPerformanceTrack is not destructured from the dynamic flags object in www.js"
-
-  - id: performance_issue_reporting_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "enablePerformanceIssueReporting still references enableComponentPerformanceTrack in native-fb.js"
-
+- id: files_exist
+  type: pass_to_pass
+  origin: static
+  description: All four feature flag fork files must be present
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint check passes
+- id: test_repo_license
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo license check passes
+- id: test_repo_print_warnings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo print warnings check passes
+- id: test_repo_version_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo version check passes
+- id: test_repo_tests_shared
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo shared package tests pass
+- id: native_fb_dynamic_flag_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableComponentPerformanceTrack is no longer exported as __VARIANT__
+    in native-fb-dynamic.js
+- id: www_dynamic_flag_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableComponentPerformanceTrack is no longer exported as __VARIANT__
+    in www-dynamic.js
+- id: native_fb_static_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableComponentPerformanceTrack is statically set to true in native-fb.js
+    with no __PROFILE__ gating
+- id: www_static_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableComponentPerformanceTrack is statically set to true in www.js
+- id: www_not_destructured_from_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableComponentPerformanceTrack is not destructured from the dynamic
+    flags object in www.js
+- id: performance_issue_reporting_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: enablePerformanceIssueReporting still references enableComponentPerformanceTrack
+    in native-fb.js
 rubric:
-  - rule: "New flags must be added to ALL fork files, not just the main one"
-    source:
-      path: ".claude/skills/feature-flags/SKILL.md"
-      lines: "78"
-      commit: "3e319a943cff862b8fbb8e96868f9f153a9e199d"
+- rule: New flags must be added to ALL fork files, not just the main one
+  source:
+    path: .claude/skills/feature-flags/SKILL.md
+    lines: '78'
+    commit: 3e319a943cff862b8fbb8e96868f9f153a9e199d
+hierarchy_analysis: The only configuration file provided is the root CLAUDE.md, which
+  contains a basic monorepo overview distinguishing between React core and the React
+  Compiler. There are no specific coding conventions, style guidelines, or architectural
+  rules provided in the configuration hierarchy.

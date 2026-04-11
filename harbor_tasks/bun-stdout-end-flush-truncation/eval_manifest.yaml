@@ -1,88 +1,112 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28635
-  base_commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"
-  merge_commit: "9a27ef75697d713dba18b7a9762308197014ecca"
-
+  base_commit: ba05a72939569c1a371a513c3bd64a2cab6a60ee
+  merge_commit: 9a27ef75697d713dba18b7a9762308197014ecca
 checks:
-  - id: final_sync_flush
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_final calls sink.flush() synchronously and invokes cb(null)"
-
-  - id: final_async_flush
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_final waits for async flush Promise before calling cb(null)"
-
-  - id: final_error_propagation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_final propagates flush() errors to cb(err) without crashing"
-
-  - id: existing_stream_setup
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Existing _destroy, _isStdio, and destroySoon must be preserved"
-
-  - id: no_dot_call_apply
-    type: fail_to_pass
-    origin: agent_config
-    description: "_final must use .$call/.$apply, never .call/.apply"
-    source:
-      path: "src/js/CLAUDE.md"
-      lines: "56"
-      commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"
-
-  - id: string_literal_require
-    type: pass_to_pass
-    origin: agent_config
-    description: "All require() calls must use string literals"
-    source:
-      path: "src/js/CLAUDE.md"
-      lines: "103"
-      commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"
-
-  - id: jsc_intrinsics_used
-    type: fail_to_pass
-    origin: agent_config
-    description: "_final must use $isPromise, not instanceof Promise"
-    source:
-      path: "src/js/CLAUDE.md"
-      lines: "105"
-      commit: "ba05a72939569c1a371a513c3bd64a2cab6a60ee"
-
-  - id: kwritestreamfastpath_import
-    type: pass_to_pass
-    origin: repo_ci
-    description: "kWriteStreamFastPath import must exist (required for _final implementation)"
-
-  - id: internal_fs_streams_require
-    type: pass_to_pass
-    origin: repo_ci
-    description: "ProcessObjectInternals must require internal/fs/streams module"
-
-  - id: getstdiowritestream_function
-    type: pass_to_pass
-    origin: repo_ci
-    description: "getStdioWriteStream function must exist in ProcessObjectInternals"
-
-  - id: stream_properties
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Stream setup must include required properties (fd, _type, _isStdio)"
-
-  - id: repo_oxlint
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo's oxlint passes on ProcessObjectInternals.ts"
-
-  - id: repo_prettier
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo's prettier format check passes on ProcessObjectInternals.ts"
-
-rubric: []
-
+- id: final_sync_flush
+  type: fail_to_pass
+  origin: pr_diff
+  description: _final calls sink.flush() synchronously and invokes cb(null)
+- id: final_async_flush
+  type: fail_to_pass
+  origin: pr_diff
+  description: _final waits for async flush Promise before calling cb(null)
+- id: final_error_propagation
+  type: fail_to_pass
+  origin: pr_diff
+  description: _final propagates flush() errors to cb(err) without crashing
+- id: existing_stream_setup
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing _destroy, _isStdio, and destroySoon must be preserved
+- id: no_dot_call_apply
+  type: fail_to_pass
+  origin: agent_config
+  description: _final must use .$call/.$apply, never .call/.apply
+  source:
+    path: src/js/CLAUDE.md
+    lines: '56'
+    commit: ba05a72939569c1a371a513c3bd64a2cab6a60ee
+- id: string_literal_require
+  type: pass_to_pass
+  origin: agent_config
+  description: All require() calls must use string literals
+  source:
+    path: src/js/CLAUDE.md
+    lines: '103'
+    commit: ba05a72939569c1a371a513c3bd64a2cab6a60ee
+- id: jsc_intrinsics_used
+  type: fail_to_pass
+  origin: agent_config
+  description: _final must use $isPromise, not instanceof Promise
+  source:
+    path: src/js/CLAUDE.md
+    lines: '105'
+    commit: ba05a72939569c1a371a513c3bd64a2cab6a60ee
+- id: kwritestreamfastpath_import
+  type: pass_to_pass
+  origin: repo_ci
+  description: kWriteStreamFastPath import must exist (required for _final implementation)
+- id: internal_fs_streams_require
+  type: pass_to_pass
+  origin: repo_ci
+  description: ProcessObjectInternals must require internal/fs/streams module
+- id: getstdiowritestream_function
+  type: pass_to_pass
+  origin: repo_ci
+  description: getStdioWriteStream function must exist in ProcessObjectInternals
+- id: stream_properties
+  type: pass_to_pass
+  origin: repo_ci
+  description: Stream setup must include required properties (fd, _type, _isStdio)
+- id: repo_oxlint
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo's oxlint passes on ProcessObjectInternals.ts
+- id: repo_prettier
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo's prettier format check passes on ProcessObjectInternals.ts
+rubric:
+- rule: String literal `require()` only
+  source:
+    path: src/js/CLAUDE.md
+    lines: 14-24
+  evidence: The gold solution uses `require("internal/fs/streams")` with a string
+    literal to import `kWriteStreamFastPath`.
+  category: style
+- rule: $ prefix for private APIs and JSC intrinsics
+  source:
+    path: src/js/CLAUDE.md
+    lines: 41-56
+  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check if
+    the flush result is a promise, following the convention of using `$` prefixed
+    private APIs.
+  category: style
+distractors:
+- rule: 'Validation and Errors: validate callbacks using $isCallable'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to validate the `cb` argument in `stream._final
+    = function (cb)` using `$isCallable(cb)` or `validateFunction`. However, `_final`
+    is an internal stream lifecycle method called by the Node.js stream machinery,
+    which guarantees `cb` is a function. Adding validation here is unnecessary.
+  severity: medium
+  source:
+    path: src/js/CLAUDE.md
+    lines: 58-66
+- rule: Use `.$call` and `.$apply` for callbacks to prevent tampering
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to invoke the callback using `cb.$call(undefined,
+    null)` to prevent user tampering. However, since `cb` is an internal callback
+    provided by the stream implementation (not user code), a direct call `cb(null)`
+    is safe and correct.
+  severity: low
+  source:
+    path: src/js/CLAUDE.md
+    lines: 41-53
+hierarchy_analysis: The hierarchy correctly narrows from general Zig/C++ build instructions
+  in the root `CLAUDE.md` to JS builtin specific rules in `src/js/CLAUDE.md`. The
+  JS builtin rules take precedence for this TypeScript file, dictating the use of
+  `$` intrinsics and string literal requires.

@@ -1,139 +1,169 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19404
-  base_commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
-  merge_commit: "a93374c48f724ebbc99886ac5d607a3990090b75"
-
+  base_commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+  merge_commit: a93374c48f724ebbc99886ac5d607a3990090b75
 checks:
-  - id: file_valid
-    type: pass_to_pass
-    origin: static
-    description: "message-part.tsx exists with PART_MAPPING and createSignal markers"
-
-  - id: throttle_interval_reduced
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Render pacing interval reduced from ~100ms to <=50ms"
-
-  - id: pacing_is_streaming_aware
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Pacing function accepts and uses streaming/live state"
-
-  - id: incremental_reveal
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Text revealed in small increments via position tracking, not whole-buffer dump"
-
-  - id: both_displays_use_pacing
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Both TextPartDisplay and ReasoningPartDisplay use the pacing mechanism"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "message-part.tsx is not stubbed or truncated (>=100 lines)"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: static
-    description: "Repo TypeScript files have valid syntax (balanced braces/parens/brackets)"
-    notes: "Since bun/tsgo are not available in Docker, uses structural validation"
-
-  - id: test_repo_required_imports
-    type: pass_to_pass
-    origin: static
-    description: "message-part.tsx has required SolidJS imports for pacing implementation"
-
-  - id: test_repo_part_mapping_structure
-    type: pass_to_pass
-    origin: static
-    description: "PART_MAPPING object has valid structure with text and reasoning keys"
-
-  - id: test_repo_tsx_valid_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Repo TSX files have valid JSX structure (balanced expressions, valid TS constructs)"
-    notes: "CI typecheck equivalent: verifies JSX expression balance and TS keywords"
-
-  - id: test_repo_lint_basic
-    type: pass_to_pass
-    origin: static
-    description: "Basic lint checks pass (no trailing whitespace, consistent indentation)"
-    notes: "CI lint equivalent: checks code style rules"
-
-  - id: test_repo_imports_resolve
-    type: pass_to_pass
-    origin: static
-    description: "All imports in message-part.tsx use valid, resolvable path patterns"
-    notes: "CI build equivalent: verifies imports use known patterns"
-
-  - id: test_repo_component_signatures
-    type: pass_to_pass
-    origin: static
-    description: "Component functions have valid TypeScript signatures with props parameter"
-    notes: "CI typecheck equivalent: verifies component function structure"
-
-  - id: no_any_type
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed code must not introduce any type annotations"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
-
-  - id: no_try_catch
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed code must avoid try/catch blocks"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
-
-  - id: no_else_blocks
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed code must avoid else statements, prefer early returns"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
-
-  - id: no_multiple_create_signals
-    type: pass_to_pass
-    origin: agent_config
-    description: "Pacing function must not use multiple createSignal calls; prefer createStore for multiple signals"
-    source:
-      path: "packages/app/AGENTS.md"
-      lines: "15"
-      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
-
+- id: file_valid
+  type: pass_to_pass
+  origin: static
+  description: message-part.tsx exists with PART_MAPPING and createSignal markers
+- id: throttle_interval_reduced
+  type: fail_to_pass
+  origin: pr_diff
+  description: Render pacing interval reduced from ~100ms to <=50ms
+- id: pacing_is_streaming_aware
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pacing function accepts and uses streaming/live state
+- id: incremental_reveal
+  type: fail_to_pass
+  origin: pr_diff
+  description: Text revealed in small increments via position tracking, not whole-buffer
+    dump
+- id: both_displays_use_pacing
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both TextPartDisplay and ReasoningPartDisplay use the pacing mechanism
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: message-part.tsx is not stubbed or truncated (>=100 lines)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: static
+  description: Repo TypeScript files have valid syntax (balanced braces/parens/brackets)
+  notes: Since bun/tsgo are not available in Docker, uses structural validation
+- id: test_repo_required_imports
+  type: pass_to_pass
+  origin: static
+  description: message-part.tsx has required SolidJS imports for pacing implementation
+- id: test_repo_part_mapping_structure
+  type: pass_to_pass
+  origin: static
+  description: PART_MAPPING object has valid structure with text and reasoning keys
+- id: test_repo_tsx_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: Repo TSX files have valid JSX structure (balanced expressions, valid
+    TS constructs)
+  notes: 'CI typecheck equivalent: verifies JSX expression balance and TS keywords'
+- id: test_repo_lint_basic
+  type: pass_to_pass
+  origin: static
+  description: Basic lint checks pass (no trailing whitespace, consistent indentation)
+  notes: 'CI lint equivalent: checks code style rules'
+- id: test_repo_imports_resolve
+  type: pass_to_pass
+  origin: static
+  description: All imports in message-part.tsx use valid, resolvable path patterns
+  notes: 'CI build equivalent: verifies imports use known patterns'
+- id: test_repo_component_signatures
+  type: pass_to_pass
+  origin: static
+  description: Component functions have valid TypeScript signatures with props parameter
+  notes: 'CI typecheck equivalent: verifies component function structure'
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed code must not introduce any type annotations
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- id: no_try_catch
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed code must avoid try/catch blocks
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- id: no_else_blocks
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed code must avoid else statements, prefer early returns
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- id: no_multiple_create_signals
+  type: pass_to_pass
+  origin: agent_config
+  description: Pacing function must not use multiple createSignal calls; prefer createStore
+    for multiple signals
+  source:
+    path: packages/app/AGENTS.md
+    lines: '15'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
 rubric:
-  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
-    source:
-      path: "AGENTS.md"
-      lines: "21-32"
-      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
-
-  - rule: "Prefer const over let. Use ternaries or early returns instead of reassignment."
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5"
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: 21-32
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- rule: Prefer const over let. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 22-34
+  evidence: The gold solution introduces helper functions `step`, `next`, `clear`,
+    `sync`, `run` and variables `shown`, `live`, `end`, `max`, `size`, all of which
+    strictly adhere to the single-word naming constra
+  category: naming
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 65-75
+  evidence: In `run` and `createEffect`, the gold solution uses multiple `if (...)
+    { ...; return }` statements to handle edge cases (like `!live?.()` or text shrinking)
+    instead of using `if/else` blocks.
+  category: style
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary
+  source:
+    path: AGENTS.md
+    lines: 16-16
+  evidence: Variables like `shown` and `end` are declared without explicit type annotations
+    (`let shown = getValue()`), relying on inference from the assigned values.
+  category: style
+distractors:
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  collision_type: rule_conflict
+  why_distracting: The `next` function uses a `for` loop to scan ahead in the string
+    for a snap point (`for (let i = end; i < max; i++)`). An agent strictly following
+    this rule might try to convert the string to an array and use `.findIndex()`,
+    which would create unnecessary allocations and overhead in a hot rendering path.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 17-17
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  collision_type: rule_conflict
+  why_distracting: The pacing logic inherently requires mutable state across asynchronous
+    callbacks and reactive effects (`let shown`, `let timeout`). An agent trying to
+    avoid `let` and reassignment might attempt to use complex recursive functional
+    patterns or unnecessary SolidJS signals, complicating the implementation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 54-63
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present, so there are no
+  inter-file conflicts. The rules are applied globally across the repository.

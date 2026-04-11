@@ -1,90 +1,95 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12940
-  base_commit: "c4986883b267570d76b442899c6fc09d14e3e222"
-  merge_commit: "d610464e0eff5f200543c6bbc5fac616b1620b1e"
-
+  base_commit: c4986883b267570d76b442899c6fc09d14e3e222
+  merge_commit: d610464e0eff5f200543c6bbc5fac616b1620b1e
 checks:
-  - id: utils_syntax
-    type: pass_to_pass
-    origin: static
-    description: "gradio/utils.py must parse without syntax errors"
-
-  - id: skills_syntax
-    type: pass_to_pass
-    origin: static
-    description: "gradio/cli/commands/skills.py must parse without syntax errors"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Rep's ruff lint check passes on modified files (utils.py, skills.py)"
-
-  - id: watchfn_no_future_annotations_flag
-    type: fail_to_pass
-    origin: pr_diff
-    description: "watchfn code object must not carry CO_FUTURE_ANNOTATIONS flag"
-
-  - id: annotated_class_hints_resolve
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Annotated class type hints resolve after exec with watchfn's compile flags"
-
-  - id: annotations_not_stringified_after_exec
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Function annotations are real type objects, not strings, after exec with watchfn's flags"
-
-  - id: forward_refs_are_quoted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Forward-reference annotations (App, Blocks, etc.) must be string literals after removing from __future__ import annotations"
-
-  - id: utils_compiles_cleanly
-    type: pass_to_pass
-    origin: pr_diff
-    description: "gradio/utils.py compiles without syntax errors after annotation changes"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "utils.py retains full implementation (watchfn, BaseReloader, safe_join present)"
-
-  - id: test_repo_reload_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's reload tests pass (test/test_reload.py)"
-
-  - id: test_repo_type_hints_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's type hints tests pass (test/test_utils.py::TestGetTypeHints)"
-
-  - id: test_repo_imports_cleanly
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's main module imports without errors"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified files (utils.py, skills.py)"
-
-  - id: test_repo_utils_abspath
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's utils abspath tests pass (test/test_utils.py::TestAbspath)"
-
-  - id: test_repo_utils_validate_url
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's utils URL validation tests pass (test/test_utils.py::TestValidateURL)"
-
+- id: utils_syntax
+  type: pass_to_pass
+  origin: static
+  description: gradio/utils.py must parse without syntax errors
+- id: skills_syntax
+  type: pass_to_pass
+  origin: static
+  description: gradio/cli/commands/skills.py must parse without syntax errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rep's ruff lint check passes on modified files (utils.py, skills.py)
+- id: watchfn_no_future_annotations_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: watchfn code object must not carry CO_FUTURE_ANNOTATIONS flag
+- id: annotated_class_hints_resolve
+  type: fail_to_pass
+  origin: pr_diff
+  description: Annotated class type hints resolve after exec with watchfn's compile
+    flags
+- id: annotations_not_stringified_after_exec
+  type: fail_to_pass
+  origin: pr_diff
+  description: Function annotations are real type objects, not strings, after exec
+    with watchfn's flags
+- id: forward_refs_are_quoted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Forward-reference annotations (App, Blocks, etc.) must be string literals
+    after removing from __future__ import annotations
+- id: utils_compiles_cleanly
+  type: pass_to_pass
+  origin: pr_diff
+  description: gradio/utils.py compiles without syntax errors after annotation changes
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: utils.py retains full implementation (watchfn, BaseReloader, safe_join
+    present)
+- id: test_repo_reload_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's reload tests pass (test/test_reload.py)
+- id: test_repo_type_hints_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type hints tests pass (test/test_utils.py::TestGetTypeHints)
+- id: test_repo_imports_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's main module imports without errors
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files (utils.py, skills.py)
+- id: test_repo_utils_abspath
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils abspath tests pass (test/test_utils.py::TestAbspath)
+- id: test_repo_utils_validate_url
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils URL validation tests pass (test/test_utils.py::TestValidateURL)
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "c4986883b267570d76b442899c6fc09d14e3e222"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: c4986883b267570d76b442899c6fc09d14e3e222
+distractors:
+- rule: Python code is formatted with `ruff`.
+  collision_type: would_cause_bug
+  why_distracting: The rule specifies that Python code is formatted with `ruff`. Modern
+    Python formatting and linting rules (which `ruff` often enforces) typically encourage
+    using `from __future__ import annotations` to avoid manual stringified forward
+    references. An agent might be tempted to re-add the import to satisfy modern typing
+    conventions or run a formatter that auto-fixes it, which would reintroduce the
+    exact bug this PR is trying to fix (stringifying annotations in exec'd user code
+    during hot reload).
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 36-36
+hierarchy_analysis: Only a single root-level config file (`AGENTS.md`) is present,
+  so there are no hierarchical conflicts. The primary challenge is balancing the general
+  instruction to use `ruff` for formatting against the specific technical requirement
+  to avoid `from __future__ import annotations` in this particular file.

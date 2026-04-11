@@ -1,103 +1,119 @@
 manifest_version: 1.0
-
 task:
-  name: "sui-remove-simple-deserialize"
-  title: "Remove unused simple_deserialize methods from Move core types"
-  description: |
-    Remove unused simple_deserialize methods from move-core-types crate.
-    The event.rs file already uses BoundedVisitor::deserialize_value (fixed in previous PR).
-    This PR completes the cleanup by removing the now-unused methods.
-  source_pr:
-    url: "https://github.com/MystenLabs/sui/pull/26160"
-    number: 26160
-    merge_commit: "3a3ac018177cf71cef28be3f21957b74c6bc45be"
-    base_commit: "53de0108098a9c041edc28ce4083f8dc9436a4d3"
+  name: sui-remove-simple-deserialize
+  title: Remove unused simple_deserialize methods from Move core types
+  description: 'Remove unused simple_deserialize methods from move-core-types crate.
 
+    The event.rs file already uses BoundedVisitor::deserialize_value (fixed in previous
+    PR).
+
+    This PR completes the cleanup by removing the now-unused methods.
+
+    '
+  source_pr:
+    url: https://github.com/MystenLabs/sui/pull/26160
+    number: 26160
+    merge_commit: 3a3ac018177cf71cef28be3f21957b74c6bc45be
+    base_commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
 files:
   target:
-    - "external-crates/move/crates/move-core-types/src/annotated_value.rs"
-    - "external-crates/move/crates/move-core-types/src/runtime_value.rs"
+  - external-crates/move/crates/move-core-types/src/annotated_value.rs
+  - external-crates/move/crates/move-core-types/src/runtime_value.rs
   test:
-    - "external-crates/move/crates/move-core-types/src/unit_tests/value_test.rs"
-
+  - external-crates/move/crates/move-core-types/src/unit_tests/value_test.rs
 checks:
-  # Fail-to-pass tests (behavioral changes)
-  - id: test_move_value_simple_deserialize_removed
-    type: fail_to_pass
-    origin: behavioral
-    description: "MoveValue::simple_deserialize method should be removed from annotated_value.rs"
-
-  - id: test_move_struct_simple_deserialize_removed
-    type: fail_to_pass
-    origin: behavioral
-    description: "MoveStruct::simple_deserialize method should be removed from annotated_value.rs"
-
-  - id: test_move_variant_simple_deserialize_removed
-    type: fail_to_pass
-    origin: behavioral
-    description: "MoveVariant::simple_deserialize method should be removed from annotated_value.rs"
-
-  - id: test_runtime_struct_simple_deserialize_removed
-    type: fail_to_pass
-    origin: behavioral
-    description: "MoveStruct::simple_deserialize method should be removed from runtime_value.rs"
-
-  - id: test_runtime_variant_simple_deserialize_removed
-    type: fail_to_pass
-    origin: behavioral
-    description: "MoveVariant::simple_deserialize method should be removed from runtime_value.rs"
-
-  - id: test_anyhow_result_not_imported
-    type: fail_to_pass
-    origin: behavioral
-    description: "anyhow::Result as AResult import should be removed from annotated_value.rs"
-
-  # Pass-to-pass tests (regression tests)
-  - id: test_event_rs_uses_bounded_visitor
-    type: pass_to_pass
-    origin: repo_tests
-    description: "event.rs should use BoundedVisitor::deserialize_value (already fixed at base)"
-
-  - id: test_cargo_check_move_core_types
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo check should pass on move-core-types crate after changes"
-
-  - id: test_value_tests_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo check --tests should pass on move-core-types after changes"
-
-  - id: test_move_core_types_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo clippy should pass on move-core-types (repo CI check)"
-
-  - id: test_move_core_types_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo test --lib should pass on move-core-types (repo CI check)"
-
-  - id: test_move_core_types_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo build --all-targets should pass on move-core-types (repo CI check)"
-
+- id: test_move_value_simple_deserialize_removed
+  type: fail_to_pass
+  origin: behavioral
+  description: MoveValue::simple_deserialize method should be removed from annotated_value.rs
+- id: test_move_struct_simple_deserialize_removed
+  type: fail_to_pass
+  origin: behavioral
+  description: MoveStruct::simple_deserialize method should be removed from annotated_value.rs
+- id: test_move_variant_simple_deserialize_removed
+  type: fail_to_pass
+  origin: behavioral
+  description: MoveVariant::simple_deserialize method should be removed from annotated_value.rs
+- id: test_runtime_struct_simple_deserialize_removed
+  type: fail_to_pass
+  origin: behavioral
+  description: MoveStruct::simple_deserialize method should be removed from runtime_value.rs
+- id: test_runtime_variant_simple_deserialize_removed
+  type: fail_to_pass
+  origin: behavioral
+  description: MoveVariant::simple_deserialize method should be removed from runtime_value.rs
+- id: test_anyhow_result_not_imported
+  type: fail_to_pass
+  origin: behavioral
+  description: anyhow::Result as AResult import should be removed from annotated_value.rs
+- id: test_event_rs_uses_bounded_visitor
+  type: pass_to_pass
+  origin: repo_tests
+  description: event.rs should use BoundedVisitor::deserialize_value (already fixed
+    at base)
+- id: test_cargo_check_move_core_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check should pass on move-core-types crate after changes
+- id: test_value_tests_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check --tests should pass on move-core-types after changes
+- id: test_move_core_types_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo clippy should pass on move-core-types (repo CI check)
+- id: test_move_core_types_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo test --lib should pass on move-core-types (repo CI check)
+- id: test_move_core_types_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo build --all-targets should pass on move-core-types (repo CI check)
 rubric:
-  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead. When removing unused code, delete it completely rather than suppressing warnings."
-    source:
-      path: "CLAUDE.md"
-      lines: "117"
-      commit: "53de0108098a9c041edc28ce4083f8dc9436a4d3"
-
-  - rule: "ALWAYS run cargo xclippy after finishing development to ensure code passes all linting checks. Code cleanup changes must not introduce new clippy warnings."
-    source:
-      path: "CLAUDE.md"
-      lines: "115"
-      commit: "53de0108098a9c041edc28ce4083f8dc9436a4d3"
-
-  - rule: "Use #[cfg(test)] for test-only code used within the same crate. When modifying tests alongside code changes, ensure the test code follows the same quality standards as production code."
-    source:
-      path: "CLAUDE.md"
-      lines: "104-106"
-      commit: "53de0108098a9c041edc28ce4083f8dc9436a4d3"
+- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
+    - fix the underlying issues instead. When removing unused code, delete it completely
+    rather than suppressing warnings.'
+  source:
+    path: CLAUDE.md
+    lines: '117'
+    commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
+- rule: ALWAYS run cargo xclippy after finishing development to ensure code passes
+    all linting checks. Code cleanup changes must not introduce new clippy warnings.
+  source:
+    path: CLAUDE.md
+    lines: '115'
+    commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
+- rule: 'Use #[cfg(test)] for test-only code used within the same crate. When modifying
+    tests alongside code changes, ensure the test code follows the same quality standards
+    as production code.'
+  source:
+    path: CLAUDE.md
+    lines: 104-106
+    commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
+distractors:
+- rule: Use `#[cfg(test)]` for test-only code used within the same crate.
+  collision_type: scope_ambiguity
+  why_distracting: The config instructs to use `#[cfg(test)]` for test-only code.
+    An agent might apply this to the `deser_annotated_value` helper function added
+    in `value_test.rs`. However, since `value_test.rs` is already a test-only module
+    (indicated by its path `unit_tests/value_test.rs`), adding the attribute to individual
+    functions inside it is redundant and not done in the gold solution.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 68-69
+- rule: 'Formats & lints all Rust & Move, run before commit: ./scripts/lint.sh'
+  collision_type: scope_ambiguity
+  why_distracting: The config suggests running `./scripts/lint.sh` before commit.
+    An agent might run this global script, which could format or lint the entire large
+    repository, potentially taking a long time or introducing unrelated formatting
+    changes, rather than just checking the modified crate.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 43-44
+hierarchy_analysis: The repository has a root `CLAUDE.md` and an `AGENTS.md`. The
+  root `CLAUDE.md` provides general Rust guidelines, including testing and test-only
+  code annotations. `AGENTS.md` defers to `CLAUDE.md`.

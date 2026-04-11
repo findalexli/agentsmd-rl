@@ -1,134 +1,111 @@
-source_pr: "JetBrains/kotlin#5801"
-merge_commit: "9f40849b87558c0bf5c2722be3917e663b237d56"
-base_commit: "6030128bf5943db6bda17fb603eadcd5214064cd"
-title: "Prevent `$stable` property from being added to any object"
-
-# Checks for each test in test_outputs.py
+source_pr: JetBrains/kotlin#5801
+merge_commit: 9f40849b87558c0bf5c2722be3917e663b237d56
+base_commit: 6030128bf5943db6bda17fb603eadcd5214064cd
+title: Prevent `$stable` property from being added to any object
 checks:
-  # Fail-to-pass tests (verify the fix is present)
-  - id: test_stability_kt_has_object_check
-    type: fail_to_pass
-    origin: code_structure
-    description: "Stability.kt must have declaration.isObject check"
-    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
-
-  - id: test_lowering_kt_has_isobject_check
-    type: fail_to_pass
-    origin: code_structure
-    description: "AbstractComposeLowering.kt must use isObject instead of isCompanion"
-    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
-
-  - id: test_no_stable_property_in_golden_files
-    type: fail_to_pass
-    origin: test_behavior
-    description: "Golden files should not contain Object.%stable references"
-
-  - id: test_new_golden_files_exist
-    type: fail_to_pass
-    origin: test_behavior
-    description: "New golden files for object stability test should exist"
-
-  - id: test_test_methods_exist
-    type: fail_to_pass
-    origin: test_behavior
-    description: "Test methods for object stability should exist in test files"
-
-  # Pass-to-pass tests (static file checks)
-  - id: test_compose_compiler_sources_exist
-    type: pass_to_pass
-    origin: static
-    description: "Compose compiler plugin source files exist"
-    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
-
-  - id: test_static_expression_detection_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Static expression detection test file exists and has expected content"
-    file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/StaticExpressionDetectionTests.kt
-
-  # New pass-to-pass tests (kotlinc syntax validation)
-  - id: test_stability_kt_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Stability.kt has valid Kotlin syntax (kotlinc validation)"
-    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
-
-  - id: test_lowering_kt_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "AbstractComposeLowering.kt has valid Kotlin syntax (kotlinc validation)"
-    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
-
-  - id: test_composer_param_tests_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ComposerParamTransformTests.kt has valid Kotlin syntax"
-    file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/ComposerParamTransformTests.kt
-
-  - id: test_run_composable_tests_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "RunComposableTests.kt has valid Kotlin syntax"
-    file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/RunComposableTests.kt
-
-  - id: test_compose_plugin_source_structure
-    type: pass_to_pass
-    origin: static
-    description: "Compose compiler plugin source directory structure is valid"
-
-  - id: test_integration_tests_structure
-    type: pass_to_pass
-    origin: static
-    description: "Integration tests directory structure is valid"
-
-  # New pass-to-pass tests (CI-based repo tests using kotlinc)
-  - id: test_kotlin_analysis_dir_structure
-    type: pass_to_pass
-    origin: static
-    description: "Analysis directory contains expected source files (structure check)"
-
-  - id: test_kotlinc_lower_file_validation
-    type: pass_to_pass
-    origin: repo_tests
-    description: "AbstractComposeLowering.kt passes kotlinc syntax validation"
-    file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
-
-  - id: test_kotlin_golden_file_format
-    type: pass_to_pass
-    origin: static
-    description: "Golden files have valid format with Source/Transformed IR sections"
-
-  - id: test_compose_test_files_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Key compose test files have valid Kotlin syntax (kotlinc validation)"
-
-# Agent config rules (from CLAUDE.md and AGENTS.md)
-# This PR touches the compose compiler plugin area
+- id: test_stability_kt_has_object_check
+  type: fail_to_pass
+  origin: code_structure
+  description: Stability.kt must have declaration.isObject check
+  file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
+- id: test_lowering_kt_has_isobject_check
+  type: fail_to_pass
+  origin: code_structure
+  description: AbstractComposeLowering.kt must use isObject instead of isCompanion
+  file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
+- id: test_no_stable_property_in_golden_files
+  type: fail_to_pass
+  origin: test_behavior
+  description: Golden files should not contain Object.%stable references
+- id: test_new_golden_files_exist
+  type: fail_to_pass
+  origin: test_behavior
+  description: New golden files for object stability test should exist
+- id: test_test_methods_exist
+  type: fail_to_pass
+  origin: test_behavior
+  description: Test methods for object stability should exist in test files
+- id: test_compose_compiler_sources_exist
+  type: pass_to_pass
+  origin: static
+  description: Compose compiler plugin source files exist
+  file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
+- id: test_static_expression_detection_compiles
+  type: pass_to_pass
+  origin: static
+  description: Static expression detection test file exists and has expected content
+  file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/StaticExpressionDetectionTests.kt
+- id: test_stability_kt_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Stability.kt has valid Kotlin syntax (kotlinc validation)
+  file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
+- id: test_lowering_kt_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: AbstractComposeLowering.kt has valid Kotlin syntax (kotlinc validation)
+  file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
+- id: test_composer_param_tests_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ComposerParamTransformTests.kt has valid Kotlin syntax
+  file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/ComposerParamTransformTests.kt
+- id: test_run_composable_tests_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: RunComposableTests.kt has valid Kotlin syntax
+  file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/RunComposableTests.kt
+- id: test_compose_plugin_source_structure
+  type: pass_to_pass
+  origin: static
+  description: Compose compiler plugin source directory structure is valid
+- id: test_integration_tests_structure
+  type: pass_to_pass
+  origin: static
+  description: Integration tests directory structure is valid
+- id: test_kotlin_analysis_dir_structure
+  type: pass_to_pass
+  origin: static
+  description: Analysis directory contains expected source files (structure check)
+- id: test_kotlinc_lower_file_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: AbstractComposeLowering.kt passes kotlinc syntax validation
+  file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
+- id: test_kotlin_golden_file_format
+  type: pass_to_pass
+  origin: static
+  description: Golden files have valid format with Source/Transformed IR sections
+- id: test_compose_test_files_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key compose test files have valid Kotlin syntax (kotlinc validation)
 agent_config:
-  - rule: "Check compose compiler plugin area before making changes"
-    source: "CLAUDE.md:project:plugins/"
-    applies: true
-  - rule: "Reference YouTrack issues in commits when applicable"
-    source: ".ai/guidelines.md:Commit Guidelines"
-    applies: true
-  - rule: "Commit tests together with corresponding code changes"
-    source: ".ai/guidelines.md:Commit Guidelines"
-    applies: true
-  - rule: "Commit messages must explain not just WHAT but also WHY and HOW"
-    source: ".ai/guidelines.md:Commit Guidelines"
-    applies: true
-
-# Rubric for LLM evaluation (subjective aspects)
+- rule: Check compose compiler plugin area before making changes
+  source: CLAUDE.md:project:plugins/
+  applies: true
+- rule: Reference YouTrack issues in commits when applicable
+  source: .ai/guidelines.md:Commit Guidelines
+  applies: true
+- rule: Commit tests together with corresponding code changes
+  source: .ai/guidelines.md:Commit Guidelines
+  applies: true
+- rule: Commit messages must explain not just WHAT but also WHY and HOW
+  source: .ai/guidelines.md:Commit Guidelines
+  applies: true
 rubric:
-  - rule: "Identify the code area before making changes and read area-specific docs"
-    source:
-      path: ".ai/guidelines.md"
-      lines: "40-43"
-      commit: "6030128bf5943db6bda17fb603eadcd5214064cd"
-
-  - rule: "When fixing an issue with tests, commit test data as a separate commit BEFORE the fix"
-    source:
-      path: "compiler/AGENTS.md"
-      lines: "12-14"
-      commit: "6030128bf5943db6bda17fb603eadcd5214064cd"
+- rule: Identify the code area before making changes and read area-specific docs
+  source:
+    path: .ai/guidelines.md
+    lines: 40-43
+    commit: 6030128bf5943db6bda17fb603eadcd5214064cd
+- rule: When fixing an issue with tests, commit test data as a separate commit BEFORE
+    the fix
+  source:
+    path: compiler/AGENTS.md
+    lines: 12-14
+    commit: 6030128bf5943db6bda17fb603eadcd5214064cd
+hierarchy_analysis: The provided configuration files (`CLAUDE.md` and `AGENTS.md`)
+  only contain pointers to other guideline files (`./.ai/guidelines.md` and `./.claude/local.md`)
+  which are not provided in the context. There are no actionable rules present in
+  the loaded hierarchy.

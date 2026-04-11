@@ -2,180 +2,186 @@ source_pr:
   owner: ClickHouse
   repo: ClickHouse
   number: 102032
-  title: "Rename HTML_S3_PATH to S3_REPORT_BUCKET, add upstream catalog merge"
+  title: Rename HTML_S3_PATH to S3_REPORT_BUCKET, add upstream catalog merge
   merge_commit: 47a1d36eb5723869b8a32c2dcf441aa5386f280c
   base_commit: d0432097aed783bd35054dce2edcefe0c4e5122c
-
 checks:
-  # FAIL-TO-PASS tests
-  - id: test_html_s3_path_removed
-    type: fail_to_pass
-    origin: behavioral
-    description: HTML_S3_PATH is completely removed from all CI files
-
-  - id: test_s3_report_bucket_exists_in_settings
-    type: fail_to_pass
-    origin: behavioral
-    description: S3_REPORT_BUCKET setting is defined in settings.py
-
-  - id: test_s3_upstream_report_bucket_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: S3_UPSTREAM_REPORT_BUCKET setting is defined in settings.py
-
-  - id: test_s3_upstream_report_bucket_in_user_defined
-    type: fail_to_pass
-    origin: behavioral
-    description: S3_UPSTREAM_REPORT_BUCKET is in _USER_DEFINED_SETTINGS list
-
-  - id: test_download_catalog_method_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: TestCaseIssueCatalog has _download_catalog method
-
-  - id: test_settings_import_in_issue_py
-    type: fail_to_pass
-    origin: behavioral
-    description: issue.py imports Settings from praktika.settings
-
-  - id: test_issue_to_s3_uses_settings
-    type: fail_to_pass
-    origin: behavioral
-    description: to_s3 uses Settings.S3_REPORT_BUCKET
-
-  - id: test_from_s3_merge_logic
-    type: fail_to_pass
-    origin: behavioral
-    description: from_s3 has merge logic for upstream catalogs
-
-  - id: test_validator_uses_new_setting_name
-    type: fail_to_pass
-    origin: behavioral
-    description: validator.py uses S3_REPORT_BUCKET in assertions
-
-  - id: test_hook_html_uses_new_setting
-    type: fail_to_pass
-    origin: behavioral
-    description: hook_html.py uses Settings.S3_REPORT_BUCKET
-
-  - id: test_html_prepare_uses_new_setting
-    type: fail_to_pass
-    origin: behavioral
-    description: html_prepare.py uses Settings.S3_REPORT_BUCKET
-
-  - id: test_info_uses_new_setting
-    type: fail_to_pass
-    origin: behavioral
-    description: info.py uses Settings.S3_REPORT_BUCKET
-
-  - id: test_result_uses_new_setting
-    type: fail_to_pass
-    origin: behavioral
-    description: result.py uses Settings.S3_REPORT_BUCKET
-
-  - id: test_s3_uses_new_setting
-    type: fail_to_pass
-    origin: behavioral
-    description: s3.py uses Settings.S3_REPORT_BUCKET
-
-  - id: test_settings_has_both_new_settings
-    type: fail_to_pass
-    origin: behavioral
-    description: settings.py has both S3_REPORT_BUCKET and S3_UPSTREAM_REPORT_BUCKET
-
-  - id: test_collect_statistics_uses_settings
-    type: fail_to_pass
-    origin: behavioral
-    description: collect_statistics.py imports and uses Settings
-
-  - id: test_ci_settings_uses_new_name
-    type: fail_to_pass
-    origin: behavioral
-    description: ci/settings/settings.py defines S3_REPORT_BUCKET
-
-  # PASS-TO-PASS tests
-  - id: test_settings_importable
-    type: pass_to_pass
-    origin: static
-    description: Settings module is importable and has expected attributes (base commit has HTML_S3_PATH)
-
-  - id: test_issue_module_importable
-    type: pass_to_pass
-    origin: static
-    description: TestCaseIssueCatalog is importable with expected methods (base commit)
-
-  - id: test_python_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: All modified Python files have valid syntax (py_compile check)
-
-  - id: test_no_broken_imports
-    type: pass_to_pass
-    origin: static
-    description: Imports in modified modules work correctly
-
-  - id: test_repo_python_syntax_all_modified
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - Python syntax check via subprocess.run on all modified files
-
-  - id: test_repo_praktika_settings_import
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - praktika.settings imports correctly via subprocess.run
-
-  - id: test_repo_ci_settings_import
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - ci.settings.settings imports correctly via subprocess.run
-
-  - id: test_repo_praktika_modules_importable
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - praktika modules can be imported without errors
-
-  - id: test_repo_settings_attrs_accessible
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - Settings class attributes are accessible via subprocess import
-
-  - id: test_repo_praktika_cli_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - praktika CLI is functional (pip install + --help works)
-
-  - id: test_repo_modified_files_ast_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - All modified Python files have valid AST via subprocess.run
-
+- id: test_html_s3_path_removed
+  type: fail_to_pass
+  origin: behavioral
+  description: HTML_S3_PATH is completely removed from all CI files
+- id: test_s3_report_bucket_exists_in_settings
+  type: fail_to_pass
+  origin: behavioral
+  description: S3_REPORT_BUCKET setting is defined in settings.py
+- id: test_s3_upstream_report_bucket_exists
+  type: fail_to_pass
+  origin: behavioral
+  description: S3_UPSTREAM_REPORT_BUCKET setting is defined in settings.py
+- id: test_s3_upstream_report_bucket_in_user_defined
+  type: fail_to_pass
+  origin: behavioral
+  description: S3_UPSTREAM_REPORT_BUCKET is in _USER_DEFINED_SETTINGS list
+- id: test_download_catalog_method_exists
+  type: fail_to_pass
+  origin: behavioral
+  description: TestCaseIssueCatalog has _download_catalog method
+- id: test_settings_import_in_issue_py
+  type: fail_to_pass
+  origin: behavioral
+  description: issue.py imports Settings from praktika.settings
+- id: test_issue_to_s3_uses_settings
+  type: fail_to_pass
+  origin: behavioral
+  description: to_s3 uses Settings.S3_REPORT_BUCKET
+- id: test_from_s3_merge_logic
+  type: fail_to_pass
+  origin: behavioral
+  description: from_s3 has merge logic for upstream catalogs
+- id: test_validator_uses_new_setting_name
+  type: fail_to_pass
+  origin: behavioral
+  description: validator.py uses S3_REPORT_BUCKET in assertions
+- id: test_hook_html_uses_new_setting
+  type: fail_to_pass
+  origin: behavioral
+  description: hook_html.py uses Settings.S3_REPORT_BUCKET
+- id: test_html_prepare_uses_new_setting
+  type: fail_to_pass
+  origin: behavioral
+  description: html_prepare.py uses Settings.S3_REPORT_BUCKET
+- id: test_info_uses_new_setting
+  type: fail_to_pass
+  origin: behavioral
+  description: info.py uses Settings.S3_REPORT_BUCKET
+- id: test_result_uses_new_setting
+  type: fail_to_pass
+  origin: behavioral
+  description: result.py uses Settings.S3_REPORT_BUCKET
+- id: test_s3_uses_new_setting
+  type: fail_to_pass
+  origin: behavioral
+  description: s3.py uses Settings.S3_REPORT_BUCKET
+- id: test_settings_has_both_new_settings
+  type: fail_to_pass
+  origin: behavioral
+  description: settings.py has both S3_REPORT_BUCKET and S3_UPSTREAM_REPORT_BUCKET
+- id: test_collect_statistics_uses_settings
+  type: fail_to_pass
+  origin: behavioral
+  description: collect_statistics.py imports and uses Settings
+- id: test_ci_settings_uses_new_name
+  type: fail_to_pass
+  origin: behavioral
+  description: ci/settings/settings.py defines S3_REPORT_BUCKET
+- id: test_settings_importable
+  type: pass_to_pass
+  origin: static
+  description: Settings module is importable and has expected attributes (base commit
+    has HTML_S3_PATH)
+- id: test_issue_module_importable
+  type: pass_to_pass
+  origin: static
+  description: TestCaseIssueCatalog is importable with expected methods (base commit)
+- id: test_python_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: All modified Python files have valid syntax (py_compile check)
+- id: test_no_broken_imports
+  type: pass_to_pass
+  origin: static
+  description: Imports in modified modules work correctly
+- id: test_repo_python_syntax_all_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Python syntax check via subprocess.run on all modified files
+- id: test_repo_praktika_settings_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - praktika.settings imports correctly via subprocess.run
+- id: test_repo_ci_settings_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ci.settings.settings imports correctly via subprocess.run
+- id: test_repo_praktika_modules_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - praktika modules can be imported without errors
+- id: test_repo_settings_attrs_accessible
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Settings class attributes are accessible via subprocess import
+- id: test_repo_praktika_cli_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - praktika CLI is functional (pip install + --help works)
+- id: test_repo_modified_files_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - All modified Python files have valid AST via subprocess.run
 rubric:
-  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from classes and functions inside inline code blocks, such as: `ClassName` or `function_name`."
-    source:
-      path: "AGENTS.md"
-      lines: "5-6"
-      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
-
-  - rule: "When writing text such as documentation, comments, or commit messages, write names of functions and methods as `f` instead of `f()` - prefer it for mathematical purity when it refers to a function itself rather than its application."
-    source:
-      path: "AGENTS.md"
-      lines: "9-10"
-      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
-
-  - rule: "When mentioning logical errors in comments or messages, say 'exception' instead of 'crash', because they don't crash the server in the release build."
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
-
-  - rule: "Scan all changed lines for typos in comments, variable names, string literals, log messages, error messages, and documentation. Error messages should be clear, informative, and help the user understand what went wrong."
-    source:
-      path: ".claude/skills/review/SKILL.md"
-      lines: "96-99"
-      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
-
-  - rule: "When creating or updating a pull request, use `.github/PULL_REQUEST_TEMPLATE.md` as the PR body template. Follow the template exactly. The 'Bug Fix' category should be used only for real bug fixes, while for fixing CI reports use the 'CI Fix or Improvement' category."
-    source:
-      path: "AGENTS.md"
-      lines: "161"
-      commit: "d0432097aed783bd35054dce2edcefe0c4e5122c"
+- rule: 'When writing text such as documentation, comments, or commit messages, wrap
+    literal names from classes and functions inside inline code blocks, such as: `ClassName`
+    or `function_name`.'
+  source:
+    path: AGENTS.md
+    lines: 5-6
+    commit: d0432097aed783bd35054dce2edcefe0c4e5122c
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()` - prefer it for mathematical
+    purity when it refers to a function itself rather than its application.
+  source:
+    path: AGENTS.md
+    lines: 9-10
+    commit: d0432097aed783bd35054dce2edcefe0c4e5122c
+- rule: When mentioning logical errors in comments or messages, say 'exception' instead
+    of 'crash', because they don't crash the server in the release build.
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: d0432097aed783bd35054dce2edcefe0c4e5122c
+- rule: Scan all changed lines for typos in comments, variable names, string literals,
+    log messages, error messages, and documentation. Error messages should be clear,
+    informative, and help the user understand what went wrong.
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 96-99
+    commit: d0432097aed783bd35054dce2edcefe0c4e5122c
+- rule: When creating or updating a pull request, use `.github/PULL_REQUEST_TEMPLATE.md`
+    as the PR body template. Follow the template exactly. The 'Bug Fix' category should
+    be used only for real bug fixes, while for fixing CI reports use the 'CI Fix or
+    Improvement' category.
+  source:
+    path: AGENTS.md
+    lines: '161'
+    commit: d0432097aed783bd35054dce2edcefe0c4e5122c
+distractors:
+- rule: Links to ClickHouse CI should be analyzed using the tool at `.claude/tools/fetch_ci_report.js`
+  collision_type: scope_ambiguity
+  why_distracting: The task involves modifying CI scripts that handle S3 paths and
+    HTML reports. An agent might see 'CI reports' in the task description and think
+    it needs to fetch and analyze CI reports using the provided tool to understand
+    the current behavior or verify the changes. However, this is a pure codebase refactoring
+    and feature addition task. Running the tool would be a waste of time and might
+    lead the agent down a rabbit hole of analyzing specific test failures instead
+    of updating the Python scripts.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 14-33
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()`
+  collision_type: meta_confusion
+  why_distracting: 'The task instructions explicitly use `f()` notation: `TestCaseIssueCatalog.from_s3()`
+    and `_download_catalog(cls, bucket, suffix="")`. An agent might try to ''correct''
+    the task instructions or overthink how to format these names in the code, but
+    the rule applies strictly to text/comments, not the actual Python method definitions
+    or calls.'
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 10-11
+hierarchy_analysis: The AGENTS.md file contains general repository guidelines, mostly
+  focused on documentation, git workflow, and specific debugging tools. Since this
+  task is a straightforward Python refactoring and feature addition in the `ci/` directory,
+  most of these rules are not directly applicable and serve as potential distractors.

@@ -3,175 +3,152 @@ source:
   pr_number: 5782
   base_commit: aa96b1eb9878f7e427671338882cd24dc514a090
   merge_commit: 86147403c7400cd4f37c1edcaacb51e6fc0349fc
-  title: "[Swift Export] Properly cancel Flow collection"
-
+  title: '[Swift Export] Properly cancel Flow collection'
 checks:
-  # Fail-to-pass tests: Verify the fix is in place
-  - id: test_coroutine_scope_parameter
-    type: fail_to_pass
-    origin: solution
-    description: SwiftFlowIterator has coroutineScope parameter with default value
-
-  - id: test_cancel_uses_scope_cancel
-    type: fail_to_pass
-    origin: solution
-    description: cancel() method uses coroutineScope.cancel() instead of complete()
-
-  - id: test_invoke_on_cancellation_ready_state
-    type: fail_to_pass
-    origin: solution
-    description: State.Ready handler has invokeOnCancellation to cancel on suspension cancel
-
-  - id: test_invoke_on_cancellation_awaiting_consumer_state
-    type: fail_to_pass
-    origin: solution
-    description: State.AwaitingConsumer handler has invokeOnCancellation to cancel on suspension cancel
-
-  - id: test_launch_uses_coroutine_scope
-    type: fail_to_pass
-    origin: solution
-    description: launch() method uses coroutineScope.launch instead of creating new scope each time
-
-  - id: test_swift_iterator_class
-    type: fail_to_pass
-    origin: solution
-    description: Swift file has new Iterator class that handles deinit cancellation
-
-  - id: test_swift_iterator_deinit_cancels
-    type: fail_to_pass
-    origin: solution
-    description: Iterator.deinit calls cancel on the underlying KotlinFlowIterator
-
-  - id: test_kotlin_flow_iterator_is_internal
-    type: fail_to_pass
-    origin: solution
-    description: KotlinFlowIterator is marked as internal (not public)
-
-  - id: test_kotlin_flow_iterator_no_deinit
-    type: fail_to_pass
-    origin: solution
-    description: KotlinFlowIterator no longer has deinit (it was moved to Iterator class)
-
-  # Pass-to-pass tests: Verify repo remains functional
-  # Subprocess-based CI tests (origin: repo_tests)
-  - id: test_repo_gradle_settings_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Repo Gradle settings file exists and is parseable"
-
-  - id: test_repo_kotlin_file_syntax_ktlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Kotlin coroutine support file has valid basic structure via Python validation"
-
-  - id: test_repo_swift_file_syntax_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Swift coroutine support file has valid basic structure via Python validation"
-
-  - id: test_repo_swift_export_module_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Swift export standalone module files exist and are accessible"
-
-  - id: test_repo_test_data_integrity
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Coroutine test data directories exist and have content"
-
-  - id: test_repo_git_log_base_commit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Repository is at expected base commit"
-
-  - id: test_repo_git_status_expected
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Repository git status is as expected - clean at base or has fix applied"
-
-  - id: test_patch_applies_cleanly
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Gold patch can be applied cleanly to repository"
-
-  # New CI-based tests using subprocess.run() (origin: repo_tests)
-  - id: test_kotlin_file_compiles_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Kotlin coroutine support file has valid syntax via subprocess"
-
-  - id: test_swift_file_compiles_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Swift coroutine support file has valid syntax via subprocess"
-
-  - id: test_kotlin_coroutine_support_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Kotlin coroutine support file has required imports via subprocess"
-
-  - id: test_kotlin_coroutine_support_classes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Kotlin coroutine support file has required classes via subprocess"
-
-  - id: test_swift_coroutine_support_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Swift coroutine support file has required imports via subprocess"
-
-  - id: test_swift_coroutine_support_classes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Swift coroutine support file has required classes via subprocess"
-
-  - id: test_coroutine_test_data_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Coroutine integration test data exists and is valid via subprocess"
-
-  - id: test_repo_swift_export_test_files_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Swift export test support files exist via subprocess"
-
-  - id: test_repo_gradle_module_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Swift export modules have proper Gradle structure via subprocess"
-
-  - id: test_repo_kotlin_file_line_count
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Kotlin coroutine support file has reasonable size"
-
-  - id: test_repo_swift_file_line_count
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: Swift coroutine support file has reasonable size"
-
+- id: test_coroutine_scope_parameter
+  type: fail_to_pass
+  origin: solution
+  description: SwiftFlowIterator has coroutineScope parameter with default value
+- id: test_cancel_uses_scope_cancel
+  type: fail_to_pass
+  origin: solution
+  description: cancel() method uses coroutineScope.cancel() instead of complete()
+- id: test_invoke_on_cancellation_ready_state
+  type: fail_to_pass
+  origin: solution
+  description: State.Ready handler has invokeOnCancellation to cancel on suspension
+    cancel
+- id: test_invoke_on_cancellation_awaiting_consumer_state
+  type: fail_to_pass
+  origin: solution
+  description: State.AwaitingConsumer handler has invokeOnCancellation to cancel on
+    suspension cancel
+- id: test_launch_uses_coroutine_scope
+  type: fail_to_pass
+  origin: solution
+  description: launch() method uses coroutineScope.launch instead of creating new
+    scope each time
+- id: test_swift_iterator_class
+  type: fail_to_pass
+  origin: solution
+  description: Swift file has new Iterator class that handles deinit cancellation
+- id: test_swift_iterator_deinit_cancels
+  type: fail_to_pass
+  origin: solution
+  description: Iterator.deinit calls cancel on the underlying KotlinFlowIterator
+- id: test_kotlin_flow_iterator_is_internal
+  type: fail_to_pass
+  origin: solution
+  description: KotlinFlowIterator is marked as internal (not public)
+- id: test_kotlin_flow_iterator_no_deinit
+  type: fail_to_pass
+  origin: solution
+  description: KotlinFlowIterator no longer has deinit (it was moved to Iterator class)
+- id: test_repo_gradle_settings_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Repo Gradle settings file exists and is parseable'
+- id: test_repo_kotlin_file_syntax_ktlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Kotlin coroutine support file has valid basic structure via Python
+    validation'
+- id: test_repo_swift_file_syntax_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Swift coroutine support file has valid basic structure via Python
+    validation'
+- id: test_repo_swift_export_module_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Swift export standalone module files exist and are accessible'
+- id: test_repo_test_data_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Coroutine test data directories exist and have content'
+- id: test_repo_git_log_base_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Repository is at expected base commit'
+- id: test_repo_git_status_expected
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Repository git status is as expected - clean at base or has fix
+    applied'
+- id: test_patch_applies_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Gold patch can be applied cleanly to repository'
+- id: test_kotlin_file_compiles_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Kotlin coroutine support file has valid syntax via subprocess'
+- id: test_swift_file_compiles_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Swift coroutine support file has valid syntax via subprocess'
+- id: test_kotlin_coroutine_support_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Kotlin coroutine support file has required imports via subprocess'
+- id: test_kotlin_coroutine_support_classes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Kotlin coroutine support file has required classes via subprocess'
+- id: test_swift_coroutine_support_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Swift coroutine support file has required imports via subprocess'
+- id: test_swift_coroutine_support_classes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Swift coroutine support file has required classes via subprocess'
+- id: test_coroutine_test_data_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Coroutine integration test data exists and is valid via subprocess'
+- id: test_repo_swift_export_test_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Swift export test support files exist via subprocess'
+- id: test_repo_gradle_module_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Swift export modules have proper Gradle structure via subprocess'
+- id: test_repo_kotlin_file_line_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Kotlin coroutine support file has reasonable size'
+- id: test_repo_swift_file_line_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: Swift coroutine support file has reasonable size'
 agent_config: []
 rubric:
-  - rule: "Commit messages must explain not just WHAT but also WHY and HOW the changes work."
-    source:
-      path: ".ai/guidelines.md"
-      lines: "81"
-      commit: "aa96b1eb9878f7e427671338882cd24dc514a090"
-
-  - rule: "Keep commit subject line under 72 characters and use imperative mood."
-    source:
-      path: ".ai/guidelines.md"
-      lines: "80"
-      commit: "aa96b1eb9878f7e427671338882cd24dc514a090"
-
-  - rule: "Reference YouTrack issues (KT-XXXXX) in commit messages when applicable, using ^KT-XXXXX Fixed in the body to auto-close issues."
-    source:
-      path: ".ai/guidelines.md"
-      lines: "78-79"
-      commit: "aa96b1eb9878f7e427671338882cd24dc514a090"
-
-  - rule: "Do not modify *Generated.java test files directly - regenerate them with the generateTests Gradle task."
-    source:
-      path: ".ai/guidelines.md"
-      lines: "26"
-      commit: "aa96b1eb9878f7e427671338882cd24dc514a090"
+- rule: Commit messages must explain not just WHAT but also WHY and HOW the changes
+    work.
+  source:
+    path: .ai/guidelines.md
+    lines: '81'
+    commit: aa96b1eb9878f7e427671338882cd24dc514a090
+- rule: Keep commit subject line under 72 characters and use imperative mood.
+  source:
+    path: .ai/guidelines.md
+    lines: '80'
+    commit: aa96b1eb9878f7e427671338882cd24dc514a090
+- rule: Reference YouTrack issues (KT-XXXXX) in commit messages when applicable, using
+    ^KT-XXXXX Fixed in the body to auto-close issues.
+  source:
+    path: .ai/guidelines.md
+    lines: 78-79
+    commit: aa96b1eb9878f7e427671338882cd24dc514a090
+- rule: Do not modify *Generated.java test files directly - regenerate them with the
+    generateTests Gradle task.
+  source:
+    path: .ai/guidelines.md
+    lines: '26'
+    commit: aa96b1eb9878f7e427671338882cd24dc514a090
+hierarchy_analysis: The provided config files (CLAUDE.md and AGENTS.md) contain no
+  specific coding rules, style guidelines, or architectural constraints. They only
+  contain pointers to other files (.ai/guidelines.md, .claude/local.md) which are
+  not included in the context, and a meta-rule about updating memory.

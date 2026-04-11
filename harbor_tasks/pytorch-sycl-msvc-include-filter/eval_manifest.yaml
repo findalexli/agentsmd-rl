@@ -1,110 +1,143 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 170701
-  base_commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
-  merge_commit: "a09b29e732f52a690d4ca3764256f26369115858"
-
+  base_commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
+  merge_commit: a09b29e732f52a690d4ca3764256f26369115858
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Target file must parse without syntax errors"
-
-  - id: test_repo_pyflakes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file passes pyflakes static analysis"
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file compiles to bytecode without errors"
-  - id: test_repo_flake8
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file passes flake8 linting per repo config"
-
-  - id: test_repo_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file passes ruff linting per repo config"
-
-
-  - id: filter_msvc_paths_new_oneapi
-    type: fail_to_pass
-    origin: pr_diff
-    description: "MSVC include paths are filtered out when oneAPI >= 2025.3"
-
-  - id: filter_msvc_paths_newer_oneapi
-    type: fail_to_pass
-    origin: pr_diff
-    description: "MSVC include paths are filtered for oneAPI versions above 2025.3"
-
-  - id: no_filter_old_oneapi
-    type: fail_to_pass
-    origin: pr_diff
-    description: "MSVC paths preserved when oneAPI < 2025.3 (version gating)"
-
-  - id: no_filter_without_env_var
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Paths preserved when VCToolsInstallDir is not set"
-
-  - id: filter_empty_opts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Filtering an empty pp_opts list returns empty list"
-
-  - id: filter_applied_in_sycl_cflags
-    type: fail_to_pass
-    origin: pr_diff
-    description: "sycl_cflags construction wraps pp_opts through filter function"
-
-  - id: cuda_hip_flags_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CUDA and HIP flag functions are not removed or broken"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Target file retains full cpp_extension module content"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target file must parse without syntax errors
+- id: test_repo_pyflakes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes pyflakes static analysis
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file compiles to bytecode without errors
+- id: test_repo_flake8
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes flake8 linting per repo config
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes ruff linting per repo config
+- id: filter_msvc_paths_new_oneapi
+  type: fail_to_pass
+  origin: pr_diff
+  description: MSVC include paths are filtered out when oneAPI >= 2025.3
+- id: filter_msvc_paths_newer_oneapi
+  type: fail_to_pass
+  origin: pr_diff
+  description: MSVC include paths are filtered for oneAPI versions above 2025.3
+- id: no_filter_old_oneapi
+  type: fail_to_pass
+  origin: pr_diff
+  description: MSVC paths preserved when oneAPI < 2025.3 (version gating)
+- id: no_filter_without_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: Paths preserved when VCToolsInstallDir is not set
+- id: filter_empty_opts
+  type: fail_to_pass
+  origin: pr_diff
+  description: Filtering an empty pp_opts list returns empty list
+- id: filter_applied_in_sycl_cflags
+  type: fail_to_pass
+  origin: pr_diff
+  description: sycl_cflags construction wraps pp_opts through filter function
+- id: cuda_hip_flags_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: CUDA and HIP flag functions are not removed or broken
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Target file retains full cpp_extension module content
 rubric:
-  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
-    source:
-      path: "CLAUDE.md"
-      lines: "48"
-      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
-  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
-    source:
-      path: "CLAUDE.md"
-      lines: "51-52"
-      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
-  - rule: "Match existing code style and architectural patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "57"
-      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
-  - rule: "If uncertain, choose the simpler, more concise implementation."
-    source:
-      path: "CLAUDE.md"
-      lines: "62"
-      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
-  - rule: "Self-explanatory code — variable and function names convey intent; minimal comments needed."
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "28"
-      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
-  - rule: "No over-engineering — only requested changes are made; no speculative features."
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "11"
-      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
-  - rule: "Appropriate complexity — solutions are as simple as possible for the current requirements."
-    source:
-      path: "CLAUDE/skills/pr-review/review-checklist.md"
-      lines: "31"
-      commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '48'
+    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  source:
+    path: CLAUDE.md
+    lines: 51-52
+    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: '62'
+    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
+- rule: Self-explanatory code — variable and function names convey intent; minimal
+    comments needed.
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '28'
+    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
+- rule: No over-engineering — only requested changes are made; no speculative features.
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '11'
+    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
+- rule: Appropriate complexity — solutions are as simple as possible for the current
+    requirements.
+  source:
+    path: CLAUDE/skills/pr-review/review-checklist.md
+    lines: '31'
+    commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
+- rule: Comments should be useful, for example, comments that remind the reader about
+    some global context that is non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 44-45
+  evidence: The gold solution includes a comment explaining the oneAPI 2025.3+ include
+    path ordering change and the need to avoid conflicting declarations, which provides
+    non-obvious global context that cannot be
+  category: documentation
+distractors:
+- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
+  collision_type: rule_conflict
+  why_distracting: AGENTS.md instructs to use `lintrunner -a` for linting, which directly
+    conflicts with CLAUDE.md's instruction to 'Only use commands provided via `spin`
+    for linting'. An agent might fail or use the wrong tool if it follows this rule.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '11'
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might strictly follow the instruction to minimize comments
+    and make code self-explanatory, omitting the crucial explanation of the oneAPI
+    2025.3+ behavior change which is necessary to understand why the filtering is
+    happening.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '43'
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to inline the filtering logic directly into
+    the `sycl_cflags` assignment to avoid creating a single-use helper function, which
+    would make the complex `win_wrap_ninja_compile` function harder to read and violate
+    the existing pattern of using nested helpers.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 46-47
+hierarchy_analysis: 'The hierarchy contains a direct conflict regarding linting tools:
+  `AGENTS.md` recommends `lintrunner -a` while `CLAUDE.md` strictly mandates `spin
+  lint`. Additionally, there is tension within `CLAUDE.md`''s coding style guidelines
+  between minimizing comments/helper functions and providing necessary global context/matching
+  existing architectural patterns (nested helpers).'

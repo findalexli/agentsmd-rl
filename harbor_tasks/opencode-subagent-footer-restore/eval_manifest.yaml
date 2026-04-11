@@ -1,139 +1,156 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19491
-  base_commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-  merge_commit: "c3a9ec4a99f2636ec032091dd4b18b13ff3e25f3"
-
+  base_commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+  merge_commit: c3a9ec4a99f2636ec032091dd4b18b13ff3e25f3
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified TSX files must have balanced braces"
-
-  - id: subagent_footer_exists_with_navigation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SubagentFooter exports a component with navigation commands and event handlers"
-
-  - id: subagent_footer_token_cost
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SubagentFooter computes token usage and cost for display"
-
-  - id: session_imports_and_renders_subagent_footer
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Session index.tsx imports and conditionally renders SubagentFooter on parentID"
-
-  - id: subagent_footer_title
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SubagentFooter displays 'Subagent session' title text"
-
-  - id: dialog_model_no_else
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dialog-model.tsx else block replaced with early return"
-
-  - id: dialog_variant_no_unused_import
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dialog-variant.tsx unused useSync import removed"
-
-  - id: dialog_model_export_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "DialogModel component is still exported"
-
-  - id: dialog_variant_export_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "DialogVariant component is still exported"
-
-  - id: repo_prettier_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo code formatting passes Prettier check"
-
-  - id: repo_node_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified TSX files have balanced braces via Node.js parser"
-
-  - id: no_else_blocks_in_modified_files
-    type: fail_to_pass
-    origin: agent_config
-    description: "No else blocks in dialog-model.tsx or subagent-footer.tsx"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
-  - id: no_any_type_in_footer
-    type: fail_to_pass
-    origin: agent_config
-    description: "SubagentFooter must not use the 'any' type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
-  - id: no_try_catch_in_footer
-    type: fail_to_pass
-    origin: agent_config
-    description: "SubagentFooter must not use try/catch"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
-  - id: prefer_const_in_footer
-    type: fail_to_pass
-    origin: agent_config
-    description: "SubagentFooter should use const, not let"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
-  - id: no_for_loops_in_footer
-    type: fail_to_pass
-    origin: agent_config
-    description: "SubagentFooter uses functional array methods, not for loops"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified TSX files must have balanced braces
+- id: subagent_footer_exists_with_navigation
+  type: fail_to_pass
+  origin: pr_diff
+  description: SubagentFooter exports a component with navigation commands and event
+    handlers
+- id: subagent_footer_token_cost
+  type: fail_to_pass
+  origin: pr_diff
+  description: SubagentFooter computes token usage and cost for display
+- id: session_imports_and_renders_subagent_footer
+  type: fail_to_pass
+  origin: pr_diff
+  description: Session index.tsx imports and conditionally renders SubagentFooter
+    on parentID
+- id: subagent_footer_title
+  type: fail_to_pass
+  origin: pr_diff
+  description: SubagentFooter displays 'Subagent session' title text
+- id: dialog_model_no_else
+  type: fail_to_pass
+  origin: pr_diff
+  description: dialog-model.tsx else block replaced with early return
+- id: dialog_variant_no_unused_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: dialog-variant.tsx unused useSync import removed
+- id: dialog_model_export_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: DialogModel component is still exported
+- id: dialog_variant_export_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: DialogVariant component is still exported
+- id: repo_prettier_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes Prettier check
+- id: repo_node_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TSX files have balanced braces via Node.js parser
+- id: no_else_blocks_in_modified_files
+  type: fail_to_pass
+  origin: agent_config
+  description: No else blocks in dialog-model.tsx or subagent-footer.tsx
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: no_any_type_in_footer
+  type: fail_to_pass
+  origin: agent_config
+  description: SubagentFooter must not use the 'any' type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: no_try_catch_in_footer
+  type: fail_to_pass
+  origin: agent_config
+  description: SubagentFooter must not use try/catch
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: prefer_const_in_footer
+  type: fail_to_pass
+  origin: agent_config
+  description: SubagentFooter should use const, not let
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: no_for_loops_in_footer
+  type: fail_to_pass
+  origin: agent_config
+  description: SubagentFooter uses functional array methods, not for loops
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
 rubric:
-  - rule: "Keep things in one function unless composable or reusable"
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
-  - rule: "Prefer single word variable names where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "41b0d03f6afabc30696e9ccbbdbb7c3df34fd404"
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- rule: Prefer single word variable names where possible
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 68-78
+  evidence: 'In `packages/opencode/src/cli/cmd/tui/component/dialog-model.tsx`, the
+    `else` block is removed and replaced with an early return (`return` inside the
+    `if` block, and `dialog.clear()` moved to the end '
+  category: style
+distractors:
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to name the new component `Footer` and the
+    file `footer.tsx` to comply with the strict single-word naming rule. However,
+    `SubagentFooter` is necessary to avoid ambiguity with generic footers and clearly
+    describe the component's specific role.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 25-36
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to use Effect (`Effect.gen`, `Effect.fn`)
+    for the new component's state or logic. However, this is a SolidJS TUI component
+    that should rely on SolidJS reactive primitives (`createSignal`, `createMemo`)
+    rather than the backend Effect runtime.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 15-16
+hierarchy_analysis: 'The root `AGENTS.md` provides general TypeScript and style guidelines
+  (like avoiding `else` blocks) which apply universally and are correctly followed
+  in the UI components. The package-level `packages/opencode/AGENTS.md` introduces
+  highly specific rules for the Effect runtime and Drizzle database. Agents must recognize
+  the architectural boundary here: the TUI components are built with SolidJS, so the
+  Effect and Drizzle rules from the package-level config should be ignored for this
+  specific frontend task.'

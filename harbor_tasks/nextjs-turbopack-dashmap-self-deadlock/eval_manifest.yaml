@@ -1,76 +1,108 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92210
-  base_commit: "3e0158846e490509c6a26a4536d33777d9778101"
-  merge_commit: "9e1509307e336bc422bc6d1c1cc0a32ce00d9523"
-
+  base_commit: 3e0158846e490509c6a26a4536d33777d9778101
+  merge_commit: 9e1509307e336bc422bc6d1c1cc0a32ce00d9523
 checks:
-  - id: source_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "mod.rs exists and is not stubbed"
-
-  - id: repo_rust_file_parses
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Rust file is valid and parseable"
-
-  - id: repo_dashmap_usage_present
-    type: pass_to_pass
-    origin: repo_tests
-    description: "DashMap task_cache is used in both target functions"
-
-  - id: repo_taskid_type_present
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TaskId type and ConnectChildOperation are present"
-
-  - id: repo_git_history_intact
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git history is intact for blame/annotation"
-
-  - id: repo_cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Rust code passes cargo fmt --check"
-
-  - id: repo_cargo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Rust code passes cargo check"
-
-  - id: repo_cargo_test_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Rust unit tests for turbo-tasks-backend pass"
-
-  - id: persistent_task_ref_released
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DashMap Ref consumed inline in get_or_create_persistent_task before ConnectChildOperation::run"
-
-  - id: transient_task_ref_released
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DashMap Ref consumed inline in get_or_create_transient_task before ConnectChildOperation::run"
-
-  - id: no_dangling_deref_after_cache_get
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No separate 'let task_id = *task_id;' after task_cache.get() that keeps Ref alive"
-
-  - id: cache_lookup_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Both functions still perform cache lookup and ConnectChildOperation (not deleted)"
-
+- id: source_file_exists
+  type: pass_to_pass
+  origin: static
+  description: mod.rs exists and is not stubbed
+- id: repo_rust_file_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Rust file is valid and parseable
+- id: repo_dashmap_usage_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: DashMap task_cache is used in both target functions
+- id: repo_taskid_type_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: TaskId type and ConnectChildOperation are present
+- id: repo_git_history_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git history is intact for blame/annotation
+- id: repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust code passes cargo fmt --check
+- id: repo_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust code passes cargo check
+- id: repo_cargo_test_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust unit tests for turbo-tasks-backend pass
+- id: persistent_task_ref_released
+  type: fail_to_pass
+  origin: pr_diff
+  description: DashMap Ref consumed inline in get_or_create_persistent_task before
+    ConnectChildOperation::run
+- id: transient_task_ref_released
+  type: fail_to_pass
+  origin: pr_diff
+  description: DashMap Ref consumed inline in get_or_create_transient_task before
+    ConnectChildOperation::run
+- id: no_dangling_deref_after_cache_get
+  type: fail_to_pass
+  origin: pr_diff
+  description: No separate 'let task_id = *task_id;' after task_cache.get() that keeps
+    Ref alive
+- id: cache_lookup_preserved
+  type: pass_to_pass
+  origin: static
+  description: Both functions still perform cache lookup and ConnectChildOperation
+    (not deleted)
 rubric:
-  - rule: "Code fix uses the .map(|r| *r) pattern to release DashMap Ref before ConnectChildOperation::run, preventing read-write self-deadlock"
-    source:
-      path: "turbopack/crates/turbo-tasks-backend/src/backend/mod.rs"
-      lines: "1535,1618"
-      commit: "3e0158846e490509c6a26a4536d33777d9778101"
-    reference: "self.task_cache.get(&task_type).map(|r| *r)"
+- rule: Code fix uses the .map(|r| *r) pattern to release DashMap Ref before ConnectChildOperation::run,
+    preventing read-write self-deadlock
+  source:
+    path: turbopack/crates/turbo-tasks-backend/src/backend/mod.rs
+    lines: 1535,1618
+    commit: 3e0158846e490509c6a26a4536d33777d9778101
+  reference: self.task_cache.get(&task_type).map(|r| *r)
+distractors:
+- rule: 'Start watch build in background: `pnpm --filter=next dev`'
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests running `pnpm --filter=next dev` for iterative
+    development and watch mode. However, this PR modifies Rust code in the Turbopack
+    backend (`turbopack/crates/turbo-tasks-backend`). The Next.js dev server watch
+    mode does not automatically recompile Rust source files, so an agent relying on
+    this for Rust iteration will be confused when changes don't take effect.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 75-80
+- rule: 'Run tests fast (no isolation, no packing): `NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start>
+    pnpm testheadless test/path/to/test.ts`'
+  collision_type: scope_ambiguity
+  why_distracting: The rule provides a command (`pnpm testheadless`) for running tests
+    fast without isolation. An agent might attempt to use this command to test the
+    Turbopack Rust changes, but this command is exclusively for Next.js JS/TS integration
+    tests. Rust tests require `cargo test`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 82-87
+- rule: 'For type errors only: Use `pnpm --filter=next types` (~10s) instead of `pnpm
+    --filter=next build` (~60s).'
+  collision_type: meta_confusion
+  why_distracting: The rule suggests using `pnpm --filter=next types` for type errors
+    instead of a full build. An agent might try to use this to check for Rust compiler/type
+    errors, but this command only runs TypeScript `tsc`. It will silently pass or
+    fail on unrelated TS code, providing no feedback on the Rust changes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 92-92
+hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
+  at the root level. The guidelines are heavily skewed towards Next.js TypeScript/JavaScript
+  development, integration tests, and the `pnpm` build system. There is a significant
+  lack of guidance for the Rust (`turbopack/crates/*`) portion of the monorepo, other
+  than mentioning `pnpm build-all` for building both JS and Rust. This creates a high
+  risk of agents misapplying JS/TS-specific workflows (like `next dev` watch mode
+  or `testheadless`) to Rust backend tasks.

@@ -1,87 +1,114 @@
 source:
   pr:
     number: 39160
-    title: "fix(explore): Unnecessary scroll bars appearing on charts in Explore"
-    author: ""
-    url: "https://github.com/apache/superset/pull/39160"
+    title: 'fix(explore): Unnecessary scroll bars appearing on charts in Explore'
+    author: ''
+    url: https://github.com/apache/superset/pull/39160
   repo:
     owner: apache
     name: superset
     base_commit: 4f695e1b4d23beb67473b39d2f0ab71df56378b3
     merge_commit: 3a3a6536b7ed9044ffaead2fbe0d8a944431925d
-
 checks:
-  # Agent config checks
-  - id: "agent_config_1"
-    type: "agent_config"
-    description: "Hook must use targetRef to observe measured element"
-    file_pattern: "useResizeDetectorByObserver.ts"
-    pattern: "targetRef: ref,"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "Frontend Modernization - Use proper React patterns"
-
-  # Functional tests
-  - id: "test_hook_uses_target_ref"
-    type: "functional"
-    description: "Hook uses targetRef option instead of separate observerRef"
-    test_function: "test_hook_uses_target_ref"
-    category: "fail_to_pass"
-
-  - id: "test_hook_returns_correct_interface"
-    type: "functional"
-    description: "Hook returns correct interface {ref, width, height}"
-    test_function: "test_hook_returns_correct_interface"
-    category: "pass_to_pass"
-
-  - id: "test_index_does_not_use_resize_observer_ref"
-    type: "functional"
-    description: "ExploreChartPanel does not use resizeObserverRef"
-    test_function: "test_index_does_not_use_resize_observer_ref"
-    category: "fail_to_pass"
-
-  - id: "test_hook_has_proper_resize_handler"
-    type: "functional"
-    description: "Hook has proper onResize callback with setChartPanelSize"
-    test_function: "test_hook_has_proper_resize_handler"
-    category: "pass_to_pass"
-
-  - id: "test_hook_uses_debounce_mode"
-    type: "functional"
-    description: "Hook uses debounce mode with 300ms refresh rate"
-    test_function: "test_hook_uses_debounce_mode"
-    category: "pass_to_pass"
-
-  - id: "test_typescript_compiles"
-    type: "functional"
-    description: "TypeScript compiles without errors"
-    test_function: "test_typescript_compiles"
-    category: "pass_to_pass"
-
-  - id: "test_no_regressions_in_return_values"
-    type: "functional"
-    description: "Hook maintains correct return value structure"
-    test_function: "test_no_regressions_in_return_values"
-    category: "pass_to_pass"
-
-  - id: "test_hook_imports_correctly"
-    type: "functional"
-    description: "Hook correctly imports and uses useResizeDetector"
-    test_function: "test_hook_imports_correctly"
-    category: "pass_to_pass"
-
-  # Repo CI/CD pass-to-pass tests
-  - id: "test_repo_lint"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "Repo's oxlint check passes on frontend code"
-    test_function: "test_repo_lint"
-
-  - id: "test_repo_tests_explore_chart_panel"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "Repo's Jest tests for ExploreChartPanel pass"
-    test_function: "test_repo_tests_explore_chart_panel"
-
-rubric: []
+- id: agent_config_1
+  type: agent_config
+  description: Hook must use targetRef to observe measured element
+  file_pattern: useResizeDetectorByObserver.ts
+  pattern: 'targetRef: ref,'
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: Frontend Modernization - Use proper React patterns
+- id: test_hook_uses_target_ref
+  type: functional
+  description: Hook uses targetRef option instead of separate observerRef
+  test_function: test_hook_uses_target_ref
+  category: fail_to_pass
+- id: test_hook_returns_correct_interface
+  type: functional
+  description: Hook returns correct interface {ref, width, height}
+  test_function: test_hook_returns_correct_interface
+  category: pass_to_pass
+- id: test_index_does_not_use_resize_observer_ref
+  type: functional
+  description: ExploreChartPanel does not use resizeObserverRef
+  test_function: test_index_does_not_use_resize_observer_ref
+  category: fail_to_pass
+- id: test_hook_has_proper_resize_handler
+  type: functional
+  description: Hook has proper onResize callback with setChartPanelSize
+  test_function: test_hook_has_proper_resize_handler
+  category: pass_to_pass
+- id: test_hook_uses_debounce_mode
+  type: functional
+  description: Hook uses debounce mode with 300ms refresh rate
+  test_function: test_hook_uses_debounce_mode
+  category: pass_to_pass
+- id: test_typescript_compiles
+  type: functional
+  description: TypeScript compiles without errors
+  test_function: test_typescript_compiles
+  category: pass_to_pass
+- id: test_no_regressions_in_return_values
+  type: functional
+  description: Hook maintains correct return value structure
+  test_function: test_no_regressions_in_return_values
+  category: pass_to_pass
+- id: test_hook_imports_correctly
+  type: functional
+  description: Hook correctly imports and uses useResizeDetector
+  test_function: test_hook_imports_correctly
+  category: pass_to_pass
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint check passes on frontend code
+  test_function: test_repo_lint
+- id: test_repo_tests_explore_chart_panel
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Jest tests for ExploreChartPanel pass
+  test_function: test_repo_tests_explore_chart_panel
+rubric:
+- rule: Functional components with hooks
+  source:
+    path: CLAUDE.md
+    lines: 68-69
+  evidence: The fix correctly updates the `useResizeDetectorByObserver` hook to use
+    `targetRef` and modifies the functional component in `index.tsx` to consume the
+    updated hook without `observerRef`.
+  category: architecture
+- rule: Avoid `any` types - Use proper TypeScript, reuse existing types
+  source:
+    path: CLAUDE.md
+    lines: 67-68
+  evidence: The fix updates the return type of the hook to `{ ref, width, height }`
+    and ensures TypeScript compiles without errors, maintaining strict typing without
+    falling back to `any`.
+  category: style
+distractors:
+- rule: Avoid custom css and styles - Follow antd best practices and avoid styling
+    and custom CSS whenever possible
+  collision_type: would_cause_bug
+  why_distracting: 'The issue describes ''unnecessary scroll bars'', which is typically
+    a CSS problem. An agent might be tempted to add custom CSS (like `overflow: hidden`)
+    to hide the scroll bars. However, the root cause is a stale dimension bug in the
+    React hook, and adding CSS would only mask the bug while violating the rule against
+    custom styles.'
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 33-34
+- rule: Use @superset-ui/core - Don't import Ant Design directly
+  collision_type: scope_ambiguity
+  why_distracting: Because the rule emphasizes using `@superset-ui/core` over direct
+    imports, an agent might try to replace `react-resize-detector` with a different
+    resize observer utility from the Superset UI library or Ant Design. This is out
+    of scope and would overcomplicate a simple hook configuration fix.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 31-32
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  frontend modernization rules apply directly to this PR, specifically the emphasis
+  on TypeScript and React hooks. No conflicts exist between the config files.

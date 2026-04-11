@@ -1,65 +1,96 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35880
-  base_commit: "cebe42e24521ce02bf427fd482009d01e1466277"
-  merge_commit: "8a33fb3a1cd6a8230cb9c49f4cda71f8d21c8476"
-
+  base_commit: cebe42e24521ce02bf427fd482009d01e1466277
+  merge_commit: 8a33fb3a1cd6a8230cb9c49f4cda71f8d21c8476
 checks:
-  - id: tryrecord_wraps_early_and_hook_validations
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Early validation passes (validateContextVariableLValues, validateUseMemo, validateHooksUsage, validateNoCapitalizedCalls) must be wrapped in env.tryRecord()"
-
-  - id: tryrecord_wraps_inference_and_render_passes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Inference and render validation passes (inferMutationAliasingEffects, inferMutationAliasingRanges, validateLocalsNotReassignedAfterRender, validateNoRefAccessInRender, validateNoSetStateInRender) must be wrapped in env.tryRecord()"
-
-  - id: tryrecord_wraps_late_passes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Late-pipeline passes (validateNoDerivedComputationsInEffects, validateExhaustiveDependencies, validatePreservedManualMemoization, validateSourceLocations) must be wrapped in env.tryRecord()"
-
-  - id: record_errors_normalization
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Validation files must use batch recordErrors() method instead of manual for-loop with recordError(detail)"
-
-  - id: build_hir_simplified_conditional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BuildHIR must use simplified detail.category check without redundant instanceof CompilerDiagnostic ternary"
-
-  - id: merged_validation_guard_blocks
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Two consecutive if(env.enableValidations) blocks around validateLocalsNotReassignedAfterRender and assertValidMutableRanges must be merged"
-
-  - id: pipeline_has_required_functions
-    type: pass_to_pass
-    origin: static
-    description: "Pipeline.ts must still reference all expected compiler pass functions"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint passes on babel-plugin-react-compiler"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes on babel-plugin-react-compiler"
-
-  - id: test_repo_jest_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Jest unit tests pass on babel-plugin-react-compiler"
-
+- id: tryrecord_wraps_early_and_hook_validations
+  type: fail_to_pass
+  origin: pr_diff
+  description: Early validation passes (validateContextVariableLValues, validateUseMemo,
+    validateHooksUsage, validateNoCapitalizedCalls) must be wrapped in env.tryRecord()
+- id: tryrecord_wraps_inference_and_render_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Inference and render validation passes (inferMutationAliasingEffects,
+    inferMutationAliasingRanges, validateLocalsNotReassignedAfterRender, validateNoRefAccessInRender,
+    validateNoSetStateInRender) must be wrapped in env.tryRecord()
+- id: tryrecord_wraps_late_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Late-pipeline passes (validateNoDerivedComputationsInEffects, validateExhaustiveDependencies,
+    validatePreservedManualMemoization, validateSourceLocations) must be wrapped in
+    env.tryRecord()
+- id: record_errors_normalization
+  type: fail_to_pass
+  origin: pr_diff
+  description: Validation files must use batch recordErrors() method instead of manual
+    for-loop with recordError(detail)
+- id: build_hir_simplified_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: BuildHIR must use simplified detail.category check without redundant
+    instanceof CompilerDiagnostic ternary
+- id: merged_validation_guard_blocks
+  type: fail_to_pass
+  origin: pr_diff
+  description: Two consecutive if(env.enableValidations) blocks around validateLocalsNotReassignedAfterRender
+    and assertValidMutableRanges must be merged
+- id: pipeline_has_required_functions
+  type: pass_to_pass
+  origin: static
+  description: Pipeline.ts must still reference all expected compiler pass functions
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on babel-plugin-react-compiler
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes on babel-plugin-react-compiler
+- id: test_repo_jest_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Jest unit tests pass on babel-plugin-react-compiler
 rubric:
-  - rule: "When modifying the compiler, you MUST read the documentation about that pass in compiler/packages/babel-plugin-react-compiler/docs/passes/ to learn more about the role of that pass within the compiler."
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "7"
-      commit: "cebe42e24521ce02bf427fd482009d01e1466277"
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in compiler/packages/babel-plugin-react-compiler/docs/passes/ to learn more about
+    the role of that pass within the compiler.
+  source:
+    path: compiler/CLAUDE.md
+    lines: '7'
+    commit: cebe42e24521ce02bf427fd482009d01e1466277
+- rule: 'React Compiler: `/compiler/` directory'
+  source:
+    path: CLAUDE.md
+    lines: 5-8
+  evidence: The gold solution correctly scopes all its changes to the `/compiler/`
+    directory, respecting the monorepo structure and boundary between React core and
+    the React Compiler.
+  category: architecture
+distractors:
+- rule: This repository uses Sapling (`sl`) for version control... new/deleted files
+    must be explicitly added/removed.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use Sapling (`sl`) commands for version
+    control operations in its script, which could fail in a standard git-based evaluation
+    environment (the gold solution uses standard `git apply`).
+  severity: high
+  source:
+    path: compiler/CLAUDE.md
+    lines: 49-62
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time trying to read or update documentation
+    in `docs/passes/` for the validation passes being modified, but the changes are
+    purely infrastructural (error handling) and the relevant documentation is actually
+    `fault-tolerance-overview.md`.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 7-8
+hierarchy_analysis: The root CLAUDE.md correctly delegates to compiler/CLAUDE.md for
+  compiler-specific instructions. The compiler config focuses heavily on tooling (Sapling,
+  yarn snap) which is mostly distracting for this specific code refactoring task.

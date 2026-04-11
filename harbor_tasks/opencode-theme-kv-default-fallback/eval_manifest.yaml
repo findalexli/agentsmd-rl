@@ -1,154 +1,176 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 506
-  base_commit: "26382c6216797e65a1b43dea8646725332f62e07"
-
+  base_commit: 26382c6216797e65a1b43dea8646725332f62e07
 checks:
-  # Gates
-  - id: file_exists_and_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Target file exists and has substantial content (not stubbed)"
-
-  - id: syntax_balanced_braces
-    type: pass_to_pass
-    origin: static
-    description: "File has balanced curly braces"
-
-  - id: memo_block_exists
-    type: pass_to_pass
-    origin: static
-    description: "const values = createMemo block exists and is non-trivial"
-
-  # Core behavioral (fail-to-pass) — executed via Node.js with mocks
-  - id: kv_fallback_when_active_missing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When active theme is missing, KV-saved theme is used as fallback"
-
-  - id: kv_fallback_varied_themes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "KV fallback works with multiple different saved theme names"
-
-  - id: buggy_direct_fallback_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Buggy store.themes[store.active] ?? store.themes.opencode pattern removed"
-
-  # Behavioral regression (pass-to-pass) — executed via Node.js with mocks
-  - id: active_theme_used_when_present
-    type: pass_to_pass
-    origin: pr_diff
-    description: "When active theme exists in map, it is used directly (KV ignored)"
-
-  - id: opencode_fallback_when_kv_invalid
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Falls back to opencode when active missing and KV names nonexistent theme"
-
-  - id: opencode_fallback_when_kv_not_string
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Falls back to opencode when KV value is null, number, or boolean"
-
-  # Export preservation (pass-to-pass)
-  - id: resolve_theme_exported
-    type: pass_to_pass
-    origin: repo_tests
-    description: "resolveTheme function export preserved"
-
-  - id: use_theme_provider_exported
-    type: pass_to_pass
-    origin: repo_tests
-    description: "useTheme and ThemeProvider exports preserved"
-
-  - id: default_themes_exported
-    type: pass_to_pass
-    origin: repo_tests
-    description: "DEFAULT_THEMES export preserved"
-
-  # Config-derived (pass-to-pass)
-  - id: no_any_type_in_memo
-    type: pass_to_pass
-    origin: agent_config
-    description: "No 'any' type used in the values memo"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "26382c6216797e65a1b43dea8646725332f62e07"
-
-  - id: no_try_catch_in_memo
-    type: pass_to_pass
-    origin: agent_config
-    description: "No try/catch in the values memo"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "26382c6216797e65a1b43dea8646725332f62e07"
-
-  - id: prefer_const_in_memo
-    type: pass_to_pass
-    origin: agent_config
-    description: "No let declarations in the values memo — prefer const with early returns"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "26382c6216797e65a1b43dea8646725332f62e07"
-
-  - id: no_for_loops_in_memo
-    type: pass_to_pass
-    origin: agent_config
-    description: "No for/while loops in the values memo — prefer functional array methods"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "26382c6216797e65a1b43dea8646725332f62e07"
-
-  # Repo CI/CD pass_to_pass checks
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes on packages/opencode"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests pass for opencode package"
-
-  - id: test_repo_theme_store_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Theme store unit tests pass (covers theme.tsx context)"
-
-  - id: test_repo_turbo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Root turbo typecheck passes (CI command: bun turbo typecheck)"
-
-  - id: test_repo_turbo_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Root turbo test passes for opencode package (CI command: bun turbo test)"
-
-
+- id: file_exists_and_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Target file exists and has substantial content (not stubbed)
+- id: syntax_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: File has balanced curly braces
+- id: memo_block_exists
+  type: pass_to_pass
+  origin: static
+  description: const values = createMemo block exists and is non-trivial
+- id: kv_fallback_when_active_missing
+  type: fail_to_pass
+  origin: pr_diff
+  description: When active theme is missing, KV-saved theme is used as fallback
+- id: kv_fallback_varied_themes
+  type: fail_to_pass
+  origin: pr_diff
+  description: KV fallback works with multiple different saved theme names
+- id: buggy_direct_fallback_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy store.themes[store.active] ?? store.themes.opencode pattern removed
+- id: active_theme_used_when_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: When active theme exists in map, it is used directly (KV ignored)
+- id: opencode_fallback_when_kv_invalid
+  type: pass_to_pass
+  origin: pr_diff
+  description: Falls back to opencode when active missing and KV names nonexistent
+    theme
+- id: opencode_fallback_when_kv_not_string
+  type: pass_to_pass
+  origin: pr_diff
+  description: Falls back to opencode when KV value is null, number, or boolean
+- id: resolve_theme_exported
+  type: pass_to_pass
+  origin: repo_tests
+  description: resolveTheme function export preserved
+- id: use_theme_provider_exported
+  type: pass_to_pass
+  origin: repo_tests
+  description: useTheme and ThemeProvider exports preserved
+- id: default_themes_exported
+  type: pass_to_pass
+  origin: repo_tests
+  description: DEFAULT_THEMES export preserved
+- id: no_any_type_in_memo
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'any' type used in the values memo
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- id: no_try_catch_in_memo
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/catch in the values memo
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- id: prefer_const_in_memo
+  type: pass_to_pass
+  origin: agent_config
+  description: No let declarations in the values memo — prefer const with early returns
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- id: no_for_loops_in_memo
+  type: pass_to_pass
+  origin: agent_config
+  description: No for/while loops in the values memo — prefer functional array methods
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes on packages/opencode
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests pass for opencode package
+- id: test_repo_theme_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Theme store unit tests pass (covers theme.tsx context)
+- id: test_repo_turbo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Root turbo typecheck passes (CI command: bun turbo typecheck)'
+- id: test_repo_turbo_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Root turbo test passes for opencode package (CI command: bun turbo
+    test)'
 rubric:
-  - rule: "Keep things in one function unless composable or reusable"
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "26382c6216797e65a1b43dea8646725332f62e07"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "26382c6216797e65a1b43dea8646725332f62e07"
-
-  - rule: "Avoid else statements. Prefer early returns."
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "26382c6216797e65a1b43dea8646725332f62e07"
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- rule: Avoid else statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 81-89
+  evidence: The `createMemo` callback uses multiple `if` statements with early returns
+    (`if (active) return ...`, `if (theme) return ...`) and a final fallback return,
+    completely avoiding `else` blocks.
+  category: style
+- rule: Prefer single word variable names where possible.
+  source:
+    path: AGENTS.md
+    lines: 26-41
+  evidence: The gold solution introduces new variables with single-word names (`active`,
+    `saved`, `theme`) instead of using multi-word names like `activeTheme`, `savedThemeName`,
+    or `resolvedTheme`.
+  category: naming
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 71-79
+  evidence: The gold solution uses `const` for `active`, `saved`, and `theme`, and
+    relies on early returns to determine the final value, rather than declaring a
+    `let` variable and reassigning it.
+  category: style
+distractors:
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: would_cause_bug
+  why_distracting: The gold solution explicitly creates `const active`, `const saved`,
+    and `const theme` to allow for type narrowing (`if (typeof saved === "string")`)
+    and truthiness checks before returning. Inlining these into the `if` conditions
+    or return statements would either duplicate property access or break TypeScript's
+    type narrowing, leading to type errors.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 48-57
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: architecture_boundary
+  why_distracting: The file `theme.tsx` is part of the TUI (SolidJS) and uses `createMemo`.
+    The `kv` object is a local TUI store wrapper. Trying to wrap this logic in `Effect.gen`
+    or use Effect services would break the synchronous reactivity expected by `createMemo`
+    and cross the boundary between the TUI frontend and the Effect backend.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 16-23
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style guidelines
+  (early returns, single-word naming, const over let) which are highly applicable
+  to this TUI React/SolidJS code. The `packages/opencode/AGENTS.md` introduces Effect-specific
+  rules, but since this specific file is part of the TUI frontend (`src/cli/cmd/tui/context/theme.tsx`),
+  the Effect rules do not apply and serve as an architecture boundary distractor.

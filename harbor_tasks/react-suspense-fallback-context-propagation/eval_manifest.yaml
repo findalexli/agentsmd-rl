@@ -1,83 +1,86 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 36160
-  base_commit: "f944b4c5352be02623d2d7415c0806350f875114"
-  merge_commit: "9627b5a1caa64c1488643bffdf04495106fa3247"
-
+  base_commit: f944b4c5352be02623d2d7415c0806350f875114
+  merge_commit: 9627b5a1caa64c1488643bffdf04495106fa3247
 checks:
-  - id: test_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified JS file must parse without syntax errors"
-
-  - id: test_context_propagation_to_suspense_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Context changes above a suspended Suspense boundary must propagate to fallback consumers through a memo boundary"
-
-  - id: test_multiple_context_updates_propagate_to_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple sequential context updates must all reach fallback consumers with correct values"
-
-  - id: test_existing_context_propagation_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing ReactContextPropagation tests still pass"
-
-  - id: test_react_new_context_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactNewContext tests pass — tests for the modified ReactFiberNewContext module"
-
-  - id: test_repo_lint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint checks pass"
-
-  - id: test_repo_flow_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Flow typecheck passes"
-
-  - id: test_repo_flags
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's feature flags check passes"
-
-  - id: test_repo_react_suspense_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactSuspense tests pass — tests related to Suspense/fallback behavior"
-
-  - id: test_repo_react_lazy_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactLazy tests pass — tests lazy loading with Suspense"
-
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified JS file must parse without syntax errors
+- id: test_context_propagation_to_suspense_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Context changes above a suspended Suspense boundary must propagate
+    to fallback consumers through a memo boundary
+- id: test_multiple_context_updates_propagate_to_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple sequential context updates must all reach fallback consumers
+    with correct values
+- id: test_existing_context_propagation_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing ReactContextPropagation tests still pass
+- id: test_react_new_context_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactNewContext tests pass — tests for the modified ReactFiberNewContext
+    module
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint checks pass
+- id: test_repo_flow_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Flow typecheck passes
+- id: test_repo_flags
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's feature flags check passes
+- id: test_repo_react_suspense_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactSuspense tests pass — tests related to Suspense/fallback behavior
+- id: test_repo_react_lazy_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactLazy tests pass — tests lazy loading with Suspense
 rubric:
-  - rule: "Follow the existing code style in the file being modified. Check neighboring lines for patterns around naming, spacing, and structure."
-    source:
-      path: "CLAUDE.md"
-      lines: "7"
-      commit: "f944b4c5352be02623d2d7415c0806350f875114"
-
-  - rule: "Use comments to explain invariants and fiber structure relationships, not to narrate what each line does. Document WHY the code behaves a certain way, especially for complex traversal logic."
-    source:
-      path: ".claude/skills/verify/SKILL.md"
-      lines: "16-24"
-      commit: "f944b4c5352be02623d2d7415c0806350f875114"
-
-  - rule: "Run yarn prettier to format code before committing. The codebase uses Prettier for consistent formatting."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "10"
-      commit: "f944b4c5352be02623d2d7415c0806350f875114"
-
-  - rule: "Run yarn linc to check for lint issues before committing. ESLint errors will fail CI and must be fixed."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "11"
-      commit: "f944b4c5352be02623d2d7415c0806350f875114"
+- rule: Follow the existing code style in the file being modified. Check neighboring
+    lines for patterns around naming, spacing, and structure.
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: f944b4c5352be02623d2d7415c0806350f875114
+- rule: Use comments to explain invariants and fiber structure relationships, not
+    to narrate what each line does. Document WHY the code behaves a certain way, especially
+    for complex traversal logic.
+  source:
+    path: .claude/skills/verify/SKILL.md
+    lines: 16-24
+    commit: f944b4c5352be02623d2d7415c0806350f875114
+- rule: Run yarn prettier to format code before committing. The codebase uses Prettier
+    for consistent formatting.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '10'
+    commit: f944b4c5352be02623d2d7415c0806350f875114
+- rule: Run yarn linc to check for lint issues before committing. ESLint errors will
+    fail CI and must be fixed.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '11'
+    commit: f944b4c5352be02623d2d7415c0806350f875114
+- rule: React core files are located outside the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: The gold solution modifies `packages/react-reconciler/src/ReactFiberNewContext.js`,
+    which is outside the `/compiler/` directory, correctly identifying it as part
+    of React core.
+  category: architecture
+hierarchy_analysis: Only one config file (`CLAUDE.md`) is present at the root level,
+  providing basic monorepo structure information. No conflicts exist.

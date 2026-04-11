@@ -1,127 +1,156 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45000
-  base_commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
-  merge_commit: "4ee7f51e468b7408513dc294dad20e4edb13594f"
-
+  base_commit: 05514c4bb641ba1537d17048fd93f50f45d5f19d
+  merge_commit: 4ee7f51e468b7408513dc294dad20e4edb13594f
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files must parse without syntax errors"
-
-  - id: modules_import
-    type: pass_to_pass
-    origin: pr_diff
-    description: "All affected modules import without errors"
-
-  - id: colpali_uses_base_model_class
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColPali must not use AutoModelForImageTextToText (needs base model without LM head)"
-
-  - id: colqwen2_uses_base_model_class
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColQwen2 must not use AutoModelForImageTextToText (needs base model without LM head)"
-
-  - id: colpali_forward_no_model_indirection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColPali forward must call self.vlm() directly, not self.vlm.model()"
-
-  - id: colqwen2_forward_no_model_indirection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColQwen2 forward must not go through self.vlm.model (use self.vlm directly)"
-
-  - id: colpali_base_model_prefix
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColPaliForRetrieval.base_model_prefix must be 'vlm'"
-
-  - id: colqwen2_base_model_prefix
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColQwen2ForRetrieval.base_model_prefix must be 'vlm'"
-
-  - id: colmodernvbert_base_model_prefix
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColModernVBertForRetrieval.base_model_prefix must be 'vlm'"
-
-  - id: colqwen2_conversion_mapping
-    type: fail_to_pass
-    origin: pr_diff
-    description: "colqwen2 must exist in checkpoint conversion mapping"
-
-  - id: colpali_no_conversion_mapping
-    type: fail_to_pass
-    origin: pr_diff
-    description: "colpali entry must be removed from conversion mapping (no longer needed with base model)"
-
-  - id: modular_colqwen2_no_model_indirection
-    type: fail_to_pass
-    origin: agent_config
-    description: "modular_colqwen2.py (source of truth) must also call self.vlm() directly, not self.vlm.model() — modular files are authoritative when present"
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
-
-  # Repo CI tests (pass_to_pass, repo_tests)
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on modified files"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified files"
-
-  - id: test_repo_unittest_colpali
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ColPali unit tests pass (test_can_be_initialized_on_meta)"
-
-  - id: test_repo_unittest_colqwen2
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ColQwen2 unit tests pass (test_can_be_initialized_on_meta)"
-
-  - id: test_repo_unittest_colmodernvbert
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ColModernVBert unit tests pass (test_can_be_initialized_on_meta)"
-
-  - id: test_repo_missing_keys_colpali
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ColPali missing keys test passes (test_correct_missing_keys)"
-
-  - id: test_repo_missing_keys_colqwen2
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ColQwen2 missing keys test passes (test_correct_missing_keys)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without syntax errors
+- id: modules_import
+  type: pass_to_pass
+  origin: pr_diff
+  description: All affected modules import without errors
+- id: colpali_uses_base_model_class
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColPali must not use AutoModelForImageTextToText (needs base model
+    without LM head)
+- id: colqwen2_uses_base_model_class
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColQwen2 must not use AutoModelForImageTextToText (needs base model
+    without LM head)
+- id: colpali_forward_no_model_indirection
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColPali forward must call self.vlm() directly, not self.vlm.model()
+- id: colqwen2_forward_no_model_indirection
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColQwen2 forward must not go through self.vlm.model (use self.vlm directly)
+- id: colpali_base_model_prefix
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColPaliForRetrieval.base_model_prefix must be 'vlm'
+- id: colqwen2_base_model_prefix
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColQwen2ForRetrieval.base_model_prefix must be 'vlm'
+- id: colmodernvbert_base_model_prefix
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColModernVBertForRetrieval.base_model_prefix must be 'vlm'
+- id: colqwen2_conversion_mapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: colqwen2 must exist in checkpoint conversion mapping
+- id: colpali_no_conversion_mapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: colpali entry must be removed from conversion mapping (no longer needed
+    with base model)
+- id: modular_colqwen2_no_model_indirection
+  type: fail_to_pass
+  origin: agent_config
+  description: modular_colqwen2.py (source of truth) must also call self.vlm() directly,
+    not self.vlm.model() — modular files are authoritative when present
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 05514c4bb641ba1537d17048fd93f50f45d5f19d
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files
+- id: test_repo_unittest_colpali
+  type: pass_to_pass
+  origin: repo_tests
+  description: ColPali unit tests pass (test_can_be_initialized_on_meta)
+- id: test_repo_unittest_colqwen2
+  type: pass_to_pass
+  origin: repo_tests
+  description: ColQwen2 unit tests pass (test_can_be_initialized_on_meta)
+- id: test_repo_unittest_colmodernvbert
+  type: pass_to_pass
+  origin: repo_tests
+  description: ColModernVBert unit tests pass (test_can_be_initialized_on_meta)
+- id: test_repo_missing_keys_colpali
+  type: pass_to_pass
+  origin: repo_tests
+  description: ColPali missing keys test passes (test_correct_missing_keys)
+- id: test_repo_missing_keys_colqwen2
+  type: pass_to_pass
+  origin: repo_tests
+  description: ColQwen2 missing keys test passes (test_correct_missing_keys)
 rubric:
-  - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/."
-    source:
-      path: "CLAUDE.md"
-      lines: "64"
-      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
-
-  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo. Instead, edit the modular file."
-    source:
-      path: "CLAUDE.md"
-      lines: "67-68"
-      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
-
-  - rule: "PRs should be as brief as possible. Bugfix PRs can often be only one or two lines long. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "05514c4bb641ba1537d17048fd93f50f45d5f19d"
+- rule: We try to avoid direct inheritance between model-specific files in src/transformers/models/.
+  source:
+    path: CLAUDE.md
+    lines: '64'
+    commit: 05514c4bb641ba1537d17048fd93f50f45d5f19d
+- rule: When a modular file is present, generated files should not be edited, as changes
+    will be overwritten by make fix-repo. Instead, edit the modular file.
+  source:
+    path: CLAUDE.md
+    lines: 67-68
+    commit: 05514c4bb641ba1537d17048fd93f50f45d5f19d
+- rule: PRs should be as brief as possible. Bugfix PRs can often be only one or two
+    lines long. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 05514c4bb641ba1537d17048fd93f50f45d5f19d
+- rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files can inherit from other models. `make fix-repo` will copy code
+    to generate standalone `modeling` and other files.
+  source:
+    path: CLAUDE.md
+    lines: '61'
+  evidence: The gold solution modifies `src/transformers/models/colqwen2/modular_colqwen2.py`
+    in addition to `modeling_colqwen2.py`, adhering to the repository's modular model
+    design where the modular file is the
+  category: architecture
+distractors:
+- rule: If work maps to an existing issue, coordinate on that issue before opening
+    a PR. Do not open a PR for someone else's issue unless there is explicit approval...
+    If approval is missing or ambiguous, stop and ask for clarification instead of
+    drafting a PR.
+  collision_type: meta_confusion
+  why_distracting: The agent is in an isolated evaluation environment and must produce
+    a solution. Refusing to write code because it cannot verify issue coordination
+    or approval will cause it to fail the task.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 25-28
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end... Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the patch, citing the policy
+    that pure code-agent PRs are not allowed and require human validation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 45-53
+- rule: '`make fix-repo`: auto-fixes copies, modular conversions... `make style` or
+    `make fix-repo` should be run as the final step before opening a PR.'
+  collision_type: would_cause_bug
+  why_distracting: If the agent edits `modeling_colqwen2.py` directly and then follows
+    the instruction to run `make fix-repo` as the final step, `make fix-repo` will
+    overwrite `modeling_colqwen2.py` with the contents generated from the unmodified
+    `modular_colqwen2.py`, erasing the agent's fix.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 4-8
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical in content and provide
+  repository-wide guidelines. The agent should follow the architectural guidelines
+  (modular models) but ignore the meta-level contribution policies (coordination,
+  human validation) since it is operating in an automated evaluation environment.'

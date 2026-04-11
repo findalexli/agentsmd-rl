@@ -2,95 +2,132 @@ source_pr:
   owner: MystenLabs
   repo: sui
   number: 26032
-  title: "[move-compiler] Fix byte string escape"
+  title: '[move-compiler] Fix byte string escape'
   merge_commit: 47cc0bb95fba0d3dcdd38632a7f8d6e748f4b5ea
   base_commit: 92bc40908e2cd3a35255295fcde7d897f6e45910
-
 task:
   name: move-compiler-byte-string-escape
-  description: Fix Move compiler byte string escape handling for multi-byte UTF-8 characters
+  description: Fix Move compiler byte string escape handling for multi-byte UTF-8
+    characters
   type: code_fix
-
 repository:
   language: rust
   primary_crate: move-compiler
   test_framework: cargo test
-
 checks:
-  - id: test_multibyte_hex_escape_error_handling
-    type: f2p
-    description: "Compiler reports proper error for multi-byte UTF-8 chars in hex escapes, not panic"
-    points: 3
-
-  - id: test_valid_hex_escape_still_works
-    type: p2p
-    description: "Valid hex escape sequences continue to work"
-    points: 1
-
-  - id: test_single_invalid_hex_character
-    type: f2p
-    description: "Compiler handles single invalid hex character correctly"
-    points: 1
-
-  - id: test_various_multibyte_chars
-    type: f2p
-    description: "Compiler handles various multi-byte UTF-8 chars without panicking"
-    points: 1
-
-  - id: test_hex_escape_at_end
-    type: p2p
-    description: "Edge case: hex escape at end of string handled gracefully"
-    points: 1
-
-  - id: test_compiler_unit_tests
-    type: p2p
-    origin: repo_tests
-    description: "Move compiler unit tests pass (repo CI check)"
-    points: 1
-
-  - id: test_byte_string_expansion_compiles
-    type: p2p
-    origin: repo_tests
-    description: "move-compiler builds without errors (cargo check)"
-    points: 1
-
-  - id: test_move_compiler_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Move code follows Rust formatting standards (cargo fmt --check)"
-    points: 1
-
-  - id: test_repo_xlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's custom linter passes (cargo xlint)"
-    points: 1
-
-  - id: test_repo_git_checks
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's git checks pass (scripts/git-checks.sh)"
-    points: 1
-
+- id: test_multibyte_hex_escape_error_handling
+  type: f2p
+  description: Compiler reports proper error for multi-byte UTF-8 chars in hex escapes,
+    not panic
+  points: 3
+- id: test_valid_hex_escape_still_works
+  type: p2p
+  description: Valid hex escape sequences continue to work
+  points: 1
+- id: test_single_invalid_hex_character
+  type: f2p
+  description: Compiler handles single invalid hex character correctly
+  points: 1
+- id: test_various_multibyte_chars
+  type: f2p
+  description: Compiler handles various multi-byte UTF-8 chars without panicking
+  points: 1
+- id: test_hex_escape_at_end
+  type: p2p
+  description: 'Edge case: hex escape at end of string handled gracefully'
+  points: 1
+- id: test_compiler_unit_tests
+  type: p2p
+  origin: repo_tests
+  description: Move compiler unit tests pass (repo CI check)
+  points: 1
+- id: test_byte_string_expansion_compiles
+  type: p2p
+  origin: repo_tests
+  description: move-compiler builds without errors (cargo check)
+  points: 1
+- id: test_move_compiler_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Move code follows Rust formatting standards (cargo fmt --check)
+  points: 1
+- id: test_repo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's custom linter passes (cargo xlint)
+  points: 1
+- id: test_repo_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git checks pass (scripts/git-checks.sh)
+  points: 1
 agent_config:
-  - source_file: CLAUDE.md
-    rules_applied:
-      - "All new files must start with license header: Copyright (c) Mysten Labs, Inc. / SPDX-License-Identifier: Apache-2.0"
-      - "Use cargo check for quick validation"
-      - "Run tests with SUI_SKIP_SIMTESTS=1 cargo nextest run"
-      - "Set timeout limits to at least 10 minutes"
-      - "Run ./scripts/lint.sh before commit"
-      - "NEVER use #[allow(dead_code)] or linting suppressions - fix underlying issues"
-      - "Do NOT comment the obvious - only non-obvious algorithms, temporary exclusions, complex calculations, subtle race conditions"
-
+- source_file: CLAUDE.md
+  rules_applied:
+  - 'All new files must start with license header: Copyright (c) Mysten Labs, Inc.
+    / SPDX-License-Identifier: Apache-2.0'
+  - Use cargo check for quick validation
+  - Run tests with SUI_SKIP_SIMTESTS=1 cargo nextest run
+  - Set timeout limits to at least 10 minutes
+  - Run ./scripts/lint.sh before commit
+  - 'NEVER use #[allow(dead_code)] or linting suppressions - fix underlying issues'
+  - Do NOT comment the obvious - only non-obvious algorithms, temporary exclusions,
+    complex calculations, subtle race conditions
 rubric:
-  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead"
-    source:
-      path: "CLAUDE.md"
-      lines: "113"
-      commit: "92bc40908e2cd3a35255295fcde7d897f6e45910"
-  - rule: "Do NOT comment the obvious - comments should not simply repeat what the code does."
-    source:
-      path: "CLAUDE.md"
-      lines: "118"
-      commit: "92bc40908e2cd3a35255295fcde7d897f6e45910"
+- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
+    - fix the underlying issues instead'
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: 92bc40908e2cd3a35255295fcde7d897f6e45910
+- rule: Do NOT comment the obvious - comments should not simply repeat what the code
+    does.
+  source:
+    path: CLAUDE.md
+    lines: '118'
+    commit: 92bc40908e2cd3a35255295fcde7d897f6e45910
+distractors:
+- rule: Run Rust unittests with SUI_SKIP_SIMTESTS=1 cargo nextest run
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run the entire workspace test suite using `cargo
+    nextest run`, which takes a very long time due to the large codebase size, instead
+    of scoping tests to the `move-compiler` crate as instructed in the prompt.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 33-34
+- rule: Use `cargo nextest --lib` to run only library tests and skip integration tests
+  collision_type: rule_conflict
+  why_distracting: The config recommends using `cargo nextest --lib`, but the prompt
+    explicitly instructs the agent to use standard `cargo test -p move-compiler --lib`.
+    The agent might use nextest and violate the prompt's specific instruction.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 41-42
+- rule: Run individual lints with cargo xclippy (which does not recognize -p option)
+  collision_type: meta_confusion
+  why_distracting: The agent might try to lint its changes using `cargo xclippy -p
+    move-compiler`, which will fail because xclippy doesn't support `-p`, or it might
+    run it globally which is too slow.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 51-53
+- rule: Consult crate-specific CLAUDE.md files for instructions on which tests to
+    run
+  collision_type: meta_confusion
+  why_distracting: The agent might waste time searching for a crate-specific CLAUDE.md
+    file in the move-compiler directory to find testing instructions, but no such
+    file exists in the context and the prompt already provides the exact test command.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 43-44
+hierarchy_analysis: The root CLAUDE.md provides general repository guidelines, mostly
+  focused on the Sui blockchain components (sui-core, sui-node, etc.). The issue is
+  located in the external Move compiler (`external-crates/move/crates/move-compiler`),
+  which is a distinct subsystem. The general testing and linting commands in the root
+  CLAUDE.md are too broad (running all workspace tests) or inapplicable (simtests)
+  for a localized compiler bug. The agent must rely on the specific guidance in the
+  prompt (`cargo test -p move-compiler --lib`) rather than the global test commands.

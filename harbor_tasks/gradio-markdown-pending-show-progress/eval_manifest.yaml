@@ -1,69 +1,89 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12958
-  base_commit: "a2bd6e1fb5d19e59ae694ab80c2874288e9982b8"
-  merge_commit: "bb127c74bd6301e3782e0ce4744161ae976a8481"
-
+  base_commit: a2bd6e1fb5d19e59ae694ab80c2874288e9982b8
+  merge_commit: bb127c74bd6301e3782e0ce4744161ae976a8481
 checks:
-  - id: svelte_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "Index.svelte must exist and contain a class:pending directive"
-
-  - id: pending_false_when_hidden
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Pending must be FALSE when status=pending and show_progress=hidden (core bug)"
-
-  - id: pending_true_when_full
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Pending must still be TRUE when status=pending and show_progress=full"
-
-  - id: pending_true_when_minimal
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Pending must be TRUE when status=pending and show_progress=minimal"
-
-  - id: pending_false_when_complete
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Pending must be FALSE when status=complete regardless of show_progress"
-
-  - id: pending_true_when_progress_undefined
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Pending must still work when show_progress is not set (backward compat)"
-
-  - id: expression_differs_from_buggy
-    type: fail_to_pass
-    origin: static
-    description: "The class:pending expression must differ from the unchanged buggy original"
-
-  - id: tab_indentation
-    type: pass_to_pass
-    origin: agent_config
-    description: "Lines near class:pending must use tab indentation (file convention)"
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "a2bd6e1fb5d19e59ae694ab80c2874288e9982b8"
-
-  - id: repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier format check passes"
-
-  - id: repo_markdown_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Markdown component unit tests pass"
-
+- id: svelte_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Index.svelte must exist and contain a class:pending directive
+- id: pending_false_when_hidden
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pending must be FALSE when status=pending and show_progress=hidden
+    (core bug)
+- id: pending_true_when_full
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pending must still be TRUE when status=pending and show_progress=full
+- id: pending_true_when_minimal
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pending must be TRUE when status=pending and show_progress=minimal
+- id: pending_false_when_complete
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pending must be FALSE when status=complete regardless of show_progress
+- id: pending_true_when_progress_undefined
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pending must still work when show_progress is not set (backward compat)
+- id: expression_differs_from_buggy
+  type: fail_to_pass
+  origin: static
+  description: The class:pending expression must differ from the unchanged buggy original
+- id: tab_indentation
+  type: pass_to_pass
+  origin: agent_config
+  description: Lines near class:pending must use tab indentation (file convention)
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: a2bd6e1fb5d19e59ae694ab80c2874288e9982b8
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes
+- id: repo_markdown_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Markdown component unit tests pass
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "a2bd6e1fb5d19e59ae694ab80c2874288e9982b8"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: a2bd6e1fb5d19e59ae694ab80c2874288e9982b8
+distractors:
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: architecture_boundary
+  why_distracting: The bug is entirely in the frontend Svelte code (`js/markdown/Index.svelte`).
+    Running backend tests is wasted effort and crosses an architecture boundary.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '26'
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing a bug, not interacting with GitHub
+    issues. Trying to create an issue using CLI tools would be a waste of time and
+    out of scope for the coding task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '16'
+- rule: 'Format your code before pushing. Frontend: `bash scripts/format_frontend.sh`'
+  collision_type: scope_ambiguity
+  why_distracting: Running a repo-wide formatting script might modify other files
+    or lines not related to the bug, polluting the PR with unrelated changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 22-24
+hierarchy_analysis: There is only one config file (`AGENTS.md`) at the root level,
+  so no hierarchy conflicts exist. The rules are general repository guidelines, some
+  of which (like PR creation and issue management) are not applicable to an isolated
+  coding task.

@@ -1,91 +1,95 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35641
-  base_commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"
-  merge_commit: "cd515d7e22636238adef912356f522168946313d"
-
+  base_commit: 78f5c504b732aec0eb12514bc2cf3f27a8143dd2
+  merge_commit: cd515d7e22636238adef912356f522168946313d
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js must parse without Node.js syntax errors"
-
-  - id: empty_array_early_return
-    type: fail_to_pass
-    origin: pr_diff
-    description: "indexOfEventListener returns -1 immediately when the eventListeners array is empty (avoids loop overhead)"
-
-  - id: normalized_options_cached_before_loop
-    type: fail_to_pass
-    origin: pr_diff
-    description: "normalizeListenerOptions(optionsOrUseCapture) is called once before the loop and stored in normalizedOptions, not called repeatedly inside the loop"
-
-  - id: blur_early_exit_when_active_not_in_parent
-    type: fail_to_pass
-    origin: pr_diff
-    description: "blur() checks whether the active element is inside the fragment's parent (via .contains()) and returns early if not, skipping unnecessary tree traversal"
-
-  - id: active_element_passed_to_traversal_callback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "blur() fetches activeElement once and passes it to traverseFragmentInstance, so blurActiveElementWithinFragment does not re-query ownerDocument.activeElement per child"
-
-  - id: text_nodes_skipped_in_blur_traversal
-    type: fail_to_pass
-    origin: pr_diff
-    description: "blurActiveElementWithinFragment guards against HostText children (text nodes cannot receive focus and must be skipped)"
-
-  - id: redundant_first_instance_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "compareDocumentPosition no longer declares a redundant firstInstance variable that duplicates the children[0] lookup already stored in firstNode/firstElement"
-
-  - id: repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint checks pass"
-
-  - id: repo_version_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's version check passes"
-
-  - id: repo_license_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's license check passes"
-
-  - id: repo_tests_react_dom
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactDOM tests pass - relevant to ReactFiberConfigDOM changes"
-
-  - id: repo_print_warnings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's print warnings check passes"
-
-  - id: repo_flow
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Flow typecheck passes for dom-node renderer"
-
-  - id: repo_react_dom_fragment_refs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ReactDOMFragmentRefs tests pass - highly relevant to FragmentInstance changes"
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js must
+    parse without Node.js syntax errors
+- id: empty_array_early_return
+  type: fail_to_pass
+  origin: pr_diff
+  description: indexOfEventListener returns -1 immediately when the eventListeners
+    array is empty (avoids loop overhead)
+- id: normalized_options_cached_before_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: normalizeListenerOptions(optionsOrUseCapture) is called once before
+    the loop and stored in normalizedOptions, not called repeatedly inside the loop
+- id: blur_early_exit_when_active_not_in_parent
+  type: fail_to_pass
+  origin: pr_diff
+  description: blur() checks whether the active element is inside the fragment's parent
+    (via .contains()) and returns early if not, skipping unnecessary tree traversal
+- id: active_element_passed_to_traversal_callback
+  type: fail_to_pass
+  origin: pr_diff
+  description: blur() fetches activeElement once and passes it to traverseFragmentInstance,
+    so blurActiveElementWithinFragment does not re-query ownerDocument.activeElement
+    per child
+- id: text_nodes_skipped_in_blur_traversal
+  type: fail_to_pass
+  origin: pr_diff
+  description: blurActiveElementWithinFragment guards against HostText children (text
+    nodes cannot receive focus and must be skipped)
+- id: redundant_first_instance_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: compareDocumentPosition no longer declares a redundant firstInstance
+    variable that duplicates the children[0] lookup already stored in firstNode/firstElement
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint checks pass
+- id: repo_version_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's version check passes
+- id: repo_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's license check passes
+- id: repo_tests_react_dom
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactDOM tests pass - relevant to ReactFiberConfigDOM changes
+- id: repo_print_warnings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's print warnings check passes
+- id: repo_flow
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Flow typecheck passes for dom-node renderer
+- id: repo_react_dom_fragment_refs
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactDOMFragmentRefs tests pass - highly relevant to FragmentInstance
+    changes
 rubric:
-  - rule: "Run yarn prettier to fix formatting and yarn linc to check for lint issues before committing."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "10-11"
-      commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"
-
-  - rule: "Do not add new $FlowFixMe suppressions to mask real type errors; check if existing suppressions are still needed."
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "29"
-      commit: "78f5c504b732aec0eb12514bc2cf3f27a8143dd2"
+- rule: Run yarn prettier to fix formatting and yarn linc to check for lint issues
+    before committing.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: 10-11
+    commit: 78f5c504b732aec0eb12514bc2cf3f27a8143dd2
+- rule: Do not add new $FlowFixMe suppressions to mask real type errors; check if
+    existing suppressions are still needed.
+  source:
+    path: .claude/skills/flow/SKILL.md
+    lines: '29'
+    commit: 78f5c504b732aec0eb12514bc2cf3f27a8143dd2
+- rule: React core files are located outside the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: The gold solution modifies `packages/react-dom-bindings/src/client/ReactFiberConfigDOM.js`,
+    which correctly falls under the React core files outside the `/compiler/` directory.
+  category: architecture
+hierarchy_analysis: Only one config file (`CLAUDE.md`) is present at the root level,
+  providing basic monorepo structure information. There are no overlapping rules or
+  conflicts.

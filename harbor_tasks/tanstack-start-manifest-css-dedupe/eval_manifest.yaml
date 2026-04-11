@@ -4,97 +4,121 @@ source_pr:
   number: 7030
   merge_commit: ed9c43df7ab8c679f6e6833d94651a0a091b9880
   base_commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
-
 task:
   name: tanstack-start-manifest-css-dedupe
   title: Fix CSS asset deduplication in TanStack Start manifest
   primary_file: packages/start-plugin-core/src/start-manifest-plugin/manifestBuilder.ts
-
 checks:
-  - id: test_dedupe_css_from_shared_imported_chunks
-    type: behavioral
-    description: CSS from shared imported chunks is deduplicated
-    origin: fail_to_pass
-    source: PR regression test
-
-  - id: test_dedupe_route_css_overlapping_chunk_imports
-    type: behavioral
-    description: Route CSS gathered through overlapping chunk imports is deduplicated
-    origin: fail_to_pass
-    source: PR regression test
-
-  - id: test_dedupe_route_css_ancestor_routes
-    type: behavioral
-    description: Route CSS already owned by ancestor routes is deduplicated
-    origin: fail_to_pass
-    source: PR regression test
-
-  - id: test_dedupe_assets_and_preloads_active_ancestor_path
-    type: behavioral
-    description: Assets and preloads are deduplicated only along the active ancestor path
-    origin: pass_to_pass
-    source: Existing test verifying full deduplication logic
-
-  - id: test_backtracking_preserves_reused_assets
-    type: behavioral
-    description: Backtracking preserves reused assets and preloads for cousin routes
-    origin: pass_to_pass
-    source: Existing test verifying proper backtracking behavior
-
-  - id: test_manifest_builder_all_tests
-    type: behavioral
-    description: All manifest builder tests pass without regressions
-    origin: pass_to_pass
-    source: Comprehensive test suite
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's unit tests for start-plugin-core pass
-
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's ESLint check for start-plugin-core passes
-
-  - id: test_repo_types
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's TypeScript type check for start-plugin-core passes
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's build validation for start-plugin-core passes
-
+- id: test_dedupe_css_from_shared_imported_chunks
+  type: behavioral
+  description: CSS from shared imported chunks is deduplicated
+  origin: fail_to_pass
+  source: PR regression test
+- id: test_dedupe_route_css_overlapping_chunk_imports
+  type: behavioral
+  description: Route CSS gathered through overlapping chunk imports is deduplicated
+  origin: fail_to_pass
+  source: PR regression test
+- id: test_dedupe_route_css_ancestor_routes
+  type: behavioral
+  description: Route CSS already owned by ancestor routes is deduplicated
+  origin: fail_to_pass
+  source: PR regression test
+- id: test_dedupe_assets_and_preloads_active_ancestor_path
+  type: behavioral
+  description: Assets and preloads are deduplicated only along the active ancestor
+    path
+  origin: pass_to_pass
+  source: Existing test verifying full deduplication logic
+- id: test_backtracking_preserves_reused_assets
+  type: behavioral
+  description: Backtracking preserves reused assets and preloads for cousin routes
+  origin: pass_to_pass
+  source: Existing test verifying proper backtracking behavior
+- id: test_manifest_builder_all_tests
+  type: behavioral
+  description: All manifest builder tests pass without regressions
+  origin: pass_to_pass
+  source: Comprehensive test suite
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for start-plugin-core pass
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check for start-plugin-core passes
+- id: test_repo_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript type check for start-plugin-core passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build validation for start-plugin-core passes
 agent_config:
-  - source_file: AGENTS.md
-    source_commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
-    relevant_rules:
-      - "Run tests: pnpm test"
-      - "Build packages: pnpm build (affected) or pnpm build:all (force all)"
-      - "Always prefer pnpm nx ... over npx nx ..."
-      - "Run only one Nx command at a time"
-      - "Use pnpm nx run @tanstack/start-plugin-core:test:unit for specific package tests"
-      - "Add or update tests for any code changes"
-      - "Use workspace protocol for internal dependencies (workspace:*)"
-      - "TypeScript strict mode with extensive type safety"
-
+- source_file: AGENTS.md
+  source_commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
+  relevant_rules:
+  - 'Run tests: pnpm test'
+  - 'Build packages: pnpm build (affected) or pnpm build:all (force all)'
+  - Always prefer pnpm nx ... over npx nx ...
+  - Run only one Nx command at a time
+  - Use pnpm nx run @tanstack/start-plugin-core:test:unit for specific package tests
+  - Add or update tests for any code changes
+  - Use workspace protocol for internal dependencies (workspace:*)
+  - TypeScript strict mode with extensive type safety
 rubric:
-  - rule: "TypeScript strict mode with extensive type safety - use proper types for all variables and function signatures"
-    source:
-      path: "AGENTS.md"
-      lines: "20"
-      commit: "7640f6e3f5d946ca1fd32729050d12642cf38502"
-
-  - rule: "Framework-agnostic core logic separated from React/Solid bindings"
-    source:
-      path: "AGENTS.md"
-      lines: "21"
-      commit: "7640f6e3f5d946ca1fd32729050d12642cf38502"
-
-  - rule: "Add or update tests for any code changes"
-    source:
-      path: "AGENTS.md"
-      lines: "74"
-      commit: "7640f6e3f5d946ca1fd32729050d12642cf38502"
+- rule: TypeScript strict mode with extensive type safety - use proper types for all
+    variables and function signatures
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
+- rule: Framework-agnostic core logic separated from React/Solid bindings
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
+- rule: Add or update tests for any code changes
+  source:
+    path: AGENTS.md
+    lines: '74'
+    commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
+- rule: TypeScript strict mode with extensive type safety
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution maintains strict type safety by explicitly typing the
+    new `assets` property as `Array<RouterManagedTag>` in the renamed `DedupeRoute`
+    type, and using `Set<string>` for the `seenAsset
+  category: style
+distractors:
+- rule: 'Target specific packages: `pnpm nx run @tanstack/react-router:test:unit`'
+  collision_type: meta_confusion
+  why_distracting: The config provides an example of targeting specific packages using
+    `@tanstack/react-router:test:unit`. An agent might blindly copy this command to
+    run tests, but this PR modifies `@tanstack/start-plugin-core`. Running tests for
+    the wrong package would lead the agent to falsely believe their changes didn't
+    break anything or that the relevant tests are passing.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 25-26
+- rule: 'Granular unit testing through Nx (recommended): Specific files: `pnpm nx
+    run @tanstack/react-router:test:unit -- tests/link.test.tsx tests/Scripts.test.tsx`'
+  collision_type: meta_confusion
+  why_distracting: The config suggests running granular unit tests with a specific
+    command for `react-router` and `link.test.tsx`. If the agent uses this exact command
+    instead of the one provided in the task instructions (`pnpm nx run @tanstack/start-plugin-core:test:unit
+    -- tests/start-manifest-plugin/manifestBuilder.test.ts`), it will fail to verify
+    the CSS deduplication logic.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 30-31
+hierarchy_analysis: The AGENTS.md file provides general monorepo guidelines, particularly
+  around Nx testing commands. However, the examples given in the config are specific
+  to the `@tanstack/react-router` package. The agent must override these general examples
+  with the specific package (`@tanstack/start-plugin-core`) and test file provided
+  in the PR instructions.

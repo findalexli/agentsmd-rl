@@ -1,72 +1,97 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44941
-  base_commit: "ed003b4482aabdf8377250f22826dd31f378269c"
-  merge_commit: "0f19dec775aae867c36d29db5d797afb87af2ff6"
-
+  base_commit: ed003b4482aabdf8377250f22826dd31f378269c
+  merge_commit: 0f19dec775aae867c36d29db5d797afb87af2ff6
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "video_processing_utils.py must be valid Python"
-
-  - id: import_without_pil
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Module imports without PIL; BaseVideoProcessor has correct class attributes"
-
-  - id: docstring_constant_without_pil
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BASE_VIDEO_PROCESSOR_DOCSTRING accessible and non-trivial without PIL"
-
-  - id: methods_exist_without_pil
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Key methods on BaseVideoProcessor present; __call__ delegates to preprocess"
-
-  - id: pil_resampling_with_pil
-    type: pass_to_pass
-    origin: pr_diff
-    description: "PILImageResampling available in module namespace when PIL IS installed"
-
-  - id: other_image_utils_imports
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Other image_utils imports (ChannelDimension, SizeDict) unaffected"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "File not emptied/stubbed — retains substantial content and key definitions"
-
-  - id: copied_from_annotations_intact
-    type: pass_to_pass
-    origin: agent_config
-    description: "'# Copied from' annotations must not be broken or removed"
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "ed003b4482aabdf8377250f22826dd31f378269c"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on the target file"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff formatting passes on the target file"
-
-  - id: test_repo_modeling_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's modeling structure check passes"
-
-  - id: test_repo_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's __init__ structure check passes"
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: video_processing_utils.py must be valid Python
+- id: import_without_pil
+  type: fail_to_pass
+  origin: pr_diff
+  description: Module imports without PIL; BaseVideoProcessor has correct class attributes
+- id: docstring_constant_without_pil
+  type: fail_to_pass
+  origin: pr_diff
+  description: BASE_VIDEO_PROCESSOR_DOCSTRING accessible and non-trivial without PIL
+- id: methods_exist_without_pil
+  type: fail_to_pass
+  origin: pr_diff
+  description: Key methods on BaseVideoProcessor present; __call__ delegates to preprocess
+- id: pil_resampling_with_pil
+  type: pass_to_pass
+  origin: pr_diff
+  description: PILImageResampling available in module namespace when PIL IS installed
+- id: other_image_utils_imports
+  type: pass_to_pass
+  origin: pr_diff
+  description: Other image_utils imports (ChannelDimension, SizeDict) unaffected
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: File not emptied/stubbed — retains substantial content and key definitions
+- id: copied_from_annotations_intact
+  type: pass_to_pass
+  origin: agent_config
+  description: '''# Copied from'' annotations must not be broken or removed'
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: ed003b4482aabdf8377250f22826dd31f378269c
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on the target file
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatting passes on the target file
+- id: test_repo_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modeling structure check passes
+- id: test_repo_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's __init__ structure check passes
+rubric:
+- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
+    style checks'
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+  evidence: The gold solution inserts `is_vision_available` into the `from .image_utils
+    import (...)` block in strict alphabetical order (between `SizeDict` and `validate_kwargs`),
+    adhering to the ruff/isort form
+  category: style
+distractors:
+- rule: 'Copies and Modular Models: Do not edit a `# Copied from` block... add a file
+    named `modular_<name>.py` in the model directory.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule about `# Copied from` and modular models specifically
+    applies to `src/transformers/models/`. The file being edited is `src/transformers/video_processing_utils.py`,
+    which is a general utility. An agent might waste time looking for copy mechanisms
+    or worry about breaking inheritance, but this rule is out of scope for utility
+    files.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 61-66
+- rule: 'Mandatory duplicate-work checks: Before proposing a PR, check for overlapping
+    open PRs and issue ownership using `gh` CLI.'
+  collision_type: meta_confusion
+  why_distracting: The agent is instructed to run `gh issue view` and `gh pr list`
+    to check for duplicate work before proposing a PR. In a headless evaluation or
+    patch-generation environment, attempting to run these GitHub CLI commands will
+    fail or distract from actually writing the code fix.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 25-32
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  rules are heavily focused on the PR submission process, GitHub coordination, and
+  model-specific copy mechanisms, which are mostly out of scope for a direct bug-fix
+  patch generation task on a utility file.

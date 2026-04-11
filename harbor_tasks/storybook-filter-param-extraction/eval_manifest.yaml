@@ -1,83 +1,111 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "storybookjs/storybook"
+  repo: storybookjs/storybook
   pr: 34436
-  base_commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
-  merge_commit: "a43cc338991e3559aedd0befc55c90cdca425102"
-
+  base_commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+  merge_commit: a43cc338991e3559aedd0befc55c90cdca425102
 checks:
-  - id: test_repo_tags_module
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's tags module functionality works (tests parseTagsParam and serializeTagsParam)"
-
-  - id: test_repo_vitest_statuses
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's vitest tests for statuses module pass (22 tests covering parseStatusesParam and serializeStatusesParam)"
-
-  - id: test_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must exist and have valid TypeScript structure"
-
-  - id: filter_param_basic_inclusion
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseFilterParam splits semicolons and sorts into included array"
-
-  - id: filter_param_exclusion_handling
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseFilterParam routes !-prefixed items to excluded array, strips the prefix"
-
-  - id: filter_param_transform_and_null_skip
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseFilterParam applies transform callback and skips null/undefined results"
-
-  - id: filter_param_empty_and_edge_cases
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseFilterParam handles empty/undefined input and trailing semicolons"
-
-  - id: tags_uses_shared_helper
-    type: fail_to_pass
-    origin: pr_diff
-    description: "tags.ts imports parseFilterParam and removes inline parsing logic"
-
-  - id: statuses_uses_shared_helper
-    type: fail_to_pass
-    origin: pr_diff
-    description: "statuses.ts imports parseFilterParam and removes inline parsing logic"
-
-  - id: no_raw_console
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files must not use raw console.log/warn/error — use Storybook loggers"
-    source:
-      path: "AGENTS.md"
-      lines: "244-250"
-      commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
-
-  - id: explicit_ts_import_extensions
-    type: pass_to_pass
-    origin: agent_config
-    description: "New/modified files use explicit .ts extensions for relative imports"
-    source:
-      path: "AGENTS.md"
-      lines: "246"
-      commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
-
+- id: test_repo_tags_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tags module functionality works (tests parseTagsParam and serializeTagsParam)
+- id: test_repo_vitest_statuses
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's vitest tests for statuses module pass (22 tests covering parseStatusesParam
+    and serializeStatusesParam)
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must exist and have valid TypeScript structure
+- id: filter_param_basic_inclusion
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseFilterParam splits semicolons and sorts into included array
+- id: filter_param_exclusion_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseFilterParam routes !-prefixed items to excluded array, strips
+    the prefix
+- id: filter_param_transform_and_null_skip
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseFilterParam applies transform callback and skips null/undefined
+    results
+- id: filter_param_empty_and_edge_cases
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseFilterParam handles empty/undefined input and trailing semicolons
+- id: tags_uses_shared_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: tags.ts imports parseFilterParam and removes inline parsing logic
+- id: statuses_uses_shared_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: statuses.ts imports parseFilterParam and removes inline parsing logic
+- id: no_raw_console
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not use raw console.log/warn/error — use Storybook
+    loggers
+  source:
+    path: AGENTS.md
+    lines: 244-250
+    commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+- id: explicit_ts_import_extensions
+  type: pass_to_pass
+  origin: agent_config
+  description: New/modified files use explicit .ts extensions for relative imports
+  source:
+    path: AGENTS.md
+    lines: '246'
+    commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
 rubric:
-  - rule: "New TypeScript files must use explicit .ts extensions for relative imports (e.g., './foo.ts', '../lib/bar.ts')"
-    source:
-      path: "AGENTS.md"
-      lines: "246"
-      commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
-  - rule: "Modified TypeScript files must not use raw console.log/warn/error - use Storybook loggers (storybook/internal/client-logger for client-side, storybook/internal/node-logger for server-side)"
-    source:
-      path: "AGENTS.md"
-      lines: "241-250"
-      commit: "95aa11484a255b1c7f6227f2c81e2d441bb28988"
+- rule: New TypeScript files must use explicit .ts extensions for relative imports
+    (e.g., './foo.ts', '../lib/bar.ts')
+  source:
+    path: AGENTS.md
+    lines: '246'
+    commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+- rule: Modified TypeScript files must not use raw console.log/warn/error - use Storybook
+    loggers (storybook/internal/client-logger for client-side, storybook/internal/node-logger
+    for server-side)
+  source:
+    path: AGENTS.md
+    lines: 241-250
+    commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+- rule: Maintain code within the appropriate architectural boundaries (e.g., `manager-api/`
+    for Storybook UI logic).
+  source:
+    path: AGENTS.md
+    lines: 43-45
+  evidence: The gold solution creates the new shared utility `filter-param.ts` inside
+    `code/core/src/manager-api/lib/`, keeping the UI-related parameter parsing logic
+    within the `manager-api` boundary rather than
+  category: architecture
+distractors:
+- rule: Use `common/` for shared Node.js utilities.
+  collision_type: architecture_boundary
+  why_distracting: The config mentions `common/` is for 'shared Node.js utilities'.
+    An agent might see that it needs to create a 'shared generic reusable helper function'
+    and mistakenly place it in `code/core/src/common/` instead of keeping it scoped
+    to `manager-api/lib/`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 48-48
+- rule: Write and run tests using Vitest for new or modified code.
+  collision_type: scope_ambiguity
+  why_distracting: The extensive test configuration instructions might prompt an agent
+    to write new Vitest unit tests for the extracted `parseFilterParam` utility. While
+    generally a good practice, it is out of scope for this specific strict refactoring
+    task, and the gold solution does not include tests.
+  severity: low
+  source:
+    path: .cursorrules
+    lines: 3-11
+hierarchy_analysis: The configuration hierarchy is relatively flat for this task.
+  `AGENTS.md` provides the primary architectural guidelines, while `.cursorrules`
+  provides tooling instructions. The main conflict arises from interpreting 'shared
+  utility' in the prompt against the architectural definitions in `AGENTS.md`.

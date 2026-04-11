@@ -1,65 +1,92 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "cloudflare/workers-sdk"
+  repo: cloudflare/workers-sdk
   pr: 13136
-  base_commit: "d927ee342cd98932556c3671d7f2f01f30bcf954"
-  merge_commit: "ab448708ba725b74927aff4d6e3f1f97dc9c2135"
-
+  base_commit: d927ee342cd98932556c3671d7f2f01f30bcf954
+  merge_commit: ab448708ba725b74927aff4d6e3f1f97dc9c2135
 checks:
-  - id: devenv_handles_bundler_errors
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DevEnv.handleErrorEvent must have a dedicated branch for BundlerController errors"
-
-  - id: devenv_formats_esbuild_failures
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DevEnv must import and use build failure formatting for esbuild errors"
-
-  - id: devenv_handles_non_esbuild_bundler_errors
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DevEnv must handle non-esbuild BundlerController errors with fallback logging"
-
-  - id: bundler_no_duplicate_error_logging
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BundlerController must not call logger.error before emitErrorEvent"
-
-  - id: devenv_preserves_existing_error_handlers
-    type: pass_to_pass
-    origin: static
-    description: "Existing error handling for MiniflareCoreError, ProxyController, ParseError preserved"
-
-  - id: no_console_in_modified_files
-    type: pass_to_pass
-    origin: agent_config
-    description: "No console.* calls in wrangler source — use logger singleton"
-    source:
-      path: "AGENTS.md"
-      lines: "186"
-      commit: "d927ee342cd98932556c3671d7f2f01f30bcf954"
-
-  - id: devenv_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "handleErrorEvent has meaningful branching logic, not a stub"
-
-  # CI/repo_tests pass_to_pass checks
-  - id: test_repo_lint_modified_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's linter (oxlint) passes on DevEnv.ts and BundlerController.ts"
-
-  - id: test_repo_typecheck_wrangler
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Wrangler package TypeScript typecheck passes"
-
-  - id: test_repo_format_modified_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's formatter (oxfmt) check passes on modified files"
-
-rubric: []
+- id: devenv_handles_bundler_errors
+  type: fail_to_pass
+  origin: pr_diff
+  description: DevEnv.handleErrorEvent must have a dedicated branch for BundlerController
+    errors
+- id: devenv_formats_esbuild_failures
+  type: fail_to_pass
+  origin: pr_diff
+  description: DevEnv must import and use build failure formatting for esbuild errors
+- id: devenv_handles_non_esbuild_bundler_errors
+  type: fail_to_pass
+  origin: pr_diff
+  description: DevEnv must handle non-esbuild BundlerController errors with fallback
+    logging
+- id: bundler_no_duplicate_error_logging
+  type: fail_to_pass
+  origin: pr_diff
+  description: BundlerController must not call logger.error before emitErrorEvent
+- id: devenv_preserves_existing_error_handlers
+  type: pass_to_pass
+  origin: static
+  description: Existing error handling for MiniflareCoreError, ProxyController, ParseError
+    preserved
+- id: no_console_in_modified_files
+  type: pass_to_pass
+  origin: agent_config
+  description: No console.* calls in wrangler source — use logger singleton
+  source:
+    path: AGENTS.md
+    lines: '186'
+    commit: d927ee342cd98932556c3671d7f2f01f30bcf954
+- id: devenv_not_stub
+  type: pass_to_pass
+  origin: static
+  description: handleErrorEvent has meaningful branching logic, not a stub
+- id: test_repo_lint_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's linter (oxlint) passes on DevEnv.ts and BundlerController.ts
+- id: test_repo_typecheck_wrangler
+  type: pass_to_pass
+  origin: repo_tests
+  description: Wrangler package TypeScript typecheck passes
+- id: test_repo_format_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter (oxfmt) check passes on modified files
+rubric:
+- rule: No `console.*` — use `logger` singleton
+  source:
+    path: packages/wrangler/AGENTS.md
+    lines: 18-18
+  evidence: In `DevEnv.ts`, the gold solution uses `logger.error(event.cause.message)`
+    to log non-esbuild errors, adhering to the rule to avoid `console.error`.
+  category: style
+distractors:
+- rule: Add/modify a CLI command -> `packages/wrangler/src/` Commands registered in
+    `src/index.ts`
+  collision_type: architecture_boundary
+  why_distracting: The problem mentions running `wrangler dev` with multiple `-c`
+    config flags. The agent might follow this rule and look into `src/index.ts` to
+    modify how the CLI parses these flags for multi-worker mode, but the actual fix
+    is entirely within the event handling pipeline (`DevEnv.ts` and `BundlerController.ts`).
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 53-55
+- rule: No `console.*` — use `logger` singleton
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs using the `logger` singleton. If the agent applies
+    this blindly to all errors (e.g., `logger.error(event.cause)`), they will fail
+    the requirement to format esbuild `BuildFailure` errors nicely. They must use
+    the specific `logBuildFailure` function instead of the `logger` singleton for
+    esbuild errors.
+  severity: high
+  source:
+    path: packages/wrangler/AGENTS.md
+    lines: 18-18
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` providing monorepo-wide
+  context and a package-specific `packages/wrangler/AGENTS.md` providing Wrangler-specific
+  conventions. The Wrangler-specific rule to use the `logger` singleton applies directly
+  to the modified files, but requires careful scoping to avoid missing the specialized
+  `logBuildFailure` function for esbuild errors. The root guide's pointer to `src/index.ts`
+  for CLI commands is a potential distraction since the issue is described in terms
+  of CLI flags but is actually an event handling bug.

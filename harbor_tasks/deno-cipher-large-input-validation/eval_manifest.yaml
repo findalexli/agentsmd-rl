@@ -1,252 +1,240 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "denoland/deno"
+  repo: denoland/deno
   pr: 33201
-  base_commit: "8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e"
-  merge_commit: "5085a59aef53fa90dc58c8859e4feb887f0a742a"
-
-# p2p_enrichment notes:
-# - Updated test origins to correctly distinguish between static file checks
-#   (origin: static) and subprocess-based CI commands (origin: repo_tests)
-# - Added 2 new repo_tests that use subprocess.run() with Python and git commands
-# - CI commands tested in Docker: git, python3 (cargo/deno/dprint unavailable)
-
+  base_commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
+  merge_commit: 5085a59aef53fa90dc58c8859e4feb887f0a742a
 checks:
-  # -----------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests with code execution
-  # -----------------------------------------------------------------------------
-
-  - id: cipheriv_update_rejects_large_input
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cipheriv.prototype.update must check buffer size >= 2^31-1 and throw"
-
-  - id: decipheriv_update_rejects_large_input
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Decipheriv.prototype.update must check buffer size >= 2^31-1 and throw"
-
-  - id: error_message_matches_nodejs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both cipher/decipher must throw 'Trying to add data in unsupported state'"
-
-  - id: size_check_before_encrypt_call
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Size check must appear before the encrypt/decrypt op call"
-
-  - id: node_crypto_pr_diff_parsing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Uses subprocess.run() to validate repo state and PR diff application"
-
-  # -----------------------------------------------------------------------------
-  # Pass-to-pass (static) — structural integrity (file reads, not subprocess)
-  # -----------------------------------------------------------------------------
-
-  - id: cipher_file_structure
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must define both Cipheriv and Decipheriv with update methods"
-
-  - id: cipher_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts file must exist at expected path"
-
-  - id: cipher_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must have balanced braces and valid TypeScript structure"
-
-  - id: cipher_imports_valid
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must have required imports from ext:core and ext:deno_node"
-
-  - id: cipher_class_structure
-    type: pass_to_pass
-    origin: static
-    description: "Cipheriv and Decipheriv classes must have required methods"
-
-  - id: cipher_error_imports
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must import error handling utilities"
-
-  - id: node_crypto_polyfills_structure
-    type: pass_to_pass
-    origin: static
-    description: "Node crypto polyfills directory must have expected structure"
-
-  - id: cipher_license_header
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must have required license headers"
-
-  - id: cipher_no_trailing_whitespace
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must not have trailing whitespace"
-
-  - id: cipher_unix_line_endings
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must use Unix line endings (LF, not CRLF)"
-
-  - id: cipher_utf8_encoding_valid
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must be valid UTF-8 encoded"
-
-  - id: cipher_no_merge_conflict_markers
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must not contain git merge conflict markers"
-
-  - id: cipher_deno_lint_ignore_present
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts should have deno-lint ignore for Node compatibility"
-
-  - id: cipher_no_debugger_statements
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must not contain debugger statements"
-
-  - id: cipher_no_console_log
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must not contain console.log statements"
-
-  - id: cipher_required_ops_exist
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must reference required Deno core operations"
-
-  - id: cipher_ext_node_polyfill_structure
-    type: pass_to_pass
-    origin: static
-    description: "cipher.ts must follow ext:node polyfill patterns"
-
-  - id: repo_directory_structure
-    type: pass_to_pass
-    origin: static
-    description: "Repository must have expected directory structure"
-
-  # -----------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — subprocess.run() based CI commands
-  # -----------------------------------------------------------------------------
-
-  - id: git_repo_initialized
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Deno repository must be properly cloned and initialized (subprocess: git rev-parse)"
-
-  - id: base_commit_checkout
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository must be at the expected base commit (subprocess: git rev-parse)"
-
-  - id: git_working_tree_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository working tree must be clean at base commit (subprocess: git status)"
-
-  - id: cipher_file_tracked_by_git
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cipher.ts must be tracked by git (subprocess: git ls-files)"
-
-  - id: cipher_git_history_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cipher.ts must have git history (subprocess: git log)"
-
-  - id: crypto_dir_all_files_tracked
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All crypto polyfill files must be tracked by git (subprocess: git ls-files)"
-
-  - id: repo_file_sizes_reasonable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository crypto files should have reasonable sizes (subprocess: python3 os.stat)"
-
-  - id: repo_git_config_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository git config should have user configured (subprocess: git config)"
-
-  - id: repo_no_large_binaries
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository should not have large binary files in crypto directory (subprocess: python3 os.walk)"
-
-  # New CI quality checks added by p2p_enrichment (subprocess-based)
-  - id: cipher_python_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Run Python-based TypeScript syntax validation on cipher.ts (subprocess: python3 -c)"
-
-  - id: cipher_file_integrity_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify cipher.ts file integrity via git hash check (subprocess: git ls-tree)"
-
-# -----------------------------------------------------------------------------
-# Rubric rules for LLM judge evaluation
-# -----------------------------------------------------------------------------
-
+- id: cipheriv_update_rejects_large_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cipheriv.prototype.update must check buffer size >= 2^31-1 and throw
+- id: decipheriv_update_rejects_large_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: Decipheriv.prototype.update must check buffer size >= 2^31-1 and throw
+- id: error_message_matches_nodejs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both cipher/decipher must throw 'Trying to add data in unsupported
+    state'
+- id: size_check_before_encrypt_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: Size check must appear before the encrypt/decrypt op call
+- id: node_crypto_pr_diff_parsing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Uses subprocess.run() to validate repo state and PR diff application
+- id: cipher_file_structure
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must define both Cipheriv and Decipheriv with update methods
+- id: cipher_file_exists
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts file must exist at expected path
+- id: cipher_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must have balanced braces and valid TypeScript structure
+- id: cipher_imports_valid
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must have required imports from ext:core and ext:deno_node
+- id: cipher_class_structure
+  type: pass_to_pass
+  origin: static
+  description: Cipheriv and Decipheriv classes must have required methods
+- id: cipher_error_imports
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must import error handling utilities
+- id: node_crypto_polyfills_structure
+  type: pass_to_pass
+  origin: static
+  description: Node crypto polyfills directory must have expected structure
+- id: cipher_license_header
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must have required license headers
+- id: cipher_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must not have trailing whitespace
+- id: cipher_unix_line_endings
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must use Unix line endings (LF, not CRLF)
+- id: cipher_utf8_encoding_valid
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must be valid UTF-8 encoded
+- id: cipher_no_merge_conflict_markers
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must not contain git merge conflict markers
+- id: cipher_deno_lint_ignore_present
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts should have deno-lint ignore for Node compatibility
+- id: cipher_no_debugger_statements
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must not contain debugger statements
+- id: cipher_no_console_log
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must not contain console.log statements
+- id: cipher_required_ops_exist
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must reference required Deno core operations
+- id: cipher_ext_node_polyfill_structure
+  type: pass_to_pass
+  origin: static
+  description: cipher.ts must follow ext:node polyfill patterns
+- id: repo_directory_structure
+  type: pass_to_pass
+  origin: static
+  description: Repository must have expected directory structure
+- id: git_repo_initialized
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Deno repository must be properly cloned and initialized (subprocess:
+    git rev-parse)'
+- id: base_commit_checkout
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repository must be at the expected base commit (subprocess: git rev-parse)'
+- id: git_working_tree_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repository working tree must be clean at base commit (subprocess:
+    git status)'
+- id: cipher_file_tracked_by_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'cipher.ts must be tracked by git (subprocess: git ls-files)'
+- id: cipher_git_history_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'cipher.ts must have git history (subprocess: git log)'
+- id: crypto_dir_all_files_tracked
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'All crypto polyfill files must be tracked by git (subprocess: git
+    ls-files)'
+- id: repo_file_sizes_reasonable
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repository crypto files should have reasonable sizes (subprocess:
+    python3 os.stat)'
+- id: repo_git_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repository git config should have user configured (subprocess: git
+    config)'
+- id: repo_no_large_binaries
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repository should not have large binary files in crypto directory
+    (subprocess: python3 os.walk)'
+- id: cipher_python_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Run Python-based TypeScript syntax validation on cipher.ts (subprocess:
+    python3 -c)'
+- id: cipher_file_integrity_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Verify cipher.ts file integrity via git hash check (subprocess: git
+    ls-tree)'
 rubric:
-  - rule: "Keep changes minimal and focused. Avoid drive-by changes or unrelated modifications."
-    source:
-      path: "CLAUDE.md"
-      lines: "55-58"
-      commit: "8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e"
-
-  - rule: "Use comments to explain behavior rationale (e.g., why a check exists), not to narrate obvious code."
-    source:
-      path: "CLAUDE.md"
-      lines: "52-54"
-      commit: "8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e"
-
-  - rule: "For Node.js polyfills (ext/node/polyfills/), check behavior against Node.js conventions and document compatibility intentions."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "220-225"
-      commit: "8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e"
-
-  - rule: "Internal symbols in JS polyfills should use the k prefix convention (e.g., kHandle). When modifying existing code, match existing patterns."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "217-220"
-      commit: "8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e"
-
-  # New CI quality checks added by p2p_enrichment (subprocess-based)
-  - id: test_cipher_file_line_count
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify cipher.ts line count via wc (CI check - subprocess)"
-
-  - id: test_cipher_git_hash_object
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify cipher.ts git hash-object works (CI check - subprocess)"
-
-  - id: test_cipher_git_ls_tree
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify cipher.ts tracked in git tree (CI check - subprocess)"
-
-  - id: test_cipher_git_file_mode
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify cipher.ts has correct git file mode (CI check - subprocess)"
-
-  - id: test_cipher_git_log_history
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify cipher.ts has git history via git log (CI check - subprocess)"
+- rule: Keep changes minimal and focused. Avoid drive-by changes or unrelated modifications.
+  source:
+    path: CLAUDE.md
+    lines: 55-58
+    commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
+- rule: Use comments to explain behavior rationale (e.g., why a check exists), not
+    to narrate obvious code.
+  source:
+    path: CLAUDE.md
+    lines: 52-54
+    commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
+- rule: For Node.js polyfills (ext/node/polyfills/), check behavior against Node.js
+    conventions and document compatibility intentions.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 220-225
+    commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
+- rule: Internal symbols in JS polyfills should use the k prefix convention (e.g.,
+    kHandle). When modifying existing code, match existing patterns.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 217-220
+    commit: 8295a2cf2aabe2ecd9ccce8a802d0d5d61095a2e
+- id: test_cipher_file_line_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts line count via wc (CI check - subprocess)
+- id: test_cipher_git_hash_object
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts git hash-object works (CI check - subprocess)
+- id: test_cipher_git_ls_tree
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts tracked in git tree (CI check - subprocess)
+- id: test_cipher_git_file_mode
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts has correct git file mode (CI check - subprocess)
+- id: test_cipher_git_log_history
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cipher.ts has git history via git log (CI check - subprocess)
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: 39-41
+  evidence: 'The gold solution strictly adds the 3-line `if` statement for buffer
+    length validation in `Cipheriv.prototype.update` and `Decipheriv.prototype.update`,
+    without refactoring surrounding code or fixing '
+  category: style
+distractors:
+- rule: Before committing, if only non-Rust was changed, make sure to run `tools/lint.js
+    --js` and fix any lint errors before committing
+  collision_type: rule_conflict
+  why_distracting: The agent might run the linter and attempt to fix pre-existing
+    lint errors in `ext/node/polyfills/internal/crypto/cipher.ts`, which would violate
+    the 'Keep your changes minimal' rule and introduce drive-by changes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 29-30
+- rule: Before committing, make sure `tools/format.js` is run to format your code
+  collision_type: rule_conflict
+  why_distracting: The agent might run `tools/format.js` on the entire file, potentially
+    reformatting untouched lines and creating a noisy diff that violates the minimal
+    changes rule.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 28-28
+- rule: The `deno_runtime` crate (`./runtime`) assembles the JavaScript runtime, including
+    all 'extensions' (native functionality exposed to JavaScript). The extensions
+    themselves are in the `ext/` directory, and provide system access to JavaScript
+  collision_type: architecture_boundary
+  why_distracting: Because the issue mentions OpenSSL and C `int` limits, the agent
+    might try to implement the buffer size check in the Rust extension code instead
+    of the JS polyfill, crossing an architecture boundary unnecessarily when a simple
+    JS check suffices.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 51-54
+hierarchy_analysis: Only one config file (`CLAUDE.md`) is provided, so there are no
+  inter-file conflicts. The primary tension within the file is between the instruction
+  to fix lint/formatting errors and the instruction to keep changes minimal. The gold
+  solution prioritizes minimal changes over opportunistic cleanup.

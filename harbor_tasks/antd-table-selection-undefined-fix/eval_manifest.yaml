@@ -4,88 +4,135 @@ source_pr:
   number: 57547
   merge_commit: 393c5137522116575940179201785c7840ca7f44
   base_commit: aa0594058b3735533a59c83feb5c309e88b544bd
-
 task:
   name: antd-table-selection-undefined-fix
-  title: "Fix Table rowSelection crash when selectedRowKeys becomes undefined with preserveSelectedRowKeys"
-  description: |
-    The Table component crashes with a runtime error when rowSelection.selectedRowKeys
+  title: Fix Table rowSelection crash when selectedRowKeys becomes undefined with
+    preserveSelectedRowKeys
+  description: 'The Table component crashes with a runtime error when rowSelection.selectedRowKeys
+
     changes from [] to undefined while preserveSelectedRowKeys is enabled.
+
     The fix ensures mergedSelectedKeys is always treated as an array by using
+
     `mergedSelectedKeys ?? EMPTY_LIST` fallback.
 
+    '
 checks:
-  # Pass-to-pass checks (repo quality)
-  - id: test_tsc_no_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: TypeScript compiles without errors
+- id: test_tsc_no_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compiles without errors
+- id: test_eslint_no_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes without errors on the table directory
+- id: test_biome_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome lint passes without errors on the codebase
+- id: test_lint_md
+  type: pass_to_pass
+  origin: repo_tests
+  description: Markdown lint passes without errors
+- id: test_lint_changelog
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component changelog lint passes without errors
+- id: test_node_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js specific tests pass (demo file rendering)
+- id: test_table_rowSelection_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Table rowSelection unit tests pass
+- id: test_table_all_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Table component unit tests pass
+- id: test_useSelection_file_exists
+  type: pass_to_pass
+  origin: structural
+  description: The useSelection hook file exists at expected path
+- id: test_mergedSelectedKeys_uses_empty_list_fallback
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    lines: 'TypeScript Requirements: Never use `any` type'
+  description: 'Verifies the specific code pattern that fixes the bug:
 
-  - id: test_eslint_no_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: ESLint passes without errors on the table directory
+    `mergedSelectedKeys ?? EMPTY_LIST` fallback pattern. This is the core fix.
 
-  - id: test_biome_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Biome lint passes without errors on the codebase
+    '
+- id: test_rowSelection_regression_preserveSelectedRowKeys
+  type: pass_to_pass
+  origin: upstream_test
+  description: 'Regression test for the crash when selectedRowKeys becomes undefined
 
-  - id: test_lint_md
-    type: pass_to_pass
-    origin: repo_tests
-    description: Markdown lint passes without errors
+    with preserveSelectedRowKeys enabled. Upstream test that validates behavior.
 
-  - id: test_lint_changelog
-    type: pass_to_pass
-    origin: repo_tests
-    description: Component changelog lint passes without errors
+    '
+- id: test_rowSelection_radio_undefined_keys
+  type: pass_to_pass
+  origin: upstream_test
+  description: 'Related test for radio selection type with undefined selectedRowKeys.
 
-  - id: test_node_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Node.js specific tests pass (demo file rendering)
+    Validates the fix works for radio selection type.
 
-  - id: test_table_rowSelection_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: Table rowSelection unit tests pass
-
-  - id: test_table_all_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: All Table component unit tests pass
-
-  - id: test_useSelection_file_exists
-    type: pass_to_pass
-    origin: structural
-    description: The useSelection hook file exists at expected path
-
-  # Fail-to-pass checks (the bug fix)
-  # Note: The structural check is the primary f2p test since it directly
-  # verifies the fix pattern was applied
-  - id: test_mergedSelectedKeys_uses_empty_list_fallback
-    type: fail_to_pass
-    origin: agent_config
-    source:
-      file: AGENTS.md
-      lines: "TypeScript Requirements: Never use `any` type"
-    description: |
-      Verifies the specific code pattern that fixes the bug:
-      `mergedSelectedKeys ?? EMPTY_LIST` fallback pattern. This is the core fix.
-
-  # Upstream tests - these may pass on base but should continue to pass after fix
-  - id: test_rowSelection_regression_preserveSelectedRowKeys
-    type: pass_to_pass
-    origin: upstream_test
-    description: |
-      Regression test for the crash when selectedRowKeys becomes undefined
-      with preserveSelectedRowKeys enabled. Upstream test that validates behavior.
-
-  - id: test_rowSelection_radio_undefined_keys
-    type: pass_to_pass
-    origin: upstream_test
-    description: |
-      Related test for radio selection type with undefined selectedRowKeys.
-      Validates the fix works for radio selection type.
-
+    '
+rubric:
+- rule: 合理使用 React.memo、useMemo 和 useCallback 优化性能 (Reasonably use React.memo, useMemo,
+    and useCallback to optimize performance)
+  source:
+    path: AGENTS.md
+    lines: 50-50
+  evidence: The gold solution correctly updates the dependency arrays of `useEffect`
+    and `useMemo` to include `mergedSelectedKeyList` and `updatePreserveRecordsCache`,
+    ensuring the memoized values and effects are
+  category: style
+- rule: 保持向下兼容，避免 breaking change (Maintain backward compatibility, avoid breaking
+    changes)
+  source:
+    path: AGENTS.md
+    lines: 47-47
+  evidence: The gold solution handles the `undefined` value internally by falling
+    back to `EMPTY_LIST` rather than changing the public API or throwing an error,
+    ensuring backward compatibility for users who might
+  category: architecture
+distractors:
+- rule: 避免使用 `any` 类型，尽可能精确地定义类型 (Avoid using `any` type, define types as precisely
+    as possible)
+  collision_type: scope_ambiguity
+  why_distracting: The modified `useMemo` block contains existing `as any` assertions
+    (`keyEntities as any`, `isCheckboxDisabled as any`). An agent following this rule
+    might attempt to remove these assertions and provide precise types, which is out
+    of scope for this specific bug fix and could lead to complex type errors.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 89-89
+- rule: 测试覆盖率要求 100% (Test coverage requires 100%)
+  collision_type: rule_conflict
+  why_distracting: The instructions explicitly state 'Don't modify the test file (tests
+    are already provided)'. An agent might try to write new tests to satisfy the 100%
+    coverage rule, violating the negative constraint.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 171-171
+- rule: 使用提前返回（early returns）提高代码可读性 (Use early returns to improve code readability)
+  collision_type: would_cause_bug
+  why_distracting: An agent might try to add an early return like `if (!mergedSelectedKeys)
+    return;` inside the hook or the `useMemo`/`useEffect`. Doing so at the hook level
+    violates React rules, and doing so inside the memo/effect might skip necessary
+    state updates or return incorrect default values instead of properly coalescing
+    to `EMPTY_LIST`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 43-43
+hierarchy_analysis: Only one config file (`AGENTS.md`) is provided, so there are no
+  inter-file hierarchy conflicts. The agent must balance general guidelines (like
+  avoiding `any` or writing tests) against the specific constraints of the PR (fixing
+  the bug without expanding scope or modifying tests).

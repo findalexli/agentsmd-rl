@@ -2,78 +2,102 @@ source_pr:
   owner: All-Hands-AI
   repo: OpenHands
   number: 13570
-  title: "Rename env name"
+  title: Rename env name
   merge_commit: f1b65d9534f73e3ff34998b55d6e303f2f82bdd6
   base_commit: 3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a
-
 checks:
-  # Fail-to-pass tests (verify the fix works)
-  - id: test_env_variable_name_in_code
-    type: fail_to_pass
-    origin: test_outputs
-    description: "Code references AUTOMATIONS_SERVICE_KEY, not old AUTOMATIONS_SERVICE_API_KEY"
-
-  - id: test_env_var_is_read_correctly
-    type: fail_to_pass
-    origin: test_outputs
-    description: "Code correctly reads AUTOMATIONS_SERVICE_KEY from environment"
-
-  - id: test_health_endpoint_uses_correct_variable
-    type: fail_to_pass
-    origin: test_outputs
-    description: "Health endpoint uses renamed AUTOMATIONS_SERVICE_KEY variable"
-
-  - id: test_validate_function_uses_correct_variable
-    type: fail_to_pass
-    origin: test_outputs
-    description: "validate_service_api_key function uses renamed variable"
-
-  - id: test_module_docstring_updated
-    type: fail_to_pass
-    origin: test_outputs
-    description: "Module docstring references the new env var name"
-
-  - id: test_logic_correctness_simulation
-    type: fail_to_pass
-    origin: test_outputs
-    description: "Logic pattern for reading env var is correct"
-
-  # Pass-to-pass tests (repo's CI/CD checks)
-  - id: test_repo_enterprise_service_routes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Enterprise service routes unit tests pass"
-
-  - id: test_repo_enterprise_service_routes_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Enterprise service routes pass ruff linting"
-
-  - id: test_repo_enterprise_service_routes_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Enterprise service routes pass ruff format check"
-
-  - id: test_repo_service_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "service.py has valid Python syntax"
-
+- id: test_env_variable_name_in_code
+  type: fail_to_pass
+  origin: test_outputs
+  description: Code references AUTOMATIONS_SERVICE_KEY, not old AUTOMATIONS_SERVICE_API_KEY
+- id: test_env_var_is_read_correctly
+  type: fail_to_pass
+  origin: test_outputs
+  description: Code correctly reads AUTOMATIONS_SERVICE_KEY from environment
+- id: test_health_endpoint_uses_correct_variable
+  type: fail_to_pass
+  origin: test_outputs
+  description: Health endpoint uses renamed AUTOMATIONS_SERVICE_KEY variable
+- id: test_validate_function_uses_correct_variable
+  type: fail_to_pass
+  origin: test_outputs
+  description: validate_service_api_key function uses renamed variable
+- id: test_module_docstring_updated
+  type: fail_to_pass
+  origin: test_outputs
+  description: Module docstring references the new env var name
+- id: test_logic_correctness_simulation
+  type: fail_to_pass
+  origin: test_outputs
+  description: Logic pattern for reading env var is correct
+- id: test_repo_enterprise_service_routes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise service routes unit tests pass
+- id: test_repo_enterprise_service_routes_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise service routes pass ruff linting
+- id: test_repo_enterprise_service_routes_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise service routes pass ruff format check
+- id: test_repo_service_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: service.py has valid Python syntax
 rubric:
-  - rule: "Run pre-commit hooks before making changes. Use `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml` for backend changes."
-    source:
-      path: "AGENTS.md"
-      lines: "16-24"
-      commit: "3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a"
-
-  - rule: "Follow enterprise import patterns: use relative imports without `enterprise.` prefix in enterprise code. Example: `from storage.database import ...` not `from enterprise.storage.database import ...`"
-    source:
-      path: "AGENTS.md"
-      lines: "202-205"
-      commit: "3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a"
-
-  - rule: "Enterprise code must pass linting and type checking. Use `poetry run pre-commit run --all-files --show-diff-on-failure --config ./dev_config/python/.pre-commit-config.yaml`"
-    source:
-      path: "AGENTS.md"
-      lines: "188-194"
-      commit: "3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a"
+- rule: Run pre-commit hooks before making changes. Use `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
+    for backend changes.
+  source:
+    path: AGENTS.md
+    lines: 16-24
+    commit: 3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a
+- rule: 'Follow enterprise import patterns: use relative imports without `enterprise.`
+    prefix in enterprise code. Example: `from storage.database import ...` not `from
+    enterprise.storage.database import ...`'
+  source:
+    path: AGENTS.md
+    lines: 202-205
+    commit: 3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a
+- rule: Enterprise code must pass linting and type checking. Use `poetry run pre-commit
+    run --all-files --show-diff-on-failure --config ./dev_config/python/.pre-commit-config.yaml`
+  source:
+    path: AGENTS.md
+    lines: 188-194
+    commit: 3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a
+distractors:
+- rule: 'Backend: Located in the `openhands` directory'
+  collision_type: architecture_boundary
+  why_distracting: The rule states the backend is located in the `openhands` directory,
+    but the target file `service.py` is in the `enterprise/server/routes/` directory.
+    This could lead the agent to search in the wrong directory or refuse to edit the
+    file thinking it's outside the backend scope.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-59
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run'
+  collision_type: scope_ambiguity
+  why_distracting: The rule provides instructions to run the full application using
+    `make build && make run ...` to debug issues. The agent might attempt to start
+    the full application to verify the rename, which is unnecessary and resource-intensive
+    for a simple refactor.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-11
+- rule: When working on a PR that requires design documents... store them in a `.pr/`
+    directory
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests creating a `.pr/` directory for PR-specific artifacts
+    like analysis or notes. Since this is a trivial environment variable rename, creating
+    such artifacts would be a waste of time and overcomplicate the task.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 33-35
+hierarchy_analysis: The AGENTS.md file provides general repository guidelines, but
+  its architectural descriptions (e.g., backend located in `openhands/`) conflict
+  with the enterprise-specific paths required for this task.

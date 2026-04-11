@@ -1,79 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "cloudflare/workers-sdk"
+  repo: cloudflare/workers-sdk
   pr: 13105
-  base_commit: "49d063396f4c87bc7323be84fbd961b010a09460"
-  merge_commit: "ff41b070947de43c1ab6b2e4ff65a960d3d7c974"
-
+  base_commit: 49d063396f4c87bc7323be84fbd961b010a09460
+  merge_commit: ff41b070947de43c1ab6b2e4ff65a960d3d7c974
 checks:
-  - id: vite_config_valid_structure
-    type: pass_to_pass
-    origin: static
-    description: "vite.config.ts must exist with valid structure (defineConfig, balanced braces)"
-
-  - id: jsx_runtime_alias_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Existing react/jsx-runtime.js alias must be preserved"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's linter (oxlint) passes on all files"
-
-  - id: test_repo_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's formatter (oxfmt) passes on all files"
-
-  - id: test_repo_workers_playground_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Workers-playground package check passes (typecheck and default-hashes)"
-
-  - id: test_repo_workers_playground_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Workers-playground package builds successfully with Vite 8"
-
-  - id: test_repo_workers_editor_shared_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Workers-editor-shared package builds successfully (prerequisite for playground)"
-
-  - id: style_provider_cjs_alias
-    type: fail_to_pass
-    origin: pr_diff
-    description: "@cloudflare/style-provider must be aliased to its CJS build (lib/) to avoid rolldown crash"
-
-  - id: no_base_playground_option
-    type: fail_to_pass
-    origin: pr_diff
-    description: "base: '/playground' must not be used — causes Wrangler asset path mismatch"
-
-  - id: assets_dir_playground
-    type: fail_to_pass
-    origin: pr_diff
-    description: "assetsDir must route assets under playground/ for correct Wrangler deployment"
-
-  - id: changeset_for_workers_playground
-    type: fail_to_pass
-    origin: agent_config
-    description: "A changeset must exist for @cloudflare/workers-playground package changes"
-    source:
-      path: "AGENTS.md"
-      lines: "100,161"
-      commit: "49d063396f4c87bc7323be84fbd961b010a09460"
-
+- id: vite_config_valid_structure
+  type: pass_to_pass
+  origin: static
+  description: vite.config.ts must exist with valid structure (defineConfig, balanced
+    braces)
+- id: jsx_runtime_alias_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing react/jsx-runtime.js alias must be preserved
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's linter (oxlint) passes on all files
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter (oxfmt) passes on all files
+- id: test_repo_workers_playground_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workers-playground package check passes (typecheck and default-hashes)
+- id: test_repo_workers_playground_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workers-playground package builds successfully with Vite 8
+- id: test_repo_workers_editor_shared_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workers-editor-shared package builds successfully (prerequisite for
+    playground)
+- id: style_provider_cjs_alias
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@cloudflare/style-provider must be aliased to its CJS build (lib/)
+    to avoid rolldown crash'
+- id: no_base_playground_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'base: ''/playground'' must not be used — causes Wrangler asset path
+    mismatch'
+- id: assets_dir_playground
+  type: fail_to_pass
+  origin: pr_diff
+  description: assetsDir must route assets under playground/ for correct Wrangler
+    deployment
+- id: changeset_for_workers_playground
+  type: fail_to_pass
+  origin: agent_config
+  description: A changeset must exist for @cloudflare/workers-playground package changes
+  source:
+    path: AGENTS.md
+    lines: 100,161
+    commit: 49d063396f4c87bc7323be84fbd961b010a09460
 rubric:
-  - rule: "Tabs (not spaces), double quotes, semicolons, trailing commas (es5)"
-    source:
-      path: "AGENTS.md"
-      lines: "104"
-      commit: "49d063396f4c87bc7323be84fbd961b010a09460"
-  - rule: "Changeset descriptions can either use conventional commit prefixes or start with a capital letter"
-    source:
-      path: "AGENTS.md"
-      lines: "165"
-      commit: "49d063396f4c87bc7323be84fbd961b010a09460"
+- rule: Tabs (not spaces), double quotes, semicolons, trailing commas (es5)
+  source:
+    path: AGENTS.md
+    lines: '104'
+    commit: 49d063396f4c87bc7323be84fbd961b010a09460
+- rule: Changeset descriptions can either use conventional commit prefixes or start
+    with a capital letter
+  source:
+    path: AGENTS.md
+    lines: '165'
+    commit: 49d063396f4c87bc7323be84fbd961b010a09460
+distractors:
+- rule: '`packages/vite-plugin-cloudflare/` - Vite plugin for Cloudflare Workers'
+  collision_type: architecture_boundary
+  why_distracting: The issue mentions Vite 8 and a bundler problem. The agent might
+    assume the fix belongs in the Vite plugin for Cloudflare Workers (`packages/vite-plugin-cloudflare/`),
+    but the fix is actually just a configuration change in the playground's own `vite.config.ts`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '41'
+- rule: Change local dev behavior -> `packages/miniflare/src/`
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions a runtime crash in the Workers Playground. The
+    agent might think this is a local dev simulator issue and try to modify Miniflare,
+    but it's a bundler issue in the playground's Vite config.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '71'
+- rule: Add a test fixture -> `fixtures/`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add a test fixture for this Vite 8 crash,
+    but it's a playground app build config issue, so adding a fixture might be overkill
+    or out of scope.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: '73'
+hierarchy_analysis: The config files provide a high-level overview of the monorepo
+  architecture. However, they do not explicitly mention the `workers-playground` package.
+  This omission, combined with the mention of `vite-plugin-cloudflare`, creates a
+  strong distractor for an agent trying to fix a Vite-related issue.

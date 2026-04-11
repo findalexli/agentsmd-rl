@@ -60,3 +60,43 @@ rubric:
     path: AGENTS.md
     lines: '95'
     commit: f6fdbbdd7e75e7758c4ceced46fd65fb1fc76a42
+- rule: 'Logging: Clean up existing logs, don''t add more unless for errors or security
+    events'
+  source:
+    path: AGENTS.md
+    lines: 72-72
+  evidence: The gold solution removes debug `console.log` statements from `ui/desktop/src/App.tsx`
+    and upgrades a `tracing::debug!` to `tracing::warn!` for an error in `crates/goose/src/config/extensions.rs`,
+    per
+  category: style
+- rule: 'Comments: Write self-documenting code - prefer clear names over comments
+    / Never add comments that restate what code does'
+  source:
+    path: AGENTS.md
+    lines: 65-67
+  evidence: The gold solution removes stale `TODO` comments in `crates/goose/src/config/experiments.rs`
+    and `crates/goose/src/config/extensions.rs` rather than trying to update them
+    or add new explanatory comment
+  category: documentation
+distractors:
+- rule: 'Server: Changes need just generate-openapi'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `just generate-openapi` because it modified
+    Rust files in the `crates/goose` directory, but these changes are internal configuration
+    cleanups and do not affect the server API.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 61-61
+- rule: 'Test: When adding features, update goose-self-test.yaml, rebuild, then run
+    `goose run --recipe goose-self-test.yaml` to validate'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to update `goose-self-test.yaml` or run the
+    validation recipe, but this PR is strictly a cleanup of dead code and logs, not
+    a new feature.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 57-57
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level,
+  so there are no inter-file conflicts. The rules apply globally across the repository.

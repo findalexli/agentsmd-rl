@@ -70,3 +70,41 @@ rubric:
     path: docs/contributing/README.md
     lines: '241'
     commit: f26fcdfb9e50fef30381ed27fa956f7a43b0b1aa
+distractors:
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
+  collision_type: meta_confusion
+  why_distracting: The rule explicitly forbids 'pure code-agent PRs' and requires
+    a human submitter. An autonomous agent might read this and refuse to complete
+    the task, believing it is violating repository policy by acting alone.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 30-33
+- rule: Never use system python3 or bare pip/pip install. All Python commands must
+    go through uv and .venv/bin/python.
+  collision_type: meta_confusion
+  why_distracting: The rule mandates using `uv` and `.venv/bin/python` instead of
+    system `python3`. The agent might waste time trying to install `uv`, set up a
+    virtual environment, or refuse to run basic Python scripts (like the patch script
+    in the gold solution) using system Python.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 42-43
+- rule: Before proposing a PR, run duplicate-work checks using `gh issue view` and
+    `gh pr list`.
+  collision_type: meta_confusion
+  why_distracting: The rule requires running `gh` CLI commands to check for duplicate
+    issues and PRs before proposing a change. The agent might attempt to run these
+    commands in the evaluation sandbox, which will fail due to lack of authentication
+    or network access, distracting it from fixing the bug.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 10-14
+hierarchy_analysis: The configuration consists of a single active file (`AGENTS.md`)
+  containing strict workflow and contribution policies. There are no coding style
+  or architectural guidelines provided. The rules are heavily focused on human contributors
+  (e.g., prohibiting pure code-agent PRs, requiring specific local environment setups
+  like `uv`, and mandating GitHub CLI checks).

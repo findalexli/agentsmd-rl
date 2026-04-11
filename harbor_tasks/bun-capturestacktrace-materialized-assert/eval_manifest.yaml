@@ -49,7 +49,7 @@ checks:
 - id: no_tabs_in_function
   type: pass_to_pass
   origin: agent_config
-  description: "No tabs in function body \u2014 Bun C++ uses spaces"
+  description: No tabs in function body — Bun C++ uses spaces
   source:
     path: AGENTS.md
     lines: '228'
@@ -62,11 +62,10 @@ checks:
     path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
     lines: '184'
     commit: 44f5b6a1dc8f0c03fe81c6f133f9565c9457a4e7
-# Static file checks - these read files directly (not CI commands)
 - id: test_cpp_file_trailing_newline
   type: pass_to_pass
   origin: static
-  description: 'C++ files must end with a newline (pass_to_pass static check)'
+  description: C++ files must end with a newline (pass_to_pass static check)
 - id: test_cpp_no_trailing_whitespace
   type: pass_to_pass
   origin: static
@@ -74,11 +73,13 @@ checks:
 - id: test_cpp_no_banned_patterns
   type: pass_to_pass
   origin: static
-  description: C++ files must not contain banned Zig patterns (pass_to_pass static check)
+  description: C++ files must not contain banned Zig patterns (pass_to_pass static
+    check)
 - id: test_cpp_include_order
   type: pass_to_pass
   origin: static
-  description: C++ files should have root.h first in includes (pass_to_pass static check)
+  description: C++ files should have root.h first in includes (pass_to_pass static
+    check)
 - id: test_repo_cpp_syntax_valid
   type: pass_to_pass
   origin: static
@@ -86,8 +87,8 @@ checks:
 - id: test_repo_error_function_present
   type: pass_to_pass
   origin: static
-  description: errorConstructorFuncCaptureStackTrace must be present (pass_to_pass static check)
-# Repo CI/CD pass_to_pass gates - Python helper scripts syntax
+  description: errorConstructorFuncCaptureStackTrace must be present (pass_to_pass
+    static check)
 - id: test_repo_python_misctools_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -109,7 +110,50 @@ checks:
   origin: repo_tests
   description: Modified C++ file is tracked by git (pass_to_pass repo_tests)
 rubric:
-- rule: "Code changes must follow the existing C++ style in FormatStackTraceForJS.cpp — use 4-space indentation, JSC naming conventions, and preserve bracing style."
-  reference: |
-    The gold solution changes the hasMaterializedErrorInfo() check from negative guard to positive if-else branch,
-    maintaining the same indentation (4 spaces), brace placement (same-line), and naming conventions as surrounding code.
+- rule: Code changes must follow the existing C++ style in FormatStackTraceForJS.cpp
+    — use 4-space indentation, JSC naming conventions, and preserve bracing style.
+  reference: 'The gold solution changes the hasMaterializedErrorInfo() check from
+    negative guard to positive if-else branch,
+
+    maintaining the same indentation (4 spaces), brace placement (same-line), and
+    naming conventions as surrounding code.
+
+    '
+- rule: 'Run with JavaScript exception scope verification: BUN_JSC_validateExceptionChecks=1'
+  source:
+    path: CLAUDE.md
+    lines: 13-14
+  evidence: The gold solution includes `RETURN_IF_EXCEPTION(scope, {});` immediately
+    after calling `computeErrorInfoToJSValue`, ensuring that any JavaScript exceptions
+    thrown during error info computation are pro
+  category: architecture
+distractors:
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The bug involves an assertion failure and crash during garbage
+    collection. An agent might try to write a test using `Bun.spawn` that runs the
+    reproduction and checks `stderr` to ensure it doesn't contain 'panic' or 'ASSERT'.
+    Following the testing guidelines to write such a test would violate this explicit
+    negative constraint.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '66'
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead, such as; test/js/node/...
+  collision_type: scope_ambiguity
+  why_distracting: The extensive test organization rules might compel an agent to
+    write a test for this bug in `test/js/node/` or `test/v8/`. However, because the
+    bug is a GC-dependent assertion failure that requires specific memory pressure
+    to trigger reliably, writing a standard JS test is likely to be flaky or ineffective.
+    The gold solution correctly skips adding a test.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 26-34
+hierarchy_analysis: The config hierarchy provides extensive rules for Zig and testing,
+  but the PR is a C++ bug fix for a GC-related crash. The agent must recognize that
+  the Zig rules in `src/CLAUDE.md` do not apply to C++ files, and that the testing
+  rules in `CLAUDE.md` should be ignored because writing a reliable test for this
+  specific GC timing issue is impractical.

@@ -2,71 +2,103 @@ source_pr:
   owner: MystenLabs
   repo: sui
   number: 26067
-  title: "sui-rpc-api: cap the number of signatures in execute transaction"
+  title: 'sui-rpc-api: cap the number of signatures in execute transaction'
   base_commit: 73efc3be4ccf819cc5dfb38c10d301396ad75c94
   merge_commit: 812fef6896ffce29c5a9c1f352269a00f2d6e289
-
 checks:
-  # Fail-to-pass tests
-  - id: test_signature_limit_constant_exists
-    type: fail_to_pass
-    origin: pr_logic
-    description: MAX_NUMBER_OF_SIGNATURES constant must be defined with value 2
-
-  - id: test_signature_validation_code_exists
-    type: fail_to_pass
-    origin: pr_logic
-    description: Signature count validation logic must be implemented
-
-  - id: test_validation_occurs_before_signature_parsing
-    type: fail_to_pass
-    origin: pr_logic
-    description: Validation must happen before signature parsing for early rejection
-
-  - id: test_error_is_invalid_argument
-    type: fail_to_pass
-    origin: pr_logic
-    description: Error must use FieldInvalid reason for proper gRPC InvalidArgument status
-
-  - id: test_code_has_proper_documentation
-    type: fail_to_pass
-    origin: pr_logic
-    description: Constant must have explanatory comment about sender/sponsor limit
-
-  # Pass-to-pass tests (repo CI/CD)
-  - id: test_cargo_check_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-rpc-api crate must compile without errors
-
-  - id: test_cargo_clippy_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: Clippy lints must pass for sui-rpc-api crate
-
-  - id: test_cargo_fmt_check_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: Code must be properly formatted according to rustfmt
-
-  - id: test_cargo_test_sui_rpc_api_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-rpc-api crate tests must pass
-
-  - id: test_cargo_xlint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: License headers must be present in all source files
-
+- id: test_signature_limit_constant_exists
+  type: fail_to_pass
+  origin: pr_logic
+  description: MAX_NUMBER_OF_SIGNATURES constant must be defined with value 2
+- id: test_signature_validation_code_exists
+  type: fail_to_pass
+  origin: pr_logic
+  description: Signature count validation logic must be implemented
+- id: test_validation_occurs_before_signature_parsing
+  type: fail_to_pass
+  origin: pr_logic
+  description: Validation must happen before signature parsing for early rejection
+- id: test_error_is_invalid_argument
+  type: fail_to_pass
+  origin: pr_logic
+  description: Error must use FieldInvalid reason for proper gRPC InvalidArgument
+    status
+- id: test_code_has_proper_documentation
+  type: fail_to_pass
+  origin: pr_logic
+  description: Constant must have explanatory comment about sender/sponsor limit
+- id: test_cargo_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-rpc-api crate must compile without errors
+- id: test_cargo_clippy_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clippy lints must pass for sui-rpc-api crate
+- id: test_cargo_fmt_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code must be properly formatted according to rustfmt
+- id: test_cargo_test_sui_rpc_api_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-rpc-api crate tests must pass
+- id: test_cargo_xlint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: License headers must be present in all source files
 rubric:
-  - rule: "Do NOT comment the obvious - comments should explain non-obvious algorithms, business logic, and thresholds with their reasoning."
-    source:
-      path: "CLAUDE.md"
-      lines: "116-131"
-      commit: "73efc3be4ccf819cc5dfb38c10d301396ad75c94"
-  - rule: "Add explanatory comments for constants that define limits or thresholds, explaining the business logic behind the value."
-    source:
-      path: "CLAUDE.md"
-      lines: "119-122"
-      commit: "73efc3be4ccf819cc5dfb38c10d301396ad75c94"
+- rule: Do NOT comment the obvious - comments should explain non-obvious algorithms,
+    business logic, and thresholds with their reasoning.
+  source:
+    path: CLAUDE.md
+    lines: 116-131
+    commit: 73efc3be4ccf819cc5dfb38c10d301396ad75c94
+- rule: Add explanatory comments for constants that define limits or thresholds, explaining
+    the business logic behind the value.
+  source:
+    path: CLAUDE.md
+    lines: 119-122
+    commit: 73efc3be4ccf819cc5dfb38c10d301396ad75c94
+- rule: Check code without building (preferred) cargo check
+  source:
+    path: CLAUDE.md
+    lines: 28-29
+  evidence: The solution is designed to be verified via `cargo check -p sui-rpc-api`
+    as specified in the prompt, aligning with the project's preference for checking
+    code without a full build.
+  category: tooling
+distractors:
+- rule: cargo build -p sui-core
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to build `sui-core` as suggested by the example
+    command, but the changes are in `sui-rpc-api`. Building `sui-core` would not verify
+    the changes and wastes time.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 25-26
+- rule: Run e2e tests. simtests must be run with `cargo simtest`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run `cargo simtest -p sui-e2e-tests` to
+    verify the changes, which is unnecessary for a simple RPC validation addition
+    and would take a long time.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 35-36
+- rule: Always run tests before sub
+  collision_type: meta_confusion
+  why_distracting: The rule 'Always run tests before sub' might cause the agent to
+    run extensive test suites, but the prompt explicitly only requires `cargo check
+    -p sui-rpc-api`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 105-106
+hierarchy_analysis: The repository has a root `CLAUDE.md` and `AGENTS.md`. The root
+  `CLAUDE.md` provides general guidelines for building, testing, and architecture.
+  Since there are no crate-specific config files provided for `sui-rpc-api`, the root
+  `CLAUDE.md` applies. However, the specific instructions in the prompt (e.g., only
+  requiring `cargo check -p sui-rpc-api`) should override the general testing requirements
+  in `CLAUDE.md` to avoid unnecessary long-running tests.

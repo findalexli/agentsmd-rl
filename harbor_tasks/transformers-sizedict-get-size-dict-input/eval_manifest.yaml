@@ -1,80 +1,109 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44903
-  base_commit: "a8683756653094e3fc3016df8abcdeaaec758f9a"
-  merge_commit: "687a70daa99d1e1cce4a681291a5348890843254"
-
+  base_commit: a8683756653094e3fc3016df8abcdeaaec758f9a
+  merge_commit: 687a70daa99d1e1cce4a681291a5348890843254
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "image_processing_utils.py must parse without syntax errors"
-
-  - id: sizedict_height_width
-    type: fail_to_pass
-    origin: pr_diff
-    description: "get_size_dict accepts SizeDict with height/width and returns a plain dict"
-
-  - id: sizedict_shortest_edge
-    type: fail_to_pass
-    origin: pr_diff
-    description: "get_size_dict accepts SizeDict with shortest_edge key"
-
-  - id: sizedict_shortest_longest_edge
-    type: fail_to_pass
-    origin: pr_diff
-    description: "get_size_dict accepts SizeDict with shortest_edge + longest_edge"
-
-  - id: sizedict_no_convert_fallthrough
-    type: pass_to_pass
-    origin: pr_diff
-    description: "SizeDict input must not fall through to convert_to_size_dict path"
-
-  - id: plain_dict_input
-    type: pass_to_pass
-    origin: repo_tests
-    description: "get_size_dict still works with plain dict input"
-
-  - id: int_input
-    type: pass_to_pass
-    origin: repo_tests
-    description: "get_size_dict still works with int input"
-
-  - id: tuple_input
-    type: pass_to_pass
-    origin: repo_tests
-    description: "get_size_dict still works with tuple input"
-
-  - id: ruff_style_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "image_processing_utils.py passes ruff linter (make style requirement)"
-    source:
-      path: "AGENTS.md"
-      lines: "2"
-      commit: "a8683756653094e3fc3016df8abcdeaaec758f9a"
-
-  # CI/CD pass_to_pass gates - repo's own tests
-  - id: test_repo_unittest_image_processing_utils
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unittest for image_processing_utils passes"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ruff linter check passes on image_processing_utils.py"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo image_processing_utils.py has valid Python syntax"
-
-  - id: test_repo_sizedict_import
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo SizeDict can be imported from image_utils"
-
-rubric: []
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: image_processing_utils.py must parse without syntax errors
+- id: sizedict_height_width
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_size_dict accepts SizeDict with height/width and returns a plain
+    dict
+- id: sizedict_shortest_edge
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_size_dict accepts SizeDict with shortest_edge key
+- id: sizedict_shortest_longest_edge
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_size_dict accepts SizeDict with shortest_edge + longest_edge
+- id: sizedict_no_convert_fallthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: SizeDict input must not fall through to convert_to_size_dict path
+- id: plain_dict_input
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_size_dict still works with plain dict input
+- id: int_input
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_size_dict still works with int input
+- id: tuple_input
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_size_dict still works with tuple input
+- id: ruff_style_check
+  type: pass_to_pass
+  origin: agent_config
+  description: image_processing_utils.py passes ruff linter (make style requirement)
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: a8683756653094e3fc3016df8abcdeaaec758f9a
+- id: test_repo_unittest_image_processing_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unittest for image_processing_utils passes
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff linter check passes on image_processing_utils.py
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo image_processing_utils.py has valid Python syntax
+- id: test_repo_sizedict_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo SizeDict can be imported from image_utils
+rubric:
+- rule: '`make typing`: runs the ty type checker and model structure rules'
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+  evidence: 'The gold solution adds comprehensive type hints to `convert_to_size_dict`
+    (e.g., `size: int | Iterable[int] | None = None` and return type `-> dict[str,
+    int]`) to ensure the `ty` type checker passes.'
+  category: tooling
+- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
+    style checks'
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+  evidence: The gold solution formats the newly typed arguments of `convert_to_size_dict`
+    across multiple lines with a trailing comma, adhering to standard Ruff/Black formatting
+    rules.
+  category: style
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The prompt asks the agent to fix a bug but does not provide an
+    issue link or coordination evidence. An agent strictly following the fail-closed
+    policy would refuse to generate the patch and instead return an explanation of
+    what is missing.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 55-58
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The fix is relatively small (adding support for `SizeDict` in one
+    function). An agent might misclassify this as a 'tiny edit' or 'low-value busywork'
+    and refuse to fix it, even though it resolves a legitimate crash for remote code
+    models.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 40-42
+hierarchy_analysis: The config hierarchy consists of `CLAUDE.md` and `AGENTS.md` which
+  contain identical rules. The rules primarily focus on repository contribution policies
+  (coordination, duplicate checks, fail-closed behavior) rather than low-level coding
+  conventions. This creates a strong meta-level challenge where the agent must balance
+  strict contribution policies against the immediate instruction to fix a bug.

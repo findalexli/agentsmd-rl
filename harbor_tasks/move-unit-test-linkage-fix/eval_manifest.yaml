@@ -1,149 +1,168 @@
-# Evaluation manifest for move-unit-test-linkage-fix task
-# Source: MystenLabs/sui#26137
-
 source:
   pr:
     owner: MystenLabs
     repo: sui
     number: 26137
-    title: "[move-unit-test] Fix linkage for unit test runner"
+    title: '[move-unit-test] Fix linkage for unit test runner'
     merge_commit: 404f123f44711212ac69f27762a49a57eb3454f0
     base_commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
-
-# Task metadata
 task:
   name: move-unit-test-linkage-fix
   difficulty: medium
-  tags: [rust, move, unit-test, linkage, vm]
-
-# Checks define the test functions that must pass
-# Each check corresponds to a test_* function in tests/test_outputs.py
+  tags:
+  - rust
+  - move
+  - unit-test
+  - linkage
+  - vm
 checks:
-  # Fail-to-pass tests - These fail on base commit, pass on fix
-  - id: "linkage_import"
-    name: "Linkage context import present"
-    description: "Verify linkage_context is imported in the use statement"
-    test: "test_linkage_context_import_present"
-    type: "f2p"
-    points: 1
-
-  - id: "linkage_table"
-    name: "Linkage table construction"
-    description: "Verify linkage_table is constructed from package keys with identity mapping"
-    test: "test_linkage_table_construction"
-    type: "f2p"
-    points: 1
-
-  - id: "linkage_context"
-    name: "LinkageContext creation"
-    description: "Verify LinkageContext is created from the linkage table"
-    test: "test_linkage_context_creation"
-    type: "f2p"
-    points: 1
-
-  - id: "stored_package_with_linkage"
-    name: "StoredPackage uses with_linkage method"
-    description: "Verify StoredPackage uses from_module_for_testing_with_linkage instead of old method"
-    test: "test_stored_package_with_linkage"
-    type: "f2p"
-    points: 2
-
-  - id: "linkage_passed"
-    name: "Linkage context passed to StoredPackage"
-    description: "Verify linkage_context is passed as parameter to StoredPackage"
-    test: "test_linkage_context_passed_to_stored_package"
-    type: "f2p"
-    points: 1
-
-  - id: "function_structure"
-    name: "setup_test_storage function structure"
-    description: "Verify overall structure of the fixed function"
-    test: "test_setup_test_storage_function_structure"
-    type: "f2p"
-    points: 1
-
-  # Pass-to-pass tests - These pass on both base and fix
-  - id: "compilation"
-    name: "Code compiles"
-    description: "Verify modified code compiles successfully"
-    test: "test_code_compiles"
-    type: "p2p"
-    origin: repo_tests
-    points: 1
-
-  - id: "unit_tests"
-    name: "Unit tests pass"
-    description: "Verify move-unit-test crate unit tests pass"
-    test: "test_unit_tests_run"
-    type: "p2p"
-    origin: repo_tests
-    points: 1
-
-  - id: "clippy"
-    name: "Clippy passes"
-    description: "Verify move-unit-test crate passes clippy lints"
-    test: "test_move_clippy"
-    type: "p2p"
-    origin: repo_tests
-    points: 1
-
-  - id: "fmt"
-    name: "Format check passes"
-    description: "Verify move-unit-test crate follows formatting standards"
-    test: "test_move_fmt"
-    type: "p2p"
-    origin: repo_tests
-    points: 1
-
-  - id: "integration_tests"
-    name: "Integration tests pass"
-    description: "Verify move-unit-test integration tests pass"
-    test: "test_move_unit_test_integration_tests"
-    type: "p2p"
-    origin: repo_tests
-    points: 1
-
-  - id: "vm_runtime_tests"
-    name: "VM runtime unit tests pass"
-    description: "Verify move-vm-runtime unit tests pass - ensures core runtime functionality intact"
-    test: "test_move_vm_runtime_unit_tests"
-    type: "p2p"
-    origin: repo_tests
-    points: 1
-
-  - id: "move_package_compiles"
-    name: "move-package compiles"
-    description: "Verify move-package crate compiles - used by unit test runner for package resolution"
-    test: "test_move_package_compiles"
-    type: "p2p"
-    origin: repo_tests
-    points: 1
-
-  - id: "move_cli_tests"
-    name: "move-cli unit tests pass"
-    description: "Verify move-cli unit tests pass - ensures CLI test runner works correctly"
-    test: "test_move_cli_unit_tests"
-    type: "p2p"
-    origin: repo_tests
-    points: 1
-
-  # Guard tests - Verify the fix is not broken
-  - id: "no_old_method"
-    name: "Old method not used"
-    description: "Verify old from_modules_for_testing is no longer used in setup_test_storage"
-    test: "test_old_method_not_used"
-    type: "guard"
-    points: 1
-
-# Agent config checks - None for this task as there are no applicable
-# agent config rules for this specific code change
+- id: linkage_import
+  name: Linkage context import present
+  description: Verify linkage_context is imported in the use statement
+  test: test_linkage_context_import_present
+  type: f2p
+  points: 1
+- id: linkage_table
+  name: Linkage table construction
+  description: Verify linkage_table is constructed from package keys with identity
+    mapping
+  test: test_linkage_table_construction
+  type: f2p
+  points: 1
+- id: linkage_context
+  name: LinkageContext creation
+  description: Verify LinkageContext is created from the linkage table
+  test: test_linkage_context_creation
+  type: f2p
+  points: 1
+- id: stored_package_with_linkage
+  name: StoredPackage uses with_linkage method
+  description: Verify StoredPackage uses from_module_for_testing_with_linkage instead
+    of old method
+  test: test_stored_package_with_linkage
+  type: f2p
+  points: 2
+- id: linkage_passed
+  name: Linkage context passed to StoredPackage
+  description: Verify linkage_context is passed as parameter to StoredPackage
+  test: test_linkage_context_passed_to_stored_package
+  type: f2p
+  points: 1
+- id: function_structure
+  name: setup_test_storage function structure
+  description: Verify overall structure of the fixed function
+  test: test_setup_test_storage_function_structure
+  type: f2p
+  points: 1
+- id: compilation
+  name: Code compiles
+  description: Verify modified code compiles successfully
+  test: test_code_compiles
+  type: p2p
+  origin: repo_tests
+  points: 1
+- id: unit_tests
+  name: Unit tests pass
+  description: Verify move-unit-test crate unit tests pass
+  test: test_unit_tests_run
+  type: p2p
+  origin: repo_tests
+  points: 1
+- id: clippy
+  name: Clippy passes
+  description: Verify move-unit-test crate passes clippy lints
+  test: test_move_clippy
+  type: p2p
+  origin: repo_tests
+  points: 1
+- id: fmt
+  name: Format check passes
+  description: Verify move-unit-test crate follows formatting standards
+  test: test_move_fmt
+  type: p2p
+  origin: repo_tests
+  points: 1
+- id: integration_tests
+  name: Integration tests pass
+  description: Verify move-unit-test integration tests pass
+  test: test_move_unit_test_integration_tests
+  type: p2p
+  origin: repo_tests
+  points: 1
+- id: vm_runtime_tests
+  name: VM runtime unit tests pass
+  description: Verify move-vm-runtime unit tests pass - ensures core runtime functionality
+    intact
+  test: test_move_vm_runtime_unit_tests
+  type: p2p
+  origin: repo_tests
+  points: 1
+- id: move_package_compiles
+  name: move-package compiles
+  description: Verify move-package crate compiles - used by unit test runner for package
+    resolution
+  test: test_move_package_compiles
+  type: p2p
+  origin: repo_tests
+  points: 1
+- id: move_cli_tests
+  name: move-cli unit tests pass
+  description: Verify move-cli unit tests pass - ensures CLI test runner works correctly
+  test: test_move_cli_unit_tests
+  type: p2p
+  origin: repo_tests
+  points: 1
+- id: no_old_method
+  name: Old method not used
+  description: Verify old from_modules_for_testing is no longer used in setup_test_storage
+  test: test_old_method_not_used
+  type: guard
+  points: 1
 agent_config: []
-
-# Rubric for soft/subjective requirements
-# Note: This task is a functional Rust code fix (PR #26137). The p2p and f2p tests
-# comprehensively verify the fix correctness. No additional subjective rubric rules needed.
-rubric: []
-
-# Scoring
+rubric:
+- rule: external-crates/ contains the Move compiler and VM
+  source:
+    path: CLAUDE.md
+    lines: 65-66
+  evidence: The fix correctly targets `external-crates/move/crates/move-unit-test/src/test_runner.rs`,
+    aligning with the architectural definition that the Move compiler and VM reside
+    in `external-crates/`.
+  category: architecture
 total_points: 13
-min_reward_threshold: 0.7  # 70% of points required for reward
+min_reward_threshold: 0.7
+distractors:
+- rule: Always consult CLAUDE.md files in sub-crates.
+  collision_type: meta_confusion
+  why_distracting: The agent might waste time trying to read or find a `CLAUDE.md`
+    file in `external-crates/move/crates/move-unit-test/` which doesn't exist in the
+    provided context.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 10-11
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the Sui e2e simtests (`cargo simtest
+    -p sui-e2e-tests`) to verify its changes. However, the modified code is in the
+    standalone Move unit test runner, making Sui e2e simtests out of scope and a massive
+    waste of time.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 28-29
+- rule: Use -p to select only the most relevant packages for testing... e.g. `cargo
+    nextest run -p sui-types -p sui-core`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might blindly copy the example command `cargo nextest
+    run -p sui-types -p sui-core` to run tests, which would test the wrong crates
+    instead of the modified `move-unit-test` crate.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 38-39
+hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` and a root `AGENTS.md`.
+  Both emphasize checking local crate-specific `CLAUDE.md` files, which creates a
+  potential wild goose chase since none are provided for the `external-crates/move`
+  directory. The root `CLAUDE.md` provides heavy guidance on Sui-specific testing
+  (`sui-e2e-tests`, `sui-core`), which is architecturally distinct from the `external-crates/move`
+  upstream repository code being modified here.

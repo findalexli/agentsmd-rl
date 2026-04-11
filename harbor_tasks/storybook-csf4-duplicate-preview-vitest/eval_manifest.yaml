@@ -1,83 +1,116 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "storybookjs/storybook"
+  repo: storybookjs/storybook
   pr: 34361
-  base_commit: "6d4fcb5417be0013e4c2d6e2e166a15a81637268"
-  merge_commit: "69c8442c114a753762c3052efac38eb489509751"
-
+  base_commit: 6d4fcb5417be0013e4c2d6e2e166a15a81637268
+  merge_commit: 69c8442c114a753762c3052efac38eb489509751
 checks:
-  - id: typescript_files_parse
-    type: pass_to_pass
-    origin: static
-    description: "Both modified TypeScript files must parse without syntax errors"
-
-  - id: no_csf4_param_in_requires_project_annotations
-    type: fail_to_pass
-    origin: pr_diff
-    description: "requiresProjectAnnotations must not accept an isCSF4 parameter"
-
-  - id: no_csf4_conditional_return_in_utils
-    type: fail_to_pass
-    origin: pr_diff
-    description: "requiresProjectAnnotations must not short-circuit to false for CSF4"
-
-  - id: no_preview_file_loading_for_csf4_detection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The plugin must not load/parse preview config to detect CSF4 status"
-
-  - id: setup_files_no_preview_injection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Internal setup files must not conditionally include the preview file"
-
-  - id: project_annotations_conditional_still_exists
-    type: pass_to_pass
-    origin: static
-    description: "The project annotations setup file must still be conditionally included"
-
-  - id: requires_project_annotations_still_exported
-    type: pass_to_pass
-    origin: static
-    description: "requiresProjectAnnotations must still be exported from utils.ts"
-
-  - id: requires_project_annotations_returns_true_by_default
-    type: pass_to_pass
-    origin: static
-    description: "requiresProjectAnnotations must return true when no setup file has setProjectAnnotations"
-
-  # New repo_tests pass_to_pass checks using TypeScript AST validation
-  - id: repo_utils_ts_no_syntax_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: "utils.ts must have zero TypeScript parse diagnostics (CI-style AST check)"
-
-  - id: repo_index_ts_no_syntax_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: "index.ts must have zero TypeScript parse diagnostics (CI-style AST check)"
-
-  - id: repo_base_commit_structure_utils
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Base commit utils.ts structure must be valid - CI AST validation"
-
-  - id: repo_base_commit_structure_index
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Base commit index.ts structure must be valid - CI AST validation"
-
-  - id: repo_import_structure_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All imports in modified files must be syntactically valid (CI AST check)"
-
-  - id: repo_function_call_structure_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Key function calls in index.ts must have valid structure (CI AST check)"
-
+- id: typescript_files_parse
+  type: pass_to_pass
+  origin: static
+  description: Both modified TypeScript files must parse without syntax errors
+- id: no_csf4_param_in_requires_project_annotations
+  type: fail_to_pass
+  origin: pr_diff
+  description: requiresProjectAnnotations must not accept an isCSF4 parameter
+- id: no_csf4_conditional_return_in_utils
+  type: fail_to_pass
+  origin: pr_diff
+  description: requiresProjectAnnotations must not short-circuit to false for CSF4
+- id: no_preview_file_loading_for_csf4_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: The plugin must not load/parse preview config to detect CSF4 status
+- id: setup_files_no_preview_injection
+  type: fail_to_pass
+  origin: pr_diff
+  description: Internal setup files must not conditionally include the preview file
+- id: project_annotations_conditional_still_exists
+  type: pass_to_pass
+  origin: static
+  description: The project annotations setup file must still be conditionally included
+- id: requires_project_annotations_still_exported
+  type: pass_to_pass
+  origin: static
+  description: requiresProjectAnnotations must still be exported from utils.ts
+- id: requires_project_annotations_returns_true_by_default
+  type: pass_to_pass
+  origin: static
+  description: requiresProjectAnnotations must return true when no setup file has
+    setProjectAnnotations
+- id: repo_utils_ts_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: utils.ts must have zero TypeScript parse diagnostics (CI-style AST
+    check)
+- id: repo_index_ts_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: index.ts must have zero TypeScript parse diagnostics (CI-style AST
+    check)
+- id: repo_base_commit_structure_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Base commit utils.ts structure must be valid - CI AST validation
+- id: repo_base_commit_structure_index
+  type: pass_to_pass
+  origin: repo_tests
+  description: Base commit index.ts structure must be valid - CI AST validation
+- id: repo_import_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All imports in modified files must be syntactically valid (CI AST check)
+- id: repo_function_call_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key function calls in index.ts must have valid structure (CI AST check)
 rubric:
-  - rule: "The fix must remove the CSF4-specific code path from the vitest plugin without adding new console.* usage"
-    description: "The fix should properly remove isCSF4 parameter and preview file loading logic. Console.* usage should remain as-is since it's pre-existing in the base commit and unrelated to the fix."
+- rule: The fix must remove the CSF4-specific code path from the vitest plugin without
+    adding new console.* usage
+  description: The fix should properly remove isCSF4 parameter and preview file loading
+    logic. Console.* usage should remain as-is since it's pre-existing in the base
+    commit and unrelated to the fix.
+- rule: The main code lives in the `code/` directory.
+  source:
+    path: AGENTS.md
+    lines: 13-14
+  evidence: The patch correctly targets files within the `code/` directory (`code/addons/vitest/src/vitest-plugin/index.ts`
+    and `code/addons/vitest/src/vitest-plugin/utils.ts`), respecting the monorepo
+    structure.
+  category: architecture
+distractors:
+- rule: 'Vitest Configuration - Workspace configuration: `./code/vitest.workspace.ts`'
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions duplicate preview loading in the Vitest integration.
+    An agent might read this rule and attempt to modify the global `./code/vitest.workspace.ts`
+    configuration to deduplicate setup files, rather than fixing the root cause in
+    the Vitest plugin's internal setup file injection logic.
+  severity: high
+  source:
+    path: .cursorrules
+    lines: 21-23
+- rule: The main package is `code/core/src/`.
+  collision_type: architecture_boundary
+  why_distracting: The agent might assume the Vitest plugin is part of the core package
+    and attempt to locate or move the plugin code into `code/core/src/`, whereas it
+    actually resides in `code/addons/vitest/`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-46
+- rule: 'Test Mocking Rules: Follow the spy mocking rules defined in `.cursor/rules/spy-mocking.mdc`
+    for consistent mocking patterns with Vitest.'
+  collision_type: scope_ambiguity
+  why_distracting: The PR is about fixing a bug in the Vitest plugin's setup logic.
+    An agent might get distracted by the testing rules and attempt to write new tests
+    using spy mocking, which is unnecessary for this specific fix and not present
+    in the gold solution.
+  severity: low
+  source:
+    path: .cursorrules
+    lines: 34-35
+hierarchy_analysis: The configuration hierarchy is straightforward. `CLAUDE.md` delegates
+  entirely to `AGENTS.md`, which provides high-level architectural guidance. `.cursorrules`
+  provides specific Vitest testing instructions. The main conflict arises from `.cursorrules`
+  pointing to global Vitest configuration files, which could mislead an agent trying
+  to fix an internal Vitest plugin bug.

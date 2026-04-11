@@ -1,90 +1,136 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 24401
-  base_commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
-  merge_commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
-
+  base_commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+  merge_commit: 62a863cf518086135dfd2321c92fbc3823f95de8
 checks:
-  - id: ty_binary_exists
-    type: pass_to_pass
-    origin: static
-    description: "ty binary was built successfully during Docker build"
-
-  - id: requires_python_27_no_panic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ty handles requires-python='==2.7' gracefully, resolving to the lowest supported version instead of panicking"
-
-  - id: requires_python_future_version_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ty gives a clear error for requires-python='==44.44' instead of panicking"
-
-  - id: requires_python_normal_version
-    type: pass_to_pass
-    origin: pr_diff
-    description: "ty works normally with standard requires-python specifier '>=3.10'"
-
-  - id: requires_python_310_exact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "ty works with exact-version requires-python '==3.10'"
-
-  - id: no_unwrap_in_resolve_requires_python
-    type: pass_to_pass
-    origin: agent_config
-    description: "resolve_requires_python avoids .unwrap() and panic! (AGENTS.md: avoid panic!/unwrap)"
-    source:
-      path: "AGENTS.md"
-      lines: "79"
-      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
-
-  - id: no_local_imports_in_resolve
-    type: pass_to_pass
-    origin: agent_config
-    description: "No local use/import statements inside functions (AGENTS.md: imports at top of file)"
-    source:
-      path: "AGENTS.md"
-      lines: "76"
-      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
-
-  - id: repo_cargo_check_ty_project
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo check -p ty_project passes (repo CI)"
-
-  - id: repo_cargo_check_ty
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo check -p ty passes (repo CI)"
-
-  - id: repo_cargo_test_ty_project
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo test -p ty_project passes (repo CI)"
-
-  - id: repo_cargo_clippy_ty_project
-    type: pass_to_pass
-    origin: repo_tests
-    description: "cargo clippy -p ty_project --all-targets --all-features passes (repo CI)"
-
+- id: ty_binary_exists
+  type: pass_to_pass
+  origin: static
+  description: ty binary was built successfully during Docker build
+- id: requires_python_27_no_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: ty handles requires-python='==2.7' gracefully, resolving to the lowest
+    supported version instead of panicking
+- id: requires_python_future_version_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: ty gives a clear error for requires-python='==44.44' instead of panicking
+- id: requires_python_normal_version
+  type: pass_to_pass
+  origin: pr_diff
+  description: ty works normally with standard requires-python specifier '>=3.10'
+- id: requires_python_310_exact
+  type: pass_to_pass
+  origin: pr_diff
+  description: ty works with exact-version requires-python '==3.10'
+- id: no_unwrap_in_resolve_requires_python
+  type: pass_to_pass
+  origin: agent_config
+  description: 'resolve_requires_python avoids .unwrap() and panic! (AGENTS.md: avoid
+    panic!/unwrap)'
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+- id: no_local_imports_in_resolve
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No local use/import statements inside functions (AGENTS.md: imports
+    at top of file)'
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+- id: repo_cargo_check_ty_project
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check -p ty_project passes (repo CI)
+- id: repo_cargo_check_ty
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check -p ty passes (repo CI)
+- id: repo_cargo_test_ty_project
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo test -p ty_project passes (repo CI)
+- id: repo_cargo_clippy_ty_project
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo clippy -p ty_project --all-targets --all-features passes (repo
+    CI)
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
-
-  - rule: "Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability."
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
-
-  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
-    source:
-      path: "AGENTS.md"
-      lines: "82"
-      commit: "af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements
+    to reduce indentation and improve readability.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  source:
+    path: AGENTS.md
+    lines: 50-51
+  evidence: The gold solution adds two new tests (`requires_python_old_version_uses_lowest_supported_version`
+    and `requires_python_unsupported_future_version`) to verify the new behavior for
+    unsupported Python ve
+  category: testing
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 52-52
+  evidence: The gold solution adds the new tests directly into the existing `crates/ty_project/src/metadata.rs`
+    file rather than creating a new test file.
+  category: testing
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+    Instead, try to encode those constraints in the type system.
+  source:
+    path: AGENTS.md
+    lines: 57-58
+  evidence: The gold solution avoids panicking on unsupported versions by safely handling
+    the `Option` returned by `find()` using a `let Some(...) = ... else` block and
+    returning a proper `Err(ResolveRequiresPyth
+  category: style
+distractors:
+- rule: 'If asked to reproduce changes in the ty ecosystem, use this script to clone
+    the project to some directory and install its dependencies into `.venv`: `uv run
+    scripts/setup_primer_project.py <project-name> <some-temp-dir>`'
+  collision_type: meta_confusion
+  why_distracting: The problem description mentions 'This affects any project whose
+    requires-python doesn't map to a version...', which might trick the agent into
+    thinking it needs to use the ecosystem primer script to reproduce the issue. However,
+    this is a localized parsing bug that is easily reproduced and tested with in-memory
+    files in standard Rust unit tests.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 35-38
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem.
+  collision_type: rule_conflict
+  why_distracting: The agent might hesitate to add the ~60 lines of new test code
+    or the custom logic to iterate over `PythonVersion::iter()`, thinking there must
+    be an existing utility for this. However, writing these specific tests and the
+    explicit iteration logic is exactly what is required to fix the bug properly.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 56-56
+hierarchy_analysis: The configuration hierarchy consists of a single file (`AGENTS.md`)
+  containing all the rules. There are no conflicts between different levels of the
+  hierarchy. The rules provide clear guidance on testing, error handling, and development
+  workflows.

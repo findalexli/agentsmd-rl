@@ -1,114 +1,134 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91918
-  base_commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
-  merge_commit: "63f485248bacc347b8593d4597d74bd4aaa160c4"
-
+  base_commit: ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+  merge_commit: 63f485248bacc347b8593d4597d74bd4aaa160c4
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Test file must parse and have non-trivial content (not a stub)"
-
-  - id: anti_stub_real_waitfor_calls
-    type: pass_to_pass
-    origin: static
-    description: "At least 6 real .waitForElementByCss calls in non-comment code"
-
-  - id: all_waitfor_calls_have_timeout
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Every .waitForElementByCss call has an explicit timeout >= 15000ms"
-
-  - id: at_least_6_calls_with_timeout
-    type: fail_to_pass
-    origin: pr_diff
-    description: "At least 6 waitForElementByCss calls have explicit timeout argument"
-
-  - id: explanatory_comment_present
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Comment near waitForElementByCss explaining why timeout is increased (compilation/CI)"
-
-  - id: all_four_test_cases_present
-    type: pass_to_pass
-    origin: pr_diff
-    description: "All 4 navigation test cases (app->pages, pages->app, + back/forward) preserved"
-
-  - id: infrastructure_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Core test infrastructure (describe, webdriver, createNext) still present"
-
-  - id: navigation_logic_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Navigation actions (click, back, forward) and element checks present"
-
-  - id: no_settimeout_for_waiting
-    type: pass_to_pass
-    origin: agent_config
-    description: "No setTimeout or manual Promise delays used for waiting"
-    source:
-      path: "AGENTS.md"
-      lines: "180"
-      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
-
-  - id: no_deprecated_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "No deprecated check() usage"
-    source:
-      path: "AGENTS.md"
-      lines: "194"
-      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
-
-  - id: no_inline_fixture_files
-    type: pass_to_pass
-    origin: agent_config
-    description: "createNext/nextTestSetup uses real fixture directory, not inline files object"
-    source:
-      path: "AGENTS.md"
-      lines: "207-220"
-      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
-
-  - id: repo_prettier_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's prettier formatting check passes on test file"
-
-  - id: repo_typescript_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript compiler can parse test file without syntax errors"
-
-  - id: repo_node_parseable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Test file is readable and parseable by Node.js"
-
-  - id: repo_import_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Test file has valid import/export syntax"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Test file must parse and have non-trivial content (not a stub)
+- id: anti_stub_real_waitfor_calls
+  type: pass_to_pass
+  origin: static
+  description: At least 6 real .waitForElementByCss calls in non-comment code
+- id: all_waitfor_calls_have_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: Every .waitForElementByCss call has an explicit timeout >= 15000ms
+- id: at_least_6_calls_with_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least 6 waitForElementByCss calls have explicit timeout argument
+- id: explanatory_comment_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: Comment near waitForElementByCss explaining why timeout is increased
+    (compilation/CI)
+- id: all_four_test_cases_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: All 4 navigation test cases (app->pages, pages->app, + back/forward)
+    preserved
+- id: infrastructure_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core test infrastructure (describe, webdriver, createNext) still present
+- id: navigation_logic_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Navigation actions (click, back, forward) and element checks present
+- id: no_settimeout_for_waiting
+  type: pass_to_pass
+  origin: agent_config
+  description: No setTimeout or manual Promise delays used for waiting
+  source:
+    path: AGENTS.md
+    lines: '180'
+    commit: ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+- id: no_deprecated_check
+  type: pass_to_pass
+  origin: agent_config
+  description: No deprecated check() usage
+  source:
+    path: AGENTS.md
+    lines: '194'
+    commit: ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+- id: no_inline_fixture_files
+  type: pass_to_pass
+  origin: agent_config
+  description: createNext/nextTestSetup uses real fixture directory, not inline files
+    object
+  source:
+    path: AGENTS.md
+    lines: 207-220
+    commit: ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+- id: repo_prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting check passes on test file
+- id: repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compiler can parse test file without syntax errors
+- id: repo_node_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test file is readable and parseable by Node.js
+- id: repo_import_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test file has valid import/export syntax
 rubric:
-  - rule: "Read all README.md files in the directory path from repo root to the target file's directory before editing, to identify local patterns and conventions."
-    source:
-      path: "AGENTS.md"
-      lines: "46-54"
-      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
-
-  - rule: "Use comments to explain the 'why' behind non-obvious code, not just narrate what the code does."
-    source:
-      path: "AGENTS.md"
-      lines: "427-432"
-      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
-
-  - rule: "Follow existing code style and patterns from neighboring files in the same directory."
-    source:
-      path: "AGENTS.md"
-      lines: "46"
-      commit: "ad65b1bdcf3d10e5213c80bea56a73038bbf1c99"
+- rule: Read all README.md files in the directory path from repo root to the target
+    file's directory before editing, to identify local patterns and conventions.
+  source:
+    path: AGENTS.md
+    lines: 46-54
+    commit: ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+- rule: Use comments to explain the 'why' behind non-obvious code, not just narrate
+    what the code does.
+  source:
+    path: AGENTS.md
+    lines: 427-432
+    commit: ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+- rule: Follow existing code style and patterns from neighboring files in the same
+    directory.
+  source:
+    path: AGENTS.md
+    lines: '46'
+    commit: ad65b1bdcf3d10e5213c80bea56a73038bbf1c99
+- rule: test/ directory contains all test suites
+  source:
+    path: CLAUDE.md
+    lines: '17'
+  evidence: The patch modifies `test/e2e/app-dir/interoperability-with-pages/navigation.test.ts`,
+    correctly placing the test modifications in the `test/` directory as specified
+    by the monorepo structure.
+  category: architecture
+distractors:
+- rule: Run tests fast locally using NEXT_SKIP_ISOLATE=1 and testheadless
+  collision_type: meta_confusion
+  why_distracting: The bug description explicitly states that the timeout issue is
+    load-sensitive and passes locally but fails in CI. If the agent follows the rule
+    to run tests locally for iterative development, it will fail to reproduce the
+    issue, potentially leading to confusion or incorrect assumptions about the bug.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 84-91
+- rule: Always run a full bootstrap build (pnpm build-all) after switching branches
+  collision_type: scope_ambiguity
+  why_distracting: The fix only involves changing a timeout value and adding comments
+    in a single test file. Running a full bootstrap build (`pnpm build-all`) that
+    compiles all JS and Rust code is completely unnecessary for this scope and would
+    waste significant time.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 99-104
+hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
+  symlinks providing general monorepo guidance. The guidance focuses heavily on local
+  development and build processes, which contrasts with the CI-specific nature of
+  this bug.

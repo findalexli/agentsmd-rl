@@ -1,152 +1,168 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1113
-  base_commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
-  merge_commit: "c4ccc3947855e3f96e66081bd8f0a92ac75d3618"
-
+  base_commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+  merge_commit: c4ccc3947855e3f96e66081bd8f0a92ac75d3618
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without errors"
-
-  - id: trackio_config_exists_with_fields
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TrackioConfig class exists with mode, project, name, space_id fields"
-
-  - id: trackio_config_rejects_invalid_modes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TrackioConfig rejects invalid mode values with ValueError"
-
-  - id: trackio_config_accepts_valid_modes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TrackioConfig accepts disabled, online, local modes"
-
-  - id: trackio_config_defaults
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TrackioConfig defaults: mode=disabled, project/name/space_id=None"
-
-  - id: stats_logger_config_trackio_field
-    type: fail_to_pass
-    origin: pr_diff
-    description: "StatsLoggerConfig has a trackio field"
-
-  - id: stats_logger_trackio_init
-    type: fail_to_pass
-    origin: pr_diff
-    description: "StatsLogger.init() calls trackio.init() with project and name"
-
-  - id: stats_logger_trackio_commit
-    type: fail_to_pass
-    origin: pr_diff
-    description: "StatsLogger.commit() calls trackio.log() when enabled"
-
-  - id: stats_logger_trackio_close
-    type: fail_to_pass
-    origin: pr_diff
-    description: "StatsLogger.close() calls trackio.finish() when enabled"
-
-  - id: logging_helper_trackio
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Logging helper includes trackio.log with graceful import fallback"
-
-  - id: trackio_config_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "TrackioConfig.__post_init__ has real validation logic"
-
-  - id: trackio_config_post_init_validation
-    type: fail_to_pass
-    origin: agent_config
-    description: "TrackioConfig uses __post_init__ with ValueError for validation"
-    source:
-      path: ".claude/rules/api-config.md"
-      lines: "37-38"
-      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
-
-  - id: trackio_config_has_docstring
-    type: fail_to_pass
-    origin: agent_config
-    description: "TrackioConfig class has a docstring"
-    source:
-      path: ".claude/rules/api-config.md"
-      lines: "60"
-      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
-
-  - id: trackio_config_field_help_metadata
-    type: fail_to_pass
-    origin: agent_config
-    description: "StatsLoggerConfig.trackio field has help metadata"
-    source:
-      path: ".claude/rules/api-config.md"
-      lines: "54"
-      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "93"
-      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
-
-  # Repo CI/CD tests (pass_to_pass) - ruff lint/format from pre-commit
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files are formatted according to ruff format"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass ruff linter checks"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have valid Python syntax"
-
-  - id: test_repo_yaml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's YAML configuration files are syntactically valid"
-
-  - id: test_repo_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JSON files are syntactically valid"
-
-  - id: test_repo_no_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have no trailing whitespace"
-
-  - id: test_repo_newline_at_eof
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files end with a newline"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: trackio_config_exists_with_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: TrackioConfig class exists with mode, project, name, space_id fields
+- id: trackio_config_rejects_invalid_modes
+  type: fail_to_pass
+  origin: pr_diff
+  description: TrackioConfig rejects invalid mode values with ValueError
+- id: trackio_config_accepts_valid_modes
+  type: fail_to_pass
+  origin: pr_diff
+  description: TrackioConfig accepts disabled, online, local modes
+- id: trackio_config_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'TrackioConfig defaults: mode=disabled, project/name/space_id=None'
+- id: stats_logger_config_trackio_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsLoggerConfig has a trackio field
+- id: stats_logger_trackio_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsLogger.init() calls trackio.init() with project and name
+- id: stats_logger_trackio_commit
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsLogger.commit() calls trackio.log() when enabled
+- id: stats_logger_trackio_close
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsLogger.close() calls trackio.finish() when enabled
+- id: logging_helper_trackio
+  type: fail_to_pass
+  origin: pr_diff
+  description: Logging helper includes trackio.log with graceful import fallback
+- id: trackio_config_not_stub
+  type: pass_to_pass
+  origin: static
+  description: TrackioConfig.__post_init__ has real validation logic
+- id: trackio_config_post_init_validation
+  type: fail_to_pass
+  origin: agent_config
+  description: TrackioConfig uses __post_init__ with ValueError for validation
+  source:
+    path: .claude/rules/api-config.md
+    lines: 37-38
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- id: trackio_config_has_docstring
+  type: fail_to_pass
+  origin: agent_config
+  description: TrackioConfig class has a docstring
+  source:
+    path: .claude/rules/api-config.md
+    lines: '60'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- id: trackio_config_field_help_metadata
+  type: fail_to_pass
+  origin: agent_config
+  description: StatsLoggerConfig.trackio field has help metadata
+  source:
+    path: .claude/rules/api-config.md
+    lines: '54'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified files
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are formatted according to ruff format
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass ruff linter checks
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have valid Python syntax
+- id: test_repo_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML configuration files are syntactically valid
+- id: test_repo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JSON files are syntactically valid
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no trailing whitespace
+- id: test_repo_newline_at_eof
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files end with a newline
 rubric:
-  - rule: "Follow existing code patterns in the same module (match the style of WandBConfig, SwanlabConfig, TensorBoardConfig)"
-    source:
-      path: "CLAUDE.md"
-      lines: "76"
-      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
-  - rule: "Prefer composition over inheritance; keep class hierarchies shallow"
-    source:
-      path: ".claude/rules/code-style.md"
-      lines: "7-11"
-      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
-  - rule: "Heavy optional deps inside functions (trackio import should use graceful fallback)"
-    source:
-      path: "AGENTS.md"
-      lines: "101"
-      commit: "92c467e56bf17d730bd26855de33d5e4e13ba435"
+- rule: Follow existing code patterns in the same module (match the style of WandBConfig,
+    SwanlabConfig, TensorBoardConfig)
+  source:
+    path: CLAUDE.md
+    lines: '76'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- rule: Prefer composition over inheritance; keep class hierarchies shallow
+  source:
+    path: .claude/rules/code-style.md
+    lines: 7-11
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- rule: Heavy optional deps inside functions (trackio import should use graceful fallback)
+  source:
+    path: AGENTS.md
+    lines: '101'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- rule: Config dataclass | `XxxConfig`
+  source:
+    path: AGENTS.md
+    lines: 48-49
+  evidence: The gold solution names the new configuration dataclass `TrackioConfig`,
+    matching the required pattern.
+  category: naming
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: 46-46
+  evidence: 'The gold solution adds `trackio: TrackioConfig = field(...)` to `StatsLoggerConfig`
+    rather than using inheritance to extend the configuration.'
+  category: architecture
+distractors:
+- rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly instructs the agent to add `TrackioConfig`
+    to the configuration system and points to `areal/api/cli_args.py`. If the agent
+    follows the rule to 'Ask first' before modifying this file, it will halt execution
+    and fail to complete the task autonomously.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 34-36
+- rule: 'Always do: Add tests for new functionality.'
+  collision_type: scope_ambiguity
+  why_distracting: The gold solution does not include any test files. Attempting to
+    add tests for the trackio integration might lead the agent to hallucinate test
+    structures, struggle with mocking the trackio library, or modify files outside
+    the expected scope of this PR.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 29-29
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are Level 0 and contain identical,
+  overlapping rules (e.g., 'Ask first before modifying config structures', 'Add tests').
+  They are consistent with each other. The primary tension is between the repository's
+  general defensive rules ('Ask first') and the specific, scoped nature of the user's
+  prompt which requires immediate modification of restricted files.

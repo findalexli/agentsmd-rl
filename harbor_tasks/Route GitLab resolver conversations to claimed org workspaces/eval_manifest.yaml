@@ -22,6 +22,15 @@ rubric:
     path: AGENTS.md
     lines: 35-42
     commit: 7d04cffe4ec3e723fee04d89a8ba0e19d910c049
+- rule: Fix any issues that weren't automatically fixed, including Ruff formatting
+    issues (like unused imports).
+  source:
+    path: AGENTS.md
+    lines: 22-26
+  evidence: The gold solution removes the `initialize_conversation` import from `openhands.server.services.conversation_service`
+    in `gitlab_view.py` after replacing its usage, preventing Ruff unused import lint
+    e
+  category: style
 checks:
 - id: resolve_org_for_repo_imported
   description: resolve_org_for_repo is imported from resolver_org_router
@@ -115,3 +124,25 @@ checks:
   type: pass_to_pass
   origin: static
   test: test_github_view_imports_resolve
+distractors:
+- rule: Store design documents or temporary artifacts in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a `.pr/design.md` file to document the new
+    organization routing architecture, but this is a standard feature implementation
+    that doesn't require temporary PR artifacts.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 58-65
+- rule: To run the full application to debug issues, use `make build && make run ...`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the full application using `make build
+    && make run ...` to manually test the GitLab webhook routing, which is unnecessary
+    and complex for a backend-only integration change.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-11
+hierarchy_analysis: The repository has a single root-level AGENTS.md file providing
+  general guidelines for setup, linting, git practices, and PR artifacts. No conflicting
+  child configs exist.

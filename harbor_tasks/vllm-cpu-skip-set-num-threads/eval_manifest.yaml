@@ -1,61 +1,90 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 38535
-  base_commit: "677424c7acd9fb7477294017c99f798588002d4f"
-  merge_commit: "6557f4937fd2937ae4824beb492ff67625895d89"
-
+  base_commit: 677424c7acd9fb7477294017c99f798588002d4f
+  merge_commit: 6557f4937fd2937ae4824beb492ff67625895d89
 checks:
-  - id: set_num_threads_noop
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After monkey-patch, torch.set_num_threads must not change thread count"
-
-  - id: warning_logged
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Monkey-patched set_num_threads emits a log or warning when called"
-
-  - id: patch_after_thread_binding
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After monkey-patch is applied, thread binding is protected from later changes"
-
-  - id: init_device_exists
-    type: pass_to_pass
-    origin: pr_diff
-    description: "CPUWorker class and init_device method must still exist"
-
-  - id: key_functionality_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Distributed init and random seed setting must remain in cpu_worker.py"
-
-  - id: replacement_has_body
-    type: pass_to_pass
-    origin: static
-    description: "Replacement function must have real logic (logging/warning call), not just pass"
-
-  - id: test_repo_syntax_cpu_worker
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python syntax check on cpu_worker.py passes"
-
-  - id: test_repo_lint_cpu_worker
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check on cpu_worker.py passes"
-
+- id: set_num_threads_noop
+  type: fail_to_pass
+  origin: pr_diff
+  description: After monkey-patch, torch.set_num_threads must not change thread count
+- id: warning_logged
+  type: fail_to_pass
+  origin: pr_diff
+  description: Monkey-patched set_num_threads emits a log or warning when called
+- id: patch_after_thread_binding
+  type: fail_to_pass
+  origin: pr_diff
+  description: After monkey-patch is applied, thread binding is protected from later
+    changes
+- id: init_device_exists
+  type: pass_to_pass
+  origin: pr_diff
+  description: CPUWorker class and init_device method must still exist
+- id: key_functionality_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Distributed init and random seed setting must remain in cpu_worker.py
+- id: replacement_has_body
+  type: pass_to_pass
+  origin: static
+  description: Replacement function must have real logic (logging/warning call), not
+    just pass
+- id: test_repo_syntax_cpu_worker
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python syntax check on cpu_worker.py passes
+- id: test_repo_lint_cpu_worker
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check on cpu_worker.py passes
 rubric:
-  - rule: "Use pre-commit hooks to ensure code passes ruff linting."
-    source:
-      path: "AGENTS.md"
-      lines: "55-56,91-99"
-      commit: "677424c7acd9fb7477294017c99f798588002d4f"
-
-  - rule: "Follow existing code patterns when adding new code. The monkey-patch should use logger.warning() consistent with other warnings in the file."
-    source:
-      path: "AGENTS.md"
-      lines: "27-33"
-      commit: "677424c7acd9fb7477294017c99f798588002d4f"
+- rule: Use pre-commit hooks to ensure code passes ruff linting.
+  source:
+    path: AGENTS.md
+    lines: 55-56,91-99
+    commit: 677424c7acd9fb7477294017c99f798588002d4f
+- rule: Follow existing code patterns when adding new code. The monkey-patch should
+    use logger.warning() consistent with other warnings in the file.
+  source:
+    path: AGENTS.md
+    lines: 27-33
+    commit: 677424c7acd9fb7477294017c99f798588002d4f
+distractors:
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
+  collision_type: meta_confusion
+  why_distracting: The agent is acting as an autonomous coding agent in an evaluation
+    environment. If it strictly follows the rule 'Pure code-agent PRs are not allowed',
+    it might refuse to generate the fix and instead output a message asking for a
+    human submitter, failing the evaluation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 24-25
+- rule: Before proposing a PR, run duplicate-work checks using `gh issue view` and
+    `gh pr list`.
+  collision_type: meta_confusion
+  why_distracting: The agent is in an isolated evaluation environment without GitHub
+    CLI credentials or network access to GitHub. Attempting to run these `gh` commands
+    will fail and waste time/tokens, potentially causing the agent to halt or fail
+    the task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 10-14
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
+    one mutable default, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The fix is small (a few lines overriding `torch.set_num_threads`),
+    so the agent might misclassify it as a 'tiny edit' or 'low-value busywork' and
+    refuse to proceed due to the 'Fail-closed behavior' rule.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 20-21
+hierarchy_analysis: The hierarchy consists of CLAUDE.md which simply includes AGENTS.md.
+  AGENTS.md contains strict contribution policies aimed at human contributors and
+  PR submission, which conflict with the autonomous nature of the agent evaluation
+  environment.

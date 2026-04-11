@@ -1,104 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12961
-  base_commit: "b1f62c0ebc09be80aee830e26689ab70b939cf44"
-  merge_commit: "0595d1b15ba6b7c47f68ddf7f79152b3d1d3c467"
-
+  base_commit: b1f62c0ebc09be80aee830e26689ab70b939cf44
+  merge_commit: 0595d1b15ba6b7c47f68ddf7f79152b3d1d3c467
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "mcp.py must be syntactically valid Python"
-
-  - id: module_imports
-    type: pass_to_pass
-    origin: static
-    description: "gradio.mcp module must import without errors"
-
-  - id: nonqueued_calls_process_api
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Non-queued call_tool must use blocks.process_api() directly instead of HTTP loopback"
-
-  - id: nonqueued_extracts_data
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Non-queued path must extract output from process_api result['data']"
-
-  - id: session_state_imported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SessionState from gradio.state_holder must be imported in gradio.mcp"
-
-  - id: nonqueued_uses_session_state
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Non-queued path must create SessionState for the process_api call"
-
-  - id: queued_preserves_http_loopback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Queued call_tool must have client.submit in the queued branch (else body)"
-
-  - id: queued_no_process_api
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Queued path must NOT call process_api (uses HTTP loopback instead)"
-
-  - id: call_tool_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "call_tool has real logic (>= 6 meaningful statements), not a stub"
-
-  - id: nonqueued_no_submit
-    type: pass_to_pass
-    origin: static
-    description: "Non-queued path must NOT call client.submit (avoids HTTP loopback)"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: agent_config
-    description: "mcp.py must pass ruff linting (Python formatting standard)"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "b1f62c0ebc09be80aee830e26689ab70b939cf44"
-
-  - id: mcp_py_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "mcp.py must compile without errors (python -m py_compile)"
-
-  - id: mcp_module_importable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "gradio.mcp module can be imported in subprocess"
-
-  - id: test_repo_ruff_lint_backend
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint passes on gradio/mcp.py"
-
-  - id: test_repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on gradio/mcp.py"
-
-  - id: test_repo_mcp_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "MCP module synchronous unit tests pass"
-
-  - id: test_repo_gradio_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "gradio module imports without errors"
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: mcp.py must be syntactically valid Python
+- id: module_imports
+  type: pass_to_pass
+  origin: static
+  description: gradio.mcp module must import without errors
+- id: nonqueued_calls_process_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-queued call_tool must use blocks.process_api() directly instead
+    of HTTP loopback
+- id: nonqueued_extracts_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-queued path must extract output from process_api result['data']
+- id: session_state_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: SessionState from gradio.state_holder must be imported in gradio.mcp
+- id: nonqueued_uses_session_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-queued path must create SessionState for the process_api call
+- id: queued_preserves_http_loopback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Queued call_tool must have client.submit in the queued branch (else
+    body)
+- id: queued_no_process_api
+  type: pass_to_pass
+  origin: pr_diff
+  description: Queued path must NOT call process_api (uses HTTP loopback instead)
+- id: call_tool_not_stub
+  type: pass_to_pass
+  origin: static
+  description: call_tool has real logic (>= 6 meaningful statements), not a stub
+- id: nonqueued_no_submit
+  type: pass_to_pass
+  origin: static
+  description: Non-queued path must NOT call client.submit (avoids HTTP loopback)
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: mcp.py must pass ruff linting (Python formatting standard)
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: b1f62c0ebc09be80aee830e26689ab70b939cf44
+- id: mcp_py_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: mcp.py must compile without errors (python -m py_compile)
+- id: mcp_module_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio.mcp module can be imported in subprocess
+- id: test_repo_ruff_lint_backend
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint passes on gradio/mcp.py
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on gradio/mcp.py
+- id: test_repo_mcp_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP module synchronous unit tests pass
+- id: test_repo_gradio_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio module imports without errors
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "b1f62c0ebc09be80aee830e26689ab70b939cf44"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: b1f62c0ebc09be80aee830e26689ab70b939cf44
+distractors:
+- rule: '- `client/python/` — the `gradio_client` Python client library'
+  collision_type: architecture_boundary
+  why_distracting: The bug description mentions that the latency is caused by `gradio_client.Client.submit()`
+    performing an HTTP loopback. An agent reading the repository structure might try
+    to modify the `gradio_client` code in `client/python/` to optimize `submit()`
+    or add a local bypass. However, the correct architectural approach is to stop
+    using the client entirely for non-queued events and call the internal `blocks.process_api()`
+    directly in `gradio/mcp.py`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 10-10
+hierarchy_analysis: 'Only `AGENTS.md` is provided, which gives high-level repository
+  structure and general PR/style guidelines. The primary challenge is architectural:
+  understanding that a bug caused by `gradio_client` should be fixed by bypassing
+  it in `gradio/mcp.py` rather than modifying the client library itself.'

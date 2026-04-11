@@ -1,103 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2092
-  base_commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
-  merge_commit: "381733e0cf228e5a97cc77998538cd30b56b150d"
-
+  base_commit: 27c35b1ce136c85c120b0486128316ae022b53a5
+  merge_commit: 381733e0cf228e5a97cc77998538cd30b56b150d
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "utils.py must parse without syntax errors"
-
-  - id: async_exit
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Async clean_exit raises SystemExit instead of re-raising original exception"
-
-  - id: sync_exit
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Sync clean_exit raises SystemExit instead of re-raising original exception"
-
-  - id: async_exit_different_exception
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Async clean_exit terminates with SystemExit for various exception types"
-
-  - id: sync_exit_different_exception
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Sync clean_exit terminates with SystemExit for various exception types"
-
-  - id: finally_cleanup
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Finally block still runs destroy_process_group on error"
-
-  - id: wandb_cleanup
-    type: pass_to_pass
-    origin: pr_diff
-    description: "wandb.finish(exit_code=1) called on error path"
-
-  - id: success_path_async
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Async success path returns values normally"
-
-  - id: success_path_sync
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Sync success path returns values normally"
-
-  - id: error_never_silent
-    type: pass_to_pass
-    origin: agent_config
-    description: "Error path terminates with non-zero exit, not silently hanging or returning"
-    source:
-      path: "AGENTS.md"
-      lines: "23"
-      commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "clean_exit retains async+sync wrappers with try/except/finally and destroy_process_group"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check passes on utils.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on utils.py"
-
-  - id: test_repo_unit_pathing
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for utils/pathing.py pass (5 working tests)"
-
-  - id: test_repo_pyproject_toml
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's pyproject.toml is valid TOML with required sections"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: utils.py must parse without syntax errors
+- id: async_exit
+  type: fail_to_pass
+  origin: pr_diff
+  description: Async clean_exit raises SystemExit instead of re-raising original exception
+- id: sync_exit
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sync clean_exit raises SystemExit instead of re-raising original exception
+- id: async_exit_different_exception
+  type: fail_to_pass
+  origin: pr_diff
+  description: Async clean_exit terminates with SystemExit for various exception types
+- id: sync_exit_different_exception
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sync clean_exit terminates with SystemExit for various exception types
+- id: finally_cleanup
+  type: pass_to_pass
+  origin: pr_diff
+  description: Finally block still runs destroy_process_group on error
+- id: wandb_cleanup
+  type: pass_to_pass
+  origin: pr_diff
+  description: wandb.finish(exit_code=1) called on error path
+- id: success_path_async
+  type: pass_to_pass
+  origin: repo_tests
+  description: Async success path returns values normally
+- id: success_path_sync
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sync success path returns values normally
+- id: error_never_silent
+  type: pass_to_pass
+  origin: agent_config
+  description: Error path terminates with non-zero exit, not silently hanging or returning
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: 27c35b1ce136c85c120b0486128316ae022b53a5
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: clean_exit retains async+sync wrappers with try/except/finally and
+    destroy_process_group
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on utils.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on utils.py
+- id: test_repo_unit_pathing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for utils/pathing.py pass (5 working tests)
+- id: test_repo_pyproject_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml is valid TOML with required sections
 rubric:
-  - rule: "Avoid try/except blocks unless it's really necessary. It's fine that a program fails if something goes wrong. Add try/catch only for code that explicitly aims to be fault tolerant."
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
-
-  - rule: "Do not add unnecessary comments. Do not explain code changes that reflect your work process. Prefer targeted comments sparingly to explain ambiguous code."
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
-
-# Note: "Errors should never pass silently" (AGENTS.md line 23) is checked programmatically
-# via the error_never_silent agent_config check.
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
+    fails if something goes wrong. Add try/catch only for code that explicitly aims
+    to be fault tolerant.
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 27c35b1ce136c85c120b0486128316ae022b53a5
+- rule: Do not add unnecessary comments. Do not explain code changes that reflect
+    your work process. Prefer targeted comments sparingly to explain ambiguous code.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 27c35b1ce136c85c120b0486128316ae022b53a5
+- rule: Prefer to use targeted comments sparingly to explain ambiguous code.
+  source:
+    path: AGENTS.md
+    lines: 5-7
+  evidence: 'The gold solution adds a targeted comment explaining why `sys.exit(1)`
+    is used instead of `raise` (because the async event loop swallows the exception),
+    which perfectly aligns with the instruction to '
+  category: documentation
+- rule: Errors should never pass silently.
+  source:
+    path: AGENTS.md
+    lines: 20-21
+  evidence: The gold solution replaces `raise` with `sys.exit(1)` specifically to
+    prevent the async event loop from swallowing the exception and causing the process
+    to hang indefinitely, ensuring the error does n
+  category: architecture
+distractors:
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  collision_type: scope_ambiguity
+  why_distracting: The rule forbids referring to old code or explaining code changes.
+    An agent might interpret the comment explaining why `raise` doesn't work as referring
+    to 'old code' and omit it, but the comment is crucial for explaining the non-obvious
+    async event loop behavior.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-7
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
+    fails if something goes wrong.
+  collision_type: would_cause_bug
+  why_distracting: The rule advises avoiding try/except blocks so programs fail fast.
+    An agent might try to remove the try/except block entirely to follow this rule,
+    which would break the critical `wandb.finish` and `dist.destroy_process_group`
+    cleanup logic.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 3-4
+hierarchy_analysis: 'The configuration hierarchy is flat, with all rules residing
+  in `AGENTS.md`. The primary tension lies within the comments rule itself: the agent
+  must balance the prohibition against explaining code changes/old code with the allowance
+  for explaining ambiguous code. The gold solution correctly identifies the async
+  exception swallowing as ambiguous behavior requiring explanation.'

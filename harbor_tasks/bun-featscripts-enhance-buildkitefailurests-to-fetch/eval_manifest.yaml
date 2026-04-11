@@ -68,3 +68,28 @@ rubric:
     path: CLAUDE.md
     lines: 218-232
     commit: 7e9fa4ab08d9250c72795565c173cf7349de4018
+distractors:
+- rule: Tests use Bun's Jest-compatible test runner with proper test fixtures.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write tests for the new features in
+    buildkite-failures.ts (like --help, --wait, log fetching) using Bun.spawn and
+    tempDir as described in the testing rules. However, this is an internal CI utility
+    script and the prompt does not request tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 36-89
+- rule: CLAUDE.md serves as the agent's instruction manual and repository guidelines.
+  collision_type: meta_confusion
+  why_distracting: The prompt explicitly asks the agent to modify CLAUDE.md to document
+    the script's usage. Because CLAUDE.md serves as the agent's own system prompt/instruction
+    manual, the agent might experience meta-confusion, either hesitating to modify
+    its own instructions or formatting the documentation incorrectly as an agent rule
+    rather than general contributor documentation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 1-95
+hierarchy_analysis: The repository uses CLAUDE.md and AGENTS.md as root-level configuration
+  files containing general guidelines for building, testing, and test organization.
+  There are no specific rules for modifying internal utility scripts.

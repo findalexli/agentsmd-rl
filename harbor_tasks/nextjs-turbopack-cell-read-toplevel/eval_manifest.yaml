@@ -1,91 +1,119 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91699
-  base_commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"
-  merge_commit: "25646b928f900c12504b8a30ce5939207533aa54"
-
+  base_commit: cbf12d18457cbe62cbb8f57f4e485110b6630e42
+  merge_commit: 25646b928f900c12504b8a30ce5939207533aa54
 checks:
-  - id: debug_assert_removed_from_cell_read
-    type: fail_to_pass
-    origin: pr_diff
-    description: "debug_assert_not_in_top_level_task no longer fires unconditionally in try_read_task_cell"
-
-  - id: cell_read_test_expects_success
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cell-read integration test expects success (no #[should_panic])"
-
-  - id: cell_read_test_asserts_value
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cell-read test asserts the read value instead of discarding with let _"
-
-  - id: debug_assert_preserved_in_output_methods
-    type: pass_to_pass
-    origin: pr_diff
-    description: "debug_assert_not_in_top_level_task preserved in try_read_task_output and try_read_local_output"
-
-  - id: eventual_read_test_expects_panic
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Eventual-read test still expects panic (#[should_panic])"
-
-  - id: manager_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "manager.rs has substantial content (>1000 lines)"
-
-  - id: manager_readable
-    type: pass_to_pass
-    origin: static
-    description: "manager.rs is readable and contains expected function definitions"
-
-  - id: backend_test_file_readable
-    type: pass_to_pass
-    origin: static
-    description: "top_level_task_consistency.rs test file is readable and has tests"
-
-  - id: turbo_tasks_backend_crates_exist
-    type: pass_to_pass
-    origin: static
-    description: "Required turbo-tasks backend crates exist and have content"
-
-  - id: repo_git_state_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo has valid git state with expected base commit"
-
-  - id: debug_assert_function_exists
-    type: pass_to_pass
-    origin: static
-    description: "debug_assert_not_in_top_level_task function exists in manager.rs"
-
-  - id: test_repo_git_info
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's git-info script runs successfully - validates git metadata extraction via Node.js CI script"
-
-  - id: test_repo_run_for_change
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's run-for-change script runs successfully - validates change detection logic used by CI"
-
-  - id: test_repo_node_scripts_executable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Node.js CI scripts are present, tracked by git, and executable - validates CI script integrity"
-
+- id: debug_assert_removed_from_cell_read
+  type: fail_to_pass
+  origin: pr_diff
+  description: debug_assert_not_in_top_level_task no longer fires unconditionally
+    in try_read_task_cell
+- id: cell_read_test_expects_success
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Cell-read integration test expects success (no #[should_panic])'
+- id: cell_read_test_asserts_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cell-read test asserts the read value instead of discarding with let
+    _
+- id: debug_assert_preserved_in_output_methods
+  type: pass_to_pass
+  origin: pr_diff
+  description: debug_assert_not_in_top_level_task preserved in try_read_task_output
+    and try_read_local_output
+- id: eventual_read_test_expects_panic
+  type: pass_to_pass
+  origin: pr_diff
+  description: Eventual-read test still expects panic (#[should_panic])
+- id: manager_not_stub
+  type: pass_to_pass
+  origin: static
+  description: manager.rs has substantial content (>1000 lines)
+- id: manager_readable
+  type: pass_to_pass
+  origin: static
+  description: manager.rs is readable and contains expected function definitions
+- id: backend_test_file_readable
+  type: pass_to_pass
+  origin: static
+  description: top_level_task_consistency.rs test file is readable and has tests
+- id: turbo_tasks_backend_crates_exist
+  type: pass_to_pass
+  origin: static
+  description: Required turbo-tasks backend crates exist and have content
+- id: repo_git_state_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo has valid git state with expected base commit
+- id: debug_assert_function_exists
+  type: pass_to_pass
+  origin: static
+  description: debug_assert_not_in_top_level_task function exists in manager.rs
+- id: test_repo_git_info
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git-info script runs successfully - validates git metadata extraction
+    via Node.js CI script
+- id: test_repo_run_for_change
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's run-for-change script runs successfully - validates change detection
+    logic used by CI
+- id: test_repo_node_scripts_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Node.js CI scripts are present, tracked by git, and executable
+    - validates CI script integrity
 rubric:
-  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`"
-    source:
-      path: "AGENTS.md"
-      lines: "414"
-      commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"
-
-  - rule: "Tasks affected by a read inconsistency can return errors. These errors will be discarded by the strongly consistent root task."
-    source:
-      path: "turbopack/crates/turbo-tasks/src/vc/README.md"
-      lines: "127"
-      commit: "cbf12d18457cbe62cbb8f57f4e485110b6630e42"
+- rule: cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo
+    fmt`
+  source:
+    path: AGENTS.md
+    lines: '414'
+    commit: cbf12d18457cbe62cbb8f57f4e485110b6630e42
+- rule: Tasks affected by a read inconsistency can return errors. These errors will
+    be discarded by the strongly consistent root task.
+  source:
+    path: turbopack/crates/turbo-tasks/src/vc/README.md
+    lines: '127'
+    commit: cbf12d18457cbe62cbb8f57f4e485110b6630e42
+distractors:
+- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start>
+    pnpm testheadless test/path/to/test.ts'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to run the modified Rust test (`top_level_task_consistency.rs`)
+    using `pnpm testheadless`, which is meant for Next.js JS/TS tests, not Cargo/Rust
+    tests. This will fail and waste time.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 71-78
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start `pnpm --filter=next dev` in a separate terminal session before making edits'
+  collision_type: architecture_boundary
+  why_distracting: The agent might start the Next.js dev server in the background
+    (`pnpm --filter=next dev`), which is unnecessary and wastes resources since the
+    bug is entirely within the Turbopack Rust crates and their isolated Cargo tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 61-68
+- rule: 'For type errors only: Use `pnpm --filter=next types` (~10s) instead of `pnpm
+    --filter=next build` (~60s).'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use `pnpm --filter=next types` to check
+    for Rust compilation errors after modifying the Rust code, but this command runs
+    TypeScript type checking, not `cargo check`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '82'
+hierarchy_analysis: The config files (`CLAUDE.md` and `AGENTS.md` are identical) are
+  heavily focused on the Next.js JS/TS ecosystem. However, the bug and the gold solution
+  are entirely within the Turbopack Rust crates (`turbopack/crates/turbo-tasks`).
+  The agent must recognize the architectural boundary between the JS/TS Next.js code
+  and the Rust Turbopack code, and ignore the JS-specific tooling rules (like `pnpm
+  testheadless` or `pnpm --filter=next dev`) in favor of standard Rust/Cargo tooling.

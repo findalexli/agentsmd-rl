@@ -1,104 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35947
-  base_commit: "aac12ce597b49093a5add54b00deee3d8980f874"
-  merge_commit: "4cc5b7a90bac7e1f8ac51a9ac570d3ada3bddcb3"
-
+  base_commit: aac12ce597b49093a5add54b00deee3d8980f874
+  merge_commit: 4cc5b7a90bac7e1f8ac51a9ac570d3ada3bddcb3
 checks:
-  - id: file_exists_and_has_exports
-    type: pass_to_pass
-    origin: static
-    description: "Target file exists and exports trackSchedulerEvent, resolveEventType, resolveEventTimeStamp"
-
-  - id: resolve_event_type_modern
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveEventType returns event.type for modern events (click, keydown, etc.)"
-
-  - id: resolve_event_type_legacy
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveEventType handles legacy RN dispatchConfig.phasedRegistrationNames format"
-
-  - id: resolve_event_timestamp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveEventTimeStamp returns event.timeStamp from global.event"
-
-  - id: scheduler_event_filtering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both resolve functions filter out the event captured by trackSchedulerEvent"
-
-  - id: no_event_returns_defaults
-    type: pass_to_pass
-    origin: static
-    description: "With no global.event, resolveEventType returns null and resolveEventTimeStamp returns -1.1"
-
-  - id: function_signatures_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Exported functions maintain their original Flow type signatures"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in the modified file"
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "22"
-      commit: "aac12ce597b49093a5add54b00deee3d8980f874"
-
-  - id: test_repo_flow_fabric
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repos Flow typecheck passes for Fabric renderer"
-    source:
-      ci_command: "yarn flow fabric"
-      timeout: 120
-
-  - id: test_repo_flow_native
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repos Flow typecheck passes for React Native renderer"
-    source:
-      ci_command: "yarn flow native"
-      timeout: 120
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repos ESLint passes on the modified file"
-    source:
-      ci_command: "yarn lint packages/react-native-renderer/src/ReactFiberConfigFabric.js"
-      timeout: 120
-
-  - id: test_repo_react_native_renderer_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "React Native renderer unit tests pass"
-    source:
-      ci_command: "yarn test --releaseChannel=xplat --testPathPattern=react-native-renderer --ci"
-      timeout: 120
-
-  - id: test_repo_react_fabric_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "React Fabric unit tests pass"
-    source:
-      ci_command: "yarn test --releaseChannel=xplat --testPathPattern=ReactFabric --ci"
-      timeout: 120
-
+- id: file_exists_and_has_exports
+  type: pass_to_pass
+  origin: static
+  description: Target file exists and exports trackSchedulerEvent, resolveEventType,
+    resolveEventTimeStamp
+- id: resolve_event_type_modern
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveEventType returns event.type for modern events (click, keydown,
+    etc.)
+- id: resolve_event_type_legacy
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveEventType handles legacy RN dispatchConfig.phasedRegistrationNames
+    format
+- id: resolve_event_timestamp
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveEventTimeStamp returns event.timeStamp from global.event
+- id: scheduler_event_filtering
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both resolve functions filter out the event captured by trackSchedulerEvent
+- id: no_event_returns_defaults
+  type: pass_to_pass
+  origin: static
+  description: With no global.event, resolveEventType returns null and resolveEventTimeStamp
+    returns -1.1
+- id: function_signatures_preserved
+  type: pass_to_pass
+  origin: static
+  description: Exported functions maintain their original Flow type signatures
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in the modified file
+  source:
+    path: .claude/skills/flow/SKILL.md
+    lines: '22'
+    commit: aac12ce597b49093a5add54b00deee3d8980f874
+- id: test_repo_flow_fabric
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repos Flow typecheck passes for Fabric renderer
+  source:
+    ci_command: yarn flow fabric
+    timeout: 120
+- id: test_repo_flow_native
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repos Flow typecheck passes for React Native renderer
+  source:
+    ci_command: yarn flow native
+    timeout: 120
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repos ESLint passes on the modified file
+  source:
+    ci_command: yarn lint packages/react-native-renderer/src/ReactFiberConfigFabric.js
+    timeout: 120
+- id: test_repo_react_native_renderer_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: React Native renderer unit tests pass
+  source:
+    ci_command: yarn test --releaseChannel=xplat --testPathPattern=react-native-renderer
+      --ci
+    timeout: 120
+- id: test_repo_react_fabric_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: React Fabric unit tests pass
+  source:
+    ci_command: yarn test --releaseChannel=xplat --testPathPattern=ReactFabric --ci
+    timeout: 120
 rubric:
-  - rule: "$FlowExpectedError comments should include a reason for the suppression"
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "29"
-      commit: "aac12ce597b49093a5add54b00deee3d8980f874"
-  - rule: "Ensure types are imported from the correct package"
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "30"
-      commit: "aac12ce597b49093a5add54b00deee3d8980f874"
+- rule: $FlowExpectedError comments should include a reason for the suppression
+  source:
+    path: .claude/skills/flow/SKILL.md
+    lines: '29'
+    commit: aac12ce597b49093a5add54b00deee3d8980f874
+- rule: Ensure types are imported from the correct package
+  source:
+    path: .claude/skills/flow/SKILL.md
+    lines: '30'
+    commit: aac12ce597b49093a5add54b00deee3d8980f874
+- rule: React core files are located outside the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: The gold solution modifies `packages/react-native-renderer/src/ReactFiberConfigFabric.js`,
+    which is outside the `/compiler/` directory, correctly identifying it as part
+    of React core rather than the R
+  category: architecture
+hierarchy_analysis: Only a single root-level config file (`CLAUDE.md`) is present,
+  providing a basic monorepo overview. There are no overlapping or conflicting rules.

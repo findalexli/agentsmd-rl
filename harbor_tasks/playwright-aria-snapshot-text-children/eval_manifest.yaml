@@ -1,80 +1,111 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 40086
-  base_commit: "5a56d44a6f0d94b87e044f45f432522132da557c"
-  merge_commit: "5435c64f6d14293b2ce0dcdbfaa237b015bfd63e"
-
+  base_commit: 5a56d44a6f0d94b87e044f45f432522132da557c
+  merge_commit: 5435c64f6d14293b2ce0dcdbfaa237b015bfd63e
 checks:
-  - id: function_exists
-    type: pass_to_pass
-    origin: static
-    description: "Source file contains textContributesInfo function and LCS call"
-
-  - id: text_contributes_unique_short_text
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Short text with unique info included when accessible name is longer than text"
-
-  - id: text_contributes_partial_overlap
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Text with partial name overlap but unique info is included in snapshot"
-
-  - id: preserved_exclusions
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Text fully covered by name is still excluded; empty text excluded; no-name text included"
-
-  # Repo CI/CD pass_to_pass tests - added during p2p enrichment
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint passes (npm run eslint)"
-
-  - id: test_repo_tsc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript compilation passes (npm run tsc)"
-
-  - id: test_repo_lint_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's test linting passes (npm run lint-tests)"
-
-  - id: test_repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's package consistency check passes (npm run lint-packages)"
-
-  - id: test_repo_check_deps
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's DEPS constraints check passes (npm run check-deps)"
-
-  - id: test_repo_test_types
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's type generation and checking passes (npm run test-types)"
-
+- id: function_exists
+  type: pass_to_pass
+  origin: static
+  description: Source file contains textContributesInfo function and LCS call
+- id: text_contributes_unique_short_text
+  type: fail_to_pass
+  origin: pr_diff
+  description: Short text with unique info included when accessible name is longer
+    than text
+- id: text_contributes_partial_overlap
+  type: fail_to_pass
+  origin: pr_diff
+  description: Text with partial name overlap but unique info is included in snapshot
+- id: preserved_exclusions
+  type: pass_to_pass
+  origin: pr_diff
+  description: Text fully covered by name is still excluded; empty text excluded;
+    no-name text included
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes (npm run eslint)
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript compilation passes (npm run tsc)
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test linting passes (npm run lint-tests)
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package consistency check passes (npm run lint-packages)
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's DEPS constraints check passes (npm run check-deps)
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type generation and checking passes (npm run test-types)
 rubric:
-  - rule: "Code changes should be minimal and focused on the bug fix. Remove the unnecessary length check condition (if node.name.length > text.length) from textContributesInfo function."
-    source:
-      path: "packages/injected/src/ariaSnapshot.ts"
-      lines: "735-738"
-      commit: "5a56d44a6f0d94b87e044f45f432522132da557c"
-    reference: |
-      diff --git a/packages/injected/src/ariaSnapshot.ts b/packages/injected/src/ariaSnapshot.ts
-      --- a/packages/injected/src/ariaSnapshot.ts
-      +++ b/packages/injected/src/ariaSnapshot.ts
-      @@ -735,9 +735,6 @@ function textContributesInfo(node: aria.AriaNode, text: string): boolean {
-         if (!node.name)
-           return true;
-
-      -  if (node.name.length > text.length)
-      -    return false;
-      -
-         // Figure out if text adds any value. "longestCommonSubstring" is expensive, so limit strings length.
-         const substr = (text.length <= 200 && node.name.length <= 200) ? longestCommonSubstring(text, node.name) : '';
-         let filtered = text;
+- rule: Code changes should be minimal and focused on the bug fix. Remove the unnecessary
+    length check condition (if node.name.length > text.length) from textContributesInfo
+    function.
+  source:
+    path: packages/injected/src/ariaSnapshot.ts
+    lines: 735-738
+    commit: 5a56d44a6f0d94b87e044f45f432522132da557c
+  reference: "diff --git a/packages/injected/src/ariaSnapshot.ts b/packages/injected/src/ariaSnapshot.ts\n\
+    --- a/packages/injected/src/ariaSnapshot.ts\n+++ b/packages/injected/src/ariaSnapshot.ts\n\
+    @@ -735,9 +735,6 @@ function textContributesInfo(node: aria.AriaNode, text: string):\
+    \ boolean {\n   if (!node.name)\n     return true;\n\n-  if (node.name.length\
+    \ > text.length)\n-    return false;\n-\n   // Figure out if text adds any value.\
+    \ \"longestCommonSubstring\" is expensive, so limit strings length.\n   const\
+    \ substr = (text.length <= 200 && node.name.length <= 200) ? longestCommonSubstring(text,\
+    \ node.name) : '';\n   let filtered = text;\n"
+- rule: The `injected` package contains scripts injected into browser pages.
+  source:
+    path: CLAUDE.md
+    lines: 18-25
+  evidence: The gold solution modifies `packages/injected/src/ariaSnapshot.ts` to
+    fix the ARIA snapshot generation, correctly identifying that this logic lives
+    in the injected scripts package rather than the Node
+  category: architecture
+distractors:
+- rule: Always run `flint` before committing. Do not use `tsc --noEmit` or individual
+    lint commands separately.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run `npm run flint` to verify its changes,
+    which runs a massive suite of linters and typechecks across the monorepo, wasting
+    significant time and potentially hitting unrelated errors in the evaluation environment.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 40-46
+- rule: 'Decision rule: Does the test need browser/browserType/context → tests/library/.
+    Just needs page + server → tests/page/.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write a new test in `tests/page/` to verify
+    the ARIA snapshot behavior. While good practice, the gold solution only requires
+    the code fix, and writing tests might lead to timeouts or test framework complexities
+    in the agent environment.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 63-72
+- rule: Assume watch is running and code is up to date. Generated files are produced
+    by watch automatically.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run `npm run build` to compile the injected
+    script after modifying it, but the instructions say to assume watch is running.
+    Running a full build takes a long time.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 34-38
+hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root. It provides
+  clear architectural boundaries (e.g., `injected` vs `playwright-core`) and testing
+  guidelines. The agent must rely on the architectural descriptions to locate the
+  ARIA snapshot logic in the `injected` package, but should avoid getting distracted
+  by the comprehensive testing and linting instructions (`flint`, `build`, test directories)
+  since the gold solution only requires a targeted code deletion.

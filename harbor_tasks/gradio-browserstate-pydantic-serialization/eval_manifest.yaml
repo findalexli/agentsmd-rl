@@ -1,91 +1,108 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12954
-  base_commit: "77e7871176e50a894190ac98aa9de8fbdbf3620f"
-  merge_commit: "a74d37949e1f12dd6646d16bfab3665ef3579a65"
-
+  base_commit: 77e7871176e50a894190ac98aa9de8fbdbf3620f
+  merge_commit: a74d37949e1f12dd6646d16bfab3665ef3579a65
 checks:
-  - id: ruff_formatting
-    type: pass_to_pass
-    origin: agent_config
-    description: "browser_state.py passes ruff linting (AGENTS.md: Python code is formatted with ruff)"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "77e7871176e50a894190ac98aa9de8fbdbf3620f"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on browser_state.py"
-
-  - id: repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ty type check passes on browser_state.py"
-
-  - id: ruff_format_gradio_components
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on gradio/components directory"
-
-  - id: semgrep_browser_state
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's semgrep security scan passes on browser_state.py"
-
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "browser_state.py must parse without syntax errors"
-
-  - id: postprocess_converts_model
-    type: fail_to_pass
-    origin: pr_diff
-    description: "postprocess() converts Pydantic BaseModel instances to dicts"
-
-  - id: default_value_converts_model
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BrowserState(default_value=<model>) stores the value as a dict"
-
-  - id: postprocess_nested_model
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Nested Pydantic models are recursively converted to dicts"
-
-  - id: plain_types_passthrough
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Plain JSON-serializable types pass through postprocess unchanged"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "BrowserState is instantiable and postprocess returns values correctly"
-
+- id: ruff_formatting
+  type: pass_to_pass
+  origin: agent_config
+  description: 'browser_state.py passes ruff linting (AGENTS.md: Python code is formatted
+    with ruff)'
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 77e7871176e50a894190ac98aa9de8fbdbf3620f
+- id: ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on browser_state.py
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ty type check passes on browser_state.py
+- id: ruff_format_gradio_components
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on gradio/components directory
+- id: semgrep_browser_state
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's semgrep security scan passes on browser_state.py
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: browser_state.py must parse without syntax errors
+- id: postprocess_converts_model
+  type: fail_to_pass
+  origin: pr_diff
+  description: postprocess() converts Pydantic BaseModel instances to dicts
+- id: default_value_converts_model
+  type: fail_to_pass
+  origin: pr_diff
+  description: BrowserState(default_value=<model>) stores the value as a dict
+- id: postprocess_nested_model
+  type: fail_to_pass
+  origin: pr_diff
+  description: Nested Pydantic models are recursively converted to dicts
+- id: plain_types_passthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: Plain JSON-serializable types pass through postprocess unchanged
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: BrowserState is instantiable and postprocess returns values correctly
 rubric:
-  - rule: "Be consistent with the style of the surrounding code. Match patterns used in neighboring files."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "77e7871176e50a894190ac98aa9de8fbdbf3620f"
-
-  - rule: "Add docstrings for new functions explaining what they do and why they exist."
-    source:
-      path: "AGENTS.md"
-      lines: "41-46"
-      commit: "77e7871176e50a894190ac98aa9de8fbdbf3620f"
-    reference: |
-      def _to_json_serializable(value: Any) -> Any:
-          """Convert a value to a JSON-serializable form.
-
-          Pydantic BaseModel instances are converted to dicts via model_dump(),
-          since they cannot be directly serialized by orjson and would otherwise
-          fall back to str() representation.
-          """
-          if isinstance(value, PydanticBaseModel):
-              return value.model_dump()
-          return value
+- rule: Be consistent with the style of the surrounding code. Match patterns used
+    in neighboring files.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 77e7871176e50a894190ac98aa9de8fbdbf3620f
+- rule: Add docstrings for new functions explaining what they do and why they exist.
+  source:
+    path: AGENTS.md
+    lines: 41-46
+    commit: 77e7871176e50a894190ac98aa9de8fbdbf3620f
+  reference: "def _to_json_serializable(value: Any) -> Any:\n    \"\"\"Convert a value\
+    \ to a JSON-serializable form.\n\n    Pydantic BaseModel instances are converted\
+    \ to dicts via model_dump(),\n    since they cannot be directly serialized by\
+    \ orjson and would otherwise\n    fall back to str() representation.\n    \"\"\
+    \"\n    if isinstance(value, PydanticBaseModel):\n        return value.model_dump()\n\
+    \    return value\n"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 41-45
+  evidence: 'The gold solution adds the `_to_json_serializable` helper function with
+    proper type hints (`value: Any -> Any`) and a descriptive docstring, matching
+    the established coding style of the `BrowserState`'
+  category: style
+distractors:
+- rule: Tests must pass. PRs are only merged when CI is green. Run backend tests locally
+    with `bash scripts/run_backend_tests.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write new tests in the `test/` directory
+    to verify the Pydantic serialization fix. However, the acceptance criteria and
+    gold solution only require fixing the component file itself, making test creation
+    an out-of-scope effort for this specific task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 28-28
+- rule: 'Format your code before pushing. Backend: `bash scripts/format_backend.sh`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `bash scripts/format_backend.sh` across the
+    entire backend. If there are pre-existing formatting issues in other files, this
+    could result in a noisy PR with out-of-scope changes, rather than just formatting
+    the modified `browser_state.py`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 24-26
+hierarchy_analysis: The repository has a single root-level `AGENTS.md` file providing
+  general guidelines. There are no conflicting child configurations, so the rules
+  apply uniformly. The primary challenge is interpreting the scope of general rules
+  (like testing and formatting) within the context of a highly specific bug fix.

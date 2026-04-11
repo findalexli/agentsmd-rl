@@ -1,87 +1,111 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44934
-  base_commit: "d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a"
-  merge_commit: "a8732d5546d84bfb4519b6dbf461c947a5de45f6"
-
+  base_commit: d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a
+  merge_commit: a8732d5546d84bfb4519b6dbf461c947a5de45f6
 checks:
-  - id: qwen2_test_file_parses
-    type: pass_to_pass
-    origin: static
-    description: "Qwen2 test file must parse without syntax errors"
-
-  - id: t5_test_file_parses
-    type: pass_to_pass
-    origin: static
-    description: "T5 test file must parse without syntax errors"
-
-  - id: repo_ruff_check_qwen2
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on qwen2 test file"
-
-  - id: repo_ruff_check_t5
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on t5 test file"
-
-  - id: repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on test files"
-
-  - id: repo_ruff_check_model_dirs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on qwen2 and t5 model test directories"
-
-  - id: qwen2_test_file_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Qwen2 test file must compile without errors"
-
-  - id: t5_test_file_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "T5 test file must compile without errors"
-
-  - id: qwen2_speculative_generation_uses_consistent_model
-    type: fail_to_pass
-    origin: pr_diff
-    description: "test_speculative_generation must use Qwen2-0.5B for tokenizer (not 7B)"
-
-  - id: qwen2_speculative_generation_uses_expectations
-    type: fail_to_pass
-    origin: pr_diff
-    description: "test_speculative_generation must use Expectations wrapper with platform-specific expectations"
-
-  - id: t5_compile_static_cache_uses_decode
-    type: fail_to_pass
-    origin: pr_diff
-    description: "test_compile_static_cache must use tokenizer.decode(), not batch_decode()"
-
-  - id: fixes_are_substantive
-    type: pass_to_pass
-    origin: static
-    description: "Fixes must include actual code changes (Expectations, decode calls)"
-
+- id: qwen2_test_file_parses
+  type: pass_to_pass
+  origin: static
+  description: Qwen2 test file must parse without syntax errors
+- id: t5_test_file_parses
+  type: pass_to_pass
+  origin: static
+  description: T5 test file must parse without syntax errors
+- id: repo_ruff_check_qwen2
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on qwen2 test file
+- id: repo_ruff_check_t5
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on t5 test file
+- id: repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on test files
+- id: repo_ruff_check_model_dirs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on qwen2 and t5 model test directories
+- id: qwen2_test_file_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Qwen2 test file must compile without errors
+- id: t5_test_file_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: T5 test file must compile without errors
+- id: qwen2_speculative_generation_uses_consistent_model
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_speculative_generation must use Qwen2-0.5B for tokenizer (not
+    7B)
+- id: qwen2_speculative_generation_uses_expectations
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_speculative_generation must use Expectations wrapper with platform-specific
+    expectations
+- id: t5_compile_static_cache_uses_decode
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_compile_static_cache must use tokenizer.decode(), not batch_decode()
+- id: fixes_are_substantive
+  type: pass_to_pass
+  origin: static
+  description: Fixes must include actual code changes (Expectations, decode calls)
 rubric:
-  - rule: "Run `make fixup` or `make style` before submitting changes. Code style is enforced in CI and PRs will fail checks if not properly formatted."
-    source:
-      path: "CLAUDE.md"
-      lines: "1-8"
-      commit: "d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a"
-
-  - rule: "Bugfix PRs should be as brief as possible - often only one or two lines long. Do not add large comments, docstrings or new functions for simple bugfixes. Minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a"
-
-  - rule: "When writing tests, add them to existing test files rather than creating new ones. Test files are located in tests/models/<model_name>/ directories."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "16"
-      commit: "d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a"
+- rule: Run `make fixup` or `make style` before submitting changes. Code style is
+    enforced in CI and PRs will fail checks if not properly formatted.
+  source:
+    path: CLAUDE.md
+    lines: 1-8
+    commit: d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a
+- rule: Bugfix PRs should be as brief as possible - often only one or two lines long.
+    Do not add large comments, docstrings or new functions for simple bugfixes. Minimize
+    the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a
+- rule: When writing tests, add them to existing test files rather than creating new
+    ones. Test files are located in tests/models/<model_name>/ directories.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '16'
+    commit: d4895f0810fd57bf5ee8cf65c3fe20d2f622cd0a
+- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
+    style checks'
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+  evidence: 'The gold solution appends `# fmt: skip` to the `Expectations` dictionary
+    to ensure it passes the `make style` ruff formatting checks without being mangled.'
+  category: style
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The agent is in an evaluation environment where it must output
+    the code fix. Following the 'Fail-closed behavior' and refusing to output a PR-ready
+    patch because there is no issue link or coordination evidence would cause the
+    agent to fail the benchmark.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 48-49
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misclassify fixing a few strings and method names
+    in tests as 'tiny edits' or 'low-value busywork' and refuse to generate the fix,
+    but fixing broken integration tests is high-value and required by the prompt.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 34-36
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  agent must recognize that the strict contribution policies (like fail-closed behavior
+  and coordination checks) are intended for real-world PR submission, but in this
+  isolated evaluation environment, it must bypass them to actually provide the requested
+  code fix.

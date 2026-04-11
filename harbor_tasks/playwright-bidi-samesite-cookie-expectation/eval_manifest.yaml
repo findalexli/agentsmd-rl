@@ -1,78 +1,114 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 40091
-  base_commit: "5435c64f6d14293b2ce0dcdbfaa237b015bfd63e"
-  merge_commit: "ab4f133c0690f0de47fc983867624fa3908d5544"
-
+  base_commit: 5435c64f6d14293b2ce0dcdbfaa237b015bfd63e
+  merge_commit: ab4f133c0690f0de47fc983867624fa3908d5544
 checks:
-  - id: spec_file_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript spec file is non-empty with balanced braces"
-
-  - id: isBidi_in_test_signature
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The SameSite set-cookie test must include isBidi in its fixture destructuring"
-
-  - id: bidi_cookie_rejection_condition
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cookie rejection condition for SameSite=None must OR-combine isBidi with chromium"
-
-  - id: bidi_expectation_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BiDi expectations file must not list this test as failing"
-
-  - id: condition_is_not_narrowed
-    type: pass_to_pass
-    origin: static
-    description: "Existing Chromium and webkit cookie conditions must remain intact"
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's build step completes successfully"
-
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint linting passes"
-
-  - id: test_repo_tsc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript type check passes"
-
-  - id: test_repo_check_deps
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's dependency check passes"
-
-  - id: test_repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's package linting passes"
-
-  - id: test_repo_test_types
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's test types check passes"
-
+- id: spec_file_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript spec file is non-empty with balanced braces
+- id: isBidi_in_test_signature
+  type: fail_to_pass
+  origin: pr_diff
+  description: The SameSite set-cookie test must include isBidi in its fixture destructuring
+- id: bidi_cookie_rejection_condition
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cookie rejection condition for SameSite=None must OR-combine isBidi
+    with chromium
+- id: bidi_expectation_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: BiDi expectations file must not list this test as failing
+- id: condition_is_not_narrowed
+  type: pass_to_pass
+  origin: static
+  description: Existing Chromium and webkit cookie conditions must remain intact
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build step completes successfully
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint linting passes
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript type check passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dependency check passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package linting passes
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test types check passes
 rubric:
-  - rule: "Code changes must pass the repository's lint checks (eslint, tsc, check-deps, lint-packages, test-types) without errors."
-    source:
-      path: "CLAUDE.md"
-      lines: "52-58, 108"
-      commit: "5435c64f6d14293b2ce0dcdbfaa237b015bfd63e"
-    reference: "isBidi parameter added to test signature; (browserName === 'chromium' || isBidi) && value === 'None' condition added"
-
-  - rule: "Tests using browser/context/browserType fixtures must be placed in tests/library/ (not tests/page/)."
-    source:
-      path: "CLAUDE.md"
-      lines: "83-88"
-      commit: "5435c64f6d14293b2ce0dcdbfaa237b015bfd63e"
-    reference: "browsercontext-fetch.spec.ts in tests/library/ modified; expectation removed from tests/bidi/expectations/"
+- rule: Code changes must pass the repository's lint checks (eslint, tsc, check-deps,
+    lint-packages, test-types) without errors.
+  source:
+    path: CLAUDE.md
+    lines: 52-58, 108
+    commit: 5435c64f6d14293b2ce0dcdbfaa237b015bfd63e
+  reference: isBidi parameter added to test signature; (browserName === 'chromium'
+    || isBidi) && value === 'None' condition added
+- rule: Tests using browser/context/browserType fixtures must be placed in tests/library/
+    (not tests/page/).
+  source:
+    path: CLAUDE.md
+    lines: 83-88
+    commit: 5435c64f6d14293b2ce0dcdbfaa237b015bfd63e
+  reference: browsercontext-fetch.spec.ts in tests/library/ modified; expectation
+    removed from tests/bidi/expectations/
+- rule: Place tests dealing with cookies and browser-specific features in `tests/library/`.
+  source:
+    path: CLAUDE.md
+    lines: 65-72
+  evidence: 'The modified test is located in `tests/library/browsercontext-fetch.spec.ts`
+    and tests `set-cookie` behavior across different browsers, which perfectly aligns
+    with the directive that `tests/library/` '
+  category: architecture
+distractors:
+- rule: 'Decision rule: Just needs `page` + `server` → `tests/page/`'
+  collision_type: scope_ambiguity
+  why_distracting: The decision rule states 'Just needs `page` + `server` → `tests/page/`'.
+    The modified test destructures `page` and `server` (along with other fixtures),
+    which might lead an agent to incorrectly move the test to `tests/page/` instead
+    of keeping it in `tests/library/` where cookie/browser-specific tests belong.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-74
+- rule: Use `npm run ctest <filter>` for Chromium only library tests during development.
+  collision_type: meta_confusion
+  why_distracting: The config recommends using `npm run ctest` during development
+    for library tests. However, `ctest` only runs Chromium tests. Since this issue
+    is specifically about Firefox/BiDi behavior, following this rule to test the fix
+    would fail to verify the BiDi behavior and could lead the agent to think the issue
+    is already resolved or un-reproducible.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 50-56
+- rule: Key fixtures for `tests/library/` are `browser`, `context`, `browserType`.
+  collision_type: rule_conflict
+  why_distracting: The table lists `browser`, `context`, `browserType` as the key
+    fixtures for `tests/library/`. An agent might try to refactor the test to use
+    these fixtures instead of the existing `page`, `server`, `browserName`, and `isBidi`
+    fixtures, unnecessarily expanding the scope of the PR and potentially breaking
+    the test's logic.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 65-72
+hierarchy_analysis: 'Only a single root `CLAUDE.md` file is provided, so there are
+  no cross-file hierarchy conflicts. However, there is internal tension within the
+  file regarding test placement: the strict fixture-based decision rule (page+server
+  -> tests/page) conflicts with the feature-based directory purpose (cookies -> tests/library).'

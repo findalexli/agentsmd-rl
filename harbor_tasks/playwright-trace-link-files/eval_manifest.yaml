@@ -1,80 +1,107 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39975
-  base_commit: "69924568b93f2f37609fa2a617baf83d6ff11838"
-  merge_commit: "6896c34880b7fac7423b03bb20a19178befab404"
-
+  base_commit: 69924568b93f2f37609fa2a617baf83d6ff11838
+  merge_commit: 6896c34880b7fac7423b03bb20a19178befab404
 checks:
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must compile without errors"
-
-  - id: repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint passes on modified files"
-
-  - id: repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Workspace packages are consistent"
-
-  - id: repo_generate_channels
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Protocol channel generation works"
-
-  - id: trace_loader_accepts_optional_tracefile
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TraceLoader.load() signature includes optional traceFile parameter"
-
-  - id: trace_loader_optional_unzipprogress
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TraceLoader.load() signature has optional unzipProgress callback"
-
-  - id: opentrace_creates_link_file_for_trace_files
-    type: fail_to_pass
-    origin: pr_diff
-    description: "openTrace() creates .link file when opening .trace files directly (not .zip)"
-
-  - id: loadtrace_reads_link_file
-    type: fail_to_pass
-    origin: pr_diff
-    description: "loadTrace() reads .link file and uses linked path when present"
-
-  - id: cli_program_catches_errors
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLI program catches errors from cliProgram() and exits properly via logErrorAndExit"
-
-  - id: traceutils_opentrace_exists
-    type: pass_to_pass
-    origin: static
-    description: "openTrace function exists in traceUtils.ts"
-
-  - id: traceutils_loadtrace_exists
-    type: pass_to_pass
-    origin: static
-    description: "loadTrace function exists in traceUtils.ts"
-
-  - id: traceloader_has_load_method
-    type: pass_to_pass
-    origin: static
-    description: "TraceLoader class has load method with correct signature"
-
-  - id: tracing_has_error_handling
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Tracing stop has error handling when traceLegend is not set"
-
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must compile without errors
+- id: repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified files
+- id: repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workspace packages are consistent
+- id: repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Protocol channel generation works
+- id: trace_loader_accepts_optional_tracefile
+  type: fail_to_pass
+  origin: pr_diff
+  description: TraceLoader.load() signature includes optional traceFile parameter
+- id: trace_loader_optional_unzipprogress
+  type: fail_to_pass
+  origin: pr_diff
+  description: TraceLoader.load() signature has optional unzipProgress callback
+- id: opentrace_creates_link_file_for_trace_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: openTrace() creates .link file when opening .trace files directly (not
+    .zip)
+- id: loadtrace_reads_link_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: loadTrace() reads .link file and uses linked path when present
+- id: cli_program_catches_errors
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI program catches errors from cliProgram() and exits properly via
+    logErrorAndExit
+- id: traceutils_opentrace_exists
+  type: pass_to_pass
+  origin: static
+  description: openTrace function exists in traceUtils.ts
+- id: traceutils_loadtrace_exists
+  type: pass_to_pass
+  origin: static
+  description: loadTrace function exists in traceUtils.ts
+- id: traceloader_has_load_method
+  type: pass_to_pass
+  origin: static
+  description: TraceLoader class has load method with correct signature
+- id: tracing_has_error_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tracing stop has error handling when traceLegend is not set
 rubric:
-  - rule: "TraceLoader.load() must accept optional traceFile parameter as second argument for filtering trace files"
-    reference: "async load(backend: TraceLoaderBackend, traceFile?: string, unzipProgress?: (done: number, total: number) => void)"
-
-  - rule: "CLI program.ts must catch errors from cliProgram() with .catch(logErrorAndExit) for proper error handling"
-    reference: "cliProgram().catch(logErrorAndExit)"
+- rule: TraceLoader.load() must accept optional traceFile parameter as second argument
+    for filtering trace files
+  reference: 'async load(backend: TraceLoaderBackend, traceFile?: string, unzipProgress?:
+    (done: number, total: number) => void)'
+- rule: CLI program.ts must catch errors from cliProgram() with .catch(logErrorAndExit)
+    for proper error handling
+  reference: cliProgram().catch(logErrorAndExit)
+- rule: The `playwright-core` package is responsible for the browser automation engine,
+    including client, server, dispatchers, and protocol.
+  source:
+    path: CLAUDE.md
+    lines: 3-8
+  evidence: The gold solution correctly modifies `packages/playwright-core/src/cli/program.ts`
+    and `packages/playwright-core/src/tools/trace/traceUtils.ts`, aligning with the
+    architecture that the core engine, se
+  category: architecture
+distractors:
+- rule: 'Tooling Packages: `trace-viewer` is the Trace viewer UI.'
+  collision_type: architecture_boundary
+  why_distracting: The issue is about opening `.trace` files via the Playwright trace
+    CLI. The rule states `trace-viewer` is the 'Trace viewer UI'. An agent might mistakenly
+    try to add the `.link` file creation or trace loading logic in the `trace-viewer`
+    package. However, the CLI and trace file extraction/loading utilities are actually
+    part of `playwright-core`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 16-20
+- rule: 'Decision rule: Does the test need browser/browserType/context -> tests/library/.
+    Just needs page + server -> tests/page/.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule provides a strict decision matrix for where to put tests
+    (`tests/page/` vs `tests/library/`). An agent might try to force CLI or trace
+    loader tests into one of these directories, even though they are meant for browser/page
+    user interactions and lifecycle, not CLI unit tests or trace file utilities.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 63-70
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
+  The guidance is heavily focused on testing, linting, and package architecture. The
+  primary challenge for an agent is correctly mapping the feature request (Trace CLI
+  and trace loading) to the correct package (`playwright-core` vs `trace-viewer`),
+  as the documentation broadly categorizes `trace-viewer` as the tooling package for
+  traces, but the backend loading logic resides in `playwright-core`.

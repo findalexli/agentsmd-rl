@@ -1,152 +1,158 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28361
-  base_commit: "0de7a806d108a56a2c9f87d5974c52384059c397"
-  merge_commit: "70a2a77763eb1ab2ca30ada85a116f3554bc124f"
-
+  base_commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+  merge_commit: 70a2a77763eb1ab2ca30ada85a116f3554bc124f
 checks:
-  - id: ffi_struct_integrity
-    type: pass_to_pass
-    origin: static
-    description: "ffi.zig has balanced braces and all core FFI identifiers present"
-
-  - id: value_guard_rejects_non_objects
-    type: fail_to_pass
-    origin: pr_diff
-    description: "generateSymbols condition rejects non-object symbol descriptor values"
-
-  - id: arg_types_cleanup_in_error_paths
-    type: fail_to_pass
-    origin: pr_diff
-    description: "arg_types freed in error-return paths before clearAndFree (memory leak fix)"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "generateSymbols retains substantive symbol-parsing logic"
-
-  - id: no_std_apis_in_diff
-    type: fail_to_pass
-    origin: agent_config
-    description: "No prohibited std.* APIs (std.fs, std.posix, std.os) in agent changes"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "16"
-      commit: "0de7a806d108a56a2c9f87d5974c52384059c397"
-
-  - id: no_inline_import_in_diff
-    type: fail_to_pass
-    origin: agent_config
-    description: "No inline @import() inside function bodies in agent changes"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "11"
-      commit: "0de7a806d108a56a2c9f87d5974c52384059c397"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — CI/CD checks discovered from repo
-  # ---------------------------------------------------------------------------
-
-  - id: test_js_files_valid_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Repo's JavaScript/TypeScript files have valid syntax"
-
-  - id: test_tsconfig_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's tsconfig.json is valid"
-
-  - id: test_ffi_zig_parse_structure
-    type: pass_to_pass
-    origin: static
-    description: "ffi.zig has valid Zig structure (balanced braces, valid keywords)"
-
-  - id: test_repo_file_structure
-    type: pass_to_pass
-    origin: static
-    description: "Critical repo files exist and are non-empty"
-
-  - id: test_zig_no_banned_patterns
-    type: pass_to_pass
-    origin: static
-    description: "Zig source doesn't contain banned patterns from CLAUDE.md"
-
-  - id: test_js_lint_oxlint
-    type: pass_to_pass
-    origin: static
-    description: "Repo's JavaScript/TypeScript passes oxlint (skipped due to config incompatibility)"
-
-  - id: test_repo_oxlint_config_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's oxlint.json is valid JSON"
-
-  - id: test_repo_prettier_config_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's .prettierrc is valid JSON"
-
-  - id: test_repo_package_json_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's package.json is valid"
-
-  - id: test_repo_claude_md_exists
-    type: pass_to_pass
-    origin: static
-    description: "Repo's CLAUDE.md exists and has expected content"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — Actual CI/CD commands using subprocess.run()
-  # ---------------------------------------------------------------------------
-
-  - id: test_repo_prettier_ffi_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "FFI test files pass prettier formatting check (npx prettier --check)"
-
-  - id: test_repo_prettier_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JavaScript/TypeScript scripts pass prettier check"
-
-  - id: test_repo_package_json_parseable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's package.json is valid JSON (verified via Node.js subprocess)"
-
-  - id: test_repo_tsconfig_json_parseable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's tsconfig.json is valid JSON (verified via Node.js subprocess)"
-
-  # New p2p tests added during enrichment
-  - id: test_oxlint_ffi_source
-    type: pass_to_pass
-    origin: repo_tests
-    description: "FFI TypeScript source passes oxlint (npx oxlint src/js/bun/ffi.ts)"
-
-  - id: test_oxlint_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo scripts pass oxlint (npx oxlint scripts/build.mjs)"
-
-  - id: test_prettier_config_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo config files pass prettier formatting (npx prettier --check .prettierrc tsconfig.json)"
-
-  - id: test_ffi_test_files_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "FFI test files have valid structure (verified via Node.js)"
-
+- id: ffi_struct_integrity
+  type: pass_to_pass
+  origin: static
+  description: ffi.zig has balanced braces and all core FFI identifiers present
+- id: value_guard_rejects_non_objects
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateSymbols condition rejects non-object symbol descriptor values
+- id: arg_types_cleanup_in_error_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: arg_types freed in error-return paths before clearAndFree (memory leak
+    fix)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: generateSymbols retains substantive symbol-parsing logic
+- id: no_std_apis_in_diff
+  type: fail_to_pass
+  origin: agent_config
+  description: No prohibited std.* APIs (std.fs, std.posix, std.os) in agent changes
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+- id: no_inline_import_in_diff
+  type: fail_to_pass
+  origin: agent_config
+  description: No inline @import() inside function bodies in agent changes
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+- id: test_js_files_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: Repo's JavaScript/TypeScript files have valid syntax
+- id: test_tsconfig_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's tsconfig.json is valid
+- id: test_ffi_zig_parse_structure
+  type: pass_to_pass
+  origin: static
+  description: ffi.zig has valid Zig structure (balanced braces, valid keywords)
+- id: test_repo_file_structure
+  type: pass_to_pass
+  origin: static
+  description: Critical repo files exist and are non-empty
+- id: test_zig_no_banned_patterns
+  type: pass_to_pass
+  origin: static
+  description: Zig source doesn't contain banned patterns from CLAUDE.md
+- id: test_js_lint_oxlint
+  type: pass_to_pass
+  origin: static
+  description: Repo's JavaScript/TypeScript passes oxlint (skipped due to config incompatibility)
+- id: test_repo_oxlint_config_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's oxlint.json is valid JSON
+- id: test_repo_prettier_config_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's .prettierrc is valid JSON
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's package.json is valid
+- id: test_repo_claude_md_exists
+  type: pass_to_pass
+  origin: static
+  description: Repo's CLAUDE.md exists and has expected content
+- id: test_repo_prettier_ffi_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: FFI test files pass prettier formatting check (npx prettier --check)
+- id: test_repo_prettier_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript/TypeScript scripts pass prettier check
+- id: test_repo_package_json_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package.json is valid JSON (verified via Node.js subprocess)
+- id: test_repo_tsconfig_json_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tsconfig.json is valid JSON (verified via Node.js subprocess)
+- id: test_oxlint_ffi_source
+  type: pass_to_pass
+  origin: repo_tests
+  description: FFI TypeScript source passes oxlint (npx oxlint src/js/bun/ffi.ts)
+- id: test_oxlint_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo scripts pass oxlint (npx oxlint scripts/build.mjs)
+- id: test_prettier_config_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo config files pass prettier formatting (npx prettier --check .prettierrc
+    tsconfig.json)
+- id: test_ffi_test_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: FFI test files have valid structure (verified via Node.js)
 rubric:
-  - rule: "In Zig code, be careful with allocators and use defer for cleanup where applicable."
-    source:
-      path: "AGENTS.md"
-      lines: "232"
-      commit: "0de7a806d108a56a2c9f87d5974c52384059c397"
+- rule: In Zig code, be careful with allocators and use defer for cleanup where applicable.
+  source:
+    path: AGENTS.md
+    lines: '232'
+    commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+- rule: Always use `bun.*` APIs instead of `std.*`
+  source:
+    path: src/CLAUDE.md
+    lines: 15-16
+  evidence: When deinitializing the `arg_types` array to fix the memory leak, the
+    gold solution uses `bun.default_allocator` (or the locally available `allocator`
+    alias) rather than introducing a `std` allocator.
+  category: style
+distractors:
+- rule: Use `bun.sys.open` for system calls instead of `std.posix.open`
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions fixing error-return paths in `open`, `print`,
+    and `linkSymbols`. These refer to the JavaScript FFI API methods implemented in
+    Zig (e.g., `Bun.FFI.open`), not system-level file operations. An agent might mistakenly
+    think it needs to refactor these functions to use `bun.sys.open` or apply system
+    call error handling patterns (`Maybe(T)`), which would be completely wrong for
+    JS API bindings.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 36-45
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output.
+  collision_type: meta_confusion
+  why_distracting: The issue explicitly describes a bug where the code 'causes a debug
+    assertion failure (crash)' and 'leading to a panic on non-object inputs'. An agent
+    might read this rule and either avoid writing a test altogether, or get confused
+    about how to test a fix for a panic. The correct approach is to test that a `TypeError`
+    is thrown, but the strong wording against testing for panics creates meta-level
+    confusion.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 65-66
+hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` focusing on testing/building,
+  and `src/CLAUDE.md` focusing on Zig conventions and system calls. The rules are
+  complementary and accumulate cleanly. The main conflicts arise from terminology
+  in the issue description ('open', 'panic') colliding with specific rules in the
+  config (`bun.sys.open`, 'never test for no panic').

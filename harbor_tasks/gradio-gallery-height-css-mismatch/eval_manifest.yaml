@@ -1,75 +1,83 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12927
-  base_commit: "611d40b529b6c97e41e09ae0a60804ad71a9bf58"
-  merge_commit: "ca84f3e36c6a3f3c3f0b57084b6f514d6cded1d4"
-
+  base_commit: 611d40b529b6c97e41e09ae0a60804ad71a9bf58
+  merge_commit: ca84f3e36c6a3f3c3f0b57084b6f514d6cded1d4
 checks:
-  - id: css_class_consistency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CSS selectors in <style> must match class names used in the template"
-
-  - id: string_height_preserved
-    type: fail_to_pass
-    origin: pr_diff
-    description: "style:height must preserve CSS string values like '300px' and '50vh'"
-
-  - id: height_forwarding_accepts_strings
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Index.svelte must forward string heights to Gallery component"
-
-  - id: height_type_accepts_string
-    type: fail_to_pass
-    origin: pr_diff
-    description: "GalleryProps.height type must accept CSS string values"
-
-  - id: upload_wrapper_height
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Upload wrapper area must have height styling so it doesn't collapse"
-
-  - id: numeric_height_still_works
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Numeric height (e.g. 300) must still produce '300px'"
-
-  - id: auto_height_returns_null
-    type: pass_to_pass
-    origin: pr_diff
-    description: "height='auto' must produce null (no inline style override)"
-
-  - id: hidden_upload_input_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "hidden-upload-input class must still exist for webcam mode"
-
-  - id: gallery_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Gallery.svelte must be a real Svelte component, not a stub"
-
-  - id: repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo code formatting check passes (pnpm format:check)"
-
-  - id: repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo unit tests pass (pnpm test:run)"
-
-  - id: repo_gallery_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Gallery component unit tests pass (pnpm vitest run Gallery.test.ts)"
-
+- id: css_class_consistency
+  type: fail_to_pass
+  origin: pr_diff
+  description: CSS selectors in <style> must match class names used in the template
+- id: string_height_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: style:height must preserve CSS string values like '300px' and '50vh'
+- id: height_forwarding_accepts_strings
+  type: fail_to_pass
+  origin: pr_diff
+  description: Index.svelte must forward string heights to Gallery component
+- id: height_type_accepts_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: GalleryProps.height type must accept CSS string values
+- id: upload_wrapper_height
+  type: fail_to_pass
+  origin: pr_diff
+  description: Upload wrapper area must have height styling so it doesn't collapse
+- id: numeric_height_still_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: Numeric height (e.g. 300) must still produce '300px'
+- id: auto_height_returns_null
+  type: pass_to_pass
+  origin: pr_diff
+  description: height='auto' must produce null (no inline style override)
+- id: hidden_upload_input_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: hidden-upload-input class must still exist for webcam mode
+- id: gallery_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Gallery.svelte must be a real Svelte component, not a stub
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting check passes (pnpm format:check)
+- id: repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests pass (pnpm test:run)
+- id: repo_gallery_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gallery component unit tests pass (pnpm vitest run Gallery.test.ts)
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "611d40b529b6c97e41e09ae0a60804ad71a9bf58"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 611d40b529b6c97e41e09ae0a60804ad71a9bf58
+distractors:
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The bug is purely in the frontend Svelte/TypeScript code (`js/gallery/`).
+    Running backend tests for a CSS and Svelte prop forwarding issue is a waste of
+    time and resources.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 26-27
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing the code, not managing GitHub issues.
+    Trying to create an issue via CLI or API would fail or waste time.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 16-17
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
+  It provides general repository structure and PR rules. The rules are mostly high-level
+  and apply to the entire repository.

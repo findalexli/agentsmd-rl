@@ -1,83 +1,106 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 39979
-  base_commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
-  merge_commit: "9c069597ff7c822052832c0e46eda76f37f9c1ef"
-
+  base_commit: cec7b21afa00c0f48e46859c683680a2c6e9e029
+  merge_commit: 9c069597ff7c822052832c0e46eda76f37f9c1ef
 checks:
-  - id: expressions_with_arrow_not_wrapped
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Expressions containing '=>' should not be incorrectly wrapped as functions"
-
-  - id: proper_function_detection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Fix uses proper function detection with typeof === 'function' instead of includes('=>')"
-
-  - id: nullish_coalescing_for_undefined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Uses nullish coalescing operator (??) for undefined result handling"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified function has real logic, not just pass/return"
-
-  - id: test_repo_tsc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript compilation passes"
-
-  - id: test_repo_check_deps
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's dependency check passes"
-
-  - id: test_repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's package consistency check passes"
-
-  - id: test_repo_lint_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's test linting passes"
-
-  - id: test_repo_test_types
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's type tests pass"
-
-  - id: test_repo_eslint_backend
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's eslint check passes on modified backend directory"
-
+- id: expressions_with_arrow_not_wrapped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Expressions containing '=>' should not be incorrectly wrapped as functions
+- id: proper_function_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix uses proper function detection with typeof === 'function' instead
+    of includes('=>')
+- id: nullish_coalescing_for_undefined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Uses nullish coalescing operator (??) for undefined result handling
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified function has real logic, not just pass/return
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript compilation passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dependency check passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package consistency check passes
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test linting passes
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type tests pass
+- id: test_repo_eslint_backend
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's eslint check passes on modified backend directory
 rubric:
-  - rule: "Run npm run flint before committing to ensure all lint checks pass (eslint, tsc, doclint, etc.)"
-    source:
-      path: "CLAUDE.md"
-      lines: "37-39"
-      commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
-
-  - rule: "Use MCP tests (ctest-mcp) when modifying MCP tools in packages/playwright-core/src/tools/backend/"
-    source:
-      path: "CLAUDE.md"
-      lines: "52,57"
-      commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
-
-  - rule: "Follow DEPS system boundaries - client code never imports server code, server code never imports client code"
-    source:
-      path: "CLAUDE.md"
-      lines: "63-65"
-      commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
-
-  - rule: "Comments should improve readability and explain purpose, not narrate what code does. Code should be self-explanatory when possible."
-    source:
-      path: "CONTRIBUTING.md"
-      lines: "43"
-      commit: "cec7b21afa00c0f48e46859c683680a2c6e9e029"
+- rule: Run npm run flint before committing to ensure all lint checks pass (eslint,
+    tsc, doclint, etc.)
+  source:
+    path: CLAUDE.md
+    lines: 37-39
+    commit: cec7b21afa00c0f48e46859c683680a2c6e9e029
+- rule: Use MCP tests (ctest-mcp) when modifying MCP tools in packages/playwright-core/src/tools/backend/
+  source:
+    path: CLAUDE.md
+    lines: 52,57
+    commit: cec7b21afa00c0f48e46859c683680a2c6e9e029
+- rule: Follow DEPS system boundaries - client code never imports server code, server
+    code never imports client code
+  source:
+    path: CLAUDE.md
+    lines: 63-65
+    commit: cec7b21afa00c0f48e46859c683680a2c6e9e029
+- rule: Comments should improve readability and explain purpose, not narrate what
+    code does. Code should be self-explanatory when possible.
+  source:
+    path: CONTRIBUTING.md
+    lines: '43'
+    commit: cec7b21afa00c0f48e46859c683680a2c6e9e029
+- rule: Import boundaries are enforced via DEPS.list files
+  source:
+    path: CLAUDE.md
+    lines: 73-75
+  evidence: The gold solution implements the function detection logic (`eval` and
+    `typeof`) entirely inline within the `evaluate.ts` file without importing external
+    utilities, respecting the strict import boundar
+  category: architecture
+distractors:
+- rule: npm run ctest <filter> | Chromium only library tests — use during development
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run `npm run ctest` to test the evaluate
+    tool since it's a core feature, but MCP tools have their own specific test command
+    `npm run ctest-mcp`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 46-48
+- rule: 'Decision rule: Does the test need browser/browserType/context -> tests/library/.
+    Just needs page + server -> tests/page/.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might think the evaluate tool tests belong in `tests/page/`
+    because the tool uses `page.evaluate` internally, but MCP tools have their own
+    dedicated directory `tests/mcp/`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 71-71
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
+  The main challenge for an agent is navigating the specific test commands and directories
+  for different subsystems (e.g., MCP tools vs. core library tests). The agent must
+  correctly identify that the `browser_evaluate` tool falls under the MCP subsystem
+  and use the corresponding `ctest-mcp` command and `tests/mcp/` directory, ignoring
+  the general library test guidelines.

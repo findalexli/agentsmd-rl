@@ -1,106 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35827
-  base_commit: "ab18f33d46171ed1963ae1ac955c5110bb1eb199"
-  merge_commit: "8b6b11f703a1f92dd2bb2e0e3b93a1836dc06de6"
-
+  base_commit: ab18f33d46171ed1963ae1ac955c5110bb1eb199
+  merge_commit: 8b6b11f703a1f92dd2bb2e0e3b93a1836dc06de6
 checks:
-  # -------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — these should FAIL before the patch, PASS after
-  # -------------------------------------------------------------------------
-  - id: compileprogram_returns_void
-    type: fail_to_pass
-    origin: pr_diff
-    description: "compileProgram returns void and CompileProgramMetadata type removed (TS AST)"
-
-  - id: retryerrors_removed_from_class
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ProgramContext class retryErrors property removed (TS AST)"
-
-  - id: schema_rejects_client_no_memo
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CompilerOutputModeSchema z.enum no longer includes 'client-no-memo' (TS AST)"
-
-  - id: validate_file_deleted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ValidateNoUntransformedReferences.ts deleted (unused validation pass)"
-
-  - id: validate_not_imported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BabelPlugin.ts no longer imports or calls validateNoUntransformedReferences"
-
-  - id: babel_fn_import_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BabelFn import removed from Imports.ts (was only used by retryErrors type)"
-
-  - id: client_no_memo_removed_environment
-    type: fail_to_pass
-    origin: pr_diff
-    description: "'client-no-memo' case removed from switch statements in Environment.ts"
-
-  - id: compile_result_not_captured
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BabelPlugin.ts no longer captures compileProgram return value"
-
-  # -------------------------------------------------------------------------
-  # Pass-to-pass (static) — these should ALWAYS pass (anti-stub/file integrity)
-  # -------------------------------------------------------------------------
-  - id: core_files_intact
-    type: pass_to_pass
-    origin: static
-    description: "Key source files still exist with essential content (anti-stub)"
-
-  # -------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — repository's own CI/CD checks
-  # -------------------------------------------------------------------------
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes (npx tsc --noEmit)"
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's build passes (yarn build using tsup)"
-
-  - id: test_repo_jest_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Jest unit tests pass (npx jest --config scripts/jest/main.config.js)"
-
-  - id: test_repo_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier formatting check passes (npx prettier --check src/**/*.ts)"
-
-  - id: test_repo_dist_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Build produces dist/index.js output file"
-
+- id: compileprogram_returns_void
+  type: fail_to_pass
+  origin: pr_diff
+  description: compileProgram returns void and CompileProgramMetadata type removed
+    (TS AST)
+- id: retryerrors_removed_from_class
+  type: fail_to_pass
+  origin: pr_diff
+  description: ProgramContext class retryErrors property removed (TS AST)
+- id: schema_rejects_client_no_memo
+  type: fail_to_pass
+  origin: pr_diff
+  description: CompilerOutputModeSchema z.enum no longer includes 'client-no-memo'
+    (TS AST)
+- id: validate_file_deleted
+  type: fail_to_pass
+  origin: pr_diff
+  description: ValidateNoUntransformedReferences.ts deleted (unused validation pass)
+- id: validate_not_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: BabelPlugin.ts no longer imports or calls validateNoUntransformedReferences
+- id: babel_fn_import_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: BabelFn import removed from Imports.ts (was only used by retryErrors
+    type)
+- id: client_no_memo_removed_environment
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''client-no-memo'' case removed from switch statements in Environment.ts'
+- id: compile_result_not_captured
+  type: fail_to_pass
+  origin: pr_diff
+  description: BabelPlugin.ts no longer captures compileProgram return value
+- id: core_files_intact
+  type: pass_to_pass
+  origin: static
+  description: Key source files still exist with essential content (anti-stub)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (npx tsc --noEmit)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build passes (yarn build using tsup)
+- id: test_repo_jest_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Jest unit tests pass (npx jest --config scripts/jest/main.config.js)
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier formatting check passes (npx prettier --check src/**/*.ts)
+- id: test_repo_dist_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build produces dist/index.js output file
 rubric:
-  - rule: "When modifying the compiler, read the documentation about that pass in compiler/packages/babel-plugin-react-compiler/docs/passes/ to understand its role"
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "6-7"
-      commit: "ab18f33d46171ed1963ae1ac955c5110bb1eb199"
-
-  - rule: "Use CompilerError.throwTodo() for unsupported but known patterns (graceful bailout), and CompilerError.invariant() for truly unexpected/invalid states (hard failure)"
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "233-248"
-      commit: "ab18f33d46171ed1963ae1ac955c5110bb1eb199"
-
-  - rule: "Remove dead code completely - including type definitions, imports, class properties, and switch cases that reference the removed functionality"
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "51-62"
-      commit: "ab18f33d46171ed1963ae1ac955c5110bb1eb199"
+- rule: When modifying the compiler, read the documentation about that pass in compiler/packages/babel-plugin-react-compiler/docs/passes/
+    to understand its role
+  source:
+    path: compiler/CLAUDE.md
+    lines: 6-7
+    commit: ab18f33d46171ed1963ae1ac955c5110bb1eb199
+- rule: Use CompilerError.throwTodo() for unsupported but known patterns (graceful
+    bailout), and CompilerError.invariant() for truly unexpected/invalid states (hard
+    failure)
+  source:
+    path: compiler/CLAUDE.md
+    lines: 233-248
+    commit: ab18f33d46171ed1963ae1ac955c5110bb1eb199
+- rule: Remove dead code completely - including type definitions, imports, class properties,
+    and switch cases that reference the removed functionality
+  source:
+    path: compiler/CLAUDE.md
+    lines: 51-62
+    commit: ab18f33d46171ed1963ae1ac955c5110bb1eb199
+- rule: React Compiler code is located in the `/compiler/` directory and has its own
+    instructions.
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+  evidence: All modified files are correctly located within the `compiler/` directory,
+    specifically targeting the `compiler/packages/babel-plugin-react-compiler/` package.
+  category: architecture
+distractors:
+- rule: This repository uses Sapling (`sl`) for version control. Use `sl status`,
+    `sl addremove`, and `sl commit`.
+  collision_type: meta_confusion
+  why_distracting: The config instructs the use of Sapling (`sl`) for version control,
+    but standard agent evaluation environments typically use `git` (as seen in the
+    gold solution's `git apply`). An agent trying to use `sl` commands to commit or
+    check status will encounter command-not-found errors.
+  severity: high
+  source:
+    path: compiler/CLAUDE.md
+    lines: 44-57
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent is tasked with removing an unused pass (`ValidateNoUntransformedReferences`).
+    Strictly following the rule to read the documentation for a pass that is being
+    entirely deleted is a waste of time and context window.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 5-5
+- rule: Use `yarn snap minimize` to automatically reduce a failing test case to its
+    minimal reproduction.
+  collision_type: scope_ambiguity
+  why_distracting: The issue is about cleaning up dead code and unused abstractions,
+    not fixing a compiler error or a failing test case. Attempting to use the minimize
+    tool is irrelevant to the task and would waste execution time.
+  severity: low
+  source:
+    path: compiler/CLAUDE.md
+    lines: 35-42
+hierarchy_analysis: The root `CLAUDE.md` correctly directs the agent to the `/compiler/`
+  directory and its specific instructions. The `compiler/CLAUDE.md` provides detailed
+  workflows, but introduces tooling conflicts (Sapling vs Git) that the agent must
+  navigate carefully in a standard evaluation environment.

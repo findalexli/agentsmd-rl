@@ -139,6 +139,31 @@ config_edits:
     \ under the `./plugins` directory.\n(c) 2007-2024 Broadcom. The term \"Broadcom\"\
     \ refers to Broadcom Inc. and/or its subsidiaries. All rights reserved.\nReleased\
     \ under the MPL, the same license as RabbitMQ."
-hierarchy_analysis: The provided configuration files (`CLAUDE.md` and `AGENTS.md`)
-  are identical and primarily contain repository structure documentation and general
-  build instructions. There is no hierarchical conflict between them.
+hierarchy_analysis: The config files `CLAUDE.md` and `AGENTS.md` are identical and
+  provide repository structure overviews rather than strict coding conventions. The
+  primary challenge is architectural boundaries, as the config points to centralized
+  locations for CLI tools and documentation, while this specific PR requires localized
+  changes within the `rabbitmq_trust_store` plugin.
+distractors:
+- rule: '`deps/rabbitmq_cli`: standard CLI tools (`rabbitmqctl`, `rabbitmq-plugins`,
+    `rabbitmq-diagnostics`, etc.)'
+  collision_type: architecture_boundary
+  why_distracting: The config states that standard CLI tools like `rabbitmqctl` live
+    in `deps/rabbitmq_cli`. An agent might try to add the new `list_trust_store_certificates`
+    command to `deps/rabbitmq_cli` instead of the plugin's own directory (`deps/rabbitmq_trust_store/src/`),
+    which violates the plugin architecture where plugin-specific commands live in
+    the plugin.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 46-46
+- rule: the website repository is `rabbitmq/rabbitmq-website`
+  collision_type: scope_ambiguity
+  why_distracting: The config mentions that the website repository is `rabbitmq/rabbitmq-website`.
+    An agent might try to modify the website repository to update the documentation
+    for the new CLI commands, instead of just updating the plugin's `README.md` as
+    requested.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 14-15

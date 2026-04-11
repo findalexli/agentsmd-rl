@@ -1,164 +1,179 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19455
-  base_commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-  merge_commit: "4b9660b211aa57477b6baa1848e582d3279f4db7"
-
+  base_commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+  merge_commit: 4b9660b211aa57477b6baa1848e582d3279f4db7
 checks:
-  # Gate
-  - id: router_exports_middleware
-    type: pass_to_pass
-    origin: static
-    description: "router.ts must exist and export WorkspaceRouterMiddleware as a function"
-
-  # Fail-to-pass — core behavioral
-  - id: instance_provide_in_router
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Router calls Instance.provide with InstanceBootstrap for directory-based routing"
-
-  - id: instance_provide_removed_from_instance_ts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Instance.provide middleware removed from instance.ts (moved to router)"
-
-  - id: workspace_routing_branches
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Router handles no-workspace, worktree, and remote workspace cases"
-
-  - id: old_middleware_deleted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "workspace-router-middleware.ts deleted (consolidated into router.ts)"
-
-  - id: server_imports_from_router
-    type: fail_to_pass
-    origin: pr_diff
-    description: "server.ts imports WorkspaceRouterMiddleware from ./router, not control-plane"
-
-  - id: directory_resolution_in_router
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Router resolves directory from query param and x-opencode-directory header"
-
-  # Pass-to-pass — regression
-  - id: instance_routes_importable
-    type: pass_to_pass
-    origin: pr_diff
-    description: "InstanceRoutes still exported from instance.ts"
-
-  - id: worktree_adaptor_importable
-    type: pass_to_pass
-    origin: pr_diff
-    description: "WorktreeAdaptor still exported with a fetch method"
-
-  - id: router_delegates_to_instance_routes
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Router imports and delegates to InstanceRoutes via routes().fetch()"
-
-  # Repo CI/CD tests — ensure repo's own tests pass on base and after fix
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's bun turbo typecheck passes"
-
-  - id: test_repo_build_opencode
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Opencode package builds successfully"
-
-  # Additional repo CI/CD tests for modified modules
-  - id: test_repo_worktree_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Worktree tests pass — covers worktree routing logic"
-
-  - id: test_repo_server_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Server tests pass — covers server routing and session handling"
-
-  - id: test_repo_control_plane_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Control-plane tests pass — covers workspace adaptors and SSE"
-
-  - id: test_repo_project_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Project tests pass — covers Instance.provide and bootstrap"
-
-  # Config-derived — AGENTS.md rules
-  - id: no_any_type_in_router
-    type: fail_to_pass
-    origin: agent_config
-    description: "Router must not use the `any` type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
-  - id: const_over_let_in_router
-    type: fail_to_pass
-    origin: agent_config
-    description: "Router must prefer const over let"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
-  - id: no_else_in_router
-    type: fail_to_pass
-    origin: agent_config
-    description: "Router must not use else statements; prefer early returns"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
+- id: router_exports_middleware
+  type: pass_to_pass
+  origin: static
+  description: router.ts must exist and export WorkspaceRouterMiddleware as a function
+- id: instance_provide_in_router
+  type: fail_to_pass
+  origin: pr_diff
+  description: Router calls Instance.provide with InstanceBootstrap for directory-based
+    routing
+- id: instance_provide_removed_from_instance_ts
+  type: fail_to_pass
+  origin: pr_diff
+  description: Instance.provide middleware removed from instance.ts (moved to router)
+- id: workspace_routing_branches
+  type: fail_to_pass
+  origin: pr_diff
+  description: Router handles no-workspace, worktree, and remote workspace cases
+- id: old_middleware_deleted
+  type: fail_to_pass
+  origin: pr_diff
+  description: workspace-router-middleware.ts deleted (consolidated into router.ts)
+- id: server_imports_from_router
+  type: fail_to_pass
+  origin: pr_diff
+  description: server.ts imports WorkspaceRouterMiddleware from ./router, not control-plane
+- id: directory_resolution_in_router
+  type: fail_to_pass
+  origin: pr_diff
+  description: Router resolves directory from query param and x-opencode-directory
+    header
+- id: instance_routes_importable
+  type: pass_to_pass
+  origin: pr_diff
+  description: InstanceRoutes still exported from instance.ts
+- id: worktree_adaptor_importable
+  type: pass_to_pass
+  origin: pr_diff
+  description: WorktreeAdaptor still exported with a fetch method
+- id: router_delegates_to_instance_routes
+  type: pass_to_pass
+  origin: pr_diff
+  description: Router imports and delegates to InstanceRoutes via routes().fetch()
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun turbo typecheck passes
+- id: test_repo_build_opencode
+  type: pass_to_pass
+  origin: repo_tests
+  description: Opencode package builds successfully
+- id: test_repo_worktree_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Worktree tests pass — covers worktree routing logic
+- id: test_repo_server_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server tests pass — covers server routing and session handling
+- id: test_repo_control_plane_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Control-plane tests pass — covers workspace adaptors and SSE
+- id: test_repo_project_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Project tests pass — covers Instance.provide and bootstrap
+- id: no_any_type_in_router
+  type: fail_to_pass
+  origin: agent_config
+  description: Router must not use the `any` type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- id: const_over_let_in_router
+  type: fail_to_pass
+  origin: agent_config
+  description: Router must prefer const over let
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- id: no_else_in_router
+  type: fail_to_pass
+  origin: agent_config
+  description: Router must not use else statements; prefer early returns
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
 rubric:
-  - rule: "Avoid `try`/`catch` where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
-  - rule: "Keep things in one function unless composable or reusable"
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
-  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
-    source:
-      path: "AGENTS.md"
-      lines: "21"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
-  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "e5f0e813b6e2f9305fc27d432689f95a56beea51"
+- rule: Avoid `try`/`catch` where possible
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- rule: Reduce total variable count by inlining when a value is only used once
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: e5f0e813b6e2f9305fc27d432689f95a56beea51
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 22-22
+  evidence: The gold solution uses `_info`, `_input`, and `_init` as parameter names
+    in the `fetch` method of `worktree.ts`.
+  category: naming
+distractors:
+- rule: Prefer `HttpClient.HttpClient` instead of raw `fetch`.
+  collision_type: scope_ambiguity
+  why_distracting: The `fetch` method in `worktree.ts` is an implementation of the
+    `Adaptor` interface (which mimics the Web Fetch API signature), not an actual
+    HTTP client call. An agent might try to replace this method signature or its internal
+    logic with `HttpClient`, breaking the interface.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 38-38
+- rule: Use `InstanceState` (from `src/effect/instance-state.ts`) for per-directory
+    or per-project state that needs per-instance cleanup.
+  collision_type: meta_confusion
+  why_distracting: The PR is about consolidating `Instance.provide` (which uses AsyncLocalStorage
+    for Hono request lifecycle) and directory resolution. An agent might confuse this
+    with Effect's `InstanceState` and try to rewrite the directory resolution using
+    Effect, which is incorrect for the Hono middleware layer.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 22-24
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: architecture_boundary
+  why_distracting: The router and middleware are standard async functions in Hono.
+    An agent might try to effectify the new router module, which is unnecessary and
+    out of scope for this specific refactor.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 11-11
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript/Node.js guidelines
+  (naming, architecture), while `packages/opencode/AGENTS.md` introduces highly specific
+  Effect-ts patterns. For this PR, which deals with Hono middleware and standard async
+  functions, the Effect rules in the child config act as strong distractors because
+  the agent might assume all new or refactored code in `packages/opencode` must be
+  migrated to Effect.

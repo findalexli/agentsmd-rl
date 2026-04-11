@@ -1,109 +1,98 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/vscode"
+  repo: microsoft/vscode
   pr: 306341
-  base_commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
-  merge_commit: "e231798dee0a12ef1fec677d6453d14c18048de6"
-
+  base_commit: d4b002af75f1878ead5b608beed470b9ae25b6f8
+  merge_commit: e231798dee0a12ef1fec677d6453d14c18048de6
 checks:
-  - id: typescript_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified file has no obvious syntax errors (balanced braces, class present)"
-
-  - id: notification_method_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "showThemeAutoUpdatedNotification method is removed from workbenchThemeService.ts"
-
-  - id: notification_key_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "THEME_AUTO_UPDATED_NOTIFICATION_KEY constant is removed from workbenchThemeService.ts"
-
-  - id: notification_call_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Call to this.showThemeAutoUpdatedNotification() is removed from initialize()"
-
-  - id: revert_notification_string_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The 'newDefaultThemeAutoUpdated' localization key is removed"
-
-  - id: new_default_notification_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "showNewDefaultThemeNotification method is not accidentally removed"
-
-  - id: new_theme_notification_key_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "NEW_THEME_NOTIFICATION_KEY constant is not accidentally removed"
-
-  - id: initialize_method_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "initialize() still calls showNewDefaultThemeNotification but not showThemeAutoUpdatedNotification"
-
-  - id: copyright_header
-    type: pass_to_pass
-    origin: agent_config
-    description: "All files must include Microsoft copyright header"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "130"
-      commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
-
-  - id: tabs_indentation
-    type: pass_to_pass
-    origin: agent_config
-    description: "Use tabs, not spaces for indentation"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "72"
-      commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
-
-  - id: no_duplicate_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "Never duplicate imports; always reuse existing imports"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "138"
-      commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
-
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified file has no obvious syntax errors (balanced braces, class
+    present)
+- id: notification_method_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: showThemeAutoUpdatedNotification method is removed from workbenchThemeService.ts
+- id: notification_key_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: THEME_AUTO_UPDATED_NOTIFICATION_KEY constant is removed from workbenchThemeService.ts
+- id: notification_call_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Call to this.showThemeAutoUpdatedNotification() is removed from initialize()
+- id: revert_notification_string_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The 'newDefaultThemeAutoUpdated' localization key is removed
+- id: new_default_notification_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: showNewDefaultThemeNotification method is not accidentally removed
+- id: new_theme_notification_key_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: NEW_THEME_NOTIFICATION_KEY constant is not accidentally removed
+- id: initialize_method_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: initialize() still calls showNewDefaultThemeNotification but not showThemeAutoUpdatedNotification
+- id: copyright_header
+  type: pass_to_pass
+  origin: agent_config
+  description: All files must include Microsoft copyright header
+  source:
+    path: .github/copilot-instructions.md
+    lines: '130'
+    commit: d4b002af75f1878ead5b608beed470b9ae25b6f8
+- id: tabs_indentation
+  type: pass_to_pass
+  origin: agent_config
+  description: Use tabs, not spaces for indentation
+  source:
+    path: .github/copilot-instructions.md
+    lines: '72'
+    commit: d4b002af75f1878ead5b608beed470b9ae25b6f8
+- id: no_duplicate_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Never duplicate imports; always reuse existing imports
+  source:
+    path: .github/copilot-instructions.md
+    lines: '138'
+    commit: d4b002af75f1878ead5b608beed470b9ae25b6f8
 rubric:
-  - rule: "Prefer `async` and `await` over `Promise` and `then` calls."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "131"
-      commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
-
-  - rule: "When removing an import, do not leave behind blank lines where the import was. Ensure the surrounding code remains compact."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "139"
-      commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
-
-  - rule: "Do not use `any` or `unknown` as the type for variables, parameters, or return values unless absolutely necessary."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "140"
-      commit: "d4b002af75f1878ead5b608beed470b9ae25b6f8"
-
-  - id: repo_eslint_theme_file
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's eslint passes on the modified theme service file"
-
-  - id: repo_stylelint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's stylelint passes on all CSS files"
-
-  - id: repo_eslint_themes_dir
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's eslint passes on the themes directory"
+- rule: Prefer `async` and `await` over `Promise` and `then` calls.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '131'
+    commit: d4b002af75f1878ead5b608beed470b9ae25b6f8
+- rule: When removing an import, do not leave behind blank lines where the import
+    was. Ensure the surrounding code remains compact.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '139'
+    commit: d4b002af75f1878ead5b608beed470b9ae25b6f8
+- rule: Do not use `any` or `unknown` as the type for variables, parameters, or return
+    values unless absolutely necessary.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '140'
+    commit: d4b002af75f1878ead5b608beed470b9ae25b6f8
+- id: repo_eslint_theme_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's eslint passes on the modified theme service file
+- id: repo_stylelint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's stylelint passes on all CSS files
+- id: repo_eslint_themes_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's eslint passes on the themes directory
+hierarchy_analysis: The provided config file hierarchy only contains a single file
+  (`AGENTS.md`) which serves as a pointer to `.github/copilot-instructions.md` and
+  does not contain any explicit coding rules or guidelines. Therefore, no positive
+  or negative rubrics can be extracted.

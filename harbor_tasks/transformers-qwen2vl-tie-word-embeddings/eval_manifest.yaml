@@ -1,82 +1,112 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44976
-  base_commit: "28e1cc59ecf479ea674f2cc4b443a2969aae3a69"
-  merge_commit: "28af8184fb00a0e9bc778c3defdec39bbe7e8839"
-
+  base_commit: 28e1cc59ecf479ea674f2cc4b443a2969aae3a69
+  merge_commit: 28af8184fb00a0e9bc778c3defdec39bbe7e8839
 checks:
-  - id: repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on modified files"
-
-  - id: repo_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified files"
-
-  - id: repo_copies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's copied code consistency check passes"
-
-  - id: repo_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's init file consistency check passes"
-
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified config/modeling files must parse without errors"
-
-  - id: qwen2vl_text_no_own_tie_field
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Qwen2VLTextConfig must not define tie_word_embeddings as its own dataclass field"
-
-  - id: qwen2_5_vl_text_no_own_tie_field
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Qwen2_5_VLTextConfig must not define tie_word_embeddings as its own dataclass field"
-
-  - id: modernvbert_init_type_hint
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ModernVBertForMaskedLM.__init__ config param has type annotation"
-
-  - id: modular_init_type_hint
-    type: fail_to_pass
-    origin: pr_diff
-    description: "modular_modernvbert.py ModernVBertForMaskedLM.__init__ config param has type annotation"
-
-  - id: downstream_no_tie_propagation_hack
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColQwen2Config and ColModernVBertConfig must not contain tie_word_embeddings propagation hack"
-
-  - id: text_configs_instantiate
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Text sub-configs instantiate with expected vocab_size and model_type"
-
-  - id: config_roundtrip
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Config instantiation and to_dict serialization works for text and composite configs"
-
-  - id: downstream_configs_structure
-    type: pass_to_pass
-    origin: static
-    description: "ColQwen2Config and ColModernVBertConfig retain class structure after hack removal"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified config files are not trivially emptied or stubbed"
-
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+- id: repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files
+- id: repo_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's copied code consistency check passes
+- id: repo_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's init file consistency check passes
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified config/modeling files must parse without errors
+- id: qwen2vl_text_no_own_tie_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: Qwen2VLTextConfig must not define tie_word_embeddings as its own dataclass
+    field
+- id: qwen2_5_vl_text_no_own_tie_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: Qwen2_5_VLTextConfig must not define tie_word_embeddings as its own
+    dataclass field
+- id: modernvbert_init_type_hint
+  type: fail_to_pass
+  origin: pr_diff
+  description: ModernVBertForMaskedLM.__init__ config param has type annotation
+- id: modular_init_type_hint
+  type: fail_to_pass
+  origin: pr_diff
+  description: modular_modernvbert.py ModernVBertForMaskedLM.__init__ config param
+    has type annotation
+- id: downstream_no_tie_propagation_hack
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColQwen2Config and ColModernVBertConfig must not contain tie_word_embeddings
+    propagation hack
+- id: text_configs_instantiate
+  type: pass_to_pass
+  origin: pr_diff
+  description: Text sub-configs instantiate with expected vocab_size and model_type
+- id: config_roundtrip
+  type: pass_to_pass
+  origin: pr_diff
+  description: Config instantiation and to_dict serialization works for text and composite
+    configs
+- id: downstream_configs_structure
+  type: pass_to_pass
+  origin: static
+  description: ColQwen2Config and ColModernVBertConfig retain class structure after
+    hack removal
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified config files are not trivially emptied or stubbed
 rubric:
-  - rule: "Code changes should be minimal and focused. The gold solution correctly removes only the problematic tie_word_embeddings field from Qwen2VLTextConfig and Qwen2_5_VLTextConfig, removes the propagation hack from composite configs, and adds type annotations to ModernVBertForMaskedLM.__init__."
-    reference: "Removed tie_word_embeddings from text configs; removed propagation hack; added type hint"
+- rule: Code changes should be minimal and focused. The gold solution correctly removes
+    only the problematic tie_word_embeddings field from Qwen2VLTextConfig and Qwen2_5_VLTextConfig,
+    removes the propagation hack from composite configs, and adds type annotations
+    to ModernVBertForMaskedLM.__init__.
+  reference: Removed tie_word_embeddings from text configs; removed propagation hack;
+    added type hint
+- rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files can inherit from other models. `make fix-repo` will generate the
+    actual modeling file.
+  source:
+    path: CLAUDE.md
+    lines: 62-67
+  evidence: The gold solution applies the type annotation fix to `ModernVBertForMaskedLM.__init__`
+    in both `modeling_modernvbert.py` and its source `modular_modernvbert.py`, adhering
+    to the repository's modular m
+  category: architecture
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the patch entirely, citing the
+    'Fail-closed behavior for agents' rule because it cannot verify coordination on
+    an issue or human validation in this automated evaluation setting.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 57-60
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might ignore the instruction to add the missing type
+    annotation to `ModernVBertForMaskedLM.__init__`, classifying it as a 'tiny edit'
+    or 'isolated lint cleanup' forbidden by the policy, even though it was explicitly
+    requested in the prompt alongside the main bug fix.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 42-44
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical repository-wide
+  guidelines. The rules regarding agent behavior (fail-closed, coordination) conflict
+  with the automated evaluation environment, requiring the agent to ignore meta-instructions
+  and focus on the code task. The architectural rule about modular models correctly
+  guides the agent to edit `modular_modernvbert.py` alongside `modeling_modernvbert.py`.

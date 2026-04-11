@@ -1,95 +1,118 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 178009
-  base_commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
-  merge_commit: "db741c72097871e384b22ee6fff1d6083adf23cc"
-
+  base_commit: 483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc
+  merge_commit: db741c72097871e384b22ee6fff1d6083adf23cc
 checks:
-  - id: test_mps_syntax
-    type: pass_to_pass
-    origin: static
-    description: "mps.py must parse without syntax errors"
-
-  - id: test_mps_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "mps.py must compile to bytecode without errors"
-
-  - id: test_utils_h_balanced_braces
-    type: pass_to_pass
-    origin: static
-    description: "c10/metal/utils.h must have balanced braces"
-
-  - id: test_utils_h_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "c10/metal/utils.h must be valid C++ header (pragma/namespace/braces)"
-
-  - id: test_codegen_mps_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "mps.py must have valid import statements"
-
-  - id: test_buggy_pattern_not_bare_modulo
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_print_ModularIndexing with div=65536 + non-power-of-2 mod must not return bare (x/div) % (mod)"
-
-  - id: test_buggy_pattern_uses_function_call
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Buggy-pattern output must use a function call, not bare % operator"
-
-  - id: test_utils_h_new_mod_safety_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: "utils.h must have a new modulo-safety function with optimization barrier"
-
-  - id: test_non_buggy_patterns_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-buggy patterns (div=1, power-of-2 mod) and FloorDiv still produce valid output"
-
-  - id: test_existing_functions_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "floor_divide and fmod still present in utils.h; files not gutted"
-
+- id: test_mps_syntax
+  type: pass_to_pass
+  origin: static
+  description: mps.py must parse without syntax errors
+- id: test_mps_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: mps.py must compile to bytecode without errors
+- id: test_utils_h_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: c10/metal/utils.h must have balanced braces
+- id: test_utils_h_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: c10/metal/utils.h must be valid C++ header (pragma/namespace/braces)
+- id: test_codegen_mps_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: mps.py must have valid import statements
+- id: test_buggy_pattern_not_bare_modulo
+  type: fail_to_pass
+  origin: pr_diff
+  description: _print_ModularIndexing with div=65536 + non-power-of-2 mod must not
+    return bare (x/div) % (mod)
+- id: test_buggy_pattern_uses_function_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy-pattern output must use a function call, not bare % operator
+- id: test_utils_h_new_mod_safety_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: utils.h must have a new modulo-safety function with optimization barrier
+- id: test_non_buggy_patterns_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-buggy patterns (div=1, power-of-2 mod) and FloorDiv still produce
+    valid output
+- id: test_existing_functions_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: floor_divide and fmod still present in utils.h; files not gutted
 rubric:
-  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
-    source:
-      path: "CLAUDE.md"
-      lines: "48"
-      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
-
-  - rule: "Comments should be useful — remind the reader about non-obvious global context that can't be inferred locally."
-    source:
-      path: "CLAUDE.md"
-      lines: "49-50"
-      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
-
-  - rule: "If uncertain, choose the simpler, more concise implementation."
-    source:
-      path: "CLAUDE.md"
-      lines: "59"
-      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
-
-  - rule: "Match existing code style and architectural patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "57"
-      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
-
-  - rule: "Variable and function names convey intent; minimal comments needed."
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "28"
-      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
-
-  - rule: "Solutions are as simple as possible for the current requirements; no over-engineering."
-    source:
-      path: ".claude/skills/pr-review/review-checklist.md"
-      lines: "11"
-      commit: "483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc"
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '48'
+    commit: 483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc
+- rule: Comments should be useful — remind the reader about non-obvious global context
+    that can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 49-50
+    commit: 483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: '59'
+    commit: 483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: 483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc
+- rule: Variable and function names convey intent; minimal comments needed.
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '28'
+    commit: 483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc
+- rule: Solutions are as simple as possible for the current requirements; no over-engineering.
+  source:
+    path: .claude/skills/pr-review/review-checklist.md
+    lines: '11'
+    commit: 483b55d84c74b92b3c2c67be4b9b7c7359ec2bbc
+- rule: Comments should be useful, for example, comments that remind the reader about
+    some global context that is non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 31-32
+  evidence: 'The gold solution adds comments in both `c10/metal/utils.h` and `torch/_inductor/codegen/mps.py`
+    explicitly mentioning the ''Metal compiler bug'' and the specific ''fused (x /
+    A) % B'' pattern to explain '
+  category: documentation
+distractors:
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  collision_type: rule_conflict
+  why_distracting: The `safe_mod` function is literally a 1-LOC helper (`return x
+    % y;`). An agent strictly following this rule might try to avoid creating this
+    helper and instead emit complex inline workarounds in the Python codegen, which
+    could fail to defeat the Metal compiler's peephole optimizer or make the codegen
+    messy.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 33-34
+- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
+  collision_type: meta_confusion
+  why_distracting: '`CLAUDE.md` explicitly states ''Only use commands provided via
+    `spin` for linting.'' This creates a direct contradiction in the instructions
+    for how the agent should check its work, potentially causing the agent to run
+    the wrong command and fail.'
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 9-9
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are at Level 0, but they contain
+  conflicting instructions regarding linting (`spin lint` vs `lintrunner -a`). The
+  agent must navigate this contradiction. Additionally, the general rule against trivial
+  helper functions in `CLAUDE.md` conflicts with the specific necessity of creating
+  a 1-LOC C++ function to defeat a compiler optimization pass.

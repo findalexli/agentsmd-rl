@@ -1,83 +1,111 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45048
-  base_commit: "9cd278715c5154597a44110d6e0c114a7e90d6f5"
-  merge_commit: "cc4ef19bb88ce7c49607a98fc8214b5c8bdb5342"
-
+  base_commit: 9cd278715c5154597a44110d6e0c114a7e90d6f5
+  merge_commit: cc4ef19bb88ce7c49607a98fc8214b5c8bdb5342
 checks:
-  - id: syntax
-    type: pass_to_pass
-    origin: static
-    description: "Target test file must parse without errors"
-
-  - id: dosample_false_in_generate
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All generate() calls in SmolLM3IntegrationTest must use do_sample=False"
-
-  - id: no_temperature_in_generate
-    type: fail_to_pass
-    origin: pr_diff
-    description: "generate() calls must not use temperature kwarg (temperature=0 does not override do_sample=True)"
-
-  - id: expected_text_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Old buggy expected text from non-deterministic sampling must be replaced"
-
-  - id: class_structure_preserved
-    type: pass_to_pass
-    origin: static
-    description: "All original test classes and integration test methods must still exist"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Integration test methods must have real bodies, not stubs"
-
-  - id: no_new_test_files
-    type: pass_to_pass
-    origin: agent_config
-    description: "Tests must be added to existing files, not new ones"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "16"
-      commit: "9cd278715c5154597a44110d6e0c114a7e90d6f5"
-
-  - id: code_style
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified test file must pass ruff linting"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "17"
-      commit: "9cd278715c5154597a44110d6e0c114a7e90d6f5"
-
-  # Repo CI/CD pass_to_pass gates (p2p_enrichment)
-  # CI commands discovered from Makefile and utils/checkers.py:
-  # - ruff check (via utils/checkers.py ruff_check)
-  # - ruff format --check (via utils/checkers.py ruff_format)
-  # - python -m py_compile (built-in Python syntax check)
-  - id: test_repo_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target test file must satisfy ruff formatting standards"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target test file must have valid Python syntax"
-
-  - id: test_repo_style_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file should pass repo's ruff check via utils/checkers.py"
-
+- id: syntax
+  type: pass_to_pass
+  origin: static
+  description: Target test file must parse without errors
+- id: dosample_false_in_generate
+  type: fail_to_pass
+  origin: pr_diff
+  description: All generate() calls in SmolLM3IntegrationTest must use do_sample=False
+- id: no_temperature_in_generate
+  type: fail_to_pass
+  origin: pr_diff
+  description: generate() calls must not use temperature kwarg (temperature=0 does
+    not override do_sample=True)
+- id: expected_text_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old buggy expected text from non-deterministic sampling must be replaced
+- id: class_structure_preserved
+  type: pass_to_pass
+  origin: static
+  description: All original test classes and integration test methods must still exist
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Integration test methods must have real bodies, not stubs
+- id: no_new_test_files
+  type: pass_to_pass
+  origin: agent_config
+  description: Tests must be added to existing files, not new ones
+  source:
+    path: .github/copilot-instructions.md
+    lines: '16'
+    commit: 9cd278715c5154597a44110d6e0c114a7e90d6f5
+- id: code_style
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified test file must pass ruff linting
+  source:
+    path: .github/copilot-instructions.md
+    lines: '17'
+    commit: 9cd278715c5154597a44110d6e0c114a7e90d6f5
+- id: test_repo_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target test file must satisfy ruff formatting standards
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target test file must have valid Python syntax
+- id: test_repo_style_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file should pass repo's ruff check via utils/checkers.py
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "9cd278715c5154597a44110d6e0c114a7e90d6f5"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 9cd278715c5154597a44110d6e0c114a7e90d6f5
+- rule: 'Many tests are marked as ''slow'' and skipped by default in the CI. To run
+    them, use: RUN_SLOW=1 pytest ...'
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution modifies `test_model_3b_generation` which is decorated
+    with `@slow`, aligning with the repository's convention of marking long-running
+    integration tests (like text generation) as slo
+  category: testing
+distractors:
+- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits (single
+    typo, isolated lint cleanup, one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The fix requires a very small code change (swapping `temperature=0`
+    for `do_sample=False` and updating a string). An agent might misclassify this
+    critical test determinism fix as a 'tiny edit' or 'low-value busywork' and refuse
+    to implement it.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 40-42
+- rule: Fail-closed behavior for agents - If work is duplicate or only trivial busywork,
+    do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: Because the required patch is so small, the agent might trigger
+    the fail-closed behavior and output an explanation instead of the actual code
+    patch, blocking the resolution of the issue.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 54-57
+- rule: Copies and Modular Models - Do not edit a `# Copied from` block, as it will
+    be reverted by `make fix-repo`.
+  collision_type: architecture_boundary
+  why_distracting: The agent might search for `# Copied from` comments or try to find
+    a `modular_smollm3.py` file to make the change. However, this rule specifically
+    applies to `src/transformers/models/`, not the integration tests in `tests/models/`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 59-65
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  agent should apply the rules uniformly without conflict between the two files.

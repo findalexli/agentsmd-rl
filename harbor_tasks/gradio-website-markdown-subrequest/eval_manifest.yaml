@@ -1,66 +1,91 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13123
-  base_commit: "e900202946a615f8fea84253d7a4377fe8a504f0"
-  merge_commit: "26be3ade4cf23a73fe9cee119cafc22f274f1ef3"
-
+  base_commit: e900202946a615f8fea84253d7a4377fe8a504f0
+  merge_commit: 26be3ade4cf23a73fe9cee119cafc22f274f1ef3
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Target TypeScript file must parse without errors"
-
-  - id: doc_redirect
-    type: fail_to_pass
-    origin: pr_diff
-    description: "serveDocMarkdown returns 3xx redirect to /api/markdown/<doc> for LLM user-agents"
-
-  - id: guide_redirect
-    type: fail_to_pass
-    origin: pr_diff
-    description: "serveGuideMarkdown returns 3xx redirect to /api/markdown/guide/<guide> for LLM user-agents"
-
-  - id: no_subrequest
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Handlers must not make fetch() subrequests for LLM requests"
-
-  - id: non_llm_fallthrough
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-LLM user-agents fall through to next() for both handlers"
-
-  - id: exports_callable
-    type: pass_to_pass
-    origin: static
-    description: "serveDocMarkdown and serveGuideMarkdown are exported async functions"
-
-  - id: prettier_formatting
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed TypeScript file must be formatted with prettier"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "e900202946a615f8fea84253d7a4377fe8a504f0"
-
-  - id: test_repo_wrangler_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's wrangler pages functions build passes"
-
-  - id: test_repo_client_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @gradio/client package builds successfully"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target TypeScript file must parse without errors
+- id: doc_redirect
+  type: fail_to_pass
+  origin: pr_diff
+  description: serveDocMarkdown returns 3xx redirect to /api/markdown/<doc> for LLM
+    user-agents
+- id: guide_redirect
+  type: fail_to_pass
+  origin: pr_diff
+  description: serveGuideMarkdown returns 3xx redirect to /api/markdown/guide/<guide>
+    for LLM user-agents
+- id: no_subrequest
+  type: fail_to_pass
+  origin: pr_diff
+  description: Handlers must not make fetch() subrequests for LLM requests
+- id: non_llm_fallthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-LLM user-agents fall through to next() for both handlers
+- id: exports_callable
+  type: pass_to_pass
+  origin: static
+  description: serveDocMarkdown and serveGuideMarkdown are exported async functions
+- id: prettier_formatting
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed TypeScript file must be formatted with prettier
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: e900202946a615f8fea84253d7a4377fe8a504f0
+- id: test_repo_wrangler_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's wrangler pages functions build passes
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/client package builds successfully
 rubric:
-  - rule: "Use Cloudflare Workers style Response.redirect() for redirects, with new URL() for URL construction."
-    source:
-      path: "js/_website/functions/_shared.ts"
-      lines: "27-43"
-      commit: "e900202946a615f8fea84253d7a4377fe8a504f0"
-    reference: |
-      return Response.redirect(`${url.origin}/api/markdown/${params.doc}`, 302);
+- rule: Use Cloudflare Workers style Response.redirect() for redirects, with new URL()
+    for URL construction.
+  source:
+    path: js/_website/functions/_shared.ts
+    lines: 27-43
+    commit: e900202946a615f8fea84253d7a4377fe8a504f0
+  reference: 'return Response.redirect(`${url.origin}/api/markdown/${params.doc}`,
+    302);
+
+    '
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 46-50
+  evidence: The gold solution maintains the existing function signatures, parameter
+    destructuring (`const { request, params, next } = context;`), and early return
+    style (`if (!isLLMRequest(request)) return next()
+  category: style
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might refuse to implement this fix because it only changes
+    a few lines in one file, misclassifying a significant performance optimization
+    (removing a fetch-parse-rewrite cycle in an edge function) as a 'tiny edit' or
+    'low-value busywork'.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 57-60
+- rule: '`js/spa/test/` — browser/Playwright tests (`*.spec.ts`)'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to write Playwright browser tests for these
+    Cloudflare Pages Functions, but these functions run on the server/edge and handle
+    API routing, not the SPA frontend.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 14-14
+hierarchy_analysis: The repository has a single AGENTS.md file at the root level.
+  It provides general guidelines for PRs, testing, and AI agent behavior.

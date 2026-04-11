@@ -134,3 +134,54 @@ rubric:
     path: .github/skills/pr-build-status/SKILL.md
     lines: 14-29
     commit: 71e5c2f595d7cc104adc18753a646e9c557c10da
+- rule: Skills must be documented in the copilot instructions with their path, purpose,
+    and trigger phrases so that agents and users know how and when to invoke them.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 265-275
+  evidence: The gold solution adds the `run-integration-tests` skill to the copilot
+    instructions following the established format for other skills, including the
+    skill name in bold, the path to the SKILL.md file,
+  category: documentation
+distractors:
+- rule: 'Testing frameworks: xUnit - Unit tests (*.UnitTests.csproj), NUnit - UI tests
+    (TestCases.Shared.Tests)'
+  collision_type: scope_ambiguity
+  why_distracting: The config specifies xUnit for unit tests and NUnit for UI tests.
+    An agent might mistakenly try to convert the integration tests to use one of these
+    frameworks or write the test runner skill in C# using these frameworks, rather
+    than creating the requested PowerShell script that wraps `dotnet test`.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 23-25
+- rule: Platform-specific files use naming conventions to control compilation (.windows.cs,
+    .android.cs, etc.)
+  collision_type: scope_ambiguity
+  why_distracting: The config defines strict platform-specific file extensions (e.g.,
+    `.windows.cs`, `.maccatalyst.cs`). An agent might incorrectly apply this convention
+    to the new skill and attempt to create platform-specific PowerShell scripts (e.g.,
+    `Run-IntegrationTests.windows.ps1`), whereas the prompt requires a single cross-platform
+    script.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 41-48
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill
+  collision_type: meta_confusion
+  why_distracting: The config instructs Copilot to run the `pr-finalize` skill when
+    performing code reviews. An agent might get confused by its own meta-instructions
+    and attempt to invoke `pr-finalize` or modify it, rather than focusing purely
+    on implementing the new `run-integration-tests` skill.
+  severity: low
+  source:
+    path: .github/copilot-instructions.md
+    lines: 10-12
+hierarchy_analysis: The `.github/copilot-instructions.md` file serves as the root
+  configuration for agent behavior in this repository. It contains both meta-instructions
+  for the agent (like running `pr-finalize`) and architectural guidelines (like platform-specific
+  file extensions). The primary challenge in this PR is distinguishing between rules
+  that apply to the C# MAUI framework code (like test frameworks and file extensions)
+  and rules that apply to the repository's automation tooling (PowerShell scripts
+  and GitHub skills).

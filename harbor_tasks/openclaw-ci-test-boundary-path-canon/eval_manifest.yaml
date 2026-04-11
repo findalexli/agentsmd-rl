@@ -1,167 +1,196 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 57797
-  base_commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-  merge_commit: "c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6"
-
+  base_commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+  merge_commit: c22edbb8eeb3668f60b0b23cd8e8e11b4340f6d6
 checks:
-  - id: files_parse
-    type: pass_to_pass
-    origin: static
-    description: "Modified TS files must have balanced braces"
-
-  - id: extension_import_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Buggy import from extensions/telegram/test-support must be removed"
-
-  - id: plugin_constructed_intree
-    type: fail_to_pass
-    origin: pr_diff
-    description: "telegramCommandTestPlugin constructed in-tree via SDK helpers or manual ChannelPlugin"
-
-  - id: plugin_not_stub
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Plugin definition spans >=8 meaningful lines (not a trivial stub)"
-
-  - id: plugin_has_channel_config
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Plugin definition includes config/allowlist/auth adapters"
-
-  - id: path_canonicalization_in_ssrf
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SSRF test block uses path canonicalization (realpath/realpathSync/path.resolve)"
-
-  - id: no_direct_path_comparison
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No direct uncanonicalized path equality in SSRF tests"
-
-  - id: both_ssrf_tests_canonicalize
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both SSRF test cases use path canonicalization, not just one"
-
-  - id: plugin_defined_and_used
-    type: pass_to_pass
-    origin: pr_diff
-    description: "telegramCommandTestPlugin appears at least twice (definition + usage)"
-
-  - id: ssrf_structure_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "SSRF test block still references MediaAttachmentCache and O_NOFOLLOW"
-
-  - id: no_extension_deep_imports
-    type: fail_to_pass
-    origin: agent_config
-    description: "Core tests must not deep-import bundled plugin internals"
-    source:
-      path: "AGENTS.md"
-      lines: "42"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - id: no_hardcoded_extension_paths
-    type: pass_to_pass
-    origin: agent_config
-    description: "Core test helpers must not hardcode repo-relative imports into extensions/**"
-    source:
-      path: "test/helpers/channels/AGENTS.md"
-      lines: "8-9"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "Never add @ts-nocheck to modified files"
-    source:
-      path: "AGENTS.md"
-      lines: "146"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - id: no_lint_suppressions
-    type: pass_to_pass
-    origin: agent_config
-    description: "Do not add inline lint suppressions (@ts-ignore, @ts-expect-error) by default"
-    source:
-      path: "AGENTS.md"
-      lines: "146"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - id: no_prototype_mutation_in_tests
-    type: pass_to_pass
-    origin: agent_config
-    description: "In tests, prefer per-instance stubs over prototype mutation"
-    source:
-      path: "AGENTS.md"
-      lines: "162"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-
-  - id: test_repo_oxlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's oxlint passes on modified files"
-
-  - id: test_repo_oxfmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's oxfmt format check passes on modified files"
-
-  - id: test_repo_media_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's media-understanding SSRF tests pass"
-
-  - id: test_repo_media_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's media-understanding unit tests pass"
-
-  - id: test_repo_commands_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's auto-reply commands tests pass"
-
-
+- id: files_parse
+  type: pass_to_pass
+  origin: static
+  description: Modified TS files must have balanced braces
+- id: extension_import_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy import from extensions/telegram/test-support must be removed
+- id: plugin_constructed_intree
+  type: fail_to_pass
+  origin: pr_diff
+  description: telegramCommandTestPlugin constructed in-tree via SDK helpers or manual
+    ChannelPlugin
+- id: plugin_not_stub
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin definition spans >=8 meaningful lines (not a trivial stub)
+- id: plugin_has_channel_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin definition includes config/allowlist/auth adapters
+- id: path_canonicalization_in_ssrf
+  type: fail_to_pass
+  origin: pr_diff
+  description: SSRF test block uses path canonicalization (realpath/realpathSync/path.resolve)
+- id: no_direct_path_comparison
+  type: fail_to_pass
+  origin: pr_diff
+  description: No direct uncanonicalized path equality in SSRF tests
+- id: both_ssrf_tests_canonicalize
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both SSRF test cases use path canonicalization, not just one
+- id: plugin_defined_and_used
+  type: pass_to_pass
+  origin: pr_diff
+  description: telegramCommandTestPlugin appears at least twice (definition + usage)
+- id: ssrf_structure_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: SSRF test block still references MediaAttachmentCache and O_NOFOLLOW
+- id: no_extension_deep_imports
+  type: fail_to_pass
+  origin: agent_config
+  description: Core tests must not deep-import bundled plugin internals
+  source:
+    path: AGENTS.md
+    lines: '42'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- id: no_hardcoded_extension_paths
+  type: pass_to_pass
+  origin: agent_config
+  description: Core test helpers must not hardcode repo-relative imports into extensions/**
+  source:
+    path: test/helpers/channels/AGENTS.md
+    lines: 8-9
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: Never add @ts-nocheck to modified files
+  source:
+    path: AGENTS.md
+    lines: '146'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- id: no_lint_suppressions
+  type: pass_to_pass
+  origin: agent_config
+  description: Do not add inline lint suppressions (@ts-ignore, @ts-expect-error)
+    by default
+  source:
+    path: AGENTS.md
+    lines: '146'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- id: no_prototype_mutation_in_tests
+  type: pass_to_pass
+  origin: agent_config
+  description: In tests, prefer per-instance stubs over prototype mutation
+  source:
+    path: AGENTS.md
+    lines: '162'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- id: test_repo_oxlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint passes on modified files
+- id: test_repo_oxfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxfmt format check passes on modified files
+- id: test_repo_media_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's media-understanding SSRF tests pass
+- id: test_repo_media_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's media-understanding unit tests pass
+- id: test_repo_commands_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's auto-reply commands tests pass
 rubric:
-  - rule: "Language: TypeScript (ESM). Prefer strict typing; avoid any."
-    source:
-      path: "AGENTS.md"
-      lines: "144"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "AGENTS.md"
-      lines: "163"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
-    source:
-      path: "AGENTS.md"
-      lines: "167"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - rule: "Keep files concise; extract helpers instead of V2 copies."
-    source:
-      path: "AGENTS.md"
-      lines: "164"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - rule: "For narrowly scoped changes, prefer narrowly scoped tests that directly validate the touched behavior."
-    source:
-      path: "AGENTS.md"
-      lines: "131"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
-  - rule: "Keep shared test helpers aligned with the same public/plugin boundary that production code uses."
-    source:
-      path: "test/helpers/channels/AGENTS.md"
-      lines: "22-23"
-      commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
+- rule: 'Language: TypeScript (ESM). Prefer strict typing; avoid any.'
+  source:
+    path: AGENTS.md
+    lines: '144'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: AGENTS.md
+    lines: '163'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- rule: 'Written English: use American spelling and grammar in code, comments, docs,
+    and UI strings.'
+  source:
+    path: AGENTS.md
+    lines: '167'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- rule: Keep files concise; extract helpers instead of V2 copies.
+  source:
+    path: AGENTS.md
+    lines: '164'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- rule: For narrowly scoped changes, prefer narrowly scoped tests that directly validate
+    the touched behavior.
+  source:
+    path: AGENTS.md
+    lines: '131'
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- rule: Keep shared test helpers aligned with the same public/plugin boundary that
+    production code uses.
+  source:
+    path: test/helpers/channels/AGENTS.md
+    lines: 22-23
+    commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+- rule: Maintain architecture boundaries between core (`src/`) and bundled plugins
+    (`extensions/`).
+  source:
+    path: CLAUDE.md
+    lines: 28-33
+  evidence: 'The gold solution removes the direct import from `../../../extensions/telegram/test-support.js`
+    in `src/auto-reply/reply/commands.test.ts` and instead builds a local mock using
+    `src/plugin-sdk/*` and '
+  category: architecture
+distractors:
+- rule: 'Import boundaries: extension production code should treat openclaw/plugin-sdk/*
+    as the public surface. Do not import core src/** directly.'
+  collision_type: architecture_boundary
+  why_distracting: The rule explicitly forbids extension code from importing core
+    code, but doesn't explicitly forbid core tests from importing extension code.
+    An agent might misinterpret this one-way rule as implying that core tests importing
+    extension test-support files is acceptable, failing to recognize the bidirectional
+    boundary violation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 18-19
+- rule: 'Messaging channels: always consider all built-in + extension channels when
+    refactoring shared logic.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates considering all built-in and extension channels
+    when refactoring shared logic. An agent might over-engineer the fix by trying
+    to create a generalized, cross-channel test plugin helper for all channels, rather
+    than just locally replicating the Telegram-specific configuration needed to fix
+    this specific test.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 20-24
+- rule: 'Plugins: live in the bundled workspace plugin tree. Keep plugin-only deps
+    in the extension package.json; do not add them to the root package.json unless
+    core uses them.'
+  collision_type: would_cause_bug
+  why_distracting: The rule discusses keeping plugin-only deps in the extension `package.json`
+    and not adding them to the root `package.json` unless core uses them. An agent
+    might try to 'fix' the import error by adding the telegram extension as a devDependency
+    to the root `package.json` so that the core test can legally import it, which
+    would violate the architectural intent.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 16-17
+hierarchy_analysis: 'The repository uses a flat config structure where `CLAUDE.md`
+  and `AGENTS.md` contain identical repository guidelines. The primary challenge is
+  interpreting architectural boundaries correctly: the rules explicitly define what
+  extensions can import from core, but rely on implicit architectural boundaries (defined
+  in the ''Architecture Boundaries'' section) to prevent core from deep-importing
+  extension internals.'

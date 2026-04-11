@@ -1,166 +1,142 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: openclaw/openclaw
   pr: 57772
   base_commit: b7b46ad185392f53a995124f6861d2b356f84976
   merge_commit: 1a75906a6fe5191ea573758017834f200056500b
-
 checks:
-  # Fail-to-pass: awk allowlist recognition
-  - id: allowlist_recognizes_awk
-    type: fail_to_pass
-    origin: pr_diff
-    description: "isInterpreterLikeAllowlistPattern recognizes awk paths as interpreter-like"
-
-  - id: allowlist_recognizes_awk_variants
-    type: fail_to_pass
-    origin: pr_diff
-    description: "isInterpreterLikeAllowlistPattern recognizes gawk, mawk, nawk"
-
-  # Fail-to-pass: inline eval detection
-  - id: detect_awk_inline_positional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "detectInterpreterInlineEvalArgv detects awk positional inline program"
-
-  - id: detect_awk_with_value_flags
-    type: fail_to_pass
-    origin: pr_diff
-    description: "detectInterpreterInlineEvalArgv detects awk program after -F/-v flags"
-
-  - id: awk_detection_description
-    type: fail_to_pass
-    origin: pr_diff
-    description: "describeInterpreterInlineEval returns '<variant> inline program' format for awk family"
-
-  - id: awk_double_dash_positional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "awk -- '{program}' detects inline code after double-dash separator"
-
-  # Fail-to-pass: integration wiring
-  - id: allowlist_imports_interpreter_check
-    type: fail_to_pass
-    origin: pr_diff
-    description: "exec-approvals-allowlist.ts calls isInterpreterLikeAllowlistPattern"
-
-  # Pass-to-pass: existing behavior preserved
-  - id: existing_interpreters_still_detected
-    type: pass_to_pass
-    origin: pr_diff
-    description: "python3, node, perl still recognized as interpreter-like"
-
-  - id: awk_file_flag_not_inline
-    type: pass_to_pass
-    origin: pr_diff
-    description: "awk -f script.awk is file-based, not inline eval"
-
-  - id: non_interpreters_not_flagged
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-interpreter programs (ls, cat, rg, grep) not falsely detected"
-
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck in modified files
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- id: no_any_type_annotations
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'any' type annotations in modified files
+  source:
+    path: CLAUDE.md
+    lines: '144'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- id: no_ts_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-ignore in modified files
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- id: no_prototype_mutation
+  type: pass_to_pass
+  origin: agent_config
+  description: No prototype mutation patterns in modified files
+  source:
+    path: CLAUDE.md
+    lines: '160'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- id: no_inline_lint_suppressions
+  type: pass_to_pass
+  origin: agent_config
+  description: No inline lint suppressions (eslint-disable / oxlint-disable) in modified
+    files
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- id: no_dynamic_import_mixed_with_static
+  type: pass_to_pass
+  origin: agent_config
+  description: No dynamic import of exec-inline-eval mixed with its static import
+    in exec-approvals-allowlist.ts
+  source:
+    path: CLAUDE.md
+    lines: '155'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo oxlint passes
+- id: test_repo_unit_tests_infra_exec
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo exec-related infra unit tests pass
+- id: test_repo_unit_tests_security_audit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo security audit tests pass
 rubric:
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "163"
-      commit: "b7b46ad185392f53a995124f6861d2b356f84976"
-
-  - rule: "Tests must be colocated with source files as *.test.ts."
-    source:
-      path: "CLAUDE.md"
-      lines: "10"
-      commit: "b7b46ad185392f53a995124f6861d2b356f84976"
-
-  - rule: "Prefer discriminated unions when parameter shape changes runtime behavior."
-    source:
-      path: "CLAUDE.md"
-      lines: "149"
-      commit: "b7b46ad185392f53a995124f6861d2b356f84976"
-
-  - rule: "Keep files concise; extract helpers instead of 'V2' copies."
-    source:
-      path: "CLAUDE.md"
-      lines: "164"
-      commit: "b7b46ad185392f53a995124f6861d2b356f84976"
-
-  - rule: "Aim to keep files under ~700 LOC; split/refactor when it improves clarity or testability."
-    source:
-      path: "CLAUDE.md"
-      lines: "165"
-      commit: "b7b46ad185392f53a995124f6861d2b356f84976"
-
-checks:
-  # Pass-to-pass: agent config rules
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-nocheck in modified files"
-    source:
-      path: CLAUDE.md
-      lines: "146"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
-
-  - id: no_any_type_annotations
-    type: pass_to_pass
-    origin: agent_config
-    description: "No 'any' type annotations in modified files"
-    source:
-      path: CLAUDE.md
-      lines: "144"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
-
-  - id: no_ts_ignore
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-ignore in modified files"
-    source:
-      path: CLAUDE.md
-      lines: "146"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
-
-  - id: no_prototype_mutation
-    type: pass_to_pass
-    origin: agent_config
-    description: "No prototype mutation patterns in modified files"
-    source:
-      path: CLAUDE.md
-      lines: "160"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
-
-  - id: no_inline_lint_suppressions
-    type: pass_to_pass
-    origin: agent_config
-    description: "No inline lint suppressions (eslint-disable / oxlint-disable) in modified files"
-    source:
-      path: CLAUDE.md
-      lines: "146"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
-
-  - id: no_dynamic_import_mixed_with_static
-    type: pass_to_pass
-    origin: agent_config
-    description: "No dynamic import of exec-inline-eval mixed with its static import in exec-approvals-allowlist.ts"
-    source:
-      path: CLAUDE.md
-      lines: "155"
-      commit: b7b46ad185392f53a995124f6861d2b356f84976
-
-
-  # Pass-to-pass: repo CI/CD tests
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo oxlint passes"
-
-  - id: test_repo_unit_tests_infra_exec
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo exec-related infra unit tests pass"
-
-  - id: test_repo_unit_tests_security_audit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo security audit tests pass"
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- rule: Tests must be colocated with source files as *.test.ts.
+  source:
+    path: CLAUDE.md
+    lines: '10'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- rule: Prefer discriminated unions when parameter shape changes runtime behavior.
+  source:
+    path: CLAUDE.md
+    lines: '149'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- rule: Keep files concise; extract helpers instead of 'V2' copies.
+  source:
+    path: CLAUDE.md
+    lines: '164'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- rule: Aim to keep files under ~700 LOC; split/refactor when it improves clarity
+    or testability.
+  source:
+    path: CLAUDE.md
+    lines: '165'
+    commit: b7b46ad185392f53a995124f6861d2b356f84976
+- rule: 'Tests: colocated `*.test.ts`.'
+  source:
+    path: CLAUDE.md
+    lines: 10-10
+  evidence: 'The gold solution adds tests for the new awk interpreter detection logic
+    directly in `src/infra/exec-approvals-allow-always.test.ts` and `src/infra/exec-inline-eval.test.ts`,
+    which are colocated with '
+  category: testing
+- rule: 'Source code: `src/` (... infra in `src/infra` ...)'
+  source:
+    path: CLAUDE.md
+    lines: 9-9
+  evidence: The gold solution correctly modifies the execution approval and inline
+    evaluation logic within the `src/infra/` directory, adhering to the project structure
+    guidelines for infrastructure code.
+  category: architecture
+distractors:
+- rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a
+    listed owner explicitly asked for the change or is already reviewing it with you.
+    Treat those paths as restricted surfaces, not drive-by cleanup.
+  collision_type: rule_conflict
+  why_distracting: The task explicitly requires fixing a security bypass in `src/infra/exec-inline-eval.ts`
+    and `src/security/audit.test.ts`. The agent might refuse to make the necessary
+    edits, thinking it violates the security-focused CODEOWNERS restriction, failing
+    to complete the task.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 5-5
+- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
+    plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import
+    core `src/**` directly.'
+  collision_type: architecture_boundary
+  why_distracting: The agent is editing core code in `src/infra/`, not an extension.
+    It might misinterpret this rule and avoid adding the necessary relative import
+    `import { isInterpreterLikeAllowlistPattern } from "./exec-inline-eval.js";` in
+    `src/infra/exec-approvals-allowlist.ts`, or try to route it through a public SDK
+    barrel.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 16-16
+hierarchy_analysis: The config hierarchy consists of `CLAUDE.md` and `AGENTS.md` at
+  the root level, which contain identical rules. There are no conflicting rules between
+  different levels of the hierarchy, but the agent must correctly distinguish between
+  core code (`src/infra/`) and extension code to apply the import boundary rules correctly.

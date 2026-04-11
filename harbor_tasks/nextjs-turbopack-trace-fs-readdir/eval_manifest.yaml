@@ -1,106 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92148
-  base_commit: "4582b5fa93dd65b6f9ed1dff7e66bdb93ddd653c"
-  merge_commit: "a5c0a897f8e692a26e3bf550a6629607805b3a0d"
-
+  base_commit: 4582b5fa93dd65b6f9ed1dff7e66bdb93ddd653c
+  merge_commit: a5c0a897f8e692a26e3bf550a6629607805b3a0d
 checks:
-  - id: source_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Required source files exist and are not stubbed"
-
-  - id: fsreaddir_enum_variant
-    type: fail_to_pass
-    origin: pr_diff
-    description: "WellKnownFunctionKind enum has FsReadDir variant in correct ASCII-order position"
-
-  - id: readdir_sync_mapping
-    type: fail_to_pass
-    origin: pr_diff
-    description: "well_known.rs maps both readdir and readdirSync to WellKnownFunctionKind::FsReadDir"
-
-  - id: dir_asset_reference_handler
-    type: fail_to_pass
-    origin: pr_diff
-    description: "references/mod.rs has FsReadDir handler with DirAssetReference, dynamic pattern detection, and error handling"
-
-  - id: fsreaddir_description_in_impl
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FsReadDir has human-readable description in WellKnownFunction impl block"
-
-  - id: wildcard_fixtures_have_fs_import
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NFT test fixture files have const fs = require('fs') for readdir tracing"
-
-  - id: nft_unit_tests_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NFT unit test cases dirname_emit, dirname_emit_concat, wildcard_require, wildcard3 are enabled"
-
-  - id: well_known_module_intact
-    type: pass_to_pass
-    origin: static
-    description: "well_known.rs fs_module_member function has substantial body with all existing fs method mappings"
-
-  - id: references_module_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "references/mod.rs has substantial code in tracing handler section"
-
-  - id: test_repo_prettier_js_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified JS fixture files pass Prettier format check (npx prettier --check)"
-
-  - id: test_repo_node_syntax_js_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified JS fixture files have valid Node.js syntax (node --check)"
-
-  - id: test_source_files_no_hard_tabs
-    type: pass_to_pass
-    origin: static
-    description: "Source files use spaces not tabs per .rustfmt.toml hard_tabs=false"
-
-  - id: test_no_trailing_whitespace_on_modified_lines
-    type: pass_to_pass
-    origin: static
-    description: "Source files have no trailing whitespace - standard CI lint check"
-
-  - id: test_unit_rs_valid_rstest_syntax
-    type: pass_to_pass
-    origin: static
-    description: "unit.rs has valid rstest syntax structure with case attributes"
-
-  - id: test_fixture_files_valid_syntax
-    type: pass_to_pass
-    origin: static
-    description: "NFT fixture files have balanced braces/parens (basic syntax check)"
-
-  - id: test_cargo_toml_structure
-    type: pass_to_pass
-    origin: static
-    description: "Cargo.toml files have valid TOML structure with required sections"
-
-  - id: test_well_known_rs_function_structure
-    type: pass_to_pass
-    origin: static
-    description: "well_known.rs has expected function structure with required functions"
-
-  - id: test_references_mod_structure
-    type: pass_to_pass
-    origin: static
-    description: "references/mod.rs has expected module structure (impl blocks, async fn, match)"
-
-  - id: test_mod_rs_enum_structure
-    type: pass_to_pass
-    origin: static
-    description: "mod.rs has expected enum definitions (WellKnownFunctionKind, JsValue)"
-
+- id: source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Required source files exist and are not stubbed
+- id: fsreaddir_enum_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: WellKnownFunctionKind enum has FsReadDir variant in correct ASCII-order
+    position
+- id: readdir_sync_mapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: well_known.rs maps both readdir and readdirSync to WellKnownFunctionKind::FsReadDir
+- id: dir_asset_reference_handler
+  type: fail_to_pass
+  origin: pr_diff
+  description: references/mod.rs has FsReadDir handler with DirAssetReference, dynamic
+    pattern detection, and error handling
+- id: fsreaddir_description_in_impl
+  type: fail_to_pass
+  origin: pr_diff
+  description: FsReadDir has human-readable description in WellKnownFunction impl
+    block
+- id: wildcard_fixtures_have_fs_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: NFT test fixture files have const fs = require('fs') for readdir tracing
+- id: nft_unit_tests_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: NFT unit test cases dirname_emit, dirname_emit_concat, wildcard_require,
+    wildcard3 are enabled
+- id: well_known_module_intact
+  type: pass_to_pass
+  origin: static
+  description: well_known.rs fs_module_member function has substantial body with all
+    existing fs method mappings
+- id: references_module_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: references/mod.rs has substantial code in tracing handler section
+- id: test_repo_prettier_js_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified JS fixture files pass Prettier format check (npx prettier
+    --check)
+- id: test_repo_node_syntax_js_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified JS fixture files have valid Node.js syntax (node --check)
+- id: test_source_files_no_hard_tabs
+  type: pass_to_pass
+  origin: static
+  description: Source files use spaces not tabs per .rustfmt.toml hard_tabs=false
+- id: test_no_trailing_whitespace_on_modified_lines
+  type: pass_to_pass
+  origin: static
+  description: Source files have no trailing whitespace - standard CI lint check
+- id: test_unit_rs_valid_rstest_syntax
+  type: pass_to_pass
+  origin: static
+  description: unit.rs has valid rstest syntax structure with case attributes
+- id: test_fixture_files_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: NFT fixture files have balanced braces/parens (basic syntax check)
+- id: test_cargo_toml_structure
+  type: pass_to_pass
+  origin: static
+  description: Cargo.toml files have valid TOML structure with required sections
+- id: test_well_known_rs_function_structure
+  type: pass_to_pass
+  origin: static
+  description: well_known.rs has expected function structure with required functions
+- id: test_references_mod_structure
+  type: pass_to_pass
+  origin: static
+  description: references/mod.rs has expected module structure (impl blocks, async
+    fn, match)
+- id: test_mod_rs_enum_structure
+  type: pass_to_pass
+  origin: static
+  description: mod.rs has expected enum definitions (WellKnownFunctionKind, JsValue)
 rubric:
-  - rule: "The FsReadDir enum variant in WellKnownFunctionKind MUST be placed in correct ASCII order relative to other variants (e.g. before PathToFileUrl)"
+- rule: The FsReadDir enum variant in WellKnownFunctionKind MUST be placed in correct
+    ASCII order relative to other variants (e.g. before PathToFileUrl)
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs starting `pnpm --filter=next dev` for Next.js
+    source changes. An agent might misinterpret Turbopack Rust crates as 'Next.js
+    source' and try to use the Next.js dev server to test its changes, which is ineffective
+    for running Turbopack's Rust unit tests.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 61-65
+- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start>
+    pnpm testheadless test/path/to/test.ts'
+  collision_type: architecture_boundary
+  why_distracting: The rule provides a command (`pnpm testheadless test/path/to/test.ts`)
+    for running tests fast. An agent might try to use this JS/TS test command, but
+    the relevant tests for this issue are Rust unit tests located in `turbopack/crates/turbopack-tracing/tests/unit.rs`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 73-77
+- rule: prefer `pnpm --filter=next build` when edits are limited to core Next.js files.
+  collision_type: architecture_boundary
+  why_distracting: The rule suggests using `pnpm --filter=next build` for core Next.js
+    files. An agent might apply this to Turbopack Rust changes, which is the wrong
+    build process for iterating on Rust crates (where `cargo` commands within the
+    `turbopack` directory would be more appropriate).
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 82-83
+hierarchy_analysis: CLAUDE.md and AGENTS.md are identical symlinks. The rules are
+  heavily biased towards the TypeScript/JavaScript parts of the Next.js monorepo (`packages/next`),
+  while the issue requires modifying the Rust-based Turbopack bundler (`turbopack/crates`).
+  This creates a significant architecture boundary mismatch where the agent might
+  try to apply JS/TS build and test commands to Rust code.

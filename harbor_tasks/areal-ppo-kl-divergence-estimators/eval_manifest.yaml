@@ -1,114 +1,144 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1054
-  base_commit: "a0d122930f7de028404235688c7dba3f01854954"
-  merge_commit: "b984eb2687638c1023ea3f77fd697143fbf86635"
-
+  base_commit: a0d122930f7de028404235688c7dba3f01854954
+  merge_commit: b984eb2687638c1023ea3f77fd697143fbf86635
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "actor.py must parse without syntax errors"
-
-  - id: kl_estimators_computed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All three KL estimators (direct, taylor, dual) computed correctly and logged"
-
-  - id: kl_estimators_diverse_inputs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "KL estimators correct across diverse inputs (identical policies, large ratios, single token)"
-
-  - id: kl_estimators_detached
-    type: fail_to_pass
-    origin: pr_diff
-    description: "KL estimator tensors are detached (no gradient tracking)"
-
-  - id: kl_stats_use_denominator
-    type: fail_to_pass
-    origin: pr_diff
-    description: "KL stats registered with denominator kwarg for per-token averaging"
-
-  - id: logprobs_none_no_kl
-    type: pass_to_pass
-    origin: pr_diff
-    description: "No KL stats logged and no crash when logprobs is None"
-
-  - id: function_signature_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Function signatures for _log_proximal_approximation_stats and _log_version_staleness_stats preserved"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in actor.py"
-    source:
-      path: "AGENTS.md"
-      lines: "25"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
-
-  - id: no_gpu_cpu_sync
-    type: pass_to_pass
-    origin: agent_config
-    description: "No .item()/.tolist()/.numpy() calls in _log_proximal_approximation_stats"
-    source:
-      path: "AGENTS.md"
-      lines: "90"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
-
-  - id: no_print_in_function
-    type: pass_to_pass
-    origin: agent_config
-    description: "No print() calls in _log_proximal_approximation_stats — use stats_tracker"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
-
-  - id: test_repo_ruff_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python syntax and critical errors check passes (ruff --select=E9,F63,F7,F82)"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "actor.py passes ruff format check (repo CI standard)"
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "actor.py compiles without syntax errors (python3 -m py_compile)"
-
-  - id: test_repo_ruff_critical_areal
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's areal module has no critical syntax errors (ruff E9,F63,F7,F82)"
-
-  - id: test_repo_all_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Critical PPO Python files compile without syntax errors (py_compile)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: actor.py must parse without syntax errors
+- id: kl_estimators_computed
+  type: fail_to_pass
+  origin: pr_diff
+  description: All three KL estimators (direct, taylor, dual) computed correctly and
+    logged
+- id: kl_estimators_diverse_inputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: KL estimators correct across diverse inputs (identical policies, large
+    ratios, single token)
+- id: kl_estimators_detached
+  type: fail_to_pass
+  origin: pr_diff
+  description: KL estimator tensors are detached (no gradient tracking)
+- id: kl_stats_use_denominator
+  type: fail_to_pass
+  origin: pr_diff
+  description: KL stats registered with denominator kwarg for per-token averaging
+- id: logprobs_none_no_kl
+  type: pass_to_pass
+  origin: pr_diff
+  description: No KL stats logged and no crash when logprobs is None
+- id: function_signature_preserved
+  type: pass_to_pass
+  origin: static
+  description: Function signatures for _log_proximal_approximation_stats and _log_version_staleness_stats
+    preserved
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in actor.py
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: a0d122930f7de028404235688c7dba3f01854954
+- id: no_gpu_cpu_sync
+  type: pass_to_pass
+  origin: agent_config
+  description: No .item()/.tolist()/.numpy() calls in _log_proximal_approximation_stats
+  source:
+    path: AGENTS.md
+    lines: '90'
+    commit: a0d122930f7de028404235688c7dba3f01854954
+- id: no_print_in_function
+  type: pass_to_pass
+  origin: agent_config
+  description: No print() calls in _log_proximal_approximation_stats — use stats_tracker
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: a0d122930f7de028404235688c7dba3f01854954
+- id: test_repo_ruff_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python syntax and critical errors check passes (ruff --select=E9,F63,F7,F82)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: actor.py passes ruff format check (repo CI standard)
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: actor.py compiles without syntax errors (python3 -m py_compile)
+- id: test_repo_ruff_critical_areal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's areal module has no critical syntax errors (ruff E9,F63,F7,F82)
+- id: test_repo_all_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Critical PPO Python files compile without syntax errors (py_compile)
 rubric:
-  - rule: "Follow existing code patterns in the same module. Look at neighboring code for tensor operations, stats logging, and control flow conventions."
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
-
-  - rule: "Use stats_tracker for metrics observability. Register training metrics via stats_tracker.stat() with denominator for per-token averaging."
-    source:
-      path: "AGENTS.md"
-      lines: "97"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
-
-  - rule: "Detach tensors from computation graph when computing metrics that do not require gradients."
-    source:
-      path: "AGENTS.md"
-      lines: "84-97"
-      commit: "a0d122930f7de028404235688c7dba3f01854954"
+- rule: Follow existing code patterns in the same module. Look at neighboring code
+    for tensor operations, stats logging, and control flow conventions.
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: a0d122930f7de028404235688c7dba3f01854954
+- rule: Use stats_tracker for metrics observability. Register training metrics via
+    stats_tracker.stat() with denominator for per-token averaging.
+  source:
+    path: AGENTS.md
+    lines: '97'
+    commit: a0d122930f7de028404235688c7dba3f01854954
+- rule: Detach tensors from computation graph when computing metrics that do not require
+    gradients.
+  source:
+    path: AGENTS.md
+    lines: 84-97
+    commit: a0d122930f7de028404235688c7dba3f01854954
+- rule: Batch ops over Python loops on tensor elements.
+  source:
+    path: AGENTS.md
+    lines: 64-65
+  evidence: The gold solution computes the Taylor and Dual estimators using vectorized
+    tensor math (`log_ratio**2 / 2.0` and `log_ratio.exp() - 1 - log_ratio`) rather
+    than iterating over elements.
+  category: style
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: 24-25
+  evidence: The gold solution registers the stats using `stats_tracker.stat(..., denominator="n_valid_tokens")`,
+    matching the existing pattern in the file for tracking metrics.
+  category: architecture
+distractors:
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
+    `print` or `logging.__name__`.'
+  collision_type: meta_confusion
+  why_distracting: The prompt asks to 'log KL divergence estimators', which might
+    lead the agent to use the standard text logger (`areal.utils.logging.getLogger`).
+    However, in this context, 'logging' refers to tracking metrics via `stats_tracker.stat`
+    for TensorBoard. Using a text logger would spam the console and likely require
+    `.item()`, which would violate the rule against GPU-CPU syncs in hot paths.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-60
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to create a new test file or modify existing
+    tests to verify the math of the KL estimators. However, this is a simple metric
+    tracking addition to an existing function, and the gold solution does not include
+    tests.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 26-27
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain similar rules regarding
+  testing and following existing patterns. `AGENTS.md` provides more specific guidance
+  on logging and performance (e.g., avoiding `.item()`, batch ops). The conflict arises
+  from the overloaded term 'log' in the prompt versus the strict text logging rules
+  in `AGENTS.md`.

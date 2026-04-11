@@ -1,93 +1,82 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/vscode"
+  repo: microsoft/vscode
   pr: 306346
-  base_commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
-  merge_commit: ""
-
+  base_commit: b15c078a6d22d9d2fd182d80658e6d9a6a1b8559
+  merge_commit: ''
 checks:
-  - id: has_git_repository_context_key_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "sessions.hasGitRepository RawContextKey defined in changesView.ts"
-
-  - id: context_key_is_raw_context_key_boolean
-    type: fail_to_pass
-    origin: pr_diff
-    description: "hasGitRepositoryContextKey is a RawContextKey<boolean>"
-
-  - id: bind_context_key_for_git_repository
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bindContextKey wires hasGitRepositoryContextKey in ChangesViewPane"
-
-  - id: git_repository_binding_checks_repository_obs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "hasGitRepository binding derives from the repository observable"
-
-  - id: code_review_has_git_repository_condition
-    type: fail_to_pass
-    origin: pr_diff
-    description: "codeReview.contributions.ts includes sessions.hasGitRepository condition"
-
-  - id: code_review_git_repo_in_context_key_expr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "sessions.hasGitRepository used inside ContextKeyExpr in code review when clause"
-
-  - id: existing_context_keys_intact
-    type: pass_to_pass
-    origin: static
-    description: "Existing context keys (hasPullRequest, etc.) still present in changesView.ts"
-
-  - id: code_review_sessions_window_context_intact
-    type: pass_to_pass
-    origin: static
-    description: "IsSessionsWindowContext still present in codeReview.contributions.ts"
-
-  - id: repo_changesView_file_integrity
-    type: pass_to_pass
-    origin: repo_tests
-    description: "changesView.ts loads and has valid TypeScript structure"
-
-  - id: repo_codeReview_file_integrity
-    type: pass_to_pass
-    origin: repo_tests
-    description: "codeReview.contributions.ts loads and has valid TypeScript structure"
-
-  - id: repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "package.json is valid JSON with expected scripts"
-
-  - id: repo_sessions_module_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Sessions module has expected directory structure"
-
+- id: has_git_repository_context_key_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: sessions.hasGitRepository RawContextKey defined in changesView.ts
+- id: context_key_is_raw_context_key_boolean
+  type: fail_to_pass
+  origin: pr_diff
+  description: hasGitRepositoryContextKey is a RawContextKey<boolean>
+- id: bind_context_key_for_git_repository
+  type: fail_to_pass
+  origin: pr_diff
+  description: bindContextKey wires hasGitRepositoryContextKey in ChangesViewPane
+- id: git_repository_binding_checks_repository_obs
+  type: fail_to_pass
+  origin: pr_diff
+  description: hasGitRepository binding derives from the repository observable
+- id: code_review_has_git_repository_condition
+  type: fail_to_pass
+  origin: pr_diff
+  description: codeReview.contributions.ts includes sessions.hasGitRepository condition
+- id: code_review_git_repo_in_context_key_expr
+  type: fail_to_pass
+  origin: pr_diff
+  description: sessions.hasGitRepository used inside ContextKeyExpr in code review
+    when clause
+- id: existing_context_keys_intact
+  type: pass_to_pass
+  origin: static
+  description: Existing context keys (hasPullRequest, etc.) still present in changesView.ts
+- id: code_review_sessions_window_context_intact
+  type: pass_to_pass
+  origin: static
+  description: IsSessionsWindowContext still present in codeReview.contributions.ts
+- id: repo_changesView_file_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: changesView.ts loads and has valid TypeScript structure
+- id: repo_codeReview_file_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: codeReview.contributions.ts loads and has valid TypeScript structure
+- id: repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json is valid JSON with expected scripts
+- id: repo_sessions_module_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sessions module has expected directory structure
 rubric:
-  - rule: "Use tabs, not spaces for indentation"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "71"
-      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
-
-  - rule: "Use arrow functions => over anonymous function expressions"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "86"
-      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
-
-  - rule: "vs/sessions may import from vs/workbench, but vs/workbench must never import from vs/sessions"
-    source:
-      path: ".github/skills/sessions/SKILL.md"
-      lines: "22-27"
-      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
-
-  - rule: "Never use shared MenuId.* constants from vs/platform/actions for agent sessions UI — use the Menus.* equivalents from browser/menus.ts instead"
-    source:
-      path: ".github/skills/sessions/SKILL.md"
-      lines: "72-73"
-      commit: "b15c078a6d22d9d2fd182d80658e6d9a6a1b8559"
+- rule: Use tabs, not spaces for indentation
+  source:
+    path: .github/copilot-instructions.md
+    lines: '71'
+    commit: b15c078a6d22d9d2fd182d80658e6d9a6a1b8559
+- rule: Use arrow functions => over anonymous function expressions
+  source:
+    path: .github/copilot-instructions.md
+    lines: '86'
+    commit: b15c078a6d22d9d2fd182d80658e6d9a6a1b8559
+- rule: vs/sessions may import from vs/workbench, but vs/workbench must never import
+    from vs/sessions
+  source:
+    path: .github/skills/sessions/SKILL.md
+    lines: 22-27
+    commit: b15c078a6d22d9d2fd182d80658e6d9a6a1b8559
+- rule: Never use shared MenuId.* constants from vs/platform/actions for agent sessions
+    UI — use the Menus.* equivalents from browser/menus.ts instead
+  source:
+    path: .github/skills/sessions/SKILL.md
+    lines: 72-73
+    commit: b15c078a6d22d9d2fd182d80658e6d9a6a1b8559
+hierarchy_analysis: The provided config file hierarchy only contains `AGENTS.md`,
+  which has 0 extracted rules. Therefore, there are no config-driven rules to analyze
+  for conflicts or overrides.

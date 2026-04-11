@@ -2,87 +2,109 @@ source_pr:
   owner: gohugoio
   repo: hugo
   pr_number: 14599
-  title: "internal/warpc: Fix SIGSEGV in Close() when dispatcher fails to start"
+  title: 'internal/warpc: Fix SIGSEGV in Close() when dispatcher fails to start'
   base_commit: 54c804876a5b63c3447b612ce6823339f3f486fc
   merge_commit: c9b88e4d15b96bcf0468ac165f9df53a5fbcd1a5
-
 target_files:
-  - internal/warpc/warpc.go
-
+- internal/warpc/warpc.go
 checks:
-  - id: "code_compiles"
-    description: "The modified code compiles without errors"
-    type: "pytest"
-    origin: "test_outputs"
-
-  - id: "lazy_dispatcher_started_flag_guarded"
-    description: "lazyDispatcher.start() only sets started=true on successful Start()"
-    type: "pytest"
-    origin: "test_outputs"
-
-  - id: "close_handles_failed_start"
-    description: "Dispatchers.Close() properly checks started flag before accessing dispatcher"
-    type: "pytest"
-    origin: "test_outputs"
-
-  - id: "no_unconditional_started_assignment"
-    description: "No unconditional 'd.started = true' in startOnce.Do block (this was the bug)"
-    type: "pytest"
-    origin: "test_outputs"
-
-  - id: "no_sigsegv_in_tests"
-    description: "Existing tests don't SIGSEGV (regression check)"
-    type: "pytest"
-    origin: "test_outputs"
-
-  - id: "test_repo_unit_tests_warpc_no_sigsegv"
-    description: "Repo warpc unit tests don't crash with SIGSEGV (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "test_outputs"
-
-  - id: "test_repo_go_vet"
-    description: "Repo's go vet passes on the warpc package (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_gofmt"
-    description: "Repo's gofmt check passes on warpc package (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_warpc_build"
-    description: "Repo's warpc package builds successfully (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_unit_tests_warpc"
-    description: "Repo warpc package unit tests pass (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_go_mod_tidy"
-    description: "Repo's go.mod is tidy (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_staticcheck"
-    description: "Repo's staticcheck passes on warpc package (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-# Note: No rubric rules for this task. The gold solution is a minimal code fix
-# (adding error check around unconditional assignment) that follows existing
-# code style. There are no config file (AGENTS.md/CLAUDE.md) changes required.
-rubric: []
-
-# Agent configs that were discovered and tested against
+- id: code_compiles
+  description: The modified code compiles without errors
+  type: pytest
+  origin: test_outputs
+- id: lazy_dispatcher_started_flag_guarded
+  description: lazyDispatcher.start() only sets started=true on successful Start()
+  type: pytest
+  origin: test_outputs
+- id: close_handles_failed_start
+  description: Dispatchers.Close() properly checks started flag before accessing dispatcher
+  type: pytest
+  origin: test_outputs
+- id: no_unconditional_started_assignment
+  description: No unconditional 'd.started = true' in startOnce.Do block (this was
+    the bug)
+  type: pytest
+  origin: test_outputs
+- id: no_sigsegv_in_tests
+  description: Existing tests don't SIGSEGV (regression check)
+  type: pytest
+  origin: test_outputs
+- id: test_repo_unit_tests_warpc_no_sigsegv
+  description: Repo warpc unit tests don't crash with SIGSEGV (pass_to_pass)
+  type: pass_to_pass
+  origin: test_outputs
+- id: test_repo_go_vet
+  description: Repo's go vet passes on the warpc package (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_gofmt
+  description: Repo's gofmt check passes on warpc package (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_warpc_build
+  description: Repo's warpc package builds successfully (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_warpc
+  description: Repo warpc package unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_go_mod_tidy
+  description: Repo's go.mod is tidy (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_staticcheck
+  description: Repo's staticcheck passes on warpc package (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: 'Assume that the maintainers and readers of the code you write are Go experts:
+    Don''t use comments to explain the obvious.'
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: 'The gold solution implements the fix by adding `if d.startErr == nil
+    { ... }` without adding any comments explaining the logic (e.g., omitting the
+    `// BUG: This is set unconditionally` comment from th'
+  category: documentation
+- rule: Brevity is good.
+  source:
+    path: AGENTS.md
+    lines: 2-2
+  evidence: The gold solution makes the minimal necessary change to fix the bug by
+    simply wrapping the success-dependent state updates inside an `if d.startErr ==
+    nil` block, rather than refactoring the entire `s
+  category: style
 agent_configs:
-  - path: AGENTS.md
-    commit: 54c804876a5b63c3447b612ce6823339f3f486fc
-    rules_checked:
-      - "Never export symbols that's not needed outside of the package"
-      - "Avoid global state at (almost) all cost"
-
-  - path: CLAUDE.md
-    commit: 54c804876a5b63c3447b612ce6823339f3f486fc
-    note: "References AGENTS.md, contains no additional rules"
+- path: AGENTS.md
+  commit: 54c804876a5b63c3447b612ce6823339f3f486fc
+  rules_checked:
+  - Never export symbols that's not needed outside of the package
+  - Avoid global state at (almost) all cost
+- path: CLAUDE.md
+  commit: 54c804876a5b63c3447b612ce6823339f3f486fc
+  note: References AGENTS.md, contains no additional rules
+distractors:
+- rule: If you need to add temporary debug printing, use `hdebug.Printf`.
+  collision_type: would_cause_bug
+  why_distracting: An agent might be tempted to add `hdebug.Printf` to log the error
+    when `d.startErr != nil` (since the success case already has an `Infof` log).
+    However, as noted in the footnote, leaving `hdebug.Printf` in the final code will
+    cause the CI build to fail.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 7-7
+- rule: Brevity is good.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might over-optimize for 'brevity' by attempting to inline
+    the assignment into the if-statement (e.g., `if d.dispatcher, d.startErr = Start[Q,
+    R](d.opts); d.startErr == nil { ... }`). While valid Go, this reduces readability
+    and deviates from the existing style of the function, which separates the assignment
+    and the subsequent logic.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 2-2
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  All rules originate from `AGENTS.md` and apply uniformly to the Go source files.

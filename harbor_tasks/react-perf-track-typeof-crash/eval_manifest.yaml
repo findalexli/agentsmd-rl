@@ -1,83 +1,98 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 0
-  base_commit: "e32c1261219a9d665f392a4799b8a24ea326f1a1"
-  merge_commit: ""
-
+  base_commit: e32c1261219a9d665f392a4799b8a24ea326f1a1
+  merge_commit: ''
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "ReactPerformanceTrackProperties.js must parse without syntax errors"
-
-  - id: safe_reader_function_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "readReactElementTypeof helper function must be defined in the file"
-
-  - id: safe_reader_uses_in_operator
-    type: fail_to_pass
-    origin: pr_diff
-    description: "readReactElementTypeof must gate access with '$$typeof' in value check to avoid getter traps on cross-origin objects"
-
-  - id: safe_reader_uses_has_own_property
-    type: fail_to_pass
-    origin: pr_diff
-    description: "readReactElementTypeof must use hasOwnProperty.call(value, '$$typeof') to avoid prototype-inherited values"
-
-  - id: add_value_uses_safe_reader
-    type: fail_to_pass
-    origin: pr_diff
-    description: "addValueToProperties must use readReactElementTypeof(value) instead of direct value.$$typeof access"
-
-  - id: add_object_diff_uses_safe_reader
-    type: fail_to_pass
-    origin: pr_diff
-    description: "addObjectDiffToProperties must use readReactElementTypeof for both $$typeof comparisons"
-
-  - id: helper_defined_before_first_use
-    type: pass_to_pass
-    origin: static
-    description: "readReactElementTypeof must be defined before addValueToProperties uses it"
-
-  - id: helper_used_in_multiple_locations
-    type: pass_to_pass
-    origin: static
-    description: "readReactElementTypeof must appear at least 3 times (definition + 2 call sites)"
-
-  # Repo CI/CD pass_to_pass gates
-  - id: test_react_perf_track
-    type: pass_to_pass
-    origin: repo_tests
-    description: "React PerformanceTrack tests pass (pass_to_pass)"
-
-  - id: test_repo_flow
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo Flow typecheck passes on shared package (pass_to_pass)"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ESLint checks pass (pass_to_pass)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: ReactPerformanceTrackProperties.js must parse without syntax errors
+- id: safe_reader_function_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: readReactElementTypeof helper function must be defined in the file
+- id: safe_reader_uses_in_operator
+  type: fail_to_pass
+  origin: pr_diff
+  description: readReactElementTypeof must gate access with '$$typeof' in value check
+    to avoid getter traps on cross-origin objects
+- id: safe_reader_uses_has_own_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: readReactElementTypeof must use hasOwnProperty.call(value, '$$typeof')
+    to avoid prototype-inherited values
+- id: add_value_uses_safe_reader
+  type: fail_to_pass
+  origin: pr_diff
+  description: addValueToProperties must use readReactElementTypeof(value) instead
+    of direct value.$$typeof access
+- id: add_object_diff_uses_safe_reader
+  type: fail_to_pass
+  origin: pr_diff
+  description: addObjectDiffToProperties must use readReactElementTypeof for both
+    $$typeof comparisons
+- id: helper_defined_before_first_use
+  type: pass_to_pass
+  origin: static
+  description: readReactElementTypeof must be defined before addValueToProperties
+    uses it
+- id: helper_used_in_multiple_locations
+  type: pass_to_pass
+  origin: static
+  description: readReactElementTypeof must appear at least 3 times (definition + 2
+    call sites)
+- id: test_react_perf_track
+  type: pass_to_pass
+  origin: repo_tests
+  description: React PerformanceTrack tests pass (pass_to_pass)
+- id: test_repo_flow
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Flow typecheck passes on shared package (pass_to_pass)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint checks pass (pass_to_pass)
 rubric:
-  - rule: "When running tests, use --silent flag to limit output to only failures and --no-watchman to avoid sandboxing issues."
-    source:
-      path: ".claude/skills/test/SKILL.md"
-      lines: "39-42"
-      commit: "e32c1261219a9d665f392a4799b8a24ea326f1a1"
-
-  - rule: "Run Flow type checking with a specific renderer (default: dom-node) using 'yarn flow dom-node' to catch type errors before committing."
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "20-23"
-      commit: "e32c1261219a9d665f392a4799b8a24ea326f1a1"
-
-  - rule: "Before committing, run 'yarn prettier' to fix formatting and 'yarn linc' to check for remaining lint issues that would fail CI."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "8-11"
-      commit: "e32c1261219a9d665f392a4799b8a24ea326f1a1"
+- rule: When running tests, use --silent flag to limit output to only failures and
+    --no-watchman to avoid sandboxing issues.
+  source:
+    path: .claude/skills/test/SKILL.md
+    lines: 39-42
+    commit: e32c1261219a9d665f392a4799b8a24ea326f1a1
+- rule: 'Run Flow type checking with a specific renderer (default: dom-node) using
+    ''yarn flow dom-node'' to catch type errors before committing.'
+  source:
+    path: .claude/skills/flow/SKILL.md
+    lines: 20-23
+    commit: e32c1261219a9d665f392a4799b8a24ea326f1a1
+- rule: Before committing, run 'yarn prettier' to fix formatting and 'yarn linc' to
+    check for remaining lint issues that would fail CI.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: 8-11
+    commit: e32c1261219a9d665f392a4799b8a24ea326f1a1
+- rule: React core files are located outside the `/compiler/` directory
+  source:
+    path: CLAUDE.md
+    lines: 7-7
+  evidence: The gold solution modifies `packages/shared/ReactPerformanceTrackProperties.js`
+    and `packages/react-reconciler/src/__tests__/ReactPerformanceTrack-test.js`, which
+    are outside the `/compiler/` director
+  category: architecture
+distractors:
+- rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions performance tracking and diffing, which an agent
+    might incorrectly associate with the React Compiler's optimization passes, leading
+    it to search or modify files in the `/compiler/` directory instead of the shared/reconciler
+    packages.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+hierarchy_analysis: The CLAUDE.md file provides a basic architectural split between
+  React core and the React Compiler. There are no conflicting rules in the hierarchy
+  as only the root CLAUDE.md is present.

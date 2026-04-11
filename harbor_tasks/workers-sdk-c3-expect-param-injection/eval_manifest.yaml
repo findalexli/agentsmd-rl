@@ -1,63 +1,106 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "cloudflare/workers-sdk"
+  repo: cloudflare/workers-sdk
   pr: 13245
-  base_commit: "f23c455ca2f762f0067ed0bfc810209ee3ab8323"
-  merge_commit: "10e731d83895f229a9383828e30c6d92a3ba9526"
-
+  base_commit: f23c455ca2f762f0067ed0bfc810209ee3ab8323
+  merge_commit: 10e731d83895f229a9383828e30c6d92a3ba9526
 checks:
-  # --------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) - CI/CD checks that should pass on base and gold
-  # --------------------------------------------------------------------------
-  - id: c3_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C3 package TypeScript typecheck passes via turbo"
-    commands: ["pnpm turbo check:type --filter=create-cloudflare"]
-
-  - id: c3_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C3 package unit tests pass via turbo"
-    commands: ["pnpm turbo test:ci --filter=create-cloudflare"]
-
-  - id: c3_lint_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C3 package lint and format checks pass"
-    commands: ["npx oxlint --deny-warnings --type-aware", "npx oxfmt --check"]
-
-  # --------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) - Changes required by the PR
-  # --------------------------------------------------------------------------
-  - id: eslint_disable_comments_resolved
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Bare eslint-disable-next-line no-restricted-imports comments are removed or justified"
-
-  - id: helpers_accept_expect_param
-    type: fail_to_pass
-    origin: pr_diff
-    description: "E2E helper functions accept expect as an injected parameter instead of importing it"
-
-  - id: mocks_throw_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "mocks.ts uses throw new Error() instead of expect.fail() for validation checks"
-
-  - id: call_sites_pass_expect
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Test files pass expect as an argument to refactored helper functions"
-
-  - id: type_only_vitest_import
-    type: fail_to_pass
-    origin: agent_config
-    description: "Helper files use type-only imports for vitest types per consistent-type-imports rule"
-    source:
-      path: "AGENTS.md"
-      lines: "91"
-      commit: "f23c455ca2f762f0067ed0bfc810209ee3ab8323"
-
-rubric: []
+- id: c3_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package TypeScript typecheck passes via turbo
+  commands:
+  - pnpm turbo check:type --filter=create-cloudflare
+- id: c3_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package unit tests pass via turbo
+  commands:
+  - pnpm turbo test:ci --filter=create-cloudflare
+- id: c3_lint_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package lint and format checks pass
+  commands:
+  - npx oxlint --deny-warnings --type-aware
+  - npx oxfmt --check
+- id: eslint_disable_comments_resolved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bare eslint-disable-next-line no-restricted-imports comments are removed
+    or justified
+- id: helpers_accept_expect_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: E2E helper functions accept expect as an injected parameter instead
+    of importing it
+- id: mocks_throw_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: mocks.ts uses throw new Error() instead of expect.fail() for validation
+    checks
+- id: call_sites_pass_expect
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test files pass expect as an argument to refactored helper functions
+- id: type_only_vitest_import
+  type: fail_to_pass
+  origin: agent_config
+  description: Helper files use type-only imports for vitest types per consistent-type-imports
+    rule
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: f23c455ca2f762f0067ed0bfc810209ee3ab8323
+rubric:
+- rule: Shared lint config in `packages/lint-config-shared/`
+  source:
+    path: AGENTS.md
+    lines: 49-50
+  evidence: The gold solution respects the shared lint config by refactoring the code
+    to comply with the `no-restricted-imports` rule (passing `expect` as an argument)
+    rather than disabling the rule globally or m
+  category: style
+- rule: TypeScript compilation with shared configs in `packages/workers-tsconfig/`
+  source:
+    path: AGENTS.md
+    lines: 48-48
+  evidence: The gold solution uses `import type { ExpectStatic } from "vitest"` to
+    import the type definition without violating the runtime import restriction, adhering
+    to TypeScript best practices.
+  category: style
+distractors:
+- rule: Shared lint config in `packages/lint-config-shared/`
+  collision_type: architecture_boundary
+  why_distracting: An agent might try to edit the shared lint config in `packages/lint-config-shared/`
+    to allow importing `expect` in `create-cloudflare` helpers, which violates the
+    architecture boundary of shared configs and affects the entire monorepo.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 49-50
+- rule: '`no-console: error` — use project''s logging utilities'
+  collision_type: would_cause_bug
+  why_distracting: An agent might try to replace `expect.fail()` in `mocks.ts` with
+    a logging utility to avoid the restricted import, but this would break the test
+    assertion behavior since `expect.fail()` throws an assertion error while logging
+    utilities do not.
+  severity: high
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 16-16
+- rule: 'Own vitest setup: mocks `log-update` and `@cloudflare/cli/streams`'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to add `expect` to the global vitest setup or
+    mock it globally, rather than passing it explicitly as an argument to the helper
+    functions.
+  severity: medium
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 22-22
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` providing monorepo-wide
+  architectural context (shared configs, package boundaries) and a package-specific
+  `packages/create-cloudflare/AGENTS.md` providing local conventions. The primary
+  tension in this PR is resolving a linting issue locally within `create-cloudflare`
+  without violating the monorepo's shared linting architecture or breaking local testing
+  conventions.

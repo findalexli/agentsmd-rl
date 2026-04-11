@@ -1,98 +1,118 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2095
-  base_commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
-  merge_commit: "e7adec38f02f5901ca60ee9f7c73314d4d1dc956"
-
+  base_commit: 4f612601f6447b3df1ee17e535ac698b5cc3d16c
+  merge_commit: e7adec38f02f5901ca60ee9f7c73314d4d1dc956
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified files must parse without errors"
-
-  - id: none_helpers_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "none_to_none_str and _convert_none functions removed from config.py"
-
-  - id: entrypoints_no_import_none_helper
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No entrypoint imports or calls none_to_none_str"
-
-  - id: sft_write_config_excludes_none
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SFT write_config omits None-valued fields from TOML output"
-
-  - id: rl_write_config_excludes_none
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RL write_config omits None-valued fields from TOML output"
-
-  - id: inference_write_config_excludes_none
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Inference write_config omits None-valued fields from TOML output"
-
-  - id: rl_write_subconfigs_excludes_none
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RL write_subconfigs omits None-valued fields from all sub-config TOML files"
-
-  - id: get_all_fields_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "get_all_fields utility still works correctly"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified files have real content — write_config, tomli_w.dump, write_subconfigs present"
-
-  - id: config_no_try_except
-    type: pass_to_pass
-    origin: agent_config
-    description: "config.py must not have try/except blocks (AGENTS.md rule)"
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
-
-  - id: no_class_based_tests_in_modified_files
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files must not introduce class-based test patterns (AGENTS.md rule)"
-    source:
-      path: "AGENTS.md"
-      lines: "54"
-      commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
-
-  - id: test_repo_python_syntax_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All Python files in src/ have valid syntax (CI: ruff/syntax check)"
-
-  - id: test_repo_utils_syntax_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's utils directory Python files have valid syntax (CI: ruff/syntax check)"
-
-  - id: test_repo_configs_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's CI config TOML files are valid and parseable"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified files must parse without errors
+- id: none_helpers_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: none_to_none_str and _convert_none functions removed from config.py
+- id: entrypoints_no_import_none_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: No entrypoint imports or calls none_to_none_str
+- id: sft_write_config_excludes_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: SFT write_config omits None-valued fields from TOML output
+- id: rl_write_config_excludes_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: RL write_config omits None-valued fields from TOML output
+- id: inference_write_config_excludes_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: Inference write_config omits None-valued fields from TOML output
+- id: rl_write_subconfigs_excludes_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: RL write_subconfigs omits None-valued fields from all sub-config TOML
+    files
+- id: get_all_fields_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_all_fields utility still works correctly
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files have real content — write_config, tomli_w.dump, write_subconfigs
+    present
+- id: config_no_try_except
+  type: pass_to_pass
+  origin: agent_config
+  description: config.py must not have try/except blocks (AGENTS.md rule)
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 4f612601f6447b3df1ee17e535ac698b5cc3d16c
+- id: no_class_based_tests_in_modified_files
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not introduce class-based test patterns (AGENTS.md
+    rule)
+  source:
+    path: AGENTS.md
+    lines: '54'
+    commit: 4f612601f6447b3df1ee17e535ac698b5cc3d16c
+- id: test_repo_python_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'All Python files in src/ have valid syntax (CI: ruff/syntax check)'
+- id: test_repo_utils_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s utils directory Python files have valid syntax (CI: ruff/syntax
+    check)'
+- id: test_repo_configs_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CI config TOML files are valid and parseable
 rubric:
-  - rule: "Simple is better than complex."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
-  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
-    source:
-      path: "AGENTS.md"
-      lines: "7-8"
-      commit: "4f612601f6447b3df1ee17e535ac698b5cc3d16c"
+- rule: Simple is better than complex.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 4f612601f6447b3df1ee17e535ac698b5cc3d16c
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 7-8
+    commit: 4f612601f6447b3df1ee17e535ac698b5cc3d16c
+- rule: 'Zen of Python: Simple is better than complex'
+  source:
+    path: AGENTS.md
+    lines: 10-34
+  evidence: 'The gold solution removes the custom recursive `none_to_none_str` helper
+    and replaces it with Pydantic''s built-in `exclude_none=True` parameter, adhering
+    to ''Simple is better than complex'' and ''There '
+  category: style
+- rule: Do not add unnecessary comments or refer to old code
+  source:
+    path: AGENTS.md
+    lines: 7-8
+  evidence: The gold solution directly modifies the `model_dump` calls to use `exclude_none=True`
+    without leaving any comments explaining the removal of the old `none_to_none_str`
+    function or the reasoning behind
+  category: documentation
+distractors:
+- rule: Update skills when modifying the codebase to keep them accurate
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs the agent to keep skills up to date whenever
+    modifying the code. Since the PR changes how TOML configs are serialized (omitting
+    None instead of writing 'None'), an agent might be tempted to update the `toml-config`
+    skill. However, this is an internal implementation detail and doesn't change the
+    user-facing workflow, so modifying the skill is out of scope and unnecessary.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 46-50
+hierarchy_analysis: The hierarchy is flat. `CLAUDE.md` simply includes `AGENTS.md`,
+  which contains all the relevant rules. There are no conflicts between different
+  levels of the configuration.

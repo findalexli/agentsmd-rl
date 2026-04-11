@@ -111,3 +111,50 @@ rubric:
     commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
   reference: '- WebCore fixes applied: MessagePortChannel memory leak, JSAbortController
     signal reason, BroadcastChannel use-after-free, EventListenerMap thread affinity.'
+- rule: C++ is used for JavaScriptCore integration and WebKit engine components
+  source:
+    path: CLAUDE.md
+    lines: 1-2
+  evidence: The gold solution modifies C++ files in `src/bun.js/bindings/webcore/`
+    using WebKit/JSC C++ types (`ThreadSafeWeakPtr`, `JSC::Visitor`, `Locker`) to
+    fix WebCore memory safety bugs, adhering to the arc
+  category: architecture
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`
+  collision_type: architecture_boundary
+  why_distracting: The agent is working on C++ files where C++ `std::` or WebKit's
+    `WTF::` namespaces are appropriate. The rule strictly forbids `std.*` in favor
+    of `bun.*`, but this applies only to Zig code. Applying this to C++ would cause
+    compilation errors or lead the agent to attempt rewriting C++ logic in Zig.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 14-16
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The PR fixes memory safety bugs (use-after-free, memory leaks)
+    which typically manifest as crashes. An agent might try to write a test to reproduce
+    the crash, but this rule forbids checking for panics, potentially confusing the
+    agent on how to test the C++ memory fixes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 73-74
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    test/regression/issue/${issueNumber}.test.ts
+  collision_type: scope_ambiguity
+  why_distracting: The prompt mentions these are 'confirmed upstream WebKit bugs'.
+    An agent might try to use the WebKit bug number to create a regression test file,
+    violating the rule that it must be a real Bun GitHub issue number.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 23-24
+hierarchy_analysis: The config hierarchy defines a clear split between Zig (the primary
+  language) and C++ (used for JSC/WebKit integration). The root `CLAUDE.md` establishes
+  this architecture, while `src/CLAUDE.md` provides deep, specific guidance for Zig
+  system calls and standard library replacements. Because this PR is entirely within
+  the C++ WebCore bindings, the Zig-specific rules in `src/CLAUDE.md` act as distractors.
+  The testing rules in the root config also create friction, as they are geared towards
+  JS/TS testing of Bun features rather than C++ memory safety backports from WebKit.

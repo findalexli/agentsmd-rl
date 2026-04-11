@@ -81,3 +81,43 @@ rubric:
     path: CLAUDE.md
     lines: 120-135
     commit: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+- rule: For faster iteration, use -p to select only the most relevant packages
+  source:
+    path: CLAUDE.md
+    lines: 39-40
+  evidence: The prompt and expected workflow use the `-p` (or `--package`) flag with
+    `cargo check --package sui-benchmark` to isolate the build to the modified crate,
+    following the instruction for faster iteratio
+  category: tooling
+distractors:
+- rule: Run e2e tests with cargo simtest and Rust unittests with cargo nextest run
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run the full test suite (`cargo simtest`
+    or `cargo nextest run`) which takes over 10 minutes, or try to write new tests,
+    whereas the task only requires verifying compilation with `cargo check`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 29-34
+- rule: Consult crate-specific CLAUDE.md or AGENTS.md files when changing files in
+    those crates.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to read `crates/sui-benchmark/CLAUDE.md` which
+    is not provided in the context, wasting time and potentially causing tool errors.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 4-5
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: architecture_boundary
+  why_distracting: The agent might think it needs to create a new file for the TPS
+    validation logic to satisfy modularity and add the license header, but the logic
+    is small enough to be inline in `stress.rs`.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 14-17
+hierarchy_analysis: The hierarchy consists of a root CLAUDE.md and AGENTS.md. The
+  root CLAUDE.md provides general Rust tooling commands. AGENTS.md delegates to crate-specific
+  files which do not exist for sui-benchmark in this context.

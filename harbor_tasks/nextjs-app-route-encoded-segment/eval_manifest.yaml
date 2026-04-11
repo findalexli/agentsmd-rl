@@ -1,112 +1,131 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91603
-  base_commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
-  merge_commit: "3ddfcace6636081e56bc64e0283b08e6cf5dae4a"
-
+  base_commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+  merge_commit: 3ddfcace6636081e56bc64e0283b08e6cf5dae4a
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript file must parse without errors"
-
-  - id: encoded_single_dynamic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Encoded single dynamic placeholder %5BprojectSlug%5D is recognized"
-
-  - id: encoded_multiple_dynamic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple encoded placeholders in same path both recognized"
-
-  - id: encoded_mixed_segments
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Mixed encoded and non-encoded dynamic segments both recognized"
-
-  - id: encoded_catchall_segment
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Encoded catchall segment %5B...slug%5D is recognized as dynamic"
-
-  - id: encoded_optional_catchall
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Encoded optional catchall %5B%5B...slug%5D%5D is recognized"
-
-  - id: normal_dynamic_segments
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-encoded dynamic segments still work"
-
-  - id: static_segments
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Static segments are parsed correctly with no false dynamic matches"
-
-  - id: malformed_encoding_no_crash
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Malformed URL encoding does not crash"
-
-  - id: no_hardcoded_secrets
-    type: pass_to_pass
-    origin: agent_config
-    description: "No hardcoded secret values in modified file"
-    source:
-      path: "AGENTS.md"
-      lines: "302-309"
-      commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
-
-  - id: no_require_calls
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare require() calls in shared lib file — use ES imports for DCE safety"
-    source:
-      path: "AGENTS.md"
-      lines: "396"
-      commit: "56d75a0b77f2ceda8ea747810275da8e0a9a3d71"
-
-  # Repo CI/CD pass_to_pass gates
-  - id: test_repo_typescript_syntax_app_router
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's router TypeScript files parse without errors"
-
-  - id: test_repo_imports_resolvable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Router module imports are resolvable without runtime errors"
-
-  - id: test_repo_eslint_app_router
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint passes on router files"
-
-  - id: test_repo_prettier_app_router
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Prettier formatting check passes on router files"
-
-  - id: test_repo_unit_interception_routes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Interception routes unit tests pass"
-
-  - id: test_repo_unit_is_dynamic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Is-dynamic route unit tests pass"
-
-  - id: test_repo_unit_validate_app_paths
-    type: pass_to_pass
-    origin: repo_tests
-    description: "App paths validation unit tests pass - directly tests parseAppRoute from modified app.ts"
-
-  - id: test_repo_unit_extract_pathname_segments
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Extract pathname route param segments unit tests pass - directly imports parseAppRoute from modified app.ts"
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript file must parse without errors
+- id: encoded_single_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Encoded single dynamic placeholder %5BprojectSlug%5D is recognized
+- id: encoded_multiple_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple encoded placeholders in same path both recognized
+- id: encoded_mixed_segments
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mixed encoded and non-encoded dynamic segments both recognized
+- id: encoded_catchall_segment
+  type: fail_to_pass
+  origin: pr_diff
+  description: Encoded catchall segment %5B...slug%5D is recognized as dynamic
+- id: encoded_optional_catchall
+  type: fail_to_pass
+  origin: pr_diff
+  description: Encoded optional catchall %5B%5B...slug%5D%5D is recognized
+- id: normal_dynamic_segments
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-encoded dynamic segments still work
+- id: static_segments
+  type: pass_to_pass
+  origin: pr_diff
+  description: Static segments are parsed correctly with no false dynamic matches
+- id: malformed_encoding_no_crash
+  type: pass_to_pass
+  origin: pr_diff
+  description: Malformed URL encoding does not crash
+- id: no_hardcoded_secrets
+  type: pass_to_pass
+  origin: agent_config
+  description: No hardcoded secret values in modified file
+  source:
+    path: AGENTS.md
+    lines: 302-309
+    commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+- id: no_require_calls
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare require() calls in shared lib file — use ES imports for DCE
+    safety
+  source:
+    path: AGENTS.md
+    lines: '396'
+    commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+- id: test_repo_typescript_syntax_app_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's router TypeScript files parse without errors
+- id: test_repo_imports_resolvable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router module imports are resolvable without runtime errors
+- id: test_repo_eslint_app_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on router files
+- id: test_repo_prettier_app_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes on router files
+- id: test_repo_unit_interception_routes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Interception routes unit tests pass
+- id: test_repo_unit_is_dynamic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Is-dynamic route unit tests pass
+- id: test_repo_unit_validate_app_paths
+  type: pass_to_pass
+  origin: repo_tests
+  description: App paths validation unit tests pass - directly tests parseAppRoute
+    from modified app.ts
+- id: test_repo_unit_extract_pathname_segments
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extract pathname route param segments unit tests pass - directly imports
+    parseAppRoute from modified app.ts
+rubric:
+- rule: Source code is in `packages/next/src/` and compiled output goes to `packages/next/dist/`.
+  source:
+    path: CLAUDE.md
+    lines: 25-31
+  evidence: The patch correctly targets the source file `packages/next/src/shared/lib/router/routes/app.ts`
+    instead of modifying the compiled output in `packages/next/dist/`.
+  category: architecture
+distractors:
+- rule: Before editing or creating files in any subdirectory, read all README.md files
+    in the directory path from the repo root up to and including the target file's
+    directory.
+  collision_type: scope_ambiguity
+  why_distracting: The bug is a specific logic error in URL decoding within the router.
+    Forcing the agent to read all READMEs up the directory tree wastes time and context
+    window, as the fix requires understanding the local code logic in `app.ts`, not
+    high-level directory documentation.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 41-48
+- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files.
+  collision_type: rule_conflict
+  why_distracting: The agent might run `pnpm --filter=next build` (~60s) to test its
+    changes because the edits are limited to core Next.js files, conflicting with
+    the instruction to use fast local development (`testheadless` or `dev`) for the
+    inner loop.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 93-94
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical symlinks. The rules
+  within the file have some internal tension, specifically between ''prefer `pnpm
+  --filter=next build` when edits are limited to core Next.js files'' and ''default
+  to watch mode + skip-isolate for the inner loop (not full builds)''. The agent must
+  correctly identify that it is in the ''inner loop'' of iterative development and
+  choose the faster test commands over the full build commands.'

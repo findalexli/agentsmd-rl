@@ -1,134 +1,170 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19220
-  base_commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-  merge_commit: "da1d37274fcc6dcb81ff76ebcf2818100239aa87"
-
+  base_commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+  merge_commit: da1d37274fcc6dcb81ff76ebcf2818100239aa87
 checks:
-  - id: system_ts_parseable
-    type: pass_to_pass
-    origin: static
-    description: "system.ts must be valid TypeScript that bun can parse"
-
-  - id: generic_gpt_not_codex
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Generic GPT models (gpt-5.4, gpt-5, gpt-3.5-turbo) must not receive the codex prompt"
-
-  - id: generic_gpt_gets_dedicated_prompt
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Generic GPT models must get a dedicated GPT prompt, not the default fallback"
-
-  - id: gpt_prompt_file_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A GPT-specific prompt file must exist in the prompt directory with real content (>=50 chars)"
-
-  - id: gpt_codex_routes_differ
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Generic GPT (gpt-5.4) and codex GPT (gpt-codex-test) must route to different prompts"
-
-  - id: codex_model_gets_codex
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Models with 'codex' in their ID must still receive the codex prompt"
-
-  - id: existing_routing_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "gpt-4o routes to BEAST, gemini to GEMINI, claude to ANTHROPIC"
-
-  - id: gpt_prompt_distinct_from_codex
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A GPT prompt file must exist and not be a near-copy of the codex prompt (similarity <= 0.90)"
-
-  - id: no_any_type
-    type: pass_to_pass
-    origin: agent_config
-    description: "system.ts must not use the 'any' type annotation"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - id: no_else_in_provider
-    type: pass_to_pass
-    origin: agent_config
-    description: "provider() must not use else statements — prefer early returns"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - id: no_let_in_system_ts
-    type: pass_to_pass
-    origin: agent_config
-    description: "system.ts must prefer const over let"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - id: no_try_catch_in_system_ts
-    type: pass_to_pass
-    origin: agent_config
-    description: "system.ts must not use try/catch blocks"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - id: no_for_loops_in_system_ts
-    type: pass_to_pass
-    origin: agent_config
-    description: "system.ts must prefer functional array methods over for loops"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - id: repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes (bun turbo typecheck)"
-
-  - id: repo_session_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's session tests pass (bun test test/session/)"
-
+- id: system_ts_parseable
+  type: pass_to_pass
+  origin: static
+  description: system.ts must be valid TypeScript that bun can parse
+- id: generic_gpt_not_codex
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generic GPT models (gpt-5.4, gpt-5, gpt-3.5-turbo) must not receive
+    the codex prompt
+- id: generic_gpt_gets_dedicated_prompt
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generic GPT models must get a dedicated GPT prompt, not the default
+    fallback
+- id: gpt_prompt_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: A GPT-specific prompt file must exist in the prompt directory with
+    real content (>=50 chars)
+- id: gpt_codex_routes_differ
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generic GPT (gpt-5.4) and codex GPT (gpt-codex-test) must route to
+    different prompts
+- id: codex_model_gets_codex
+  type: pass_to_pass
+  origin: pr_diff
+  description: Models with 'codex' in their ID must still receive the codex prompt
+- id: existing_routing_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: gpt-4o routes to BEAST, gemini to GEMINI, claude to ANTHROPIC
+- id: gpt_prompt_distinct_from_codex
+  type: fail_to_pass
+  origin: pr_diff
+  description: A GPT prompt file must exist and not be a near-copy of the codex prompt
+    (similarity <= 0.90)
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: system.ts must not use the 'any' type annotation
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- id: no_else_in_provider
+  type: pass_to_pass
+  origin: agent_config
+  description: provider() must not use else statements — prefer early returns
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- id: no_let_in_system_ts
+  type: pass_to_pass
+  origin: agent_config
+  description: system.ts must prefer const over let
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- id: no_try_catch_in_system_ts
+  type: pass_to_pass
+  origin: agent_config
+  description: system.ts must not use try/catch blocks
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- id: no_for_loops_in_system_ts
+  type: pass_to_pass
+  origin: agent_config
+  description: system.ts must prefer functional array methods over for loops
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (bun turbo typecheck)
+- id: repo_session_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's session tests pass (bun test test/session/)
 rubric:
-  - rule: "Prefer single word variable names where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - rule: "Keep things in one function unless composable or reusable"
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
-
-  - rule: "Avoid unnecessary destructuring; use dot notation to preserve context"
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "17e8f577d681db858c7a24db2c91d1b45b7b85c9"
+- rule: Prefer single word variable names where possible
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- rule: Reduce total variable count by inlining when a value is only used once
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- rule: Avoid unnecessary destructuring; use dot notation to preserve context
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: 17e8f577d681db858c7a24db2c91d1b45b7b85c9
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: 19-21
+  evidence: The new prompt file is named `gpt.txt` (a single word) rather than a multi-word
+    name like `gpt-prompt.txt` or `general-gpt.txt`.
+  category: naming
+distractors:
+- rule: Use Bun APIs when possible, like `Bun.file()`
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to read the new `gpt.txt` file at runtime using
+    `Bun.file()` in `system.ts`, but system prompts in this architecture are typically
+    imported directly as strings or handled by an existing prompt loader.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 15-15
+- rule: Prefer `FileSystem.FileSystem` instead of raw `fs/promises` for effectful
+    file I/O.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to use `FileSystem.FileSystem` to read the
+    prompt file, conflicting with the Bun API rule and likely violating how prompts
+    are statically loaded or imported.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 38-39
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to convert the synchronous `SystemPrompt.provider()`
+    routing function into an Effect generator, unnecessarily complicating a simple
+    string-matching and routing function.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 18-19
+- rule: Avoid `else` statements. Prefer early returns.
+  collision_type: scope_ambiguity
+  why_distracting: When modifying the model routing logic in `SystemPrompt.provider()`,
+    the agent might unnecessarily refactor existing `if/else if` chains into early
+    returns, expanding the scope of the PR and risking regressions.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 63-64
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and Bun guidelines,
+  while `packages/opencode/AGENTS.md` introduces Effect-specific rules. This creates
+  a direct conflict for file I/O (`Bun.file()` vs `FileSystem.FileSystem`), which
+  is a trap here because the prompt file should likely just be imported or loaded
+  using the existing mechanism rather than introducing new I/O logic.

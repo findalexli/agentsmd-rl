@@ -1,101 +1,126 @@
-source_pr: "https://github.com/MystenLabs/sui/pull/26133"
-base_commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
-merge_commit: "92cdfc7fe041bf824567e76995a5d5ef973bc6d6"
-
-# Agent config rules from CLAUDE.md that apply programmatically
+source_pr: https://github.com/MystenLabs/sui/pull/26133
+base_commit: ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a
+merge_commit: 92cdfc7fe041bf824567e76995a5d5ef973bc6d6
 agent_config: []
-
 checks:
-  # Pass-to-pass: compilation and existing tests
-  - id: test_cargo_check_compiles
-    type: pass_to_pass
-    description: "Crate compiles without errors"
-    origin: repo_tests
-
-  - id: test_existing_watermark_operations
-    type: pass_to_pass
-    description: "Existing watermark operations test passes"
-    origin: repo_tests
-
-  # Fail-to-pass: ConcurrentConnection trait implementation
-  - id: test_reader_watermark_exists_and_passes
-    type: fail_to_pass
-    description: "reader_watermark returns actual watermark data instead of None"
-    origin: gold_tests
-
-  - id: test_pruner_watermark_exists_and_passes
-    type: fail_to_pass
-    description: "pruner_watermark returns actual PrunerWatermark with computed wait_for_ms"
-    origin: gold_tests
-
-  - id: test_pruner_saturates_when_ready
-    type: fail_to_pass
-    description: "pruner_watermark properly uses saturating_sub for wait time calculation"
-    origin: gold_tests
-
-  - id: test_set_reader_watermark_works
-    type: fail_to_pass
-    description: "set_reader_watermark returns Ok(true) instead of bailing with error"
-    origin: gold_tests
-
-  - id: test_set_pruner_watermark_works
-    type: fail_to_pass
-    description: "set_pruner_watermark returns Ok(true) instead of bailing with error"
-    origin: gold_tests
-
-  - id: test_init_watermark_fresh
-    type: fail_to_pass
-    description: "init_watermark creates watermark with reader_lo = checkpoint + 1"
-    origin: gold_tests
-
-  - id: test_init_watermark_migrates_legacy
-    type: fail_to_pass
-    description: "init_watermark migrates legacy watermark format to new format"
-    origin: gold_tests
-
-  # Pass-to-pass: all tests
-  - id: test_all_lib_tests_pass
-    type: pass_to_pass
-    description: "All crate unit tests pass"
-    origin: repo_tests
-
-  # Pass-to-pass: lint and format checks
-  - id: test_cargo_clippy
-    type: pass_to_pass
-    description: "Cargo clippy passes with no warnings"
-    origin: repo_tests
-
-  - id: test_cargo_fmt
-    type: pass_to_pass
-    description: "Cargo fmt --check passes (code is properly formatted)"
-    origin: repo_tests
-
-  - id: test_cargo_doc
-    type: pass_to_pass
-    description: "Cargo doc builds without errors"
-    origin: repo_tests
-
+- id: test_cargo_check_compiles
+  type: pass_to_pass
+  description: Crate compiles without errors
+  origin: repo_tests
+- id: test_existing_watermark_operations
+  type: pass_to_pass
+  description: Existing watermark operations test passes
+  origin: repo_tests
+- id: test_reader_watermark_exists_and_passes
+  type: fail_to_pass
+  description: reader_watermark returns actual watermark data instead of None
+  origin: gold_tests
+- id: test_pruner_watermark_exists_and_passes
+  type: fail_to_pass
+  description: pruner_watermark returns actual PrunerWatermark with computed wait_for_ms
+  origin: gold_tests
+- id: test_pruner_saturates_when_ready
+  type: fail_to_pass
+  description: pruner_watermark properly uses saturating_sub for wait time calculation
+  origin: gold_tests
+- id: test_set_reader_watermark_works
+  type: fail_to_pass
+  description: set_reader_watermark returns Ok(true) instead of bailing with error
+  origin: gold_tests
+- id: test_set_pruner_watermark_works
+  type: fail_to_pass
+  description: set_pruner_watermark returns Ok(true) instead of bailing with error
+  origin: gold_tests
+- id: test_init_watermark_fresh
+  type: fail_to_pass
+  description: init_watermark creates watermark with reader_lo = checkpoint + 1
+  origin: gold_tests
+- id: test_init_watermark_migrates_legacy
+  type: fail_to_pass
+  description: init_watermark migrates legacy watermark format to new format
+  origin: gold_tests
+- id: test_all_lib_tests_pass
+  type: pass_to_pass
+  description: All crate unit tests pass
+  origin: repo_tests
+- id: test_cargo_clippy
+  type: pass_to_pass
+  description: Cargo clippy passes with no warnings
+  origin: repo_tests
+- id: test_cargo_fmt
+  type: pass_to_pass
+  description: Cargo fmt --check passes (code is properly formatted)
+  origin: repo_tests
+- id: test_cargo_doc
+  type: pass_to_pass
+  description: Cargo doc builds without errors
+  origin: repo_tests
 rubric:
-  - rule: "ALWAYS run `cargo xclippy` after finishing development to ensure code passes all linting checks"
-    source:
-      path: "CLAUDE.md"
-      lines: "111"
-      commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
-
-  - rule: "NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other linting suppressions - fix the underlying issues instead"
-    source:
-      path: "CLAUDE.md"
-      lines: "113"
-      commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
-
-  - rule: "All unit tests must work properly - use `#[tokio::test]` for async tests, not `#[test]`"
-    source:
-      path: "CLAUDE.md"
-      lines: "114"
-      commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
-
-  - rule: "Do NOT comment the obvious - comments should not simply repeat what the code does. Comment non-obvious algorithms, business logic, temporary exclusions, complex calculations, and subtle race conditions. Do NOT comment simple variable assignments, standard library usage, or basic control flow."
-    source:
-      path: "CLAUDE.md"
-      lines: "116-131"
-      commit: "ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a"
+- rule: ALWAYS run `cargo xclippy` after finishing development to ensure code passes
+    all linting checks
+  source:
+    path: CLAUDE.md
+    lines: '111'
+    commit: ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a
+- rule: NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other linting
+    suppressions - fix the underlying issues instead
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a
+- rule: All unit tests must work properly - use `#[tokio::test]` for async tests,
+    not `#[test]`
+  source:
+    path: CLAUDE.md
+    lines: '114'
+    commit: ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a
+- rule: Do NOT comment the obvious - comments should not simply repeat what the code
+    does. Comment non-obvious algorithms, business logic, temporary exclusions, complex
+    calculations, and subtle race conditions. Do NOT comment simple variable assignments,
+    standard library usage, or basic control flow.
+  source:
+    path: CLAUDE.md
+    lines: 116-131
+    commit: ffbf699bc89e0d16fbcdefdd9d459b1ca0ddb88a
+distractors:
+- rule: 'Storage Layer: Uses RocksDB for persistent storage'
+  collision_type: architecture_boundary
+  why_distracting: The config states that the storage layer 'Uses RocksDB for persistent
+    storage'. An agent might read this and attempt to implement the watermark storage
+    using RocksDB or look for a RocksDB connection. However, this specific crate (`sui-indexer-alt-object-store`)
+    is designed to interact with cloud object stores (like S3/GCS) via the `object_store`
+    crate, and watermarks must be stored as JSON objects/files in the object store
+    itself.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 76-79
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The agent might decide to extract the new `ObjectStoreWatermark`
+    and `LegacyObjectStoreWatermark` structs into a new file (e.g., `watermark.rs`)
+    to keep `lib.rs` clean, and subsequently apply the required license header. However,
+    the gold solution keeps these structs inline within `lib.rs`, making a new file
+    unnecessary and out of scope for this specific fix.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 15-18
+- rule: simtests must be run with `cargo simtest` to avoid false negatives... skip
+    simulation tests as they may cause false negatives with `cargo nextest`
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run standard `cargo test` to verify its
+    implementation of the watermark methods, which could lead to false negatives or
+    hangs due to simulation tests. The agent must use the specific `SUI_SKIP_SIMTESTS=1
+    cargo nextest run` or `cargo simtest` commands as instructed.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 28-33
+hierarchy_analysis: The root `CLAUDE.md` provides general architectural guidelines
+  (such as using RocksDB for storage) that apply primarily to the core validator node
+  (`sui-core`). These guidelines conflict with the specific purpose of the `sui-indexer-alt-object-store`
+  crate, which is designed to use cloud object storage. The agent must recognize that
+  the indexer's object store implementation operates under different architectural
+  constraints than the core node.

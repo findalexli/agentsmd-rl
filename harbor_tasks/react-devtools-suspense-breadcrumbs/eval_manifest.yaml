@@ -1,87 +1,96 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35700
-  base_commit: "95ffd6cd9c794842e5c8ab36150296afab1ae70c"
-  merge_commit: "8b276df415a29bee586473bfced9191b25166790"
-
+  base_commit: 95ffd6cd9c794842e5c8ab36150296afab1ae70c
+  merge_commit: 8b276df415a29bee586473bfced9191b25166790
 checks:
-  - id: files_exist
-    type: pass_to_pass
-    origin: static
-    description: "All modified files (SuspenseBreadcrumbs.js, .css, SuspenseTab.js, .css) must be present"
-
-  - id: breadcrumbs_css_overflow_handling
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SuspenseBreadcrumbsContainer with flex layout, MenuButton and Modal CSS classes added"
-
-  - id: overflow_components_implemented
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SuspenseBreadcrumbsFlatList, SuspenseBreadcrumbsMenu, SuspenseBreadcrumbsDropdown components implemented"
-
-  - id: overflow_detection_logic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "useIsOverflowing hook, ResizeObserver, and conditional ternary rendering for overflow"
-
-  - id: horizontal_scrollbar_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "overflow-x: auto and .SuspenseBreadcrumbs class removed from SuspenseTab.css"
-
-  - id: wrapper_div_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Wrapper div with className={styles.SuspenseBreadcrumbs} removed from SuspenseTab.js"
-
-  - id: reach_ui_menu_import
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Menu, MenuList, MenuButton, MenuItem imported from reach-ui/menu-button"
-
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ESLint passes"
-
-  - id: test_repo_flow
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo Flow typecheck passes"
-
-  - id: test_repo_license
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo license check passes"
-
-  - id: test_repo_version_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo version consistency check passes"
-
-  - id: test_repo_print_warnings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo print warnings test passes"
-
+- id: files_exist
+  type: pass_to_pass
+  origin: static
+  description: All modified files (SuspenseBreadcrumbs.js, .css, SuspenseTab.js, .css)
+    must be present
+- id: breadcrumbs_css_overflow_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: SuspenseBreadcrumbsContainer with flex layout, MenuButton and Modal
+    CSS classes added
+- id: overflow_components_implemented
+  type: fail_to_pass
+  origin: pr_diff
+  description: SuspenseBreadcrumbsFlatList, SuspenseBreadcrumbsMenu, SuspenseBreadcrumbsDropdown
+    components implemented
+- id: overflow_detection_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: useIsOverflowing hook, ResizeObserver, and conditional ternary rendering
+    for overflow
+- id: horizontal_scrollbar_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'overflow-x: auto and .SuspenseBreadcrumbs class removed from SuspenseTab.css'
+- id: wrapper_div_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Wrapper div with className={styles.SuspenseBreadcrumbs} removed from
+    SuspenseTab.js
+- id: reach_ui_menu_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: Menu, MenuList, MenuButton, MenuItem imported from reach-ui/menu-button
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes
+- id: test_repo_flow
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Flow typecheck passes
+- id: test_repo_license
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo license check passes
+- id: test_repo_version_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo version consistency check passes
+- id: test_repo_print_warnings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo print warnings test passes
 rubric:
-  - rule: "Run yarn prettier to fix formatting before committing code."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "10"
-      commit: "95ffd6cd9c794842e5c8ab36150296afab1ae70c"
-
-  - rule: "Run yarn linc to check for lint issues before committing."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "11"
-      commit: "95ffd6cd9c794842e5c8ab36150296afab1ae70c"
-
-  - rule: "Run yarn flow with a renderer argument for type checking (dom-node is default)."
-    source:
-      path: ".claude/skills/flow/SKILL.md"
-      lines: "10,22"
-      commit: "95ffd6cd9c794842e5c8ab36150296afab1ae70c"
+- rule: Run yarn prettier to fix formatting before committing code.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '10'
+    commit: 95ffd6cd9c794842e5c8ab36150296afab1ae70c
+- rule: Run yarn linc to check for lint issues before committing.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '11'
+    commit: 95ffd6cd9c794842e5c8ab36150296afab1ae70c
+- rule: Run yarn flow with a renderer argument for type checking (dom-node is default).
+  source:
+    path: .claude/skills/flow/SKILL.md
+    lines: 10,22
+    commit: 95ffd6cd9c794842e5c8ab36150296afab1ae70c
+- rule: React files are located outside the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: The gold solution modifies files in `packages/react-devtools-shared/`,
+    which correctly aligns with the instruction that React files are outside the `/compiler/`
+    directory.
+  category: architecture
+distractors:
+- rule: 'React Compiler: /compiler/ directory (has its own instructions)'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might mistakenly assume that DevTools or Suspense features
+    require changes in the React Compiler, leading it to search for compiler instructions
+    or modify compiler files unnecessarily.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+hierarchy_analysis: The hierarchy consists of a single root CLAUDE.md file with very
+  high-level architectural boundaries between React and the React Compiler.

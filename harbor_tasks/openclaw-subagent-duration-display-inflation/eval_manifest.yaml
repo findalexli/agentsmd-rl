@@ -1,94 +1,123 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 57739
-  base_commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
-  merge_commit: "09bb93c6e046ecc2c588c56f513ff4a33351d302"
-
+  base_commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
+  merge_commit: 09bb93c6e046ecc2c588c56f513ff4a33351d302
 checks:
-  - id: seconds_precision
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Sub-minute durations (5s, 30s, 45s) display second-level precision instead of rounding to 1m"
-
-  - id: minute_second_precision
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Mixed durations (90s, 150s) show combined minute+second format (1m30s, 2m30s)"
-
-  - id: hour_format
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Hour-level durations display as hours (rejects trivial seconds-only stub)"
-
-  - id: edge_cases_no_crash
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Edge inputs (0, undefined, negative) don't crash and don't show positive duration"
-
-  - id: callers_handle_undefined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both callers (subagent-control.ts, shared.ts) guard against undefined return"
-
-  - id: other_exports_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Other exports (formatTokenShort, truncateLine) still present in subagents-format.ts"
-
-  - id: no_any_types
-    type: pass_to_pass
-    origin: agent_config
-    description: "No 'any' type annotations in subagents-format.ts"
-    source:
-      path: "CLAUDE.md"
-      lines: "144"
-      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
-
-  - id: no_lint_suppressions
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-nocheck or inline lint suppressions in modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "146"
-      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
-
-  - id: no_duplicate_implementation
-    type: fail_to_pass
-    origin: agent_config
-    description: "No full duplicate formatDurationCompact — uses re-export or thin wrapper"
-    source:
-      path: "CLAUDE.md"
-      lines: "164"
-      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
-
-  # Repo CI checks (pass_to_pass gates)
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's oxlint passes with 0 errors/warnings"
-
-  - id: test_repo_format_time_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's format-time unit tests pass — related to fix module"
-
-  - id: test_repo_no_conflict_markers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo has no git conflict markers"
-
+- id: seconds_precision
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sub-minute durations (5s, 30s, 45s) display second-level precision
+    instead of rounding to 1m
+- id: minute_second_precision
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mixed durations (90s, 150s) show combined minute+second format (1m30s,
+    2m30s)
+- id: hour_format
+  type: pass_to_pass
+  origin: pr_diff
+  description: Hour-level durations display as hours (rejects trivial seconds-only
+    stub)
+- id: edge_cases_no_crash
+  type: pass_to_pass
+  origin: pr_diff
+  description: Edge inputs (0, undefined, negative) don't crash and don't show positive
+    duration
+- id: callers_handle_undefined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both callers (subagent-control.ts, shared.ts) guard against undefined
+    return
+- id: other_exports_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Other exports (formatTokenShort, truncateLine) still present in subagents-format.ts
+- id: no_any_types
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'any' type annotations in subagents-format.ts
+  source:
+    path: CLAUDE.md
+    lines: '144'
+    commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
+- id: no_lint_suppressions
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck or inline lint suppressions in modified files
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
+- id: no_duplicate_implementation
+  type: fail_to_pass
+  origin: agent_config
+  description: No full duplicate formatDurationCompact — uses re-export or thin wrapper
+  source:
+    path: CLAUDE.md
+    lines: '164'
+    commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint passes with 0 errors/warnings
+- id: test_repo_format_time_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's format-time unit tests pass — related to fix module
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no git conflict markers
 rubric:
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "163"
-      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
-
-  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
-    source:
-      path: "CLAUDE.md"
-      lines: "167"
-      commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
+- rule: 'Written English: use American spelling and grammar in code, comments, docs,
+    and UI strings.'
+  source:
+    path: CLAUDE.md
+    lines: '167'
+    commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
+- rule: 'Source code: `src/` (... infra in `src/infra` ...)'
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+  evidence: The gold solution correctly imports the canonical time formatting utility
+    from the `src/infra` directory (`../infra/format-time/format-duration.ts`), aligning
+    with the architectural definition of infr
+  category: architecture
+distractors:
+- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
+    plus local `api.ts` / `runtime-api.ts` barrels as the public surface. Do not import
+    core `src/**` ... directly.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might mistakenly apply this rule to `src/shared/subagents-format.ts`
+    and refuse to import `src/infra/format-time/format-duration.ts`, thinking it violates
+    the import boundary. However, `src/shared` is part of core, not an extension,
+    so it is allowed to import from `src/infra`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 14-14
+- rule: 'Messaging channels: always consider all built-in + extension channels when
+    refactoring shared logic (routing, allowlists, pairing, command gating, onboarding,
+    docs).'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is refactoring shared logic (`src/shared/subagents-format.ts`)
+    and might think it needs to audit or update all messaging channels (`src/telegram`,
+    `src/discord`, etc.) to ensure they handle the new duration format. However, the
+    duration format is just a string and the specific callers are already updated
+    in the PR.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 17-17
+hierarchy_analysis: The repository has identical rules in `CLAUDE.md` and `AGENTS.md`.
+  The primary challenge is correctly identifying the architectural boundaries of the
+  files being edited. The files in `src/shared/`, `src/agents/`, and `src/auto-reply/`
+  are core files, not extension production code, so the strict import boundaries for
+  extensions do not apply to them.

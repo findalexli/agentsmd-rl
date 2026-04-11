@@ -1,88 +1,109 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13152
-  base_commit: "64828b08d5be4fdde8a73932b3f288c073ec49bd"
-  merge_commit: "30bf54c187478cdafa70037f088e353f5629a995"
-
+  base_commit: 64828b08d5be4fdde8a73932b3f288c073ec49bd
+  merge_commit: 30bf54c187478cdafa70037f088e353f5629a995
 checks:
-  - id: doc_endpoint_uses_plain_response
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Doc endpoint returns plain Response instead of json() wrapper"
-
-  - id: guide_endpoint_uses_plain_response
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Guide endpoint returns plain Response instead of json() wrapper"
-
-  - id: client_uses_text_not_json
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Client fetches markdown via .text() instead of .json()/.markdown"
-
-  - id: content_type_markdown_in_servers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both server endpoints set Content-Type to text/markdown"
-
-  - id: no_json_import_from_sveltekit
-    type: fail_to_pass
-    origin: pr_diff
-    description: "json import from @sveltejs/kit removed in both server files"
-
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "All three modified files parse without syntax errors"
-
-  - id: handler_structure_preserved
-    type: pass_to_pass
-    origin: static
-    description: "SvelteKit handler exports (prerender, entries, GET) still present"
-
-  - id: handlers_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "GET handlers have real logic, not trivial stubs"
-
-  # P2P enrichment - CI/CD tests that work in Docker environment
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo Prettier format check passes (pnpm format:check)"
-
-  - id: test_repo_format_check_modified
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo Prettier format check passes on modified files"
-
-  - id: test_repo_client_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo client build succeeds (pnpm --filter @gradio/client build)"
-
-  - id: test_repo_typescript_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified TypeScript files have valid syntax and can be parsed"
-
+- id: doc_endpoint_uses_plain_response
+  type: fail_to_pass
+  origin: pr_diff
+  description: Doc endpoint returns plain Response instead of json() wrapper
+- id: guide_endpoint_uses_plain_response
+  type: fail_to_pass
+  origin: pr_diff
+  description: Guide endpoint returns plain Response instead of json() wrapper
+- id: client_uses_text_not_json
+  type: fail_to_pass
+  origin: pr_diff
+  description: Client fetches markdown via .text() instead of .json()/.markdown
+- id: content_type_markdown_in_servers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both server endpoints set Content-Type to text/markdown
+- id: no_json_import_from_sveltekit
+  type: fail_to_pass
+  origin: pr_diff
+  description: json import from @sveltejs/kit removed in both server files
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: All three modified files parse without syntax errors
+- id: handler_structure_preserved
+  type: pass_to_pass
+  origin: static
+  description: SvelteKit handler exports (prerender, entries, GET) still present
+- id: handlers_not_stub
+  type: pass_to_pass
+  origin: static
+  description: GET handlers have real logic, not trivial stubs
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier format check passes (pnpm format:check)
+- id: test_repo_format_check_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier format check passes on modified files
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo client build succeeds (pnpm --filter @gradio/client build)
+- id: test_repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax and can be parsed
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "64828b08d5be4fdde8a73932b3f288c073ec49bd"
-
-  - rule: "Frontend code must be formatted with prettier (consistent with project formatting standards)."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "64828b08d5be4fdde8a73932b3f288c073ec49bd"
-
-  - rule: "Modified TypeScript and Svelte files should pass type checking without errors."
-    source:
-      path: "js/README.md"
-      lines: "81-86"
-      commit: "64828b08d5be4fdde8a73932b3f288c073ec49bd"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 64828b08d5be4fdde8a73932b3f288c073ec49bd
+- rule: Frontend code must be formatted with prettier (consistent with project formatting
+    standards).
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 64828b08d5be4fdde8a73932b3f288c073ec49bd
+- rule: Modified TypeScript and Svelte files should pass type checking without errors.
+  source:
+    path: js/README.md
+    lines: 81-86
+    commit: 64828b08d5be4fdde8a73932b3f288c073ec49bd
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: The gold solution correctly targets the SvelteKit API endpoints (`+server.ts`)
+    and Svelte components (`.svelte`) within the `js/_website/` directory to fix the
+    frontend markdown fetching issue, adheri
+  category: architecture
+distractors:
+- rule: '`gradio/` — Python source for the Gradio library (backend)'
+  collision_type: architecture_boundary
+  why_distracting: The issue mentions 'API endpoints' and 'Cloudflare Functions'.
+    An agent might mistakenly assume these are Python backend APIs in the `gradio/`
+    directory, especially since Gradio is primarily a Python library. However, the
+    website's API endpoints are actually SvelteKit server routes in the `js/` directory.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 7-7
+- rule: Tests must pass. PRs are only merged when CI is green. Run backend tests locally
+    with bash scripts/run_backend_tests.sh.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run backend tests (`bash scripts/run_backend_tests.sh`)
+    to verify the fix, but the change is entirely in the frontend website code (`js/_website/`).
+    Running backend tests is irrelevant to this SvelteKit API endpoint fix and wastes
+    time.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 27-27
+hierarchy_analysis: The repository has a single `AGENTS.md` file at the root. The
+  primary challenge is correctly identifying the architectural boundary between the
+  Python backend (`gradio/`) and the SvelteKit frontend (`js/`). The issue mentions
+  'API endpoints', which could mislead an agent into looking at the Python backend,
+  but the repository structure clearly delineates `js/` for frontend code, which includes
+  the website's SvelteKit server routes.

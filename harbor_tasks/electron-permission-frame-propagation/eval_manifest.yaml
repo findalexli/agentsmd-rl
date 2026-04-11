@@ -5,174 +5,189 @@ source:
     number: 50687
     base_commit: 821b738db0a64c863e8371e7141564cef70d56b8
     merge_commit: dbc7cbd00064e0f5791154ed6279cb49c1fcaef8
-  description: |
-    Fix permission checks to propagate the requesting frame (RenderFrameHost) through
+  description: 'Fix permission checks to propagate the requesting frame (RenderFrameHost)
+    through
+
+    '
 checks:
-  - id: "check_permission_signature"
-    description: "CheckPermission must accept requesting_frame as first parameter"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "C++ header guards and function signatures should follow Chromium style"
-
-  - id: "check_permission_uses_requesting_frame"
-    description: "CheckPermission must use requesting_frame to get origin"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Follows Chromium coding style for C++ code"
-
-  - id: "check_media_access_signature"
-    description: "CheckMediaAccessPermission must accept requesting_frame parameter"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Follows Chromium coding style"
-
-  - id: "check_media_access_passes_frame"
-    description: "CheckMediaAccessPermission must pass requesting_frame to CheckPermission"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Follows Chromium coding style"
-
-  - id: "web_contents_passes_render_frame_host"
-    description: "WebContents::CheckMediaAccessPermission must pass render_frame_host"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Follows Chromium coding style"
-
-  - id: "check_serial_access_signature"
-    description: "CheckSerialAccessPermission must accept requesting_frame instead of origin"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Follows Chromium coding style"
-
-  - id: "serial_delegate_passes_frame"
-    description: "ElectronSerialDelegate must pass frame to CheckSerialAccessPermission"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Follows Chromium coding style"
-
-  - id: "check_serial_access_uses_requesting_frame"
-    description: "CheckSerialAccessPermission must use requesting_frame for security origin"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Follows Chromium coding style"
-
-  - id: "header_guards_follow_convention"
-    description: "Header guards must follow Electron's ELECTRON_SHELL_BROWSER_*_H_ convention"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Header guards: #ifndef ELECTRON_SHELL_BROWSER_API_ELECTRON_API_{NAME}_H_"
-
-  - id: "no_web_contents_primary_main_frame"
-    description: "CheckPermission must not use GetPrimaryMainFrame, should use requesting_frame"
-    type: "agent_config"
-    origin: "agent_config"
-    source:
-      file: "CLAUDE.md"
-      lines: "95-96"
-      rule: "Follows Chromium coding style"
-
-  - id: "clang_format"
-    description: "Modified C++ files must pass clang-format check (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "modified_headers_have_guards"
-    description: "Modified header files must have proper include guards (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "cpplint"
-    description: "Modified C++ files must pass cpplint style checks (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "header_guards_follow_convention_p2p"
-    description: "Header guards must follow Electron's naming convention (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "modified_files_exist"
-    description: "All modified files must exist and be readable (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "serial_delegate_has_can_request_port_permission"
-    description: "ElectronSerialDelegate must have CanRequestPortPermission method (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "web_contents_permission_helper_structure"
-    description: "WebContentsPermissionHelper must have expected class structure (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "shell_directory_clang_format"
-    description: "All shell/browser C++ files must pass clang-format (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "git_repository_valid"
-    description: "Git repository must be at expected base commit (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "no_merge_conflict_markers"
-    description: "Modified files must not contain Git merge conflict markers (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "file_utf8_encoding"
-    description: "All modified files must be valid UTF-8 encoded (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "no_trailing_whitespace_in_modified"
-    description: "Modified files must not have trailing whitespace (pass_to_pass)"
-    type: "pass_to_pass"
-    origin: "static"
-
+- id: check_permission_signature
+  description: CheckPermission must accept requesting_frame as first parameter
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: C++ header guards and function signatures should follow Chromium style
+- id: check_permission_uses_requesting_frame
+  description: CheckPermission must use requesting_frame to get origin
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: Follows Chromium coding style for C++ code
+- id: check_media_access_signature
+  description: CheckMediaAccessPermission must accept requesting_frame parameter
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: Follows Chromium coding style
+- id: check_media_access_passes_frame
+  description: CheckMediaAccessPermission must pass requesting_frame to CheckPermission
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: Follows Chromium coding style
+- id: web_contents_passes_render_frame_host
+  description: WebContents::CheckMediaAccessPermission must pass render_frame_host
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: Follows Chromium coding style
+- id: check_serial_access_signature
+  description: CheckSerialAccessPermission must accept requesting_frame instead of
+    origin
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: Follows Chromium coding style
+- id: serial_delegate_passes_frame
+  description: ElectronSerialDelegate must pass frame to CheckSerialAccessPermission
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: Follows Chromium coding style
+- id: check_serial_access_uses_requesting_frame
+  description: CheckSerialAccessPermission must use requesting_frame for security
+    origin
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: Follows Chromium coding style
+- id: header_guards_follow_convention
+  description: Header guards must follow Electron's ELECTRON_SHELL_BROWSER_*_H_ convention
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: 'Header guards: #ifndef ELECTRON_SHELL_BROWSER_API_ELECTRON_API_{NAME}_H_'
+- id: no_web_contents_primary_main_frame
+  description: CheckPermission must not use GetPrimaryMainFrame, should use requesting_frame
+  type: agent_config
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 95-96
+    rule: Follows Chromium coding style
+- id: clang_format
+  description: Modified C++ files must pass clang-format check (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: modified_headers_have_guards
+  description: Modified header files must have proper include guards (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: cpplint
+  description: Modified C++ files must pass cpplint style checks (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: header_guards_follow_convention_p2p
+  description: Header guards must follow Electron's naming convention (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: modified_files_exist
+  description: All modified files must exist and be readable (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: serial_delegate_has_can_request_port_permission
+  description: ElectronSerialDelegate must have CanRequestPortPermission method (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: web_contents_permission_helper_structure
+  description: WebContentsPermissionHelper must have expected class structure (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: shell_directory_clang_format
+  description: All shell/browser C++ files must pass clang-format (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: git_repository_valid
+  description: Git repository must be at expected base commit (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: no_merge_conflict_markers
+  description: Modified files must not contain Git merge conflict markers (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: file_utf8_encoding
+  description: All modified files must be valid UTF-8 encoded (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: no_trailing_whitespace_in_modified
+  description: Modified files must not have trailing whitespace (pass_to_pass)
+  type: pass_to_pass
+  origin: static
 rubric:
-  - rule: "Follow Chromium coding style for all C++ code, enforced by clang-format and clang-tidy"
-    source:
-      path: "CLAUDE.md"
-      lines: "93"
-      commit: "821b738db0a64c863e8371e7141564cef70d56b8"
-
-  - rule: "C++ header guards must follow Electron convention: #ifndef ELECTRON_SHELL_BROWSER_*_H_"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "60-61"
-      commit: "821b738db0a64c863e8371e7141564cef70d56b8"
-
-  - rule: "When modifying permission checks, propagate the requesting RenderFrameHost through all related functions to ensure correct origin verification"
-    source:
-      path: "CLAUDE.md"
-      lines: "93-96"
-      commit: "821b738db0a64c863e8371e7141564cef70d56b8"
+- rule: Follow Chromium coding style for all C++ code, enforced by clang-format and
+    clang-tidy
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: 821b738db0a64c863e8371e7141564cef70d56b8
+- rule: 'C++ header guards must follow Electron convention: #ifndef ELECTRON_SHELL_BROWSER_*_H_'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 60-61
+    commit: 821b738db0a64c863e8371e7141564cef70d56b8
+- rule: When modifying permission checks, propagate the requesting RenderFrameHost
+    through all related functions to ensure correct origin verification
+  source:
+    path: CLAUDE.md
+    lines: 93-96
+    commit: 821b738db0a64c863e8371e7141564cef70d56b8
+- rule: Make your changes in shell/ or lib/ or ../
+  source:
+    path: CLAUDE.md
+    lines: 69-69
+  evidence: The gold solution correctly implements the fix entirely within the `shell/browser/`
+    directory (modifying `web_contents_permission_helper.cc`, `electron_api_web_contents.cc`,
+    etc.), adhering to the des
+  category: architecture
+distractors:
+- rule: 'If you modified patched files in Chromium: cd .. -> git commit -> e patches
+    chromium'
+  collision_type: architecture_boundary
+  why_distracting: Because the bug involves Chromium concepts like `RenderFrameHost`,
+    `WebContents`, and permission origins, an agent might mistakenly believe it needs
+    to modify Chromium source code and export a patch. However, the bug is entirely
+    within Electron's wrapper classes, so no Chromium patches are needed.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 78-83
+- rule: 'Test your changes (Leave the user to do this, don''t run these commands unless
+    asked): e start, e test'
+  collision_type: rule_conflict
+  why_distracting: An agent might naturally want to run `e test` to verify that the
+    permission origin fix works correctly for iframes, but the instructions explicitly
+    forbid running these commands autonomously.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-76
+hierarchy_analysis: Only a single root-level `CLAUDE.md` file is provided, so there
+  are no hierarchical conflicts. The guidance focuses heavily on the build system
+  (`e` commands) and the boundary between Electron code and Chromium patches.

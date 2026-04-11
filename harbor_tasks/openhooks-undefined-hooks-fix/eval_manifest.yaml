@@ -1,115 +1,136 @@
 task_name: openhooks-undefined-hooks-fix
-source_pr: "https://github.com/All-Hands-AI/OpenHands/pull/13589"
+source_pr: https://github.com/All-Hands-AI/OpenHands/pull/13589
 base_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
 merge_commit: f7b53283b5692e1ba1755bfba8a51f09c76f5ec7
 repository: All-Hands-AI/OpenHands
 description: Fix runtime crash when matcher.hooks is undefined in hooks modal
-
 checks:
-  - id: type_definition_updated
-    name: HookMatcher hooks marked optional
-    type: fail_to_pass
-    description: TypeScript interface marks hooks as optional with comment
-    target_file: frontend/src/api/conversation-service/v1-conversation-service.types.ts
-
-  - id: hook_event_item_handles_undefined
-    name: hook-event-item nullish coalescing
-    type: fail_to_pass
-    description: hook-event-item.tsx uses matcher.hooks ?? [] for reduce
-    target_file: frontend/src/components/features/conversation-panel/hook-event-item.tsx
-
-  - id: hook_matcher_content_handles_undefined
-    name: hook-matcher-content nullish coalescing
-    type: fail_to_pass
-    description: hook-matcher-content.tsx uses matcher.hooks ?? [] for map
-    target_file: frontend/src/components/features/conversation-panel/hook-matcher-content.tsx
-
-  - id: typescript_compiles
-    name: TypeScript compilation
-    type: pass_to_pass
-    description: TypeScript compiles without errors
-
-  - id: lint_passes
-    name: Lint passes
-    type: pass_to_pass
-    description: Frontend linting passes
-    origin: agent_config
-    source: AGENTS.md - "If you've made changes to the frontend, you should run cd frontend && npm run lint:fix && npm run build"
-
-  - id: unit_tests_pass
-    name: Unit tests pass
-    type: pass_to_pass
-    description: Hooks modal unit tests pass
-
-  - id: mixed_matchers_test
-    name: Mixed matchers test
-    type: pass_to_pass
-    description: Tests handle mix of matchers with and without hooks
-
-  - id: eslint_passes
-    name: ESLint passes
-    type: pass_to_pass
-    description: Repo's ESLint check passes
-    origin: repo_tests
-    source: CI workflow lint.yml - "eslint src --ext .ts,.tsx,.js"
-
-  - id: prettier_passes
-    name: Prettier passes
-    type: pass_to_pass
-    description: Repo's Prettier formatting check passes
-    origin: repo_tests
-    source: CI workflow lint.yml - "prettier --check src/**/*.{ts,tsx}"
-
-  - id: repo_builds
-    name: Frontend build passes
-    type: pass_to_pass
-    description: Repo's frontend build passes
-    origin: repo_tests
-    source: CI workflow fe-unit-tests.yml - "npm run build"
-
-  - id: translation_completeness
-    name: Translation completeness
-    type: pass_to_pass
-    description: Repo's translation completeness check passes
-    origin: repo_tests
-    source: CI workflow lint.yml - "npm run check-translation-completeness"
-
-  - id: conversation_panel_tests
-    name: Conversation panel tests
-    type: pass_to_pass
-    description: Repo's conversation-panel specific tests pass
-    origin: repo_tests
-    source: CI test path pattern for conversation-panel components
-
-  - id: hooks_modal_unit_tests
-    name: Hooks modal unit tests
-    type: pass_to_pass
-    description: Repo's hooks-modal specific unit tests pass
-    origin: repo_tests
-    source: CI workflow fe-unit-tests.yml - "npm run test -- hooks-modal.test.tsx"
-
-  - id: typecheck
-    name: TypeScript typecheck
-    type: pass_to_pass
-    description: Repo's TypeScript typecheck passes
-    origin: repo_tests
-    source: CI workflow lint.yml - "npm run typecheck"
-
+- id: type_definition_updated
+  name: HookMatcher hooks marked optional
+  type: fail_to_pass
+  description: TypeScript interface marks hooks as optional with comment
+  target_file: frontend/src/api/conversation-service/v1-conversation-service.types.ts
+- id: hook_event_item_handles_undefined
+  name: hook-event-item nullish coalescing
+  type: fail_to_pass
+  description: hook-event-item.tsx uses matcher.hooks ?? [] for reduce
+  target_file: frontend/src/components/features/conversation-panel/hook-event-item.tsx
+- id: hook_matcher_content_handles_undefined
+  name: hook-matcher-content nullish coalescing
+  type: fail_to_pass
+  description: hook-matcher-content.tsx uses matcher.hooks ?? [] for map
+  target_file: frontend/src/components/features/conversation-panel/hook-matcher-content.tsx
+- id: typescript_compiles
+  name: TypeScript compilation
+  type: pass_to_pass
+  description: TypeScript compiles without errors
+- id: lint_passes
+  name: Lint passes
+  type: pass_to_pass
+  description: Frontend linting passes
+  origin: agent_config
+  source: AGENTS.md - "If you've made changes to the frontend, you should run cd frontend
+    && npm run lint:fix && npm run build"
+- id: unit_tests_pass
+  name: Unit tests pass
+  type: pass_to_pass
+  description: Hooks modal unit tests pass
+- id: mixed_matchers_test
+  name: Mixed matchers test
+  type: pass_to_pass
+  description: Tests handle mix of matchers with and without hooks
+- id: eslint_passes
+  name: ESLint passes
+  type: pass_to_pass
+  description: Repo's ESLint check passes
+  origin: repo_tests
+  source: CI workflow lint.yml - "eslint src --ext .ts,.tsx,.js"
+- id: prettier_passes
+  name: Prettier passes
+  type: pass_to_pass
+  description: Repo's Prettier formatting check passes
+  origin: repo_tests
+  source: CI workflow lint.yml - "prettier --check src/**/*.{ts,tsx}"
+- id: repo_builds
+  name: Frontend build passes
+  type: pass_to_pass
+  description: Repo's frontend build passes
+  origin: repo_tests
+  source: CI workflow fe-unit-tests.yml - "npm run build"
+- id: translation_completeness
+  name: Translation completeness
+  type: pass_to_pass
+  description: Repo's translation completeness check passes
+  origin: repo_tests
+  source: CI workflow lint.yml - "npm run check-translation-completeness"
+- id: conversation_panel_tests
+  name: Conversation panel tests
+  type: pass_to_pass
+  description: Repo's conversation-panel specific tests pass
+  origin: repo_tests
+  source: CI test path pattern for conversation-panel components
+- id: hooks_modal_unit_tests
+  name: Hooks modal unit tests
+  type: pass_to_pass
+  description: Repo's hooks-modal specific unit tests pass
+  origin: repo_tests
+  source: CI workflow fe-unit-tests.yml - "npm run test -- hooks-modal.test.tsx"
+- id: typecheck
+  name: TypeScript typecheck
+  type: pass_to_pass
+  description: Repo's TypeScript typecheck passes
+  origin: repo_tests
+  source: CI workflow lint.yml - "npm run typecheck"
 rubric:
-  - rule: "Frontend changes must pass lint and build. Run: cd frontend && npm run lint:fix && npm run build"
-    source:
-      path: "AGENTS.md"
-      lines: "21"
-      commit: "3cd85a07b78a2d9d2e28b2904e1b42096d47a802"
-
-  - rule: "Pre-commit hooks MUST pass successfully before pushing any changes. Run: make install-pre-commit-hooks first."
-    source:
-      path: "AGENTS.md"
-      lines: "16,24"
-      commit: "3cd85a07b78a2d9d2e28b2904e1b42096d47a802"
-
-  - rule: "Follow existing code style and patterns. Check neighboring files for TypeScript/React conventions."
-    source:
-      path: "AGENTS.md"
-      lines: "26-31"
-      commit: "3cd85a07b78a2d9d2e28b2904e1b42096d47a802"
+- rule: 'Frontend changes must pass lint and build. Run: cd frontend && npm run lint:fix
+    && npm run build'
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+- rule: 'Pre-commit hooks MUST pass successfully before pushing any changes. Run:
+    make install-pre-commit-hooks first.'
+  source:
+    path: AGENTS.md
+    lines: 16,24
+    commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+- rule: Follow existing code style and patterns. Check neighboring files for TypeScript/React
+    conventions.
+  source:
+    path: AGENTS.md
+    lines: 26-31
+    commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 21-22
+  evidence: The instructions explicitly require that 'All frontend linting should
+    pass', which aligns with the repository rule to run `npm run lint:fix` and `npm
+    run build` after making changes to the frontend.
+  category: tooling
+distractors:
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to build and run the entire application
+    (backend and frontend) using Docker and `make run` to debug the issue, which is
+    unnecessary and time-consuming since the instructions explicitly state to test
+    using `npm run test` in the frontend directory.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 11-14
+- rule: If you've made changes to the backend, you should run `pre-commit run --config
+    ./dev_config/python/.pre-commit-config.yaml`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the backend Python pre-commit hooks,
+    but this PR only involves TypeScript/React frontend changes.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 20-20
+hierarchy_analysis: The repository has a single root-level `AGENTS.md` file. The primary
+  conflict arises from the general debugging instructions (running the full app via
+  `make build && make run`) versus the specific, localized testing instructions provided
+  in the task prompt (`npm run test` in the frontend directory).

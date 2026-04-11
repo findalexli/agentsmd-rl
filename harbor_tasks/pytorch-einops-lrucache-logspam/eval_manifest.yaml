@@ -1,101 +1,121 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 175442
-  base_commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
-  merge_commit: "ef5c69dec13056e58810a59663db7f8a6b8bebbd"
-
+  base_commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+  merge_commit: ef5c69dec13056e58810a59663db7f8a6b8bebbd
 checks:
-  - id: test_allow_in_graph_wraps_core_ops
-    type: fail_to_pass
-    origin: pr_diff
-    description: "allow_in_graph must be called for rearrange and reduce (version check must not skip)"
-
-  - id: test_multiple_einops_functions_wrapped
-    type: fail_to_pass
-    origin: pr_diff
-    description: "At least 4 of 6 einops functions must be registered with allow_in_graph"
-
-  - id: test_version_check_does_not_skip_wrapping
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Version check must not cause early return that skips allow_in_graph calls"
-
-  - id: test_version_check_is_commented_out
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The version check comparing einops.__version__ must be commented out in the function body"
-
-  - id: test_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "torch/_dynamo/decorators.py must parse without syntax errors"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python syntax check passes via py_compile"
-
-  - id: test_repo_flake8_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's flake8 error check passes (E9, F63, F7, F82)"
-
-  - id: test_repo_tools_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's tools tests pass (test_docstring_linter.py)"
-
-  - id: test_repo_github_scripts_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's .github/scripts tests pass (test_gitutils.py)"
-
-  - id: test_function_imports_einops
-    type: pass_to_pass
-    origin: static
-    description: "_allow_in_graph_einops must exist and contain 'import einops'"
-
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Function has substantive body (>=4 AST statements), not just pass/return"
-
-  # New pass_to_pass tests added by p2p enrichment
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff check passes on modified file (E9, F63, F7, F82)"
-
-  - id: test_repo_label_utils_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's label_utils tests pass from .github/scripts/"
-
-  - id: test_repo_delete_old_branches_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's delete_old_branches tests pass from .github/scripts/"
-
+- id: test_allow_in_graph_wraps_core_ops
+  type: fail_to_pass
+  origin: pr_diff
+  description: allow_in_graph must be called for rearrange and reduce (version check
+    must not skip)
+- id: test_multiple_einops_functions_wrapped
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least 4 of 6 einops functions must be registered with allow_in_graph
+- id: test_version_check_does_not_skip_wrapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: Version check must not cause early return that skips allow_in_graph
+    calls
+- id: test_version_check_is_commented_out
+  type: fail_to_pass
+  origin: pr_diff
+  description: The version check comparing einops.__version__ must be commented out
+    in the function body
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: torch/_dynamo/decorators.py must parse without syntax errors
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python syntax check passes via py_compile
+- id: test_repo_flake8_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's flake8 error check passes (E9, F63, F7, F82)
+- id: test_repo_tools_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tools tests pass (test_docstring_linter.py)
+- id: test_repo_github_scripts_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's .github/scripts tests pass (test_gitutils.py)
+- id: test_function_imports_einops
+  type: pass_to_pass
+  origin: static
+  description: _allow_in_graph_einops must exist and contain 'import einops'
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Function has substantive body (>=4 AST statements), not just pass/return
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff check passes on modified file (E9, F63, F7, F82)
+- id: test_repo_label_utils_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's label_utils tests pass from .github/scripts/
+- id: test_repo_delete_old_branches_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's delete_old_branches tests pass from .github/scripts/
 rubric:
-  - rule: "Minimize comments; be concise; code should be self-explanatory. Comments explaining why code is TEMPORARILY DISABLED are acceptable and necessary."
-    source:
-      path: "CLAUDE.md"
-      lines: "48"
-      commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
-  - rule: "Comments should be useful, for example, comments that remind the reader about some global context that is non-obvious and can't be inferred locally."
-    source:
-      path: "CLAUDE.md"
-      lines: "49-50"
-      commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
-  - rule: "Match existing code style and architectural patterns. Temporarily commenting out code with explanatory comments is acceptable for hotfixes."
-    source:
-      path: "CLAUDE.md"
-      lines: "57"
-      commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
-  - rule: "If uncertain, choose the simpler, more concise implementation. Commenting out problematic code is simpler than complex refactoring."
-    source:
-      path: "CLAUDE.md"
-      lines: "62"
-      commit: "98e35020c7423c304778a7044f6baa3c8a98ba6d"
+- rule: Minimize comments; be concise; code should be self-explanatory. Comments explaining
+    why code is TEMPORARILY DISABLED are acceptable and necessary.
+  source:
+    path: CLAUDE.md
+    lines: '48'
+    commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+- rule: Comments should be useful, for example, comments that remind the reader about
+    some global context that is non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 49-50
+    commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+- rule: Match existing code style and architectural patterns. Temporarily commenting
+    out code with explanatory comments is acceptable for hotfixes.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+- rule: If uncertain, choose the simpler, more concise implementation. Commenting
+    out problematic code is simpler than complex refactoring.
+  source:
+    path: CLAUDE.md
+    lines: '62'
+    commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+distractors:
+- rule: Once the change is passing, find an appropriate test file to add the test
+    to and make sure to follow local conventions on the test file.
+  collision_type: would_cause_bug
+  why_distracting: The agent is instructed to find an appropriate test file to add
+    a test once the change is passing. However, this bug involves `einops`, a third-party
+    library. Since the agent is also instructed not to install dependencies (AGENTS.md
+    line 12), attempting to add a test that imports `einops` to the main PyTorch test
+    suite would likely cause CI failures or local test crashes if the dependency is
+    missing.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 2-6
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: rule_conflict
+  why_distracting: The agent might interpret this rule as an instruction to simply
+    delete the problematic version check block entirely to keep the code concise.
+    However, the gold solution intentionally comments out the code and leaves a detailed
+    explanation, preserving the original logic for when the underlying `lru_cache`
+    issue is eventually fixed.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '48'
+hierarchy_analysis: The rules in CLAUDE.md and AGENTS.md generally complement each
+  other, but there is an implicit conflict in AGENTS.md between the requirement to
+  add a test for every bug fix and the strict prohibition against installing dependencies.
+  For bugs involving third-party integrations like `einops`, the prohibition on installing
+  dependencies must override the requirement to add a test to the main test suite.

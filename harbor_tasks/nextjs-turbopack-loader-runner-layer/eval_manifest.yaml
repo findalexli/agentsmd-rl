@@ -1,64 +1,89 @@
 rubric:
-  - rule: "The agent must add a note to AGENTS.md indicating that turbopack_use_loaders was updated to webpack_loaders."
-    source:
-      path: "AGENTS.md"
-    reference: "Note: turbopack_use_loaders is now webpack_loaders."
-
+- rule: The agent must add a note to AGENTS.md indicating that turbopack_use_loaders
+    was updated to webpack_loaders.
+  source:
+    path: AGENTS.md
+  reference: 'Note: turbopack_use_loaders is now webpack_loaders.'
 checks:
-  # Fail-to-pass checks (behavioral)
-  - id: test_layer_name_fixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: process_default_internal must use Layer::new with "webpack_loaders"
-
-  - id: test_buggy_name_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: The old buggy layer name "turbopack_use_loaders" must not appear in lib.rs
-
-  - id: test_cross_file_consistency
-    type: fail_to_pass
-    origin: pr_diff
-    description: Both lib.rs and module_options/mod.rs must use the same "webpack_loaders" layer name
-
-  # Pass-to-pass checks (static)
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: lib.rs must be substantial — not gutted or replaced with a stub
-
-  - id: test_loader_pipeline_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: Key loader pipeline constructs must still exist in lib.rs
-
-  - id: test_other_layers_untouched
-    type: pass_to_pass
-    origin: pr_diff
-    description: Other Layer::new calls (e.g. externals-tracing) must not be removed
-
-  - id: test_layer_new_call_syntax
-    type: pass_to_pass
-    origin: pr_diff
-    description: Layer::new call must use rcstr! macro with the layer name string
-
-  # Pass-to-pass checks (repo_tests) - git CI commands
-  - id: test_repo_git_status
-    type: pass_to_pass
-    origin: repo_tests
-    description: Git repository status check
-
-  - id: test_repo_git_ls_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: Git can list tracked files
-
-  - id: test_repo_git_log
-    type: pass_to_pass
-    origin: repo_tests
-    description: Git log shows expected commit
-
-  - id: test_repo_git_diff_empty
-    type: pass_to_pass
-    origin: repo_tests
-    description: Git diff shows no uncommitted changes
+- id: test_layer_name_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: process_default_internal must use Layer::new with "webpack_loaders"
+- id: test_buggy_name_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The old buggy layer name "turbopack_use_loaders" must not appear in
+    lib.rs
+- id: test_cross_file_consistency
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both lib.rs and module_options/mod.rs must use the same "webpack_loaders"
+    layer name
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: lib.rs must be substantial — not gutted or replaced with a stub
+- id: test_loader_pipeline_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Key loader pipeline constructs must still exist in lib.rs
+- id: test_other_layers_untouched
+  type: pass_to_pass
+  origin: pr_diff
+  description: Other Layer::new calls (e.g. externals-tracing) must not be removed
+- id: test_layer_new_call_syntax
+  type: pass_to_pass
+  origin: pr_diff
+  description: Layer::new call must use rcstr! macro with the layer name string
+- id: test_repo_git_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository status check
+- id: test_repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git can list tracked files
+- id: test_repo_git_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log shows expected commit
+- id: test_repo_git_diff_empty
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git diff shows no uncommitted changes
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: meta_confusion
+  why_distracting: The agent is modifying Rust code in the Turbopack crate, not Next.js
+    JS source. Running `pnpm --filter=next dev` might not automatically recompile
+    the Rust NAPI bindings, causing the agent to think their fix didn't work because
+    the dev server is using the old binary.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 68-70
+- rule: Before editing or creating files in any subdirectory... read all README.md
+    files in the directory path...
+  collision_type: scope_ambiguity
+  why_distracting: The fix is a trivial one-line string change in a known file (`turbopack/crates/turbopack/src/lib.rs`).
+    Forcing the agent to read up to 4 levels of READMEs (which may not even exist)
+    wastes context window and time.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 44-50
+- rule: 'For type errors only: Use `pnpm --filter=next types` (~10s) instead of `pnpm
+    --filter=next build` (~60s).'
+  collision_type: meta_confusion
+  why_distracting: The agent might see a Rust compiler error (if they make a typo)
+    and try to run `pnpm --filter=next types`, which only checks TypeScript types,
+    not Rust types.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 87-88
+hierarchy_analysis: The config files (CLAUDE.md and AGENTS.md) are identical and primarily
+  focus on the TypeScript/JavaScript parts of the Next.js monorepo. They lack specific
+  guidance for the Rust/Turbopack workflow, which can mislead agents into using JS-centric
+  build and test commands for Rust changes.

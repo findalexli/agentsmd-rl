@@ -1,82 +1,102 @@
 rubric:
-  - rule: "Follow existing frontend code patterns. The codebase uses TanStack Query for data fetching - UI components should call custom hooks from frontend/src/hooks/query/ or frontend/src/hooks/mutation/, not call API client methods directly."
-    source:
-      path: "AGENTS.md"
-      lines: "95-105"
-      commit: "df64ce9668ebd0116d0b6864a410adfedc615e96"
-
-  - rule: "When modifying frontend code, ensure lint passes. Run 'npm run lint:fix' in the frontend directory and verify 'npm run build' succeeds before considering changes complete."
-    source:
-      path: "AGENTS.md"
-      lines: "26-30"
-      commit: "df64ce9668ebd0116d0b6864a410adfedc615e96"
-
-  - rule: "Remove unused imports when modifying files. Clean up any imports that are no longer needed after making changes."
-    source:
-      path: "AGENTS.md"
-      lines: "26-30"
-      commit: "df64ce9668ebd0116d0b6864a410adfedc615e96"
-
+- rule: Follow existing frontend code patterns. The codebase uses TanStack Query for
+    data fetching - UI components should call custom hooks from frontend/src/hooks/query/
+    or frontend/src/hooks/mutation/, not call API client methods directly.
+  source:
+    path: AGENTS.md
+    lines: 95-105
+    commit: df64ce9668ebd0116d0b6864a410adfedc615e96
+- rule: When modifying frontend code, ensure lint passes. Run 'npm run lint:fix' in
+    the frontend directory and verify 'npm run build' succeeds before considering
+    changes complete.
+  source:
+    path: AGENTS.md
+    lines: 26-30
+    commit: df64ce9668ebd0116d0b6864a410adfedc615e96
+- rule: Remove unused imports when modifying files. Clean up any imports that are
+    no longer needed after making changes.
+  source:
+    path: AGENTS.md
+    lines: 26-30
+    commit: df64ce9668ebd0116d0b6864a410adfedc615e96
+- rule: Do not run `make build` to set up the entire repo unless explicitly requested
+    by the user or necessary for running the entire application.
+  source:
+    path: AGENTS.md
+    lines: 4-5
+  evidence: The gold solution directly patches the frontend component without running
+    `make build` or setting up the entire repository.
+  category: tooling
 checks:
-  # Fail-to-Pass Tests: Verify the fix works
-  - id: test_use_should_show_user_features_hook_removed
-    type: fail_to_pass
-    origin: agent
-    description: useShouldShowUserFeatures hook is removed from user-actions.tsx
-
-  - id: test_context_menu_always_rendered
-    type: fail_to_pass
-    origin: agent
-    description: UserContextMenu is always rendered unconditionally
-
-  - id: test_context_menu_div_always_present
-    type: fail_to_pass
-    origin: agent
-    description: Context menu wrapper div with opacity classes is always present
-
-  # Pass-to-Pass Tests: Existing verification tests
-  - id: test_typescript_user_actions_no_errors
-    type: pass_to_pass
-    origin: agent
-    description: user-actions.tsx has no TypeScript errors
-
-  - id: test_frontend_lint_user_actions_clean
-    type: pass_to_pass
-    origin: agent
-    description: Frontend lint passes on user-actions.tsx
-
-  - id: test_user_actions_file_exists
-    type: pass_to_pass
-    origin: agent
-    description: Target file exists sanity check
-
-  - id: test_component_imports_clean
-    type: pass_to_pass
-    origin: agent
-    description: No unused imports remain after fix
-
-  # Pass-to-Pass Tests: Repo CI/CD checks
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's TypeScript typecheck passes (react-router typegen && tsc)
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's frontend build passes
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's frontend lint passes (typecheck + eslint + prettier)
-
-  - id: test_repo_unit_tests_user_context_menu
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's UserContextMenu component unit tests pass (vitest)
-
-  - id: test_repo_unit_tests_sidebar
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's Sidebar component unit tests pass (vitest)
+- id: test_use_should_show_user_features_hook_removed
+  type: fail_to_pass
+  origin: agent
+  description: useShouldShowUserFeatures hook is removed from user-actions.tsx
+- id: test_context_menu_always_rendered
+  type: fail_to_pass
+  origin: agent
+  description: UserContextMenu is always rendered unconditionally
+- id: test_context_menu_div_always_present
+  type: fail_to_pass
+  origin: agent
+  description: Context menu wrapper div with opacity classes is always present
+- id: test_typescript_user_actions_no_errors
+  type: pass_to_pass
+  origin: agent
+  description: user-actions.tsx has no TypeScript errors
+- id: test_frontend_lint_user_actions_clean
+  type: pass_to_pass
+  origin: agent
+  description: Frontend lint passes on user-actions.tsx
+- id: test_user_actions_file_exists
+  type: pass_to_pass
+  origin: agent
+  description: Target file exists sanity check
+- id: test_component_imports_clean
+  type: pass_to_pass
+  origin: agent
+  description: No unused imports remain after fix
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (react-router typegen && tsc)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's frontend build passes
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's frontend lint passes (typecheck + eslint + prettier)
+- id: test_repo_unit_tests_user_context_menu
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's UserContextMenu component unit tests pass (vitest)
+- id: test_repo_unit_tests_sidebar
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Sidebar component unit tests pass (vitest)
+distractors:
+- rule: To run the full application to debug issues, use `make build && make run FRONTEND_PORT=12000...`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to start the full application (frontend
+    and backend) to debug the missing popup menu, which is unnecessary for a simple
+    React conditional rendering fix and would waste significant time.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-13
+- rule: Store design documents, analysis, or debugging notes in a `.pr/` directory
+    at the repository root.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a `.pr/analysis.md` file to document why
+    the unauthenticated user check was removed, but this is a trivial fix that does
+    not warrant temporary PR artifacts.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 40-50
+hierarchy_analysis: The `AGENTS.md` file provides general repository guidelines. Since
+  this is a simple frontend fix, the agent should focus on the specific file modification
+  and avoid heavy repository-wide commands like `make build` or full application startup,
+  which are documented but intended for more complex debugging scenarios.

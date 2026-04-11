@@ -71,8 +71,8 @@ checks:
 - id: repo_git_tracks_modified_files
   type: pass_to_pass
   origin: repo_tests
-  description: Modified source files are tracked by git and have valid content,
-    verified via git ls-files subprocess.run()
+  description: Modified source files are tracked by git and have valid content, verified
+    via git ls-files subprocess.run()
 rubric:
 - rule: When dep sub-builds rewrite forwarding headers as undeclared side effects,
     dep outputs (lib*.a) must use implicit dependencies (|), not order-only (||),
@@ -102,3 +102,42 @@ rubric:
     path: scripts/build/compile.ts
     lines: 140-164
     commit: c721d357ad9ed04017bb24d21decf5739dba3911
+- rule: Idempotent. Run `bun run build` over and over — that's it. Same inputs produce
+    the same `build.ninja`, ninja sees nothing changed, exits immediately.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 5-6
+  evidence: The gold solution updates the build system documentation to explain how
+    using implicit dependencies for dep outputs ensures the build doesn't lag one
+    build behind, fixing the spurious relink and resto
+  category: architecture
+distractors:
+- rule: Explicit over implicit. Every decision traceable to a line of code you can
+    grep for.
+  collision_type: meta_confusion
+  why_distracting: The PR requires changing dependencies from `orderOnlyInputs` to
+    `implicitInputs`. An agent might misinterpret the 'Explicit over implicit' design
+    principle as a directive to avoid Ninja's `implicitInputs` or to try to make all
+    dependencies `explicitInputs` (`$in`), which would break the build command lines
+    since these are headers/libraries, not primary source files.
+  severity: high
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 12-13
+- rule: First-class support for deps with their own build systems. Vendored deps keep
+    their native cmake/cargo — we don't rewrite their build into our graph.
+  collision_type: architecture_boundary
+  why_distracting: The issue mentions WebKit rewriting forwarding headers as undeclared
+    side effects. An agent might try to fix this by modifying the WebKit sub-build
+    integration or trying to track the headers explicitly in our graph, violating
+    the rule to let vendored deps keep their native build systems. The correct fix
+    is to use the library output as an implicit invalidation signal.
+  severity: medium
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 25-26
+hierarchy_analysis: The config hierarchy provides high-level build instructions in
+  the root `CLAUDE.md` and `AGENTS.md`, but the most relevant rules are in `scripts/build/CLAUDE.md`
+  which governs the build system architecture. The agent must carefully distinguish
+  between general design principles ('Explicit over implicit') and specific Ninja
+  terminology ('implicit inputs').

@@ -1,114 +1,132 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1077
-  base_commit: "3142b88a5e93e991df727c81892d6cb8bd65d06e"
-  merge_commit: "f6556e88582e82b747ab1ac4038af2e106a464ee"
-
+  base_commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+  merge_commit: f6556e88582e82b747ab1ac4038af2e106a464ee
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (rpc_server.py, rtensor.py) must parse without errors"
-
-  - id: repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on modified files (pass_to_pass)"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified files (pass_to_pass)"
-
-  - id: batch_endpoint_returns_data
-    type: fail_to_pass
-    origin: pr_diff
-    description: "POST /data/batch returns stored tensor data for valid shard IDs"
-
-  - id: batch_endpoint_preserves_order
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Batch fetch returns shards in the exact order requested"
-
-  - id: batch_endpoint_missing_shards
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Batch endpoint returns 400 with missing_shard_ids for absent shards"
-
-  - id: batch_endpoint_empty_request
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Batch endpoint handles empty shard_ids list gracefully (returns 200 with empty list)"
-
-  - id: single_shard_retrieval
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing single-shard GET /data/<shard_id> endpoint still works"
-
-  - id: backend_max_shards_configurable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "HttpRTensorBackend accepts and validates max_shards_per_request parameter"
-
-  - id: backend_groups_by_node
-    type: fail_to_pass
-    origin: pr_diff
-    description: "fetch() groups shards by node_addr into batch requests"
-
-  - id: backend_chunks_large_requests
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Same-node shards exceeding max_shards_per_request are chunked"
-
-  - id: backend_preserves_original_order
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Results maintain original request order across grouped/chunked fetches"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports (from x import *) in modified files"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "3142b88a5e93e991df727c81892d6cb8bd65d06e"
-
-  - id: no_bare_print
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare print() calls in production code (must use logger)"
-    source:
-      path: "AGENTS.md"
-      lines: "90-92"
-      commit: "3142b88a5e93e991df727c81892d6cb8bd65d06e"
-
-  - id: no_hardcoded_endpoints
-    type: pass_to_pass
-    origin: agent_config
-    description: "No hardcoded IP addresses or static URL strings in modified files"
-    source:
-      path: "AGENTS.md"
-      lines: "31"
-      commit: "3142b88a5e93e991df727c81892d6cb8bd65d06e"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (rpc_server.py, rtensor.py) must parse without errors
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files (pass_to_pass)
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files (pass_to_pass)
+- id: batch_endpoint_returns_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST /data/batch returns stored tensor data for valid shard IDs
+- id: batch_endpoint_preserves_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: Batch fetch returns shards in the exact order requested
+- id: batch_endpoint_missing_shards
+  type: fail_to_pass
+  origin: pr_diff
+  description: Batch endpoint returns 400 with missing_shard_ids for absent shards
+- id: batch_endpoint_empty_request
+  type: fail_to_pass
+  origin: pr_diff
+  description: Batch endpoint handles empty shard_ids list gracefully (returns 200
+    with empty list)
+- id: single_shard_retrieval
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing single-shard GET /data/<shard_id> endpoint still works
+- id: backend_max_shards_configurable
+  type: fail_to_pass
+  origin: pr_diff
+  description: HttpRTensorBackend accepts and validates max_shards_per_request parameter
+- id: backend_groups_by_node
+  type: fail_to_pass
+  origin: pr_diff
+  description: fetch() groups shards by node_addr into batch requests
+- id: backend_chunks_large_requests
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same-node shards exceeding max_shards_per_request are chunked
+- id: backend_preserves_original_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: Results maintain original request order across grouped/chunked fetches
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports (from x import *) in modified files
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- id: no_bare_print
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare print() calls in production code (must use logger)
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- id: no_hardcoded_endpoints
+  type: pass_to_pass
+  origin: agent_config
+  description: No hardcoded IP addresses or static URL strings in modified files
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
 rubric:
-  - rule: "Follow existing code patterns in the same module."
-    source:
-      path: "AGENTS.md"
-      lines: "40"
-      commit: "3142b88a5e93e991df727c81892d6cb8bd65d06e"
-
-  - rule: "Use `areal.utils.logging.getLogger(name)` with PascalCase names; never `print` or `logging.__name__`."
-    source:
-      path: "AGENTS.md"
-      lines: "90-92"
-      commit: "3142b88a5e93e991df727c81892d6cb8bd65d06e"
-
-  - rule: "Prefer composition over inheritance -- keep class hierarchies <= 2 levels; prefer delegation."
-    source:
-      path: "AGENTS.md"
-      lines: "81"
-      commit: "3142b88a5e93e991df727c81892d6cb8bd65d06e"
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: '40'
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- rule: Use `areal.utils.logging.getLogger(name)` with PascalCase names; never `print`
+    or `logging.__name__`.
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- rule: Prefer composition over inheritance -- keep class hierarchies <= 2 levels;
+    prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+distractors:
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names and
+    register new loggers.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to refactor the existing logger in `rpc_server.py`
+    to use PascalCase or register a new logger in `areal/utils/logging.py`, which
+    is out of scope for this specific bug fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 54-56
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The instructions only specify modifying `rpc_server.py` and `rtensor.py`.
+    Attempting to add tests would require modifying files outside the specified scope,
+    violating the implicit boundary of the task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '34'
+- rule: No hardcoded secrets, paths, or endpoints.
+  collision_type: rule_conflict
+  why_distracting: The agent might interpret adding the `/data/batch` route and calling
+    it in `rtensor.py` as 'hardcoding an endpoint' and attempt to make the path configurable
+    via environment variables or config files, overcomplicating the solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '26'
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain similar rules, but `AGENTS.md`
+  provides more specific operational guidelines for agents (e.g., logging conventions).
+  The rules are consistent across both files, so there are no direct conflicts between
+  the config files themselves. The agent should apply the accumulative rules without
+  issue.

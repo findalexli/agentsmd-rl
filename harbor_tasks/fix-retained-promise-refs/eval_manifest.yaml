@@ -3,94 +3,121 @@ source:
   repo: TanStack/router
   merge_commit: 32fcba7b044b03f5901308b870f70b0b4910c220
   base_commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
-
 checks:
-  - id: prev_promise_let_declaration
-    description: "prevLoadPromise uses 'let' instead of 'const' in executeBeforeLoad"
-    test: test_load_matches_prev_promise_cleared
-    origin: programmatic
-    reward: 0.2
-
-  - id: prev_promise_cleared
-    description: "prevLoadPromise is set to undefined after resolve"
-    test: test_load_matches_prev_promise_cleared
-    origin: programmatic
-    reward: 0.2
-
-  - id: load_promise_cleared_in_loader
-    description: "match._nonReactive.loadPromise is cleared to undefined in error handler"
-    test: test_load_matches_load_promise_cleared_in_loader
-    origin: programmatic
-    reward: 0.2
-
-  - id: load_promise_cleared_normal_flow
-    description: "match._nonReactive.loadPromise is cleared to undefined in normal flow"
-    test: test_load_matches_load_promise_cleared_in_loader
-    origin: programmatic
-    reward: 0.0
-
-  - id: commit_promise_let_declaration
-    description: "previousCommitPromise uses 'let' instead of 'const' in commitLocation"
-    test: test_router_commit_promise_cleared
-    origin: programmatic
-    reward: 0.2
-
-  - id: commit_promise_cleared
-    description: "previousCommitPromise is set to undefined after resolve"
-    test: test_router_commit_promise_cleared
-    origin: programmatic
-    reward: 0.2
-
-  - id: unit_tests_pass
-    description: "Existing unit tests pass"
-    test: test_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    reward: 0.0
-
-  - id: typescript_compiles
-    description: "TypeScript compiles without errors"
-    test: test_typescript_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    reward: 0.0
-
-  - id: build_succeeds
-    description: "Package builds successfully"
-    test: test_build_succeeds
-    type: pass_to_pass
-    origin: repo_tests
-    reward: 0.0
-
-  - id: eslint_passes
-    description: "Repo's ESLint check passes on router-core"
-    test: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    reward: 0.0
-
-  - id: publint_passes
-    description: "Repo's package validation (publint + attw) passes on router-core"
-    test: test_repo_publint
-    type: pass_to_pass
-    origin: repo_tests
-    reward: 0.0
-
+- id: prev_promise_let_declaration
+  description: prevLoadPromise uses 'let' instead of 'const' in executeBeforeLoad
+  test: test_load_matches_prev_promise_cleared
+  origin: programmatic
+  reward: 0.2
+- id: prev_promise_cleared
+  description: prevLoadPromise is set to undefined after resolve
+  test: test_load_matches_prev_promise_cleared
+  origin: programmatic
+  reward: 0.2
+- id: load_promise_cleared_in_loader
+  description: match._nonReactive.loadPromise is cleared to undefined in error handler
+  test: test_load_matches_load_promise_cleared_in_loader
+  origin: programmatic
+  reward: 0.2
+- id: load_promise_cleared_normal_flow
+  description: match._nonReactive.loadPromise is cleared to undefined in normal flow
+  test: test_load_matches_load_promise_cleared_in_loader
+  origin: programmatic
+  reward: 0.0
+- id: commit_promise_let_declaration
+  description: previousCommitPromise uses 'let' instead of 'const' in commitLocation
+  test: test_router_commit_promise_cleared
+  origin: programmatic
+  reward: 0.2
+- id: commit_promise_cleared
+  description: previousCommitPromise is set to undefined after resolve
+  test: test_router_commit_promise_cleared
+  origin: programmatic
+  reward: 0.2
+- id: unit_tests_pass
+  description: Existing unit tests pass
+  test: test_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  reward: 0.0
+- id: typescript_compiles
+  description: TypeScript compiles without errors
+  test: test_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  reward: 0.0
+- id: build_succeeds
+  description: Package builds successfully
+  test: test_build_succeeds
+  type: pass_to_pass
+  origin: repo_tests
+  reward: 0.0
+- id: eslint_passes
+  description: Repo's ESLint check passes on router-core
+  test: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  reward: 0.0
+- id: publint_passes
+  description: Repo's package validation (publint + attw) passes on router-core
+  test: test_repo_publint
+  type: pass_to_pass
+  origin: repo_tests
+  reward: 0.0
 rubric:
-  - rule: "Use TypeScript strict mode with extensive type safety. Core logic should be framework-agnostic and separated from React/Solid bindings."
-    source:
-      path: "AGENTS.md"
-      lines: "18-23"
-      commit: "a0a6aa8b8ad801f0a364b6c27722d5a929c14e70"
-
-  - rule: "Always run unit and type tests during development. Use the efficient targeted testing workflow via Nx (specific packages → files → patterns)."
-    source:
-      path: "AGENTS.md"
-      lines: "51-67"
-      commit: "a0a6aa8b8ad801f0a364b6c27722d5a929c14e70"
-
-  - rule: "Run pnpm test:eslint, pnpm test:types, and pnpm test:unit before committing changes."
-    source:
-      path: "AGENTS.md"
-      lines: "69-75"
-      commit: "a0a6aa8b8ad801f0a364b6c27722d5a929c14e70"
+- rule: Use TypeScript strict mode with extensive type safety. Core logic should be
+    framework-agnostic and separated from React/Solid bindings.
+  source:
+    path: AGENTS.md
+    lines: 18-23
+    commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
+- rule: Always run unit and type tests during development. Use the efficient targeted
+    testing workflow via Nx (specific packages → files → patterns).
+  source:
+    path: AGENTS.md
+    lines: 51-67
+    commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
+- rule: Run pnpm test:eslint, pnpm test:types, and pnpm test:unit before committing
+    changes.
+  source:
+    path: AGENTS.md
+    lines: 69-75
+    commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
+- rule: Always prefer `pnpm nx ...` over `npx nx ...` and prefer Nx targets.
+  source:
+    path: AGENTS.md
+    lines: 36-37
+  evidence: The gold solution rebuilds the package using `pnpm nx run @tanstack/router-core:build`
+    rather than using `npx` or a direct build script.
+  category: tooling
+- rule: Framework-agnostic core logic separated from React/Solid bindings
+  source:
+    path: AGENTS.md
+    lines: 15-15
+  evidence: The memory leak fix is applied directly to `packages/router-core/src/load-matches.ts`
+    and `router.ts`, keeping the core promise management logic framework-agnostic.
+  category: architecture
+- rule: Run only one Nx command at a time.
+  source:
+    path: AGENTS.md
+    lines: 40-40
+  evidence: The gold solution script executes exactly one Nx command (`pnpm nx run
+    @tanstack/router-core:build`) at the end of the script.
+  category: tooling
+distractors:
+- rule: Always run unit and type tests during development - do not proceed if they
+    fail
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the full test suite (`pnpm test:unit`,
+    `pnpm test:types`) or targeted Nx test commands inside the solution script. While
+    the prompt mentions these in the testing instructions, the gold solution script
+    only runs the build command. Adding test commands to the evaluation script might
+    cause timeouts or unrelated failures in a sandbox environment.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 46-46
+hierarchy_analysis: The AGENTS.md file provides general monorepo guidelines. The agent
+  must balance the strict testing requirements with the practical scope of a patch
+  script, adhering to the tooling preferences (pnpm nx) without over-complicating
+  the execution environment.

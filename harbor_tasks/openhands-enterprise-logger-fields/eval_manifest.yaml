@@ -2,86 +2,107 @@ task_name: openhands-enterprise-logger-fields
 source_pr: All-Hands-AI/OpenHands#13612
 base_commit: 8f87ef59c72f1c7bae2b937164caf99731ac8e83
 merge_commit: 5f064fa88b683b28e00568cc637e4473c714d12d
-
-# Source agent config rule from AGENTS.md:
-# - Pre-commit hooks must pass before pushing changes
 checks:
-  - id: test_logger_includes_module_field
-    type: fail_to_pass
-    origin: behavioral
-    description: Logger output must include 'module' field with correct module name
-
-  - id: test_logger_includes_funcname_field
-    type: fail_to_pass
-    origin: behavioral
-    description: Logger output must include 'funcName' field with calling function name
-
-  - id: test_logger_includes_lineno_field
-    type: fail_to_pass
-    origin: behavioral
-    description: Logger output must include 'lineno' field with line number
-
-  - id: test_logger_all_fields_present
-    type: fail_to_pass
-    origin: behavioral
-    description: All required log fields (message, severity, module, funcName, lineno) must be present
-
-  - id: test_logger_error_level_includes_fields
-    type: fail_to_pass
-    origin: behavioral
-    description: Error level logs must also include module, funcName, lineno fields
-
-  - id: test_logger_with_extra_fields
-    type: fail_to_pass
-    origin: behavioral
-    description: Logs with extra fields must include module, funcName, lineno alongside extras
-
-  - id: test_code_syntax_valid
-    type: pass_to_pass
-    origin: structural
-    description: Modified file must have valid Python syntax
-
-  - id: test_logger_json_formatter_imports
-    type: pass_to_pass
-    origin: structural
-    description: Logger module must import JsonFormatter and setup_json_logger correctly
-
-  # Repo CI/CD Pass-to-Pass Tests
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Ruff linting passes on enterprise/server
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo enterprise server unit tests pass
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Ruff format check passes on enterprise/server
-
-  - id: test_repo_pyproject_valid
-    type: pass_to_pass
-    origin: static
-    description: Repo pyproject.toml is valid TOML
-
+- id: test_logger_includes_module_field
+  type: fail_to_pass
+  origin: behavioral
+  description: Logger output must include 'module' field with correct module name
+- id: test_logger_includes_funcname_field
+  type: fail_to_pass
+  origin: behavioral
+  description: Logger output must include 'funcName' field with calling function name
+- id: test_logger_includes_lineno_field
+  type: fail_to_pass
+  origin: behavioral
+  description: Logger output must include 'lineno' field with line number
+- id: test_logger_all_fields_present
+  type: fail_to_pass
+  origin: behavioral
+  description: All required log fields (message, severity, module, funcName, lineno)
+    must be present
+- id: test_logger_error_level_includes_fields
+  type: fail_to_pass
+  origin: behavioral
+  description: Error level logs must also include module, funcName, lineno fields
+- id: test_logger_with_extra_fields
+  type: fail_to_pass
+  origin: behavioral
+  description: Logs with extra fields must include module, funcName, lineno alongside
+    extras
+- id: test_code_syntax_valid
+  type: pass_to_pass
+  origin: structural
+  description: Modified file must have valid Python syntax
+- id: test_logger_json_formatter_imports
+  type: pass_to_pass
+  origin: structural
+  description: Logger module must import JsonFormatter and setup_json_logger correctly
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Ruff linting passes on enterprise/server
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo enterprise server unit tests pass
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Ruff format check passes on enterprise/server
+- id: test_repo_pyproject_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo pyproject.toml is valid TOML
 rubric:
-  - rule: "Pre-commit hooks must be installed before making changes and must pass before pushing"
-    source:
-      path: "AGENTS.md"
-      lines: "16,18,24"
-      commit: "8f87ef59c72f1c7bae2b937164caf99731ac8e83"
-
-  - rule: "Backend Python changes must pass Ruff linting, Mypy type checks, and formatting checks"
-    source:
-      path: "AGENTS.md"
-      lines: "20,28-31"
-      commit: "8f87ef59c72f1c7bae2b937164caf99731ac8e83"
-
-  - rule: "Enterprise code should use relative imports without the 'enterprise.' prefix"
-    source:
-      path: "AGENTS.md"
-      lines: "202-205"
-      commit: "8f87ef59c72f1c7bae2b937164caf99731ac8e83"
+- rule: Pre-commit hooks must be installed before making changes and must pass before
+    pushing
+  source:
+    path: AGENTS.md
+    lines: 16,18,24
+    commit: 8f87ef59c72f1c7bae2b937164caf99731ac8e83
+- rule: Backend Python changes must pass Ruff linting, Mypy type checks, and formatting
+    checks
+  source:
+    path: AGENTS.md
+    lines: 20,28-31
+    commit: 8f87ef59c72f1c7bae2b937164caf99731ac8e83
+- rule: Enterprise code should use relative imports without the 'enterprise.' prefix
+  source:
+    path: AGENTS.md
+    lines: 202-205
+    commit: 8f87ef59c72f1c7bae2b937164caf99731ac8e83
+- rule: Ensure code is free of Ruff formatting issues and trailing whitespace.
+  source:
+    path: AGENTS.md
+    lines: 30-33
+  evidence: The patch carefully replaces the format string and removes the `style='{'`
+    argument while maintaining proper indentation and avoiding trailing whitespace,
+    adhering to Ruff formatting standards.
+  category: style
+distractors:
+- rule: Backend is located in the `openhands` directory.
+  collision_type: architecture_boundary
+  why_distracting: The rule states the backend is located in the `openhands` directory,
+    which might lead the agent to search for or modify `openhands/server/logger.py`
+    instead of the explicitly requested `enterprise/server/logger.py`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-60
+- rule: Run `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
+    for backend changes.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs running a specific pre-commit config (`./dev_config/python/.pre-commit-config.yaml`)
+    for backend changes. However, the changes are in the `enterprise` directory, which
+    has its own testing setup (`cd enterprise && poetry run pytest...`). Running the
+    main backend pre-commit might fail or be irrelevant for enterprise code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-18
+hierarchy_analysis: The `AGENTS.md` file provides general repository guidelines that
+  are heavily focused on the main `openhands` open-source codebase. However, this
+  PR specifically targets the `enterprise` directory, which acts as a separate architectural
+  boundary with its own testing commands (using `poetry` instead of the root `make`
+  commands). The agent must prioritize the specific instructions in the issue description
+  over the general repository structure and testing rules in `AGENTS.md`.

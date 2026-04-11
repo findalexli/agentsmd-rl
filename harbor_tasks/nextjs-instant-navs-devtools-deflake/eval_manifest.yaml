@@ -1,74 +1,96 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91912
-  base_commit: "60e71ac90c4f150982fda3ca937b1b0e4c9a7b29"
-  merge_commit: "861b644d079a5d5a22cce3c1f604ee8dcb5429dc"
-
+  base_commit: 60e71ac90c4f150982fda3ca937b1b0e4c9a7b29
+  merge_commit: 861b644d079a5d5a22cce3c1f604ee8dcb5429dc
 checks:
-  - id: click_start_no_instant_selector
-    type: fail_to_pass
-    origin: pr_diff
-    description: "clickStartClientNav must not use elementByCssInstant (races Playwright IPC)"
-
-  - id: click_start_uses_bounded_wait
-    type: fail_to_pass
-    origin: pr_diff
-    description: "clickStartClientNav should use elementByCss with timeout, waitForElementByCss, or retry"
-
-  - id: click_target_selector_preserved
-    type: pass_to_pass
-    origin: static
-    description: "The click target must still be [data-instant-nav-client]"
-
-  - id: cookie_wait_after_click
-    type: pass_to_pass
-    origin: static
-    description: "waitForInstantModeCookie must still be called after the click"
-
-  - id: panel_helpers_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Other instant-nav helpers (openInstantNavPanel, clickInstantNavMenuItem, etc.) still exist"
-
-  - id: file_structure_intact
-    type: pass_to_pass
-    origin: static
-    description: "File retains describe block and at least 3 test cases"
-
-  - id: no_deprecated_check_usage
-    type: pass_to_pass
-    origin: agent_config
-    description: "No deprecated check() usage — use retry() + expect() instead"
-    source:
-      path: "AGENTS.md"
-      lines: "194"
-      commit: "60e71ac90c4f150982fda3ca937b1b0e4c9a7b29"
-
-  - id: no_settimeout_for_waiting
-    type: pass_to_pass
-    origin: agent_config
-    description: "Do not use setTimeout for waiting in clickStartClientNav — use retry() instead"
-    source:
-      path: "AGENTS.md"
-      lines: "180"
-      commit: "60e71ac90c4f150982fda3ca937b1b0e4c9a7b29"
-
-  # Repo CI/CD tests (pass_to_pass) — verify fix doesn't break existing functionality
-  - id: test_repo_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier formatting check passes on the test file"
-
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint check passes on the test file"
-
+- id: click_start_no_instant_selector
+  type: fail_to_pass
+  origin: pr_diff
+  description: clickStartClientNav must not use elementByCssInstant (races Playwright
+    IPC)
+- id: click_start_uses_bounded_wait
+  type: fail_to_pass
+  origin: pr_diff
+  description: clickStartClientNav should use elementByCss with timeout, waitForElementByCss,
+    or retry
+- id: click_target_selector_preserved
+  type: pass_to_pass
+  origin: static
+  description: The click target must still be [data-instant-nav-client]
+- id: cookie_wait_after_click
+  type: pass_to_pass
+  origin: static
+  description: waitForInstantModeCookie must still be called after the click
+- id: panel_helpers_preserved
+  type: pass_to_pass
+  origin: static
+  description: Other instant-nav helpers (openInstantNavPanel, clickInstantNavMenuItem,
+    etc.) still exist
+- id: file_structure_intact
+  type: pass_to_pass
+  origin: static
+  description: File retains describe block and at least 3 test cases
+- id: no_deprecated_check_usage
+  type: pass_to_pass
+  origin: agent_config
+  description: No deprecated check() usage — use retry() + expect() instead
+  source:
+    path: AGENTS.md
+    lines: '194'
+    commit: 60e71ac90c4f150982fda3ca937b1b0e4c9a7b29
+- id: no_settimeout_for_waiting
+  type: pass_to_pass
+  origin: agent_config
+  description: Do not use setTimeout for waiting in clickStartClientNav — use retry()
+    instead
+  source:
+    path: AGENTS.md
+    lines: '180'
+    commit: 60e71ac90c4f150982fda3ca937b1b0e4c9a7b29
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier formatting check passes on the test file
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check passes on the test file
 rubric:
-  - rule: "If modifying test setup, prefer real fixture directories (files: __dirname) over inline files objects in nextTestSetup."
-    source:
-      path: "AGENTS.md"
-      lines: "207-220"
-      commit: "60e71ac90c4f150982fda3ca937b1b0e4c9a7b29"
+- rule: 'If modifying test setup, prefer real fixture directories (files: __dirname)
+    over inline files objects in nextTestSetup.'
+  source:
+    path: AGENTS.md
+    lines: 207-220
+    commit: 60e71ac90c4f150982fda3ca937b1b0e4c9a7b29
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: scope_ambiguity
+  why_distracting: The rule explicitly instructs the agent to start the framework
+    build watcher (`pnpm --filter=next dev`) when changing integration tests. However,
+    since this PR only modifies a test file and not the Next.js framework source,
+    running the framework watcher is unnecessary, wastes background resources, and
+    distracts from simply running the test itself.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 67-69
+- rule: Before editing or creating files in any subdirectory... read all README.md
+    files in the directory path from the repo root up to and including the target
+    file's directory.
+  collision_type: scope_ambiguity
+  why_distracting: The rule asks the agent to read all README.md files in the directory
+    path up to the target file. For a localized Playwright test flake fix (changing
+    a timeout), searching for and reading READMEs up the `test/development/app-dir/...`
+    tree is a waste of time and context window.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 41-43
+hierarchy_analysis: The config files `CLAUDE.md` and `AGENTS.md` are identical symlinks.
+  They provide general repository guidance (building, testing, and reading READMEs)
+  but lack specific rules regarding Playwright test conventions or timeout handling.
+  The agent must rely on the issue description rather than the config files to understand
+  the distinction between `elementByCssInstant` and `elementByCss` with a timeout.

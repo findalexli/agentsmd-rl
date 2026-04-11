@@ -1,171 +1,168 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28535
-  base_commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
-  merge_commit: "39094877abb3e74557d3975dd015ee677220eb35"
-
+  base_commit: 698eb8104be9a42c9a2b5e5b03a8843f81911055
+  merge_commit: 39094877abb3e74557d3975dd015ee677220eb35
 checks:
-  - id: file_exists_and_nontrivial
-    type: pass_to_pass
-    origin: static
-    description: "JSGlobalObject.zig must exist with substantial content"
-
-  - id: crash_assert_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bun.assert(instance != .zero) crash trigger must be removed from throw()/throwPretty()"
-
-  - id: throwvalue_guarded
-    type: fail_to_pass
-    origin: pr_diff
-    description: "throwValue() must guard against calling vm().throwError() when exception already pending"
-
-  - id: throw_and_throwpretty_handle_zero
-    type: fail_to_pass
-    origin: pr_diff
-    description: "throw() and throwPretty() must handle createErrorInstance returning .zero"
-
-  - id: throwtodo_handles_zero
-    type: fail_to_pass
-    origin: pr_diff
-    description: "throwTODO() must handle createErrorInstance returning .zero"
-
-  - id: throwerror_safe_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "throwError(anyerror) must route through guarded path, not directly vm().throwError()"
-
-  - id: createrangeerror_handles_zero
-    type: fail_to_pass
-    origin: pr_diff
-    description: "createRangeError() must handle createErrorInstance returning .zero"
-
-  - id: throwTypeError_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "throwTypeError() must still exist with non-trivial body"
-
-  - id: throwDOMException_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "throwDOMException() must still exist with non-trivial body"
-
-  - id: uses_bun_assert_not_std
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must use bun.assert, not std.debug.assert"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "16"
-      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
-
-  - id: no_std_fs_posix_os
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not use std.fs/std.posix/std.os"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "16"
-      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
-
-  # Static pass_to_pass gates — EditorConfig compliance (file-read check)
-  - id: test_repo_editorconfig
-    type: pass_to_pass
-    origin: static
-    description: "Modified file must comply with .editorconfig (utf-8, lf, trailing whitespace)"
-
-  # Repo CI/CD pass_to_pass gates — Zig fmt check (real subprocess command)
-  - id: test_repo_zig_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Zig code must be properly formatted (zig fmt --check)"
-
-  # Repo CI/CD pass_to_pass gates — Git repository integrity (real subprocess command)
-  - id: test_repo_git_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository must be in clean state with no uncommitted changes"
-
-  # Repo CI/CD pass_to_pass gates — Git whitespace check (real subprocess command)
-  - id: test_repo_git_diff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git diff --check must pass (no trailing whitespace, no missing newlines)"
-
-  # Repo CI/CD pass_to_pass gates — Git commit history check (real subprocess command)
-  - id: test_repo_git_log
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository must have valid commit history"
-
-  # Static pass_to_pass gates — Zig file syntax basics (file-read check)
-  - id: test_repo_zig_basic_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Zig file must have balanced braces/parentheses and valid structure"
-
-  # Static pass_to_pass gates — No tabs for indentation (file-read check)
-  - id: test_repo_no_tabs_indentation
-    type: pass_to_pass
-    origin: static
-    description: "Zig file must use spaces for indentation, not tabs"
-
-  # Static pass_to_pass gates — No std.debug.print or std.log (file-read check)
-  - id: test_repo_no_std_debug_print_log
-    type: pass_to_pass
-    origin: static
-    description: "Must not use std.debug.print or std.log (debugging code should not be committed)"
-
-  # Static pass_to_pass gates — No usingnamespace (file-read check)
-  - id: test_repo_no_usingnamespace
-    type: pass_to_pass
-    origin: static
-    description: "Must not use usingnamespace (deprecated, will be removed in Zig 0.15)"
-
-  # Static pass_to_pass gates — No allocator.ptr comparisons (file-read check)
-  - id: test_repo_no_allocator_undefined_comparison
-    type: pass_to_pass
-    origin: static
-    description: "Must not compare allocator.ptr with == or != (UB due to possible undefined context pointer)"
-
+- id: file_exists_and_nontrivial
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig must exist with substantial content
+- id: crash_assert_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: bun.assert(instance != .zero) crash trigger must be removed from throw()/throwPretty()
+- id: throwvalue_guarded
+  type: fail_to_pass
+  origin: pr_diff
+  description: throwValue() must guard against calling vm().throwError() when exception
+    already pending
+- id: throw_and_throwpretty_handle_zero
+  type: fail_to_pass
+  origin: pr_diff
+  description: throw() and throwPretty() must handle createErrorInstance returning
+    .zero
+- id: throwtodo_handles_zero
+  type: fail_to_pass
+  origin: pr_diff
+  description: throwTODO() must handle createErrorInstance returning .zero
+- id: throwerror_safe_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: throwError(anyerror) must route through guarded path, not directly
+    vm().throwError()
+- id: createrangeerror_handles_zero
+  type: fail_to_pass
+  origin: pr_diff
+  description: createRangeError() must handle createErrorInstance returning .zero
+- id: throwTypeError_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: throwTypeError() must still exist with non-trivial body
+- id: throwDOMException_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: throwDOMException() must still exist with non-trivial body
+- id: uses_bun_assert_not_std
+  type: pass_to_pass
+  origin: agent_config
+  description: Must use bun.assert, not std.debug.assert
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 698eb8104be9a42c9a2b5e5b03a8843f81911055
+- id: no_std_fs_posix_os
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use std.fs/std.posix/std.os
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 698eb8104be9a42c9a2b5e5b03a8843f81911055
+- id: test_repo_editorconfig
+  type: pass_to_pass
+  origin: static
+  description: Modified file must comply with .editorconfig (utf-8, lf, trailing whitespace)
+- id: test_repo_zig_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig code must be properly formatted (zig fmt --check)
+- id: test_repo_git_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository must be in clean state with no uncommitted changes
+- id: test_repo_git_diff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git diff --check must pass (no trailing whitespace, no missing newlines)
+- id: test_repo_git_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository must have valid commit history
+- id: test_repo_zig_basic_syntax
+  type: pass_to_pass
+  origin: static
+  description: Zig file must have balanced braces/parentheses and valid structure
+- id: test_repo_no_tabs_indentation
+  type: pass_to_pass
+  origin: static
+  description: Zig file must use spaces for indentation, not tabs
+- id: test_repo_no_std_debug_print_log
+  type: pass_to_pass
+  origin: static
+  description: Must not use std.debug.print or std.log (debugging code should not
+    be committed)
+- id: test_repo_no_usingnamespace
+  type: pass_to_pass
+  origin: static
+  description: Must not use usingnamespace (deprecated, will be removed in Zig 0.15)
+- id: test_repo_no_allocator_undefined_comparison
+  type: pass_to_pass
+  origin: static
+  description: Must not compare allocator.ptr with == or != (UB due to possible undefined
+    context pointer)
 rubric:
-  # Note: Removed the @import rule since the file already has @import inside
-  # the ERR function at base commit - checking it would penalize the gold
-  # solution for pre-existing code patterns.
-  - rule: "Always use 'bun.*' APIs instead of 'std.*'."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "16"
-      commit: "698eb8104be9a42c9a2b5e5b03a8843f81911055"
-
-  # Static pass_to_pass gates - No panic/abort in error paths (file-read check)
-  - id: test_repo_no_panic_in_error_paths
-    type: pass_to_pass
-    origin: static
-    description: "Error handling paths should not use @panic which could crash the process"
-
-  # Static pass_to_pass gates - Valid Zig string literal syntax (file-read check)
-  - id: test_repo_zig_string_literal_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Zig file must have valid string literal syntax with no unclosed strings"
-
-  # Static pass_to_pass gates - Consistent function signatures (file-read check)
-  - id: test_repo_consistent_function_signatures
-    type: pass_to_pass
-    origin: static
-    description: "Functions must have consistent parameter and return type formatting"
-
-  # Static pass_to_pass gates - No unreachable in error paths (file-read check)
-  - id: test_repo_no_unreachable_in_error_paths
-    type: pass_to_pass
-    origin: static
-    description: "Error paths should not use unreachable which is undefined behavior"
-
-  # Static pass_to_pass gates - Bun API usage validation (file-read check)
-  - id: test_repo_bun_api_usage
-    type: pass_to_pass
-    origin: static
-    description: "Must use bun.* APIs for common operations (not std.*)"
+- rule: Always use 'bun.*' APIs instead of 'std.*'.
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 698eb8104be9a42c9a2b5e5b03a8843f81911055
+- id: test_repo_no_panic_in_error_paths
+  type: pass_to_pass
+  origin: static
+  description: Error handling paths should not use @panic which could crash the process
+- id: test_repo_zig_string_literal_syntax
+  type: pass_to_pass
+  origin: static
+  description: Zig file must have valid string literal syntax with no unclosed strings
+- id: test_repo_consistent_function_signatures
+  type: pass_to_pass
+  origin: static
+  description: Functions must have consistent parameter and return type formatting
+- id: test_repo_no_unreachable_in_error_paths
+  type: pass_to_pass
+  origin: static
+  description: Error paths should not use unreachable which is undefined behavior
+- id: test_repo_bun_api_usage
+  type: pass_to_pass
+  origin: static
+  description: Must use bun.* APIs for common operations (not std.*)
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  source:
+    path: src/CLAUDE.md
+    lines: 16-17
+  evidence: The gold solution uses `bun.assert(this.hasException());` instead of `std.debug.assert`
+    when verifying the exception state.
+  category: style
+distractors:
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The bug is specifically about a crash (assertion failure) after
+    a stack overflow. An agent might try to write a test to ensure the process doesn't
+    crash, but the rules explicitly forbid writing tests that check for no 'panic'
+    or 'uncaught exception'. The gold solution correctly omits a test to avoid violating
+    this rule.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 75-76
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    test/regression/issue/${issueNumber}.test.ts. Ensure the issue number is REAL
+    and not a placeholder!
+  collision_type: scope_ambiguity
+  why_distracting: The prompt provides a reproduction script but no issue number.
+    The agent might try to create a regression test with a placeholder issue number,
+    which is explicitly forbidden, or waste time trying to figure out where to place
+    a test for a stack overflow crash.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 28-29
+hierarchy_analysis: The hierarchy consists of root-level testing and build instructions
+  (`CLAUDE.md`, `AGENTS.md`) and `src/`-level Zig-specific guidelines (`src/CLAUDE.md`,
+  `src/AGENTS.md`). The root-level testing rules create a conflict because the bug
+  is a crash, but tests checking for no panic are forbidden. The gold solution resolves
+  this by omitting the test entirely and focusing only on the Zig implementation,
+  following the `src/`-level rule to use `bun.*` APIs.

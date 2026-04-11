@@ -1,64 +1,64 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 36106
-  base_commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
-  merge_commit: "d594643e5e5b662f064c584018ab3773754c792d"
-
+  base_commit: b4546cd0d4db2b913d8e7503bee86e1844073b2e
+  merge_commit: d594643e5e5b662f064c584018ab3773754c792d
 checks:
-  - id: enableViewTransition_native_fb
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableViewTransition is enabled in ReactFeatureFlags.native-fb.js"
-
-  - id: enableViewTransition_test_renderer_native_fb
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableViewTransition is enabled in ReactFeatureFlags.test-renderer.native-fb.js"
-
-  - id: enableViewTransition_test_renderer_www
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableViewTransition is enabled in ReactFeatureFlags.test-renderer.www.js"
-
-  - id: flag_files_readable
-    type: pass_to_pass
-    origin: static
-    description: "All modified flag files exist and contain expected exports"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Flag value is a boolean literal, not a placeholder or variable"
-
-  - id: all_fork_files_consistent
-    type: fail_to_pass
-    origin: agent_config
-    description: "enableViewTransition is consistently enabled across all three modified fork files"
-    source:
-      path: ".claude/skills/feature-flags/SKILL.md"
-      lines: "78"
-      commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
-
-  - id: test_repo_flags_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's feature flags check (yarn flags) passes"
-
-  - id: test_repo_lint_flag_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint passes on all modified flag files"
-
-  - id: test_repo_syntax_flag_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All modified flag files have valid JavaScript syntax"
-
-  - id: test_repo_version_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo version check (yarn version-check) passes"
-
-rubric: []
+- id: enableViewTransition_native_fb
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableViewTransition is enabled in ReactFeatureFlags.native-fb.js
+- id: enableViewTransition_test_renderer_native_fb
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableViewTransition is enabled in ReactFeatureFlags.test-renderer.native-fb.js
+- id: enableViewTransition_test_renderer_www
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableViewTransition is enabled in ReactFeatureFlags.test-renderer.www.js
+- id: flag_files_readable
+  type: pass_to_pass
+  origin: static
+  description: All modified flag files exist and contain expected exports
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Flag value is a boolean literal, not a placeholder or variable
+- id: all_fork_files_consistent
+  type: fail_to_pass
+  origin: agent_config
+  description: enableViewTransition is consistently enabled across all three modified
+    fork files
+  source:
+    path: .claude/skills/feature-flags/SKILL.md
+    lines: '78'
+    commit: b4546cd0d4db2b913d8e7503bee86e1844073b2e
+- id: test_repo_flags_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's feature flags check (yarn flags) passes
+- id: test_repo_lint_flag_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on all modified flag files
+- id: test_repo_syntax_flag_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified flag files have valid JavaScript syntax
+- id: test_repo_version_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo version check (yarn version-check) passes
+rubric:
+- rule: React files are located outside the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: The gold solution modifies files in `packages/shared/forks/`, which is
+    outside the `/compiler/` directory, correctly treating them as part of the React
+    core rather than the React Compiler.
+  category: architecture
+hierarchy_analysis: The hierarchy consists of a single root `CLAUDE.md` file providing
+  a basic monorepo overview. There are no conflicting rules or complex overrides to
+  analyze.

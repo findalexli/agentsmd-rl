@@ -1,101 +1,128 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44927
-  base_commit: "9dc8d8aa3090ab3f39e6086d02b712f9274bc795"
-  merge_commit: "b1527a32a1010cd94bfb4f937af247bb5871f6fd"
-
+  base_commit: 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
+  merge_commit: b1527a32a1010cd94bfb4f937af247bb5871f6fd
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Target file must be valid Python"
-
-  - id: bpe_avoids_from_file
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BPE tokenizer with custom __init__ must not call TokenizerFast.from_file"
-
-  - id: wordpiece_avoids_from_file
-    type: fail_to_pass
-    origin: pr_diff
-    description: "WordPiece tokenizer with custom __init__ must not call TokenizerFast.from_file"
-
-  - id: wordlevel_avoids_from_file
-    type: fail_to_pass
-    origin: pr_diff
-    description: "WordLevel tokenizer with custom __init__ must not call TokenizerFast.from_file"
-
-  - id: bpe_output_without_from_file
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Optimized BPE path returns correct vocab, merges, and metadata without from_file"
-
-  - id: unigram_uses_from_file_fallback
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Unigram tokenizers still work via from_file fallback path"
-
-  - id: missing_type_field_fallback
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Tokenizer JSON without type field in model section falls back to from_file"
-
-  - id: base_class_path_unchanged
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Base class path (no custom __init__) still returns tokenizer_object"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified function has real logic, not a trivial stub"
-
-  - id: ruff_clean
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified file passes ruff linting (make style enforced by CI)"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "9dc8d8aa3090ab3f39e6086d02b712f9274bc795"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file passes ruff formatting check (CI: make style)"
-
-  - id: check_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository init files are consistent (CI: check_inits.py)"
-
-  - id: check_dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository dummy files are consistent (CI: check_dummies.py)"
-
-  - id: module_import
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified module can be imported without errors"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target file must be valid Python
+- id: bpe_avoids_from_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: BPE tokenizer with custom __init__ must not call TokenizerFast.from_file
+- id: wordpiece_avoids_from_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: WordPiece tokenizer with custom __init__ must not call TokenizerFast.from_file
+- id: wordlevel_avoids_from_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: WordLevel tokenizer with custom __init__ must not call TokenizerFast.from_file
+- id: bpe_output_without_from_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: Optimized BPE path returns correct vocab, merges, and metadata without
+    from_file
+- id: unigram_uses_from_file_fallback
+  type: pass_to_pass
+  origin: pr_diff
+  description: Unigram tokenizers still work via from_file fallback path
+- id: missing_type_field_fallback
+  type: pass_to_pass
+  origin: pr_diff
+  description: Tokenizer JSON without type field in model section falls back to from_file
+- id: base_class_path_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: Base class path (no custom __init__) still returns tokenizer_object
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified function has real logic, not a trivial stub
+- id: ruff_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file passes ruff linting (make style enforced by CI)
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
+- id: ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Modified file passes ruff formatting check (CI: make style)'
+- id: check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repository init files are consistent (CI: check_inits.py)'
+- id: check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repository dummy files are consistent (CI: check_dummies.py)'
+- id: module_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified module can be imported without errors
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "9dc8d8aa3090ab3f39e6086d02b712f9274bc795"
-
-  - rule: "Do not edit a # Copied from block, as it will be reverted by make fix-repo. Ideally you should edit the code it's copying from and propagate the change, but you can break the # Copied from link if needed."
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "9dc8d8aa3090ab3f39e6086d02b712f9274bc795"
-
-  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo! Instead, edit the modular file."
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "9dc8d8aa3090ab3f39e6086d02b712f9274bc795"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
+- rule: 'Do not edit a # Copied from block, as it will be reverted by make fix-repo.
+    Ideally you should edit the code it''s copying from and propagate the change,
+    but you can break the # Copied from link if needed.'
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
+- rule: When a modular file is present, generated files should not be edited, as changes
+    will be overwritten by make fix-repo! Instead, edit the modular file.
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 9dc8d8aa3090ab3f39e6086d02b712f9274bc795
+- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits.
+  source:
+    path: CLAUDE.md
+    lines: 37-39
+  evidence: The gold solution implements a complex optimization to avoid redundant
+    parsing of large tokenizer files, saving ~0.4 seconds per load. This addresses
+    a significant performance bottleneck, aligning wit
+  category: architecture
+distractors:
+- rule: 'Avoid direct inheritance between model-specific files in src/transformers/models/
+    and use # Copied from.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule restricts direct inheritance and mandates the use of `#
+    Copied from` for files in `src/transformers/models/`. The agent might incorrectly
+    apply this to `src/transformers/tokenization_utils_tokenizers.py`, which is a
+    core utility file outside the `models/` directory, potentially avoiding standard
+    class structures or searching for `# Copied from` directives that don't exist
+    here.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 58-62
+- rule: 'Many tests are marked as ''slow'' and skipped by default in the CI. To run
+    them, use: RUN_SLOW=1 pytest ...'
+  collision_type: meta_confusion
+  why_distracting: Because the bug is explicitly about a performance issue (0.4s per
+    load), an agent might try to write a performance test and mark it as slow, or
+    attempt to run all slow tests to verify the performance improvement. Running all
+    slow tests locally would waste a massive amount of time and compute during the
+    agent's run.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 6-6
+hierarchy_analysis: Both CLAUDE.md and AGENTS.md contain identical rules. The rules
+  primarily focus on repository-wide contribution policies, CI checks, and model-specific
+  architectural patterns (like `# Copied from`). Since the target file is a core utility
+  outside the `models/` directory, the model-specific rules do not apply, requiring
+  the agent to correctly scope the guidelines.

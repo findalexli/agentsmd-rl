@@ -95,3 +95,50 @@ rubric:
     path: superset/mcp_service/CLAUDE.md
     lines: 222-242
     commit: 1bb41a6e609320dd2932f67d8373cb7866230f65
+- rule: NEVER remove existing license headers during refactoring or edits
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 9-10
+  evidence: The gold solution modifies `chart_utils.py`, `preview_utils.py`, and `get_chart_preview.py`
+    by targeting specific functions and lines, leaving the top of the files untouched
+    and thereby preserving any
+  category: style
+- rule: Avoid time-specific language in code comments
+  source:
+    path: CLAUDE.md
+    lines: 88-89
+  evidence: The comment added in `chart_utils.py` (`# Include both "all_columns" (Superset
+    table viz) and "columns" (QueryContextFactory validation) to avoid "Empty query?"
+    errors`) explains the requirement factu
+  category: documentation
+distractors:
+- rule: EVERY Python file in the MCP service MUST have the Apache Software Foundation
+    license header
+  collision_type: scope_ambiguity
+  why_distracting: The rule states to 'ALWAYS verify license headers are present after
+    editing files. If you see a file without a license header, ADD IT IMMEDIATELY.'
+    Since the agent is editing existing files and may only read specific chunks of
+    the file rather than the very top, it might erroneously assume the header is missing
+    and prepend the 16-line Apache license header, causing duplication and syntax
+    errors.
+  severity: high
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 7-26
+- rule: When creating new MCP tools, prompts, or resources, you MUST add their imports
+    to app.py for auto-registration
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying `get_chart_preview.py`, which is an MCP
+    tool. The rule mandates adding imports to `app.py` for auto-registration when
+    creating new tools. The agent might get confused and attempt to verify or re-register
+    this existing tool in `app.py`, leading to unnecessary edits or duplicate registrations.
+  severity: medium
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 51-69
+hierarchy_analysis: The root `CLAUDE.md` provides general Superset guidelines, while
+  `superset/mcp_service/CLAUDE.md` provides strict, highly prescriptive MCP-specific
+  rules (like Apache license header verification and tool registration). The MCP-specific
+  rules are strongly worded ('CRITICAL', 'ALWAYS', 'MUST') and could cause agents
+  to over-apply them to existing files if they don't carefully check the file's existing
+  state.

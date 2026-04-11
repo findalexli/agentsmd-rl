@@ -99,6 +99,14 @@ rubric:
     bash
 
     ./scripts/test.sh src/vs/editor/test/common/model.test.ts src/vs/editor/test/common/range.'
+- rule: '`test/`: Integration tests and test infrastructure'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 11-11
+  evidence: The gold solution modifies `test/unit/electron/index.js` to update the
+    test runner CLI arguments, aligning with the architectural definition that the
+    `test/` folder contains test infrastructure.
+  category: architecture
 config_edits:
 - path: .github/skills/unit-tests/SKILL.md
   tier: 1
@@ -144,3 +152,32 @@ config_edits:
     are **not run** by `scripts/test.sh`. Use `scripts/test-integration.sh` (or `scripts/test-integration.bat`)
     instead. See the `integration-tests` skill for details on filtering and running
     specific integration test files.'
+distractors:
+- rule: If the tool is not available... run `npm run compile-check-ts-native` after
+    making changes to type-check the main VS Code sources
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to run `npm run compile-check-ts-native` for
+    changes under `src/`. An agent might mistakenly apply this to validate changes
+    in `test/unit/electron/index.js`, but this file is outside `src/` and is plain
+    JavaScript, so the TypeScript compiler check would not validate it and would waste
+    time.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 45-46
+- rule: 'MANDATORY: Always check for compilation errors before running any tests or
+    validation scripts, or declaring work complete'
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates checking for compilation errors before declaring
+    work complete. Since the modified file `test/unit/electron/index.js` is a JavaScript
+    file, it does not undergo TypeScript compilation. An agent might waste time trying
+    to compile it or running full project compilation unnecessarily.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 38-38
+hierarchy_analysis: The config hierarchy is simple, with `AGENTS.md` providing no
+  specific rules and `.github/copilot-instructions.md` providing general architectural
+  and validation guidelines. The validation guidelines are heavily focused on TypeScript
+  compilation, which creates ambiguity for this specific PR since it modifies a plain
+  JavaScript file in the test infrastructure.

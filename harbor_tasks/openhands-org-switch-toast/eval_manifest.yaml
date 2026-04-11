@@ -4,131 +4,146 @@ source:
   base_commit: 30b7af31b9cc6c7e1dbdb88f311ae4da3fdfb3c3
   merge_commit: aeda0ea76245be1ecae69a2aabaa5317e08fac10
   task_name: openhands-org-switch-toast
-
 checks:
-  # Fail-to-pass tests (functional requirements)
-  - id: test_i18n_keys_exist
-    type: fail_to_pass
-    origin: functional_requirement
-    description: i18n translation keys must be added to declaration.ts
-
-  - id: test_i18n_translations_exist
-    type: fail_to_pass
-    origin: functional_requirement
-    description: All 15 language translations must exist for both toast messages
-
-  - id: test_use_switch_organization_imports_toast_handler
-    type: fail_to_pass
-    origin: functional_requirement
-    description: useSwitchOrganization hook must import displaySuccessToast
-
-  - id: test_use_switch_organization_uses_i18n_keys
-    type: fail_to_pass
-    origin: functional_requirement
-    description: useSwitchOrganization must use ORG$SWITCHED_TO_ORGANIZATION and ORG$SWITCHED_TO_PERSONAL_WORKSPACE i18n keys
-
-  - id: test_use_switch_organization_mutation_params
-    type: fail_to_pass
-    origin: functional_requirement
-    description: useSwitchOrganization mutation must accept orgName and isPersonal parameters
-
-  - id: test_org_selector_passes_org_details
-    type: fail_to_pass
-    origin: functional_requirement
-    description: OrgSelector component must pass orgName and isPersonal flag to switchOrganization
-
-  - id: test_org_selector_finds_org_by_id
-    type: fail_to_pass
-    origin: functional_requirement
-    description: OrgSelector must look up organization by ID before switching
-
-  - id: test_org_selector_tests_include_toast_assertions
-    type: fail_to_pass
-    origin: functional_requirement
-    description: Unit tests must verify displaySuccessToast is called
-
-  - id: test_org_selector_tests_cover_team_org
-    type: fail_to_pass
-    origin: functional_requirement
-    description: Unit tests must cover switching to team organization
-
-  - id: test_org_selector_tests_cover_personal_workspace
-    type: fail_to_pass
-    origin: functional_requirement
-    description: Unit tests must cover switching to personal workspace
-
-  - id: test_org_selector_test_accepts_params_in_translation
-    type: fail_to_pass
-    origin: functional_requirement
-    description: Test translation mock must accept params for interpolated strings
-
-  # Pass-to-pass tests (repo CI/CD requirements)
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Org-selector unit tests must pass
-
-  - id: test_repo_org_component_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: All org component tests must pass
-
-  - id: test_repo_mutation_hook_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Mutation hook tests must pass
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend linting must pass
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend TypeScript type checking must pass
-
-  - id: test_i18n_completeness
-    type: pass_to_pass
-    origin: repo_tests
-    description: All translations must be complete
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend build must succeed
-
-# Agent config rules (from AGENTS.md) - programmatically verifiable
+- id: test_i18n_keys_exist
+  type: fail_to_pass
+  origin: functional_requirement
+  description: i18n translation keys must be added to declaration.ts
+- id: test_i18n_translations_exist
+  type: fail_to_pass
+  origin: functional_requirement
+  description: All 15 language translations must exist for both toast messages
+- id: test_use_switch_organization_imports_toast_handler
+  type: fail_to_pass
+  origin: functional_requirement
+  description: useSwitchOrganization hook must import displaySuccessToast
+- id: test_use_switch_organization_uses_i18n_keys
+  type: fail_to_pass
+  origin: functional_requirement
+  description: useSwitchOrganization must use ORG$SWITCHED_TO_ORGANIZATION and ORG$SWITCHED_TO_PERSONAL_WORKSPACE
+    i18n keys
+- id: test_use_switch_organization_mutation_params
+  type: fail_to_pass
+  origin: functional_requirement
+  description: useSwitchOrganization mutation must accept orgName and isPersonal parameters
+- id: test_org_selector_passes_org_details
+  type: fail_to_pass
+  origin: functional_requirement
+  description: OrgSelector component must pass orgName and isPersonal flag to switchOrganization
+- id: test_org_selector_finds_org_by_id
+  type: fail_to_pass
+  origin: functional_requirement
+  description: OrgSelector must look up organization by ID before switching
+- id: test_org_selector_tests_include_toast_assertions
+  type: fail_to_pass
+  origin: functional_requirement
+  description: Unit tests must verify displaySuccessToast is called
+- id: test_org_selector_tests_cover_team_org
+  type: fail_to_pass
+  origin: functional_requirement
+  description: Unit tests must cover switching to team organization
+- id: test_org_selector_tests_cover_personal_workspace
+  type: fail_to_pass
+  origin: functional_requirement
+  description: Unit tests must cover switching to personal workspace
+- id: test_org_selector_test_accepts_params_in_translation
+  type: fail_to_pass
+  origin: functional_requirement
+  description: Test translation mock must accept params for interpolated strings
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Org-selector unit tests must pass
+- id: test_repo_org_component_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All org component tests must pass
+- id: test_repo_mutation_hook_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Mutation hook tests must pass
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend linting must pass
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend TypeScript type checking must pass
+- id: test_i18n_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: All translations must be complete
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend build must succeed
 agent_config:
-
-  - id: frontend_tanstack_query
-    source: AGENTS.md
-    lines: "Data Fetching & Cache Management section"
-    rule: "UI components must use TanStack Query hooks, never call API client methods directly"
-    applicable: true
-
-  - id: frontend_i18n_pattern
-    source: AGENTS.md
-    lines: "Internationalization section"
-    rule: "i18n keys must be added to both declaration.ts and translation.json"
-    applicable: true
-
-  - id: frontend_hook_naming
-    source: AGENTS.md
-    lines: "Mutation hooks should follow pattern use[Action]"
-    rule: "Mutation hooks follow naming convention use[Action]"
-    applicable: true
-
-# Rubric for soft/subjective requirements (LLM judge only)
+- id: frontend_tanstack_query
+  source: AGENTS.md
+  lines: Data Fetching & Cache Management section
+  rule: UI components must use TanStack Query hooks, never call API client methods
+    directly
+  applicable: true
+- id: frontend_i18n_pattern
+  source: AGENTS.md
+  lines: Internationalization section
+  rule: i18n keys must be added to both declaration.ts and translation.json
+  applicable: true
+- id: frontend_hook_naming
+  source: AGENTS.md
+  lines: Mutation hooks should follow pattern use[Action]
+  rule: Mutation hooks follow naming convention use[Action]
+  applicable: true
 rubric:
-  - id: proper_error_handling
-    criterion: "Toast notifications should only show on successful organization switch"
-    applicable: false  # PR doesn't add error toast handling
-
-  - id: code_organization
-    criterion: "Hook logic should remain clean and readable after adding toast functionality"
-    applicable: true
-
-  - id: test_quality
-    criterion: "Tests should properly mock external dependencies and verify behavior not implementation"
-    applicable: true
+- id: proper_error_handling
+  criterion: Toast notifications should only show on successful organization switch
+  applicable: false
+- id: code_organization
+  criterion: Hook logic should remain clean and readable after adding toast functionality
+  applicable: true
+- id: test_quality
+  criterion: Tests should properly mock external dependencies and verify behavior
+    not implementation
+  applicable: true
+- rule: React frontend code is located in the `frontend` directory.
+  source:
+    path: AGENTS.md
+    lines: 1-2
+  evidence: The gold solution correctly implements the React frontend changes within
+    the `frontend/` directory, specifically modifying `frontend/src/hooks/mutation/use-switch-organization.ts`
+    and `frontend/src/co
+  category: architecture
+distractors:
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+    You don't need to do this unless the user asks you to.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `make build` to set up the repo for testing
+    the frontend changes, but the rule explicitly states not to do this unless requested.
+    Running it would waste time and resources for a simple frontend UI change.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 4-6
+- rule: When working on a PR that requires design documents... store them in a `.pr/`
+    directory at the repository root.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a `.pr/design.md` file to document the organization
+    switching toast notification feature, but this is a simple UI addition, not a
+    complex refactoring or debugging session that warrants PR-specific artifacts.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 36-45
+- rule: If you've made changes to the backend, you should run `pre-commit run --config
+    ./dev_config/python/.pre-commit-config.yaml`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run the Python backend pre-commit hooks, but this
+    PR only involves frontend TypeScript/React changes, making the backend linting
+    unnecessary.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 20-20
+hierarchy_analysis: The AGENTS.md file provides general repository guidelines. There
+  are no conflicting rules in the hierarchy since only one config file is provided.

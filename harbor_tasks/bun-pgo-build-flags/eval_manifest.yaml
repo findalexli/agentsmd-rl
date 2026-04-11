@@ -1,92 +1,127 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28805
-  base_commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
-  merge_commit: "0ebe66d060031aa3138eaf1a089319a26bbed862"
-
+  base_commit: d2e67536514b059cb317beea23ebbeafe2fa6c1a
+  merge_commit: 0ebe66d060031aa3138eaf1a089319a26bbed862
 checks:
-  - id: typescript_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files must parse without errors"
-
-  - id: pgo_flags_in_config_interface
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Config interface includes pgoGenerate and pgoUse fields"
-
-  - id: pgo_mutual_exclusivity_check
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveConfig throws BuildError when both pgoGenerate and pgoUse are provided"
-
-  - id: pgo_flags_in_cli_args
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CLI argument parsing includes pgoGenerate and pgoUse flags"
-
-  - id: pgo_feature_flags_in_output
-    type: fail_to_pass
-    origin: pr_diff
-    description: "formatConfig shows pgo-gen/pgo-use in feature list when enabled"
-
-  - id: pgo_compile_flags_present
-    type: fail_to_pass
-    origin: pr_diff
-    description: "globalFlags includes PGO compile-side flags"
-
-  - id: pgo_link_flags_present
-    type: fail_to_pass
-    origin: pr_diff
-    description: "linkerFlags includes PGO link-side flags"
-
-  - id: webkit_pgo_forwarding
-    type: fail_to_pass
-    origin: pr_diff
-    description: "WebKit dependency forwards PGO flags via CMAKE_C/CXX_FLAGS"
-
-  - id: existing_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Upstream build script tests still pass"
-
-  - id: typescript_syntax_node_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified TypeScript files have valid syntax (node --check)"
-
-  - id: oxlint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass oxlint linting"
-
-  - id: prettier_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass prettier format check"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "resolveConfig has real PGO validation logic, not placeholder"
-
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must parse without errors
+- id: pgo_flags_in_config_interface
+  type: fail_to_pass
+  origin: pr_diff
+  description: Config interface includes pgoGenerate and pgoUse fields
+- id: pgo_mutual_exclusivity_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveConfig throws BuildError when both pgoGenerate and pgoUse are
+    provided
+- id: pgo_flags_in_cli_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI argument parsing includes pgoGenerate and pgoUse flags
+- id: pgo_feature_flags_in_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: formatConfig shows pgo-gen/pgo-use in feature list when enabled
+- id: pgo_compile_flags_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: globalFlags includes PGO compile-side flags
+- id: pgo_link_flags_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: linkerFlags includes PGO link-side flags
+- id: webkit_pgo_forwarding
+  type: fail_to_pass
+  origin: pr_diff
+  description: WebKit dependency forwards PGO flags via CMAKE_C/CXX_FLAGS
+- id: existing_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream build script tests still pass
+- id: typescript_syntax_node_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax (node --check)
+- id: oxlint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass oxlint linting
+- id: prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass prettier format check
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: resolveConfig has real PGO validation logic, not placeholder
 rubric:
-  - rule: "Explicit over implicit. All config decisions traceable to a line of code. No hidden defaults, no order-dependent global state. Use flat Config struct with values computed once in resolveConfig()."
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "15-19"
-      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
-
-  - rule: "Add compiler flags as entries in flat tables with when predicates. Each flag has a when predicate and desc. Related flags live adjacent so coupling is visible."
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "116-123"
-      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
-
-  - rule: "Follow existing code style - check neighboring files for patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "507"
-      commit: "d2e67536514b059cb317beea23ebbeafe2fa6c1a"
+- rule: Explicit over implicit. All config decisions traceable to a line of code.
+    No hidden defaults, no order-dependent global state. Use flat Config struct with
+    values computed once in resolveConfig().
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 15-19
+    commit: d2e67536514b059cb317beea23ebbeafe2fa6c1a
+- rule: Add compiler flags as entries in flat tables with when predicates. Each flag
+    has a when predicate and desc. Related flags live adjacent so coupling is visible.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 116-123
+    commit: d2e67536514b059cb317beea23ebbeafe2fa6c1a
+- rule: Follow existing code style - check neighboring files for patterns.
+  source:
+    path: CLAUDE.md
+    lines: '507'
+    commit: d2e67536514b059cb317beea23ebbeafe2fa6c1a
+- rule: One flat Config struct. All derived values computed once in resolveConfig().
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 18-20
+  evidence: The gold solution adds `pgoGenerate` and `pgoUse` to the single `Config`
+    and `PartialConfig` interfaces, and resolves their absolute paths and mutual exclusivity
+    exactly once inside the `resolveConfig
+  category: architecture
+- rule: One flat table per flag category. Each flag has a when predicate and a desc.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 21-22
+  evidence: The gold solution adds the PGO compiler and linker flags to the centralized
+    `globalFlags` and `linkerFlags` arrays in `scripts/build/flags.ts` rather than
+    scattering them across different configuratio
+  category: architecture
+distractors:
+- rule: nested-cmake — invoke the dep's own cmake configure + build as ninja edges.
+    Flags forwarded via -DCMAKE_C_FLAGS
+  collision_type: architecture_boundary
+  why_distracting: The rule states that for nested-cmake dependencies, flags are forwarded
+    via `-DCMAKE_C_FLAGS`. An agent might try to implement PGO flag forwarding globally
+    for all cmake dependencies in `source.ts`. However, WebKit specifically clears
+    global dependency flags to avoid conflicts with its own optimizations, requiring
+    the PGO flags to be explicitly appended to `optFlags` within `scripts/build/deps/webkit.ts`
+    instead.
+  severity: high
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 31-33
+- rule: Build flags (e.g. --asan=off) go before the exec args; see scripts/build.ts
+    header for the full arg routing rules.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mentions that build flags go before exec args and points
+    to the `scripts/build.ts` header for full arg routing rules. An agent might get
+    distracted trying to implement complex argument routing logic or modifying the
+    header documentation, when all that is actually required is adding the new keys
+    to the `parseArgs` allowed keys array.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 26-27
+hierarchy_analysis: The repository has a root `CLAUDE.md` (and identical `AGENTS.md`)
+  focusing on high-level build commands and testing, and a specialized `scripts/build/CLAUDE.md`
+  focusing on the architecture of the TypeScript build system itself. For this task,
+  the specialized build system rules in `scripts/build/CLAUDE.md` take precedence,
+  as the PR involves modifying the core configuration and flag resolution mechanisms
+  of the build system.

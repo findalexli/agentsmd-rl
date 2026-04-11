@@ -1,183 +1,225 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19361
-  base_commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-  merge_commit: "e96eead32eb28c8b78be9def46cb1688d49468ae"
-
+  base_commit: b242a8d8e42839496c7213d020e8cba19a76e111
+  merge_commit: e96eead32eb28c8b78be9def46cb1688d49468ae
 checks:
-  - id: vcs_file_nontrivial
-    type: pass_to_pass
-    origin: static
-    description: "vcs.ts must exist with >= 40 lines of implementation"
-
-  - id: no_effect_promise
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Effect.promise must not appear — it bypasses Effect's scope model"
-
-  - id: no_util_git_import
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The old @/util/git async utility must not be imported"
-
-  - id: imports_child_process_spawner
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Must import ChildProcess/ChildProcessSpawner from effect/unstable/process"
-
-  - id: generator_git_helper_complete
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A generator must spawn a child process, read exit code, and extract stdout"
-
-  - id: layer_declares_spawner_dependency
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Layer type signature must include ChildProcessSpawner as a dependency"
-
-  - id: default_layer_provides_spawner
-    type: fail_to_pass
-    origin: pr_diff
-    description: "defaultLayer must wire in a concrete spawner implementation"
-
-  - id: uses_child_process_make
-    type: fail_to_pass
-    origin: agent_config
-    description: "Must use ChildProcess.make() to construct child process descriptors"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "47"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - id: no_raw_platform_api
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not use raw Node.js child_process — use Effect services instead"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "45"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - id: public_api_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Service public API (layer, defaultLayer, Service, init, branch) must remain"
-
-  - id: no_any_type
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not use the 'any' type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - id: no_try_catch
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not use try/catch — prefer Effect error handling"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - id: no_let_declarations
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not use let — prefer const with ternaries or early returns"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - id: no_raw_fs_import
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not import raw fs/promises — use FileSystem.FileSystem service instead"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "46"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - id: no_raw_fetch
-    type: pass_to_pass
-    origin: agent_config
-    description: "Must not use raw fetch() — use HttpClient.HttpClient service instead"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "48"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  # ---------------------------------------------------------------------------
-  # Repo CI/CD pass_to_pass gates — verify repo quality checks pass on base commit
-  # ---------------------------------------------------------------------------
-
-  - id: repo_vcs_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "vcs.ts must be syntactically valid TypeScript (balanced braces, parens, brackets)"
-
-  - id: repo_vcs_imports_resolve
-    type: pass_to_pass
-    origin: repo_tests
-    description: "vcs.ts workspace imports (@/...) must resolve to existing files"
-
-  - id: repo_no_duplicate_exports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "vcs.ts must not have duplicate export declarations"
-
-  - id: repo_effect_imports_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Effect library imports must use valid module paths"
-
-  - id: repo_layer_signature_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Layer exports must have valid Layer.Layer type signatures"
-
+- id: vcs_file_nontrivial
+  type: pass_to_pass
+  origin: static
+  description: vcs.ts must exist with >= 40 lines of implementation
+- id: no_effect_promise
+  type: fail_to_pass
+  origin: pr_diff
+  description: Effect.promise must not appear — it bypasses Effect's scope model
+- id: no_util_git_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: The old @/util/git async utility must not be imported
+- id: imports_child_process_spawner
+  type: fail_to_pass
+  origin: pr_diff
+  description: Must import ChildProcess/ChildProcessSpawner from effect/unstable/process
+- id: generator_git_helper_complete
+  type: fail_to_pass
+  origin: pr_diff
+  description: A generator must spawn a child process, read exit code, and extract
+    stdout
+- id: layer_declares_spawner_dependency
+  type: fail_to_pass
+  origin: pr_diff
+  description: Layer type signature must include ChildProcessSpawner as a dependency
+- id: default_layer_provides_spawner
+  type: fail_to_pass
+  origin: pr_diff
+  description: defaultLayer must wire in a concrete spawner implementation
+- id: uses_child_process_make
+  type: fail_to_pass
+  origin: agent_config
+  description: Must use ChildProcess.make() to construct child process descriptors
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '47'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- id: no_raw_platform_api
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use raw Node.js child_process — use Effect services instead
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '45'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- id: public_api_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Service public API (layer, defaultLayer, Service, init, branch) must
+    remain
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use the 'any' type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- id: no_try_catch
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use try/catch — prefer Effect error handling
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- id: no_let_declarations
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use let — prefer const with ternaries or early returns
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- id: no_raw_fs_import
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not import raw fs/promises — use FileSystem.FileSystem service
+    instead
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '46'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- id: no_raw_fetch
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use raw fetch() — use HttpClient.HttpClient service instead
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '48'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- id: repo_vcs_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: vcs.ts must be syntactically valid TypeScript (balanced braces, parens,
+    brackets)
+- id: repo_vcs_imports_resolve
+  type: pass_to_pass
+  origin: repo_tests
+  description: vcs.ts workspace imports (@/...) must resolve to existing files
+- id: repo_no_duplicate_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: vcs.ts must not have duplicate export declarations
+- id: repo_effect_imports_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Effect library imports must use valid module paths
+- id: repo_layer_signature_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Layer exports must have valid Layer.Layer type signatures
 rubric:
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - rule: "Prefer single word names for variables and functions. Only use multiple words if necessary."
-    source:
-      path: "AGENTS.md"
-      lines: "21"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - rule: "Use Effect.fn(\"Domain.method\") for named/traced effects and Effect.fnUntraced for internal helpers."
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "21"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - rule: "Use Effect.gen(function* () { ... }) for composition."
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "20"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
-
-  - rule: "Keep things in one function unless composable or reusable."
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "b242a8d8e42839496c7213d020e8cba19a76e111"
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- rule: Use Effect.fn("Domain.method") for named/traced effects and Effect.fnUntraced
+    for internal helpers.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '21'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- rule: Use Effect.gen(function* () { ... }) for composition.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '20'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- rule: Keep things in one function unless composable or reusable.
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: b242a8d8e42839496c7213d020e8cba19a76e111
+- rule: Prefer `ChildProcessSpawner.ChildProcessSpawner` with `ChildProcess.make(...)`
+    instead of custom process wrappers.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '38'
+  evidence: The gold solution replaces the custom `git()` utility from `@/util/git`
+    with `ChildProcessSpawner.ChildProcessSpawner` and `ChildProcess.make("git", ...)`.
+  category: architecture
+- rule: Use `Effect.fnUntraced` for internal helpers.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '17'
+  evidence: The gold solution wraps the newly created `git` and `getBranch` internal
+    helper functions with `Effect.fnUntraced`.
+  category: style
+- rule: '`Effect.fn` / `Effect.fnUntraced` accept pipeable operators as extra arguments,
+    so avoid unnecessary outer `.pipe()` wrappers.'
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '18'
+  evidence: The gold solution passes `Effect.scoped` and `Effect.catch(...)` as the
+    second and third arguments to `Effect.fnUntraced` for the `git` helper, avoiding
+    an outer `.pipe()` wrapper.
+  category: style
+distractors:
+- rule: Prefer single word names for variables and functions. Use single word names
+    by default for new locals, params, and helper functions.
+  collision_type: rule_conflict
+  why_distracting: The original code used a single-word helper `const get = async
+    () => ...`. The gold solution renames this to `getBranch`. An agent strictly following
+    the single-word naming rule might keep it as `get` (which is vague) or rename
+    it to `branch` (which shadows the exported `branch()` function), leading to less
+    readable code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-26
+- rule: Avoid `try`/`catch` where possible
+  collision_type: scope_ambiguity
+  why_distracting: The agent might avoid using `Effect.catch` to handle the git process
+    failure because of the general 'Avoid try/catch' rule. However, `Effect.catch`
+    is the correct, native way to handle expected failures in Effect pipelines, and
+    avoiding it would lead to unhandled defects or awkward error handling.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '11'
+- rule: Use `Effect.addFinalizer` or `Effect.acquireRelease` inside the `InstanceState.make`
+    closure for cleanup (subscriptions, process teardown, etc.).
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to manually add an `Effect.addFinalizer` for
+    the spawned git process inside the `InstanceState.make` closure. However, `ChildProcessSpawner`
+    already manages process lifecycle via Effect's scope, and the `git` helper is
+    marked with `Effect.scoped`, making manual teardown redundant and potentially
+    buggy.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '31'
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` providing general
+  TypeScript/Node conventions and a package-specific `packages/opencode/AGENTS.md`
+  providing strict Effect-specific patterns. The Effect-specific rules in the package
+  config must take precedence over general TS rules (e.g., Effect error handling vs
+  general try/catch avoidance). Additionally, the strict single-word naming rule in
+  the root config conflicts with the need for clarity in the Effect helper (`getBranch`),
+  requiring the agent to apply the exception clause ('unless a single word would be
+  unclear').

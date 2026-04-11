@@ -2,127 +2,144 @@ source_pr:
   owner: apache
   repo: airflow
   number: 64783
-  title: "[v3-2-test] Allow revent packages when testing RC versions (#64774)"
+  title: '[v3-2-test] Allow revent packages when testing RC versions (#64774)'
   merge_commit: ab94c71d68f46d98236e9e2506ac9251d673c60e
   base_commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
-
-# Checks are the automated, programmatic tests
 checks:
-  - id: "f2p_install_together_exclude_newer"
-    description: "When pre_release=True, _install_airflow_and_optionally_providers_together adds --pre and --exclude-newer with timestamp"
-    type: fail_to_pass
-    test: "test_install_together_adds_exclude_newer_with_timestamp"
-
-  - id: "f2p_install_constraints_exclude_newer"
-    description: "When pre_release=True, _install_only_airflow_airflow_core_task_sdk_with_constraints adds --pre and --exclude-newer with timestamp"
-    type: fail_to_pass
-    test: "test_install_with_constraints_adds_exclude_newer_with_timestamp"
-
-  - id: "f2p_timestamp_is_current"
-    description: "The timestamp used should be the current time when the function runs"
-    type: fail_to_pass
-    test: "test_timestamp_is_current_time"
-
-  - id: "p2p_no_prerelease_no_exclude_newer"
-    description: "When pre_release=False, command should NOT include --pre or --exclude-newer"
-    type: pass_to_pass
-    test: "test_non_prerelease_does_not_add_exclude_newer"
-
-  - id: "p2p_no_prerelease_constraints_no_exclude_newer"
-    description: "Second function also should NOT add flags when pre_release=False"
-    type: pass_to_pass
-    test: "test_non_prerelease_with_constraints_no_exclude_newer"
-
-  - id: "p2p_console_message_providers"
-    description: "Console message should mention 'providers' for first function"
-    type: pass_to_pass
-    test: "test_console_message_updated_for_providers"
-
-  - id: "p2p_repo_python_syntax"
-    description: "Python syntax check passes on install_airflow_and_providers.py"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_python_syntax"
-
-  - id: "p2p_repo_ast_parsing"
-    description: "AST parsing succeeds on install_airflow_and_providers.py"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_ast_parsing"
-
-  - id: "p2p_repo_ruff_critical"
-    description: "Ruff critical checks (E9,F) pass on install_airflow_and_providers.py"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_ruff_critical"
-
-  - id: "p2p_repo_ruff_format"
-    description: "Ruff format check passes on install_airflow_and_providers.py"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_ruff_format"
-
-  - id: "p2p_repo_ruff_imports"
-    description: "Ruff import checks (I) pass on install_airflow_and_providers.py"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_ruff_imports"
-
-  - id: "p2p_repo_shellcheck_scripts"
-    description: "Shell scripts in in_container pass shellcheck"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_shellcheck_scripts"
-
-  - id: "p2p_repo_yaml_lint"
-    description: "Basic YAML linting passes on workflow files"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_yaml_lint"
-
-  # New CI/CD repo tests added for pass_to_pass gates
-  - id: "p2p_repo_uv_scripts_tests"
-    description: "Repo's scripts CI tests pass with uv"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_uv_scripts_tests"
-
-  - id: "p2p_repo_uv_common_prek_utils"
-    description: "Repo's common_prek_utils tests pass with uv"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_uv_common_prek_utils"
-
-  - id: "p2p_repo_uv_ruff_format"
-    description: "Ruff format check passes with uv on target file"
-    type: pass_to_pass
-    origin: repo_tests
-    test: "test_repo_uv_ruff_format"
-
-# Rubric for soft/subjective rules from agent config
+- id: f2p_install_together_exclude_newer
+  description: When pre_release=True, _install_airflow_and_optionally_providers_together
+    adds --pre and --exclude-newer with timestamp
+  type: fail_to_pass
+  test: test_install_together_adds_exclude_newer_with_timestamp
+- id: f2p_install_constraints_exclude_newer
+  description: When pre_release=True, _install_only_airflow_airflow_core_task_sdk_with_constraints
+    adds --pre and --exclude-newer with timestamp
+  type: fail_to_pass
+  test: test_install_with_constraints_adds_exclude_newer_with_timestamp
+- id: f2p_timestamp_is_current
+  description: The timestamp used should be the current time when the function runs
+  type: fail_to_pass
+  test: test_timestamp_is_current_time
+- id: p2p_no_prerelease_no_exclude_newer
+  description: When pre_release=False, command should NOT include --pre or --exclude-newer
+  type: pass_to_pass
+  test: test_non_prerelease_does_not_add_exclude_newer
+- id: p2p_no_prerelease_constraints_no_exclude_newer
+  description: Second function also should NOT add flags when pre_release=False
+  type: pass_to_pass
+  test: test_non_prerelease_with_constraints_no_exclude_newer
+- id: p2p_console_message_providers
+  description: Console message should mention 'providers' for first function
+  type: pass_to_pass
+  test: test_console_message_updated_for_providers
+- id: p2p_repo_python_syntax
+  description: Python syntax check passes on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_python_syntax
+- id: p2p_repo_ast_parsing
+  description: AST parsing succeeds on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_ast_parsing
+- id: p2p_repo_ruff_critical
+  description: Ruff critical checks (E9,F) pass on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_ruff_critical
+- id: p2p_repo_ruff_format
+  description: Ruff format check passes on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_ruff_format
+- id: p2p_repo_ruff_imports
+  description: Ruff import checks (I) pass on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_ruff_imports
+- id: p2p_repo_shellcheck_scripts
+  description: Shell scripts in in_container pass shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_shellcheck_scripts
+- id: p2p_repo_yaml_lint
+  description: Basic YAML linting passes on workflow files
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_yaml_lint
+- id: p2p_repo_uv_scripts_tests
+  description: Repo's scripts CI tests pass with uv
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_uv_scripts_tests
+- id: p2p_repo_uv_common_prek_utils
+  description: Repo's common_prek_utils tests pass with uv
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_uv_common_prek_utils
+- id: p2p_repo_uv_ruff_format
+  description: Ruff format check passes with uv on target file
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_repo_uv_ruff_format
 rubric:
-  - rule: "Include Apache License header on all new/modified Python files."
-    source:
-      path: "CLAUDE.md"
-      lines: "85"
-      commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
-
-  - rule: "Do not use assert statements in production code."
-    source:
-      path: "CLAUDE.md"
-      lines: "78"
-      commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
-
-# Agent config rules that apply to this task
+- rule: Include Apache License header on all new/modified Python files.
+  source:
+    path: CLAUDE.md
+    lines: '85'
+    commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
+- rule: Do not use assert statements in production code.
+  source:
+    path: CLAUDE.md
+    lines: '78'
+    commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
 agent_config:
-  - file: "CLAUDE.md"
-    applicable: true
-    reason: "Root-level config applies to all changes"
-    rules:
-      - "Imports at top of file. Valid exceptions: circular imports, lazy loading for TYPE_CHECKING blocks."
-      - "Always format and check Python files with ruff immediately after writing or editing them."
-
-  - file: "AGENTS.md"
-    applicable: true
-    reason: "Root-level config applies to all changes"
-    rules: []
+- file: CLAUDE.md
+  applicable: true
+  reason: Root-level config applies to all changes
+  rules:
+  - 'Imports at top of file. Valid exceptions: circular imports, lazy loading for
+    TYPE_CHECKING blocks.'
+  - Always format and check Python files with ruff immediately after writing or editing
+    them.
+- file: AGENTS.md
+  applicable: true
+  reason: Root-level config applies to all changes
+  rules: []
+distractors:
+- rule: Never run pytest, python, or airflow commands directly on the host — always
+    use `breeze`.
+  collision_type: meta_confusion
+  why_distracting: The rule insists on using `breeze` for running python commands,
+    which might lead the agent to try testing the script via `breeze run python scripts/in_container/install_airflow_and_providers.py`.
+    However, this script is specifically designed to be executed during the Docker
+    image build process, not as a standard runtime command within the Breeze environment.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 9-9
+- rule: Place temporary scripts in `dev/` (mounted as `/opt/airflow/dev/` inside Breeze).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to move the script to `dev/` or create
+    a temporary wrapper there to test the installation logic. This is distracting
+    because the script must remain exactly at `scripts/in_container/install_airflow_and_providers.py`
+    to be correctly copied and executed by the project's Dockerfile.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 10-10
+- rule: 'Run scripts tests: `uv run --project scripts pytest scripts/tests/ -xvs`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time trying to run or write unit tests for
+    this script using the `uv run --project scripts pytest scripts/tests/` command.
+    Container build scripts often lack direct unit tests and are instead validated
+    by successfully building the Docker image.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 27-27
+hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
+  and provide general repository commands. Since the task involves modifying a Docker
+  container build script (`scripts/in_container/`), standard local testing commands
+  (like `breeze` or `uv run`) are largely inapplicable, creating potential meta-confusion
+  for an agent trying to verify its changes.

@@ -1,77 +1,94 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 38415
-  base_commit: "b2bc736b1247a76e6ab1cfbe38ae39c3c307de40"
-  merge_commit: "af89140efc06c462ae531999b9f2db6ba0c7a528"
-
+  base_commit: b2bc736b1247a76e6ab1cfbe38ae39c3c307de40
+  merge_commit: af89140efc06c462ae531999b9f2db6ba0c7a528
 checks:
-  - id: dockerfile_exists
-    type: pass_to_pass
-    origin: static
-    description: "docker/Dockerfile.rocm must exist and contain UV install command"
-
-  - id: curl_failure_propagates
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When curl fails, the UV install command must exit non-zero instead of masking the error via curl|sh pipe"
-
-  - id: retry_flag_present
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The curl command must include --retry for transient failure recovery"
-
-  - id: verifies_uv_installed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After install, the command must verify uv is actually available (e.g., uv --version)"
-
-  - id: successful_install_works
-    type: pass_to_pass
-    origin: pr_diff
-    description: "When curl succeeds, the UV install command must complete with exit 0"
-
-  - id: settings_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "UV_INSTALL_DIR and astral.sh URL must be preserved in the Dockerfile"
-
-  - id: command_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "The UV install command must have real download + execute logic"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python linting passes (ruff check on docker/)"
-
-  - id: test_repo_dockerfile_validate
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's dockerfile validation passes (validate-docker-versions)"
-
-  - id: test_repo_dockerfile_rocm_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Dockerfile.rocm has valid syntax and required directives"
-
+- id: dockerfile_exists
+  type: pass_to_pass
+  origin: static
+  description: docker/Dockerfile.rocm must exist and contain UV install command
+- id: curl_failure_propagates
+  type: fail_to_pass
+  origin: pr_diff
+  description: When curl fails, the UV install command must exit non-zero instead
+    of masking the error via curl|sh pipe
+- id: retry_flag_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: The curl command must include --retry for transient failure recovery
+- id: verifies_uv_installed
+  type: fail_to_pass
+  origin: pr_diff
+  description: After install, the command must verify uv is actually available (e.g.,
+    uv --version)
+- id: successful_install_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: When curl succeeds, the UV install command must complete with exit
+    0
+- id: settings_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: UV_INSTALL_DIR and astral.sh URL must be preserved in the Dockerfile
+- id: command_not_stub
+  type: pass_to_pass
+  origin: static
+  description: The UV install command must have real download + execute logic
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes (ruff check on docker/)
+- id: test_repo_dockerfile_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dockerfile validation passes (validate-docker-versions)
+- id: test_repo_dockerfile_rocm_syntax
+  type: pass_to_pass
+  origin: static
+  description: Dockerfile.rocm has valid syntax and required directives
 rubric:
-  - rule: "Implement fail-closed behavior: if an operation fails, it must not proceed silently or mask errors."
-    source:
-      path: "AGENTS.md"
-      lines: "34-36"
-      commit: "b2bc736b1247a76e6ab1cfbe38ae39c3c307de40"
-
-  - rule: "Use the project's standard tooling (uv) for installations, not bare system commands."
-    source:
-      path: "AGENTS.md"
-      lines: "42,48-56"
-      commit: "b2bc736b1247a76e6ab1cfbe38ae39c3c307de40"
-
-  - rule: "Follow existing code style and error handling patterns in the same file."
-    source:
-      path: "AGENTS.md"
-      lines: "119-127"
-      commit: "b2bc736b1247a76e6ab1cfbe38ae39c3c307de40"
+- rule: 'Implement fail-closed behavior: if an operation fails, it must not proceed
+    silently or mask errors.'
+  source:
+    path: AGENTS.md
+    lines: 34-36
+    commit: b2bc736b1247a76e6ab1cfbe38ae39c3c307de40
+- rule: Use the project's standard tooling (uv) for installations, not bare system
+    commands.
+  source:
+    path: AGENTS.md
+    lines: 42,48-56
+    commit: b2bc736b1247a76e6ab1cfbe38ae39c3c307de40
+- rule: Follow existing code style and error handling patterns in the same file.
+  source:
+    path: AGENTS.md
+    lines: 119-127
+    commit: b2bc736b1247a76e6ab1cfbe38ae39c3c307de40
+distractors:
+- rule: 'Install `uv` if you don''t have it already: curl -LsSf https://astral.sh/uv/install.sh
+    | sh'
+  collision_type: rule_conflict
+  why_distracting: The agent instructions explicitly demonstrate installing `uv` using
+    the exact `curl ... | sh` anti-pattern that this issue is trying to fix. An agent
+    might assume this is the project's endorsed installation method and refuse to
+    change it, or try to apply a different fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 42-43
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
+    one mutable default, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret fixing a single line in a Dockerfile
+    as a 'tiny edit' or 'low-value busywork' and refuse to implement the fix based
+    on the fail-closed policy.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-19
+hierarchy_analysis: AGENTS.md is the root configuration. It contains a direct contradiction
+  to the bug report by demonstrating the exact anti-pattern (`curl | sh`) that the
+  bug report asks to fix. The agent must prioritize the specific bug report instructions
+  over the general environment setup snippet in the agent instructions.

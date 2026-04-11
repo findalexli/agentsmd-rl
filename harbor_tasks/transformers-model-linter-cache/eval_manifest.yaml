@@ -1,128 +1,162 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44790
-  base_commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
-  merge_commit: "2cd52c267ce4d0212eaa40c0ec7192a11654336f"
-
+  base_commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+  merge_commit: 2cd52c267ce4d0212eaa40c0ec7192a11654336f
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without syntax errors"
-
-  - id: content_hash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Content hash function is deterministic, content-sensitive, and rule-order-insensitive"
-
-  - id: cache_save_load_round_trip
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cache save/load round-trip persists data correctly; missing file returns empty dict"
-
-  - id: cli_cache_flag
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script advertises a CLI flag to disable/bypass caching"
-
-  - id: makefile_typing_target
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Makefile has a 'typing' target that invokes the model structure linter"
-
-  - id: redundant_targets_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Legacy check-model-rules* Makefile targets are removed"
-
-  - id: check_repo_runs_linter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "check-repo target runs the model linter without error-ignore prefix"
-
-  - id: parse_args_backward_compat
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Existing CLI flags (--list-rules, --no-progress, --changed-only) still work"
-
-  - id: gitignore_excludes_cache
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".gitignore excludes the model linter cache file"
-
-  - id: agents_md_references_typing
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".ai/AGENTS.md references 'make typing'"
-
-  - id: skill_md_references_typing
-    type: fail_to_pass
-    origin: pr_diff
-    description: ".ai/skills/add-or-fix-type-checking/SKILL.md references 'make typing'"
-
-  - id: pr_checks_docs_reference_typing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "docs/source/en/pr_checks.md documents the 'make typing' target"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: agent_config
-    description: "ruff lint passes on utils/check_modeling_structure.py"
-    source:
-      path: ".ai/AGENTS.md"
-      lines: "2"
-      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
-
-  - id: no_bare_type_ignore
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare '# type: ignore' without specific error code in modified file"
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "185-186"
-      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
-
-  - id: repo_modeling_linter_help
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Model structure linter --help works"
-
-  - id: repo_modeling_linter_list_rules
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Model structure linter --list-rules works and shows TRF rules"
-
-  - id: repo_ruff_utils
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff lint on utils/check_modeling_structure.py passes"
-
-  - id: repo_make_check_repo_dryrun
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Makefile 'check-repo' target exists and references check_modeling_structure"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without syntax errors
+- id: content_hash
+  type: fail_to_pass
+  origin: pr_diff
+  description: Content hash function is deterministic, content-sensitive, and rule-order-insensitive
+- id: cache_save_load_round_trip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cache save/load round-trip persists data correctly; missing file returns
+    empty dict
+- id: cli_cache_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script advertises a CLI flag to disable/bypass caching
+- id: makefile_typing_target
+  type: fail_to_pass
+  origin: pr_diff
+  description: Makefile has a 'typing' target that invokes the model structure linter
+- id: redundant_targets_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Legacy check-model-rules* Makefile targets are removed
+- id: check_repo_runs_linter
+  type: fail_to_pass
+  origin: pr_diff
+  description: check-repo target runs the model linter without error-ignore prefix
+- id: parse_args_backward_compat
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing CLI flags (--list-rules, --no-progress, --changed-only) still
+    work
+- id: gitignore_excludes_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore excludes the model linter cache file
+- id: agents_md_references_typing
+  type: fail_to_pass
+  origin: pr_diff
+  description: .ai/AGENTS.md references 'make typing'
+- id: skill_md_references_typing
+  type: fail_to_pass
+  origin: pr_diff
+  description: .ai/skills/add-or-fix-type-checking/SKILL.md references 'make typing'
+- id: pr_checks_docs_reference_typing
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/source/en/pr_checks.md documents the 'make typing' target
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: ruff lint passes on utils/check_modeling_structure.py
+  source:
+    path: .ai/AGENTS.md
+    lines: '2'
+    commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+- id: no_bare_type_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No bare ''# type: ignore'' without specific error code in modified
+    file'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 185-186
+    commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+- id: repo_modeling_linter_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: Model structure linter --help works
+- id: repo_modeling_linter_list_rules
+  type: pass_to_pass
+  origin: repo_tests
+  description: Model structure linter --list-rules works and shows TRF rules
+- id: repo_ruff_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint on utils/check_modeling_structure.py passes
+- id: repo_make_check_repo_dryrun
+  type: pass_to_pass
+  origin: repo_tests
+  description: Makefile 'check-repo' target exists and references check_modeling_structure
 rubric:
-  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed."
-    source:
-      path: ".ai/AGENTS.md"
-      lines: "65"
-      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
-  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file."
-    source:
-      path: ".ai/AGENTS.md"
-      lines: "66"
-      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
-  - rule: "Never use `# type: ignore` as a first resort. Exhaust all approaches (isinstance narrowing, cast(), overloads, Protocol) before resorting to type: ignore."
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "191"
-      commit: "aa1c36f1a9f454e69c4eac83071ced235942c7ed"
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+    Ideally you should edit the code it's copying from and propagate the change, but
+    you can break the `# Copied from` link if needed.
+  source:
+    path: .ai/AGENTS.md
+    lines: '65'
+    commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+- rule: When a `modular` file is present, generated files should not be edited, as
+    changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file.
+  source:
+    path: .ai/AGENTS.md
+    lines: '66'
+    commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+- rule: 'Never use `# type: ignore` as a first resort. Exhaust all approaches (isinstance
+    narrowing, cast(), overloads, Protocol) before resorting to type: ignore.'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '191'
+    commit: aa1c36f1a9f454e69c4eac83071ced235942c7ed
+- rule: '`make check-repo` is the command for CI-style consistency checks.'
+  source:
+    path: CLAUDE.md
+    lines: 4-4
+  evidence: The gold solution updates `.ai/AGENTS.md` to explicitly state that `make
+    check-repo` includes `make typing`, preserving its documented role as the comprehensive
+    CI-style consistency check even after t
+  category: documentation
+distractors:
+- rule: '`make style`: runs formatters, linters and type checker'
+  collision_type: meta_confusion
+  why_distracting: The rule defines `make style` as running formatters, linters, and
+    the type checker. The agent is explicitly tasked with changing this behavior by
+    extracting the type checker into a new `make typing` target. Treating this documentation
+    as an immutable constraint would prevent the agent from modifying the Makefile
+    and updating the documentation itself.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+- rule: Do not open one-off PRs for tiny edits or isolated lint cleanup.
+  collision_type: scope_ambiguity
+  why_distracting: The rule forbids one-off PRs for 'isolated lint cleanup'. An agent
+    might misinterpret the task of adding caching to the model structure linter and
+    refactoring linting Makefile targets as an 'isolated lint cleanup' and refuse
+    to proceed, citing the contribution policy.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 34-36
+- rule: Pure code-agent PRs are not allowed; human validation is required.
+  collision_type: meta_confusion
+  why_distracting: The rule states that pure code-agent PRs are not allowed and require
+    human validation. An agent might refuse to generate the requested code or inappropriately
+    inject human-validation disclaimers into the PR description or code comments,
+    misunderstanding its role as an assistant generating the patch for a human.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 38-46
+hierarchy_analysis: 'The repository contains identical rules across `CLAUDE.md`, `AGENTS.md`,
+  and `.ai/AGENTS.md`. The primary challenge is meta-circularity: the agent is asked
+  to modify the very documentation (`.ai/AGENTS.md`) that defines the repository''s
+  commands (`make style`). The agent must recognize that the config files describe
+  the *current* state, which the prompt explicitly asks to change.'

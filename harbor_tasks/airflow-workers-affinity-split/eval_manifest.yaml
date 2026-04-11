@@ -4,220 +4,229 @@ source_pr:
   number: 64860
   merge_commit: c35d1d77fa2b1725a0e7ed7d33b9b0ea0f2313a8
   base_commit: bc26d6b135d9a2b6b60e6b3208328adab88b03c4
-
 task:
   name: airflow-workers-affinity-split
   title: Add workers.celery.affinity & workers.kubernetes.affinity
-  description: |
-    Split the deprecated workers.affinity field into two new fields:
+  description: 'Split the deprecated workers.affinity field into two new fields:
+
     workers.celery.affinity for Celery worker pods and
+
     workers.kubernetes.affinity for Kubernetes executor pod template.
+
     The old workers.affinity field should still work for backward compatibility,
+
     but the new fields should take precedence when set.
 
+    '
   files_to_modify:
-    - chart/files/pod-template-file.kubernetes-helm-yaml
-    - chart/values.schema.json
-    - chart/values.yaml
-    - chart/templates/NOTES.txt
-    - chart/newsfragments/64860.significant.rst
-
+  - chart/files/pod-template-file.kubernetes-helm-yaml
+  - chart/values.schema.json
+  - chart/values.yaml
+  - chart/templates/NOTES.txt
+  - chart/newsfragments/64860.significant.rst
 checks:
-  # Fail-to-pass tests
-  - id: test_workers_kubernetes_affinity_pod_template
-    type: fail_to_pass
-    origin: behavioral
-    description: workers.kubernetes.affinity is correctly applied to pod-template-file
-    points: 10
-
-  - id: test_workers_celery_affinity_deployment
-    type: fail_to_pass
-    origin: behavioral
-    description: workers.celery.affinity is correctly applied to worker deployment
-    points: 10
-
-  - id: test_kubernetes_affinity_precedence
-    type: fail_to_pass
-    origin: behavioral
-    description: workers.kubernetes.affinity takes precedence over workers.affinity
-    points: 10
-
-  - id: test_backward_compatibility_old_affinity
-    type: fail_to_pass
-    origin: behavioral
-    description: Old workers.affinity still works for backward compatibility
-    points: 5
-
-  - id: test_schema_has_new_affinity_fields
-    type: fail_to_pass
-    origin: agent_config
-    source:
-      file: CLAUDE.md
-      lines: "Testing Standards"
-      rule: "Add tests for new behavior - cover success, failure, and edge cases"
-    description: Schema defines workers.celery.affinity and workers.kubernetes.affinity
-    points: 5
-
-  - id: test_schema_deprecation_description
-    type: fail_to_pass
-    origin: agent_config
-    source:
-      file: CLAUDE.md
-      lines: "Commits and PRs"
-      rule: "Add a newsfragment for user-visible changes"
-    description: Schema mentions deprecation for workers.affinity
-    points: 3
-
-  - id: test_notes_deprecation_warning
-    type: fail_to_pass
-    origin: agent_config
-    source:
-      file: CLAUDE.md
-      lines: "Commits and PRs"
-      rule: "Add a newsfragment for user-visible changes"
-    description: NOTES.txt contains deprecation warning
-    points: 3
-
-  - id: test_values_yaml_has_new_fields
-    type: fail_to_pass
-    origin: behavioral
-    description: values.yaml has new affinity fields defined
-    points: 5
-
-  # Pass-to-pass tests (repo tests)
-  - id: test_helm_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Helm lint passes on the chart
-    points: 2
-
-  - id: test_helm_template_default_values
-    type: pass_to_pass
-    origin: repo_tests
-    description: Helm template works with default values
-    points: 2
-
-  - id: test_helm_lint_strict
-    type: pass_to_pass
-    origin: repo_tests
-    description: Helm lint strict mode passes (repo CI check)
-    points: 2
-
-  - id: test_helm_template_with_values
-    type: pass_to_pass
-    origin: repo_tests
-    description: Helm template with explicit values.yaml passes (repo CI check)
-    points: 2
-
-  - id: test_helm_template_kubernetes_executor
-    type: pass_to_pass
-    origin: repo_tests
-    description: Helm template with KubernetesExecutor passes (repo CI check for modified path)
-    points: 2
-
-  - id: test_helm_template_celery_executor
-    type: pass_to_pass
-    origin: repo_tests
-    description: Helm template with CeleryExecutor passes (repo CI check for modified path)
-    points: 2
-
-  - id: test_values_yaml_schema_validation
-    type: pass_to_pass
-    origin: repo_tests
-    description: values.yaml validates against values.schema.json (repo CI check)
-    points: 2
-
-  - id: test_chart_yaml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: Chart.yaml is valid YAML with required fields (repo CI check)
-    points: 2
-
-  # Repo CI tests enrichment (added in p2p_enrichment phase)
-  - id: test_repo_chart_quality_schema_validation
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - values.yaml validates against schema (TestChartQuality::test_values_validate_schema)
-    points: 2
-
-  - id: test_repo_worker_affinity
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - Worker affinity test (TestWorker::test_affinity)
-    points: 2
-
-  - id: test_repo_worker_default_affinity
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - Default worker affinity test (TestWorker::test_should_create_default_affinity)
-    points: 2
-
-  - id: test_repo_pod_template_workers_affinity
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - Pod template workers affinity (TestPodTemplateFile::test_workers_affinity)
-    points: 2
-
-  - id: test_repo_pod_template_global_affinity
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - Pod template global affinity (TestPodTemplateFile::test_global_affinity)
-    points: 2
-
-  - id: test_repo_pod_template_affinity_overwrite
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - Pod template affinity precedence (TestPodTemplateFile::test_affinity_overwrite)
-    points: 2
-
-  - id: test_repo_worker_affinity_overwrite
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo CI - Worker affinity precedence (TestWorker::test_affinity_overwrite)
-    points: 2
-
+- id: test_workers_kubernetes_affinity_pod_template
+  type: fail_to_pass
+  origin: behavioral
+  description: workers.kubernetes.affinity is correctly applied to pod-template-file
+  points: 10
+- id: test_workers_celery_affinity_deployment
+  type: fail_to_pass
+  origin: behavioral
+  description: workers.celery.affinity is correctly applied to worker deployment
+  points: 10
+- id: test_kubernetes_affinity_precedence
+  type: fail_to_pass
+  origin: behavioral
+  description: workers.kubernetes.affinity takes precedence over workers.affinity
+  points: 10
+- id: test_backward_compatibility_old_affinity
+  type: fail_to_pass
+  origin: behavioral
+  description: Old workers.affinity still works for backward compatibility
+  points: 5
+- id: test_schema_has_new_affinity_fields
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: Testing Standards
+    rule: Add tests for new behavior - cover success, failure, and edge cases
+  description: Schema defines workers.celery.affinity and workers.kubernetes.affinity
+  points: 5
+- id: test_schema_deprecation_description
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: Commits and PRs
+    rule: Add a newsfragment for user-visible changes
+  description: Schema mentions deprecation for workers.affinity
+  points: 3
+- id: test_notes_deprecation_warning
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: Commits and PRs
+    rule: Add a newsfragment for user-visible changes
+  description: NOTES.txt contains deprecation warning
+  points: 3
+- id: test_values_yaml_has_new_fields
+  type: fail_to_pass
+  origin: behavioral
+  description: values.yaml has new affinity fields defined
+  points: 5
+- id: test_helm_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Helm lint passes on the chart
+  points: 2
+- id: test_helm_template_default_values
+  type: pass_to_pass
+  origin: repo_tests
+  description: Helm template works with default values
+  points: 2
+- id: test_helm_lint_strict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Helm lint strict mode passes (repo CI check)
+  points: 2
+- id: test_helm_template_with_values
+  type: pass_to_pass
+  origin: repo_tests
+  description: Helm template with explicit values.yaml passes (repo CI check)
+  points: 2
+- id: test_helm_template_kubernetes_executor
+  type: pass_to_pass
+  origin: repo_tests
+  description: Helm template with KubernetesExecutor passes (repo CI check for modified
+    path)
+  points: 2
+- id: test_helm_template_celery_executor
+  type: pass_to_pass
+  origin: repo_tests
+  description: Helm template with CeleryExecutor passes (repo CI check for modified
+    path)
+  points: 2
+- id: test_values_yaml_schema_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: values.yaml validates against values.schema.json (repo CI check)
+  points: 2
+- id: test_chart_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chart.yaml is valid YAML with required fields (repo CI check)
+  points: 2
+- id: test_repo_chart_quality_schema_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - values.yaml validates against schema (TestChartQuality::test_values_validate_schema)
+  points: 2
+- id: test_repo_worker_affinity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Worker affinity test (TestWorker::test_affinity)
+  points: 2
+- id: test_repo_worker_default_affinity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Default worker affinity test (TestWorker::test_should_create_default_affinity)
+  points: 2
+- id: test_repo_pod_template_workers_affinity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Pod template workers affinity (TestPodTemplateFile::test_workers_affinity)
+  points: 2
+- id: test_repo_pod_template_global_affinity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Pod template global affinity (TestPodTemplateFile::test_global_affinity)
+  points: 2
+- id: test_repo_pod_template_affinity_overwrite
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Pod template affinity precedence (TestPodTemplateFile::test_affinity_overwrite)
+  points: 2
+- id: test_repo_worker_affinity_overwrite
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Worker affinity precedence (TestWorker::test_affinity_overwrite)
+  points: 2
 rubric:
-  - id: helm_precedence_order
-    description: |
-      Helm template precedence order should be correct:
-      workers.kubernetes.affinity > workers.affinity > global affinity
-      for pod-template-file, and workers.celery.affinity > workers.affinity
-      for Celery worker deployment.
-    points: 5
-    source:
-      file: CLAUDE.md
-      lines: "Architecture Boundaries"
-      rule: Follow the documented template logic and precedence patterns
+- id: helm_precedence_order
+  description: 'Helm template precedence order should be correct:
 
-  - id: schema_definitions_complete
-    description: |
-      Schema definitions in values.schema.json should be complete with
-      proper descriptions, types, and references to k8s Affinity type.
-    points: 3
-    source:
-      file: CLAUDE.md
-      lines: "Coding Standards"
-      rule: Write clear, maintainable code following project conventions
+    workers.kubernetes.affinity > workers.affinity > global affinity
 
-  - id: deprecation_handling
-    description: |
-      Deprecation should be handled properly: old field still works,
-      new fields are added, deprecation warnings in NOTES.txt,
-      deprecation note in schema description, and newsfragment added.
-    points: 5
-    source:
-      file: CLAUDE.md
-      lines: "Commits and PRs"
-      rule: Add a newsfragment for user-visible changes
+    for pod-template-file, and workers.celery.affinity > workers.affinity
 
+    for Celery worker deployment.
+
+    '
+  points: 5
+  source:
+    file: CLAUDE.md
+    lines: Architecture Boundaries
+    rule: Follow the documented template logic and precedence patterns
+- id: schema_definitions_complete
+  description: 'Schema definitions in values.schema.json should be complete with
+
+    proper descriptions, types, and references to k8s Affinity type.
+
+    '
+  points: 3
+  source:
+    file: CLAUDE.md
+    lines: Coding Standards
+    rule: Write clear, maintainable code following project conventions
+- id: deprecation_handling
+  description: 'Deprecation should be handled properly: old field still works,
+
+    new fields are added, deprecation warnings in NOTES.txt,
+
+    deprecation note in schema description, and newsfragment added.
+
+    '
+  points: 5
+  source:
+    file: CLAUDE.md
+    lines: Commits and PRs
+    rule: Add a newsfragment for user-visible changes
 difficulty: medium
 tags:
-  - helm
-  - kubernetes
-  - yaml
-  - backward-compatibility
-  - chart
-
+- helm
+- kubernetes
+- yaml
+- backward-compatibility
+- chart
 time_estimate:
   min_minutes: 20
   max_minutes: 60
+distractors:
+- rule: 'Run a single test: `uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
+    -xvs`'
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to use `uv run pytest` to test the Helm chart
+    changes, but Helm tests require the specific `breeze testing helm-tests` command
+    to set up the proper Kubernetes/Helm environment. Running pytest directly on the
+    host for Helm tests will fail.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 12-14
+- rule: 'Lint with ruff only: `prek run ruff --from-ref <target_branch>`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run Ruff to lint the changes, but Ruff is
+    a Python linter and this PR only modifies YAML, JSON, TXT, and RST files. Running
+    it would be a waste of time and could cause confusion if the agent thinks Python
+    files need to be modified.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 28-29
+hierarchy_analysis: CLAUDE.md and AGENTS.md are identical and provide general testing
+  and linting commands. Since this PR exclusively modifies Helm chart configuration
+  files (YAML, JSON, text), the Python-specific commands (pytest, ruff, mypy) are
+  irrelevant and potentially distracting.

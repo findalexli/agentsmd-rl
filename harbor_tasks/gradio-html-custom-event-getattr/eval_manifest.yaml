@@ -1,96 +1,102 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12967
-  base_commit: "d610464e0eff5f200543c6bbc5fac616b1620b1e"
-  merge_commit: "424a4e4bcfeace96f7f5a678b56a578ad2002cf4"
-
+  base_commit: d610464e0eff5f200543c6bbc5fac616b1620b1e
+  merge_commit: 424a4e4bcfeace96f7f5a678b56a578ad2002cf4
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without syntax errors"
-
-  - id: custom_event_attribute_access
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Custom event name in js_on_load can be accessed as callable attribute"
-
-  - id: custom_event_listener_wiring
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Custom event listener can be wired to a Python handler function"
-
-  - id: nonexistent_event_raises
-    type: pass_to_pass
-    origin: pr_diff
-    description: "AttributeError raised for event name not present in js_on_load"
-
-  - id: multiple_custom_events
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple custom events can be wired on the same HTML component"
-
-  - id: builtin_events_still_work
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Built-in events (click, change) still work on HTML component"
-
-  - id: html_basic_construction
-    type: pass_to_pass
-    origin: pr_diff
-    description: "HTML component component can be constructed and produces valid config"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: agent_config
-    description: "Python code is formatted with ruff"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "d610464e0eff5f200543c6bbc5fac616b1620b1e"
-
-  # Repo CI/CD checks (pass_to_pass gates)
-  - id: ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file passes ruff format check from repo CI"
-
-  - id: repo_html_component_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "HTML component unit tests pass (repo CI test-python.yml)"
-
-  - id: gradio_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Gradio package imports correctly (basic smoke test)"
-
-  - id: repo_lint_backend
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Backend lint script passes on modified file (repo CI test-python.yml)"
-
-  # New p2p enrichment tests - from repo CI/CD
-  - id: repo_events_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Event system unit tests pass (repo CI) — tests event listener infrastructure"
-
-  - id: repo_blocks_config_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Blocks event wiring config tests pass (repo CI)"
-
-  - id: repo_gradio_version
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Gradio version can be retrieved (repo CI smoke test)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without syntax errors
+- id: custom_event_attribute_access
+  type: fail_to_pass
+  origin: pr_diff
+  description: Custom event name in js_on_load can be accessed as callable attribute
+- id: custom_event_listener_wiring
+  type: fail_to_pass
+  origin: pr_diff
+  description: Custom event listener can be wired to a Python handler function
+- id: nonexistent_event_raises
+  type: pass_to_pass
+  origin: pr_diff
+  description: AttributeError raised for event name not present in js_on_load
+- id: multiple_custom_events
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple custom events can be wired on the same HTML component
+- id: builtin_events_still_work
+  type: pass_to_pass
+  origin: pr_diff
+  description: Built-in events (click, change) still work on HTML component
+- id: html_basic_construction
+  type: pass_to_pass
+  origin: pr_diff
+  description: HTML component component can be constructed and produces valid config
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: Python code is formatted with ruff
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: d610464e0eff5f200543c6bbc5fac616b1620b1e
+- id: ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file passes ruff format check from repo CI
+- id: repo_html_component_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: HTML component unit tests pass (repo CI test-python.yml)
+- id: gradio_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradio package imports correctly (basic smoke test)
+- id: repo_lint_backend
+  type: pass_to_pass
+  origin: repo_tests
+  description: Backend lint script passes on modified file (repo CI test-python.yml)
+- id: repo_events_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Event system unit tests pass (repo CI) — tests event listener infrastructure
+- id: repo_blocks_config_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Blocks event wiring config tests pass (repo CI)
+- id: repo_gradio_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradio version can be retrieved (repo CI smoke test)
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "d610464e0eff5f200543c6bbc5fac616b1620b1e"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: d610464e0eff5f200543c6bbc5fac616b1620b1e
+distractors:
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  collision_type: architecture_boundary
+  why_distracting: The bug involves JavaScript events triggered from the frontend,
+    so an agent might think it needs to modify the Svelte/TypeScript frontend code
+    for the HTML component in `js/` to explicitly pass custom events to the backend.
+    However, the gold solution handles this entirely in the Python backend by dynamically
+    intercepting `__getattr__` and checking the `js_on_load` string.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-12
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing a bug in the code, not interacting
+    with GitHub's issue tracker or PR system. Trying to create or link an issue would
+    be a waste of time and out of scope for the coding task.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 22-22
+hierarchy_analysis: The AGENTS.md file provides high-level repository structure and
+  PR guidelines. There are no conflicting config files since only AGENTS.md is present.

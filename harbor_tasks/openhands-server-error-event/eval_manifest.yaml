@@ -2,149 +2,164 @@ source_pr:
   owner: All-Hands-AI
   repo: OpenHands
   number: 13643
-  title: "Handling the new server error event"
+  title: Handling the new server error event
   merge_commit: 73ba66faeae1520fc2671b07677db4b5e3e235d3
   base_commit: a198599d917fca47c467715b43858fc30f8082d4
-
 task:
   name: openhands-server-error-event
-  title: "Add ServerErrorEvent handling to OpenHands frontend"
-  description: |
-    The Agent Server now sends ServerErrorEvent messages over WebSocket for server-side
-    errors (e.g., MCP configuration failures). The frontend needs to handle these events
-    by displaying error banners to users, similar to how ConversationErrorEvent is handled.
+  title: Add ServerErrorEvent handling to OpenHands frontend
+  description: 'The Agent Server now sends ServerErrorEvent messages over WebSocket
+    for server-side
 
+    errors (e.g., MCP configuration failures). The frontend needs to handle these
+    events
+
+    by displaying error banners to users, similar to how ConversationErrorEvent is
+    handled.
+
+    '
 agent_configs:
-  - source: AGENTS.md
-    lines: "Frontend section - general frontend development guidelines"
-  - source: AGENTS.md
-    lines: "TypeScript/React development practices"
-
+- source: AGENTS.md
+  lines: Frontend section - general frontend development guidelines
+- source: AGENTS.md
+  lines: TypeScript/React development practices
 checks:
-  # Pass-to-pass checks (repo CI/tests)
-  - id: test_typescript_compilation
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend TypeScript compilation passes
-
-  - id: test_frontend_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend linting passes
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: Frontend build passes
-
-  - id: test_repo_translation_completeness
-    type: pass_to_pass
-    origin: repo_tests
-    description: Translation completeness check passes
-
-  - id: test_repo_websocket_handler_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: WebSocket handler tests pass
-
-  - id: test_repo_error_message_banner_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Error message banner component tests pass
-
-  - id: test_repo_use_websocket_hook_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: useWebSocket hook tests pass
-
-  - id: test_repo_use_event_store_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: useEventStore tests pass
-
-  - id: test_repo_ws_client_provider_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: WebSocket client provider tests pass
-
-  - id: test_repo_conversation_store_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Conversation store tests pass
-
-  - id: test_repo_i18n_duplicate_keys_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: i18n duplicate keys tests pass
-
-  - id: test_repo_api_conversation_service_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: v1-conversation-service API tests pass
-
-  - id: test_repo_websocket_url_utils_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: WebSocket URL utility tests pass
-
-  # Fail-to-pass checks (actual fix verification)
-  - id: test_server_error_event_type_exists
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md
-    description: ServerErrorEvent type definition exists with correct structure
-
-  - id: test_is_server_error_event_guard_exists
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md
-    description: isServerErrorEvent type guard exists and is correctly implemented
-
-  - id: test_is_displayable_error_event_guard_exists
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md
-    description: isDisplayableErrorEvent combines both error types for unified handling
-
-  - id: test_websocket_context_uses_displayable_error
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md
-    description: WebSocket context uses isDisplayableErrorEvent for error banner display
-
-  - id: test_openhands_event_includes_server_error
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md
-    description: OpenHandsEvent union type includes ServerErrorEvent
-
-  - id: test_mock_helper_includes_server_error
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md
-    description: Mock helper includes createMockServerErrorEvent function
-
-  - id: test_websocket_handler_tests_exist
-    type: fail_to_pass
-    origin: agent_config
-    source: AGENTS.md
-    description: Tests for ServerErrorEvent handling exist in the test suite
-
+- id: test_typescript_compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend TypeScript compilation passes
+- id: test_frontend_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend linting passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend build passes
+- id: test_repo_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Translation completeness check passes
+- id: test_repo_websocket_handler_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: WebSocket handler tests pass
+- id: test_repo_error_message_banner_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error message banner component tests pass
+- id: test_repo_use_websocket_hook_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: useWebSocket hook tests pass
+- id: test_repo_use_event_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: useEventStore tests pass
+- id: test_repo_ws_client_provider_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: WebSocket client provider tests pass
+- id: test_repo_conversation_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Conversation store tests pass
+- id: test_repo_i18n_duplicate_keys_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: i18n duplicate keys tests pass
+- id: test_repo_api_conversation_service_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: v1-conversation-service API tests pass
+- id: test_repo_websocket_url_utils_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: WebSocket URL utility tests pass
+- id: test_server_error_event_type_exists
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md
+  description: ServerErrorEvent type definition exists with correct structure
+- id: test_is_server_error_event_guard_exists
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md
+  description: isServerErrorEvent type guard exists and is correctly implemented
+- id: test_is_displayable_error_event_guard_exists
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md
+  description: isDisplayableErrorEvent combines both error types for unified handling
+- id: test_websocket_context_uses_displayable_error
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md
+  description: WebSocket context uses isDisplayableErrorEvent for error banner display
+- id: test_openhands_event_includes_server_error
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md
+  description: OpenHandsEvent union type includes ServerErrorEvent
+- id: test_mock_helper_includes_server_error
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md
+  description: Mock helper includes createMockServerErrorEvent function
+- id: test_websocket_handler_tests_exist
+  type: fail_to_pass
+  origin: agent_config
+  source: AGENTS.md
+  description: Tests for ServerErrorEvent handling exist in the test suite
 rubric:
-  - rule: "Follow existing code style for event type definitions. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "119-140"
-      commit: "a198599d917fca47c467715b43858fc30f8082d4"
-
-  - rule: "Add corresponding type guard functions when adding new event types."
-    source:
-      path: "AGENTS.md"
-      lines: "299-310"
-      commit: "a198599d917fca47c467715b43858fc30f8082d4"
-
-  - rule: "Run frontend linting with 'npm run lint:fix' and ensure build passes with 'npm run build' before submitting changes."
-    source:
-      path: "AGENTS.md"
-      lines: "16-24"
-      commit: "a198599d917fca47c467715b43858fc30f8082d4"
+- rule: Follow existing code style for event type definitions. Check neighboring files
+    for patterns.
+  source:
+    path: AGENTS.md
+    lines: 119-140
+    commit: a198599d917fca47c467715b43858fc30f8082d4
+- rule: Add corresponding type guard functions when adding new event types.
+  source:
+    path: AGENTS.md
+    lines: 299-310
+    commit: a198599d917fca47c467715b43858fc30f8082d4
+- rule: Run frontend linting with 'npm run lint:fix' and ensure build passes with
+    'npm run build' before submitting changes.
+  source:
+    path: AGENTS.md
+    lines: 16-24
+    commit: a198599d917fca47c467715b43858fc30f8082d4
+- rule: Ensure simple test errors have been fixed before pushing changes.
+  source:
+    path: AGENTS.md
+    lines: 16-19
+  evidence: The gold solution includes comprehensive unit tests in `frontend/__tests__/conversation-websocket-handler.test.tsx`
+    to verify the new `ServerErrorEvent` handling, aligning with the requirement to
+    ensu
+  category: testing
+distractors:
+- rule: Run Python pre-commit hooks if changes are made to the backend.
+  collision_type: architecture_boundary
+  why_distracting: The problem description mentions 'The Agent Server has been updated'.
+    The agent might mistakenly think it needs to inspect or modify the Python backend
+    to understand the `ServerErrorEvent` structure, and subsequently try to run backend
+    pre-commit hooks, wasting time outside the frontend scope.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-18
+- rule: Store PR-specific artifacts like design documents or analysis notes in a `.pr/`
+    directory.
+  collision_type: meta_confusion
+  why_distracting: The agent might interpret the task of adding a new event type as
+    requiring a design document or analysis notes, and create unnecessary files in
+    a `.pr/` directory instead of just implementing the frontend code.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 58-62
+hierarchy_analysis: The `AGENTS.md` file provides repository-wide instructions that
+  clearly separate frontend and backend workflows. The agent must correctly identify
+  that this task is strictly within the frontend scope (as specified by 'Files to
+  Modify') and ignore backend-specific rules and general PR artifact rules unless
+  explicitly requested.

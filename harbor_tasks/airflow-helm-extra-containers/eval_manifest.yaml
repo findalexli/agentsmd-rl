@@ -2,142 +2,144 @@ source_pr:
   owner: apache
   repo: airflow
   pr_number: 64739
-  title: 'Add workers.celery.extraContainers & workers.kubernetes.extraContainers'
-  merge_commit: '636213e7d33d8ed2a69a6ba9e6b286c43e2008d9'
-  base_commit: '27258d567887a93f43af25a9d79d773198751bd9'
-
+  title: Add workers.celery.extraContainers & workers.kubernetes.extraContainers
+  merge_commit: 636213e7d33d8ed2a69a6ba9e6b286c43e2008d9
+  base_commit: 27258d567887a93f43af25a9d79d773198751bd9
 checks:
-  # Fail-to-pass tests (behavioral - test the actual bug fix)
-  - id: 'test_kubernetes_extra_containers_new_path'
-    name: 'Kubernetes extraContainers new path works'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_deprecated_extra_containers_still_works'
-    name: 'Deprecated extraContainers still works (backward compat)'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_new_path_takes_precedence_over_deprecated'
-    name: 'New path takes precedence over deprecated'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_templating_works_with_new_path'
-    name: 'Templating works with new Kubernetes path'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_celery_extra_containers_new_path'
-    name: 'Celery extraContainers new path works'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_deprecated_extra_containers_celery_still_works'
-    name: 'Deprecated Celery extraContainers still works'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_new_celery_path_takes_precedence'
-    name: 'New Celery path takes precedence'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_templating_works_with_celery_new_path'
-    name: 'Templating works with new Celery path'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  # Pass-to-pass tests (structural - ensure the changes are in place)
-  - id: 'test_celery_extra_containers_in_schema'
-    name: 'Celery extraContainers in JSON schema'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_kubernetes_extra_containers_in_schema'
-    name: 'Kubernetes extraContainers in JSON schema'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_deprecated_description_updated'
-    name: 'Deprecated description mentions new paths'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_celery_extra_containers_default_empty'
-    name: 'Celery extraContainers defaults to empty'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  - id: 'test_kubernetes_extra_containers_default_empty'
-    name: 'Kubernetes extraContainers defaults to empty'
-    type: 'pytest'
-    origin: 'task'
-    file: 'test_outputs.py'
-
-  # Pass-to-pass tests from repo CI (ensure existing tests still pass)
-  - id: 'test_repo_helm_pod_template_tests'
-    name: "Repo's pod-template-file helm tests pass"
-    type: 'pass_to_pass'
-    origin: 'repo_tests'
-    file: 'test_outputs.py'
-    description: 'Airflow repo helm tests for pod-template-file extra_containers on base commit'
-
-  - id: 'test_repo_helm_worker_tests'
-    name: "Repo's worker helm tests pass"
-    type: 'pass_to_pass'
-    origin: 'repo_tests'
-    file: 'test_outputs.py'
-    description: 'Airflow repo helm tests for worker extra_containers on base commit'
-
-  - id: 'test_repo_helm_worker_sets_tests'
-    name: "Repo's worker sets helm tests pass"
-    type: 'pass_to_pass'
-    origin: 'repo_tests'
-    file: 'test_outputs.py'
-    description: 'Airflow repo helm tests for worker sets extra_containers on base commit'
-
-  - id: 'test_repo_helm_lint'
-    name: 'Helm lint passes on chart'
-    type: 'pass_to_pass'
-    origin: 'repo_tests'
-    file: 'test_outputs.py'
-    description: 'Helm lint validates chart structure and values (CI command)'
-
-  - id: 'test_repo_helm_template_basic'
-    name: 'Helm template renders with defaults'
-    type: 'pass_to_pass'
-    origin: 'repo_tests'
-    file: 'test_outputs.py'
-    description: 'Helm template renders chart with default values (CI command)'
-
-  - id: 'test_repo_values_schema_valid_json'
-    name: 'values.schema.json is valid JSON'
-    type: 'pass_to_pass'
-    origin: 'repo_tests'
-    file: 'test_outputs.py'
-    description: 'JSON schema file parses without errors (CI validation)'
-
-# Rubric for LLM judge (soft/subjective rules)
+- id: test_kubernetes_extra_containers_new_path
+  name: Kubernetes extraContainers new path works
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_deprecated_extra_containers_still_works
+  name: Deprecated extraContainers still works (backward compat)
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_new_path_takes_precedence_over_deprecated
+  name: New path takes precedence over deprecated
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_templating_works_with_new_path
+  name: Templating works with new Kubernetes path
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_celery_extra_containers_new_path
+  name: Celery extraContainers new path works
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_deprecated_extra_containers_celery_still_works
+  name: Deprecated Celery extraContainers still works
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_new_celery_path_takes_precedence
+  name: New Celery path takes precedence
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_templating_works_with_celery_new_path
+  name: Templating works with new Celery path
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_celery_extra_containers_in_schema
+  name: Celery extraContainers in JSON schema
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_kubernetes_extra_containers_in_schema
+  name: Kubernetes extraContainers in JSON schema
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_deprecated_description_updated
+  name: Deprecated description mentions new paths
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_celery_extra_containers_default_empty
+  name: Celery extraContainers defaults to empty
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_kubernetes_extra_containers_default_empty
+  name: Kubernetes extraContainers defaults to empty
+  type: pytest
+  origin: task
+  file: test_outputs.py
+- id: test_repo_helm_pod_template_tests
+  name: Repo's pod-template-file helm tests pass
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Airflow repo helm tests for pod-template-file extra_containers on base
+    commit
+- id: test_repo_helm_worker_tests
+  name: Repo's worker helm tests pass
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Airflow repo helm tests for worker extra_containers on base commit
+- id: test_repo_helm_worker_sets_tests
+  name: Repo's worker sets helm tests pass
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Airflow repo helm tests for worker sets extra_containers on base commit
+- id: test_repo_helm_lint
+  name: Helm lint passes on chart
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Helm lint validates chart structure and values (CI command)
+- id: test_repo_helm_template_basic
+  name: Helm template renders with defaults
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Helm template renders chart with default values (CI command)
+- id: test_repo_values_schema_valid_json
+  name: values.schema.json is valid JSON
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: JSON schema file parses without errors (CI validation)
 rubric:
-  - rule: 'Testing Standards - Use pytest patterns, @pytest.mark.parametrize for multiple similar inputs'
-    source:
-      path: 'CLAUDE.md'
-      lines: '88-98'
-
+- rule: Testing Standards - Use pytest patterns, @pytest.mark.parametrize for multiple
+    similar inputs
+  source:
+    path: CLAUDE.md
+    lines: 88-98
 metadata:
-  estimated_difficulty: 'medium'
-  estimated_time: '30m'
-  tags: ['helm', 'kubernetes', 'yaml', 'json-schema']
+  estimated_difficulty: medium
+  estimated_time: 30m
+  tags:
+  - helm
+  - kubernetes
+  - yaml
+  - json-schema
+distractors:
+- rule: 'Run a single test: uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
+    -xvs'
+  collision_type: scope_ambiguity
+  why_distracting: The task involves modifying Helm charts. The agent might try to
+    run tests using `uv run pytest` which is for Python projects, but Helm tests require
+    the specific `breeze testing helm-tests` command.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 18-19
+- rule: 'Lint with ruff only: prek run ruff --from-ref <target_branch>'
+  collision_type: scope_ambiguity
+  why_distracting: The task modifies YAML, JSON, and RST files. Ruff is a Python linter.
+    Running it would be useless and waste time since no Python files are changed.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 34-35
+hierarchy_analysis: The config files CLAUDE.md and AGENTS.md are identical and provide
+  general repository commands. There are no conflicts between them.

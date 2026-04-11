@@ -1,136 +1,98 @@
-source_pr: "SeleniumHQ/selenium#17165"
-merge_commit: "168378778de52a6a4d8a8bee8b85e494ce34a7ff"
-base_commit: "39436b0c1eabbed5489148b98a36302d77feed9e"
-
-# Fail-to-pass: These tests fail on base commit, pass with fix
+source_pr: SeleniumHQ/selenium#17165
+merge_commit: 168378778de52a6a4d8a8bee8b85e494ce34a7ff
+base_commit: 39436b0c1eabbed5489148b98a36302d77feed9e
 checks:
-  - id: test_webdriver_init_stub_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: Type stub for webdriver/__init__.py exists with Chrome export
-
-  - id: test_chrome_stub_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: Type stub for chrome/__init__.py exists with proper exports
-
-  - id: test_edge_stub_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: Type stub for edge/__init__.py exists
-
-  - id: test_firefox_stub_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: Type stub for firefox/__init__.py exists with firefox_profile export
-
-  - id: test_safari_stub_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: Type stub for safari/__init__.py exists
-
-  - id: test_ie_stub_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: Type stub for ie/__init__.py exists
-
-  - id: test_webkitgtk_stub_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: Type stub for webkitgtk/__init__.py exists
-
-  - id: test_wpewebkit_stub_exists
-    type: fail_to_pass
-    origin: behavioral
-    description: Type stub for wpewebkit/__init__.py exists
-
-  - id: test_mypy_can_resolve_webdriver_imports
-    type: fail_to_pass
-    origin: behavioral
-    description: mypy can resolve types from selenium.webdriver lazy imports
-
-  - id: test_import_desired_capabilities_directly
-    type: fail_to_pass
-    origin: behavioral
-    description: DesiredCapabilities can be imported from common submodule
-
-  - id: test_pyproject_includes_pyi
-    type: fail_to_pass
-    origin: behavioral
-    description: pyproject.toml includes *.pyi in package-data
-
-  - id: test_webdriver_stub_has_all_exports
-    type: fail_to_pass
-    origin: behavioral
-    description: Main webdriver stub exports all expected classes (Chrome, Firefox, etc.)
-
-# Pass-to-pass: These tests should pass on base and with fix
-checks:
-  - id: test_selenium_package_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: Basic selenium package is importable
-
-  - id: test_webdriver_package_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: selenium.webdriver package is importable
-
-  - id: test_stub_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: All .pyi stub files have valid Python syntax
-
-  - id: test_repo_validate_pyproject
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo pyproject.toml passes validation
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo Python code passes ruff linting
-
-  - id: test_repo_python_compileall
-    type: pass_to_pass
-    origin: repo_tests
-    description: All Python files in repo have valid syntax
-
-  - id: test_repo_remote_connection_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Unit tests for remote_connection module pass
-
-  - id: test_repo_chrome_edge_options_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Unit tests for Chrome and Edge options pass
-
-  - id: test_repo_import_modified_modules
-    type: pass_to_pass
-    origin: repo_tests
-    description: Modified chrome/edge remote_connection modules are importable
-
-# Note: This task involves adding type stub files to an external package.
-# The rubric rules about AGENTS.md don't apply since this task doesn't
-# modify agent configuration files - it only adds .pyi stub files and
-# fixes imports in the selenium package.
-
+- id: test_selenium_package_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic selenium package is importable
+- id: test_webdriver_package_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: selenium.webdriver package is importable
+- id: test_stub_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All .pyi stub files have valid Python syntax
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pyproject.toml passes validation
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Python code passes ruff linting
+- id: test_repo_python_compileall
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in repo have valid syntax
+- id: test_repo_remote_connection_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for remote_connection module pass
+- id: test_repo_chrome_edge_options_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for Chrome and Edge options pass
+- id: test_repo_import_modified_modules
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified chrome/edge remote_connection modules are importable
 rubric:
-  - rule: "Every file must include the Apache License 2.0 header boilerplate"
-    source:
-      path: "CONTRIBUTING.md"
-      lines: "124-150"
-      commit: "39436b0c1eabbed5489148b98a36302d77feed9e"
-
-  - rule: "Use union notation (|) instead of Optional for type hints"
-    source:
-      path: "py/AGENTS.md"
-      lines: "42-57"
-      commit: "39436b0c1eabbed5489148b98a36302d77feed9e"
-
-  - rule: "Follow existing code style in the repository; check neighboring files for patterns"
-    source:
-      path: "AGENTS.md"
-      lines: "69-71"
-      commit: "39436b0c1eabbed5489148b98a36302d77feed9e"
+- rule: Every file must include the Apache License 2.0 header boilerplate
+  source:
+    path: CONTRIBUTING.md
+    lines: 124-150
+    commit: 39436b0c1eabbed5489148b98a36302d77feed9e
+- rule: Use union notation (|) instead of Optional for type hints
+  source:
+    path: py/AGENTS.md
+    lines: 42-57
+    commit: 39436b0c1eabbed5489148b98a36302d77feed9e
+- rule: Follow existing code style in the repository; check neighboring files for
+    patterns
+  source:
+    path: AGENTS.md
+    lines: 69-71
+    commit: 39436b0c1eabbed5489148b98a36302d77feed9e
+- rule: Comments should explain *why*, not *what*
+  source:
+    path: AGENTS.md
+    lines: 42-43
+  evidence: The docstring in the generated `__init__.pyi` file explains the reasoning
+    behind the file's existence ('This stub file is necessary for type checkers and
+    IDEs to automatically have visibility into laz
+  category: documentation
+- rule: Type hints are used throughout; add type annotations to new code
+  source:
+    path: py/AGENTS.md
+    lines: 33-35
+  evidence: The entire solution revolves around creating `.pyi` stub files to provide
+    type annotations and visibility for modules that are lazy-loaded at runtime.
+  category: style
+distractors:
+- rule: When implementing solutions prefer writing a test for it first
+  collision_type: meta_confusion
+  why_distracting: The rule asks to write a test first, but this PR is exclusively
+    about adding `.pyi` type stubs for static analysis (mypy/IDEs). The standard Bazel
+    test suite tests runtime behavior, so attempting to write a runtime test for type
+    stubs would be impossible or irrelevant, leading to wasted effort.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 32-33
+- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+  collision_type: scope_ambiguity
+  why_distracting: The rule advises avoiding repo-wide refactors and preferring small
+    diffs. An agent might misinterpret this and only create the root `__init__.pyi`
+    file to keep the diff small, failing to create the required 8 stub files across
+    all the webdriver submodules (chrome, edge, firefox, etc.) as instructed.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 11-12
+hierarchy_analysis: The root `AGENTS.md` provides general guidelines on testing and
+  diff size, while `py/AGENTS.md` provides Python-specific guidance on type hints.
+  In this specific PR, the Python-specific need for type visibility (via `.pyi` files)
+  overrides the general testing mandate, as static type stubs cannot be meaningfully
+  tested via the standard runtime test suite.

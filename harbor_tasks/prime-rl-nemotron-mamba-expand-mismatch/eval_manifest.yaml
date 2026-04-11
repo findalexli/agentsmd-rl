@@ -1,116 +1,133 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2110
-  base_commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-  merge_commit: "6cae5cca734d0063951efaf700ca9e4bc39c8677"
-
+  base_commit: 8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
+  merge_commit: 6cae5cca734d0063951efaf700ca9e4bc39c8677
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files must parse without syntax errors"
-
-  - id: nano_30b_dimension_invariant
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Config mamba_expand yields correct intermediate_size for Nano-30B (core bug)"
-
-  - id: multiple_dimension_combos
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Config mamba_expand correct for varied hidden_size / head combos"
-
-  - id: fractional_expand_precision
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No off-by-one from float truncation when expand is not a clean fraction"
-
-  - id: 120b_default_config
-    type: pass_to_pass
-    origin: pr_diff
-    description: "120B default config still produces correct mamba_expand (regression)"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "NemotronHConfig.__init__ has real logic, not just pass/return"
-
-  - id: no_silent_try_except
-    type: pass_to_pass
-    origin: agent_config
-    description: "No silent except/pass blocks in modified files"
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-
-  - id: no_work_process_comments
-    type: pass_to_pass
-    origin: agent_config
-    description: "No comments referring to old code or work process"
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check passes on modified files"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on modified files"
-
-  - id: test_repo_no_broken_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All modified Python files parse without syntax errors"
-
-  - id: test_repo_ruff_full_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's full ruff lint check passes on all files"
-
-  - id: test_repo_imports_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified module imports without errors"
-
-  - id: test_repo_config_validates
-    type: pass_to_pass
-    origin: repo_tests
-    description: "NemotronHConfig validates with default parameters"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modified files must parse without syntax errors
+- id: nano_30b_dimension_invariant
+  type: fail_to_pass
+  origin: pr_diff
+  description: Config mamba_expand yields correct intermediate_size for Nano-30B (core
+    bug)
+- id: multiple_dimension_combos
+  type: fail_to_pass
+  origin: pr_diff
+  description: Config mamba_expand correct for varied hidden_size / head combos
+- id: fractional_expand_precision
+  type: fail_to_pass
+  origin: pr_diff
+  description: No off-by-one from float truncation when expand is not a clean fraction
+- id: 120b_default_config
+  type: pass_to_pass
+  origin: pr_diff
+  description: 120B default config still produces correct mamba_expand (regression)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: NemotronHConfig.__init__ has real logic, not just pass/return
+- id: no_silent_try_except
+  type: pass_to_pass
+  origin: agent_config
+  description: No silent except/pass blocks in modified files
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
+- id: no_work_process_comments
+  type: pass_to_pass
+  origin: agent_config
+  description: No comments referring to old code or work process
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on modified files
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files
+- id: test_repo_no_broken_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified Python files parse without syntax errors
+- id: test_repo_ruff_full_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's full ruff lint check passes on all files
+- id: test_repo_imports_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified module imports without errors
+- id: test_repo_config_validates
+  type: pass_to_pass
+  origin: repo_tests
+  description: NemotronHConfig validates with default parameters
 rubric:
-  - rule: "Explicit is better than implicit — mamba_expand should be computed from mamba_num_heads * mamba_head_dim / hidden_size, not an opaque constant."
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-    reference:
-      file: "src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py"
-      line: 179
-      content: "self.mamba_expand = (mamba_num_heads * mamba_head_dim) / hidden_size"
-
-  - rule: "Simple is better than complex — the fix should be minimal and direct."
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-    reference:
-      file: "src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py"
-      line: 179
-      content: "self.mamba_expand = (mamba_num_heads * mamba_head_dim) / hidden_size"
-
-  - rule: "Comments should explain why not what — the fix includes a targeted comment explaining the bug."
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4"
-    reference:
-      file: "src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py"
-      lines: "173-176"
+- rule: Explicit is better than implicit — mamba_expand should be computed from mamba_num_heads
+    * mamba_head_dim / hidden_size, not an opaque constant.
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
+  reference:
+    file: src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py
+    line: 179
+    content: self.mamba_expand = (mamba_num_heads * mamba_head_dim) / hidden_size
+- rule: Simple is better than complex — the fix should be minimal and direct.
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: 8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
+  reference:
+    file: src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py
+    line: 179
+    content: self.mamba_expand = (mamba_num_heads * mamba_head_dim) / hidden_size
+- rule: Comments should explain why not what — the fix includes a targeted comment
+    explaining the bug.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 8a6f4ef3bfe644c7fd1e33841aa66c6f3a4c26a4
+  reference:
+    file: src/prime_rl/trainer/models/nemotron_h/configuration_nemotron_h.py
+    lines: 173-176
+- rule: Instead prefer to use targeted comments sparingly to explain ambiguous code.
+  source:
+    path: AGENTS.md
+    lines: 6-6
+  evidence: The gold solution adds targeted comments in `configuration_nemotron_h.py`
+    and a detailed docstring in `modeling_nemotron_h.py` to explain the ambiguous
+    Zamba2 compatibility logic and the non-obvious `
+  category: documentation
+- rule: Explicit is better than implicit.
+  source:
+    path: AGENTS.md
+    lines: 11-11
+  evidence: The gold solution explicitly calculates `correct_expand` based on `mamba_num_heads`,
+    `mamba_head_dim`, and `hidden_size` rather than relying on the default `mamba_expand`
+    which implicitly assumes a 12
+  category: style
+distractors:
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might interpret the detailed explanation of Zamba2 compatibility
+    and the `mamba_expand` calculation as 'unnecessary' or 'explaining code change',
+    and thus omit the crucial context needed to understand why this non-standard calculation
+    is being performed.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 6-6
+hierarchy_analysis: The hierarchy is flat with only `AGENTS.md` providing rules. The
+  rules regarding comments create a tension between avoiding unnecessary comments
+  and explaining ambiguous code, which the gold solution navigates by providing targeted,
+  necessary context for a complex compatibility workaround.

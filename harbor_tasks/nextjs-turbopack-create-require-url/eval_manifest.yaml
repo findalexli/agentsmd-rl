@@ -1,91 +1,106 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92153
-  base_commit: "b7f99c773ed73e8916bd14ebc9709f625220c838"
-  merge_commit: "373d2c448a1370e653e10ff6e42ee3038201fc20"
-
+  base_commit: b7f99c773ed73e8916bd14ebc9709f625220c838
+  merge_commit: 373d2c448a1370e653e10ff6e42ee3038201fc20
 checks:
-  # Gates (pass_to_pass, static)
-  - id: source_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Required Rust source files exist and are non-trivial"
-
-  # Fail-to-pass (pr_diff)
-  - id: require_from_variant_in_enum
-    type: fail_to_pass
-    origin: pr_diff
-    description: "WellKnownFunctionKind enum has RequireFrom variant with Box<ConstantString>"
-
-  - id: require_from_handler_resolves_from_relative_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RequireFrom handler uses rel.as_str() to construct resolve origin via parent().join()"
-
-  - id: url_pattern_mapped_to_require_from
-    type: fail_to_pass
-    origin: pr_diff
-    description: "value_visitor_inner maps JsValue::Url(rel, Relative) to RequireFrom"
-
-  - id: display_impl_for_require_from
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Display impl for RequireFrom produces createRequire('<path>') diagnostic"
-
-  - id: unit_cases_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "6 previously-commented create-require test cases in unit.rs are active"
-
-  - id: entry_name_mjs_mapping
-    type: fail_to_pass
-    origin: pr_diff
-    description: "entry_name match maps 5 create-require test inputs to input.mjs"
-
-  # Pass-to-pass (static)
-  - id: existing_variants_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Core WellKnownFunctionKind variants (Require, RequireResolve, etc.) still exist"
-
-  - id: create_require_handler_unchanged
-    type: pass_to_pass
-    origin: static
-    description: "Original createRequire(import.meta.url) handler branch is preserved"
-
-  # Pass-to-pass (repo_tests)
-  - id: repo_check_unused_turbo_tasks
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's check-unused-turbo-tasks script passes (no new unused turbo-tasks items)"
-
-  - id: repo_node_file_trace_fixtures_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's node-file-trace test fixtures exist for create-require tests"
-
-  - id: repo_check_error_codes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's check-error-codes script passes"
-
+- id: source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Required Rust source files exist and are non-trivial
+- id: require_from_variant_in_enum
+  type: fail_to_pass
+  origin: pr_diff
+  description: WellKnownFunctionKind enum has RequireFrom variant with Box<ConstantString>
+- id: require_from_handler_resolves_from_relative_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: RequireFrom handler uses rel.as_str() to construct resolve origin via
+    parent().join()
+- id: url_pattern_mapped_to_require_from
+  type: fail_to_pass
+  origin: pr_diff
+  description: value_visitor_inner maps JsValue::Url(rel, Relative) to RequireFrom
+- id: display_impl_for_require_from
+  type: fail_to_pass
+  origin: pr_diff
+  description: Display impl for RequireFrom produces createRequire('<path>') diagnostic
+- id: unit_cases_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: 6 previously-commented create-require test cases in unit.rs are active
+- id: entry_name_mjs_mapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: entry_name match maps 5 create-require test inputs to input.mjs
+- id: existing_variants_preserved
+  type: pass_to_pass
+  origin: static
+  description: Core WellKnownFunctionKind variants (Require, RequireResolve, etc.)
+    still exist
+- id: create_require_handler_unchanged
+  type: pass_to_pass
+  origin: static
+  description: Original createRequire(import.meta.url) handler branch is preserved
+- id: repo_check_unused_turbo_tasks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check-unused-turbo-tasks script passes (no new unused turbo-tasks
+    items)
+- id: repo_node_file_trace_fixtures_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's node-file-trace test fixtures exist for create-require tests
+- id: repo_check_error_codes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check-error-codes script passes
 rubric:
-  - rule: "Follow Rust formatting conventions. Run cargo fmt which uses ASCII order (uppercase before lowercase) for imports and enum variants."
-    source:
-      path: "AGENTS.md"
-      lines: "414"
-      commit: "b7f99c773ed73e8916bd14ebc9709f625220c838"
-
-  - rule: "Before editing files in any subdirectory, read all README.md files in the directory path from the repo root up to and including the target file's directory."
-    source:
-      path: "AGENTS.md"
-      lines: "46"
-      commit: "b7f99c773ed73e8916bd14ebc9709f625220c838"
-
-  - rule: "When editing Turbopack (Rust) code, verify with a full build (pnpm build-all) since changes may affect multiple packages."
-    source:
-      path: "AGENTS.md"
-      lines: "374"
-      commit: "b7f99c773ed73e8916bd14ebc9709f625220c838"
+- rule: Follow Rust formatting conventions. Run cargo fmt which uses ASCII order (uppercase
+    before lowercase) for imports and enum variants.
+  source:
+    path: AGENTS.md
+    lines: '414'
+    commit: b7f99c773ed73e8916bd14ebc9709f625220c838
+- rule: Before editing files in any subdirectory, read all README.md files in the
+    directory path from the repo root up to and including the target file's directory.
+  source:
+    path: AGENTS.md
+    lines: '46'
+    commit: b7f99c773ed73e8916bd14ebc9709f625220c838
+- rule: When editing Turbopack (Rust) code, verify with a full build (pnpm build-all)
+    since changes may affect multiple packages.
+  source:
+    path: AGENTS.md
+    lines: '374'
+    commit: b7f99c773ed73e8916bd14ebc9709f625220c838
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits for auto-rebuilds on file changes.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs the agent to run `pnpm --filter=next dev` for
+    a fast inner loop when changing Next.js source. However, this PR modifies Turbopack's
+    Rust crates (`turbopack/crates/...`). Running the Next.js dev server watch mode
+    will not automatically recompile the Rust binaries, leading the agent to falsely
+    believe its Rust changes are taking effect or failing.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 67-75
+- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests preferring `pnpm --filter=next build` when edits
+    are limited to core Next.js files. An agent might misinterpret Turbopack as a
+    'core Next.js file' and run this command, which will fail to compile the Rust
+    changes. The agent actually needs to use `pnpm build-all` or Cargo directly for
+    Rust crate modifications.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 88-89
+hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
+  symlinks at the root level. The primary conflict arises from the repository's dual-language
+  nature (TypeScript/JS for Next.js vs. Rust for Turbopack). The build and dev instructions
+  heavily optimize for the TypeScript/JS workflow, which creates scope ambiguity when
+  an agent is tasked with modifying the Rust-based Turbopack bundler.

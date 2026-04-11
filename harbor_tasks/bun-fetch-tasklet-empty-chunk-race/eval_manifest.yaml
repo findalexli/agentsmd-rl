@@ -1,78 +1,102 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28982
-  base_commit: "770893d28ff94013abed5520482848609a6872f9"
-  merge_commit: "479d29f770c934d89af3182c5c0b11103d624d3b"
-
+  base_commit: 770893d28ff94013abed5520482848609a6872f9
+  merge_commit: 479d29f770c934d89af3182c5c0b11103d624d3b
 checks:
-  - id: zig_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "FetchTasklet.zig must have valid Zig syntax"
-
-  - id: empty_chunk_guard_present
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The empty non-terminal chunk guard must be present in onBodyReceived"
-
-  - id: guard_placement_correct
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The guard must be placed before onBodyReceived() inside is_waiting_body block"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "FetchTasklet implementation must have substantial logic"
-
-  - id: zig_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Zig code must pass fmt --check validation"
-
-  - id: stream_api_not_broken
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Basic streaming must still work after the fix (no regression)"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JavaScript lint passes (bun x oxlint src/js)"
-
-  - id: test_repo_banned_words
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's banned words check passes"
-
-  - id: test_repo_zig_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Zig fmt check passes on FetchTasklet.zig"
-
-  - id: test_repo_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript prettier check passes on scripts/"
-
+- id: zig_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: FetchTasklet.zig must have valid Zig syntax
+- id: empty_chunk_guard_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: The empty non-terminal chunk guard must be present in onBodyReceived
+- id: guard_placement_correct
+  type: fail_to_pass
+  origin: pr_diff
+  description: The guard must be placed before onBodyReceived() inside is_waiting_body
+    block
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: FetchTasklet implementation must have substantial logic
+- id: zig_compiles
+  type: pass_to_pass
+  origin: static
+  description: Zig code must pass fmt --check validation
+- id: stream_api_not_broken
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic streaming must still work after the fix (no regression)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript lint passes (bun x oxlint src/js)
+- id: test_repo_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's banned words check passes
+- id: test_repo_zig_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Zig fmt check passes on FetchTasklet.zig
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript prettier check passes on scripts/
 rubric:
-  # From src/CLAUDE.md and src/AGENTS.md - Zig conventions
-  - rule: "Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform wrappers that preserve OS error info and never use unreachable."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "22-38"
-      commit: "770893d28ff94013abed5520482848609a6872f9"
-
-  - rule: "Never use @import() inline inside of functions. Always put them at the bottom of the file or containing struct."
-    source:
-      path: "src/CLAUDE.md"
-      lines: "12-14"
-      commit: "770893d28ff94013abed5520482848609a6872f9"
-
-  - rule: "Follow existing code style - check neighboring files for patterns"
-    source:
-      path: "CLAUDE.md"
-      lines: "168"
-      commit: "770893d28ff94013abed5520482848609a6872f9"
+- rule: Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform
+    wrappers that preserve OS error info and never use unreachable.
+  source:
+    path: src/CLAUDE.md
+    lines: 22-38
+    commit: 770893d28ff94013abed5520482848609a6872f9
+- rule: Never use @import() inline inside of functions. Always put them at the bottom
+    of the file or containing struct.
+  source:
+    path: src/CLAUDE.md
+    lines: 12-14
+    commit: 770893d28ff94013abed5520482848609a6872f9
+- rule: Follow existing code style - check neighboring files for patterns
+  source:
+    path: CLAUDE.md
+    lines: '168'
+    commit: 770893d28ff94013abed5520482848609a6872f9
+- rule: Never use `@import()` inline inside of functions.
+  source:
+    path: src/CLAUDE.md
+    lines: 10-10
+  evidence: The gold solution adds logic inside the `FetchTasklet` struct's function
+    without using any inline `@import()` statements, relying entirely on existing
+    in-scope variables and types.
+  category: style
+distractors:
+- rule: Test Organization and Writing Tests guidelines
+  collision_type: scope_ambiguity
+  why_distracting: The instructions provide detailed guidance on how and where to
+    write tests (e.g., `test/js/web/` for fetch). An agent might waste significant
+    effort trying to write a reliable test for this multi-threaded stale-task race
+    condition, which is notoriously difficult to reproduce deterministically. The
+    gold solution correctly focuses only on the Zig fix and documentation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 40-60
+- rule: Prefer Bun APIs over `std`
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates using `bun.*` APIs over `std.*` for system operations.
+    An agent might get distracted looking for Bun-specific buffer or stream APIs to
+    handle the empty chunk, but the fix requires a simple logical check on the existing
+    `scheduled_response_buffer.list.items.len` and `result` state.
+  severity: low
+  source:
+    path: src/CLAUDE.md
+    lines: 15-26
+hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md` focusing on build
+  and test instructions, and `src/CLAUDE.md` focusing on Zig-specific conventions
+  and Bun APIs. The root-level testing rules are highly distracting for this specific
+  issue because testing a multi-threaded race condition is extremely difficult and
+  not required by the gold solution. The agent must prioritize the Zig logic fix over
+  the general testing guidelines.

@@ -48,3 +48,39 @@ rubric:
     path: CLAUDE.md
     lines: '422'
     commit: e513488d0d3bc19ae9b16b08ef43add7e4faab7c
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits to Next.js source.
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying a Rust crate (`turbo-persistence`), not
+    Next.js JS source or integration tests. Running `pnpm --filter=next dev` is for
+    JS iterative development and won't help with testing a Rust-level lock contention
+    fix, which should be tested via `cargo test` in the specific crate.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 64-72
+- rule: Run tests fast using NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<mode> pnpm testheadless
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run tests using `pnpm testheadless` which
+    is specifically for Next.js integration tests (`test/path/to/test.ts`), whereas
+    the changes are in a Rust crate and should be tested with `cargo test`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-79
+- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use `pnpm --filter=next build` to compile
+    their changes, but since they are editing a Rust crate (`turbopack/crates/turbo-persistence`),
+    they need to use `pnpm build-all` or `cargo build` to compile the Rust code.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 84-86
+hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
+  and provide general Next.js development guidelines. However, they are heavily skewed
+  towards JavaScript/TypeScript development in the `packages/next` directory. For
+  a Rust-based PR in `turbopack/crates/turbo-persistence`, many of the build and test
+  commands provided in the root config are inapplicable and could mislead the agent
+  into using JS-specific tooling instead of Cargo.

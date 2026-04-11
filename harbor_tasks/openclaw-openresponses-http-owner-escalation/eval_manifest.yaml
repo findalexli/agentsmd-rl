@@ -1,126 +1,144 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 57778
-  base_commit: "1a75906a6fe5191ea573758017834f200056500b"
-  merge_commit: "17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c"
-
+  base_commit: 1a75906a6fe5191ea573758017834f200056500b
+  merge_commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
 checks:
-  - id: typescript_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified file must parse without TypeScript errors"
-
-  - id: no_hardcoded_sender_is_owner_true
-    type: fail_to_pass
-    origin: pr_diff
-    description: "agentCommandFromIngress must not receive senderIsOwner as literal true"
-
-  - id: sender_is_owner_flows_from_params
-    type: fail_to_pass
-    origin: pr_diff
-    description: "runResponsesAgentCommand receives senderIsOwner from callers and passes it through"
-
-  - id: call_sites_pass_non_owner
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both streaming and non-streaming call sites pass senderIsOwner as non-owner"
-
-  - id: handler_exported
-    type: pass_to_pass
-    origin: repo_tests
-    description: "handleOpenResponsesHttpRequest remains exported"
-
-  - id: ingress_call_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "agentCommandFromIngress call preserved in the file"
-
-  - id: model_override_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "allowModelOverride: true still present"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "File not gutted and helper has real body (>= 3 statements)"
-
-  - id: strict_boolean_typing
-    type: fail_to_pass
-    origin: agent_config
-    description: "senderIsOwner uses strict boolean typing"
-    source:
-      path: "CLAUDE.md"
-      lines: "144"
-      commit: "1a75906a6fe5191ea573758017834f200056500b"
-
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-nocheck or inline lint suppressions added"
-    source:
-      path: "CLAUDE.md"
-      lines: "146"
-      commit: "1a75906a6fe5191ea573758017834f200056500b"
-
-  - id: no_explicit_any
-    type: pass_to_pass
-    origin: agent_config
-    description: "No explicit any type in helper params or senderIsOwner"
-    source:
-      path: "CLAUDE.md"
-      lines: "147"
-      commit: "1a75906a6fe5191ea573758017834f200056500b"
-
-  - id: no_sentinel_default
-    type: fail_to_pass
-    origin: agent_config
-    description: "senderIsOwner must not use silent sentinel default (?? true/false)"
-    source:
-      path: "CLAUDE.md"
-      lines: "152"
-      commit: "1a75906a6fe5191ea573758017834f200056500b"
-
-  - id: test_repo_lint_modified_file
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Linter passes on the modified file"
-
-  - id: test_repo_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's formatter passes on the modified file"
-
-  - id: test_repo_parity_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's parity tests pass"
-
-  - id: test_repo_prompt_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's OpenResponses prompt tests pass"
-
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without TypeScript errors
+- id: no_hardcoded_sender_is_owner_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: agentCommandFromIngress must not receive senderIsOwner as literal true
+- id: sender_is_owner_flows_from_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: runResponsesAgentCommand receives senderIsOwner from callers and passes
+    it through
+- id: call_sites_pass_non_owner
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both streaming and non-streaming call sites pass senderIsOwner as non-owner
+- id: handler_exported
+  type: pass_to_pass
+  origin: repo_tests
+  description: handleOpenResponsesHttpRequest remains exported
+- id: ingress_call_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: agentCommandFromIngress call preserved in the file
+- id: model_override_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'allowModelOverride: true still present'
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: File not gutted and helper has real body (>= 3 statements)
+- id: strict_boolean_typing
+  type: fail_to_pass
+  origin: agent_config
+  description: senderIsOwner uses strict boolean typing
+  source:
+    path: CLAUDE.md
+    lines: '144'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck or inline lint suppressions added
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- id: no_explicit_any
+  type: pass_to_pass
+  origin: agent_config
+  description: No explicit any type in helper params or senderIsOwner
+  source:
+    path: CLAUDE.md
+    lines: '147'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- id: no_sentinel_default
+  type: fail_to_pass
+  origin: agent_config
+  description: senderIsOwner must not use silent sentinel default (?? true/false)
+  source:
+    path: CLAUDE.md
+    lines: '152'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- id: test_repo_lint_modified_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Linter passes on the modified file
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter passes on the modified file
+- id: test_repo_parity_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's parity tests pass
+- id: test_repo_prompt_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's OpenResponses prompt tests pass
 rubric:
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "163"
-      commit: "1a75906a6fe5191ea573758017834f200056500b"
-  - rule: "Gateway protocol changes are contract changes. Prefer additive evolution."
-    source:
-      path: "src/gateway/protocol/CLAUDE.md"
-      lines: "19-21"
-      commit: "1a75906a6fe5191ea573758017834f200056500b"
-  - rule: "If introducing a new optional field or nullable semantic in core logic, prefer an explicit union or dedicated type when the value changes behavior."
-    source:
-      path: "CLAUDE.md"
-      lines: "153"
-      commit: "1a75906a6fe5191ea573758017834f200056500b"
-  - rule: "Prefer discriminated unions when parameter shape changes runtime behavior."
-    source:
-      path: "CLAUDE.md"
-      lines: "149"
-      commit: "1a75906a6fe5191ea573758017834f200056500b"
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- rule: Gateway protocol changes are contract changes. Prefer additive evolution.
+  source:
+    path: src/gateway/protocol/CLAUDE.md
+    lines: 19-21
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- rule: If introducing a new optional field or nullable semantic in core logic, prefer
+    an explicit union or dedicated type when the value changes behavior.
+  source:
+    path: CLAUDE.md
+    lines: '153'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- rule: Prefer discriminated unions when parameter shape changes runtime behavior.
+  source:
+    path: CLAUDE.md
+    lines: '149'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- rule: In chat replies, file references must be repo-root relative only; never absolute
+    paths or `~/...`.
+  source:
+    path: CLAUDE.md
+    lines: 4-5
+  evidence: The bash script targets the file using the repo-root relative path `src/gateway/openresponses-http.ts`.
+  category: style
+distractors:
+- rule: 'Messaging channels: always consider all built-in + extension channels when
+    refactoring shared logic (routing, allowlists, pairing, command gating, onboarding,
+    docs).'
+  collision_type: scope_ambiguity
+  why_distracting: The bug involves command gating and owner privileges. The rule
+    instructs to consider all built-in and extension channels when refactoring shared
+    logic like command gating. The agent might waste time auditing or modifying Telegram,
+    Discord, Slack, etc., when the bug is specifically isolated to the HTTP ingress
+    handler.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 18-22
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
+    owner explicitly asked for the change or is already reviewing it with you.
+  collision_type: meta_confusion
+  why_distracting: The bug is a security vulnerability (privilege escalation). The
+    agent might interpret this as a security-focused file and refuse to edit it without
+    explicit owner permission, failing to fix the bug.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 5-6
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical rules. The agent
+  must carefully scope its changes to the HTTP gateway despite rules encouraging cross-channel
+  audits for command gating logic.'

@@ -1,86 +1,119 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vllm-project/vllm"
+  repo: vllm-project/vllm
   pr: 38311
-  base_commit: "44a6528028ad79951de08b6a7928f6c05788d00d"
-  merge_commit: "384e4d5f48cea203b0fbcd41951d2d49775bf6bd"
-
+  base_commit: 44a6528028ad79951de08b6a7928f6c05788d00d
+  merge_commit: 384e4d5f48cea203b0fbcd41951d2d49775bf6bd
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified file must parse without errors"
-
-  - id: no_fullgraph_early_return
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FULL cudagraph path must not early-return before building attention metadata"
-
-  - id: attn_metadata_before_fullgraph_execution
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Attention metadata must be built before FULL cudagraph execution"
-
-  - id: slot_mappings_computed
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Slot mappings computed in propose() for all cudagraph modes"
-
-  - id: core_class_structure
-    type: pass_to_pass
-    origin: pr_diff
-    description: "EagleSpeculator class retains all required methods"
-
-  - id: propose_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "propose() has real logic — conditionals, calls, self attribute access"
-
-  - id: no_bare_pip
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare pip usage in modified file"
-    source:
-      path: "AGENTS.md"
-      lines: "42"
-      commit: "44a6528028ad79951de08b6a7928f6c05788d00d"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: static
-    description: "No wildcard imports in modified file"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on modified file"
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file compiles without syntax errors"
-
-  - id: test_repo_ast_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file parses as valid Python AST"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without errors
+- id: no_fullgraph_early_return
+  type: fail_to_pass
+  origin: pr_diff
+  description: FULL cudagraph path must not early-return before building attention
+    metadata
+- id: attn_metadata_before_fullgraph_execution
+  type: fail_to_pass
+  origin: pr_diff
+  description: Attention metadata must be built before FULL cudagraph execution
+- id: slot_mappings_computed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Slot mappings computed in propose() for all cudagraph modes
+- id: core_class_structure
+  type: pass_to_pass
+  origin: pr_diff
+  description: EagleSpeculator class retains all required methods
+- id: propose_not_stub
+  type: pass_to_pass
+  origin: static
+  description: propose() has real logic — conditionals, calls, self attribute access
+- id: no_bare_pip
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare pip usage in modified file
+  source:
+    path: AGENTS.md
+    lines: '42'
+    commit: 44a6528028ad79951de08b6a7928f6c05788d00d
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: static
+  description: No wildcard imports in modified file
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified file
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file compiles without syntax errors
+- id: test_repo_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file parses as valid Python AST
 rubric:
-  - rule: "Use @torch.inference_mode() decorator for model inference methods that don't need gradients"
-    source:
-      path: "vllm/v1/worker/gpu/spec_decode/eagle/speculator.py"
-      lines: "144"
-      commit: "44a6528028ad79951de08b6a7928f6c05788d00d"
-
-  - rule: "Follow existing type hint patterns (use dict[str, Any] | None, torch.Tensor | None, etc.)"
-    source:
-      path: "vllm/v1/worker/gpu/spec_decode/eagle/speculator.py"
-      lines: "144-155"
-      commit: "44a6528028ad79951de08b6a7928f6c05788d00d"
-
-  - rule: "Code must pass ruff linter checks as configured in the repo's pre-commit hooks"
-    source:
-      path: "AGENTS.md"
-      lines: "76-78"
-      commit: "44a6528028ad79951de08b6a7928f6c05788d00d"
+- rule: Use @torch.inference_mode() decorator for model inference methods that don't
+    need gradients
+  source:
+    path: vllm/v1/worker/gpu/spec_decode/eagle/speculator.py
+    lines: '144'
+    commit: 44a6528028ad79951de08b6a7928f6c05788d00d
+- rule: Follow existing type hint patterns (use dict[str, Any] | None, torch.Tensor
+    | None, etc.)
+  source:
+    path: vllm/v1/worker/gpu/spec_decode/eagle/speculator.py
+    lines: 144-155
+    commit: 44a6528028ad79951de08b6a7928f6c05788d00d
+- rule: Code must pass ruff linter checks as configured in the repo's pre-commit hooks
+  source:
+    path: AGENTS.md
+    lines: 76-78
+    commit: 44a6528028ad79951de08b6a7928f6c05788d00d
+- rule: No low-value busywork PRs
+  source:
+    path: AGENTS.md
+    lines: 17-19
+  evidence: The gold solution implements a substantive fix by extracting `_build_draft_attn_metadata`
+    and `_dispatch_and_sync_dp` to correctly rebuild attention metadata, rather than
+    making a trivial or mechanica
+  category: architecture
+distractors:
+- rule: Duplicate-work checks using gh CLI
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run `gh issue view` or `gh pr list`
+    inside the `solve.sh` script to check for duplicate work. This will fail in the
+    evaluation environment where the GitHub CLI is not authenticated or installed,
+    and is irrelevant for a code generation task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 8-15
+- rule: Running tests using uv and pytest
+  collision_type: meta_confusion
+  why_distracting: The agent might try to install test dependencies using `uv pip
+    install` and run `pytest` inside the `solve.sh` script. This would cause the script
+    to take excessively long or fail due to environment constraints, as testing is
+    handled by the evaluation framework.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 48-58
+- rule: Commit messages must include attribution trailers
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use `git commit` with `Co-authored-by:`
+    trailers inside the `solve.sh` script. The evaluation framework expects a patch
+    or file modifications, not a git commit, and running git commit might fail if
+    the git user is not configured.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 71-80
+hierarchy_analysis: The configuration hierarchy consists of `CLAUDE.md` which simply
+  includes `AGENTS.md`. `AGENTS.md` provides extensive guidelines on PR submission,
+  environment setup, and testing. Since the task is to generate a fix script (`solve.sh`)
+  for an evaluation environment, many of the workflow and PR-related rules in `AGENTS.md`
+  (like using `gh` CLI, running tests, and formatting commit messages) are meta-distractors
+  that conflict with the constraints of a headless evaluation script.

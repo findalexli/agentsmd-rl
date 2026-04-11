@@ -1,117 +1,134 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "denoland/deno"
+  repo: denoland/deno
   pr: 33172
-  base_commit: "ad725eea313df6204d342d84ace4af1b11cc341f"
-  merge_commit: "00d46fe27611060fd87432010c401bbb3ca55a6e"
-
+  base_commit: ad725eea313df6204d342d84ace4af1b11cc341f
+  merge_commit: 00d46fe27611060fd87432010c401bbb3ca55a6e
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must exist and retain core structure (TCP class, listen method, EXPECTED_VIOLATIONS)"
-
-  - id: test_repo_tcp_wrap_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: tcp_wrap.ts must import from _listen.ts (ceilPowOf2 used by listen path)"
-
-  - id: test_repo_listen_module_exports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: _listen.ts must export ceilPowOf2 and backoff constants"
-
-  - id: test_repo_lint_plugin_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: lint plugin must have valid EXPECTED_VIOLATIONS structure"
-
-  - id: test_repo_tcp_wrap_violation_count
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: tcp_wrap.ts Deno.* usage count must match EXPECTED_VIOLATIONS (base: 3, post-fix: 0)"
-
-  - id: test_repo_tcp_wrap_core_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: tcp_wrap.ts must have required ext:core/ops and ext:deno_node imports"
-
-  - id: test_repo_listen_module_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: _listen.ts must export ceilPowOf2 with correct signature and backoff constants"
-
-  - id: test_repo_git_base_commit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: git verify repo is at expected base commit ad725eea313df6204d342d84ace4af1b11cc341f"
-
-  - id: test_repo_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: git verify repo has no uncommitted changes at base commit"
-
-  - id: test_repo_git_ls_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: git verify modified files tcp_wrap.ts and lint plugin exist in git tree"
-
-  - id: test_repo_grep_deno_listen
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: grep verify tcp_wrap.ts contains Deno.listen on base commit"
-
-  - id: test_repo_grep_deno_usage_count
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: grep verify tcp_wrap.ts has >=3 Deno.* usages matching EXPECTED_VIOLATIONS"
-
-  - id: test_repo_grep_expected_violations
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: grep verify EXPECTED_VIOLATIONS lists tcp_wrap.ts:3 on base commit"
-
-  - id: test_repo_grep_listen_exports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: grep verify _listen.ts exports ceilPowOf2 and backoff constants"
-
-  - id: legacy_listen_branch_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "listen() must not branch on kUseNativeWrap to a legacy path"
-
-  - id: dead_legacy_methods_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dead #listenLegacy, #accept, #acceptBackoff methods and Deno.listen usage must be removed"
-
-  - id: lint_violations_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Lint plugin must not list tcp_wrap.ts in EXPECTED_VIOLATIONS with count > 0"
-
-  - id: unused_imports_cleaned
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Imports only used by dead legacy code (delay, INITIAL_ACCEPT_BACKOFF_DELAY, MAX_ACCEPT_BACKOFF_DELAY) must be removed"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must exist and retain core structure (TCP class, listen
+    method, EXPECTED_VIOLATIONS)
+- id: test_repo_tcp_wrap_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: tcp_wrap.ts must import from _listen.ts (ceilPowOf2 used
+    by listen path)'
+- id: test_repo_listen_module_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: _listen.ts must export ceilPowOf2 and backoff constants'
+- id: test_repo_lint_plugin_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: lint plugin must have valid EXPECTED_VIOLATIONS structure'
+- id: test_repo_tcp_wrap_violation_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: tcp_wrap.ts Deno.* usage count must match EXPECTED_VIOLATIONS
+    (base: 3, post-fix: 0)'
+- id: test_repo_tcp_wrap_core_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: tcp_wrap.ts must have required ext:core/ops and ext:deno_node
+    imports'
+- id: test_repo_listen_module_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: _listen.ts must export ceilPowOf2 with correct signature
+    and backoff constants'
+- id: test_repo_git_base_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: git verify repo is at expected base commit ad725eea313df6204d342d84ace4af1b11cc341f'
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: git verify repo has no uncommitted changes at base commit'
+- id: test_repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: git verify modified files tcp_wrap.ts and lint plugin exist
+    in git tree'
+- id: test_repo_grep_deno_listen
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: grep verify tcp_wrap.ts contains Deno.listen on base commit'
+- id: test_repo_grep_deno_usage_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: grep verify tcp_wrap.ts has >=3 Deno.* usages matching EXPECTED_VIOLATIONS'
+- id: test_repo_grep_expected_violations
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: grep verify EXPECTED_VIOLATIONS lists tcp_wrap.ts:3 on base
+    commit'
+- id: test_repo_grep_listen_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: grep verify _listen.ts exports ceilPowOf2 and backoff constants'
+- id: legacy_listen_branch_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: listen() must not branch on kUseNativeWrap to a legacy path
+- id: dead_legacy_methods_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Dead #listenLegacy, #accept, #acceptBackoff methods and Deno.listen
+    usage must be removed'
+- id: lint_violations_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Lint plugin must not list tcp_wrap.ts in EXPECTED_VIOLATIONS with count
+    > 0
+- id: unused_imports_cleaned
+  type: fail_to_pass
+  origin: pr_diff
+  description: Imports only used by dead legacy code (delay, INITIAL_ACCEPT_BACKOFF_DELAY,
+    MAX_ACCEPT_BACKOFF_DELAY) must be removed
 rubric:
-  - rule: "Before committing, run tools/format.js to format code, and tools/lint.js --js for JS/TS changes"
-    source:
-      path: "CLAUDE.md"
-      lines: "21-26"
-      commit: "ad725eea313df6204d342d84ace4af1b11cc341f"
-
-  - rule: "Keep changes minimal. Do not do drive-by changes in a PR."
-    source:
-      path: "CLAUDE.md"
-      lines: "34-36"
-      commit: "ad725eea313df6204d342d84ace4af1b11cc341f"
-
-  - rule: "Internal symbols in JS (ext/node/polyfills/) use the k prefix convention: kIpc, kSerialization, etc. Flag deviations."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "165-166"
-      commit: "ad725eea313df6204d342d84ace4af1b11cc341f"
+- rule: Before committing, run tools/format.js to format code, and tools/lint.js --js
+    for JS/TS changes
+  source:
+    path: CLAUDE.md
+    lines: 21-26
+    commit: ad725eea313df6204d342d84ace4af1b11cc341f
+- rule: Keep changes minimal. Do not do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: 34-36
+    commit: ad725eea313df6204d342d84ace4af1b11cc341f
+- rule: 'Internal symbols in JS (ext/node/polyfills/) use the k prefix convention:
+    kIpc, kSerialization, etc. Flag deviations.'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 165-166
+    commit: ad725eea313df6204d342d84ace4af1b11cc341f
+- rule: Before committing, if only non-Rust was changed, make sure to run `tools/lint.js
+    --js` and fix any lint errors before committing
+  source:
+    path: CLAUDE.md
+    lines: 25-26
+  evidence: The gold solution removes unused imports (`delay`, `INITIAL_ACCEPT_BACKOFF_DELAY`,
+    `MAX_ACCEPT_BACKOFF_DELAY`) which would otherwise trigger unused import lint errors
+    after the dead code is removed.
+  category: tooling
+distractors:
+- rule: Keep your changes minimal, don't do drive-by changes in a PR. If you need
+    to make a change that is not directly related to the PR, create a separate PR
+    for it.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might interpret updating the lint plugin configuration
+    in `tools/lint_plugins/no_deno_api_in_polyfills.ts` as a 'drive-by change' because
+    it is outside the primary `ext/node/` directory being modified. However, the prompt
+    explicitly requires removing the lint violation entry since the underlying `Deno.listen`
+    API usage is being removed.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 33-35
+hierarchy_analysis: The single `CLAUDE.md` file provides general repository guidelines.
+  The instruction to avoid 'drive-by changes' conflicts with the specific PR requirement
+  to update a lint plugin configuration file in a separate directory. The explicit
+  PR instructions must override the general guideline to keep changes strictly localized.

@@ -3,72 +3,85 @@ source:
   pr_number: 6886
   base_commit: d5622bb413a2d1ac99c546c5336be949dfb351d9
   merge_commit: dd39707c6957abb390e9e2b694da6da0e054c282
-  title: "refactor(react-router): Head and Scripts use deepEqual to avoid useStore re-renders"
-
+  title: 'refactor(react-router): Head and Scripts use deepEqual to avoid useStore
+    re-renders'
 checks:
-  # Fail-to-pass tests (verify the fix)
-  - id: test_scripts_has_deep_equal_import
-    description: "Scripts.tsx imports deepEqual from @tanstack/router-core"
-    type: fail_to_pass
-
-  - id: test_scripts_use_store_calls_have_deep_equal
-    description: "All useStore calls in Scripts.tsx have deepEqual as comparator"
-    type: fail_to_pass
-
-  - id: test_head_content_utils_has_deep_equal_import
-    description: "headContentUtils.tsx imports deepEqual from @tanstack/router-core"
-    type: fail_to_pass
-
-  - id: test_use_tags_use_store_calls_have_deep_equal
-    description: "All useStore calls in useTags hook have deepEqual as comparator"
-    type: fail_to_pass
-
-  # Pass-to-pass tests (repo CI/CD checks - must pass on both base and after fix)
-  - id: test_p2p_react_router_unit_tests
-    description: "Repo's unit tests for react-router pass"
-    type: pass_to_pass
-    origin: repo_tests
-    command: "pnpm nx run @tanstack/react-router:test:unit -- --run"
-
-  - id: test_p2p_react_router_types
-    description: "Repo's TypeScript type check for react-router passes"
-    type: pass_to_pass
-    origin: repo_tests
-    command: "pnpm nx run @tanstack/react-router:test:types"
-
-  - id: test_p2p_react_router_build
-    description: "Repo's build for react-router package passes"
-    type: pass_to_pass
-    origin: repo_tests
-    command: "pnpm nx run @tanstack/react-router:build"
-
-  - id: test_p2p_react_router_test_build
-    description: "Repo's build validation passes (publint + attw)"
-    type: pass_to_pass
-    origin: repo_tests
-    command: "pnpm nx run @tanstack/react-router:test:build"
-
+- id: test_scripts_has_deep_equal_import
+  description: Scripts.tsx imports deepEqual from @tanstack/router-core
+  type: fail_to_pass
+- id: test_scripts_use_store_calls_have_deep_equal
+  description: All useStore calls in Scripts.tsx have deepEqual as comparator
+  type: fail_to_pass
+- id: test_head_content_utils_has_deep_equal_import
+  description: headContentUtils.tsx imports deepEqual from @tanstack/router-core
+  type: fail_to_pass
+- id: test_use_tags_use_store_calls_have_deep_equal
+  description: All useStore calls in useTags hook have deepEqual as comparator
+  type: fail_to_pass
+- id: test_p2p_react_router_unit_tests
+  description: Repo's unit tests for react-router pass
+  type: pass_to_pass
+  origin: repo_tests
+  command: pnpm nx run @tanstack/react-router:test:unit -- --run
+- id: test_p2p_react_router_types
+  description: Repo's TypeScript type check for react-router passes
+  type: pass_to_pass
+  origin: repo_tests
+  command: pnpm nx run @tanstack/react-router:test:types
+- id: test_p2p_react_router_build
+  description: Repo's build for react-router package passes
+  type: pass_to_pass
+  origin: repo_tests
+  command: pnpm nx run @tanstack/react-router:build
+- id: test_p2p_react_router_test_build
+  description: Repo's build validation passes (publint + attw)
+  type: pass_to_pass
+  origin: repo_tests
+  command: pnpm nx run @tanstack/react-router:test:build
 rubric:
-  - rule: "Use TypeScript strict mode with extensive type safety"
-    source:
-      path: "AGENTS.md"
-      lines: "20"
-      commit: "d5622bb413a2d1ac99c546c5336be949dfb351d9"
-
-  - rule: "Framework-agnostic core logic should be separated from React/Solid bindings"
-    source:
-      path: "AGENTS.md"
-      lines: "21-22"
-      commit: "d5622bb413a2d1ac99c546c5336be949dfb351d9"
-
-  - rule: "Always run unit and type tests during development - do not proceed if they fail"
-    source:
-      path: "AGENTS.md"
-      lines: "53"
-      commit: "d5622bb413a2d1ac99c546c5336be949dfb351d9"
-
-  - rule: "Run pnpm test:eslint, pnpm test:types, and pnpm test:unit before committing"
-    source:
-      path: "AGENTS.md"
-      lines: "71"
-      commit: "d5622bb413a2d1ac99c546c5336be949dfb351d9"
+- rule: Use TypeScript strict mode with extensive type safety
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: d5622bb413a2d1ac99c546c5336be949dfb351d9
+- rule: Framework-agnostic core logic should be separated from React/Solid bindings
+  source:
+    path: AGENTS.md
+    lines: 21-22
+    commit: d5622bb413a2d1ac99c546c5336be949dfb351d9
+- rule: Always run unit and type tests during development - do not proceed if they
+    fail
+  source:
+    path: AGENTS.md
+    lines: '53'
+    commit: d5622bb413a2d1ac99c546c5336be949dfb351d9
+- rule: Run pnpm test:eslint, pnpm test:types, and pnpm test:unit before committing
+  source:
+    path: AGENTS.md
+    lines: '71'
+    commit: d5622bb413a2d1ac99c546c5336be949dfb351d9
+- rule: Framework-agnostic core logic separated from React/Solid bindings
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: The gold solution imports the `deepEqual` utility from the framework-agnostic
+    `@tanstack/router-core` package rather than implementing a React-specific deep
+    equality check within the `react-router` pa
+  category: architecture
+distractors:
+- rule: Use workspace protocol for internal dependencies (`workspace:*`)
+  collision_type: would_cause_bug
+  why_distracting: An agent might misinterpret this rule and attempt to use the `workspace:*`
+    protocol directly in the TypeScript import statements (e.g., `import { deepEqual
+    } from 'workspace:@tanstack/router-core'`). This protocol is only valid in `package.json`
+    dependencies, and using it in `.tsx` files would cause a compilation error.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-19
+hierarchy_analysis: The AGENTS.md file provides high-level architectural guidelines.
+  The rule to separate framework-agnostic core logic correctly guides the agent to
+  import `deepEqual` from `@tanstack/router-core`. However, the instruction regarding
+  the `workspace:*` protocol is meant for package management but could be misapplied
+  to source code imports, requiring the agent to understand the boundary between package
+  configuration and TypeScript syntax.

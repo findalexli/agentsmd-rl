@@ -4,175 +4,192 @@ source_pr:
   number: 39113
   merge_commit: be7e1abd8ad3657337840384878d3bbe9f6bde1b
   base_commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
-
-# Behavior checks - each maps to a test in test_outputs.py
 checks:
-  # Fail-to-pass tests using code execution
-  - id: "test_database_filter_accepts_created_by_fk"
-    name: "DatabaseFilter accepts created_by_fk"
-    description: "DatabaseFilter should accept created_by_fk as valid filter column via code execution"
-    test: "test_database_filter_accepts_created_by_fk"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_database_filter_accepts_changed_by_fk"
-    name: "DatabaseFilter accepts changed_by_fk"
-    description: "DatabaseFilter should accept changed_by_fk as valid filter column via code execution"
-    test: "test_database_filter_accepts_changed_by_fk"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_list_databases_request_parses_json_filters"
-    name: "ListDatabasesRequest parses JSON filters"
-    description: "ListDatabasesRequest field_validator should parse JSON string for filters field"
-    test: "test_list_databases_request_parses_json_filters"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_list_databases_request_parses_json_select_columns"
-    name: "ListDatabasesRequest parses JSON select_columns"
-    description: "ListDatabasesRequest field_validator should parse JSON string for select_columns field"
-    test: "test_list_databases_request_parses_json_select_columns"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_list_databases_imports_default_columns_from_schema_discovery"
-    name: "list_databases imports DATABASE_DEFAULT_COLUMNS"
-    description: "list_databases.py should import DATABASE_DEFAULT_COLUMNS from schema_discovery via code execution"
-    test: "test_list_databases_imports_default_columns_from_schema_discovery"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_database_error_has_timezone_aware_timestamp"
-    name: "DatabaseError has timezone-aware timestamp"
-    description: "DatabaseError.create() should produce timezone-aware timestamps via code execution"
-    test: "test_database_error_has_timezone_aware_timestamp"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_humanize_timestamp_handles_aware_datetime"
-    name: "_humanize_timestamp handles aware datetimes"
-    description: "_humanize_timestamp should handle both aware and naive datetimes correctly"
-    test: "test_humanize_timestamp_handles_aware_datetime"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_app_py_has_database_created_by_fk_documentation"
-    name: "app.py includes database filter documentation"
-    description: "app.py instructions should include database created_by_fk examples"
-    test: "test_app_py_has_database_created_by_fk_documentation"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_schemas_py_imports_field_validator"
-    name: "schemas.py imports field_validator"
-    description: "schemas.py should import field_validator from pydantic via code execution"
-    test: "test_schemas_py_imports_field_validator"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  - id: "test_schemas_py_imports_parse_utilities"
-    name: "schemas.py imports parse utilities"
-    description: "schemas.py should import parse_json_or_list and parse_json_or_model_list from schema_utils via code execution"
-    test: "test_schemas_py_imports_parse_utilities"
-    type: "fail_to_pass"
-    origin: "pr_diff"
-
-  # Pass-to-pass tests - subprocess-based repo CI checks (origin: repo_tests)
-  - id: "test_repo_mcp_database_syntax"
-    name: "MCP database files have valid Python syntax"
-    description: "Modified MCP database files should pass Python syntax check (py_compile)"
-    test: "test_repo_mcp_database_syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_mcp_database_unit_tests"
-    name: "MCP database tools unit tests pass"
-    description: "MCP database tools unit tests should pass via pytest"
-    test: "test_repo_mcp_database_unit_tests"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_mcp_schemas_import"
-    name: "MCP database schemas module imports successfully"
-    description: "MCP database schemas module should import without errors"
-    test: "test_repo_mcp_schemas_import"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_mcp_common_schema_discovery"
-    name: "MCP schema_discovery module imports successfully"
-    description: "MCP common schema_discovery module should export DATABASE_DEFAULT_COLUMNS"
-    test: "test_repo_mcp_common_schema_discovery"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  - id: "test_repo_mcp_service_py_syntax"
-    name: "All MCP service files have valid Python syntax"
-    description: "All MCP service Python files should pass Python syntax check"
-    test: "test_repo_mcp_service_py_syntax"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-
-  # Static analysis tests (origin: static - AST/content checks)
-  - id: "test_database_schemas_has_database_filter_class"
-    name: "DatabaseFilter class exists"
-    description: "Database schemas module should contain DatabaseFilter class"
-    test: "test_database_schemas_has_database_filter_class"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "test_database_schemas_has_list_databases_request_class"
-    name: "ListDatabasesRequest class exists"
-    description: "Database schemas module should contain ListDatabasesRequest class"
-    test: "test_database_schemas_has_list_databases_request_class"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "test_list_databases_has_tool_function"
-    name: "list_databases tool function exists"
-    description: "list_databases.py should contain the list_databases tool function"
-    test: "test_list_databases_has_tool_function"
-    type: "pass_to_pass"
-    origin: "static"
-
-  - id: "test_app_py_has_documentation"
-    name: "app.py contains documentation"
-    description: "app.py should contain docstrings and reference MCP tools"
-    test: "test_app_py_has_documentation"
-    type: "pass_to_pass"
-    origin: "static"
-
-  # Agent config checks
-  - id: "test_database_filter_description_updated"
-    name: "DatabaseFilter description updated"
-    description: "DatabaseFilter description should mention created_by_fk usage"
-    test: "test_database_filter_description_updated"
-    type: "agent_config"
-    origin: "pr_diff"
-
-# Rubric for LLM-judge evaluation (soft/subjective criteria)
+- id: test_database_filter_accepts_created_by_fk
+  name: DatabaseFilter accepts created_by_fk
+  description: DatabaseFilter should accept created_by_fk as valid filter column via
+    code execution
+  test: test_database_filter_accepts_created_by_fk
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_database_filter_accepts_changed_by_fk
+  name: DatabaseFilter accepts changed_by_fk
+  description: DatabaseFilter should accept changed_by_fk as valid filter column via
+    code execution
+  test: test_database_filter_accepts_changed_by_fk
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_list_databases_request_parses_json_filters
+  name: ListDatabasesRequest parses JSON filters
+  description: ListDatabasesRequest field_validator should parse JSON string for filters
+    field
+  test: test_list_databases_request_parses_json_filters
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_list_databases_request_parses_json_select_columns
+  name: ListDatabasesRequest parses JSON select_columns
+  description: ListDatabasesRequest field_validator should parse JSON string for select_columns
+    field
+  test: test_list_databases_request_parses_json_select_columns
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_list_databases_imports_default_columns_from_schema_discovery
+  name: list_databases imports DATABASE_DEFAULT_COLUMNS
+  description: list_databases.py should import DATABASE_DEFAULT_COLUMNS from schema_discovery
+    via code execution
+  test: test_list_databases_imports_default_columns_from_schema_discovery
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_database_error_has_timezone_aware_timestamp
+  name: DatabaseError has timezone-aware timestamp
+  description: DatabaseError.create() should produce timezone-aware timestamps via
+    code execution
+  test: test_database_error_has_timezone_aware_timestamp
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_humanize_timestamp_handles_aware_datetime
+  name: _humanize_timestamp handles aware datetimes
+  description: _humanize_timestamp should handle both aware and naive datetimes correctly
+  test: test_humanize_timestamp_handles_aware_datetime
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_app_py_has_database_created_by_fk_documentation
+  name: app.py includes database filter documentation
+  description: app.py instructions should include database created_by_fk examples
+  test: test_app_py_has_database_created_by_fk_documentation
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_schemas_py_imports_field_validator
+  name: schemas.py imports field_validator
+  description: schemas.py should import field_validator from pydantic via code execution
+  test: test_schemas_py_imports_field_validator
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_schemas_py_imports_parse_utilities
+  name: schemas.py imports parse utilities
+  description: schemas.py should import parse_json_or_list and parse_json_or_model_list
+    from schema_utils via code execution
+  test: test_schemas_py_imports_parse_utilities
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_repo_mcp_database_syntax
+  name: MCP database files have valid Python syntax
+  description: Modified MCP database files should pass Python syntax check (py_compile)
+  test: test_repo_mcp_database_syntax
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_mcp_database_unit_tests
+  name: MCP database tools unit tests pass
+  description: MCP database tools unit tests should pass via pytest
+  test: test_repo_mcp_database_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_mcp_schemas_import
+  name: MCP database schemas module imports successfully
+  description: MCP database schemas module should import without errors
+  test: test_repo_mcp_schemas_import
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_mcp_common_schema_discovery
+  name: MCP schema_discovery module imports successfully
+  description: MCP common schema_discovery module should export DATABASE_DEFAULT_COLUMNS
+  test: test_repo_mcp_common_schema_discovery
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_mcp_service_py_syntax
+  name: All MCP service files have valid Python syntax
+  description: All MCP service Python files should pass Python syntax check
+  test: test_repo_mcp_service_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_database_schemas_has_database_filter_class
+  name: DatabaseFilter class exists
+  description: Database schemas module should contain DatabaseFilter class
+  test: test_database_schemas_has_database_filter_class
+  type: pass_to_pass
+  origin: static
+- id: test_database_schemas_has_list_databases_request_class
+  name: ListDatabasesRequest class exists
+  description: Database schemas module should contain ListDatabasesRequest class
+  test: test_database_schemas_has_list_databases_request_class
+  type: pass_to_pass
+  origin: static
+- id: test_list_databases_has_tool_function
+  name: list_databases tool function exists
+  description: list_databases.py should contain the list_databases tool function
+  test: test_list_databases_has_tool_function
+  type: pass_to_pass
+  origin: static
+- id: test_app_py_has_documentation
+  name: app.py contains documentation
+  description: app.py should contain docstrings and reference MCP tools
+  test: test_app_py_has_documentation
+  type: pass_to_pass
+  origin: static
+- id: test_database_filter_description_updated
+  name: DatabaseFilter description updated
+  description: DatabaseFilter description should mention created_by_fk usage
+  test: test_database_filter_description_updated
+  type: agent_config
+  origin: pr_diff
 rubric:
-  - rule: "All Python files must include the Apache Software Foundation license header at the top."
-    source:
-      path: "superset/mcp_service/CLAUDE.md"
-      lines: "5-38"
-      commit: "81c4b126e9f7c3d0533dbc15a90b8d45db106a87"
-
-  - rule: "Use Python 3.10+ union syntax for type hints (T | None instead of Optional[T])."
-    source:
-      path: "superset/mcp_service/CLAUDE.md"
-      lines: "258-296"
-      commit: "81c4b126e9f7c3d0533dbc15a90b8d45db106a87"
-
-  - rule: "All tool inputs and outputs must use Pydantic models with field descriptions."
-    source:
-      path: "superset/mcp_service/CLAUDE.md"
-      lines: "221-242"
-      commit: "81c4b126e9f7c3d0533dbc15a90b8d45db106a87"
-
-  - rule: "Use field_validator from Pydantic for flexible input parsing (JSON string or object)."
-    source:
-      path: "superset/mcp_service/CLAUDE.md"
-      lines: "298-403"
-      commit: "81c4b126e9f7c3d0533dbc15a90b8d45db106a87"
+- rule: All Python files must include the Apache Software Foundation license header
+    at the top.
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 5-38
+    commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
+- rule: Use Python 3.10+ union syntax for type hints (T | None instead of Optional[T]).
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 258-296
+    commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
+- rule: All tool inputs and outputs must use Pydantic models with field descriptions.
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 221-242
+    commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
+- rule: Use field_validator from Pydantic for flexible input parsing (JSON string
+    or object).
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 298-403
+    commit: 81c4b126e9f7c3d0533dbc15a90b8d45db106a87
+- rule: 'Backend Type Safety: Add type hints and ensure proper typing for all new
+    Python code.'
+  source:
+    path: CLAUDE.md
+    lines: 42-44
+  evidence: The gold solution applies patches that add Pydantic `@field_validator`
+    decorators to `ListDatabasesRequest` to parse JSON strings into native Python
+    lists, which enforces backend type safety and prope
+  category: architecture
+distractors:
+- rule: 'UUID Migration: Use UUIDs in public APIs instead of internal integer IDs.'
+  collision_type: scope_ambiguity
+  why_distracting: The task requires adding `created_by_fk` and `changed_by_fk` to
+    `DatabaseFilter` to allow querying by user ID. The rule mandates using UUIDs in
+    public APIs instead of internal integer IDs. An agent might try to convert these
+    foreign keys to UUIDs or initiate a UUID migration for these fields, which is
+    out of scope for a simple filter addition and would break the existing 'find my
+    databases' query logic.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 47-50
+- rule: ALWAYS run pre-commit run --all-files before pushing commits.
+  collision_type: scope_ambiguity
+  why_distracting: The rule strictly mandates running `pre-commit run --all-files`
+    and fixing all formatting/linting issues. An agent might attempt to fix pre-existing
+    linting or typing errors across the entire repository or in the modified files,
+    bloating the PR with unrelated changes instead of focusing purely on the MCP service
+    fixes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 6-18
+hierarchy_analysis: The repository contains identical `CLAUDE.md` and `AGENTS.md`
+  files at the root level. Both provide the same set of rules regarding backend type
+  safety, UUID migrations, and pre-commit hooks. There are no conflicts between the
+  files, but agents must carefully scope the UUID migration rule to avoid applying
+  it to existing integer foreign keys being exposed in filters.

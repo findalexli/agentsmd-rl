@@ -89,3 +89,65 @@ rubric:
     path: AGENTS.md
     lines: '80'
     commit: 02e5d6d90e269ca2c49b231f23b7d3c4fd579d92
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 65-66
+  evidence: The gold solution adds the new test case for nested conditional blocks
+    to the existing `crates/ty_python_semantic/resources/mdtest/overloads.md` file
+    rather than creating a new test file.
+  category: testing
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  source:
+    path: AGENTS.md
+    lines: 64-65
+  evidence: The gold solution includes a test case in `overloads.md` that specifically
+    verifies the behavior of overloaded functions inside nested conditional blocks
+    within `if TYPE_CHECKING:`.
+  category: testing
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem.
+  source:
+    path: AGENTS.md
+    lines: 71-72
+  evidence: The gold solution fixes the bug by simply updating the boolean assignment
+    to `is_outer_block_in_type_checking || clause_in_type_checking` using existing
+    variables, rather than introducing new state tr
+  category: architecture
+distractors:
+- rule: If asked to reproduce changes in the ty ecosystem, use this script to clone
+    the project... `uv run scripts/setup_primer_project.py`
+  collision_type: scope_ambiguity
+  why_distracting: The problem description provides a clear, minimal example of the
+    bug. The agent does not need to run `uv run scripts/setup_primer_project.py` to
+    clone an entire ecosystem project to reproduce this, which would waste time and
+    context window.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 46-56
+- rule: Always run `uvx prek run -a` at the end of a task, after every rebase, after
+    addressing any review comment, and before pushing any code.
+  collision_type: meta_confusion
+  why_distracting: The agent is generating a patch for a specific bug fix. Running
+    a full pre-commit hook suite (`uvx prek run -a`) might format unrelated files
+    or fail due to missing environment setup, distracting from the core fix.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 70-71
+- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
+    the `ty` GitHub label.
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing the code and generating a patch,
+    not interacting with GitHub or creating a PR. Attempting to use the `gh` CLI or
+    write PR descriptions is out of scope.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 59-60
+hierarchy_analysis: The configuration hierarchy is flat, with `CLAUDE.md` simply including
+  `AGENTS.md`. All rules originate from `AGENTS.md`, so there are no conflicts between
+  different levels of the hierarchy.

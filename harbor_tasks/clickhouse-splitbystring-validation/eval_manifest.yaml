@@ -8,29 +8,58 @@ source:
   task:
     name: clickhouse-splitbystring-validation
     title: Extend argument validation in splitByString tokenizer
-
-# Rubric for soft/subjective rules that need LLM judge
 rubric:
-  - rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "54-55"
-      commit: "7dad4d8f7af43976fa63a062d20225aad04842c8"
-
-  - rule: "When mentioning logical errors, say 'exception' instead of 'crash'"
-    source:
-      path: "AGENTS.md"
-      lines: "9"
-      commit: "7dad4d8f7af43976fa63a062d20225aad04842c8"
-
-  - rule: "Write names of functions and methods as `f` instead of `f()` - prefer it for mathematical purity when it refers a function itself rather than its application"
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "7dad4d8f7af43976fa63a062d20225aad04842c8"
-
-  - rule: "Wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks"
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "7dad4d8f7af43976fa63a062d20225aad04842c8"
+- rule: When writing C++ code, always use Allman-style braces (opening brace on a
+    new line)
+  source:
+    path: .claude/CLAUDE.md
+    lines: 54-55
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+- rule: When mentioning logical errors, say 'exception' instead of 'crash'
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+- rule: Write names of functions and methods as `f` instead of `f()` - prefer it for
+    mathematical purity when it refers a function itself rather than its application
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+- rule: Wrap literal names from ClickHouse SQL language, classes and functions, or
+    literal excerpts from log messages inside inline code blocks
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+- rule: When mentioning logical errors, say "exception" instead of "crash", because
+    they don't crash the server in the release build.
+  source:
+    path: AGENTS.md
+    lines: 9-9
+  evidence: The gold solution throws an Exception with a clear error message ('the
+    empty string cannot be used as a separator') for the logical error of providing
+    an empty separator, avoiding any mention of 'cras
+  category: style
+distractors:
+- rule: Links to ClickHouse CI should be analyzed using the tool at .claude/tools/fetch_ci_report.js
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use fetch_ci_report.js to find more
+    context about the issue, but this is a local code fix task without an existing
+    PR or CI report to analyze.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 11-12
+- rule: To analyze CI performance comparison results, use the tool at .claude/tools/fetch_perf_report.py
+  collision_type: meta_confusion
+  why_distracting: The agent might think it needs to run performance analysis for
+    this tokenizer change using fetch_perf_report.py, but there is no PR or CI run
+    to fetch performance reports from.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 37-37
+hierarchy_analysis: The AGENTS.md file provides general repository guidelines. The
+  rules regarding CI and performance report fetching are highly specific to PR review
+  contexts and are not applicable to this local bug fix task.

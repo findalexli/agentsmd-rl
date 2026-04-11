@@ -73,7 +73,47 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's ast-grep linting passes
-# No rubric rules - the gold solution only patches app-page.ts and does not modify
-# agent config files. The rubric judge is designed to check if agents update config
-# files when making code changes, but this task's gold solution doesn't demonstrate
-# that behavior, making rubric rules irrelevant.
+rubric:
+- rule: prefer `pnpm --filter=next build` when edits are limited to core Next.js files
+  source:
+    path: CLAUDE.md
+    lines: 76-77
+  evidence: The gold solution only modifies `packages/next/src/build/templates/app-page.ts`,
+    which is within the core `packages/next` directory, fitting the criteria for using
+    the faster scoped build command.
+  category: tooling
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  source:
+    path: CLAUDE.md
+    lines: 58-60
+  evidence: The gold solution modifies `packages/next/src/build/templates/app-page.ts`
+    (Next.js source code), meaning the agent should start the dev server in watch
+    mode for fast local development before making e
+  category: tooling
+distractors:
+- rule: Before editing or creating files in any subdirectory... read all README.md
+    files in the directory path
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time trying to find and read non-existent
+    or irrelevant README files in `packages/next/src/build/templates/` instead of
+    focusing on the specific logic bug in `app-page.ts`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 38-40
+- rule: 'Always run a full bootstrap build after switching branches: pnpm build-all'
+  collision_type: meta_confusion
+  why_distracting: The agent might run `pnpm build-all` which takes a long time and
+    builds Rust code, whereas the changes are limited to a single TypeScript file
+    in the core package where `pnpm --filter=next build` is sufficient.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 80-84
+hierarchy_analysis: The config files `CLAUDE.md` and `AGENTS.md` are identical symlinks.
+  The rules primarily focus on monorepo tooling and build commands. The main tension
+  is between the fast inner-loop commands (`pnpm --filter=next dev`, `pnpm --filter=next
+  build`) and the full workspace commands (`pnpm build-all`). For this specific PR,
+  which only touches a single core TypeScript file, the agent must correctly scope
+  its build commands to avoid massive time penalties.

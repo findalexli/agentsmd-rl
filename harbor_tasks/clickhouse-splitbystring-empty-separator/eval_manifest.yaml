@@ -1,142 +1,142 @@
 source:
-  pr: "https://github.com/ClickHouse/ClickHouse/pull/101928"
-  title: "Extend argument validation in `splitByString` tokenizer"
-  base_commit: "2ffea49f37f25c9a09a74b9ecb338b05eb426370"
-  merge_commit: "ac7a313a2fe360f672ecfad47ff515748f9ec151"
+  pr: https://github.com/ClickHouse/ClickHouse/pull/101928
+  title: Extend argument validation in `splitByString` tokenizer
+  base_commit: 2ffea49f37f25c9a09a74b9ecb338b05eb426370
+  merge_commit: ac7a313a2fe360f672ecfad47ff515748f9ec151
   files:
-    - "src/Interpreters/TokenizerFactory.cpp"
-    - "tests/queries/0_stateless/03403_function_tokens.sql"
-
-# Checks - one per test_* function in test_outputs.py
+  - src/Interpreters/TokenizerFactory.cpp
+  - tests/queries/0_stateless/03403_function_tokens.sql
 checks:
-  # Fail-to-Pass Tests
-  - id: test_cpp_code_compiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Modified C++ code compiles with valid syntax using clang -fsyntax-only"
-
-  - id: test_empty_string_validation_compiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Empty string validation logic with exception throwing compiles correctly"
-
-  - id: test_validation_logic_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Validation happens inside the loop before values.emplace_back()"
-
-  - id: test_error_messages_exact
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Exact error messages match the expected strings from the PR"
-
-  # Pass-to-Pass Tests - Static Checks (file existence, content validation)
-  - id: test_target_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "Target source file TokenizerFactory.cpp exists and is readable"
-
-  - id: test_source_file_valid_cpp
-    type: pass_to_pass
-    origin: static
-    description: "Source file has valid C++ structure with balanced braces and parentheses"
-
-  - id: test_required_components_exist
-    type: pass_to_pass
-    origin: static
-    description: "Source contains required components (split_by_string_creator, castAs, BAD_ARGUMENTS)"
-
-  - id: test_sql_test_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "SQL test files exist (03403_function_tokens.sql and .reference)"
-
-  - id: test_sql_test_content
-    type: pass_to_pass
-    origin: static
-    description: "SQL test file contains valid test cases for splitByString tokenizer"
-
-  # Pass-to-Pass Tests - Repo CI Commands (actual subprocess.run() commands)
-  - id: test_style_various_checks
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ClickHouse CI style checks (various_checks.sh) pass on base commit"
-
-  - id: test_python_syntax_clickhouse_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python syntax check of clickhouse-test tool passes"
-
-  - id: test_settings_style_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ClickHouse settings style check (check-settings-style) passes"
-
-  - id: test_git_workspace_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git workspace is clean with no uncommitted changes"
-
-  - id: test_clang_syntax_only_target
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Clang syntax-only check runs successfully on target file"
-
-  # NEW: Additional Pass-to-Pass Tests - Repo CI Commands
-  - id: test_repo_pytest_xfail_xpass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ClickHouse pytest xfail/xpass consistency check passes"
-
-  - id: test_mypy_diff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ClickHouse mypy diff check on changed Python files passes"
-
-  - id: test_ci_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python syntax check of CI job scripts (check_ci.py, etc.) passes"
-
-  - id: test_tests_ci_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python syntax check of tests/ci scripts passes"
-
-  - id: test_queries_sql_basic_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SQL test files have valid structure and are readable"
-
-# Rules from agent config files that are programmatically checkable
+- id: test_cpp_code_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Modified C++ code compiles with valid syntax using clang -fsyntax-only
+- id: test_empty_string_validation_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty string validation logic with exception throwing compiles correctly
+- id: test_validation_logic_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: Validation happens inside the loop before values.emplace_back()
+- id: test_error_messages_exact
+  type: fail_to_pass
+  origin: pr_diff
+  description: Exact error messages match the expected strings from the PR
+- id: test_target_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Target source file TokenizerFactory.cpp exists and is readable
+- id: test_source_file_valid_cpp
+  type: pass_to_pass
+  origin: static
+  description: Source file has valid C++ structure with balanced braces and parentheses
+- id: test_required_components_exist
+  type: pass_to_pass
+  origin: static
+  description: Source contains required components (split_by_string_creator, castAs,
+    BAD_ARGUMENTS)
+- id: test_sql_test_files_exist
+  type: pass_to_pass
+  origin: static
+  description: SQL test files exist (03403_function_tokens.sql and .reference)
+- id: test_sql_test_content
+  type: pass_to_pass
+  origin: static
+  description: SQL test file contains valid test cases for splitByString tokenizer
+- id: test_style_various_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse CI style checks (various_checks.sh) pass on base commit
+- id: test_python_syntax_clickhouse_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check of clickhouse-test tool passes
+- id: test_settings_style_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse settings style check (check-settings-style) passes
+- id: test_git_workspace_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git workspace is clean with no uncommitted changes
+- id: test_clang_syntax_only_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clang syntax-only check runs successfully on target file
+- id: test_repo_pytest_xfail_xpass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse pytest xfail/xpass consistency check passes
+- id: test_mypy_diff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse mypy diff check on changed Python files passes
+- id: test_ci_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check of CI job scripts (check_ci.py, etc.) passes
+- id: test_tests_ci_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check of tests/ci scripts passes
+- id: test_queries_sql_basic_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: SQL test files have valid structure and are readable
 agent_config:
-  - rule: "Use Allman-style braces (opening brace on a new line)"
-    source: ".claude/CLAUDE.md"
-    applicable: true
-    check_type: "style"
-
-  - rule: "Say ASan not ASAN"
-    source: ".claude/CLAUDE.md"
-    applicable: false  # Not relevant to this specific code change
-
-  - rule: "Write names of functions and methods as `f` instead of `f()`"
-    source: ".claude/CLAUDE.md"
-    applicable: false  # Not relevant to this code change (no new function refs)
-
-  - rule: "When mentioning logical errors, say exception instead of crash"
-    source: ".claude/CLAUDE.md"
-    applicable: true
-
-# Soft/subjective rules for LLM judge
+- rule: Use Allman-style braces (opening brace on a new line)
+  source: .claude/CLAUDE.md
+  applicable: true
+  check_type: style
+- rule: Say ASan not ASAN
+  source: .claude/CLAUDE.md
+  applicable: false
+- rule: Write names of functions and methods as `f` instead of `f()`
+  source: .claude/CLAUDE.md
+  applicable: false
+- rule: When mentioning logical errors, say exception instead of crash
+  source: .claude/CLAUDE.md
+  applicable: true
 rubric:
-  - rule: "When writing tests in tests/queries, prefer adding a new test instead of extending existing ones"
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "141"
-      commit: "2ffea49f37f25c9a09a74b9ecb338b05eb426370"
-
-  - rule: "When adding a new test, consult `./tests/queries/0_stateless/add-test` to determine the correct name prefix for the new test"
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "143"
-      commit: "2ffea49f37f25c9a09a74b9ecb338b05eb426370"
+- rule: When writing tests in tests/queries, prefer adding a new test instead of extending
+    existing ones
+  source:
+    path: .claude/CLAUDE.md
+    lines: '141'
+    commit: 2ffea49f37f25c9a09a74b9ecb338b05eb426370
+- rule: When adding a new test, consult `./tests/queries/0_stateless/add-test` to
+    determine the correct name prefix for the new test
+  source:
+    path: .claude/CLAUDE.md
+    lines: '143'
+    commit: 2ffea49f37f25c9a09a74b9ecb338b05eb426370
+distractors:
+- rule: 'When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to add markdown backticks around the tokenizer
+    name or other literals within the C++ exception message (e.g., `"Incorrect parameter
+    of tokenizer `{}`"`), but this rule explicitly targets documentation, comments,
+    and commit messages, not C++ string literals for user-facing errors.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-5
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()` - we prefer it for mathematical
+    purity when it refers a function itself rather than its application.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to apply the mathematical purity rule for function
+    names to the C++ error message or code, but this rule is scoped to text like documentation
+    and comments, not the actual implementation or user-facing exception strings.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 9-9
+hierarchy_analysis: The `AGENTS.md` file contains general guidelines for documentation,
+  commit messages, and text formatting. Since the task only involves modifying C++
+  code to add an exception, these text-formatting rules do not apply to the C++ string
+  literals. Agents must be careful not to over-apply documentation rules to user-facing
+  error messages in the codebase.

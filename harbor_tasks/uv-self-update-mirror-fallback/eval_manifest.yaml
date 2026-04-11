@@ -1,139 +1,143 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/uv"
+  repo: astral-sh/uv
   pr: 14936
-  base_commit: "7228ad62b9de7f9b5d887ef4b2be9bb033a04191"
-
+  base_commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
 checks:
-  - id: uv_mirror_url
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Binary::Uv manifest_urls arm constructs URL from VERSIONS_MANIFEST_MIRROR"
-
-  - id: uv_mirror_order
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Binary::Uv lists mirror URL before canonical GitHub URL"
-
-  - id: manifest_parse_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ManifestParse errors trigger URL fallback in should_try_next_url"
-
-  - id: manifest_utf8_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ManifestUtf8 errors trigger URL fallback in should_try_next_url"
-
-  - id: ruff_urls_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Binary::Ruff still has both mirror and canonical URLs"
-
-  - id: existing_fallback_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Download and ManifestFetch still trigger fallback in should_try_next_url"
-
-  - id: stream_fallback_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Stream errors still trigger fallback in should_try_next_url"
-
-  - id: no_panic_unreachable
-    type: pass_to_pass
-    origin: agent_config
-    description: "No panic! or unreachable! in manifest_urls or should_try_next_url"
-    source:
-      path: "CLAUDE.md"
-      lines: "7"
-      commit: "7228ad62b9de7f9b5d887ef4b2be9bb033a04191"
-
-  - id: no_unsafe_blocks
-    type: pass_to_pass
-    origin: agent_config
-    description: "No unsafe code blocks in manifest_urls or should_try_next_url"
-    source:
-      path: "CLAUDE.md"
-      lines: "7"
-      commit: "7228ad62b9de7f9b5d887ef4b2be9bb033a04191"
-
-  - id: no_allow_attribute
-    type: pass_to_pass
-    origin: agent_config
-    description: "No #[allow()] in modified functions — prefer #[expect()]"
-    source:
-      path: "CLAUDE.md"
-      lines: "10"
-      commit: "7228ad62b9de7f9b5d887ef4b2be9bb033a04191"
-
-  - id: uv_arm_not_stub
-    type: fail_to_pass
-    origin: static
-    description: "Binary::Uv arm has >= 2 parse(format!()) calls, not a stub"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python code passes ruff linting"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python code passes ruff format check"
-
-  - id: test_repo_typos
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo passes typos spell check"
-
-  - id: test_repo_validate_pyproject
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's pyproject.toml passes validation"
-
-  - id: test_repo_shellcheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Shell scripts pass shellcheck validation"
-
-  - id: test_repo_cargo_shear
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cargo dependencies are checked with cargo-shear"
-
-  - id: test_repo_rust_manifest_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Rust manifest URLs are properly formatted in source"
-
-  - id: test_repo_readme_transform
-    type: pass_to_pass
-    origin: repo_tests
-    description: "README transformation script runs without errors"
-
+- id: uv_mirror_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: Binary::Uv manifest_urls arm constructs URL from VERSIONS_MANIFEST_MIRROR
+- id: uv_mirror_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: Binary::Uv lists mirror URL before canonical GitHub URL
+- id: manifest_parse_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: ManifestParse errors trigger URL fallback in should_try_next_url
+- id: manifest_utf8_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: ManifestUtf8 errors trigger URL fallback in should_try_next_url
+- id: ruff_urls_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Binary::Ruff still has both mirror and canonical URLs
+- id: existing_fallback_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Download and ManifestFetch still trigger fallback in should_try_next_url
+- id: stream_fallback_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Stream errors still trigger fallback in should_try_next_url
+- id: no_panic_unreachable
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic! or unreachable! in manifest_urls or should_try_next_url
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- id: no_unsafe_blocks
+  type: pass_to_pass
+  origin: agent_config
+  description: No unsafe code blocks in manifest_urls or should_try_next_url
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- id: no_allow_attribute
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No #[allow()] in modified functions — prefer #[expect()]'
+  source:
+    path: CLAUDE.md
+    lines: '10'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- id: uv_arm_not_stub
+  type: fail_to_pass
+  origin: static
+  description: Binary::Uv arm has >= 2 parse(format!()) calls, not a stub
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code passes ruff linting
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code passes ruff format check
+- id: test_repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes typos spell check
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml passes validation
+- id: test_repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts pass shellcheck validation
+- id: test_repo_cargo_shear
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo dependencies are checked with cargo-shear
+- id: test_repo_rust_manifest_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust manifest URLs are properly formatted in source
+- id: test_repo_readme_transform
+  type: pass_to_pass
+  origin: repo_tests
+  description: README transformation script runs without errors
 rubric:
-  - rule: "PREFER patterns like `if let` to handle fallibility"
-    source:
-      path: "CLAUDE.md"
-      lines: "8"
-      commit: "7228ad62b9de7f9b5d887ef4b2be9bb033a04191"
-
-  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
-    source:
-      path: "CLAUDE.md"
-      lines: "17-18"
-      commit: "7228ad62b9de7f9b5d887ef4b2be9bb033a04191"
-
-  - rule: "PREFER let chains (`if let` combined with `&&`) over nested `if let` statements"
-    source:
-      path: "CLAUDE.md"
-      lines: "11"
-      commit: "7228ad62b9de7f9b5d887ef4b2be9bb033a04191"
-
-  - rule: "PREFER top-level imports over local imports or fully qualified names"
-    source:
-      path: "CLAUDE.md"
-      lines: "16"
-      commit: "7228ad62b9de7f9b5d887ef4b2be9bb033a04191"
+- rule: PREFER patterns like `if let` to handle fallibility
+  source:
+    path: CLAUDE.md
+    lines: '8'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and
+    `requires_python` instead of `rp`
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- rule: PREFER let chains (`if let` combined with `&&`) over nested `if let` statements
+  source:
+    path: CLAUDE.md
+    lines: '11'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+distractors:
+- rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
+    rule ignores
+  collision_type: rule_conflict
+  why_distracting: The existing code uses `.unwrap()` when parsing known-valid URLs
+    (e.g., `DisplaySafeUrl::parse(...).unwrap()`). If an agent strictly avoids `.unwrap()`,
+    it might attempt to refactor the method signature to return a `Result` or add
+    unnecessary error handling, breaking consistency with the adjacent `Ruff` match
+    arm.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 7-7
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: Testing the network fallback logic for `uv self update` would require
+    mocking the Astral mirror and GitHub CDN responses (including malformed responses).
+    Attempting to add a test case for this specific resilience fix would likely lead
+    to wasted effort or overly complex test setup.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+hierarchy_analysis: The CLAUDE.md file provides general guidelines. However, local
+  consistency (using `.unwrap()` for static URL parsing) overrides the general rule
+  to avoid `.unwrap()`. Additionally, the directive to always add tests is impractical
+  for this specific network-level fallback fix.

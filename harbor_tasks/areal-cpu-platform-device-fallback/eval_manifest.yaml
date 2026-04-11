@@ -1,145 +1,162 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1003
-  base_commit: "6208006db64ac29aded7be33963e86503ba9e28e"
-  merge_commit: "eb494def6af8390b115ac2409dc86a221c9d3f83"
-
+  base_commit: 6208006db64ac29aded7be33963e86503ba9e28e
+  merge_commit: eb494def6af8390b115ac2409dc86a221c9d3f83
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified files must parse as valid Python"
-
-  - id: memory_allocated_and_reserved
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CpuPlatform.memory_allocated() and memory_reserved() return 0"
-
-  - id: mem_get_info
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CpuPlatform.mem_get_info() returns a 2-tuple of zeros"
-
-  - id: empty_cache
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CpuPlatform.empty_cache() is callable and returns None"
-
-  - id: fsdp_engine_cpu_device
-    type: fail_to_pass
-    origin: pr_diff
-    description: "fsdp_engine._create_device_model creates cpu device when platform is cpu"
-
-  - id: archon_engine_cpu_device
-    type: fail_to_pass
-    origin: pr_diff
-    description: "archon_engine._create_device_model also handles cpu platform"
-
-  - id: scheduler_guards_env_var
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Scheduler guards device_control_env_var assignment with a conditional"
-
-  - id: existing_cpu_platform_api
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Existing CpuPlatform API preserved (clear_memory, get_visible_devices, attrs)"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "93"
-      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
-
-  - id: no_bare_print
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare print() calls — use areal.utils.logging.getLogger instead"
-    source:
-      path: "AGENTS.md"
-      lines: "89-91"
-      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
-
-  - id: new_cpu_methods_have_return_types
-    type: fail_to_pass
-    origin: agent_config
-    description: "New CpuPlatform methods must have explicit return type annotations"
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "6208006db64ac29aded7be33963e86503ba9e28e"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linting passes on modified files"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff formatting check passes on modified files"
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files compile as valid Python"
-
-
-  - id: test_repo_ast_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All modified files parse as valid AST"
-
-  - id: test_repo_ruff_check_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linting passes on the entire areal package"
-
-  - id: test_repo_ruff_format_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff formatting check passes on the entire areal package"
-
-  - id: test_repo_precommit_yaml
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-commit YAML check passes on all files"
-
-  - id: test_repo_precommit_json
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-commit JSON check passes on all files"
-
-  - id: test_repo_precommit_eof
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-commit end-of-file fixer passes on all files"
-
-  - id: test_repo_precommit_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-commit trailing whitespace check passes on all files"
-
-  - id: test_repo_precommit_large_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-commit check for added large files passes"
-
-  - id: test_repo_precommit_private_keys
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-commit detect private key passes"
-
-  - id: test_repo_precommit_nbstripout
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-commit notebook stripout check passes on all files"
-# Rubric rules removed - style conventions are validated by the test suite:
-# - test_new_cpu_methods_have_return_types validates type hints
-# - test_no_bare_print validates no print() calls
-# - Full test pass validates code follows existing patterns
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified files must parse as valid Python
+- id: memory_allocated_and_reserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: CpuPlatform.memory_allocated() and memory_reserved() return 0
+- id: mem_get_info
+  type: fail_to_pass
+  origin: pr_diff
+  description: CpuPlatform.mem_get_info() returns a 2-tuple of zeros
+- id: empty_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: CpuPlatform.empty_cache() is callable and returns None
+- id: fsdp_engine_cpu_device
+  type: fail_to_pass
+  origin: pr_diff
+  description: fsdp_engine._create_device_model creates cpu device when platform is
+    cpu
+- id: archon_engine_cpu_device
+  type: fail_to_pass
+  origin: pr_diff
+  description: archon_engine._create_device_model also handles cpu platform
+- id: scheduler_guards_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: Scheduler guards device_control_env_var assignment with a conditional
+- id: existing_cpu_platform_api
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing CpuPlatform API preserved (clear_memory, get_visible_devices,
+    attrs)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified files
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: 6208006db64ac29aded7be33963e86503ba9e28e
+- id: no_bare_print
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare print() calls — use areal.utils.logging.getLogger instead
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 6208006db64ac29aded7be33963e86503ba9e28e
+- id: new_cpu_methods_have_return_types
+  type: fail_to_pass
+  origin: agent_config
+  description: New CpuPlatform methods must have explicit return type annotations
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 6208006db64ac29aded7be33963e86503ba9e28e
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on modified files
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff formatting check passes on modified files
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files compile as valid Python
+- id: test_repo_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified files parse as valid AST
+- id: test_repo_ruff_check_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on the entire areal package
+- id: test_repo_ruff_format_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff formatting check passes on the entire areal package
+- id: test_repo_precommit_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit YAML check passes on all files
+- id: test_repo_precommit_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit JSON check passes on all files
+- id: test_repo_precommit_eof
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit end-of-file fixer passes on all files
+- id: test_repo_precommit_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit trailing whitespace check passes on all files
+- id: test_repo_precommit_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit check for added large files passes
+- id: test_repo_precommit_private_keys
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit detect private key passes
+- id: test_repo_precommit_nbstripout
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit notebook stripout check passes on all files
+rubric:
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: 40-40
+  evidence: 'The gold solution implements `memory_allocated`, `memory_reserved`, `mem_get_info`,
+    and `empty_cache` in `CpuPlatform` with standard PyTorch-like signatures (returning
+    `int` or `tuple[int, int]`) but '
+  category: style
+distractors:
+- rule: 'Ask first before: ... Changing launcher or scheduler logic.'
+  collision_type: rule_conflict
+  why_distracting: The bug description explicitly identifies a problem in `areal/infra/scheduler/local.py`
+    and asks for it to be fixed. The agent might get stuck trying to ask for permission
+    using a tool instead of just fixing the bug.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 45-49
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write unit or integration tests for
+    the CPU platform fixes. However, the gold solution treats this as a bug fix and
+    does not add tests, avoiding the complexity of mocking distributed/engine environments
+    for CPU.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-41
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  collision_type: architecture_boundary
+  why_distracting: The bug states that the base `Platform` class delegates unknown
+    attributes to `torch.<device_type>`. An agent strictly following 'prefer delegation'
+    might try to build a complex delegation wrapper for `torch.cpu` in the base class
+    rather than simply overriding the missing methods directly in the `CpuPlatform`
+    subclass.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 75-75
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are both Level 0 and contain overlapping
+  rules. `AGENTS.md` provides more specific operational constraints (like ''Ask first
+  before: Changing launcher or scheduler logic''). The conflict between the explicit
+  bug instruction to fix the scheduler and the `AGENTS.md` rule to ''Ask first'' is
+  the most critical interaction.'

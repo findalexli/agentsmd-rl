@@ -1,159 +1,172 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1029
-  base_commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-  merge_commit: "978532eafab705b6b163964fbce135d2cfd41f38"
-
+  base_commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+  merge_commit: 978532eafab705b6b163964fbce135d2cfd41f38
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified file must parse without errors"
-
-  - id: gate_hook_fires
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Forward hooks on router.gate fire during router forward (core DTensor bug)"
-
-  - id: gate_hook_with_varied_inputs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Gate hook fires for varied input shapes and score functions"
-
-  - id: router_gate_linear_class_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RouterGateLinear(nn.Linear) subclass exists in router.py"
-
-  - id: gate_is_router_gate_linear
-    type: fail_to_pass
-    origin: pr_diff
-    description: "router.gate is an instance of RouterGateLinear, not plain nn.Linear"
-
-  - id: state_dict_compat
-    type: pass_to_pass
-    origin: pr_diff
-    description: "router.gate state_dict keys match nn.Linear(bias=False) for checkpoints"
-
-  - id: router_forward_shapes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TokenChoiceTopKRouter forward produces correct output shapes and valid values"
-
-  - id: repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check passes on areal/experimental/ module"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on areal/experimental/ module"
-
-  - id: repo_yaml_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's GitHub workflow YAML files have valid syntax"
-
-  - id: repo_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JSON files have valid syntax"
-
-  - id: repo_mdformat
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's markdown files pass mdformat check"
-
-  - id: repo_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python files have no trailing whitespace"
-
-  - id: repo_end_of_file
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python files end with exactly one newline"
-
-  - id: not_stub
-    type: fail_to_pass
-    origin: static
-    description: "RouterGateLinear.forward has real logic — class absent on base, present on fix"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in modified file"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
-  - id: no_gpu_cpu_sync_in_hot_path
-    type: pass_to_pass
-    origin: agent_config
-    description: "No GPU-CPU sync calls (.item(), .tolist()) in router code"
-    source:
-      path: "AGENTS.md"
-      lines: "95"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
-  - id: no_bare_print
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare print() calls — must use getLogger"
-    source:
-      path: "AGENTS.md"
-      lines: "89-91"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
-  - id: explicit_type_hints
-    type: pass_to_pass
-    origin: agent_config
-    description: "RouterGateLinear.__init__ and forward have explicit type annotations"
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
-  - id: no_module_level_process_group
-    type: pass_to_pass
-    origin: agent_config
-    description: "No global process groups created at module level in experimental code"
-    source:
-      path: "AGENTS.md"
-      lines: "173"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without errors
+- id: gate_hook_fires
+  type: fail_to_pass
+  origin: pr_diff
+  description: Forward hooks on router.gate fire during router forward (core DTensor
+    bug)
+- id: gate_hook_with_varied_inputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Gate hook fires for varied input shapes and score functions
+- id: router_gate_linear_class_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: RouterGateLinear(nn.Linear) subclass exists in router.py
+- id: gate_is_router_gate_linear
+  type: fail_to_pass
+  origin: pr_diff
+  description: router.gate is an instance of RouterGateLinear, not plain nn.Linear
+- id: state_dict_compat
+  type: pass_to_pass
+  origin: pr_diff
+  description: router.gate state_dict keys match nn.Linear(bias=False) for checkpoints
+- id: router_forward_shapes
+  type: pass_to_pass
+  origin: repo_tests
+  description: TokenChoiceTopKRouter forward produces correct output shapes and valid
+    values
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on areal/experimental/ module
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on areal/experimental/ module
+- id: repo_yaml_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's GitHub workflow YAML files have valid syntax
+- id: repo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JSON files have valid syntax
+- id: repo_mdformat
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's markdown files pass mdformat check
+- id: repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files have no trailing whitespace
+- id: repo_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files end with exactly one newline
+- id: not_stub
+  type: fail_to_pass
+  origin: static
+  description: RouterGateLinear.forward has real logic — class absent on base, present
+    on fix
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified file
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- id: no_gpu_cpu_sync_in_hot_path
+  type: pass_to_pass
+  origin: agent_config
+  description: No GPU-CPU sync calls (.item(), .tolist()) in router code
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- id: no_bare_print
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare print() calls — must use getLogger
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- id: explicit_type_hints
+  type: pass_to_pass
+  origin: agent_config
+  description: RouterGateLinear.__init__ and forward have explicit type annotations
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- id: no_module_level_process_group
+  type: pass_to_pass
+  origin: agent_config
+  description: No global process groups created at module level in experimental code
+  source:
+    path: AGENTS.md
+    lines: '173'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
 rubric:
-  - rule: "Composition over inheritance — keep hierarchies <= 2 levels; prefer delegation."
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
-  - rule: "No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor))."
-    source:
-      path: "AGENTS.md"
-      lines: "95"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
-  - rule: "Follow existing code patterns in the same module."
-    source:
-      path: "AGENTS.md"
-      lines: "40"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
-  - rule: "Batch ops over Python loops on tensor elements."
-    source:
-      path: "AGENTS.md"
-      lines: "96"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
-
-  - rule: "Add tests for new functionality."
-    source:
-      path: "AGENTS.md"
-      lines: "41"
-      commit: "8d84d9f933a83ec2130a8873e8fe74d2cee7a742"
+- rule: Composition over inheritance — keep hierarchies <= 2 levels; prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- rule: No GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor)).
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: '40'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- rule: Batch ops over Python loops on tensor elements.
+  source:
+    path: AGENTS.md
+    lines: '96'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- rule: Add tests for new functionality.
+  source:
+    path: AGENTS.md
+    lines: '41'
+    commit: 8d84d9f933a83ec2130a8873e8fe74d2cee7a742
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: 47-47
+  evidence: The gold solution includes a comprehensive docstring for the new `RouterGateLinear`
+    class that uses the same Sphinx/reST cross-reference syntax (`:func:`, `:class:`)
+    and `Args:` block format as the ex
+  category: style
+distractors:
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  collision_type: would_cause_bug
+  why_distracting: The rule advocates for composition over inheritance. If an agent
+    applies this by creating a new `nn.Module` that contains an `nn.Linear` as an
+    attribute (composition) instead of subclassing `nn.Linear` (inheritance), the
+    state dict key for the weights would change (e.g., from `gate.weight` to `gate.linear.weight`),
+    violating the explicit requirement to preserve checkpoint compatibility.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 57-57
+- rule: Add tests for new functionality
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a test for the DTensor hook firing.
+    However, testing DTensor hooks requires a distributed multi-GPU setup, and the
+    prompt only asks to fix the bug in the router file. Attempting to add tests would
+    likely lead to hallucinated test files or complex distributed test setups that
+    are out of scope for this specific fix.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 48-48
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are Level 0 files and share many
+  rules. The conflict arises between the general architectural guideline in `AGENTS.md`
+  ('Composition over inheritance') and the specific PR requirement to maintain state
+  dict compatibility. The PR requirement must override the general guideline to prevent
+  a bug.

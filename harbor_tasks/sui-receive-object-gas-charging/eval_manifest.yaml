@@ -4,145 +4,158 @@ source:
   base_commit: a6d32d34bb8e01047eca44e9e62001639090b9a7
   merge_commit: 8812c22233b30d8f48178af5e9d7ff2b2aab8f76
   task_name: sui-receive-object-gas-charging
-
-# Checks that determine task completion
 checks:
-  # Fail-to-pass: Protocol config fields
-  - id: test_protocol_config_has_new_fields
-    type: fail_to_pass
-    origin: source_code
-    description: Protocol config has transfer_receive_object_cost_per_byte and transfer_receive_object_type_cost_per_byte fields
-
-  - id: test_protocol_config_sets_values_for_version_119
-    type: fail_to_pass
-    origin: source_code
-    description: Protocol version 119 sets the new cost values to Some(1) and Some(2)
-
-  # Fail-to-pass: Native implementation fields
-  - id: test_native_cost_params_has_new_fields
-    type: fail_to_pass
-    origin: source_code
-    description: TransferReceiveObjectInternalCostParams struct has the new cost fields
-
-  - id: test_native_receive_charges_type_cost
-    type: fail_to_pass
-    origin: source_code
-    description: receive_object_internal charges gas based on child_ty.size()
-
-  - id: test_native_receive_charges_per_byte_cost
-    type: fail_to_pass
-    origin: source_code
-    description: receive_object_internal charges gas based on child abstract_memory_size
-
-  - id: test_natives_cost_table_passes_new_params
-    type: fail_to_pass
-    origin: source_code
-    description: NativesCostTable passes new protocol config values to TransferReceiveObjectInternalCostParams
-
-  - id: test_transfer_rs_imports_sizeconfig
-    type: fail_to_pass
-    origin: source_code
-    description: transfer.rs imports SizeConfig and ValueView for size calculation
-
-  # Pass-to-pass: Repo compilation checks
-  - id: test_cargo_check_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: cargo check -p sui-protocol-config passes
-
-  - id: test_natives_check_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: cargo check -p sui-move-natives-latest passes
-
-  - id: test_protocol_config_clippy_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: cargo clippy on sui-protocol-config passes
-
-  - id: test_move_natives_clippy_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: cargo clippy on sui-move-natives-latest passes
-
-  - id: test_protocol_config_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: Unit tests for sui-protocol-config pass
-
-  - id: test_move_natives_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: Unit tests for sui-move-natives-latest pass
-
-  - id: test_cargo_xlint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: cargo xlint passes (license and project lints)
-
-  - id: test_execution_layer_cut_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: Execution layer cut script works (./scripts/execution_layer.py cut)
-
-  - id: test_cargo_fmt_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: cargo fmt --check passes (code formatting)
-
-  # Additional pass-to-pass: CI/CD tests found from repo exploration
-  - id: test_cargo_doc_builds
-    type: pass_to_pass
-    origin: repo_tests
-    description: cargo doc builds for sui-protocol-config (documentation check)
-
-  - id: test_doctests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: doctests for sui-protocol-config pass
-
-  - id: test_git_checks_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: git checks script passes (whitespace/filename validation)
-
-# Rules derived from agent config files (CLAUDE.md, AGENTS.md, SKILL.md)
-# This PR touches protocol config, so relevant rules from the protocol-config skill apply
+- id: test_protocol_config_has_new_fields
+  type: fail_to_pass
+  origin: source_code
+  description: Protocol config has transfer_receive_object_cost_per_byte and transfer_receive_object_type_cost_per_byte
+    fields
+- id: test_protocol_config_sets_values_for_version_119
+  type: fail_to_pass
+  origin: source_code
+  description: Protocol version 119 sets the new cost values to Some(1) and Some(2)
+- id: test_native_cost_params_has_new_fields
+  type: fail_to_pass
+  origin: source_code
+  description: TransferReceiveObjectInternalCostParams struct has the new cost fields
+- id: test_native_receive_charges_type_cost
+  type: fail_to_pass
+  origin: source_code
+  description: receive_object_internal charges gas based on child_ty.size()
+- id: test_native_receive_charges_per_byte_cost
+  type: fail_to_pass
+  origin: source_code
+  description: receive_object_internal charges gas based on child abstract_memory_size
+- id: test_natives_cost_table_passes_new_params
+  type: fail_to_pass
+  origin: source_code
+  description: NativesCostTable passes new protocol config values to TransferReceiveObjectInternalCostParams
+- id: test_transfer_rs_imports_sizeconfig
+  type: fail_to_pass
+  origin: source_code
+  description: transfer.rs imports SizeConfig and ValueView for size calculation
+- id: test_cargo_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check -p sui-protocol-config passes
+- id: test_natives_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check -p sui-move-natives-latest passes
+- id: test_protocol_config_clippy_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo clippy on sui-protocol-config passes
+- id: test_move_natives_clippy_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo clippy on sui-move-natives-latest passes
+- id: test_protocol_config_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for sui-protocol-config pass
+- id: test_move_natives_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for sui-move-natives-latest pass
+- id: test_cargo_xlint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo xlint passes (license and project lints)
+- id: test_execution_layer_cut_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Execution layer cut script works (./scripts/execution_layer.py cut)
+- id: test_cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo fmt --check passes (code formatting)
+- id: test_cargo_doc_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo doc builds for sui-protocol-config (documentation check)
+- id: test_doctests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: doctests for sui-protocol-config pass
+- id: test_git_checks_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: git checks script passes (whitespace/filename validation)
 agent_config:
-  - source: .claude/skills/protocol-config/SKILL.md
-    rule: When modifying ProtocolConfig, ensure new fields are Option<T> and use as_option() accessors
-    relevant: true
-
-  - source: .claude/skills/protocol-config/SKILL.md
-    rule: Update protocol config snapshots with 'cargo insta test -p sui-protocol-config --accept'
-    relevant: true
-
-  - source: .claude/skills/protocol-config/SKILL.md
-    rule: Protocol version settings CANNOT be changed once released to production networks
-    relevant: false  # This is process guidance, not a testable behavior
-
-  - source: CLAUDE.md
-    rule: Always run 'cargo xclippy' after finishing development
-    relevant: false  # Process guidance
-
-  - source: CLAUDE.md
-    rule: Never use #[allow(dead_code)] or lint suppressions - fix underlying issues
-    relevant: true
-
-  - source: CLAUDE.md
-    rule: All new files must start with SPDX license header
-    relevant: false  # Not adding new files
-
-# Rubric for soft/subjective criteria (LLM-judge only)
+- source: .claude/skills/protocol-config/SKILL.md
+  rule: When modifying ProtocolConfig, ensure new fields are Option<T> and use as_option()
+    accessors
+  relevant: true
+- source: .claude/skills/protocol-config/SKILL.md
+  rule: Update protocol config snapshots with 'cargo insta test -p sui-protocol-config
+    --accept'
+  relevant: true
+- source: .claude/skills/protocol-config/SKILL.md
+  rule: Protocol version settings CANNOT be changed once released to production networks
+  relevant: false
+- source: CLAUDE.md
+  rule: Always run 'cargo xclippy' after finishing development
+  relevant: false
+- source: CLAUDE.md
+  rule: Never use
+  relevant: true
+- source: CLAUDE.md
+  rule: All new files must start with SPDX license header
+  relevant: false
 rubric:
-  - rule: "Do NOT comment the obvious. Comments should explain non-obvious algorithms, business logic, or subtle assumptions - not narrate what the code does."
-    source:
-      path: "CLAUDE.md"
-      lines: "116-131"
-      commit: "a6d32d34bb8e01047eca44e9e62001639090b9a7"
-
-  - rule: "New protocol config fields must use Option<T> type and be initialized with Some(value) in the version block."
-    source:
-      path: ".claude/skills/protocol-config/SKILL.md"
-      lines: "99-104"
-      commit: "a6d32d34bb8e01047eca44e9e62001639090b9a7"
+- rule: Do NOT comment the obvious. Comments should explain non-obvious algorithms,
+    business logic, or subtle assumptions - not narrate what the code does.
+  source:
+    path: CLAUDE.md
+    lines: 116-131
+    commit: a6d32d34bb8e01047eca44e9e62001639090b9a7
+- rule: New protocol config fields must use Option<T> type and be initialized with
+    Some(value) in the version block.
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 99-104
+    commit: a6d32d34bb8e01047eca44e9e62001639090b9a7
+- rule: sui-execution/ contains the Move execution layer with versions (v0, v1, v2
+    and latest)
+  source:
+    path: CLAUDE.md
+    lines: 61-61
+  evidence: The gold solution modifies files in `sui-execution/latest/sui-move-natives/`,
+    correctly targeting the `latest` version of the Move execution layer rather than
+    older versions (v0, v1, v2).
+  category: architecture
+distractors:
+- rule: cargo xclippy does not recognize -p option
+  collision_type: meta_confusion
+  why_distracting: The agent might try to lint its specific changes using `cargo xclippy
+    -p sui-protocol-config` or `-p sui-move-natives` to save time, which will fail
+    because the custom xclippy command does not support the -p option.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 48-50
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add the Apache-2.0 license header to the
+    snapshot files (.snap and .snap.json) that it modifies or regenerates, but these
+    are auto-generated data files, not source code.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 18-21
+- rule: skip simulation tests as they may cause false negatives with cargo nextest
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to run tests using just `cargo nextest run`
+    without the `SUI_SKIP_SIMTESTS=1` environment variable, which could cause false
+    negatives or failures in simulation tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 33-34
+hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md` which establish
+  global defaults. The root `CLAUDE.md` explicitly defers to crate-specific `CLAUDE.md`
+  files, though none are provided in this context. The agent must navigate the global
+  testing and linting commands, being careful with custom tools like `cargo xclippy`
+  and `cargo simtest`.

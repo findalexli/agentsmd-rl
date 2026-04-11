@@ -1,128 +1,169 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1008
-  base_commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
-  merge_commit: ""
-
+  base_commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+  merge_commit: ''
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files (types.py, clevr_count_70k.py) must parse without syntax errors"
-
-  - id: reward_fn_returns_float
-    type: fail_to_pass
-    origin: pr_diff
-    description: "clevr_count_70k_reward_fn must return float (not int) for correct, wrong, and no-match inputs"
-
-  - id: enum_classes_str_compatible
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ApiType and InputName must be str-compatible Enum subclasses with correct member values"
-
-  - id: properties_use_enum_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: "api_type and input_name_for_logging properties must return enum instances, not bare strings"
-
-  - id: no_bare_print_uses_logger
-    type: fail_to_pass
-    origin: pr_diff
-    description: "clevr_count_70k.py must not use bare print(); must use logger instead"
-
-  - id: log_message_space_fix
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Warning message in to_tensor_dict must not have implicit string concat bug (missing space)"
-
-  - id: extract_answer_works
-    type: pass_to_pass
-    origin: pr_diff
-    description: "extract_answer still correctly parses bracketed numbers from text"
-
-  - id: reward_fn_edge_cases
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Reward function handles None answer and various inputs correctly"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files must not use wildcard imports"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
-
-  - id: reward_fn_has_return_annotation
-    type: fail_to_pass
-    origin: agent_config
-    description: "clevr_count_70k_reward_fn must have an explicit '-> float' return type annotation"
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
-
-  - id: properties_annotated_with_enum_types
-    type: fail_to_pass
-    origin: agent_config
-    description: "api_type and input_name_for_logging properties must be annotated with enum types (ApiType/InputName), not bare str"
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
-
-  - id: reward_uses_areal_logging
-    type: fail_to_pass
-    origin: agent_config
-    description: "clevr_count_70k.py must import logging from areal.utils, not stdlib"
-    source:
-      path: "AGENTS.md"
-      lines: "89-91"
-      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
-
-  - id: logger_pascalcase_name
-    type: fail_to_pass
-    origin: agent_config
-    description: "getLogger in clevr_count_70k.py must use a PascalCase descriptive name"
-    source:
-      path: "AGENTS.md"
-      lines: "89"
-      commit: "4f5a2944f0acfebba378e5b88bf2ab940f84b943"
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Modified Python files compile without syntax errors (repo CI check)"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Modified Python files pass ruff linting (repo CI check)"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Modified Python files are properly formatted (repo CI check)"
-
-  - id: test_repo_ruff_check_fix
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files have no auto-fixable lint issues via ruff check --fix"
-
-  - id: test_repo_import_sorting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files follow isort conventions via ruff import sorting"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modified files (types.py, clevr_count_70k.py) must parse without
+    syntax errors
+- id: reward_fn_returns_float
+  type: fail_to_pass
+  origin: pr_diff
+  description: clevr_count_70k_reward_fn must return float (not int) for correct,
+    wrong, and no-match inputs
+- id: enum_classes_str_compatible
+  type: fail_to_pass
+  origin: pr_diff
+  description: ApiType and InputName must be str-compatible Enum subclasses with correct
+    member values
+- id: properties_use_enum_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: api_type and input_name_for_logging properties must return enum instances,
+    not bare strings
+- id: no_bare_print_uses_logger
+  type: fail_to_pass
+  origin: pr_diff
+  description: clevr_count_70k.py must not use bare print(); must use logger instead
+- id: log_message_space_fix
+  type: fail_to_pass
+  origin: pr_diff
+  description: Warning message in to_tensor_dict must not have implicit string concat
+    bug (missing space)
+- id: extract_answer_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: extract_answer still correctly parses bracketed numbers from text
+- id: reward_fn_edge_cases
+  type: pass_to_pass
+  origin: pr_diff
+  description: Reward function handles None answer and various inputs correctly
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not use wildcard imports
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: reward_fn_has_return_annotation
+  type: fail_to_pass
+  origin: agent_config
+  description: clevr_count_70k_reward_fn must have an explicit '-> float' return type
+    annotation
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: properties_annotated_with_enum_types
+  type: fail_to_pass
+  origin: agent_config
+  description: api_type and input_name_for_logging properties must be annotated with
+    enum types (ApiType/InputName), not bare str
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: reward_uses_areal_logging
+  type: fail_to_pass
+  origin: agent_config
+  description: clevr_count_70k.py must import logging from areal.utils, not stdlib
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: logger_pascalcase_name
+  type: fail_to_pass
+  origin: agent_config
+  description: getLogger in clevr_count_70k.py must use a PascalCase descriptive name
+  source:
+    path: AGENTS.md
+    lines: '89'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_ci
+  description: Modified Python files compile without syntax errors (repo CI check)
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_ci
+  description: Modified Python files pass ruff linting (repo CI check)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_ci
+  description: Modified Python files are properly formatted (repo CI check)
+- id: test_repo_ruff_check_fix
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have no auto-fixable lint issues via ruff check
+    --fix
+- id: test_repo_import_sorting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files follow isort conventions via ruff import sorting
 rubric:
-  - rule: "Changes add str-compatible Enum classes (ApiType, InputName) with correct member values in types.py."
-    reference: "class ApiType(str, Enum): COMPLETION = 'completion' RESPONSE = 'response' NONE = 'none'"
+- rule: Changes add str-compatible Enum classes (ApiType, InputName) with correct
+    member values in types.py.
+  reference: 'class ApiType(str, Enum): COMPLETION = ''completion'' RESPONSE = ''response''
+    NONE = ''none'''
+- rule: Changes add proper return type annotations (-> ApiType, -> InputName) on properties
+    in types.py.
+  reference: 'def api_type(self) -> ApiType: def input_name_for_logging(self) -> InputName:'
+- rule: Changes add areal.utils.logging import, create logger with PascalCase name,
+    and replace print() with logger.info() in clevr_count_70k.py.
+  reference: 'from areal.utils import logging
 
-  - rule: "Changes add proper return type annotations (-> ApiType, -> InputName) on properties in types.py."
-    reference: "def api_type(self) -> ApiType: def input_name_for_logging(self) -> InputName:"
+    logger = logging.getLogger(''CLEVR70KReward'')
 
-  - rule: "Changes add areal.utils.logging import, create logger with PascalCase name, and replace print() with logger.info() in clevr_count_70k.py."
-    reference: "from areal.utils import logging\nlogger = logging.getLogger('CLEVR70KReward')\nlogger.info(f'completions: ...')"
+    logger.info(f''completions: ...'')'
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
+    `print`'
+  source:
+    path: AGENTS.md
+    lines: 42-43
+  evidence: The gold solution removes the bare `print()` call in `areal/reward/clevr_count_70k.py`
+    and adds `logger = logging.getLogger("CLEVR70KReward")`, adhering to the requirement
+    to use `getLogger` with a Pa
+  category: style
+distractors:
+- rule: Register new loggers with color in `areal/utils/logging.py`
+  collision_type: scope_ambiguity
+  why_distracting: The rule explicitly states to 'Register new loggers with color
+    in `areal/utils/logging.py`'. An agent following this would attempt to modify
+    `areal/utils/logging.py` to add a color mapping for `CLEVR70KReward`. However,
+    the gold solution only creates the logger locally without modifying the central
+    registry, making this an out-of-scope distraction.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 43-44
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires adding tests for new functionality. An agent
+    might try to write unit tests for the new `ApiType` and `InputName` enums or the
+    modified reward function. Since this PR is strictly a bug fix and minor refactor
+    of existing code, adding tests is out of scope.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 30-30
+- rule: No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(tensor)`).
+  collision_type: meta_confusion
+  why_distracting: The performance rule forbids `print(tensor)` to avoid GPU-CPU syncs.
+    An agent might overthink the removal of `print()` in the reward function, assuming
+    it's a tensor synchronization issue rather than a simple logging convention violation,
+    potentially leading to unnecessary tensor detach/cpu calls.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 47-48
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` both provide high-level guidelines,
+  with `AGENTS.md` offering more specific coding style rules. The primary conflict
+  arises within `AGENTS.md` itself: the rule to use `getLogger` is followed, but the
+  subsequent instruction to register the logger with a color in `areal/utils/logging.py`
+  is ignored by the gold solution, likely because it is considered out of scope for
+  a simple bugfix PR.'

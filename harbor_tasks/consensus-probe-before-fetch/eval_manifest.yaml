@@ -1,142 +1,176 @@
 source_pr:
-  repo: "MystenLabs/sui"
+  repo: MystenLabs/sui
   number: 26056
-  title: "[consensus] probe before fetching commits and blocks from a peer"
-  merge_commit: "52203ecc02e7a3fd810ed88c1fd24a3a99ba98db"
-  base_commit: "192a628cc56fcd901af4330d91c123fe8f493187"
-
+  title: '[consensus] probe before fetching commits and blocks from a peer'
+  merge_commit: 52203ecc02e7a3fd810ed88c1fd24a3a99ba98db
+  base_commit: 192a628cc56fcd901af4330d91c123fe8f493187
 behavioral_checks:
-  # Fail-to-pass tests - these fail on base commit, pass on fix
-  - id: "f2p_1"
-    name: "test_parameters_has_timeout_fields"
-    type: "functional"
-    description: "Parameters struct has new timeout fields with correct defaults"
-
-  - id: "f2p_2"
-    name: "test_probe_connectivity_method_exists"
-    type: "functional"
-    description: "NetworkClient has the probe_connectivity method"
-
-  - id: "f2p_3"
-    name: "test_commit_syncer_uses_configurable_timeout"
-    type: "functional"
-    description: "commit_syncer uses configurable timeout instead of hardcoded constant"
-
-  - id: "f2p_4"
-    name: "test_authority_service_implements_observer_trait"
-    type: "functional"
-    description: "AuthorityService implements ObserverNetworkService trait methods"
-
-  - id: "f2p_5"
-    name: "test_probe_call_in_fetch_commits_once"
-    type: "functional"
-    description: "fetch_commits_once calls probe_connectivity before fetching"
-
-  # Pass-to-pass tests - these should pass on both base and fix (regression tests)
-  - id: "p2p_1"
-    name: "test_config_compiles_with_new_defaults"
-    type: "functional"
-    description: "Config compiles and snapshot test passes with new fields"
-
-  - id: "p2p_2"
-    name: "test_network_client_has_probe_method"
-    type: "functional"
-    description: "NetworkClient has probe_connectivity with correct signature"
-
-  # Repo CI/CD pass-to-pass tests - verified CI commands that work in Docker
-  - id: "p2p_repo_fmt_check"
-    name: "test_repo_cargo_fmt_check"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "Repo's cargo fmt --check passes (code formatting)"
-
-  - id: "p2p_repo_check_config"
-    name: "test_repo_cargo_check_consensus_config"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "cargo check -p consensus-config passes (verified in Docker)"
-
-  - id: "p2p_repo_check_types"
-    name: "test_repo_cargo_check_consensus_types"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "cargo check -p consensus-types passes (verified in Docker)"
-
-  - id: "p2p_repo_clippy_config"
-    name: "test_repo_cargo_clippy_consensus_config"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "cargo clippy -p consensus-config passes (verified in Docker)"
-
-  - id: "p2p_repo_test_config_lib"
-    name: "test_repo_cargo_test_consensus_config_lib"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "cargo test -p consensus-config --lib passes (verified in Docker)"
-
-  - id: "p2p_repo_test_config_snapshot"
-    name: "test_repo_cargo_test_consensus_config_snapshot"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "consensus-config snapshot test passes (parameters_test)"
-
-  - id: "p2p_repo_test_committee"
-    name: "test_repo_cargo_test_consensus_committee"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "consensus-config committee tests pass (verified in Docker)"
-
-  - id: "p2p_repo_test_types_lib"
-    name: "test_repo_cargo_test_consensus_types_lib"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    description: "cargo test -p consensus-types --lib passes (verified in Docker)"
-
+- id: f2p_1
+  name: test_parameters_has_timeout_fields
+  type: functional
+  description: Parameters struct has new timeout fields with correct defaults
+- id: f2p_2
+  name: test_probe_connectivity_method_exists
+  type: functional
+  description: NetworkClient has the probe_connectivity method
+- id: f2p_3
+  name: test_commit_syncer_uses_configurable_timeout
+  type: functional
+  description: commit_syncer uses configurable timeout instead of hardcoded constant
+- id: f2p_4
+  name: test_authority_service_implements_observer_trait
+  type: functional
+  description: AuthorityService implements ObserverNetworkService trait methods
+- id: f2p_5
+  name: test_probe_call_in_fetch_commits_once
+  type: functional
+  description: fetch_commits_once calls probe_connectivity before fetching
+- id: p2p_1
+  name: test_config_compiles_with_new_defaults
+  type: functional
+  description: Config compiles and snapshot test passes with new fields
+- id: p2p_2
+  name: test_network_client_has_probe_method
+  type: functional
+  description: NetworkClient has probe_connectivity with correct signature
+- id: p2p_repo_fmt_check
+  name: test_repo_cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo fmt --check passes (code formatting)
+- id: p2p_repo_check_config
+  name: test_repo_cargo_check_consensus_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check -p consensus-config passes (verified in Docker)
+- id: p2p_repo_check_types
+  name: test_repo_cargo_check_consensus_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check -p consensus-types passes (verified in Docker)
+- id: p2p_repo_clippy_config
+  name: test_repo_cargo_clippy_consensus_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo clippy -p consensus-config passes (verified in Docker)
+- id: p2p_repo_test_config_lib
+  name: test_repo_cargo_test_consensus_config_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo test -p consensus-config --lib passes (verified in Docker)
+- id: p2p_repo_test_config_snapshot
+  name: test_repo_cargo_test_consensus_config_snapshot
+  type: pass_to_pass
+  origin: repo_tests
+  description: consensus-config snapshot test passes (parameters_test)
+- id: p2p_repo_test_committee
+  name: test_repo_cargo_test_consensus_committee
+  type: pass_to_pass
+  origin: repo_tests
+  description: consensus-config committee tests pass (verified in Docker)
+- id: p2p_repo_test_types_lib
+  name: test_repo_cargo_test_consensus_types_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo test -p consensus-types --lib passes (verified in Docker)
 agent_config:
-  # Agent config rules that should be followed
-  - id: "ac_1"
-    name: "license_header"
-    type: "structural"
-    origin: "agent_config"
-    source: "CLAUDE.md"
-    description: "All new files must have the license header"
-
-  - id: "ac_2"
-    name: "cargo_check"
-    type: "structural"
-    origin: "agent_config"
-    source: "CLAUDE.md"
-    description: "Code must pass cargo check"
-
-  - id: "ac_3"
-    name: "no_lint_suppression"
-    type: "structural"
-    origin: "agent_config"
-    source: "CLAUDE.md"
-    description: "No #[allow(dead_code)] or similar lint suppressions"
-
+- id: ac_1
+  name: license_header
+  type: structural
+  origin: agent_config
+  source: CLAUDE.md
+  description: All new files must have the license header
+- id: ac_2
+  name: cargo_check
+  type: structural
+  origin: agent_config
+  source: CLAUDE.md
+  description: Code must pass cargo check
+- id: ac_3
+  name: no_lint_suppression
+  type: structural
+  origin: agent_config
+  source: CLAUDE.md
+  description: 'No #[allow(dead_code)] or similar lint suppressions'
 rubric:
-  - rule: "Follow existing code style in the consensus crate. Check neighboring files for patterns on error handling, async patterns, and naming conventions."
-    source:
-      path: "CLAUDE.md"
-      lines: "6-7"
-      commit: "192a628cc56fcd901af4330d91c123fe8f493187"
-
-  - rule: "Comments should explain non-obvious algorithms, temporary exclusions/timeouts, and reasoning - not narrate obvious code. Document the 'why' for timeout values and probe logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "116-130"
-      commit: "192a628cc56fcd901af4330d91c123fe8f493187"
-
-  - rule: "All new files must start with the Mysten Labs Apache-2.0 license header."
-    source:
-      path: "CLAUDE.md"
-      lines: "15-21"
-      commit: "192a628cc56fcd901af4330d91c123fe8f493187"
-
+- rule: Follow existing code style in the consensus crate. Check neighboring files
+    for patterns on error handling, async patterns, and naming conventions.
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+    commit: 192a628cc56fcd901af4330d91c123fe8f493187
+- rule: Comments should explain non-obvious algorithms, temporary exclusions/timeouts,
+    and reasoning - not narrate obvious code. Document the 'why' for timeout values
+    and probe logic.
+  source:
+    path: CLAUDE.md
+    lines: 116-130
+    commit: 192a628cc56fcd901af4330d91c123fe8f493187
+- rule: All new files must start with the Mysten Labs Apache-2.0 license header.
+  source:
+    path: CLAUDE.md
+    lines: 15-21
+    commit: 192a628cc56fcd901af4330d91c123fe8f493187
+- rule: 'Run individual lints: cargo fmt --all -- --check and cargo xclippy'
+  source:
+    path: CLAUDE.md
+    lines: 54-56
+  evidence: The gold solution maintains proper Rust formatting (e.g., trailing commas
+    in the `Parameters::default()` struct initialization) and avoids clippy warnings,
+    adhering to the project's formatting and lin
+  category: style
+- rule: 'Authority System: Sui uses a set of validators (authorities) that process
+    transactions in parallel. Each authority maintains its own state and participates
+    in Byzantine consensus.'
+  source:
+    path: CLAUDE.md
+    lines: 83-84
+  evidence: The gold solution implements `ObserverNetworkService` for `AuthorityService`
+    in `consensus/core/src/authority_service.rs`, which aligns with the architectural
+    definition of authorities participating i
+  category: architecture
 scoring:
-  total_checks: 16  # 5 f2p + 2 p2p + 8 repo_tests p2p + 3 agent_config
-  f2p_weight: 0.40  # 5 f2p tests
-  p2p_weight: 0.40  # 10 p2p tests (2 existing + 8 new repo_tests)
-  agent_config_weight: 0.20  # 3 agent_config checks
+  total_checks: 16
+  f2p_weight: 0.4
+  p2p_weight: 0.4
+  agent_config_weight: 0.2
   passing_threshold: 0.75
+distractors:
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: architecture_boundary
+  why_distracting: The agent might create a new file for the `ObserverNetworkService`
+    trait implementation or the probe mechanism to satisfy the license header rule,
+    rather than correctly integrating the changes into the existing `authority_service.rs`
+    and `clients.rs` files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 17-20
+- rule: Always consult CLAUDE.md files in sub-crates. Instructions in local CLAUDE.md
+    files override instructions in this file when they are in conflict.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs to 'Always consult CLAUDE.md files in sub-crates',
+    which might cause the agent to hallucinate or search for non-existent `consensus/CLAUDE.md`
+    files, wasting time and causing confusion since none are provided in the context.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 5-7
+- rule: Run Rust unittests. skip simulation tests as they may cause false negatives
+    with `cargo nextest`
+  collision_type: would_cause_bug
+  why_distracting: The agent might rely solely on `cargo nextest run` as instructed,
+    which will fail the snapshot test but won't automatically update it. The agent
+    might get confused about how to update the snapshot (`cargo insta review` or `UPDATE_EXPECT=1
+    cargo test`) since it's not mentioned in the testing commands.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 38-39
+hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md` that apply
+  globally, with instructions to consult crate-specific `CLAUDE.md` files. Since no
+  crate-specific config files are provided for the `consensus` crate, the root rules
+  apply directly. The root config focuses heavily on testing commands, formatting,
+  and high-level architecture, but lacks specific guidance on snapshot testing (`cargo
+  insta`), which is required for this PR.

@@ -1,64 +1,115 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 176436
-  base_commit: "036b25f5a29dc58cbc62e7b976efb860ff128c3f"
-  merge_commit: "b9a01d7873cd980602db0b1ca1ca530de7833a59"
-
+  base_commit: 036b25f5a29dc58cbc62e7b976efb860ff128c3f
+  merge_commit: b9a01d7873cd980602db0b1ca1ca530de7833a59
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "mps.py must parse without syntax errors"
-
-  - id: where_casts_false_branch
-    type: fail_to_pass
-    origin: pr_diff
-    description: "where() must cast the false-branch value to match the true-branch type"
-
-  - id: where_casts_special_values
-    type: fail_to_pass
-    origin: pr_diff
-    description: "where() must cast special float values (inf, -inf, nan) with type cast"
-
-  - id: masked_casts_both_branches
-    type: fail_to_pass
-    origin: pr_diff
-    description: "masked() must add static_cast<decltype(...)> to both if-body and else-branch"
-
-  - id: value_to_metal_special_values
-    type: pass_to_pass
-    origin: repo_tests
-    description: "value_to_metal() preserves correct Metal representations for special values"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "masked() and where() must not be stubs"
-
-  - id: py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "mps.py compiles to bytecode without errors"
-
-  - id: ast_parseable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "mps.py produces valid AST with expected structure"
-
-  - id: functions_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All functions in mps.py are individually compilable"
-
-  - id: metal_overrides_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "MetalOverrides class exists in mps.py"
-
-  - id: required_methods_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Required methods (where, masked, value_to_metal) exist in mps.py"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: mps.py must parse without syntax errors
+- id: where_casts_false_branch
+  type: fail_to_pass
+  origin: pr_diff
+  description: where() must cast the false-branch value to match the true-branch type
+- id: where_casts_special_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: where() must cast special float values (inf, -inf, nan) with type cast
+- id: masked_casts_both_branches
+  type: fail_to_pass
+  origin: pr_diff
+  description: masked() must add static_cast<decltype(...)> to both if-body and else-branch
+- id: value_to_metal_special_values
+  type: pass_to_pass
+  origin: repo_tests
+  description: value_to_metal() preserves correct Metal representations for special
+    values
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: masked() and where() must not be stubs
+- id: py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: mps.py compiles to bytecode without errors
+- id: ast_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: mps.py produces valid AST with expected structure
+- id: functions_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: All functions in mps.py are individually compilable
+- id: metal_overrides_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: MetalOverrides class exists in mps.py
+- id: required_methods_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required methods (where, masked, value_to_metal) exist in mps.py
+rubric:
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: 48-48
+  evidence: The gold solution adds the `static_cast` directly into the f-strings without
+    adding any comments explaining why the cast is needed for half-precision types.
+  category: style
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  source:
+    path: CLAUDE.md
+    lines: 52-53
+  evidence: The gold solution inline formats the `static_cast<decltype(...)>(...)`
+    directly in the `masked` and `where` methods instead of creating a new helper
+    function for type casting.
+  category: style
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: 58-58
+  evidence: The gold solution uses `static_cast<decltype(...)>(...)` which matches
+    the C++ style casting used in Metal shaders and the existing string formatting
+    patterns in the file.
+  category: architecture
+distractors:
+- rule: When you are working on a bug, first create a standalone file that reproduces
+    the bug and verify it fails in the expected way.
+  collision_type: meta_confusion
+  why_distracting: The bug is specific to the MPS backend (Metal Performance Shaders),
+    which requires Apple Silicon hardware. The agent likely runs in a Linux container
+    and cannot execute MPS code, so attempting to reproduce the bug will fail with
+    hardware/environment errors and waste time.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 3-6
+- rule: All build (both codegen, C++ and python) is done via `pip install -e . -v
+    --no-build-isolation`.
+  collision_type: rule_conflict
+  why_distracting: CLAUDE.md instructs the agent to build using `pip install -e .
+    -v --no-build-isolation`, but AGENTS.md explicitly states 'you do not have a working
+    build environment'. Attempting to build PyTorch from source will fail and waste
+    significant time.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 10-12
+- rule: Only use commands provided via `spin` for linting. Generally, use `spin lint`
+    as to run the lint and `spin fixlint` to apply automatic fixes.
+  collision_type: rule_conflict
+  why_distracting: CLAUDE.md says to use `spin lint`, while AGENTS.md says to use
+    `lintrunner -a`. The agent might get confused about which linting tool to use
+    and waste time trying both or failing to run the correct one.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 26-28
+hierarchy_analysis: Both CLAUDE.md and AGENTS.md are at Level 0, leading to direct
+  contradictions. CLAUDE.md provides instructions for building and linting (`pip install`
+  and `spin`), while AGENTS.md explicitly forbids building ('you do not have a working
+  build environment') and specifies a different linter (`lintrunner`). The agent must
+  navigate these peer-level conflicts.

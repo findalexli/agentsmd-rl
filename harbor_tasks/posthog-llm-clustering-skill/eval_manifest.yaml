@@ -93,35 +93,83 @@ rubric:
 - rule: MCP tools must include proper scopes and annotations when being enabled
   source:
     path: .agents/skills/implementing-mcp-tools/SKILL.md
-    lines: "100-130"
+    lines: 100-130
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: New skills must use lowercase kebab-case naming with gerund form
   source:
     path: .agents/skills/writing-skills/SKILL.md
-    lines: "44"
+    lines: '44'
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
-- rule: SKILL.md files must include required frontmatter with name and description fields
+- rule: SKILL.md files must include required frontmatter with name and description
+    fields
   source:
     path: .agents/skills/writing-skills/SKILL.md
-    lines: "47"
+    lines: '47'
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: Helper scripts in skills should have proper CLI interfaces with usage messages
   source:
     path: .agents/skills/writing-skills/SKILL.md
-    lines: "60-65"
+    lines: 60-65
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: Python code should use type hints
   source:
     path: AGENTS.md
-    lines: "1-50"
+    lines: 1-50
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: MCP tool names must be lowercase kebab-case following the domain-action pattern
   source:
     path: .agents/skills/implementing-mcp-tools/SKILL.md
-    lines: "76-79"
+    lines: 76-79
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
 - rule: Skills must only use references and scripts subdirectories
   source:
     path: .agents/skills/writing-skills/SKILL.md
-    lines: "60-64"
+    lines: 60-64
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+- rule: 'Scope convention: use `llma` for LLM analytics changes (for example, `feat(llma):
+    ...`)'
+  source:
+    path: AGENTS.md
+    lines: 30-31
+  evidence: 'The commit message uses the exact scope convention requested: `feat(llma):
+    enable clustering read tools and add exploring-llm-clusters skill`.'
+  category: style
+- rule: Description should be lowercase and not end with a period, and keep the first
+    line under 72 characters.
+  source:
+    path: AGENTS.md
+    lines: 41-42
+  evidence: The commit message description (`enable clustering read tools and add
+    exploring-llm-clusters skill`) is entirely lowercase, does not end with a period,
+    and the first line is exactly 71 characters long
+  category: style
+distractors:
+- rule: 'Lint: Python: `ruff check . --fix` and `ruff format .`'
+  collision_type: rule_conflict
+  why_distracting: The repository has a general rule to lint and format all Python
+    code using ruff. However, the task explicitly requires excluding the new skill
+    scripts from ruff in `pyproject.toml` and from lint-staged in `package.json`.
+    An agent strictly following the general linting rule might fail to add these exclusions
+    or try to force the script to comply with project-wide linting.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-20
+- rule: Django serializers are the source of truth for frontend API types — `hogli
+    build:openapi` generates TypeScript via drf-spectacular + Orval... change serializers
+    and rerun.
+  collision_type: architecture_boundary
+  why_distracting: The agent is asked to enable MCP tools, which interact with the
+    API. It might assume it needs to modify Django serializers or run OpenAPI generation
+    commands (`hogli build:openapi`) to expose these tools. However, the tools are
+    already implemented and just need their `enabled` flag flipped in `tools.yaml`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 56-59
+hierarchy_analysis: The `.cursorrules` file provides general behavioral guidelines,
+  while `AGENTS.md` provides specific PostHog development rules. The commit message
+  rules in `AGENTS.md` are strictly followed by the gold solution. However, the general
+  linting rules in `AGENTS.md` conflict with the specific task instructions to exclude
+  the new scripts from linting, meaning the explicit task instructions must override
+  the general repository linting rules.

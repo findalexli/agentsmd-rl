@@ -1,139 +1,158 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 990
-  base_commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-  merge_commit: "412d22411ce6cc48c2f776a0910c6fb2834bd1e0"
-
+  base_commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+  merge_commit: 412d22411ce6cc48c2f776a0910c6fb2834bd1e0
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "actor.py and critic.py parse without syntax errors"
-
-  - id: attention_mask_preferred
-    type: fail_to_pass
-    origin: pr_diff
-    description: "infer_token_denominator prefers attention_mask over other metadata"
-
-  - id: cu_seqlens_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "cu_seqlens used for packed sequences when attention_mask absent"
-
-  - id: input_ids_shape_match
-    type: fail_to_pass
-    origin: pr_diff
-    description: "input_ids used when shape matches fallback; ignored otherwise"
-
-  - id: final_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Falls back to ones_like(fallback) when no usable metadata"
-
-  - id: actor_critic_use_helper
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Actor and critic import infer_token_denominator, old buggy pattern removed"
-
-  - id: not_stub
-    type: fail_to_pass
-    origin: static
-    description: "stats.py infer_token_denominator has real conditional fallback logic"
-
-  - id: no_wildcard_imports
-    type: fail_to_pass
-    origin: agent_config
-    description: "No wildcard imports in modified PPO files"
-    source:
-      path: "AGENTS.md"
-      lines: "25"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-
-  - id: no_print_in_ppo_files
-    type: fail_to_pass
-    origin: agent_config
-    description: "No bare print() calls in modified PPO files; use areal.utils.logging"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-
-  - id: type_hints_on_helper
-    type: fail_to_pass
-    origin: agent_config
-    description: "infer_token_denominator has type annotations on parameters and return"
-    source:
-      path: "AGENTS.md"
-      lines: "94"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-
-  - id: no_hardcoded_paths
-    type: fail_to_pass
-    origin: agent_config
-    description: "No hardcoded absolute paths or http(s) endpoints in modified PPO files"
-    source:
-      path: "AGENTS.md"
-      lines: "26"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-
-  # ---------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — CI/CD checks from the repository
-  # ---------------------------------------------------------------------------
-
-  - id: test_repo_ruff_lint_ppo
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linting passes on PPO files"
-
-  - id: test_repo_ruff_format_ppo
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff format check passes on PPO files"
-
-  - id: test_repo_syntax_areal
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All areal Python files parse without syntax errors"
-
-  - id: test_repo_syntax_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All test files parse without syntax errors"
-
-  - id: test_repo_actor_critic_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "actor.py and critic.py compile without errors"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: actor.py and critic.py parse without syntax errors
+- id: attention_mask_preferred
+  type: fail_to_pass
+  origin: pr_diff
+  description: infer_token_denominator prefers attention_mask over other metadata
+- id: cu_seqlens_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: cu_seqlens used for packed sequences when attention_mask absent
+- id: input_ids_shape_match
+  type: fail_to_pass
+  origin: pr_diff
+  description: input_ids used when shape matches fallback; ignored otherwise
+- id: final_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Falls back to ones_like(fallback) when no usable metadata
+- id: actor_critic_use_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: Actor and critic import infer_token_denominator, old buggy pattern
+    removed
+- id: not_stub
+  type: fail_to_pass
+  origin: static
+  description: stats.py infer_token_denominator has real conditional fallback logic
+- id: no_wildcard_imports
+  type: fail_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified PPO files
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- id: no_print_in_ppo_files
+  type: fail_to_pass
+  origin: agent_config
+  description: No bare print() calls in modified PPO files; use areal.utils.logging
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- id: type_hints_on_helper
+  type: fail_to_pass
+  origin: agent_config
+  description: infer_token_denominator has type annotations on parameters and return
+  source:
+    path: AGENTS.md
+    lines: '94'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- id: no_hardcoded_paths
+  type: fail_to_pass
+  origin: agent_config
+  description: No hardcoded absolute paths or http(s) endpoints in modified PPO files
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- id: test_repo_ruff_lint_ppo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on PPO files
+- id: test_repo_ruff_format_ppo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on PPO files
+- id: test_repo_syntax_areal
+  type: pass_to_pass
+  origin: repo_tests
+  description: All areal Python files parse without syntax errors
+- id: test_repo_syntax_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All test files parse without syntax errors
+- id: test_repo_actor_critic_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: actor.py and critic.py compile without errors
 rubric:
-  - rule: "Avoid GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor)) except when necessary for scalar dimension extraction."
-    source:
-      path: "AGENTS.md"
-      lines: "90"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-
-  - rule: "Batch ops over Python loops on tensor elements."
-    source:
-      path: "AGENTS.md"
-      lines: "91"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-
-  - rule: "Explicit dtype/device; torch.Size assertions for shape validation."
-    source:
-      path: "AGENTS.md"
-      lines: "92"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-
-  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
-
-  - rule: "Emit metrics via stats_tracker.get(); use existing observability patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "142"
-      commit: "d1cdac3442585565f902f1e69b9d7399c50b9b34"
+- rule: Avoid GPU-CPU sync in hot paths (.item(), .tolist(), print(tensor)) except
+    when necessary for scalar dimension extraction.
+  source:
+    path: AGENTS.md
+    lines: '90'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- rule: Batch ops over Python loops on tensor elements.
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- rule: Explicit dtype/device; torch.Size assertions for shape validation.
+  source:
+    path: AGENTS.md
+    lines: '92'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- rule: Emit metrics via stats_tracker.get(); use existing observability patterns.
+  source:
+    path: AGENTS.md
+    lines: '142'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- rule: 'Typing & imports: explicit type hints'
+  source:
+    path: AGENTS.md
+    lines: 64-65
+  evidence: 'The `infer_token_denominator` function in `areal/trainer/ppo/stats.py`
+    uses explicit type hints for its arguments (`input_data: dict[str, Any]`, `fallback:
+    torch.Tensor`) and return type (`-> torch.Te'
+  category: style
+- rule: Explicit `dtype`/`device`
+  source:
+    path: AGENTS.md
+    lines: 62-63
+  evidence: 'The gold solution explicitly defines `common_kwargs = {"dtype": torch.bool,
+    "device": fallback.device}` and passes it to all `torch.ones` and `torch.ones_like`
+    calls to ensure tensors are created on t'
+  category: style
+distractors:
+- rule: No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(tensor)`).
+  collision_type: rule_conflict
+  why_distracting: The agent needs to extract the sequence length from the `cu_seqlens`
+    tensor to create a new tensor of that size using `torch.ones()`. Since `torch.ones()`
+    requires an integer size, calling `.item()` is necessary (`int(cu_seqlens[-1].item())`).
+    Strictly avoiding `.item()` would prevent the agent from correctly instantiating
+    the fallback tensor.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 59-60
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The PR is a targeted bug fix for stats logging. The gold solution
+    does not add new unit tests. An agent strictly following this might hallucinate
+    a test file or modify unrelated test files, expanding the scope unnecessarily.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 45-46
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` are at the root level (Level
+  0) and provide overlapping guidance. `AGENTS.md` provides more specific technical
+  constraints (like avoiding `.item()` and requiring explicit dtypes/devices), while
+  `CLAUDE.md` provides higher-level project context. The conflict arises internally
+  within `AGENTS.md` where the rule against GPU-CPU syncs (`.item()`) conflicts with
+  the need to dynamically size a tensor based on `cu_seqlens` values.

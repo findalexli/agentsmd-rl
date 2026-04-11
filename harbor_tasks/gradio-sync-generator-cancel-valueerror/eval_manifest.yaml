@@ -1,81 +1,99 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13134
-  base_commit: "a09c0e891709e007e4f265fc48f466175f5a2a22"
-  merge_commit: "75f8dceb679b505c8887f0a3c3b9fee98a931db9"
-
+  base_commit: a09c0e891709e007e4f265fc48f466175f5a2a22
+  merge_commit: 75f8dceb679b505c8887f0a3c3b9fee98a931db9
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "gradio/utils.py parses without syntax errors"
-
-  - id: aclose_retries_on_already_executing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "aclose() retries when close() raises ValueError('generator already executing')"
-
-  - id: aclose_retries_higher_fail_count
-    type: fail_to_pass
-    origin: pr_diff
-    description: "aclose() retries correctly with higher failure counts (fail_count=5)"
-
-  - id: aclose_timeout_raises
-    type: fail_to_pass
-    origin: pr_diff
-    description: "aclose() raises ValueError after timeout is exceeded"
-
-  - id: aclose_race_condition
-    type: fail_to_pass
-    origin: pr_diff
-    description: "aclose() handles time-based race where close() fails temporarily"
-
-  - id: aclose_propagates_non_matching_valueerror
-    type: pass_to_pass
-    origin: pr_diff
-    description: "aclose() does not retry on ValueError without 'already executing'"
-
-  - id: safe_aclose_works_with_async_generator
-    type: pass_to_pass
-    origin: pr_diff
-    description: "safe_aclose_iterator() works with native async generators"
-
-  - id: not_stub
-    type: fail_to_pass
-    origin: static
-    description: "aclose() has real retry logic, not just self.iterator.close()"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python linting passes (ruff check on gradio/utils.py)"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python formatting passes (ruff format check on gradio/utils.py)"
-
-  - id: test_repo_gradio_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "gradio module imports successfully"
-
-  - id: test_repo_utils_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "gradio/utils.py has valid Python syntax via py_compile"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/utils.py parses without syntax errors
+- id: aclose_retries_on_already_executing
+  type: fail_to_pass
+  origin: pr_diff
+  description: aclose() retries when close() raises ValueError('generator already
+    executing')
+- id: aclose_retries_higher_fail_count
+  type: fail_to_pass
+  origin: pr_diff
+  description: aclose() retries correctly with higher failure counts (fail_count=5)
+- id: aclose_timeout_raises
+  type: fail_to_pass
+  origin: pr_diff
+  description: aclose() raises ValueError after timeout is exceeded
+- id: aclose_race_condition
+  type: fail_to_pass
+  origin: pr_diff
+  description: aclose() handles time-based race where close() fails temporarily
+- id: aclose_propagates_non_matching_valueerror
+  type: pass_to_pass
+  origin: pr_diff
+  description: aclose() does not retry on ValueError without 'already executing'
+- id: safe_aclose_works_with_async_generator
+  type: pass_to_pass
+  origin: pr_diff
+  description: safe_aclose_iterator() works with native async generators
+- id: not_stub
+  type: fail_to_pass
+  origin: static
+  description: aclose() has real retry logic, not just self.iterator.close()
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes (ruff check on gradio/utils.py)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python formatting passes (ruff format check on gradio/utils.py)
+- id: test_repo_gradio_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio module imports successfully
+- id: test_repo_utils_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio/utils.py has valid Python syntax via py_compile
 rubric:
-  - rule: "Python code must be formatted with ruff. Follow the project's linting standards."
-    source:
-      path: "AGENTS.md"
-      lines: "45-46"
-      commit: "a09c0e891709e007e4f265fc48f466175f5a2a22"
-
-  - rule: "Be consistent with the style of the surrounding code. Follow existing patterns for indentation, naming, and structure."
-    source:
-      path: "AGENTS.md"
-      lines: "47"
-      commit: "a09c0e891709e007e4f265fc48f466175f5a2a22"
+- rule: Python code must be formatted with ruff. Follow the project's linting standards.
+  source:
+    path: AGENTS.md
+    lines: 45-46
+    commit: a09c0e891709e007e4f265fc48f466175f5a2a22
+- rule: Be consistent with the style of the surrounding code. Follow existing patterns
+    for indentation, naming, and structure.
+  source:
+    path: AGENTS.md
+    lines: '47'
+    commit: a09c0e891709e007e4f265fc48f466175f5a2a22
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 46-48
+  evidence: The gold solution moves the retry logic (using `time.monotonic()`, `asyncio.sleep()`,
+    and checking for 'already executing' in the `ValueError`) directly into `SyncToAsyncIterator.aclose()`,
+    maintainin
+  category: style
+distractors:
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits... Mechanical
+    cleanups are acceptable only when bundled into a clear, systematic scope'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might avoid simplifying `safe_aclose_iterator()` after
+    moving its logic, mistakenly believing that removing the now-redundant code constitutes
+    a 'tiny edit' or 'mechanical cleanup' that violates the policy against low-value
+    busywork.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 58-60
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run the full backend test suite (`bash
+    scripts/run_backend_tests.sh`) which could take a long time or fail on unrelated
+    flaky tests, distracting it from the localized fix in `gradio/utils.py`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 28-29
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level,
+  so there are no hierarchical conflicts. The rules apply globally to the repository.

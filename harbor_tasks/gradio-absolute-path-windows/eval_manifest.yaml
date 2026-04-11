@@ -1,75 +1,99 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12926
-  base_commit: "e29e1ccd5874cb98b813ed4f7f72d9fef2935016"
-  merge_commit: "6011b00d0154b85532fa901dd73cf8fa7d86fd04"
-
+  base_commit: e29e1ccd5874cb98b813ed4f7f72d9fef2935016
+  merge_commit: 6011b00d0154b85532fa901dd73cf8fa7d86fd04
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "gradio/utils.py must parse without errors"
-
-  - id: test_repo_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff lint check passes on gradio/utils.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff format check passes on gradio/utils.py"
-
-  - id: test_repo_utils_no_syntax_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: "gradio/utils.py can be compiled and has no syntax errors"
-
-  - id: test_repo_safe_join_extractable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "safe_join function can be extracted and executed from utils.py"
-
-  - id: test_repo_is_in_or_equal
-    type: pass_to_pass
-    origin: repo_tests
-    description: "is_in_or_equal related security function works correctly"
-
-  - id: test_repo_is_in_or_equal_full
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Run full test_is_in_or_equal test suite from repo CI"
-
-  - id: slash_path_rejected_simulated_win314
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Path /etc/passwd rejected even when os.path.isabs returns False (Py3.14 Windows sim)"
-
-  - id: various_slash_paths_rejected_simulated_win314
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple /-prefixed paths rejected under Py3.14 Windows simulation"
-
-  - id: relative_paths_allowed
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Normal relative paths must not be rejected by safe_join"
-
-  - id: traversal_paths_still_rejected
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Existing traversal guards (.. and ../) still work"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "safe_join has real logic with security checks"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/utils.py must parse without errors
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint check passes on gradio/utils.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on gradio/utils.py
+- id: test_repo_utils_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio/utils.py can be compiled and has no syntax errors
+- id: test_repo_safe_join_extractable
+  type: pass_to_pass
+  origin: repo_tests
+  description: safe_join function can be extracted and executed from utils.py
+- id: test_repo_is_in_or_equal
+  type: pass_to_pass
+  origin: repo_tests
+  description: is_in_or_equal related security function works correctly
+- id: test_repo_is_in_or_equal_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run full test_is_in_or_equal test suite from repo CI
+- id: slash_path_rejected_simulated_win314
+  type: fail_to_pass
+  origin: pr_diff
+  description: Path /etc/passwd rejected even when os.path.isabs returns False (Py3.14
+    Windows sim)
+- id: various_slash_paths_rejected_simulated_win314
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple /-prefixed paths rejected under Py3.14 Windows simulation
+- id: relative_paths_allowed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Normal relative paths must not be rejected by safe_join
+- id: traversal_paths_still_rejected
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing traversal guards (.. and ../) still work
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: safe_join has real logic with security checks
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: AGENTS.md
-      lines: "45"
-      commit: "e29e1ccd5874cb98b813ed4f7f72d9fef2935016"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: e29e1ccd5874cb98b813ed4f7f72d9fef2935016
+distractors:
+- rule: Tests must pass. PRs are only merged when CI is green. Run backend tests locally
+    with bash scripts/run_backend_tests.sh.
+  collision_type: scope_ambiguity
+  why_distracting: The bug is specific to Windows and Python 3.14. An agent trying
+    to strictly follow the testing rule might waste significant time trying to write
+    a test and run `bash scripts/run_backend_tests.sh`. Since the evaluation environment
+    is likely Linux and a different Python version, reproducing the bug to verify
+    the test would require complex mocking of `os.path.isabs` and `os.name`, which
+    is unnecessary for this simple one-line security fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 27-28
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in a headless evaluation environment and
+    cannot create or link GitHub issues. Attempting to use tools or write scripts
+    to interact with the GitHub API to create an issue would be a complete waste of
+    time and lead to task failure.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 16-17
+- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md
+  collision_type: meta_confusion
+  why_distracting: The agent might misinterpret this rule as an instruction to modify
+    the `.github/PULL_REQUEST_TEMPLATE.md` file itself to include the fix description
+    and AI disclosure, rather than understanding it applies to the PR creation UI.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 19-22
+hierarchy_analysis: Only a single root-level config file (`AGENTS.md`) is present,
+  so there are no hierarchical conflicts. The primary challenge is filtering out repository
+  contribution guidelines (PRs, issues, CI) from actual coding directives.

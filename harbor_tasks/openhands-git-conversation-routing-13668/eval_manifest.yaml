@@ -2,137 +2,166 @@ source_pr:
   owner: All-Hands-AI
   repo: OpenHands
   number: 13668
-  title: "feat(frontend): add Git Conversation Routing section for org claims UI"
+  title: 'feat(frontend): add Git Conversation Routing section for org claims UI'
   merge_commit: df3360005c6bff7bf850ff1b1a8b28e4c9684225
   base_commit: df4fea6aca28d3050189a1b19d91ad3d129a95cb
-
 task_name: openhands-git-conversation-routing-13668
-task_title: "Add Git Conversation Routing feature to organization management"
-
+task_title: Add Git Conversation Routing feature to organization management
 difficulty: medium
-tags: [frontend, react, typescript, i18n]
+tags:
+- frontend
+- react
+- typescript
+- i18n
 estimated_time: 45min
-
 timeouts:
-  agent: 1800  # 30 minutes
-  verifier: 180  # 3 minutes
-
+  agent: 1800
+  verifier: 180
 environment:
   dockerfile: environment/Dockerfile
   setup_commands: []
-
 solution:
   patch: solution/solve.sh
   idempotent_check:
-    grep_for: "ORG$GIT_CONVERSATION_ROUTING"
+    grep_for: ORG$GIT_CONVERSATION_ROUTING
     file: frontend/src/i18n/declaration.ts
-
 checks:
-  - id: claim_button_component
-    name: "ClaimButton component exists with required exports"
-    test: test_outputs.py::test_claim_button_component_exists
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: git_org_row_component
-    name: "GitOrgRow component exists with required exports"
-    test: test_outputs.py::test_git_org_row_component_exists
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: git_conversation_routing_component
-    name: "GitConversationRouting component exists with required exports"
-    test: test_outputs.py::test_git_conversation_routing_component_exists
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: hook_exists
-    name: "useGitConversationRouting hook exists with required exports"
-    test: test_outputs.py::test_hook_exists
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: i18n_keys
-    name: "All required i18n keys declared in declaration.ts"
-    test: test_outputs.py::test_i18n_keys_declared
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: i18n_translations
-    name: "All required i18n translations exist in translation.json"
-    test: test_outputs.py::test_i18n_translations_exist
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: permission_added
-    name: "manage_org_claims permission added to permissions.ts"
-    test: test_outputs.py::test_permission_added
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: manage_org_integration
-    name: "GitConversationRouting integrated into manage-org.tsx"
-    test: test_outputs.py::test_manage_org_integration
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: typescript_compiles
-    name: "TypeScript compilation succeeds with no errors"
-    test: test_outputs.py::test_typescript_compiles
-    type: fail_to_pass
-    weight: 1.0
-
-  - id: unit_tests_pass
-    name: "Unit tests for new components pass"
-    test: test_outputs.py::test_unit_tests_pass
-    type: pass_to_pass
-    weight: 0.5
-
-  - id: component_exports_valid
-    name: "Component exports can be resolved"
-    test: test_outputs.py::test_component_exports_valid
-    type: pass_to_pass
-    weight: 0.5
-
-  - id: repo_typecheck
-    name: "Repo TypeScript typecheck passes"
-    test: test_outputs.py::test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's CI typecheck command (react-router typegen && tsc) passes"
-    weight: 1.0
-
-  - id: repo_build
-    name: "Repo production build passes"
-    test: test_outputs.py::test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's CI build command (npm run build) passes"
-    weight: 1.0
-
-  - id: repo_translations
-    name: "Repo translation completeness check passes"
-    test: test_outputs.py::test_repo_translations
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's CI translation check passes"
-    weight: 0.5
-
+- id: claim_button_component
+  name: ClaimButton component exists with required exports
+  test: test_outputs.py::test_claim_button_component_exists
+  type: fail_to_pass
+  weight: 1.0
+- id: git_org_row_component
+  name: GitOrgRow component exists with required exports
+  test: test_outputs.py::test_git_org_row_component_exists
+  type: fail_to_pass
+  weight: 1.0
+- id: git_conversation_routing_component
+  name: GitConversationRouting component exists with required exports
+  test: test_outputs.py::test_git_conversation_routing_component_exists
+  type: fail_to_pass
+  weight: 1.0
+- id: hook_exists
+  name: useGitConversationRouting hook exists with required exports
+  test: test_outputs.py::test_hook_exists
+  type: fail_to_pass
+  weight: 1.0
+- id: i18n_keys
+  name: All required i18n keys declared in declaration.ts
+  test: test_outputs.py::test_i18n_keys_declared
+  type: fail_to_pass
+  weight: 1.0
+- id: i18n_translations
+  name: All required i18n translations exist in translation.json
+  test: test_outputs.py::test_i18n_translations_exist
+  type: fail_to_pass
+  weight: 1.0
+- id: permission_added
+  name: manage_org_claims permission added to permissions.ts
+  test: test_outputs.py::test_permission_added
+  type: fail_to_pass
+  weight: 1.0
+- id: manage_org_integration
+  name: GitConversationRouting integrated into manage-org.tsx
+  test: test_outputs.py::test_manage_org_integration
+  type: fail_to_pass
+  weight: 1.0
+- id: typescript_compiles
+  name: TypeScript compilation succeeds with no errors
+  test: test_outputs.py::test_typescript_compiles
+  type: fail_to_pass
+  weight: 1.0
+- id: unit_tests_pass
+  name: Unit tests for new components pass
+  test: test_outputs.py::test_unit_tests_pass
+  type: pass_to_pass
+  weight: 0.5
+- id: component_exports_valid
+  name: Component exports can be resolved
+  test: test_outputs.py::test_component_exports_valid
+  type: pass_to_pass
+  weight: 0.5
+- id: repo_typecheck
+  name: Repo TypeScript typecheck passes
+  test: test_outputs.py::test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CI typecheck command (react-router typegen && tsc) passes
+  weight: 1.0
+- id: repo_build
+  name: Repo production build passes
+  test: test_outputs.py::test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CI build command (npm run build) passes
+  weight: 1.0
+- id: repo_translations
+  name: Repo translation completeness check passes
+  test: test_outputs.py::test_repo_translations
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CI translation check passes
+  weight: 0.5
 rubric:
-  - rule: "Follow the frontend data fetching architecture: UI components must use TanStack Query hooks, never call API client methods directly. Query hooks follow the pattern use[Resource] and are located in frontend/src/hooks/query/."
-    source:
-      path: "AGENTS.md"
-      lines: "76-84"
-      commit: "df4fea6aca28d3050189a1b19d91ad3d129a95cb"
-
-  - rule: "Add all i18n translations to frontend/src/i18n/translation.json with all supported language keys, and add the corresponding I18nKey enum entry to frontend/src/i18n/declaration.ts."
-    source:
-      path: "AGENTS.md"
-      lines: "86-87,98-99"
-      commit: "df4fea6aca28d3050189a1b19d91ad3d129a95cb"
-
-  - rule: "Before making changes, run make install-pre-commit-hooks. Frontend changes must pass linting and build: cd frontend && npm run lint:fix && npm run build."
-    source:
-      path: "AGENTS.md"
-      lines: "11-16,27-28"
-      commit: "df4fea6aca28d3050189a1b19d91ad3d129a95cb"
+- rule: 'Follow the frontend data fetching architecture: UI components must use TanStack
+    Query hooks, never call API client methods directly. Query hooks follow the pattern
+    use[Resource] and are located in frontend/src/hooks/query/.'
+  source:
+    path: AGENTS.md
+    lines: 76-84
+    commit: df4fea6aca28d3050189a1b19d91ad3d129a95cb
+- rule: Add all i18n translations to frontend/src/i18n/translation.json with all supported
+    language keys, and add the corresponding I18nKey enum entry to frontend/src/i18n/declaration.ts.
+  source:
+    path: AGENTS.md
+    lines: 86-87,98-99
+    commit: df4fea6aca28d3050189a1b19d91ad3d129a95cb
+- rule: 'Before making changes, run make install-pre-commit-hooks. Frontend changes
+    must pass linting and build: cd frontend && npm run lint:fix && npm run build.'
+  source:
+    path: AGENTS.md
+    lines: 11-16,27-28
+    commit: df4fea6aca28d3050189a1b19d91ad3d129a95cb
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: The gold solution exclusively modifies frontend files (e.g., `frontend/src/components/features/org/claim-button.tsx`),
+    which triggers the requirement to run the frontend-specific lint and build comman
+  category: tooling
+distractors:
+- rule: Run `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
+    if you've made changes to the backend.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run the Python pre-commit hooks to ensure
+    overall code quality before finishing, but this PR only modifies TypeScript/React
+    frontend files, making the Python pre-commit check irrelevant.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 17-17
+- rule: Store design documents and temporary artifacts in a `.pr/` directory at the
+    repository root.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a `.pr/design.md` or `.pr/notes.md` to plan
+    the new Git Conversation Routing components and hooks, but this is a standard
+    feature implementation that doesn't require temporary PR artifacts.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 51-57
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `make build` to set up the entire repo including
+    the backend, but this PR only requires frontend development and testing, making
+    a full backend build an unnecessary waste of time and compute.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-9
+hierarchy_analysis: The `AGENTS.md` file provides repository-wide instructions. Since
+  there are no deeper config files provided, all rules from `AGENTS.md` apply. The
+  agent must carefully distinguish between frontend and backend workflows, applying
+  only the frontend-specific linting and building commands while ignoring Python/backend
+  instructions.

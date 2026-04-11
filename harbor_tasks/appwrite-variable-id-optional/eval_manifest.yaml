@@ -4,93 +4,122 @@ source_pr:
   number: 11795
   merge_commit: 597b20a6cb2eb3cc93a5a25814f2ec39b35cd3cd
   base_commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
-
 task:
   name: appwrite-variable-id-optional
-  title: "Make variableId optional in createProjectVariable endpoint"
-  description: |
-    Fix a bug where creating a global project variable fails with "Param 'variableId' is not optional"
+  title: Make variableId optional in createProjectVariable endpoint
+  description: 'Fix a bug where creating a global project variable fails with "Param
+    ''variableId'' is not optional"
+
     because the endpoint incorrectly requires variableId as a mandatory parameter.
+
+    '
   primary_language: php
   difficulty: easy
-
 agent_config:
   source_files:
-    - CLAUDE.md
-    - AGENTS.md
-    - src/Appwrite/Platform/AGENTS.md
-
+  - CLAUDE.md
+  - AGENTS.md
+  - src/Appwrite/Platform/AGENTS.md
   checks:
-    - id: test_php_syntax_valid
-      description: "PHP file has valid syntax and compiles"
-      origin: code_behavior
-      file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
-      points: 0.25
-
-    - id: test_variable_id_param_optional_with_unique_default
-      description: "variableId param has default 'unique()' and is marked optional"
-      origin: code_behavior
-      file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
-      points: 0.25
-
-    - id: test_variable_id_matches_function_and_sites_behavior
-      description: "variableId param uses CustomId validator with unique() default"
-      origin: code_behavior
-      file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
-      points: 0.25
-
-    - id: test_variable_id_param_not_required
-      description: "variableId param optional flag is explicitly set to true"
-      origin: code_behavior
-      file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
-      points: 0.25
-
-    # Pass-to-Pass tests (Repo CI/CD checks)
-    - id: test_repo_composer_validate
-      type: pass_to_pass
-      description: "Repo's composer.json passes validation"
-      origin: repo_tests
-      points: 0
-
-    - id: test_repo_php_syntax_all
-      type: pass_to_pass
-      description: "All PHP files in Variables module have valid syntax"
-      origin: repo_tests
-      points: 0
-
-    - id: test_repo_pint_lint
-      type: pass_to_pass
-      description: "Repo passes PSR-12 lint checks (Laravel Pint)"
-      origin: repo_tests
-      points: 0
-
-    - id: test_repo_phpstan_variables
-      type: pass_to_pass
-      description: "Modified file passes PHPStan level 3 static analysis"
-      origin: repo_tests
-      points: 0
-
-    - id: test_repo_unit_custom_id
-      type: pass_to_pass
-      description: "CustomId validator unit tests pass"
-      origin: repo_tests
-      points: 0
-
+  - id: test_php_syntax_valid
+    description: PHP file has valid syntax and compiles
+    origin: code_behavior
+    file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
+    points: 0.25
+  - id: test_variable_id_param_optional_with_unique_default
+    description: variableId param has default 'unique()' and is marked optional
+    origin: code_behavior
+    file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
+    points: 0.25
+  - id: test_variable_id_matches_function_and_sites_behavior
+    description: variableId param uses CustomId validator with unique() default
+    origin: code_behavior
+    file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
+    points: 0.25
+  - id: test_variable_id_param_not_required
+    description: variableId param optional flag is explicitly set to true
+    origin: code_behavior
+    file: src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php
+    points: 0.25
+  - id: test_repo_composer_validate
+    type: pass_to_pass
+    description: Repo's composer.json passes validation
+    origin: repo_tests
+    points: 0
+  - id: test_repo_php_syntax_all
+    type: pass_to_pass
+    description: All PHP files in Variables module have valid syntax
+    origin: repo_tests
+    points: 0
+  - id: test_repo_pint_lint
+    type: pass_to_pass
+    description: Repo passes PSR-12 lint checks (Laravel Pint)
+    origin: repo_tests
+    points: 0
+  - id: test_repo_phpstan_variables
+    type: pass_to_pass
+    description: Modified file passes PHPStan level 3 static analysis
+    origin: repo_tests
+    points: 0
+  - id: test_repo_unit_custom_id
+    type: pass_to_pass
+    description: CustomId validator unit tests pass
+    origin: repo_tests
+    points: 0
 rubric:
-  - rule: "Follow the Action pattern for HTTP endpoints. Param definitions should use ->param(name, default, validator, description, optional, injections) structure."
-    source:
-      path: "AGENTS.md"
-      lines: "79-96"
-      commit: "20f80ac067e0042ea05ac9566f0a9ff1624bf3b2"
-
-  - rule: "Optional parameters should have appropriate defaults. For ID fields that should be auto-generated, use 'unique()' as the default value."
-    source:
-      path: "AGENTS.md"
-      lines: "93-96"
-      commit: "20f80ac067e0042ea05ac9566f0a9ff1624bf3b2"
-
-  - rule: "HTTP endpoint files must follow strict naming: only Create.php, Get.php, Update.php, Delete.php, or XList.php allowed."
-    source:
-      path: "src/Appwrite/Platform/AGENTS.md"
-      lines: "29-33"
-      commit: "20f80ac067e0042ea05ac9566f0a9ff1624bf3b2"
+- rule: Follow the Action pattern for HTTP endpoints. Param definitions should use
+    ->param(name, default, validator, description, optional, injections) structure.
+  source:
+    path: AGENTS.md
+    lines: 79-96
+    commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+- rule: Optional parameters should have appropriate defaults. For ID fields that should
+    be auto-generated, use 'unique()' as the default value.
+  source:
+    path: AGENTS.md
+    lines: 93-96
+    commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+- rule: 'HTTP endpoint files must follow strict naming: only Create.php, Get.php,
+    Update.php, Delete.php, or XList.php allowed.'
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 29-33
+    commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+- rule: Inside Http directories for services, file names can only be Get.php, Update.php,
+    Create.php, Delete.php or XList.php.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 30-34
+  evidence: The file being modified is `src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php`,
+    adhering to the strict naming convention that HTTP endpoint files must be named
+    `Create.php`, `Get
+  category: naming
+- rule: Action pattern (HTTP endpoints) uses a fluent interface in the constructor
+    to define HTTP method, path, description, and parameters.
+  source:
+    path: AGENTS.md
+    lines: 48-66
+  evidence: The gold solution modifies the `->param()` definition inside the `__construct()`
+    method of the `Create` action class, preserving the fluent builder pattern used
+    for defining endpoint parameters.
+  category: architecture
+distractors:
+- rule: Action pattern example showing ID parameters as required with an empty string
+    default.
+  collision_type: would_cause_bug
+  why_distracting: The Action pattern example demonstrates an ID parameter defined
+    as `->param('teamId', '', new CustomId(), 'Team ID.')`. This uses an empty string
+    `''` as the default value and omits the 5th argument (making it required by default).
+    If the agent strictly follows this pattern for `variableId`, it will fail to make
+    the parameter optional and fail to set the default to `'unique()'`, which is the
+    exact fix required for the bug.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 48-66
+hierarchy_analysis: The hierarchy consists of `AGENTS.md` at the root and `src/Appwrite/Platform/AGENTS.md`
+  at the module level. Both reinforce the same architectural patterns for HTTP endpoints
+  (Action classes, specific file names). The root `AGENTS.md` provides a code example
+  for the Action pattern that could be misleading for this specific bug, as the bug
+  requires deviating from the standard required ID parameter shown in the example
+  to an optional one with a `'unique()'` default.

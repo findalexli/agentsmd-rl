@@ -3,128 +3,143 @@ source:
   pr_number: 13579
   base_commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
   merge_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
-  title: "APP-1115 Fix for AWS config (Minio) for feature branches"
-
+  title: APP-1115 Fix for AWS config (Minio) for feature branches
 checks:
-  # Pass-to-pass tests: verify repo CI/CD checks pass on base and after fix
-  - id: test_repo_python_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file has valid Python syntax"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on target file"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff formatting passes on target file"
-
-  - id: test_repo_unit_test_file_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit test file for aws_event_service has valid Python syntax"
-
-  - id: test_repo_test_config_file_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's event service config test file has valid Python syntax"
-
-  - id: test_repo_file_is_git_tracked
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file is tracked in git repo"
-
-  - id: test_repo_unit_tests_aws_event_service
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for aws_event_service pass"
-
-  - id: test_repo_unit_tests_config_event_service_selection
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for event service config selection pass"
-
-  # Fail-to-pass tests: verify the bug fix works
-  - id: test_pydantic_field_import_present
-    type: fail_to_pass
-    origin: task_test
-    description: "Module imports pydantic Field"
-
-  - id: test_injector_uses_self_endpoint_url
-    type: fail_to_pass
-    origin: task_test
-    description: "Injector uses self.endpoint_url instead of os.getenv in inject method"
-
-  - id: test_get_default_aws_endpoint_url_function_exists
-    type: fail_to_pass
-    origin: task_test
-    description: "_get_default_aws_endpoint_url function exists"
-
-  - id: test_get_default_aws_endpoint_url_function_structure
-    type: fail_to_pass
-    origin: task_test
-    description: "_get_default_aws_endpoint_url function handles secure and insecure properly"
-
-  - id: test_get_default_aws_endpoint_url_returns_none_when_no_env
-    type: fail_to_pass
-    origin: task_test
-    description: "Function returns None when AWS_S3_ENDPOINT not set"
-
-  - id: test_get_default_aws_endpoint_url_handles_https_secure
-    type: fail_to_pass
-    origin: task_test
-    description: "Function handles https:// with secure=true"
-
-  - id: test_get_default_aws_endpoint_url_handles_http_insecure
-    type: fail_to_pass
-    origin: task_test
-    description: "Function handles http:// with secure=false"
-
-  - id: test_get_default_aws_endpoint_url_converts_protocol
-    type: fail_to_pass
-    origin: task_test
-    description: "Function converts protocol based on secure setting"
-
-  - id: test_injector_has_endpoint_url_field
-    type: fail_to_pass
-    origin: task_test
-    description: "Injector class has endpoint_url field"
-
-  - id: test_injector_endpoint_url_type
-    type: fail_to_pass
-    origin: task_test
-    description: "endpoint_url field has correct type annotation str | None"
-
-  - id: test_injector_endpoint_url_has_default_factory
-    type: fail_to_pass
-    origin: task_test
-    description: "endpoint_url field has default_factory using _get_default_aws_endpoint_url"
-
-  - id: test_injector_endpoint_url_not_required
-    type: fail_to_pass
-    origin: task_test
-    description: "endpoint_url field is not required (has default)"
-
-# Agent config rules (from AGENTS.md)
+- id: test_repo_python_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file has valid Python syntax
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on target file
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatting passes on target file
+- id: test_repo_unit_test_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit test file for aws_event_service has valid Python syntax
+- id: test_repo_test_config_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's event service config test file has valid Python syntax
+- id: test_repo_file_is_git_tracked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file is tracked in git repo
+- id: test_repo_unit_tests_aws_event_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for aws_event_service pass
+- id: test_repo_unit_tests_config_event_service_selection
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for event service config selection pass
+- id: test_pydantic_field_import_present
+  type: fail_to_pass
+  origin: task_test
+  description: Module imports pydantic Field
+- id: test_injector_uses_self_endpoint_url
+  type: fail_to_pass
+  origin: task_test
+  description: Injector uses self.endpoint_url instead of os.getenv in inject method
+- id: test_get_default_aws_endpoint_url_function_exists
+  type: fail_to_pass
+  origin: task_test
+  description: _get_default_aws_endpoint_url function exists
+- id: test_get_default_aws_endpoint_url_function_structure
+  type: fail_to_pass
+  origin: task_test
+  description: _get_default_aws_endpoint_url function handles secure and insecure
+    properly
+- id: test_get_default_aws_endpoint_url_returns_none_when_no_env
+  type: fail_to_pass
+  origin: task_test
+  description: Function returns None when AWS_S3_ENDPOINT not set
+- id: test_get_default_aws_endpoint_url_handles_https_secure
+  type: fail_to_pass
+  origin: task_test
+  description: Function handles https:// with secure=true
+- id: test_get_default_aws_endpoint_url_handles_http_insecure
+  type: fail_to_pass
+  origin: task_test
+  description: Function handles http:// with secure=false
+- id: test_get_default_aws_endpoint_url_converts_protocol
+  type: fail_to_pass
+  origin: task_test
+  description: Function converts protocol based on secure setting
+- id: test_injector_has_endpoint_url_field
+  type: fail_to_pass
+  origin: task_test
+  description: Injector class has endpoint_url field
+- id: test_injector_endpoint_url_type
+  type: fail_to_pass
+  origin: task_test
+  description: endpoint_url field has correct type annotation str | None
+- id: test_injector_endpoint_url_has_default_factory
+  type: fail_to_pass
+  origin: task_test
+  description: endpoint_url field has default_factory using _get_default_aws_endpoint_url
+- id: test_injector_endpoint_url_not_required
+  type: fail_to_pass
+  origin: task_test
+  description: endpoint_url field is not required (has default)
 agent_config:
-  - source: AGENTS.md
-    rules:
-      - "Run pre-commit hooks before pushing changes: pre-commit run --config ./dev_config/python/.pre-commit-config.yaml"
-      - "Write tests with pytest for new code"
-
-# Rubric for soft/subjective checks
+- source: AGENTS.md
+  rules:
+  - 'Run pre-commit hooks before pushing changes: pre-commit run --config ./dev_config/python/.pre-commit-config.yaml'
+  - Write tests with pytest for new code
 rubric:
-  - rule: "Follow existing code style and patterns in the target file. Type annotations should use modern Python syntax (e.g., str | None)."
-    source:
-      path: "AGENTS.md"
-      lines: "76-80"
-      commit: "c9b2ce2fb9c61313d80643a489f81728bb9f5b09"
-
-  - rule: "Use Pydantic Field with default_factory for configuration fields that depend on environment variables or dynamic defaults."
-    source:
-      path: "AGENTS.md"
-      lines: "76-80"
-      commit: "c9b2ce2fb9c61313d80643a489f81728bb9f5b09"
+- rule: Follow existing code style and patterns in the target file. Type annotations
+    should use modern Python syntax (e.g., str | None).
+  source:
+    path: AGENTS.md
+    lines: 76-80
+    commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
+- rule: Use Pydantic Field with default_factory for configuration fields that depend
+    on environment variables or dynamic defaults.
+  source:
+    path: AGENTS.md
+    lines: 76-80
+    commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
+- rule: Ensure lint errors (like Ruff formatting issues) are fixed before pushing
+    changes.
+  source:
+    path: AGENTS.md
+    lines: 17-28
+  evidence: The gold solution explicitly runs `ruff format` on the modified file to
+    ensure there are no formatting issues before finishing.
+  category: tooling
+- rule: Backend code for the V1 application server is located in `openhands/app_server/`.
+  source:
+    path: AGENTS.md
+    lines: 58-60
+  evidence: The gold solution correctly targets and modifies `openhands/app_server/event/aws_event_service.py`,
+    adhering to the backend directory structure.
+  category: architecture
+distractors:
+- rule: Store design documents, analysis, or temporary artifacts in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a `.pr/notes.md` or `.pr/design.md` to document
+    its plan for fixing the S3 endpoint URL. This is a straightforward bug fix that
+    does not require temporary PR artifacts, and creating them would be wasted effort.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 36-45
+- rule: Run the full application using `make build && make run` to debug issues.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run `make build && make run` to start the
+    full application and debug the URL parsing logic. This is unnecessary for a simple,
+    unit-testable string manipulation fix and would waste significant time and compute
+    resources.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-12
+hierarchy_analysis: The repository has a single root-level configuration file (`AGENTS.md`).
+  The rules are straightforward, but the agent must exercise judgment regarding the
+  scope of the task to avoid over-engineering the solution (e.g., spinning up the
+  full app or creating PR design docs for a simple URL parsing fix).

@@ -83,38 +83,92 @@ rubric:
     path: .agents/skills/implementing-mcp-tools/SKILL.md
     lines: 70-108
     commit: 6fe1d5dafe2218c2e35121466285017ecadaed60
-  reference: "## Tool naming constraints\n\nTool names and feature identifiers are\n  \
-    validated at build time and in CI.\nViolations fail the build.\n\n### Tool names\n\
-    \n- **Format**: lowercase kebab-case \u2014 only `[a-z0-9-]`, no leading/trailing\
+  reference: "## Tool naming constraints\n\nTool names and feature identifiers are\n\
+    \  validated at build time and in CI.\nViolations fail the build.\n\n### Tool\
+    \ names\n\n- **Format**: lowercase kebab-case — only `[a-z0-9-]`, no leading/trailing\
     \ hyphens\n- **Length**: 52 characters or fewer\n- **Convention**: `domain-action`,\
     \ e.g. `cohorts-create`, `dashboard-get`, `feature-flags-list`\n\n### Feature\
-    \ identifiers\n\n- **Format**: lowercase snake*case \u2014 only `[a-z0-9*]`, must*\
-    start with a letter\n- **Convention**: should match the product folder name, e.g.\
+    \ identifiers\n\n- **Format**: lowercase snake*case — only `[a-z0-9*]`, must*start\
+    \ with a letter\n- **Convention**: should match the product folder name, e.g.\
     \ `error_tracking`, `feature_flags`\n\n### Why 52 characters?\n\nMCP clients enforce\
     \ different limits on tool names. The 52-char limit is the safe zone\nthat works\
-    \ across all known clients:\n\n| Client           | Limit                     \
-\            | Notes                                                           \
-\   |\n| ---------------- | ------------------------------ | --------------------------------------------------------------\
-\   |\n| MCP spec (draft) | 1\u2013128 chars, `[A-Za-z0-9_-.]` | Official recommendation,\
-    \ not enforced                            |\n| Claude Code      | 64 chars       \
-\                | Hard limit; prefixes tool names with `mcp____`              \
-\     |\n| Cursor           | 60 chars combined              | `server_name + tool_name`;\
-    \ tools over this are silently filtered |\n| OpenAI API       | `^[a-zA-Z0-9_-]+$`,\
-    \ 64 chars   | No dots allowed                                                 \
-\   |\n\nWith the server name \"posthog\" (7 chars) plus a separator, tool names\
-    \ must stay at\nor below 52 characters to fit within Cursor's 60-char combined limit.\n\
-    \n\n### CI enforcement\n\n- `pnpm --filter=@posthog/mcp lint-tool-names` \u2014\
-    \ validates length and pattern for YAML and JSON definitions\n- A vitest test validates\
-    \ all runtime `TOOL_MAP` and `GENERATED_TOOL_MAP` entries\n"
+    \ across all known clients:\n\n| Client           | Limit                    \
+    \             | Notes                                                        \
+    \      |\n| ---------------- | ------------------------------ | --------------------------------------------------------------\
+    \   |\n| MCP spec (draft) | 1–128 chars, `[A-Za-z0-9_-.]` | Official recommendation,\
+    \ not enforced                            |\n| Claude Code      | 64 chars   \
+    \                    | Hard limit; prefixes tool names with `mcp____`        \
+    \           |\n| Cursor           | 60 chars combined              | `server_name\
+    \ + tool_name`; tools over this are silently filtered |\n| OpenAI API       |\
+    \ `^[a-zA-Z0-9_-]+$`, 64 chars   | No dots allowed                           \
+    \                         |\n\nWith the server name \"posthog\" (7 chars) plus\
+    \ a separator, tool names must stay at\nor below 52 characters to fit within Cursor's\
+    \ 60-char combined limit.\n\n\n### CI enforcement\n\n- `pnpm --filter=@posthog/mcp\
+    \ lint-tool-names` — validates length and pattern for YAML and JSON definitions\n\
+    - A vitest test validates all runtime `TOOL_MAP` and `GENERATED_TOOL_MAP` entries\n"
 - rule: Handbook page documents feature identifier naming requirements
   source:
     path: docs/published/handbook/engineering/ai/implementing-mcp-tools.md
     lines: 191-213
     commit: 6fe1d5dafe2218c2e35121466285017ecadaed60
-  reference: "# .agents/skills/implementing-mcp-tools/SKILL.md\n## Tool naming constraints\n\
-    \nTool names and feature identifiers are validated at build time and in CI.\n\
-    Violations fail the build.\n\n### Tool names\n\n- **Format**: lowercase kebab-case\
-    \ \u2014 only `[a-z0-9-]`, no leading/trailing hyphens\n- **Length**: 52 characters\
-    \ or fewer\n- **Convention**: `domain-action`, e.g. `cohorts-create`, `dashboard-get`,\
-    \ `feature-flags-list`\n\n### Feature identifiers\n\n- **Format**: lowercase snake*case\
-    \ \u2014 only `[a-z0-9*]`, must sta"
+  reference: '# .agents/skills/implementing-mcp-tools/SKILL.md
+
+    ## Tool naming constraints
+
+
+    Tool names and feature identifiers are validated at build time and in CI.
+
+    Violations fail the build.
+
+
+    ### Tool names
+
+
+    - **Format**: lowercase kebab-case — only `[a-z0-9-]`, no leading/trailing hyphens
+
+    - **Length**: 52 characters or fewer
+
+    - **Convention**: `domain-action`, e.g. `cohorts-create`, `dashboard-get`, `feature-flags-list`
+
+
+    ### Feature identifiers
+
+
+    - **Format**: lowercase snake*case — only `[a-z0-9*]`, must sta'
+- rule: Agent instructions are maintained in the repository and updated alongside
+    code changes (categorized under 'chore').
+  source:
+    path: AGENTS.md
+    lines: 37-38
+  evidence: The gold solution updates the `.agents/skills/implementing-mcp-tools/SKILL.md`
+    file, treating agent instructions as maintainable documentation alongside the
+    codebase.
+  category: documentation
+distractors:
+- rule: 'All tests: `pytest`'
+  collision_type: rule_conflict
+  why_distracting: 'The prompt explicitly requests a vitest test for the MCP tool
+    names, which are in TypeScript (`services/mcp/tests/unit/tool-name-validation.test.ts`).
+    The `AGENTS.md` rule claims ''All tests: pytest'', which applies to the Python
+    backend but would cause the agent to write the wrong type of test or run the wrong
+    test command for the MCP service.'
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 14-15
+- rule: 'TypeScript check: `pnpm --filter=@posthog/frontend typescript:check`'
+  collision_type: architecture_boundary
+  why_distracting: The agent might assume that since it's modifying TypeScript files,
+    it should run typechecks using the `@posthog/frontend` filter. However, the MCP
+    service is a separate package (`@posthog/mcp`), and running frontend checks would
+    not validate the changes made in `services/mcp`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 24-25
+hierarchy_analysis: 'The `.cursorrules` file provides general behavioral instructions,
+  while `AGENTS.md` provides specific repository guidelines. However, `AGENTS.md`
+  is heavily biased towards the Python backend and the main React frontend, lacking
+  specific commands for the `services/mcp` package. The agent must override the ''All
+  tests: pytest'' rule from `AGENTS.md` based on the explicit prompt instruction to
+  use vitest for the MCP service.'

@@ -1,103 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28651
-  base_commit: "9804f55e762ada50e595e693361e3ed770d7796a"
-  merge_commit: "17616ae2444f1cc3c55fe5106119c9c79bc41bf3"
-
+  base_commit: 9804f55e762ada50e595e693361e3ed770d7796a
+  merge_commit: 17616ae2444f1cc3c55fe5106119c9c79bc41bf3
 checks:
-  - id: test_source_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "ErrorStackTrace.cpp must exist and be non-empty"
-
-  - id: test_delegates_to_interpreter_getStackTrace
-    type: fail_to_pass
-    origin: pr_diff
-    description: "getFramesForCaller must delegate to vm.interpreter.getStackTrace and remove old StackVisitor::visit walk"
-
-  - id: test_interpreter_header_included
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Must #include <JavaScriptCore/Interpreter.h> for getStackTrace delegation"
-
-  - id: test_async_frame_boundary_in_caller_search
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Must stop at async frame boundaries (isAsyncFrame) when scanning for caller"
-
-  - id: test_stack_trace_limit_after_caller_removal
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stackTraceLimit applied after caller removal (shrink), not during raw collection"
-
-  - id: test_post_filter_implementation_visibility
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Must filter frames with isImplementationVisibilityPrivate (regression guard)"
-
-  - id: test_function_signature_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "getFramesForCaller function signature must be preserved"
-
-  - id: test_sibling_functions_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "fromExisting and getStackTraceForThrownValue must not be deleted"
-
-  - id: test_caller_dual_matching
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Caller matching uses both cell identity and name-based matching"
-
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "getFramesForCaller has substantial non-trivial implementation"
-
-  - id: test_no_tabs_in_function
-    type: pass_to_pass
-    origin: agent_config
-    description: "No tabs in getFramesForCaller -- Bun C++ uses 4-space indent"
-    source:
-      path: "CLAUDE.md"
-      lines: "245"
-      commit: "9804f55e762ada50e595e693361e3ed770d7796a"
-
-  - id: test_config_h_included
-    type: pass_to_pass
-    origin: agent_config
-    description: "ErrorStackTrace.cpp must include config.h (file convention)"
-    source:
-      path: "CLAUDE.md"
-      lines: "245"
-      commit: "9804f55e762ada50e595e693361e3ed770d7796a"
-
-  # Repo CI/CD pass_to_pass tests - discovered from .github/workflows/
-  - id: test_cpp_file_clang_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ErrorStackTrace.cpp must pass clang-format check (WebKit style)"
-    source:
-      path: ".github/workflows/format.yml"
-      ci_command: "clang-format --dry-run --Werror src/bun.js/bindings/ErrorStackTrace.cpp"
-
-  - id: test_cpp_file_basic_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ErrorStackTrace.cpp must have valid C++ structure (includes present, no double semicolons)"
-    source:
-      path: ".github/workflows/lint.yml"
-      note: "Basic syntax validation derived from lint requirements"
-
-  - id: test_repo_configs_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository lint and format configs must exist and be non-empty"
-    source:
-      paths: [".github/workflows/lint.yml", ".github/workflows/format.yml"]
-      note: "Validates oxlint.json, .prettierrc, and .clang-tidy exist and are non-empty"
-
-rubric: []  # Empty - this is a pure code fix with no config/doc changes needed
+- id: test_source_file_exists
+  type: pass_to_pass
+  origin: static
+  description: ErrorStackTrace.cpp must exist and be non-empty
+- id: test_delegates_to_interpreter_getStackTrace
+  type: fail_to_pass
+  origin: pr_diff
+  description: getFramesForCaller must delegate to vm.interpreter.getStackTrace and
+    remove old StackVisitor::visit walk
+- id: test_interpreter_header_included
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Must #include <JavaScriptCore/Interpreter.h> for getStackTrace delegation'
+- id: test_async_frame_boundary_in_caller_search
+  type: fail_to_pass
+  origin: pr_diff
+  description: Must stop at async frame boundaries (isAsyncFrame) when scanning for
+    caller
+- id: test_stack_trace_limit_after_caller_removal
+  type: fail_to_pass
+  origin: pr_diff
+  description: stackTraceLimit applied after caller removal (shrink), not during raw
+    collection
+- id: test_post_filter_implementation_visibility
+  type: pass_to_pass
+  origin: pr_diff
+  description: Must filter frames with isImplementationVisibilityPrivate (regression
+    guard)
+- id: test_function_signature_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: getFramesForCaller function signature must be preserved
+- id: test_sibling_functions_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: fromExisting and getStackTraceForThrownValue must not be deleted
+- id: test_caller_dual_matching
+  type: pass_to_pass
+  origin: pr_diff
+  description: Caller matching uses both cell identity and name-based matching
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: getFramesForCaller has substantial non-trivial implementation
+- id: test_no_tabs_in_function
+  type: pass_to_pass
+  origin: agent_config
+  description: No tabs in getFramesForCaller -- Bun C++ uses 4-space indent
+  source:
+    path: CLAUDE.md
+    lines: '245'
+    commit: 9804f55e762ada50e595e693361e3ed770d7796a
+- id: test_config_h_included
+  type: pass_to_pass
+  origin: agent_config
+  description: ErrorStackTrace.cpp must include config.h (file convention)
+  source:
+    path: CLAUDE.md
+    lines: '245'
+    commit: 9804f55e762ada50e595e693361e3ed770d7796a
+- id: test_cpp_file_clang_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: ErrorStackTrace.cpp must pass clang-format check (WebKit style)
+  source:
+    path: .github/workflows/format.yml
+    ci_command: clang-format --dry-run --Werror src/bun.js/bindings/ErrorStackTrace.cpp
+- id: test_cpp_file_basic_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: ErrorStackTrace.cpp must have valid C++ structure (includes present,
+    no double semicolons)
+  source:
+    path: .github/workflows/lint.yml
+    note: Basic syntax validation derived from lint requirements
+- id: test_repo_configs_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository lint and format configs must exist and be non-empty
+  source:
+    paths:
+    - .github/workflows/lint.yml
+    - .github/workflows/format.yml
+    note: Validates oxlint.json, .prettierrc, and .clang-tidy exist and are non-empty
+rubric:
+- rule: Bun is written primarily in Zig with C++ for JavaScriptCore integration, powered
+    by WebKit's JavaScriptCore engine.
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+  evidence: The gold solution modifies `src/bun.js/bindings/ErrorStackTrace.cpp` and
+    includes `<JavaScriptCore/Interpreter.h>` to leverage WebKit's built-in stack
+    trace collection, aligning with the architectural
+  category: architecture
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates using `bun.*` APIs instead of `std.*` (e.g.,
+    avoiding `std.fs` or `std.posix`). This is a Zig-specific rule, but the file being
+    edited is C++. An agent might misinterpret this and try to avoid C++ `std::` namespaces
+    or look for non-existent C++ `bun::` wrappers, causing compilation errors or hallucinated
+    code.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 16-28
+- rule: 'Test Organization: find the best existing file to modify instead, such as
+    test/v8/ - V8 C++ API compatibility tests.'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt mentions `Error.captureStackTrace` is a V8 compatibility
+    API, and the config provides specific locations for V8 compatibility tests (`test/v8/`).
+    An agent might waste significant time trying to write and integrate a test suite
+    for the provided reproduction, but the gold solution strictly patches the C++
+    implementation without adding tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 40-51
+hierarchy_analysis: The root `CLAUDE.md` provides general project architecture and
+  testing guidelines, while `src/CLAUDE.md` provides highly specific Zig coding conventions.
+  Because the target file is C++, the Zig-specific rules in `src/CLAUDE.md` are completely
+  irrelevant and act as distractors. The agent must recognize the language boundary
+  and ignore the Zig rules when working in `src/bun.js/bindings/`.

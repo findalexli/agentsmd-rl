@@ -5,88 +5,111 @@ source:
     number: 102166
     merge_commit: 97e4a1a630071d7b2ec74b2639d0d6727f8034c9
     base_commit: 4bf498e9ee91f246ff50126e3f49427ab97c7dc3
-  description: |
-    Make mergeable check green for revert PRs by detecting "Reverts ClickHouse/"
+  description: 'Make mergeable check green for revert PRs by detecting "Reverts ClickHouse/"
+
     in the PR body and allowing merge when Fast test passes, even if other jobs failed.
 
+    '
 checks:
-  - id: test_revert_pr_detection_logic
-    type: fail_to_pass
-    origin: behavior
-    description: Revert PR detection pattern "Reverts ClickHouse/" in env.PR_BODY must exist
-    source: {}
-
-  - id: test_revert_pr_logic_branches
-    type: fail_to_pass
-    origin: behavior
-    description: Fast test failure detection with any() and not fast_test_failed condition must exist
-    source: {}
-
-  - id: test_revert_pr_pattern_placement
-    type: fail_to_pass
-    origin: behavior
-    description: Revert PR logic must be positioned between failed_results processing and enable_merge_ready_status
-    source: {}
-
-  - id: test_imports_available
-    type: pass_to_pass
-    origin: code_structure
-    description: Required imports (Result, _Environment) must be present
-    source: {}
-
-  - id: test_python_syntax_valid
-    type: pass_to_pass
-    origin: code_structure
-    description: native_jobs.py must have valid Python syntax
-    source: {}
-
-  - id: test_revert_pr_logic_unit
-    type: fail_to_pass
-    origin: behavior
-    description: Complete revert PR logic block with comment, condition, fast_test check, and status change
-    source: {}
-
-  # Pass-to-Pass tests (Repo CI/CD checks)
-  - id: test_repo_ci_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's CI pytest tests in ci/tests/ pass
-
-  - id: test_repo_python_syntax_native_jobs
-    type: pass_to_pass
-    origin: repo_tests
-    description: Python syntax check on ci/praktika/native_jobs.py passes
-
-  - id: test_repo_praktika_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: All Python files in ci/praktika have valid syntax
-
-  - id: test_repo_ci_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: CI directory structure is valid with all key files present
-
-  - id: test_repo_praktika_core_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: Core praktika modules (Result, ResultTranslator, _Environment) can be imported
-
+- id: test_revert_pr_detection_logic
+  type: fail_to_pass
+  origin: behavior
+  description: Revert PR detection pattern "Reverts ClickHouse/" in env.PR_BODY must
+    exist
+  source: {}
+- id: test_revert_pr_logic_branches
+  type: fail_to_pass
+  origin: behavior
+  description: Fast test failure detection with any() and not fast_test_failed condition
+    must exist
+  source: {}
+- id: test_revert_pr_pattern_placement
+  type: fail_to_pass
+  origin: behavior
+  description: Revert PR logic must be positioned between failed_results processing
+    and enable_merge_ready_status
+  source: {}
+- id: test_imports_available
+  type: pass_to_pass
+  origin: code_structure
+  description: Required imports (Result, _Environment) must be present
+  source: {}
+- id: test_python_syntax_valid
+  type: pass_to_pass
+  origin: code_structure
+  description: native_jobs.py must have valid Python syntax
+  source: {}
+- id: test_revert_pr_logic_unit
+  type: fail_to_pass
+  origin: behavior
+  description: Complete revert PR logic block with comment, condition, fast_test check,
+    and status change
+  source: {}
+- id: test_repo_ci_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CI pytest tests in ci/tests/ pass
+- id: test_repo_python_syntax_native_jobs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check on ci/praktika/native_jobs.py passes
+- id: test_repo_praktika_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in ci/praktika have valid syntax
+- id: test_repo_ci_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI directory structure is valid with all key files present
+- id: test_repo_praktika_core_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core praktika modules (Result, ResultTranslator, _Environment) can
+    be imported
 rubric:
-  - rule: "Use Allman-style braces (opening brace on a new line) when writing C++ code. This is enforced by the style check in CI."
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "145"
-      commit: "4bf498e9ee91f246ff50126e3f49427ab97c7dc3"
-
-  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks."
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "5"
-      commit: "4bf498e9ee91f246ff50126e3f49427ab97c7dc3"
-
-  - rule: "When working with a branch, do not use rebase or amend - add new commits instead. Do not commit to the master branch."
-    source:
-      path: ".claude/skills/continue-pr/SKILL.md"
-      lines: "249,252"
-      commit: "4bf498e9ee91f246ff50126e3f49427ab97c7dc3"
+- rule: Use Allman-style braces (opening brace on a new line) when writing C++ code.
+    This is enforced by the style check in CI.
+  source:
+    path: .claude/CLAUDE.md
+    lines: '145'
+    commit: 4bf498e9ee91f246ff50126e3f49427ab97c7dc3
+- rule: When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks.
+  source:
+    path: .claude/CLAUDE.md
+    lines: '5'
+    commit: 4bf498e9ee91f246ff50126e3f49427ab97c7dc3
+- rule: When working with a branch, do not use rebase or amend - add new commits instead.
+    Do not commit to the master branch.
+  source:
+    path: .claude/skills/continue-pr/SKILL.md
+    lines: 249,252
+    commit: 4bf498e9ee91f246ff50126e3f49427ab97c7dc3
+distractors:
+- rule: Links to ClickHouse CI should be analyzed using the tool at `.claude/tools/fetch_ci_report.js`
+  collision_type: meta_confusion
+  why_distracting: The task is to modify the CI pipeline code (`ci/praktika/native_jobs.py`)
+    to change how it evaluates PRs, not to analyze a specific CI run or report. Trying
+    to use the CI analysis tool would waste time and confuse the agent about whether
+    it's supposed to fix a test or fix the CI infrastructure.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 14-15
+- rule: When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks
+  collision_type: scope_ambiguity
+  why_distracting: "An agent might try to wrap 'Fast test' in backticks in the python\
+    \ comment (e.g., `# only \tFast test\t is required`), but 'Fast test' is a CI\
+    \ job name, not a SQL language element, class, function, or log excerpt. The gold\
+    \ solution correctly leaves it unformatted."
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 5-6
+hierarchy_analysis: The AGENTS.md file contains general repository guidelines, mostly
+  focused on documentation, commit messages, and CI analysis tools. Since this task
+  involves modifying the CI infrastructure itself rather than analyzing a CI run or
+  writing documentation, most rules are either irrelevant or act as distractors.

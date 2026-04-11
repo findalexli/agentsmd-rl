@@ -91,3 +91,31 @@ rubric:
     path: AGENTS.md
     lines: '45'
     commit: 0595d1b15ba6b7c47f68ddf7f79152b3d1d3c467
+distractors:
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  collision_type: architecture_boundary
+  why_distracting: The rule states that `js/` contains frontend code (Svelte/TypeScript).
+    An agent might try to fix the website font path issue by modifying Svelte components,
+    Vite configuration, or writing a URL-rewriting script inside `js/_website/`. However,
+    the correct architectural fix is to modify the Python theme generation script
+    (`scripts/generate_theme.py`) to output the correct URLs and update the `package.json`
+    to pass a flag.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-12
+- rule: 'Format your code before pushing. Frontend: `bash scripts/format_frontend.sh`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent modifies `js/_website/package.json` and might attempt
+    to run `bash scripts/format_frontend.sh` as instructed. Running this script could
+    format unrelated frontend files, polluting the PR with out-of-scope changes, or
+    fail if the agent's environment lacks the necessary Node.js dependencies.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 31-34
+hierarchy_analysis: The repository has a single `AGENTS.md` configuration file at
+  the root level. The rules are general and apply to the entire repository. The primary
+  challenge is interpreting architectural boundaries (Python backend vs. JS frontend)
+  when a Python script generates assets consumed by the JS frontend.

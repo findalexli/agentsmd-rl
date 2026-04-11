@@ -100,3 +100,35 @@ rubric:
 - id: agent_targeted_testing
   description: Prefer Nx targets over direct test runners for task dependencies
   source: AGENTS.md:45
+- rule: TypeScript strict mode with extensive type safety
+  source:
+    path: AGENTS.md
+    lines: 16-16
+  evidence: The gold solution uses optional chaining (`?.`) when accessing deeply
+    nested properties like `viteConfig.environments?.[VITE_ENVIRONMENT_NAMES.server]?.build`
+    and `serverEnv?.build` to prevent runtime
+  category: style
+distractors:
+- rule: Framework-agnostic core logic separated from React/Solid bindings
+  collision_type: architecture_boundary
+  why_distracting: An agent might misinterpret this rule and attempt to separate the
+    Vite plugin logic into React or Solid specific packages. However, Vite plugins
+    operate at build-time and the `start-plugin-core` package is already the correct
+    architectural boundary for this framework-agnostic bundler logic.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 17-17
+- rule: Use workspace protocol for internal dependencies (`workspace:*`)
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to update `package.json` to import `vite` using
+    the `workspace:*` protocol after importing it in `utils.ts`. This would fail because
+    `vite` is an external third-party dependency, not an internal monorepo package.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 19-19
+hierarchy_analysis: The AGENTS.md file provides high-level monorepo guidelines. Since
+  there are no deeper config files provided, these root-level rules apply directly.
+  The primary challenge is distinguishing between rules meant for the runtime library
+  (like framework-agnostic bindings) versus build-time tooling (like Vite plugins).

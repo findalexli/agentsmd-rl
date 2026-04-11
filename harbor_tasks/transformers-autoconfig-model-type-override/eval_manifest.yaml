@@ -1,125 +1,134 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45058
-  base_commit: "ce4a791c5277840c4c1d74eed03431b674869da5"
-  merge_commit: "44686173b26bb174f3c7eb6e59f08a338d1adf54"
-
+  base_commit: ce4a791c5277840c4c1d74eed03431b674869da5
+  merge_commit: 44686173b26bb174f3c7eb6e59f08a338d1adf54
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "configuration_utils.py must parse without errors"
-
-  - id: override_model_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Passing model_type kwarg overrides config_dict value when they differ"
-
-  - id: warning_on_override
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A warning is logged when model_type is overridden"
-
-  - id: no_warning_when_matching
-    type: pass_to_pass
-    origin: pr_diff
-    description: "No warning is logged when model_type kwarg matches config"
-
-  - id: no_override_when_matching
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Passing model_type that matches config does not change anything"
-
-  - id: normal_load_without_model_type_kwarg
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Loading config without model_type kwarg works unchanged"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "configuration_utils.py is not stubbed out"
-
-  - id: minimal_diff
-    type: fail_to_pass
-    origin: agent_config
-    description: "Fix should be brief — under 30 lines added"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "ce4a791c5277840c4c1d74eed03431b674869da5"
-
-  - id: ruff_style_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "configuration_utils.py must pass ruff style checks"
-    source:
-      path: "AGENTS.md"
-      lines: "2"
-      commit: "ce4a791c5277840c4c1d74eed03431b674869da5"
-
-  - id: test_repo_import_configuration_utils
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's configuration_utils module imports without errors"
-
-  - id: test_repo_pycompile_configuration_utils
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's configuration_utils.py compiles without syntax errors"
-
-  - id: test_repo_check_config_docstrings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's config docstrings check passes"
-
-  - id: test_repo_check_config_attributes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's config attributes check passes"
-
-  - id: test_repo_check_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's init files check passes"
-
-  - id: test_repo_check_dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's dummy objects check passes"
-
-  - id: test_repo_check_modeling_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's modeling file structure check passes"
-
-  - id: test_repo_check_pipeline_typing
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's pipeline type hints check passes"
-
-  - id: test_repo_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's public imports work correctly"
-
-  - id: test_repo_check_doc_toc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's documentation table of contents check passes"
-
-  - id: test_repo_check_doctest_list
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's doctest list check passes"
-
-  - id: test_repo_check_auto_mappings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's auto mappings sort check passes"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: configuration_utils.py must parse without errors
+- id: override_model_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Passing model_type kwarg overrides config_dict value when they differ
+- id: warning_on_override
+  type: fail_to_pass
+  origin: pr_diff
+  description: A warning is logged when model_type is overridden
+- id: no_warning_when_matching
+  type: pass_to_pass
+  origin: pr_diff
+  description: No warning is logged when model_type kwarg matches config
+- id: no_override_when_matching
+  type: pass_to_pass
+  origin: pr_diff
+  description: Passing model_type that matches config does not change anything
+- id: normal_load_without_model_type_kwarg
+  type: pass_to_pass
+  origin: pr_diff
+  description: Loading config without model_type kwarg works unchanged
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: configuration_utils.py is not stubbed out
+- id: minimal_diff
+  type: fail_to_pass
+  origin: agent_config
+  description: Fix should be brief — under 30 lines added
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: ce4a791c5277840c4c1d74eed03431b674869da5
+- id: ruff_style_check
+  type: pass_to_pass
+  origin: agent_config
+  description: configuration_utils.py must pass ruff style checks
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: ce4a791c5277840c4c1d74eed03431b674869da5
+- id: test_repo_import_configuration_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's configuration_utils module imports without errors
+- id: test_repo_pycompile_configuration_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's configuration_utils.py compiles without syntax errors
+- id: test_repo_check_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config docstrings check passes
+- id: test_repo_check_config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config attributes check passes
+- id: test_repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's init files check passes
+- id: test_repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dummy objects check passes
+- id: test_repo_check_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modeling file structure check passes
+- id: test_repo_check_pipeline_typing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pipeline type hints check passes
+- id: test_repo_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's public imports work correctly
+- id: test_repo_check_doc_toc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation table of contents check passes
+- id: test_repo_check_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's doctest list check passes
+- id: test_repo_check_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's auto mappings sort check passes
 rubric:
-  - rule: "The fix should be minimal and only touch configuration_utils.py without modifying any # Copied from blocks or generated files."
-    reference: "Add model_type override logic to _get_config_dict method in configuration_utils.py"
+- rule: 'The fix should be minimal and only touch configuration_utils.py without modifying
+    any # Copied from blocks or generated files.'
+  reference: Add model_type override logic to _get_config_dict method in configuration_utils.py
+- rule: No low-value busywork PRs
+  source:
+    path: CLAUDE.md
+    lines: 42-44
+  evidence: The gold solution implements a functional bug fix to allow `model_type`
+    overrides for inference frameworks, which is a substantive behavioral change rather
+    than a mechanical cleanup or typo fix.
+  category: architecture
+distractors:
+- rule: Fail-closed behavior for agents
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with generating a patch for a specific bug
+    in an evaluation setting. If it strictly follows the fail-closed policy requiring
+    coordination evidence, it will refuse to generate the patch and fail the evaluation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 57-60
+- rule: Copies and Modular Models
+  collision_type: architecture_boundary
+  why_distracting: The agent might mistakenly assume `configuration_utils.py` is subject
+    to the `# Copied from` synchronization mechanism and search for copies to update,
+    but this rule only applies to model-specific files in `src/transformers/models/`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 62-67
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  agent must navigate meta-instructions that forbid generating PR-ready output without
+  coordination evidence, which conflicts with the evaluation environment's goal of
+  producing a patch.

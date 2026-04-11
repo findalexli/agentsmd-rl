@@ -1,79 +1,73 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/vscode"
+  repo: microsoft/vscode
   pr: 306362
-  base_commit: "76258864c3a7669bd0254946543fe317959d1960"
-  merge_commit: "9f149cd91b0320b773744f56bb5604210369816e"
-
+  base_commit: 76258864c3a7669bd0254946543fe317959d1960
+  merge_commit: 9f149cd91b0320b773744f56bb5604210369816e
 checks:
-  - id: files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Both modified TypeScript files are present in the workspace"
-
-  - id: repo_tsfmt_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript formatter check (tsfmt --dry) passes on modified files"
-
-  - id: repo_tsfmt_check_widget
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript formatter check passes on ciStatusWidget.ts"
-
-  - id: model_file_parses
-    type: pass_to_pass
-    origin: repo_tests
-    description: "GitHubPullRequestCIModel.ts is valid TypeScript that parses without errors"
-
-  - id: widget_file_parses
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ciStatusWidget.ts is valid TypeScript that parses without errors"
-
-  - id: parse_workflow_run_id_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parseWorkflowRunId must be exported and callable from external modules"
-
-  - id: widget_imports_and_uses_parse_workflow_run_id
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ciStatusWidget.ts must successfully import and use parseWorkflowRunId (compiles)"
-
-  - id: gate_condition_checks_for_valid_workflow
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The 'Rerun Check' action is gated on parseWorkflowRunId returning non-undefined"
-
-  - id: parse_workflow_run_id_behavior
-    type: pass_to_pass
-    origin: static
-    description: "parseWorkflowRunId correctly extracts run IDs or returns undefined for diverse inputs"
-
-  - id: model_compiles_cleanly
-    type: pass_to_pass
-    origin: pr_diff
-    description: "The model TypeScript file compiles without errors"
-
-  - id: uses_tabs_not_spaces
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified code uses tabs for indentation, not spaces"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "72"
-      commit: "76258864c3a7669bd0254946543fe317959d1960"
-
+- id: files_exist
+  type: pass_to_pass
+  origin: static
+  description: Both modified TypeScript files are present in the workspace
+- id: repo_tsfmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript formatter check (tsfmt --dry) passes on modified
+    files
+- id: repo_tsfmt_check_widget
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript formatter check passes on ciStatusWidget.ts
+- id: model_file_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: GitHubPullRequestCIModel.ts is valid TypeScript that parses without
+    errors
+- id: widget_file_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: ciStatusWidget.ts is valid TypeScript that parses without errors
+- id: parse_workflow_run_id_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseWorkflowRunId must be exported and callable from external modules
+- id: widget_imports_and_uses_parse_workflow_run_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: ciStatusWidget.ts must successfully import and use parseWorkflowRunId
+    (compiles)
+- id: gate_condition_checks_for_valid_workflow
+  type: fail_to_pass
+  origin: pr_diff
+  description: The 'Rerun Check' action is gated on parseWorkflowRunId returning non-undefined
+- id: parse_workflow_run_id_behavior
+  type: pass_to_pass
+  origin: static
+  description: parseWorkflowRunId correctly extracts run IDs or returns undefined
+    for diverse inputs
+- id: model_compiles_cleanly
+  type: pass_to_pass
+  origin: pr_diff
+  description: The model TypeScript file compiles without errors
+- id: uses_tabs_not_spaces
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified code uses tabs for indentation, not spaces
+  source:
+    path: .github/copilot-instructions.md
+    lines: '72'
+    commit: 76258864c3a7669bd0254946543fe317959d1960
 rubric:
-  - rule: "Use JSDoc style comments for functions, interfaces, enums, and classes"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "89"
-      commit: "76258864c3a7669bd0254946543fe317959d1960"
-  - rule: "Do not export types or functions unless you need to share it across multiple components"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "84"
-      commit: "76258864c3a7669bd0254946543fe317959d1960"
+- rule: Use JSDoc style comments for functions, interfaces, enums, and classes
+  source:
+    path: .github/copilot-instructions.md
+    lines: '89'
+    commit: 76258864c3a7669bd0254946543fe317959d1960
+- rule: Do not export types or functions unless you need to share it across multiple
+    components
+  source:
+    path: .github/copilot-instructions.md
+    lines: '84'
+    commit: 76258864c3a7669bd0254946543fe317959d1960
+hierarchy_analysis: The provided configuration hierarchy contains no rules (0 rules
+  in AGENTS.md). Therefore, there are no hierarchical conflicts or overrides to analyze.

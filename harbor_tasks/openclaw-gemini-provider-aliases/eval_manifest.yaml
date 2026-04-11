@@ -1,202 +1,221 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 56567
-  base_commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-  merge_commit: "d1b0f8e8e2a9896713abe54c57fde40296a037b8"
-
+  base_commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+  merge_commit: d1b0f8e8e2a9896713abe54c57fde40296a037b8
 checks:
-  - id: repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's oxlint passes with 0 warnings/errors"
-
-  - id: repo_google_extension_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Google extension tests pass"
-
-  - id: repo_no_conflict_markers
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo has no conflict markers"
-
-  - id: repo_extension_no_src_outside_plugin_sdk
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Extensions don't import src/** outside plugin-sdk"
-
-  - id: repo_extension_no_relative_outside_package
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Extensions don't use relative imports escaping package"
-
-  - id: repo_extension_no_plugin_sdk_internal
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Extensions don't import plugin-sdk-internal"
-
-  - id: repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified TypeScript files are properly formatted"
-
-  - id: repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes for plugin-sdk types"
-
-  - id: repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's plugin-sdk types build passes"
-
-
-  - id: repo_google_shared_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Google shared utilities tests pass"
-
-  - id: repo_test_extension_google
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Google extension tests pass via CI test:extension wrapper"
-
-  - id: typescript_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files exist and have balanced braces"
-
-  - id: resolve_pro_for_alias_provider
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveGoogle31ForwardCompatModel resolves pro model for alias provider via cross-provider template lookup"
-
-  - id: resolve_flash_from_direct_provider
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveGoogle31ForwardCompatModel resolves flash from direct google templates"
-
-  - id: flash_lite_not_misclassified_as_flash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "flash-lite models resolve to their own template, not the broader flash prefix"
-
-  - id: runtime_provider_not_hardcoded
-    type: fail_to_pass
-    origin: pr_diff
-    description: "index.ts passes runtime ctx.provider instead of hardcoded 'google'"
-
-  - id: template_provider_id_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "resolveGoogle31ForwardCompatModel accepts templateProviderId for cross-provider lookup"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "provider-models.ts has substantial implementation logic"
-
-  - id: no_core_internal_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "Extension code must not import from core src/** internals"
-    source:
-      path: "CLAUDE.md"
-      lines: "16"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-nocheck directives in modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "104"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - id: no_explicit_any
-    type: pass_to_pass
-    origin: agent_config
-    description: "Avoid explicit 'any' type annotations; prefer real types or unknown"
-    source:
-      path: "CLAUDE.md"
-      lines: "102"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - id: no_extension_self_import
-    type: pass_to_pass
-    origin: agent_config
-    description: "Extension must not import itself via openclaw/plugin-sdk/google"
-    source:
-      path: "CLAUDE.md"
-      lines: "108"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - id: no_relative_imports_outside_package
-    type: pass_to_pass
-    origin: agent_config
-    description: "No relative imports that escape extensions/google/ package boundary"
-    source:
-      path: "CLAUDE.md"
-      lines: "109"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - id: no_dynamic_import_mixing
-    type: pass_to_pass
-    origin: agent_config
-    description: "Do not mix await import() and static import for the same module"
-    source:
-      path: "CLAUDE.md"
-      lines: "106"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - id: no_prototype_mutation
-    type: pass_to_pass
-    origin: agent_config
-    description: "No prototype mutation in production code"
-    source:
-      path: "CLAUDE.md"
-      lines: "111"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - id: no_ts_ignore
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-ignore inline TypeScript suppression directives in modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "104"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint passes with 0 warnings/errors
+- id: repo_google_extension_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Google extension tests pass
+- id: repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no conflict markers
+- id: repo_extension_no_src_outside_plugin_sdk
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions don't import src/** outside plugin-sdk
+- id: repo_extension_no_relative_outside_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions don't use relative imports escaping package
+- id: repo_extension_no_plugin_sdk_internal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions don't import plugin-sdk-internal
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files are properly formatted
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes for plugin-sdk types
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's plugin-sdk types build passes
+- id: repo_google_shared_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Google shared utilities tests pass
+- id: repo_test_extension_google
+  type: pass_to_pass
+  origin: repo_tests
+  description: Google extension tests pass via CI test:extension wrapper
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files exist and have balanced braces
+- id: resolve_pro_for_alias_provider
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveGoogle31ForwardCompatModel resolves pro model for alias provider
+    via cross-provider template lookup
+- id: resolve_flash_from_direct_provider
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveGoogle31ForwardCompatModel resolves flash from direct google
+    templates
+- id: flash_lite_not_misclassified_as_flash
+  type: fail_to_pass
+  origin: pr_diff
+  description: flash-lite models resolve to their own template, not the broader flash
+    prefix
+- id: runtime_provider_not_hardcoded
+  type: fail_to_pass
+  origin: pr_diff
+  description: index.ts passes runtime ctx.provider instead of hardcoded 'google'
+- id: template_provider_id_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveGoogle31ForwardCompatModel accepts templateProviderId for cross-provider
+    lookup
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: provider-models.ts has substantial implementation logic
+- id: no_core_internal_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Extension code must not import from core src/** internals
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck directives in modified files
+  source:
+    path: CLAUDE.md
+    lines: '104'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- id: no_explicit_any
+  type: pass_to_pass
+  origin: agent_config
+  description: Avoid explicit 'any' type annotations; prefer real types or unknown
+  source:
+    path: CLAUDE.md
+    lines: '102'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- id: no_extension_self_import
+  type: pass_to_pass
+  origin: agent_config
+  description: Extension must not import itself via openclaw/plugin-sdk/google
+  source:
+    path: CLAUDE.md
+    lines: '108'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- id: no_relative_imports_outside_package
+  type: pass_to_pass
+  origin: agent_config
+  description: No relative imports that escape extensions/google/ package boundary
+  source:
+    path: CLAUDE.md
+    lines: '109'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- id: no_dynamic_import_mixing
+  type: pass_to_pass
+  origin: agent_config
+  description: Do not mix await import() and static import for the same module
+  source:
+    path: CLAUDE.md
+    lines: '106'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- id: no_prototype_mutation
+  type: pass_to_pass
+  origin: agent_config
+  description: No prototype mutation in production code
+  source:
+    path: CLAUDE.md
+    lines: '111'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- id: no_ts_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-ignore inline TypeScript suppression directives in modified
+    files
+  source:
+    path: CLAUDE.md
+    lines: '104'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
 rubric:
-  - rule: "Prefer strict typing; avoid 'any'. Do not disable 'no-explicit-any'; prefer real types, 'unknown', or a narrow adapter/helper instead."
-    source:
-      path: "CLAUDE.md"
-      lines: "102-105"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "114"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - rule: "Keep files concise; extract helpers instead of V2 copies."
-    source:
-      path: "CLAUDE.md"
-      lines: "115"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - rule: "Use American spelling and grammar in code, comments, docs, and UI strings."
-    source:
-      path: "CLAUDE.md"
-      lines: "118"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
-  - rule: "Aim to keep files under ~700 LOC; guideline only — split or refactor when it improves clarity or testability."
-    source:
-      path: "CLAUDE.md"
-      lines: "116"
-      commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
+- rule: Prefer strict typing; avoid 'any'. Do not disable 'no-explicit-any'; prefer
+    real types, 'unknown', or a narrow adapter/helper instead.
+  source:
+    path: CLAUDE.md
+    lines: 102-105
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '114'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- rule: Keep files concise; extract helpers instead of V2 copies.
+  source:
+    path: CLAUDE.md
+    lines: '115'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- rule: Use American spelling and grammar in code, comments, docs, and UI strings.
+  source:
+    path: CLAUDE.md
+    lines: '118'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- rule: Aim to keep files under ~700 LOC; guideline only — split or refactor when
+    it improves clarity or testability.
+  source:
+    path: CLAUDE.md
+    lines: '116'
+    commit: 6be14ab388eb74cd100e43bf975aad78146ac220
+- rule: 'Tests: colocated `*.test.ts`.'
+  source:
+    path: CLAUDE.md
+    lines: 10-10
+  evidence: The gold solution creates the test file `extensions/google/provider-models.test.ts`
+    in the exact same directory as the source file `extensions/google/provider-models.ts`.
+  category: testing
+- rule: 'Import boundaries: extension production code should treat `openclaw/plugin-sdk/*`
+    plus local `api.ts` / `runtime-api.ts` barrels as the public surface.'
+  source:
+    path: CLAUDE.md
+    lines: 15-15
+  evidence: The gold solution imports `ProviderResolveDynamicModelContext`, `ProviderRuntimeModel`,
+    and `cloneFirstTemplateModel` exclusively from `openclaw/plugin-sdk/*` rather
+    than reaching into core `src/` dir
+  category: architecture
+distractors:
+- rule: For docs, UI copy, and picker lists, order services/providers alphabetically
+    unless the section is explicitly describing runtime behavior.
+  collision_type: would_cause_bug
+  why_distracting: The agent might attempt to sort the constants or the if/else prefix
+    matching branches alphabetically (`gemini-3.1-flash` before `gemini-3.1-flash-lite`).
+    Doing so would reintroduce the exact bug being fixed, as prefix matching requires
+    the longer, more specific string to be checked first.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 25-25
+- rule: 'Source code: `src/` (CLI wiring in `src/cli`, commands in `src/commands`,
+    web provider in `src/provider-web.ts`, infra in `src/infra`, media pipeline in
+    `src/media`).'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to move the modified files or the new test
+    file into a `src/` directory (e.g., `extensions/google/src/`), misunderstanding
+    that the `src/` rule applies to the core repository structure, whereas this plugin's
+    files are currently flat under `extensions/google/`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 9-9
+hierarchy_analysis: 'The configuration hierarchy consists of `CLAUDE.md` and `AGENTS.md`,
+  which contain identical rules. The primary challenge is correctly scoping the rules:
+  distinguishing between core repository conventions (like the `src/` directory structure)
+  and extension-specific conventions (like `openclaw/plugin-sdk/*` import boundaries
+  and flat directory structures).'

@@ -1,137 +1,171 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19445
-  base_commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-  merge_commit: "ff13524a531ebd196224551199c3cb0833c44c3c"
-
+  base_commit: e973bbf54a519566bfdccce3474178b26b163a6d
+  merge_commit: ff13524a531ebd196224551199c3cb0833c44c3c
 checks:
-  - id: no_mock_module_in_thread_test
-    type: fail_to_pass
-    origin: pr_diff
-    description: "thread.test.ts does not use mock.module() (leaks globally in Bun)"
-
-  - id: uses_spyon_for_mocking
-    type: fail_to_pass
-    origin: pr_diff
-    description: "thread.test.ts uses spyOn() on imported modules instead of mock.module()"
-
-  - id: setup_per_test_pattern
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Mocking happens per-test (in setup function/hook), not at module level"
-
-  - id: config_mock_filters_by_cwd
-    type: fail_to_pass
-    origin: pr_diff
-    description: "config.test.ts BunProc.run mock filters calls by working directory"
-
-  - id: mock_cleanup_in_lifecycle_hook
-    type: fail_to_pass
-    origin: agent_config
-    description: "thread.test.ts cleans up mocks in afterEach/afterAll"
-    source:
-      path: "AGENTS.md"
-      lines: "122"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - id: no_any_type_added
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changes do not introduce the any type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - id: no_try_catch_added
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changes do not introduce try/catch blocks"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - id: no_else_added
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changes do not introduce else statements"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - id: thread_test_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "thread.test.ts is not stubbed out"
-
-  - id: config_test_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "config.test.ts is not stubbed and has substantive mock logic"
-
-  - id: test_repo_thread_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's thread.test.ts passes"
-
-  - id: test_repo_config_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's config.test.ts passes"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes"
-
-  - id: test_repo_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's modified test files pass prettier formatting check"
-
+- id: no_mock_module_in_thread_test
+  type: fail_to_pass
+  origin: pr_diff
+  description: thread.test.ts does not use mock.module() (leaks globally in Bun)
+- id: uses_spyon_for_mocking
+  type: fail_to_pass
+  origin: pr_diff
+  description: thread.test.ts uses spyOn() on imported modules instead of mock.module()
+- id: setup_per_test_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mocking happens per-test (in setup function/hook), not at module level
+- id: config_mock_filters_by_cwd
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.test.ts BunProc.run mock filters calls by working directory
+- id: mock_cleanup_in_lifecycle_hook
+  type: fail_to_pass
+  origin: agent_config
+  description: thread.test.ts cleans up mocks in afterEach/afterAll
+  source:
+    path: AGENTS.md
+    lines: '122'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- id: no_any_type_added
+  type: pass_to_pass
+  origin: agent_config
+  description: Changes do not introduce the any type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- id: no_try_catch_added
+  type: pass_to_pass
+  origin: agent_config
+  description: Changes do not introduce try/catch blocks
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- id: no_else_added
+  type: pass_to_pass
+  origin: agent_config
+  description: Changes do not introduce else statements
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- id: thread_test_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: thread.test.ts is not stubbed out
+- id: config_test_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: config.test.ts is not stubbed and has substantive mock logic
+- id: test_repo_thread_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's thread.test.ts passes
+- id: test_repo_config_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config.test.ts passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modified test files pass prettier formatting check
 rubric:
-  - rule: "Avoid mocks as much as possible"
-    source:
-      path: "AGENTS.md"
-      lines: "122"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - rule: "Test actual implementation, do not duplicate logic into tests"
-    source:
-      path: "AGENTS.md"
-      lines: "123"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - rule: "Prefer `const` over `let`. Use ternaries or early returns instead of reassignment."
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - rule: "Prefer single word variable names where possible"
-    source:
-      path: "AGENTS.md"
-      lines: "14"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
-
-  - rule: "Prefer functional array methods (flatMap, filter, map) over for loops"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "e973bbf54a519566bfdccce3474178b26b163a6d"
+- rule: Avoid mocks as much as possible
+  source:
+    path: AGENTS.md
+    lines: '122'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- rule: Test actual implementation, do not duplicate logic into tests
+  source:
+    path: AGENTS.md
+    lines: '123'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- rule: Prefer single word variable names where possible
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: e973bbf54a519566bfdccce3474178b26b163a6d
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 84-96
+  evidence: The gold solution uses `if (input.directory) seen.tui.push(input.directory)`
+    without an `else` block in the `App.tui` mock implementation.
+  category: style
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 24-36
+  evidence: The gold solution uses the single-word variable name `input` for the parameter
+    in the `App.tui` mock implementation.
+  category: naming
+distractors:
+- rule: Avoid mocks as much as possible
+  collision_type: would_cause_bug
+  why_distracting: The rule says 'Avoid mocks as much as possible', but this test
+    fundamentally requires mocking dependencies like `App.tui` and `Rpc.client` to
+    isolate thread logic. Trying to remove all mocks instead of just switching from
+    `mock.module` to `spyOn` would break the test or require a massive rewrite.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 116-117
+- rule: Prefer ChildProcessSpawner.ChildProcessSpawner with ChildProcess.make(...)
+    instead of custom process wrappers.
+  collision_type: architecture_boundary
+  why_distracting: The problem mentions `BunProc.run` being mocked in `config.test.ts`.
+    An agent might try to refactor the actual implementation to use Effect's `ChildProcessSpawner`
+    instead of fixing the test's mock counting logic, crossing an architecture boundary
+    into Effect migration.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 45-46
+- rule: Use Effect.cached when multiple concurrent callers should share a single in-flight
+    computation
+  collision_type: scope_ambiguity
+  why_distracting: The problem mentions 'dedupes concurrent config dependency installs'.
+    An agent might try to implement `Effect.cached` to handle this deduplication,
+    but the deduplication is already implemented and the issue is purely about the
+    test's mock intercepting unrelated calls.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 52-53
+hierarchy_analysis: The hierarchy applies general TypeScript/Bun rules at the root,
+  Effect/Drizzle rules in the package, and test fixture rules in the test directory.
+  The primary conflict arises from the root rule 'Avoid mocks as much as possible'
+  conflicting with the necessity of mocking in these specific tests. Additionally,
+  the package-level Effect migration rules act as distractors because the problem
+  mentions concepts like 'concurrent installs' and 'process running' which have Effect
+  equivalents, but the task is strictly to fix test flakiness in existing non-Effect
+  or already-implemented code.

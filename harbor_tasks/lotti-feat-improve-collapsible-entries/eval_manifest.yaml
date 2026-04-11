@@ -65,3 +65,44 @@ rubric:
     path: AGENTS.md
     lines: '113'
     commit: 1da86998cfa8f8bd27483b8e698fd38d88e6193f
+- rule: 'Files: `lower_snake_case.dart`'
+  source:
+    path: AGENTS.md
+    lines: 23-24
+  evidence: The gold solution modifies files like `entry_detail_header.dart`, `entry_details_widget.dart`,
+    and `collapsible_section.dart`, which strictly follow the lower_snake_case naming
+    convention.
+  category: naming
+- rule: '`lib/` — Flutter/Dart source (features, services, widgets). Do not edit generated
+    files (`*.g.dart`, `*.freezed.dart`).'
+  source:
+    path: AGENTS.md
+    lines: 4-5
+  evidence: The gold solution only modifies standard Dart files in `lib/features/`
+    and `lib/widgets/` and avoids touching any generated files.
+  category: architecture
+distractors:
+- rule: 'Test-first workflow when adding/fixing tests: ... Run targeted tests (single
+    file or folder) via `dart-mcp.run_tests` before broad runs.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write unit tests for the scroll jumpiness
+    or animation alignment. These are purely visual/UI behaviors that are difficult
+    to unit test effectively, and the gold solution does not include any test modifications.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 68-72
+- rule: Update docs and localization as needed (run `make l10n`).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think that removing the duplicate date or changing
+    the header layout requires updating localization files or running `make l10n`.
+    However, this PR only involves moving existing widgets and does not introduce
+    or remove translatable strings.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 40-42
+hierarchy_analysis: The repository uses a single `AGENTS.md` file at the root level.
+  There are no conflicting child configurations, so the root rules apply universally.
+  The primary challenge is interpreting the scope of testing and localization rules
+  for purely visual UI fixes.

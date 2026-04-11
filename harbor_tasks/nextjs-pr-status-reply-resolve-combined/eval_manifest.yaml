@@ -1,78 +1,117 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92450
-  base_commit: "fea754747872122d167dd8bf1fc5581044e50521"
-  merge_commit: "6d572c27e01cbdb19dfbdf5bce94604229478088"
-
+  base_commit: fea754747872122d167dd8bf1fc5581044e50521
+  merge_commit: 6d572c27e01cbdb19dfbdf5bce94604229478088
 checks:
-  - id: reply_and_resolve_subcommand_no_args
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reply-and-resolve-thread subcommand exists and prints usage when called without args"
-
-  - id: reply_and_resolve_subcommand_missing_body
-    type: fail_to_pass
-    origin: pr_diff
-    description: "reply-and-resolve-thread requires both threadId and body args"
-
-  - id: generate_thread_md_includes_combined_command
-    type: fail_to_pass
-    origin: pr_diff
-    description: "generateThreadMd outputs the reply-and-resolve-thread command for unresolved threads"
-
-  - id: reply_to_thread_uses_rest_api
-    type: fail_to_pass
-    origin: pr_diff
-    description: "replyToThread uses REST API endpoint instead of GraphQL mutation"
-
-  - id: syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "scripts/pr-status.js must parse without syntax errors (node --check)"
-
-  - id: reply_thread_usage_error
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing reply-thread subcommand still validates args correctly"
-
-  - id: resolve_thread_usage_error
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing resolve-thread subcommand still validates args correctly"
-
-  - id: repo_prettier_pr_status
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier check passes on scripts/pr-status.js"
-
-  - id: repo_ast_grep_pr_status
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ast-grep scan passes on scripts/pr-status.js (no pattern violations)"
-
-  - id: skill_md_thread_interaction_commands
-    type: fail_to_pass
-    origin: agent_config
-    description: "SKILL.md must document thread interaction commands including the combined command"
-    source:
-      path: ".agents/skills/pr-status-triage/SKILL.md"
-      lines: "22"
-      commit: "fea754747872122d167dd8bf1fc5581044e50521"
-
-  - id: workflow_md_one_step_resolve
-    type: fail_to_pass
-    origin: agent_config
-    description: "workflow.md must document the one-step reply-and-resolve alternative"
-    source:
-      path: ".agents/skills/pr-status-triage/workflow.md"
-      lines: "29-44"
-      commit: "fea754747872122d167dd8bf1fc5581044e50521"
-
+- id: reply_and_resolve_subcommand_no_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: reply-and-resolve-thread subcommand exists and prints usage when called
+    without args
+- id: reply_and_resolve_subcommand_missing_body
+  type: fail_to_pass
+  origin: pr_diff
+  description: reply-and-resolve-thread requires both threadId and body args
+- id: generate_thread_md_includes_combined_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateThreadMd outputs the reply-and-resolve-thread command for unresolved
+    threads
+- id: reply_to_thread_uses_rest_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: replyToThread uses REST API endpoint instead of GraphQL mutation
+- id: syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/pr-status.js must parse without syntax errors (node --check)
+- id: reply_thread_usage_error
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing reply-thread subcommand still validates args correctly
+- id: resolve_thread_usage_error
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing resolve-thread subcommand still validates args correctly
+- id: repo_prettier_pr_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier check passes on scripts/pr-status.js
+- id: repo_ast_grep_pr_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ast-grep scan passes on scripts/pr-status.js (no pattern violations)
+- id: skill_md_thread_interaction_commands
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md must document thread interaction commands including the combined
+    command
+  source:
+    path: .agents/skills/pr-status-triage/SKILL.md
+    lines: '22'
+    commit: fea754747872122d167dd8bf1fc5581044e50521
+- id: workflow_md_one_step_resolve
+  type: fail_to_pass
+  origin: agent_config
+  description: workflow.md must document the one-step reply-and-resolve alternative
+  source:
+    path: .agents/skills/pr-status-triage/workflow.md
+    lines: 29-44
+    commit: fea754747872122d167dd8bf1fc5581044e50521
 rubric:
-  - rule: "After addressing review comments, reply to the thread describing what was done, then resolve it. Use reply-and-resolve-thread to do both in one step, or use reply-thread + resolve-thread separately."
-    source:
-      path: ".agents/skills/pr-status-triage/SKILL.md"
-      lines: "22"
-      commit: "fea754747872122d167dd8bf1fc5581044e50521"
+- rule: After addressing review comments, reply to the thread describing what was
+    done, then resolve it. Use reply-and-resolve-thread to do both in one step, or
+    use reply-thread + resolve-thread separately.
+  source:
+    path: .agents/skills/pr-status-triage/SKILL.md
+    lines: '22'
+    commit: fea754747872122d167dd8bf1fc5581044e50521
+- rule: 'Codebase structure: `scripts/` is designated for build and maintenance scripts.'
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+  evidence: The gold solution correctly modifies `scripts/pr-status.js` which is located
+    in the `scripts/` directory, aligning with the architectural definition that this
+    directory is for maintenance scripts.
+  category: architecture
+- rule: Read local documentation (like READMEs or skill docs) to identify and follow
+    local patterns and conventions before editing files in a subdirectory.
+  source:
+    path: CLAUDE.md
+    lines: 40-42
+  evidence: The gold solution updates `.agents/skills/pr-status-triage/SKILL.md` and
+    `workflow.md` by seamlessly integrating the new command into the existing 'Quick
+    Commands' and 'Resolving Review Threads' secti
+  category: documentation
+distractors:
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start `pnpm --filter=next dev` in a separate terminal session before making edits.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might start the Next.js dev server (`pnpm --filter=next
+    dev`) because it is editing a JavaScript file. However, `scripts/pr-status.js`
+    is a standalone Node.js maintenance script, not part of the Next.js framework
+    source (`packages/next/src/`). Starting the dev server is unnecessary and wastes
+    time.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 60-62
+- rule: 'Always run a full bootstrap build after switching branches: `pnpm build-all`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `pnpm build-all` to ensure the workspace is
+    bootstrapped after checking out the branch. Since the changes are strictly isolated
+    to a standalone script and markdown files, a full build of the JS and Rust code
+    is completely unnecessary and would waste significant time.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 81-85
+hierarchy_analysis: 'The configuration relies on a single root-level `CLAUDE.md` (symlinked
+  to `AGENTS.md`). The primary challenge is scope ambiguity: the config heavily emphasizes
+  Next.js core development workflows (dev servers, Rust/JS builds, test isolation),
+  but this PR is strictly modifying a standalone maintenance script and agent skill
+  documentation. Agents must correctly identify that `scripts/` falls outside the
+  ''Next.js source'' scope to avoid triggering expensive and irrelevant build/dev
+  commands.'

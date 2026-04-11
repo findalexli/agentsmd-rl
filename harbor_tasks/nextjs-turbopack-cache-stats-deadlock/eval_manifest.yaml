@@ -1,103 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91742
-  base_commit: "b5cb015c5f94088cf0211613051fb696b67cddda"
-  merge_commit: "78f162568634798de281a27889fa313bae8513d6"
-
+  base_commit: b5cb015c5f94088cf0211613051fb696b67cddda
+  merge_commit: 78f162568634798de281a27889fa313bae8513d6
 checks:
-  - id: test_source_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "Required source files exist and mod.rs is not stubbed"
-
-  - id: test_deadlock_pattern_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "self.get_task_name removed from stats.entry() calls and cfg blocks; stats code preserved"
-
-  - id: test_task_name_from_storage
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Task name derived from storage reference (inner), not self (which re-locks)"
-
-  - id: test_cargo_feature_split
-    type: fail_to_pass
-    origin: pr_diff
-    description: "print_cache_item_size decoupled from lzzzz; separate feature for compressed reporting"
-
-  - id: test_add_counts_covers_data
-    type: fail_to_pass
-    origin: pr_diff
-    description: "add_counts triggered on data OR meta modified, not meta-only"
-
-  - id: test_formatsizes_struct_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FormatSizes helper struct exists for DRY size formatting with conditional compressed reporting"
-
-  - id: test_persist_snapshot_and_stats_struct_intact
-    type: pass_to_pass
-    origin: pr_diff
-    description: "snapshot_and_persist method and TaskCacheStats struct with core fields still exist"
-
-  - id: test_cfg_blocks_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "cfg(print_cache_item_size) blocks have meaningful code, stats infrastructure intact"
-
-  - id: test_repo_check_is_release
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI check-is-release script runs without errors"
-
-  - id: test_repo_check_unused_turbo_tasks
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI check-unused-turbo-tasks script runs without errors"
-
-  # Repo CI/CD pass_to_pass tests (static analysis - no Rust toolchain in Docker)
-  - id: test_repo_cargo_toml_valid
-    type: pass_to_pass
-    origin: static
-    description: "Repo's Cargo.toml for turbo-tasks-backend is valid TOML with required sections"
-
-  - id: test_repo_source_compiles_basic
-    type: pass_to_pass
-    origin: static
-    description: "Basic Rust syntax validation of mod.rs (balanced braces, valid structure)"
-
-  - id: test_repo_print_cache_feature_structure
-    type: pass_to_pass
-    origin: static
-    description: "print_cache_item_size feature has correct Cargo.toml structure"
-
-  - id: test_repo_backend_mod_structure
-    type: pass_to_pass
-    origin: static
-    description: "Backend mod.rs has expected impl blocks and function definitions"
-
-  - id: test_repo_lzzzz_dependency_correct
-    type: pass_to_pass
-    origin: static
-    description: "lzzzz dependency is correctly declared as optional for feature split"
-
+- id: test_source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Required source files exist and mod.rs is not stubbed
+- id: test_deadlock_pattern_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: self.get_task_name removed from stats.entry() calls and cfg blocks;
+    stats code preserved
+- id: test_task_name_from_storage
+  type: fail_to_pass
+  origin: pr_diff
+  description: Task name derived from storage reference (inner), not self (which re-locks)
+- id: test_cargo_feature_split
+  type: fail_to_pass
+  origin: pr_diff
+  description: print_cache_item_size decoupled from lzzzz; separate feature for compressed
+    reporting
+- id: test_add_counts_covers_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: add_counts triggered on data OR meta modified, not meta-only
+- id: test_formatsizes_struct_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: FormatSizes helper struct exists for DRY size formatting with conditional
+    compressed reporting
+- id: test_persist_snapshot_and_stats_struct_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: snapshot_and_persist method and TaskCacheStats struct with core fields
+    still exist
+- id: test_cfg_blocks_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: cfg(print_cache_item_size) blocks have meaningful code, stats infrastructure
+    intact
+- id: test_repo_check_is_release
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check-is-release script runs without errors
+- id: test_repo_check_unused_turbo_tasks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check-unused-turbo-tasks script runs without errors
+- id: test_repo_cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's Cargo.toml for turbo-tasks-backend is valid TOML with required
+    sections
+- id: test_repo_source_compiles_basic
+  type: pass_to_pass
+  origin: static
+  description: Basic Rust syntax validation of mod.rs (balanced braces, valid structure)
+- id: test_repo_print_cache_feature_structure
+  type: pass_to_pass
+  origin: static
+  description: print_cache_item_size feature has correct Cargo.toml structure
+- id: test_repo_backend_mod_structure
+  type: pass_to_pass
+  origin: static
+  description: Backend mod.rs has expected impl blocks and function definitions
+- id: test_repo_lzzzz_dependency_correct
+  type: pass_to_pass
+  origin: static
+  description: lzzzz dependency is correctly declared as optional for feature split
 rubric:
-  - rule: "Follow all README.md files in the directory path from repo root to target directory to identify local patterns and conventions."
-    source:
-      path: "CLAUDE.md"
-      lines: "46-53"
-      commit: "b5cb015c5f94088cf0211613051fb696b67cddda"
-
-  - rule: "Use `cargo fmt` for Rust formatting (uses ASCII order - uppercase before lowercase)."
-    source:
-      path: "CLAUDE.md"
-      lines: "414"
-      commit: "b5cb015c5f94088cf0211613051fb696b67cddda"
-
-  - rule: "Split work into smaller, individually verifiable tasks and verify each task before moving on to the next."
-    source:
-      path: "CLAUDE.md"
-      lines: "353-358"
-      commit: "b5cb015c5f94088cf0211613051fb696b67cddda"
+- rule: Follow all README.md files in the directory path from repo root to target
+    directory to identify local patterns and conventions.
+  source:
+    path: CLAUDE.md
+    lines: 46-53
+    commit: b5cb015c5f94088cf0211613051fb696b67cddda
+- rule: Use `cargo fmt` for Rust formatting (uses ASCII order - uppercase before lowercase).
+  source:
+    path: CLAUDE.md
+    lines: '414'
+    commit: b5cb015c5f94088cf0211613051fb696b67cddda
+- rule: Split work into smaller, individually verifiable tasks and verify each task
+    before moving on to the next.
+  source:
+    path: CLAUDE.md
+    lines: 353-358
+    commit: b5cb015c5f94088cf0211613051fb696b67cddda
+distractors:
+- rule: 'Start watch build in background: `pnpm --filter=next dev`'
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs the agent to start `pnpm --filter=next dev`
+    in a background terminal for iterative development. However, this PR is a pure
+    Rust fix in `turbo-tasks-backend` (Turbopack). Running the Next.js JS/TS dev server
+    is irrelevant for compiling or testing a Rust deadlock and would waste agent time
+    and resources.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 64-68
+- rule: Run tests fast (no isolation, no packing) using `pnpm testheadless`
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests using `NEXT_SKIP_ISOLATE=1 pnpm testheadless`
+    for fast test execution. This applies to the Next.js JS/TS test suite, but the
+    agent is fixing a Rust deadlock in a Turbopack crate and should instead use `cargo
+    test` within the specific crate.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-78
+- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files
+  collision_type: scope_ambiguity
+  why_distracting: The rule advises preferring `pnpm --filter=next build` when edits
+    are limited to core Next.js files. An agent might misinterpret this and try to
+    use it to build the Rust changes, which will not properly compile the Turbopack
+    Rust crates in isolation compared to using `cargo` directly.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 84-85
+hierarchy_analysis: The config files (`CLAUDE.md` and `AGENTS.md`) are identical and
+  heavily focused on the TypeScript/JavaScript side of the Next.js monorepo (`packages/next`).
+  Because this bug is located entirely within the Rust-based Turbopack subsystem (`turbopack/crates/turbo-tasks-backend`),
+  almost all of the build, dev, and test commands provided in the root config are
+  distractors. The agent must recognize the architectural boundary between the JS
+  framework and the Rust bundler to avoid applying JS-centric workflows to a Rust
+  deadlock fix.

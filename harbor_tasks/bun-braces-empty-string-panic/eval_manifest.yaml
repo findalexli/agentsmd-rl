@@ -1,86 +1,110 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28487
-  base_commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-  merge_commit: "3ca678c93ee1d620873f7896af45486f9954553a"
-
+  base_commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+  merge_commit: 3ca678c93ee1d620873f7896af45486f9954553a
 checks:
-  # Fail-to-pass: Core behavioral tests (must fail before fix, pass after)
-  - id: flatten_tokens_has_empty_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "flattenTokens must have early return guard for empty token list"
-
-  - id: advance_has_underflow_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Parser.advance must guard prev() to prevent usize underflow"
-
-  # Pass-to-pass: Static syntax/compilation checks
-  - id: braces_zig_compiles
-    type: pass_to_pass
-    origin: static
-    description: "src/shell/braces.zig must have valid Zig syntax"
-
-  - id: braces_zig_ast_check
-    type: pass_to_pass
-    origin: static
-    description: "src/shell/braces.zig must pass Zig AST check"
-
-  - id: no_regression_in_brace_parsing
-    type: pass_to_pass
-    origin: static
-    description: "Normal brace expansion patterns should still be parseable"
-
-  # Pass-to-pass: PR regression test
-  - id: regression_test_added
-    type: pass_to_pass
-    origin: pr_diff
-    description: "The gold patch should add regression test for empty string"
-
-  # Pass-to-pass: Repo CI/CD checks (mirrors actual repo CI)
-  - id: repo_zig_fmt_braces
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: zig fmt --check must pass on braces.zig"
-
-  - id: repo_zig_ast_check_braces
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: zig ast-check must pass on braces.zig"
-
-  - id: repo_zig_ast_check_related_shell_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: zig ast-check must pass on related shell files"
-
-  - id: repo_zig_fmt_all_shell_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: zig fmt --check must pass on all shell/*.zig files"
-
-  - id: repo_brace_test_file_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI: brace.test.ts must exist and contain valid tests"
-
+- id: flatten_tokens_has_empty_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: flattenTokens must have early return guard for empty token list
+- id: advance_has_underflow_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: Parser.advance must guard prev() to prevent usize underflow
+- id: braces_zig_compiles
+  type: pass_to_pass
+  origin: static
+  description: src/shell/braces.zig must have valid Zig syntax
+- id: braces_zig_ast_check
+  type: pass_to_pass
+  origin: static
+  description: src/shell/braces.zig must pass Zig AST check
+- id: no_regression_in_brace_parsing
+  type: pass_to_pass
+  origin: static
+  description: Normal brace expansion patterns should still be parseable
+- id: regression_test_added
+  type: pass_to_pass
+  origin: pr_diff
+  description: The gold patch should add regression test for empty string
+- id: repo_zig_fmt_braces
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: zig fmt --check must pass on braces.zig'
+- id: repo_zig_ast_check_braces
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: zig ast-check must pass on braces.zig'
+- id: repo_zig_ast_check_related_shell_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: zig ast-check must pass on related shell files'
+- id: repo_zig_fmt_all_shell_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: zig fmt --check must pass on all shell/*.zig files'
+- id: repo_brace_test_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: brace.test.ts must exist and contain valid tests'
 rubric:
-  - rule: "Code changes must pass zig fmt formatting check"
-    source:
-      path: "tests/test_outputs.py"
-      lines: "104-117"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-
-  - rule: "Code changes must pass zig ast-check validation"
-    source:
-      path: "tests/test_outputs.py"
-      lines: "120-133"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
-
-  - rule: "Bug fixes must include regression tests"
-    source:
-      path: "tests/test_outputs.py"
-      lines: "217-230"
-      commit: "5b7fe81279a40f3fccebe6e7f52278c81b39dfb6"
+- rule: Code changes must pass zig fmt formatting check
+  source:
+    path: tests/test_outputs.py
+    lines: 104-117
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- rule: Code changes must pass zig ast-check validation
+  source:
+    path: tests/test_outputs.py
+    lines: 120-133
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- rule: Bug fixes must include regression tests
+  source:
+    path: tests/test_outputs.py
+    lines: 217-230
+    commit: 5b7fe81279a40f3fccebe6e7f52278c81b39dfb6
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  source:
+    path: CLAUDE.md
+    lines: 58-59
+  evidence: The gold solution tests the actual return value `expect($.braces("")).toEqual([""]);`
+    rather than spawning a process and checking stderr for the word 'panic'.
+  category: testing
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead, such as test/js/bun/ for Bun-specific API tests.
+  source:
+    path: CLAUDE.md
+    lines: 23-24
+  evidence: The gold solution adds the test cases to the existing `test/js/bun/shell/brace.test.ts`
+    file instead of creating a new regression test file.
+  category: testing
+distractors:
+- rule: When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
+  collision_type: scope_ambiguity
+  why_distracting: Because the issue describes a 'panic' (which crashes the process),
+    an agent might assume it must spawn a separate Bun process using `Bun.spawn` to
+    safely test the crash without taking down the test runner. However, since the
+    bug is fixed in the same PR, a direct, synchronous API test is sufficient and
+    preferred.
+  severity: high
+  source:
+    path: test/CLAUDE.md
+    lines: 21-24
+- rule: Use `-e` for single-file tests
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to create a new single-file test using `Bun.spawn`
+    with `-e` to test the empty string behavior, rather than simply adding a new `test("empty
+    string", ...)` block to the existing `brace.test.ts` suite.
+  severity: medium
+  source:
+    path: test/CLAUDE.md
+    lines: 26-27
+hierarchy_analysis: The root `CLAUDE.md` provides general testing guidelines (like
+  not checking for panics and where to put tests), while `test/CLAUDE.md` provides
+  specific patterns for spawning processes. In this case, the root guideline about
+  not checking for panics overrides the temptation to use the process-spawning patterns
+  from `test/CLAUDE.md`, because a direct API test is preferred once the panic is
+  fixed.

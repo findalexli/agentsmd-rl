@@ -1,94 +1,120 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92167
-  base_commit: "8a241bb504bf167d191b96e914b7785156510038"
-  merge_commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
-
+  base_commit: 8a241bb504bf167d191b96e914b7785156510038
+  merge_commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
 checks:
-  # Pass-to-pass gates (existing repo CI checks)
-  - id: turbo_json_valid_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "turbo.json must parse as valid JSON via Python json.tool"
-
-  - id: turbo_jsonc_valid_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "packages/next-swc/turbo.jsonc must parse as valid JSONC via node"
-
-  - id: next_swc_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "packages/next-swc/package.json must be valid JSON with required scripts via node"
-
-  - id: root_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "package.json must be valid JSON with required scripts"
-
-  - id: rust_fingerprint_script_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "scripts/rust-fingerprint.js must have valid Node.js syntax"
-
-  # Fail-to-pass gates (PR-specific behavioral tests)
-  - id: rust_fingerprint_writes_stamp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "rust-fingerprint.js writes TURBO_HASH to stamp file when env var is set"
-
-  - id: rust_fingerprint_skips_without_turbo_hash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "rust-fingerprint.js exits 0 and skips when TURBO_HASH is unset"
-
-  - id: turbo_jsonc_has_fingerprint_task
-    type: fail_to_pass
-    origin: pr_diff
-    description: "turbo.jsonc defines rust-fingerprint task with Rust source inputs and stamp output"
-
-  - id: build_tasks_depend_on_fingerprint
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Rust build/check tasks depend on rust-fingerprint instead of duplicating globs"
-
-  - id: build_tasks_use_stamp_not_globs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Build tasks use stamp file input, not old duplicated Rust source globs"
-
-  - id: sccache_passthrough_env
-    type: fail_to_pass
-    origin: pr_diff
-    description: "turbo.json globalPassThroughEnv includes SCCACHE_* and RUSTC_WRAPPER"
-
-  - id: ci_in_global_env
-    type: fail_to_pass
-    origin: pr_diff
-    description: "turbo.json globalEnv includes CI"
-
-  - id: package_json_fingerprint_script
-    type: fail_to_pass
-    origin: pr_diff
-    description: "packages/next-swc/package.json defines rust-fingerprint script"
-
+- id: turbo_json_valid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbo.json must parse as valid JSON via Python json.tool
+- id: turbo_jsonc_valid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next-swc/turbo.jsonc must parse as valid JSONC via node
+- id: next_swc_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next-swc/package.json must be valid JSON with required scripts
+    via node
+- id: root_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json must be valid JSON with required scripts
+- id: rust_fingerprint_script_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/rust-fingerprint.js must have valid Node.js syntax
+- id: rust_fingerprint_writes_stamp
+  type: fail_to_pass
+  origin: pr_diff
+  description: rust-fingerprint.js writes TURBO_HASH to stamp file when env var is
+    set
+- id: rust_fingerprint_skips_without_turbo_hash
+  type: fail_to_pass
+  origin: pr_diff
+  description: rust-fingerprint.js exits 0 and skips when TURBO_HASH is unset
+- id: turbo_jsonc_has_fingerprint_task
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo.jsonc defines rust-fingerprint task with Rust source inputs and
+    stamp output
+- id: build_tasks_depend_on_fingerprint
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rust build/check tasks depend on rust-fingerprint instead of duplicating
+    globs
+- id: build_tasks_use_stamp_not_globs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build tasks use stamp file input, not old duplicated Rust source globs
+- id: sccache_passthrough_env
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo.json globalPassThroughEnv includes SCCACHE_* and RUSTC_WRAPPER
+- id: ci_in_global_env
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo.json globalEnv includes CI
+- id: package_json_fingerprint_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/next-swc/package.json defines rust-fingerprint script
 rubric:
-  - rule: "When adding new scripts to the scripts/ directory, include a descriptive comment header explaining the script's purpose and any environment variables it uses."
-    source:
-      path: "CLAUDE.md"
-      lines: "302-309"
-      commit: "8a241bb504bf167d191b96e914b7785156510038"
-
-  - rule: "For changes to build configuration (turbo.json, turbo.jsonc, package.json scripts), verify the changes work with the actual build system (e.g., turbo tasks must have proper inputs/outputs defined)."
-    source:
-      path: "CLAUDE.md"
-      lines: "353-358"
-      commit: "8a241bb504bf167d191b96e914b7785156510038"
-
-  - rule: "When modifying package.json files (especially in packages/next-swc/), ensure scripts are properly named and follow the existing naming convention (e.g., rust-* prefix for Rust-related scripts)."
-    source:
-      path: "CLAUDE.md"
-      lines: "55-69"
-      commit: "8a241bb504bf167d191b96e914b7785156510038"
+- rule: When adding new scripts to the scripts/ directory, include a descriptive comment
+    header explaining the script's purpose and any environment variables it uses.
+  source:
+    path: CLAUDE.md
+    lines: 302-309
+    commit: 8a241bb504bf167d191b96e914b7785156510038
+- rule: For changes to build configuration (turbo.json, turbo.jsonc, package.json
+    scripts), verify the changes work with the actual build system (e.g., turbo tasks
+    must have proper inputs/outputs defined).
+  source:
+    path: CLAUDE.md
+    lines: 353-358
+    commit: 8a241bb504bf167d191b96e914b7785156510038
+- rule: When modifying package.json files (especially in packages/next-swc/), ensure
+    scripts are properly named and follow the existing naming convention (e.g., rust-*
+    prefix for Rust-related scripts).
+  source:
+    path: CLAUDE.md
+    lines: 55-69
+    commit: 8a241bb504bf167d191b96e914b7785156510038
+- rule: Place build and maintenance scripts in the `scripts/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 12-20
+  evidence: The gold solution creates `scripts/rust-fingerprint.js`, correctly placing
+    the new build script in the designated `scripts/` directory as defined by the
+    monorepo overview.
+  category: architecture
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits to Next.js source.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires starting `pnpm --filter=next dev` when changing
+    Next.js source. An agent might think modifying `packages/next-swc` or `turbo.json`
+    qualifies as Next.js source and try to run the dev server, which is completely
+    irrelevant for testing Rust turbo fingerprinting and sccache passthrough.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 61-65
+- rule: Read all `README.md` files in the directory path from the repo root up to
+    and including the target file's directory before editing.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to read all `README.md` files in the
+    directory path before editing files in subdirectories like `packages/*`. For a
+    pure build-system/turbo configuration task, searching for and reading these READMEs
+    will waste context window and time without providing actionable information for
+    the task.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 44-50
+hierarchy_analysis: The configuration relies entirely on the root `CLAUDE.md` (symlinked
+  to `AGENTS.md`). The rules are heavily focused on the core Next.js TypeScript/JavaScript
+  development loop, which creates scope ambiguity when the task involves the Rust
+  build pipeline and Turborepo configuration.

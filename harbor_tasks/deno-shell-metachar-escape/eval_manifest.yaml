@@ -1,70 +1,88 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "denoland/deno"
+  repo: denoland/deno
   pr: 33071
-  base_commit: "6710d587bc05e4275c2336fb1cc5104d5eee9fdc"
-  merge_commit: "8b9d1aa92bdab59b117ce85777e20d443d20e905"
-
+  base_commit: 6710d587bc05e4275c2336fb1cc5104d5eee9fdc
+  merge_commit: 8b9d1aa92bdab59b117ce85777e20d443d20e905
 checks:
-  - id: win_escape_ampersand_pipe
-    type: fail_to_pass
-    origin: pr_diff
-    description: "escapeShellArg (Windows) must quote args containing & or |"
-
-  - id: win_escape_angle_brackets_caret
-    type: fail_to_pass
-    origin: pr_diff
-    description: "escapeShellArg (Windows) must quote args containing <, >, or ^"
-
-  - id: win_escape_exclamation_parens
-    type: fail_to_pass
-    origin: pr_diff
-    description: "escapeShellArg (Windows) must quote args containing !, (, or )"
-
-  - id: win_escape_existing_specials_still_quoted
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Args with spaces, quotes, or backslashes must still be quoted"
-
-  - id: win_escape_plain_args_passthrough
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Plain alphanumeric args must pass through unchanged"
-
-  - id: deno_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Deno lint passes on modified file"
-
-  - id: deno_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Deno format check passes on modified file"
-
-  - id: child_process_shell_escape
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's child_process shell escape spec test passes"
-
-  - id: child_process_unref_stdio
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's child_process unref stdio spec test passes"
-
-  - id: child_process_unref_survives
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's child_process unref survives spec test passes"
-
+- id: win_escape_ampersand_pipe
+  type: fail_to_pass
+  origin: pr_diff
+  description: escapeShellArg (Windows) must quote args containing & or |
+- id: win_escape_angle_brackets_caret
+  type: fail_to_pass
+  origin: pr_diff
+  description: escapeShellArg (Windows) must quote args containing <, >, or ^
+- id: win_escape_exclamation_parens
+  type: fail_to_pass
+  origin: pr_diff
+  description: escapeShellArg (Windows) must quote args containing !, (, or )
+- id: win_escape_existing_specials_still_quoted
+  type: pass_to_pass
+  origin: pr_diff
+  description: Args with spaces, quotes, or backslashes must still be quoted
+- id: win_escape_plain_args_passthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: Plain alphanumeric args must pass through unchanged
+- id: deno_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Deno lint passes on modified file
+- id: deno_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Deno format check passes on modified file
+- id: child_process_shell_escape
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process shell escape spec test passes
+- id: child_process_unref_stdio
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process unref stdio spec test passes
+- id: child_process_unref_survives
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process unref survives spec test passes
 rubric:
-  - rule: "Node.js compatibility code is in ext/node/polyfills/. When reviewing these files, check behavior against Node.js docs, not just Deno conventions."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "322-325"
-      commit: "6710d587bc05e4275c2336fb1cc5104d5eee9fdc"
-  - rule: "Keep your changes minimal, don't do drive-by changes in a PR."
-    source:
-      path: "CLAUDE.md"
-      lines: "39"
-      commit: "6710d587bc05e4275c2336fb1cc5104d5eee9fdc"
+- rule: Node.js compatibility code is in ext/node/polyfills/. When reviewing these
+    files, check behavior against Node.js docs, not just Deno conventions.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 322-325
+    commit: 6710d587bc05e4275c2336fb1cc5104d5eee9fdc
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: '39'
+    commit: 6710d587bc05e4275c2336fb1cc5104d5eee9fdc
+distractors:
+- rule: 'tests/unit/ - Unit tests
+
+    tests/specs/ - Integration tests (spec tests)'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add tests for this Node.js polyfill bug
+    in `tests/unit/` or `tests/specs/`. However, Node.js compatibility tests in Deno
+    typically have their own specific structure (like a dedicated node_compat folder
+    or running standard Node tests), so attempting to add standard Deno unit tests
+    for this would lead to confusion and out-of-scope changes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 50-51
+- rule: 'Execute your development build:
+
+    ./target/debug/deno eval ''console.log("Hello from dev build")'''
+  collision_type: meta_confusion
+  why_distracting: The bug is specific to Windows `cmd.exe` escaping. If the agent
+    tries to verify the fix locally using the provided development build commands
+    on a Linux/Unix environment, the Windows-specific code path in `escapeShellArg`
+    won't be exercised, leading to confusion about whether the fix works.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 70-72
+hierarchy_analysis: The repository has a single CLAUDE.md file at the root level providing
+  general guidelines for Deno development. No deeper config files exist to override
+  these rules.

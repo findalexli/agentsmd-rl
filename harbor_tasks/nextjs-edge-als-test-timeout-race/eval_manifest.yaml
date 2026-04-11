@@ -1,145 +1,158 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91643
-  base_commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
-  merge_commit: "542b2b029ca439815299067b47306a451587dff6"
-
+  base_commit: 9f181bd11af5f532c529a6f168fe40505f0a4d75
+  merge_commit: 542b2b029ca439815299067b47306a451587dff6
 checks:
-  - id: test_single_fixture_executes_correctly
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Single ALS fixture file exists and returns {id: <req-id>} when invoked"
-
-  - id: test_multiple_fixture_executes_correctly
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple ALS fixture file exists and returns {id, nestedId} with nested ALS"
-
-  - id: test_no_per_test_instance_creation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "createNext not called inside test body (race condition fixed)"
-
-  - id: test_no_inline_route_code
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No inline route handler code as template strings in test file"
-
-  - id: test_uses_fetchViaHTTP
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Test still uses fetchViaHTTP from next-test-utils"
-
-  - id: test_concurrent_requests_with_req_id
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Test still sends concurrent requests with req-id headers via Promise.all"
-
-  - id: test_uses_nexttestsetup
-    type: fail_to_pass
-    origin: agent_config
-    description: "Uses nextTestSetup() API instead of createNext per AGENTS.md"
-    source:
-      path: "AGENTS.md"
-      lines: "207-221"
-      commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
-
-  - id: test_uses_fixture_directory
-    type: fail_to_pass
-    origin: agent_config
-    description: "Uses fixture directory reference (not inline files object) per AGENTS.md"
-    source:
-      path: "AGENTS.md"
-      lines: "207-221"
-      commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
-
-  - id: test_no_deprecated_check_function
-    type: pass_to_pass
-    origin: agent_config
-    description: "Does not use deprecated check() function per AGENTS.md"
-    source:
-      path: "AGENTS.md"
-      lines: "194-205"
-      commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
-
-  - id: test_no_settimeout_waiting
-    type: pass_to_pass
-    origin: agent_config
-    description: "Does not use setTimeout for waiting — use retry() instead per AGENTS.md"
-    source:
-      path: "AGENTS.md"
-      lines: "180-192"
-      commit: "9f181bd11af5f532c529a6f168fe40505f0a4d75"
-
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Test file has real structure with describe/it/expect and 15+ meaningful lines"
-
-  - id: test_test_file_valid_syntax
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file has valid TypeScript syntax"
-
-  - id: test_fixture_files_valid_syntax
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo fixture files have valid JavaScript syntax"
-
-  - id: test_no_broken_imports
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file imports are resolvable"
-
-  - id: test_repo_e2e_utils_import
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file imports from e2e-utils"
-
-  - id: test_repo_next_test_utils_import
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file imports fetchViaHTTP from next-test-utils"
-
-  - id: test_repo_describe_block
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file has a describe block"
-
-  - id: test_repo_it_test_pattern
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file has it/test calls"
-
-  - id: test_repo_als_pattern
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file references AsyncLocalStorage pattern"
-
-  - id: test_repo_req_id_pattern
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file uses req-id header pattern"
-
-  - id: test_repo_promise_all_pattern
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file uses Promise.all for concurrent requests"
-
-  - id: test_repo_edge_runtime_pattern
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file references edge runtime config"
-
-  - id: test_repo_no_commonjs
-    type: pass_to_pass
-    origin: repo_ci
-    description: "Repo test file does not use CommonJS require/module.exports"
-
-# Rubric rules are covered by pass-to-pass tests:
-# - test_no_settimeout_waiting: Uses retry() not setTimeout (AGENTS.md:180-192)
-# - test_no_deprecated_check_function: No deprecated check() function (AGENTS.md:194-205)
-# - test_uses_fixture_directory: Uses fixture directory not inline files (AGENTS.md:207-221)
-rubric: []
+- id: test_single_fixture_executes_correctly
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Single ALS fixture file exists and returns {id: <req-id>} when invoked'
+- id: test_multiple_fixture_executes_correctly
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple ALS fixture file exists and returns {id, nestedId} with nested
+    ALS
+- id: test_no_per_test_instance_creation
+  type: fail_to_pass
+  origin: pr_diff
+  description: createNext not called inside test body (race condition fixed)
+- id: test_no_inline_route_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: No inline route handler code as template strings in test file
+- id: test_uses_fetchViaHTTP
+  type: pass_to_pass
+  origin: pr_diff
+  description: Test still uses fetchViaHTTP from next-test-utils
+- id: test_concurrent_requests_with_req_id
+  type: pass_to_pass
+  origin: pr_diff
+  description: Test still sends concurrent requests with req-id headers via Promise.all
+- id: test_uses_nexttestsetup
+  type: fail_to_pass
+  origin: agent_config
+  description: Uses nextTestSetup() API instead of createNext per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: 207-221
+    commit: 9f181bd11af5f532c529a6f168fe40505f0a4d75
+- id: test_uses_fixture_directory
+  type: fail_to_pass
+  origin: agent_config
+  description: Uses fixture directory reference (not inline files object) per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: 207-221
+    commit: 9f181bd11af5f532c529a6f168fe40505f0a4d75
+- id: test_no_deprecated_check_function
+  type: pass_to_pass
+  origin: agent_config
+  description: Does not use deprecated check() function per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: 194-205
+    commit: 9f181bd11af5f532c529a6f168fe40505f0a4d75
+- id: test_no_settimeout_waiting
+  type: pass_to_pass
+  origin: agent_config
+  description: Does not use setTimeout for waiting — use retry() instead per AGENTS.md
+  source:
+    path: AGENTS.md
+    lines: 180-192
+    commit: 9f181bd11af5f532c529a6f168fe40505f0a4d75
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Test file has real structure with describe/it/expect and 15+ meaningful
+    lines
+- id: test_test_file_valid_syntax
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file has valid TypeScript syntax
+- id: test_fixture_files_valid_syntax
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo fixture files have valid JavaScript syntax
+- id: test_no_broken_imports
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file imports are resolvable
+- id: test_repo_e2e_utils_import
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file imports from e2e-utils
+- id: test_repo_next_test_utils_import
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file imports fetchViaHTTP from next-test-utils
+- id: test_repo_describe_block
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file has a describe block
+- id: test_repo_it_test_pattern
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file has it/test calls
+- id: test_repo_als_pattern
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file references AsyncLocalStorage pattern
+- id: test_repo_req_id_pattern
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file uses req-id header pattern
+- id: test_repo_promise_all_pattern
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file uses Promise.all for concurrent requests
+- id: test_repo_edge_runtime_pattern
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file references edge runtime config
+- id: test_repo_no_commonjs
+  type: pass_to_pass
+  origin: repo_ci
+  description: Repo test file does not use CommonJS require/module.exports
+rubric:
+- rule: 'Codebase structure: test/ - All test suites'
+  source:
+    path: CLAUDE.md
+    lines: 11-20
+  evidence: The gold solution places the new fixture files (`single.js` and `multiple.js`)
+    inside the `test/e2e/edge-async-local-storage/pages/api/` directory, respecting
+    the repository structure where all test s
+  category: architecture
+distractors:
+- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start>
+    pnpm testheadless test/path/to/test.ts'
+  collision_type: would_cause_bug
+  why_distracting: The issue explicitly states the test is flaky in 'deploy mode'
+    due to deployment step timeouts. The rule instructs developers to run tests with
+    `NEXT_SKIP_ISOLATE=1` and `NEXT_TEST_MODE=<dev|start>`, which skips packing/isolation
+    and runs in dev/start mode instead of deploy mode. Following this testing instruction
+    would prevent the agent from reproducing the specific deploy mode timeout and
+    race condition.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 75-80
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` in a separate
+    terminal when changing Next.js source or integration tests. However, this PR only
+    modifies an e2e test file and its fixtures, not the Next.js framework source code.
+    Running the dev server in the background is unnecessary overhead and irrelevant
+    for fixing an e2e test setup issue.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 65-70
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical symlinked files containing
+  general repository guidelines. The guidelines heavily optimize for fast local development
+  of the Next.js core framework (e.g., skipping isolation, running dev servers). However,
+  these optimizations conflict with the specific needs of this PR, which requires
+  debugging an e2e test in ''deploy mode'' where isolation and deployment steps are
+  the root cause of the flakiness.'

@@ -1,150 +1,176 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1083
-  base_commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
-  merge_commit: "aebe13d8a69dc9d23fc4faf6b57b4664149edb64"
-
+  base_commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
+  merge_commit: aebe13d8a69dc9d23fc4faf6b57b4664149edb64
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified Python files must parse without errors"
-
-  - id: no_windows_line_endings
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must use Unix line endings (LF), not Windows (CRLF)"
-
-  - id: trailing_newline
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must end with a newline character"
-
-  - id: platform_base_set_numa_affinity
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Platform base class exposes set_numa_affinity as a callable no-op"
-
-  - id: cuda_handles_missing_pynvml
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CudaPlatform.set_numa_affinity handles missing pynvml gracefully"
-
-  - id: cuda_uses_nvml
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CudaPlatform.set_numa_affinity calls pynvml NVML functions (mock-verified)"
-
-  - id: cuda_nvml_shutdown
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CudaPlatform calls nvmlShutdown after NVML operations for cleanup"
-
-  - id: cuda_handles_nvml_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CudaPlatform catches NVML runtime errors without crashing"
-
-  - id: engines_call_set_numa_affinity
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All three engine files contain a call to set_numa_affinity (AST-verified)"
-
-  - id: platform_existing_methods
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Platform base class existing methods still present"
-
-  - id: cuda_existing_methods
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CudaPlatform existing methods still present"
-
-  - id: cuda_set_numa_affinity_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "CudaPlatform.set_numa_affinity has substantial implementation (not stub)"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in modified platform files"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
-
-  - id: no_print_logging
-    type: pass_to_pass
-    origin: agent_config
-    description: "set_numa_affinity must not use print() — use areal.utils.logging.getLogger"
-    source:
-      path: "AGENTS.md"
-      lines: "90-91"
-      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
-
-  - id: pynvml_imported_inside_function
-    type: fail_to_pass
-    origin: agent_config
-    description: "pynvml must be imported inside set_numa_affinity, not at module level"
-    source:
-      path: "AGENTS.md"
-      lines: "100-101"
-      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
-
-  - id: type_hints_on_set_numa_affinity
-    type: fail_to_pass
-    origin: agent_config
-    description: "set_numa_affinity must have explicit type hints (local_rank: int) and return annotation (-> None) in both platform.py and cuda.py"
-    source:
-      path: "AGENTS.md"
-      lines: "100"
-      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
-
-  # CI/CD pass-to-pass gates - verify repo tests pass on both base and gold
-  - id: test_repo_syntax_platform
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's platform files must have valid Python syntax"
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's modified files must compile without errors"
-
-  - id: test_repo_import_torch
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo must be able to import torch (basic dependency check)"
-
-  - id: test_repo_ast_valid_platform
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Platform files must have valid AST structure"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's modified files must pass ruff linting"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's modified files must be formatted correctly"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified Python files must parse without errors
+- id: no_windows_line_endings
+  type: pass_to_pass
+  origin: static
+  description: Modified files must use Unix line endings (LF), not Windows (CRLF)
+- id: trailing_newline
+  type: pass_to_pass
+  origin: static
+  description: Modified files must end with a newline character
+- id: platform_base_set_numa_affinity
+  type: fail_to_pass
+  origin: pr_diff
+  description: Platform base class exposes set_numa_affinity as a callable no-op
+- id: cuda_handles_missing_pynvml
+  type: fail_to_pass
+  origin: pr_diff
+  description: CudaPlatform.set_numa_affinity handles missing pynvml gracefully
+- id: cuda_uses_nvml
+  type: fail_to_pass
+  origin: pr_diff
+  description: CudaPlatform.set_numa_affinity calls pynvml NVML functions (mock-verified)
+- id: cuda_nvml_shutdown
+  type: fail_to_pass
+  origin: pr_diff
+  description: CudaPlatform calls nvmlShutdown after NVML operations for cleanup
+- id: cuda_handles_nvml_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: CudaPlatform catches NVML runtime errors without crashing
+- id: engines_call_set_numa_affinity
+  type: fail_to_pass
+  origin: pr_diff
+  description: All three engine files contain a call to set_numa_affinity (AST-verified)
+- id: platform_existing_methods
+  type: pass_to_pass
+  origin: repo_tests
+  description: Platform base class existing methods still present
+- id: cuda_existing_methods
+  type: pass_to_pass
+  origin: repo_tests
+  description: CudaPlatform existing methods still present
+- id: cuda_set_numa_affinity_not_stub
+  type: pass_to_pass
+  origin: static
+  description: CudaPlatform.set_numa_affinity has substantial implementation (not
+    stub)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified platform files
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
+- id: no_print_logging
+  type: pass_to_pass
+  origin: agent_config
+  description: set_numa_affinity must not use print() — use areal.utils.logging.getLogger
+  source:
+    path: AGENTS.md
+    lines: 90-91
+    commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
+- id: pynvml_imported_inside_function
+  type: fail_to_pass
+  origin: agent_config
+  description: pynvml must be imported inside set_numa_affinity, not at module level
+  source:
+    path: AGENTS.md
+    lines: 100-101
+    commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
+- id: type_hints_on_set_numa_affinity
+  type: fail_to_pass
+  origin: agent_config
+  description: 'set_numa_affinity must have explicit type hints (local_rank: int)
+    and return annotation (-> None) in both platform.py and cuda.py'
+  source:
+    path: AGENTS.md
+    lines: '100'
+    commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
+- id: test_repo_syntax_platform
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's platform files must have valid Python syntax
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modified files must compile without errors
+- id: test_repo_import_torch
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must be able to import torch (basic dependency check)
+- id: test_repo_ast_valid_platform
+  type: pass_to_pass
+  origin: repo_tests
+  description: Platform files must have valid AST structure
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modified files must pass ruff linting
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modified files must be formatted correctly
 rubric:
-  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies"
-    source:
-      path: "AGENTS.md"
-      lines: "81"
-      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
-    reference: "- **Composition over inheritance** -- keep hierarchies \\<= 2 levels; prefer delegation."
+- rule: 'Prefer composition over inheritance: Avoid deep class hierarchies'
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
+  reference: '- **Composition over inheritance** -- keep hierarchies \<= 2 levels;
+    prefer delegation.'
+- rule: Logging calls in new code should use PascalCase logger names; per-rank log
+    messages should follow the format [Component Rank N]
+  source:
+    path: AGENTS.md
+    lines: 90-91
+    commit: 682d5640a3497dd69e6ea2b98d2a0f45f34df578
+  reference: '**Logging**: `areal.utils.logging.getLogger(name)` with **PascalCase**
+    names -- never
 
-  - rule: "Logging calls in new code should use PascalCase logger names; per-rank log messages should follow the format [Component Rank N]"
-    source:
-      path: "AGENTS.md"
-      lines: "90-91"
-      commit: "682d5640a3497dd69e6ea2b98d2a0f45f34df578"
-    reference: "**Logging**: `areal.utils.logging.getLogger(name)` with **PascalCase** names -- never\n`print` or `logging.__name__`. Per-rank format: `[{Component} Rank {N}]`. Register new\nloggers with color in `areal/utils/logging.py`."
+    `print` or `logging.__name__`. Per-rank format: `[{Component} Rank {N}]`. Register
+    new
+
+    loggers with color in `areal/utils/logging.py`.'
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: '23'
+  evidence: The gold solution implements `set_numa_affinity` as a `@classmethod` in
+    both `Platform` and `CudaPlatform`, mirroring the existing `set_device` pattern
+    in the same module.
+  category: architecture
+- rule: 'Logging: ... never print'
+  source:
+    path: AGENTS.md
+    lines: 54-55
+  evidence: The gold solution uses `logger.info` and `logger.warning` to report NVML
+    initialization success and errors, strictly avoiding the use of `print`.
+  category: style
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write unit tests for `set_numa_affinity`.
+    However, testing NVML and NUMA topology requires specific multi-socket hardware
+    or complex mocking of `pynvml` and `os.sched_getaffinity`, which is out of scope
+    for this PR. The gold solution relies on defensive runtime checks instead.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '24'
+- rule: 'Ask first before: Adding new dependencies.'
+  collision_type: rule_conflict
+  why_distracting: The instructions specify using `pynvml` (the `nvidia-ml-py` package).
+    The agent might halt to ask permission to add this dependency or attempt to modify
+    `pyproject.toml` / `uv.lock`. However, the gold solution handles it via a defensive
+    `try...except ImportError` block without modifying project dependencies.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 29-32
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical core rules,
+  but `AGENTS.md` is specifically tailored for AI agents. The primary conflict arises
+  between the task instruction to use `pynvml` and the repository rule to 'Ask first
+  before adding new dependencies'. A successful agent must resolve this by implementing
+  a defensive import (`try...except ImportError`) rather than modifying dependency
+  files or halting for clarification.

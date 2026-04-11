@@ -1,71 +1,73 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35958
-  base_commit: "4b568a8dbb4cb84b0067f353b9c0bec1ddb61d8e"
-  merge_commit: "23b2d8514f13f109b980b0a1f4f3aab906ad51d0"
-
+  base_commit: 4b568a8dbb4cb84b0067f353b9c0bec1ddb61d8e
+  merge_commit: 23b2d8514f13f109b980b0a1f4f3aab906ad51d0
 checks:
-  - id: proxy_js_exists_and_nontrivial
-    type: pass_to_pass
-    origin: static
-    description: "proxy.js must exist and contain core extension functions"
-
-  - id: handle_pageshow_defers_when_prerendering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "handlePageShow defers injection via prerenderingchange listener with once:true when document.prerendering is true"
-
-  - id: handle_pageshow_injects_when_not_prerendering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "handlePageShow calls injectProxy directly when document.prerendering is false"
-
-  - id: pageshow_listener_uses_handle_pageshow
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The pageshow event listener must be registered with handlePageShow, not injectProxy"
-
-  - id: inject_proxy_no_target_parameter
-    type: fail_to_pass
-    origin: pr_diff
-    description: "injectProxy must have no parameters (old {target} destructuring removed)"
-
-  - id: flow_prerendering_type_declared
-    type: fail_to_pass
-    origin: pr_diff
-    description: "flow-typed/environments/dom.js must declare prerendering: boolean on Document"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint check passes"
-
-  - id: test_repo_flow
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Flow typecheck passes"
-
-  - id: test_repo_license_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's license check passes"
-
-  - id: test_repo_version_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's version check passes"
-
+- id: proxy_js_exists_and_nontrivial
+  type: pass_to_pass
+  origin: static
+  description: proxy.js must exist and contain core extension functions
+- id: handle_pageshow_defers_when_prerendering
+  type: fail_to_pass
+  origin: pr_diff
+  description: handlePageShow defers injection via prerenderingchange listener with
+    once:true when document.prerendering is true
+- id: handle_pageshow_injects_when_not_prerendering
+  type: fail_to_pass
+  origin: pr_diff
+  description: handlePageShow calls injectProxy directly when document.prerendering
+    is false
+- id: pageshow_listener_uses_handle_pageshow
+  type: fail_to_pass
+  origin: pr_diff
+  description: The pageshow event listener must be registered with handlePageShow,
+    not injectProxy
+- id: inject_proxy_no_target_parameter
+  type: fail_to_pass
+  origin: pr_diff
+  description: injectProxy must have no parameters (old {target} destructuring removed)
+- id: flow_prerendering_type_declared
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'flow-typed/environments/dom.js must declare prerendering: boolean
+    on Document'
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check passes
+- id: test_repo_flow
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Flow typecheck passes
+- id: test_repo_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's license check passes
+- id: test_repo_version_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's version check passes
 rubric:
-  - rule: "Run yarn prettier to fix formatting; inconsistent formatting will fail CI."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "9"
-      commit: "4b568a8dbb4cb84b0067f353b9c0bec1ddb61d8e"
-
-  - rule: "Run yarn linc to check for remaining lint issues before committing."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "10"
-      commit: "4b568a8dbb4cb84b0067f353b9c0bec1ddb61d8e"
+- rule: Run yarn prettier to fix formatting; inconsistent formatting will fail CI.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '9'
+    commit: 4b568a8dbb4cb84b0067f353b9c0bec1ddb61d8e
+- rule: Run yarn linc to check for remaining lint issues before committing.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '10'
+    commit: 4b568a8dbb4cb84b0067f353b9c0bec1ddb61d8e
+- rule: 'React: All files outside `/compiler/`'
+  source:
+    path: CLAUDE.md
+    lines: 7-7
+  evidence: The gold solution modifies `packages/react-devtools-extensions/src/contentScripts/proxy.js`
+    and `flow-typed/environments/dom.js`, which are outside the `/compiler/` directory,
+    aligning with the defini
+  category: architecture
+hierarchy_analysis: The config hierarchy consists of a single root CLAUDE.md file
+  that defines the architectural boundary between the main React project and the React
+  Compiler. There are no overlapping or conflicting rules.

@@ -63,3 +63,45 @@ rubric:
     path: AGENTS.md
     lines: 18-24
     commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 18-19
+  evidence: 'The gold solution modifies frontend TypeScript files and tests, which
+    requires running the frontend lint and build commands to verify type correctness
+    (e.g., `hooks?: HookDefinition[]`) and ensure no '
+  category: tooling
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
+  source:
+    path: AGENTS.md
+    lines: 15-16
+  evidence: The gold solution includes three new comprehensive unit tests in `hooks-modal.test.tsx`
+    to verify the fix for undefined hooks, ensuring that test errors are fixed and
+    regressions are prevented.
+  category: testing
+distractors:
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to start the full application stack (backend
+    and frontend) to reproduce the crash interactively. This is unnecessary and time-consuming
+    since the issue is a clear frontend null-pointer exception that can be reproduced
+    and verified entirely via unit tests.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-11
+- rule: When working on a PR that requires design documents, scripts meant for development-only,
+    or other temporary artifacts... store them in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a `.pr/analysis.md` or `.pr/design.md` file
+    to document its investigation of the crash. This is overkill for a simple undefined
+    check and wastes time and context window.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 35-43
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level,
+  so there are no hierarchy conflicts. The rules apply globally to the repository.

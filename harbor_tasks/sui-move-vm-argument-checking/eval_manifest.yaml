@@ -2,126 +2,134 @@ source_pr: https://github.com/MystenLabs/sui/pull/26052
 base_commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
 merge_commit: b85ea336af4c727655108209640becf2c8514c0e
 description: Add additional argument checking in Move VM runtime
-
 checks:
-  # Pass-to-pass: Basic compilation
-  - id: test_compilation
-    type: pass_to_pass
-    origin: repo_tests
-    description: "move-vm-runtime compiles successfully"
-
-  # Pass-to-pass: Happy path tests
-  - id: test_argument_count_happy_path_0_args
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Function calls with correct 0 arguments succeed"
-
-  - id: test_argument_count_happy_path_1_arg
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Function calls with correct 1 argument succeed"
-
-  # Pass-to-pass: Repo CI checks
-  - id: test_repo_cargo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo check on move-vm-runtime passes"
-
-  - id: test_repo_cargo_check_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo check on all move crates passes"
-
-  - id: test_repo_cargo_test_move_vm_runtime
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo test on move-vm-runtime --lib passes"
-
-  # Additional pass-to-pass: CI checks that work with current Dockerfile
-  - id: test_repo_cargo_xlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo xlint (license check) passes"
-
-  - id: test_repo_function_arg_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's function_arg_tests module passes"
-
-  # Fail-to-pass: Value argument count mismatches
-  - id: test_argument_count_mismatch_0_expected_1_got
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling function expecting 0 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH"
-
-  - id: test_argument_count_mismatch_1_expected_0_got
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling function expecting 1 arg with 0 args fails with NUMBER_OF_ARGUMENTS_MISMATCH"
-
-  - id: test_argument_count_mismatch_2_expected_1_got
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling function expecting 2 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH"
-
-  - id: test_argument_count_mismatch_2_expected_3_got
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling function expecting 2 args with 3 args fails with NUMBER_OF_ARGUMENTS_MISMATCH"
-
-  # Fail-to-pass: Type argument count mismatches
-  - id: test_type_argument_count_mismatch_0_expected_1_got
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling generic function with 0 type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH"
-
-  - id: test_type_argument_count_mismatch_1_expected_2_got
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling generic function with 2 type args when 1 expected fails"
-
-  - id: test_type_argument_count_mismatch_non_generic_with_args
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling non-generic function with type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH"
-
-  - id: test_type_argument_count_mismatch_2_expected_1_got
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling function expecting 2 type args with 1 fails"
-
-  - id: test_type_argument_count_mismatch_2_expected_3_got
-    type: fail_to_pass
-    origin: implementation
-    description: "Calling function expecting 2 type args with 3 fails"
-
-  # Agent config adherence
-  - id: test_vm_code_present
-    type: fail_to_pass
-    origin: implementation
-    description: "VM argument checking code is present in vm.rs"
-
+- id: test_compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: move-vm-runtime compiles successfully
+- id: test_argument_count_happy_path_0_args
+  type: pass_to_pass
+  origin: repo_tests
+  description: Function calls with correct 0 arguments succeed
+- id: test_argument_count_happy_path_1_arg
+  type: pass_to_pass
+  origin: repo_tests
+  description: Function calls with correct 1 argument succeed
+- id: test_repo_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check on move-vm-runtime passes
+- id: test_repo_cargo_check_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check on all move crates passes
+- id: test_repo_cargo_test_move_vm_runtime
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test on move-vm-runtime --lib passes
+- id: test_repo_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo xlint (license check) passes
+- id: test_repo_function_arg_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's function_arg_tests module passes
+- id: test_argument_count_mismatch_0_expected_1_got
+  type: fail_to_pass
+  origin: implementation
+  description: Calling function expecting 0 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_argument_count_mismatch_1_expected_0_got
+  type: fail_to_pass
+  origin: implementation
+  description: Calling function expecting 1 arg with 0 args fails with NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_argument_count_mismatch_2_expected_1_got
+  type: fail_to_pass
+  origin: implementation
+  description: Calling function expecting 2 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_argument_count_mismatch_2_expected_3_got
+  type: fail_to_pass
+  origin: implementation
+  description: Calling function expecting 2 args with 3 args fails with NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_type_argument_count_mismatch_0_expected_1_got
+  type: fail_to_pass
+  origin: implementation
+  description: Calling generic function with 0 type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH
+- id: test_type_argument_count_mismatch_1_expected_2_got
+  type: fail_to_pass
+  origin: implementation
+  description: Calling generic function with 2 type args when 1 expected fails
+- id: test_type_argument_count_mismatch_non_generic_with_args
+  type: fail_to_pass
+  origin: implementation
+  description: Calling non-generic function with type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH
+- id: test_type_argument_count_mismatch_2_expected_1_got
+  type: fail_to_pass
+  origin: implementation
+  description: Calling function expecting 2 type args with 1 fails
+- id: test_type_argument_count_mismatch_2_expected_3_got
+  type: fail_to_pass
+  origin: implementation
+  description: Calling function expecting 2 type args with 3 fails
+- id: test_vm_code_present
+  type: fail_to_pass
+  origin: implementation
+  description: VM argument checking code is present in vm.rs
 rubric:
-  - rule: "All new files must start with the Mysten Labs Apache-2.0 license header"
-    source:
-      path: "CLAUDE.md"
-      lines: "16-21"
-      commit: "fbb6960c6225c2a4406cd336a0899b54e53e4787"
-
-  - rule: "Always run cargo xclippy after finishing development to ensure code passes all linting checks"
-    source:
-      path: "CLAUDE.md"
-      lines: "51-59,111"
-      commit: "fbb6960c6225c2a4406cd336a0899b54e53e4787"
-
-  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions - fix the underlying issues instead"
-    source:
-      path: "CLAUDE.md"
-      lines: "113"
-      commit: "fbb6960c6225c2a4406cd336a0899b54e53e4787"
-
-  - rule: "Do NOT comment the obvious - comments should explain non-obvious algorithms, business logic, or invariants, not narrate simple code"
-    source:
-      path: "CLAUDE.md"
-      lines: "116-131"
-      commit: "fbb6960c6225c2a4406cd336a0899b54e53e4787"
+- rule: All new files must start with the Mysten Labs Apache-2.0 license header
+  source:
+    path: CLAUDE.md
+    lines: 16-21
+    commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+- rule: Always run cargo xclippy after finishing development to ensure code passes
+    all linting checks
+  source:
+    path: CLAUDE.md
+    lines: 51-59,111
+    commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
+    - fix the underlying issues instead'
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+- rule: Do NOT comment the obvious - comments should explain non-obvious algorithms,
+    business logic, or invariants, not narrate simple code
+  source:
+    path: CLAUDE.md
+    lines: 116-131
+    commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+- rule: 'Execution Pipeline: Move VM executes smart contracts'
+  source:
+    path: CLAUDE.md
+    lines: 82-84
+  evidence: The gold solution modifies `execute_function` in `vm.rs` to validate argument
+    counts before allowing the Move VM to execute the smart contract, aligning with
+    the execution pipeline architecture.
+  category: architecture
+distractors:
+- rule: Run Rust unittests. skip simulation tests as they may cause false negatives
+    with `cargo nextest`
+  collision_type: rule_conflict
+  why_distracting: The global config suggests running all tests with `SUI_SKIP_SIMTESTS=1
+    cargo nextest run`. However, the prompt provides a specific, scoped test command
+    (`cargo test --lib function_arg`) for this localized VM fix. Running the global
+    test suite would waste significant time and compute.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 33-34
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think it needs to run e2e simtests to verify the
+    VM changes, but the prompt explicitly specifies that unit tests in `function_arg_tests.rs`
+    are sufficient for this PR.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 30-31
+hierarchy_analysis: The root `CLAUDE.md` provides global testing commands (`cargo
+  nextest run`, `cargo simtest`), but the prompt acts as a local override by providing
+  a specific `cargo test` command for the `move-vm-runtime` crate. The agent must
+  prioritize the prompt's localized testing instructions over the global repository
+  defaults to avoid massive test execution times.

@@ -1,93 +1,133 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 24370
-  base_commit: "50ee3c2e70ccd8b945b1280cc1a1bf92612744db"
-  merge_commit: "c18f449803c3836a2a4ae432bec3aba04382ee39"
-
+  base_commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
+  merge_commit: c18f449803c3836a2a4ae432bec3aba04382ee39
 checks:
-  - id: compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified ty_python_semantic crate compiles successfully"
-
-  - id: test_repo_cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo code formatting passes cargo fmt check"
-
-  - id: test_repo_cargo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ty_python_semantic passes cargo clippy"
-
-  - id: test_repo_mdtest_literal
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Literal mdtests pass - related to PR"
-
-  - id: test_repo_mdtest_pep613
-    type: pass_to_pass
-    origin: repo_tests
-    description: "PEP 613 type alias mdtests pass - related to PR"
-
-  - id: literal_negative_float_invalid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Literal[-3.14] must be flagged as invalid-type-form"
-
-  - id: literal_negative_complex_invalid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Literal[-3j] must be flagged as invalid-type-form"
-
-  - id: type_alias_variable_ref_invalid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TypeAlias = var1 (where var1 is int) must be flagged as invalid-type-form"
-
-  - id: literal_negative_int_valid
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Literal[-3] (integer) must NOT be flagged as invalid"
-
-  - id: valid_type_alias_not_flagged
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Valid PEP-613 type aliases must not produce errors"
-
-  - id: no_panic_unwrap_in_new_module
-    type: pass_to_pass
-    origin: agent_config
-    description: "No panic!/unwrap/unreachable! in new pep_613_alias module"
-    source:
-      path: "AGENTS.md"
-      lines: "79"
-      commit: "50ee3c2e70ccd8b945b1280cc1a1bf92612744db"
-
-  - id: no_local_imports_in_new_module
-    type: pass_to_pass
-    origin: agent_config
-    description: "Rust imports at top of file, never locally in functions"
-    source:
-      path: "AGENTS.md"
-      lines: "76"
-      commit: "50ee3c2e70ccd8b945b1280cc1a1bf92612744db"
-
+- id: compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified ty_python_semantic crate compiles successfully
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes cargo fmt check
+- id: test_repo_cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ty_python_semantic passes cargo clippy
+- id: test_repo_mdtest_literal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Literal mdtests pass - related to PR
+- id: test_repo_mdtest_pep613
+  type: pass_to_pass
+  origin: repo_tests
+  description: PEP 613 type alias mdtests pass - related to PR
+- id: literal_negative_float_invalid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Literal[-3.14] must be flagged as invalid-type-form
+- id: literal_negative_complex_invalid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Literal[-3j] must be flagged as invalid-type-form
+- id: type_alias_variable_ref_invalid
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypeAlias = var1 (where var1 is int) must be flagged as invalid-type-form
+- id: literal_negative_int_valid
+  type: pass_to_pass
+  origin: pr_diff
+  description: Literal[-3] (integer) must NOT be flagged as invalid
+- id: valid_type_alias_not_flagged
+  type: pass_to_pass
+  origin: pr_diff
+  description: Valid PEP-613 type aliases must not produce errors
+- id: no_panic_unwrap_in_new_module
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!/unwrap/unreachable! in new pep_613_alias module
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
+- id: no_local_imports_in_new_module
+  type: pass_to_pass
+  origin: agent_config
+  description: Rust imports at top of file, never locally in functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "50ee3c2e70ccd8b945b1280cc1a1bf92612744db"
-  - rule: "Prefer let chains (if let combined with &&) over nested if let statements to reduce indentation and improve readability."
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "50ee3c2e70ccd8b945b1280cc1a1bf92612744db"
-  - rule: "Avoid writing significant amounts of new code. This is often a sign that we are missing an existing method or mechanism that could help solve the problem. Look for existing utilities first."
-    source:
-      path: "AGENTS.md"
-      lines: "78"
-      commit: "50ee3c2e70ccd8b945b1280cc1a1bf92612744db"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
+- rule: Prefer let chains (if let combined with &&) over nested if let statements
+    to reduce indentation and improve readability.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
+- rule: Avoid writing significant amounts of new code. This is often a sign that we
+    are missing an existing method or mechanism that could help solve the problem.
+    Look for existing utilities first.
+  source:
+    path: AGENTS.md
+    lines: '78'
+    commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 54-54
+  evidence: The gold solution adds new test cases for `Literal[-3.14]`, `Literal[-3j]`,
+    and `var1` to the existing `literal.md` and `pep613_type_aliases.md` files rather
+    than creating new markdown test files.
+  category: testing
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem. Look
+    for existing utilities first.
+  source:
+    path: AGENTS.md
+    lines: 59-59
+  evidence: The gold solution removes the custom `alias_syntax_validation` function
+    and instead reuses the existing `infer_type_expression` infrastructure to validate
+    PEP-613 type alias right-hand sides.
+  category: architecture
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  source:
+    path: AGENTS.md
+    lines: 53-53
+  evidence: The gold solution adds specific test cases to ensure the new `invalid-type-form`
+    diagnostics are correctly emitted for non-integer unary expressions and invalid
+    type alias assignments.
+  category: testing
+distractors:
+- rule: Avoid writing significant amounts of new code.
+  collision_type: scope_ambiguity
+  why_distracting: The rule to 'Avoid writing significant amounts of new code' might
+    discourage the agent from creating the necessary new `pep_613_alias.rs` module
+    in the `post_inference` directory, leading them to cram the logic into `builder.rs`
+    or an existing post-inference pass despite the problem statement's suggestion.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 59-59
+- rule: Reproducing and minimizing ty ecosystem changes using setup_primer_project.py
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use the `setup_primer_project.py` script
+    to reproduce the issue, but this is a specific unit-level bug in type expression
+    validation, not an ecosystem-wide regression. Attempting to minimize an ecosystem
+    project would be a massive waste of time and compute.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 36-43
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  All rules reside in `AGENTS.md` and apply uniformly to the repository.

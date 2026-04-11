@@ -1,104 +1,142 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44854
-  base_commit: "20a233bdc5c0fae8fa116184f105adf498d44ba2"
-  merge_commit: "e87125508b9dad4a52894b131a53d4e93f4507ae"
-
+  base_commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+  merge_commit: e87125508b9dad4a52894b131a53d4e93f4507ae
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Both modeling and modular files must parse without errors"
-
-  - id: block_forward_no_stream_context
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NemotronHBlock.forward must not create a stream context (cuda.stream or nullcontext)"
-
-  - id: mixer_stream_with_compile_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NemotronHMamba2Mixer.forward must have CUDA stream management guarded by is_torchdynamo_compiling"
-
-  - id: modular_block_no_stream_context
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Modular NemotronHBlock.forward must also not have the stream context pattern"
-
-  - id: no_contextlib_import
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Neither modeling nor modular file should import contextlib after stream context removal"
-
-  - id: modular_mixer_has_forward_override
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Modular NemotronHMamba2Mixer must override forward with compile guard and cuda stream"
-
-  - id: is_fast_path_available_sentinel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Both files must define is_fast_path_available = False at module level"
-
-  - id: required_classes_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Core class structure (NemotronHBlock, Mixer, PreTrained, ForCausalLM) must be intact"
-
-  - id: block_forward_not_stub
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NemotronHBlock.forward has real implementation (residual add, mixer/norm calls, return)"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: agent_config
-    description: "Ruff lint passes on both modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "20a233bdc5c0fae8fa116184f105adf498d44ba2"
-
-  - id: test_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff format check passes on modified files"
-
-  - id: test_modular_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modeling file has required modular auto-generated header"
-
-  - id: test_repo_nemotron_h_import_sort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff import sorting check passes on modified files"
-
-  - id: test_repo_nemotron_h_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python syntax validation passes on modified files"
-
-  - id: test_repo_nemotron_h_modeling_conventions
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modeling file follows HF naming conventions with required classes"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modeling and modular files must parse without errors
+- id: block_forward_no_stream_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: NemotronHBlock.forward must not create a stream context (cuda.stream
+    or nullcontext)
+- id: mixer_stream_with_compile_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: NemotronHMamba2Mixer.forward must have CUDA stream management guarded
+    by is_torchdynamo_compiling
+- id: modular_block_no_stream_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: Modular NemotronHBlock.forward must also not have the stream context
+    pattern
+- id: no_contextlib_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: Neither modeling nor modular file should import contextlib after stream
+    context removal
+- id: modular_mixer_has_forward_override
+  type: fail_to_pass
+  origin: pr_diff
+  description: Modular NemotronHMamba2Mixer must override forward with compile guard
+    and cuda stream
+- id: is_fast_path_available_sentinel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both files must define is_fast_path_available = False at module level
+- id: required_classes_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core class structure (NemotronHBlock, Mixer, PreTrained, ForCausalLM)
+    must be intact
+- id: block_forward_not_stub
+  type: fail_to_pass
+  origin: pr_diff
+  description: NemotronHBlock.forward has real implementation (residual add, mixer/norm
+    calls, return)
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: Ruff lint passes on both modified files
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+- id: test_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on modified files
+- id: test_modular_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modeling file has required modular auto-generated header
+- id: test_repo_nemotron_h_import_sort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff import sorting check passes on modified files
+- id: test_repo_nemotron_h_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax validation passes on modified files
+- id: test_repo_nemotron_h_modeling_conventions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modeling file follows HF naming conventions with required classes
 rubric:
-  - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo! Instead, edit the modular file."
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "20a233bdc5c0fae8fa116184f105adf498d44ba2"
-  - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/."
-    source:
-      path: "CLAUDE.md"
-      lines: "64"
-      commit: "20a233bdc5c0fae8fa116184f105adf498d44ba2"
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "20a233bdc5c0fae8fa116184f105adf498d44ba2"
+- rule: When a modular file is present, generated files should not be edited, as changes
+    will be overwritten by make fix-repo! Instead, edit the modular file.
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+- rule: We try to avoid direct inheritance between model-specific files in src/transformers/models/.
+  source:
+    path: CLAUDE.md
+    lines: '64'
+    commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+- rule: Use `modular_<name>.py` files and `make fix-repo` to manage code duplication
+    and generated modeling files.
+  source:
+    path: CLAUDE.md
+    lines: 61-64
+  evidence: The gold solution updates both `modeling_nemotron_h.py` and `modular_nemotron_h.py`
+    (or relies on `make fix-repo` to sync them) to ensure the modular source and generated
+    modeling file remain consiste
+  category: architecture
+distractors:
+- rule: Coordinate on an existing issue before opening a PR and do not open a PR without
+    explicit approval.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in an isolated evaluation environment and
+    cannot coordinate on a GitHub issue or wait for maintainer approval. Attempting
+    to follow this rule would cause the agent to refuse to write the fix.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 20-24
+- rule: 'Fail-closed behavior for agents: do not proceed to PR-ready output if coordination
+    evidence cannot be found.'
+  collision_type: meta_confusion
+  why_distracting: The agent is instructed to fail-closed and not proceed to PR-ready
+    output if coordination evidence cannot be found. In a benchmark setting, this
+    evidence is absent, so the agent might output an explanation instead of the required
+    code patch.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 50-53
+- rule: Accountability for AI-assisted patches requires human validation and specific
+    PR description formats.
+  collision_type: meta_confusion
+  why_distracting: The rule mandates that pure code-agent PRs are not allowed and
+    require human validation. An autonomous agent cannot fulfill this requirement
+    and might halt execution waiting for a human.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 41-48
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules regarding
+  agent contribution policies and modular model architecture. The rules are consistent
+  across the hierarchy, but the strict fail-closed agent policies heavily conflict
+  with the autonomous nature of the evaluation benchmark.

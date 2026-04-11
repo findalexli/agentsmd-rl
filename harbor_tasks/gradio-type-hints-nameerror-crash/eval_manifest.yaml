@@ -1,81 +1,81 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13161
-  base_commit: "c13daab68aa40cb58f2c643a650b5db48e986935"
-  merge_commit: "0a0378dee463fb10e5a95685d595801171cf641b"
-
+  base_commit: c13daab68aa40cb58f2c643a650b5db48e986935
+  merge_commit: 0a0378dee463fb10e5a95685d595801171cf641b
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "gradio/utils.py must parse without syntax errors"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on gradio/utils.py and test/test_utils.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on gradio/utils.py and test/test_utils.py"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TestGetTypeHints unit tests pass"
-
-  - id: test_repo_check_function_inputs_match
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TestCheckFunctionInputsMatch unit tests pass"
-
-  - id: test_repo_function_params
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TestFunctionParams unit tests pass"
-
-  - id: nameerror_returns_empty_dict
-    type: fail_to_pass
-    origin: pr_diff
-    description: "get_type_hints returns {} when annotation triggers NameError (unresolvable forward ref)"
-
-  - id: normal_function_hints
-    type: pass_to_pass
-    origin: pr_diff
-    description: "get_type_hints returns correct hints for normally annotated functions"
-
-  - id: callable_object_hints
-    type: pass_to_pass
-    origin: pr_diff
-    description: "get_type_hints works for callable objects with __call__ annotations"
-
-  - id: non_callable_returns_empty
-    type: pass_to_pass
-    origin: pr_diff
-    description: "get_type_hints returns {} for non-callable inputs"
-
-  - id: unannotated_returns_empty
-    type: pass_to_pass
-    origin: pr_diff
-    description: "get_type_hints returns {} for unannotated functions"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "get_type_hints function has real logic, not just pass/return"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/utils.py must parse without syntax errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on gradio/utils.py and test/test_utils.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on gradio/utils.py and test/test_utils.py
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TestGetTypeHints unit tests pass
+- id: test_repo_check_function_inputs_match
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TestCheckFunctionInputsMatch unit tests pass
+- id: test_repo_function_params
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TestFunctionParams unit tests pass
+- id: nameerror_returns_empty_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_type_hints returns {} when annotation triggers NameError (unresolvable
+    forward ref)
+- id: normal_function_hints
+  type: pass_to_pass
+  origin: pr_diff
+  description: get_type_hints returns correct hints for normally annotated functions
+- id: callable_object_hints
+  type: pass_to_pass
+  origin: pr_diff
+  description: get_type_hints works for callable objects with __call__ annotations
+- id: non_callable_returns_empty
+  type: pass_to_pass
+  origin: pr_diff
+  description: get_type_hints returns {} for non-callable inputs
+- id: unannotated_returns_empty
+  type: pass_to_pass
+  origin: pr_diff
+  description: get_type_hints returns {} for unannotated functions
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: get_type_hints function has real logic, not just pass/return
 rubric:
-  - rule: "Python code is formatted with `ruff`. Run `bash scripts/format_backend.sh`."
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "c13daab68aa40cb58f2c643a650b5db48e986935"
-
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "c13daab68aa40cb58f2c643a650b5db48e986935"
+- rule: Python code is formatted with `ruff`. Run `bash scripts/format_backend.sh`.
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: c13daab68aa40cb58f2c643a650b5db48e986935
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: c13daab68aa40cb58f2c643a650b5db48e986935
+distractors:
+- rule: No low-value busywork PRs - Do not open one-off PRs for tiny edits.
+  collision_type: scope_ambiguity
+  why_distracting: The fix is only 3 lines of code (adding a try-except block). An
+    agent might misinterpret this as a 'tiny edit' or 'low-value busywork' and either
+    refuse to implement it or try to bundle it with unrelated cleanups. However, this
+    is a critical bug fix that prevents the entire Gradio app from crashing, not a
+    mechanical cleanup.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 52-54
+hierarchy_analysis: Only one config file (`AGENTS.md`) applies to this repository,
+  so there are no inter-file conflicts or hierarchy overrides to consider.

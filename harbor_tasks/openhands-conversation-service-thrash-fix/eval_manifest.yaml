@@ -1,86 +1,102 @@
 source:
   repo: All-Hands-AI/OpenHands
   pr_number: 13610
-  title: "APP-1142 Reduced thrash on sandbox service"
+  title: APP-1142 Reduced thrash on sandbox service
   base_commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
   merge_commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
-
 checks:
-  # Fail-to-pass checks: verify the fix is applied correctly
-  - id: test_uses_app_conversation_info_service
-    type: fail_to_pass
-    origin: code_structure
-    description: "Code uses AppConversationInfoService instead of AppConversationService"
-
-  - id: test_has_get_v1_conversation_info_function
-    type: fail_to_pass
-    origin: code_structure
-    description: "Has new _get_v1_conversation_info function with correct return type"
-
-  - id: test_no_is_v1_conversation_function
-    type: fail_to_pass
-    origin: code_structure
-    description: "Old _is_v1_conversation function removed"
-
-  - id: test_no_get_v1_conversation_config_function
-    type: fail_to_pass
-    origin: code_structure
-    description: "Old _get_v1_conversation_config function removed"
-
-  - id: test_service_called_only_once_per_request
-    type: fail_to_pass
-    origin: code_structure
-    description: "Service is called only once per request (no thrashing)"
-
-  - id: test_endpoint_returns_json_response_directly_for_v1
-    type: fail_to_pass
-    origin: code_structure
-    description: "V1 conversations return JSONResponse directly without extra calls"
-
-  - id: test_imports_app_conversation_info_model
-    type: fail_to_pass
-    origin: code_structure
-    description: "Imports AppConversationInfo model"
-
-  # Pass-to-pass checks: verify the code is valid
-  - id: test_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python syntax is valid"
-
-  - id: test_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing unit tests pass"
-
-  - id: test_repo_precommit_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's pre-commit lint checks pass"
-
-  - id: test_repo_unit_tests_conversation
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's conversation routes unit tests pass"
-
-# No agent config rules that apply to this specific refactor
+- id: test_uses_app_conversation_info_service
+  type: fail_to_pass
+  origin: code_structure
+  description: Code uses AppConversationInfoService instead of AppConversationService
+- id: test_has_get_v1_conversation_info_function
+  type: fail_to_pass
+  origin: code_structure
+  description: Has new _get_v1_conversation_info function with correct return type
+- id: test_no_is_v1_conversation_function
+  type: fail_to_pass
+  origin: code_structure
+  description: Old _is_v1_conversation function removed
+- id: test_no_get_v1_conversation_config_function
+  type: fail_to_pass
+  origin: code_structure
+  description: Old _get_v1_conversation_config function removed
+- id: test_service_called_only_once_per_request
+  type: fail_to_pass
+  origin: code_structure
+  description: Service is called only once per request (no thrashing)
+- id: test_endpoint_returns_json_response_directly_for_v1
+  type: fail_to_pass
+  origin: code_structure
+  description: V1 conversations return JSONResponse directly without extra calls
+- id: test_imports_app_conversation_info_model
+  type: fail_to_pass
+  origin: code_structure
+  description: Imports AppConversationInfo model
+- id: test_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax is valid
+- id: test_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing unit tests pass
+- id: test_repo_precommit_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pre-commit lint checks pass
+- id: test_repo_unit_tests_conversation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's conversation routes unit tests pass
 agent_config: []
-
 rubric:
-  - rule: "Run pre-commit hooks for backend changes and ensure they pass. Use: pre-commit run --config ./dev_config/python/.pre-commit-config.yaml"
-    source:
-      path: "AGENTS.md"
-      lines: "16-24"
-      commit: "024f4d3326363616f2303e1fafb93224c8bb7ddb"
-
-  - rule: "Fix common lint issues: Mypy type errors, Ruff formatting issues, trailing whitespace, missing newlines at end of files"
-    source:
-      path: "AGENTS.md"
-      lines: "28-31"
-      commit: "024f4d3326363616f2303e1fafb93224c8bb7ddb"
-
-  - rule: "Prefer specific 'git add <filename>' instead of 'git add .' to avoid accidentally staging unintended files"
-    source:
-      path: "AGENTS.md"
-      lines: "33-35"
-      commit: "024f4d3326363616f2303e1fafb93224c8bb7ddb"
+- rule: 'Run pre-commit hooks for backend changes and ensure they pass. Use: pre-commit
+    run --config ./dev_config/python/.pre-commit-config.yaml'
+  source:
+    path: AGENTS.md
+    lines: 16-24
+    commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
+- rule: 'Fix common lint issues: Mypy type errors, Ruff formatting issues, trailing
+    whitespace, missing newlines at end of files'
+  source:
+    path: AGENTS.md
+    lines: 28-31
+    commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
+- rule: Prefer specific 'git add <filename>' instead of 'git add .' to avoid accidentally
+    staging unintended files
+  source:
+    path: AGENTS.md
+    lines: 33-35
+    commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
+- rule: Backend code is located in the `openhands` directory.
+  source:
+    path: AGENTS.md
+    lines: 61-62
+  evidence: The gold solution modifies `openhands/server/routes/conversation.py` and
+    imports from `openhands.app_server...`, correctly working within the `openhands`
+    directory for backend code.
+  category: architecture
+distractors:
+- rule: The current V1 application server lives in `openhands/app_server/`.
+  collision_type: architecture_boundary
+  why_distracting: The rule states that the V1 application server lives in `openhands/app_server/`,
+    but the file to modify (`openhands/server/routes/conversation.py`) is in `openhands/server/`.
+    The agent might look in the wrong directory or try to move the file to align with
+    this architectural statement.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 61-64
+- rule: Store design documents, analysis, and temporary artifacts in a `.pr/` directory
+    for complex refactoring or debugging sessions.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret this task as a 'complex refactoring'
+    or 'debugging session' and waste time creating `.pr/design.md` or `.pr/analysis.md`
+    files, which is unnecessary for this straightforward optimization.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 36-58
+hierarchy_analysis: Only a single root-level `AGENTS.md` file is provided, so there
+  are no hierarchical conflicts. All rules apply globally to the repository.

@@ -1,222 +1,213 @@
-version: "1.0"
-
+version: '1.0'
 source_pr:
   owner: ClickHouse
   repo: ClickHouse
   pr_number: 102080
   base_commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
   merge_commit: d037e27f19e1ac3bc99d027a328d646853bc6b8e
-
 checks:
-  # Fail-to-pass tests
-  - id: test_large_file_check_exists
-    type: fail_to_pass
-    origin: task_tests
-    description: Large file check code exists in various_checks.sh
-
-  - id: test_large_file_check_logic
-    type: fail_to_pass
-    origin: task_tests
-    description: Large file detection logic correctly identifies oversized files
-
-  - id: test_whitelist_comprehensive
-    type: fail_to_pass
-    origin: task_tests
-    description: Whitelist contains expected entries for known large test files
-
-  - id: test_stat_format_detection
-    type: fail_to_pass
-    origin: task_tests
-    description: Script detects GNU vs BSD stat format correctly
-
-  - id: test_large_file_warning_message
-    type: fail_to_pass
-    origin: task_tests
-    description: Warning message follows expected format
-
-  # Pass-to-pass tests (repo CI/CD)
-  - id: test_script_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: Shell script has valid bash syntax
-
-  - id: test_various_checks_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: various_checks.sh script runs without crashing
-
-  - id: test_check_submodules_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_submodules.sh has valid bash syntax
-
-  - id: test_check_submodules_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_submodules.sh runs without crashing
-
-  - id: test_check_cpp_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_cpp.sh has valid bash syntax
-
-  - id: test_check_aspell_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_aspell.sh has valid bash syntax
-
-  - id: test_check_typos_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_typos.sh has valid bash syntax
-
-  - id: test_check_mypy_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check-mypy has valid bash syntax
-
-  - id: test_check_settings_style_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check-settings-style has valid bash syntax
-
-  - id: test_check_style_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_style.py has valid Python syntax
-
-  - id: test_check_mypy_diff_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check-mypy-diff.py has valid Python syntax
-
-  - id: test_clang_tidy_cache_sh_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: clang-tidy-cache.sh has valid bash syntax
-
-  - id: test_docker_in_docker_sh_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: docker_in_docker.sh has valid bash syntax
-
-  - id: test_docker_server_config_sh_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: docker_server/config.sh has valid bash syntax
-
-  - id: test_check_ci_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_ci.py has valid Python syntax
-
-  - id: test_find_tests_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: find_tests.py has valid Python syntax
-
-  - id: test_done_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: done.py has valid Python syntax
-
-  - id: test_log_parser_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: log_parser.py has valid Python syntax
-
-  - id: test_check_settings_style_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: check-settings-style runs without crashing
-
-  - id: test_check_mypy_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: check-mypy script runs without crashing
-
-  - id: test_check_aspell_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_aspell.sh runs without crashing
-
-  - id: test_check_typos_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: check_typos.sh runs without crashing
-
-  - id: test_clickhouse_proc_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: clickhouse_proc.py has valid Python syntax
-
-  - id: test_clickhouse_version_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: clickhouse_version.py has valid Python syntax
-
-  - id: test_docker_image_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: docker_image.py has valid Python syntax
-
-  - id: test_build_master_head_hook_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: build_master_head_hook.py has valid Python syntax
-
-  - id: test_docker_clean_up_hook_py_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: docker_clean_up_hook.py has valid Python syntax
-
-  # Agent config rules from .claude/skills/review/SKILL.md
-  - id: agent_config_no_large_binary_files
-    type: fail_to_pass
-    origin: agent_config
-    description: No large / binary files in git check implemented as per SKILL.md rule
-    source:
-      file: .claude/skills/review/SKILL.md
-      lines: "226-228"
-      commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
-      rule: "Binary blobs (JARs, archives, compiled artifacts, datasets >1 MB, fat dependency bundles) must never be committed. They permanently bloat the repository for every clone and cannot be removed without history rewriting."
-
+- id: test_large_file_check_exists
+  type: fail_to_pass
+  origin: task_tests
+  description: Large file check code exists in various_checks.sh
+- id: test_large_file_check_logic
+  type: fail_to_pass
+  origin: task_tests
+  description: Large file detection logic correctly identifies oversized files
+- id: test_whitelist_comprehensive
+  type: fail_to_pass
+  origin: task_tests
+  description: Whitelist contains expected entries for known large test files
+- id: test_stat_format_detection
+  type: fail_to_pass
+  origin: task_tests
+  description: Script detects GNU vs BSD stat format correctly
+- id: test_large_file_warning_message
+  type: fail_to_pass
+  origin: task_tests
+  description: Warning message follows expected format
+- id: test_script_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell script has valid bash syntax
+- id: test_various_checks_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: various_checks.sh script runs without crashing
+- id: test_check_submodules_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_submodules.sh has valid bash syntax
+- id: test_check_submodules_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_submodules.sh runs without crashing
+- id: test_check_cpp_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_cpp.sh has valid bash syntax
+- id: test_check_aspell_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_aspell.sh has valid bash syntax
+- id: test_check_typos_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_typos.sh has valid bash syntax
+- id: test_check_mypy_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-mypy has valid bash syntax
+- id: test_check_settings_style_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-settings-style has valid bash syntax
+- id: test_check_style_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_style.py has valid Python syntax
+- id: test_check_mypy_diff_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-mypy-diff.py has valid Python syntax
+- id: test_clang_tidy_cache_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: clang-tidy-cache.sh has valid bash syntax
+- id: test_docker_in_docker_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_in_docker.sh has valid bash syntax
+- id: test_docker_server_config_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_server/config.sh has valid bash syntax
+- id: test_check_ci_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_ci.py has valid Python syntax
+- id: test_find_tests_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: find_tests.py has valid Python syntax
+- id: test_done_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: done.py has valid Python syntax
+- id: test_log_parser_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: log_parser.py has valid Python syntax
+- id: test_check_settings_style_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-settings-style runs without crashing
+- id: test_check_mypy_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-mypy script runs without crashing
+- id: test_check_aspell_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_aspell.sh runs without crashing
+- id: test_check_typos_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_typos.sh runs without crashing
+- id: test_clickhouse_proc_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: clickhouse_proc.py has valid Python syntax
+- id: test_clickhouse_version_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: clickhouse_version.py has valid Python syntax
+- id: test_docker_image_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_image.py has valid Python syntax
+- id: test_build_master_head_hook_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: build_master_head_hook.py has valid Python syntax
+- id: test_docker_clean_up_hook_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_clean_up_hook.py has valid Python syntax
+- id: agent_config_no_large_binary_files
+  type: fail_to_pass
+  origin: agent_config
+  description: No large / binary files in git check implemented as per SKILL.md rule
+  source:
+    file: .claude/skills/review/SKILL.md
+    lines: 226-228
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+    rule: Binary blobs (JARs, archives, compiled artifacts, datasets >1 MB, fat dependency
+      bundles) must never be committed. They permanently bloat the repository for
+      every clone and cannot be removed without history rewriting.
 rubric:
-  - rule: "Add comments explaining invariants and rationale for complex logic, not just narrating what the code does. Every byte committed to git is cloned forever — bulk stat via xargs is preferred over fork-per-file for performance."
-    source:
-      path: ".claude/skills/review/SKILL.md"
-      lines: "226-230"
-      commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
-    reference: |
-      # Every byte committed is cloned by every contributor forever and cannot be removed without history rewriting.
-      # Bulk stat all tracked files via xargs (avoids fork-per-file which takes minutes on large repos).
+- rule: Add comments explaining invariants and rationale for complex logic, not just
+    narrating what the code does. Every byte committed to git is cloned forever —
+    bulk stat via xargs is preferred over fork-per-file for performance.
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 226-230
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  reference: '# Every byte committed is cloned by every contributor forever and cannot
+    be removed without history rewriting.
 
-  - rule: "Scripts should detect platform differences (GNU vs BSD tools) explicitly rather than failing per-file. Use feature detection, not version checks. The code must detect once instead of failing per file, and handle both GNU and BSD formats."
-    source:
-      path: ".claude/skills/review/SKILL.md"
-      lines: "141-150"
-      commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
-    reference: |
-      REQUIRED PATTERN: Platform detection using feature detection (not version checks):
-      # GNU stat (Linux) uses -c, BSD stat (macOS) uses -f — detect once instead of failing per file.
-      if stat -c '%s %n' /dev/null >/dev/null 2>&1; then
-          STAT_FMT_FLAG='-c'
-          STAT_FMT='%s %n'
-      else
-          STAT_FMT_FLAG='-f'
-          STAT_FMT='%z %N'
-      fi
+    # Bulk stat all tracked files via xargs (avoids fork-per-file which takes minutes
+    on large repos).
 
-      Look for:
-      1. Comment explaining the platform difference
-      2. if/else with stat -c test on /dev/null to detect GNU vs BSD
-      3. Setting different format flags for each platform
+    '
+- rule: Scripts should detect platform differences (GNU vs BSD tools) explicitly rather
+    than failing per-file. Use feature detection, not version checks. The code must
+    detect once instead of failing per file, and handle both GNU and BSD formats.
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 141-150
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  reference: "REQUIRED PATTERN: Platform detection using feature detection (not version\
+    \ checks):\n# GNU stat (Linux) uses -c, BSD stat (macOS) uses -f — detect once\
+    \ instead of failing per file.\nif stat -c '%s %n' /dev/null >/dev/null 2>&1;\
+    \ then\n    STAT_FMT_FLAG='-c'\n    STAT_FMT='%s %n'\nelse\n    STAT_FMT_FLAG='-f'\n\
+    \    STAT_FMT='%z %N'\nfi\n\nLook for:\n1. Comment explaining the platform difference\n\
+    2. if/else with stat -c test on /dev/null to detect GNU vs BSD\n3. Setting different\
+    \ format flags for each platform\n"
+- rule: Follow existing code style in the file being modified. Match surrounding brace
+    style, indentation, and quoting patterns.
+  source:
+    path: .claude/CLAUDE.md
+    lines: 1-50
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  reference: '# Code follows existing bash style: proper indentation, matching brace
+    style,
 
-  - rule: "Follow existing code style in the file being modified. Match surrounding brace style, indentation, and quoting patterns."
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "1-50"
-      commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
-    reference: |
-      # Code follows existing bash style: proper indentation, matching brace style,
-      # consistent quoting with surrounding code in various_checks.sh
+    # consistent quoting with surrounding code in various_checks.sh
+
+    '
+distractors:
+- rule: When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to use markdown backticks for command names
+    like `stat` or `xargs` in the bash script comments, which is not standard practice
+    for shell scripts and not done in the gold solution.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 5-5
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret this rule as applying to shell commands
+    or bash functions, leading to unnatural phrasing or formatting in the script's
+    comments. The rule is intended for ClickHouse SQL/C++ functions.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 9-9
+hierarchy_analysis: The AGENTS.md file contains general repository guidelines, mostly
+  focused on documentation, commit messages, and CI tooling. There are no specific
+  bash styling rules provided in the context.

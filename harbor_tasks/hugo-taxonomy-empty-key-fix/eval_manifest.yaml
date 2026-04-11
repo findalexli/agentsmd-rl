@@ -103,6 +103,47 @@ rubric:
   reference: '* In tests, always use the latest Hugo specification, e.g. for layouts,
     it''s `layouts/page.html` and not `layouts/_default/single.html`, `layouts/list.html`
     and not `layouts/_default/list.html`'
+- rule: Use short variable names when the context is clear.
+  source:
+    path: AGENTS.md
+    lines: 2-5
+  evidence: The gold solution uses `m` for the map and `k`, `v` for the loop variables
+    in `alldecoders.go`.
+  category: naming
+- rule: In tests, use `qt` matchers (e.g. `b.Assert(...)`) instead of raw `if`/`t.Fatal`
+    checks.
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  evidence: The test `TestDisableKindsEmptySliceAncestors` uses the test framework's
+    `b.AssertFileContent` instead of manually reading the file and using `if`/`t.Fatal`
+    to check its contents.
+  category: testing
 scoring:
   max_score: 9
   passing_score: 6
+distractors:
+- rule: Don't use comments to explain the obvious.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might omit the comment explaining why empty keys/values
+    are being removed, thinking the code `if k == "" || v == ""` is obvious. However,
+    the comment explains the TOML edge case (`disableKinds = []` after `[taxonomies]`),
+    which is crucial context.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 2-3
+- rule: look hard for helper functions before creating new ones.
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to modify the existing `hmaps.CleanConfigStringMapString`
+    helper to also filter out empty keys/values, assuming that's the "proper" place
+    for map cleaning. Doing so would change the behavior of this helper globally,
+    potentially causing bugs in other parts of the configuration that rely on it.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 9-9
+hierarchy_analysis: CLAUDE.md delegates entirely to AGENTS.md. The rules in AGENTS.md
+  emphasize brevity, Go expertise, and reusing helpers. The main tension lies in interpreting
+  'obvious' comments (the TOML edge case requires explanation) and knowing when to
+  write a simple inline loop rather than modifying an existing map-cleaning helper.

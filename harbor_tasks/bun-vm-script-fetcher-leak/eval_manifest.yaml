@@ -1,94 +1,125 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28493
-  base_commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"
-  merge_commit: "36f17caa987d130788b97a6e9d7c9aea7895b6ed"
-
+  base_commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
+  merge_commit: 36f17caa987d130788b97a6e9d7c9aea7895b6ed
 checks:
-  # Gates
-  - id: header_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "NodeVMScriptFetcher.h must exist and be non-empty"
-
-  - id: class_definition_present
-    type: pass_to_pass
-    origin: static
-    description: "NodeVMScriptFetcher class definition must be present"
-
-  # Core fix — Strong → Weak
-  - id: m_owner_not_strong
-    type: fail_to_pass
-    origin: pr_diff
-    description: "m_owner member must NOT use Strong<> (creates uncollectable GC cycle)"
-
-  - id: m_owner_uses_weak
-    type: fail_to_pass
-    origin: pr_diff
-    description: "m_owner member must use Weak<> for GC-safe back-reference"
-
-  - id: owner_getter_null_check_and_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "owner() getter must check weak ref liveness and return safe fallback"
-
-  - id: owner_setter_or_ctor_guards_iscell
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Owner setter or constructor must guard Weak assignment with isCell check"
-
-  - id: weak_header_included
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Must include Weak.h or WeakInlines.h header"
-
-  # Regression — preserve existing API surface
-  - id: class_extends_script_fetcher
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Class must still extend JSC::ScriptFetcher"
-
-  - id: dynamic_import_callback_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "dynamicImportCallback() method must still exist"
-
-  - id: m_owner_field_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "m_owner field must not be deleted entirely"
-
-  # CI/CD pass-to-pass checks — repo structure verification
-  - id: nodevm_headers_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Related NodeVM header files must exist (NodeVM.h, NodeVMScript.h, NodeVMSourceTextModule.h)"
-
-  - id: header_guard_present
-    type: pass_to_pass
-    origin: repo_tests
-    description: "NodeVMScriptFetcher.h must have proper header guard"
-
-  - id: cpp_syntax_balanced_braces
-    type: pass_to_pass
-    origin: repo_tests
-    description: "NodeVMScriptFetcher.h must have balanced braces and parentheses"
-
+- id: header_file_exists
+  type: pass_to_pass
+  origin: static
+  description: NodeVMScriptFetcher.h must exist and be non-empty
+- id: class_definition_present
+  type: pass_to_pass
+  origin: static
+  description: NodeVMScriptFetcher class definition must be present
+- id: m_owner_not_strong
+  type: fail_to_pass
+  origin: pr_diff
+  description: m_owner member must NOT use Strong<> (creates uncollectable GC cycle)
+- id: m_owner_uses_weak
+  type: fail_to_pass
+  origin: pr_diff
+  description: m_owner member must use Weak<> for GC-safe back-reference
+- id: owner_getter_null_check_and_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: owner() getter must check weak ref liveness and return safe fallback
+- id: owner_setter_or_ctor_guards_iscell
+  type: fail_to_pass
+  origin: pr_diff
+  description: Owner setter or constructor must guard Weak assignment with isCell
+    check
+- id: weak_header_included
+  type: fail_to_pass
+  origin: pr_diff
+  description: Must include Weak.h or WeakInlines.h header
+- id: class_extends_script_fetcher
+  type: pass_to_pass
+  origin: repo_tests
+  description: Class must still extend JSC::ScriptFetcher
+- id: dynamic_import_callback_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: dynamicImportCallback() method must still exist
+- id: m_owner_field_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: m_owner field must not be deleted entirely
+- id: nodevm_headers_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Related NodeVM header files must exist (NodeVM.h, NodeVMScript.h, NodeVMSourceTextModule.h)
+- id: header_guard_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: NodeVMScriptFetcher.h must have proper header guard
+- id: cpp_syntax_balanced_braces
+  type: pass_to_pass
+  origin: repo_tests
+  description: NodeVMScriptFetcher.h must have balanced braces and parentheses
 rubric:
-  - rule: "Do not write flaky tests. Unless explicitly asked, never wait for time to pass in tests. Always wait for the condition to be met instead of waiting for an arbitrary amount of time."
-    source:
-      path: "test/CLAUDE.md"
-      lines: "21"
-      commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"
-  - rule: "NEVER write tests that check for no 'panic' or 'uncaught exception' or similar in the test output. These tests will never fail in CI."
-    source:
-      path: "CLAUDE.md"
-      lines: "99"
-      commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"
-  - rule: "Follow existing code style — check neighboring files for patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "228"
-      commit: "594f421fdc9a6aaf04b394e2775abc2f4baba05c"
+- rule: Do not write flaky tests. Unless explicitly asked, never wait for time to
+    pass in tests. Always wait for the condition to be met instead of waiting for
+    an arbitrary amount of time.
+  source:
+    path: test/CLAUDE.md
+    lines: '21'
+    commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output. These tests will never fail in CI.
+  source:
+    path: CLAUDE.md
+    lines: '99'
+    commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
+- rule: Follow existing code style — check neighboring files for patterns.
+  source:
+    path: CLAUDE.md
+    lines: '228'
+    commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
+- rule: Use C++ for JavaScriptCore integration, powered by WebKit's JavaScriptCore
+    engine.
+  source:
+    path: CLAUDE.md
+    lines: 1-2
+  evidence: The gold solution correctly modifies the C++ header `NodeVMScriptFetcher.h`
+    using WebKit's JavaScriptCore APIs (`JSC::Weak`, `JSC::JSCell`, `JSC::JSValue`)
+    to fix the memory leak, aligning with the ar
+  category: architecture
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: scope_ambiguity
+  why_distracting: This rule strictly forbids using `std.*` in favor of `bun.*` APIs.
+    However, this applies exclusively to Zig code. The agent is editing a C++ file
+    where the C++ standard library (`std::`) is perfectly valid and necessary. Applying
+    this rule to C++ would cause severe confusion or invalid code.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 14-16
+- rule: If a test is for a specific numbered GitHub Issue, place it in `test/regression/issue/`.
+    Ensure the issue number is REAL and not a placeholder!
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly requests a regression test but does not provide
+    a GitHub issue number. The agent might conflict over whether to invent a placeholder
+    issue number to use the `test/regression/issue/` directory (violating the 'not
+    a placeholder' rule) or place it elsewhere.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 23-24
+- rule: Private fields are fully supported in Zig with the `#` prefix.
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying a C++ class. Attempting to apply this Zig-specific
+    syntax (`#` prefix) for private fields in C++ instead of the `private:` access
+    specifier would result in compilation errors.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 4-5
+hierarchy_analysis: The root `CLAUDE.md` provides general architectural guidelines,
+  while `src/CLAUDE.md` provides highly specific Zig conventions. Because the target
+  file is C++ (`.h`), the Zig-specific rules in `src/CLAUDE.md` act as dangerous distractors.
+  The agent must recognize the language boundary and ignore `src/CLAUDE.md`'s strict
+  `std.*` prohibition and syntax rules, relying instead on the root's architectural
+  context for C++/JSC integration.

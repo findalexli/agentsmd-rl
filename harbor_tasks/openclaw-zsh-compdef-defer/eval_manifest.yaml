@@ -1,93 +1,106 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 56555
-  base_commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
-  merge_commit: "6be14ab388eb74cd100e43bf975aad78146ac220"
-
+  base_commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+  merge_commit: 6be14ab388eb74cd100e43bf975aad78146ac220
 checks:
-  - id: typescript_file_valid
-    type: pass_to_pass
-    origin: static
-    description: "completion-cli.ts exists and contains completion generation logic"
-
-  - id: compdef_not_bare_at_toplevel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "compdef must be called inside a registration function, not bare at top level"
-
-  - id: compdef_availability_check
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Registration logic checks whether compdef is available before calling it"
-
-  - id: precmd_hook_queues_deferred_registration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When compdef is unavailable, registration is deferred via precmd_functions"
-
-  - id: cleanup_after_successful_registration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After compdef succeeds, hook removes itself from precmd_functions and undefines"
-
-  - id: dedup_prevents_duplicate_hooks
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Repeated sourcing does not add duplicate entries to precmd_functions"
-
-  - id: zsh_completion_function_intact
-    type: pass_to_pass
-    origin: static
-    description: "Root completion function still defined and not a stub"
-
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "No @ts-nocheck or @ts-ignore in CLI source files"
-    source:
-      path: "CLAUDE.md"
-      lines: "104"
-      commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
-
-  - id: no_explicit_any
-    type: pass_to_pass
-    origin: agent_config
-    description: "No explicit 'any' type annotations or type assertions in completion-cli.ts"
-    source:
-      path: "CLAUDE.md"
-      lines: "102"
-      commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's oxlint passes on completion-cli.ts"
-
-  - id: test_repo_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's oxfmt format check passes on CLI files"
-
-  - id: test_repo_cli_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for completion-cli pass"
-
+- id: typescript_file_valid
+  type: pass_to_pass
+  origin: static
+  description: completion-cli.ts exists and contains completion generation logic
+- id: compdef_not_bare_at_toplevel
+  type: fail_to_pass
+  origin: pr_diff
+  description: compdef must be called inside a registration function, not bare at
+    top level
+- id: compdef_availability_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: Registration logic checks whether compdef is available before calling
+    it
+- id: precmd_hook_queues_deferred_registration
+  type: fail_to_pass
+  origin: pr_diff
+  description: When compdef is unavailable, registration is deferred via precmd_functions
+- id: cleanup_after_successful_registration
+  type: fail_to_pass
+  origin: pr_diff
+  description: After compdef succeeds, hook removes itself from precmd_functions and
+    undefines
+- id: dedup_prevents_duplicate_hooks
+  type: fail_to_pass
+  origin: pr_diff
+  description: Repeated sourcing does not add duplicate entries to precmd_functions
+- id: zsh_completion_function_intact
+  type: pass_to_pass
+  origin: static
+  description: Root completion function still defined and not a stub
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck or @ts-ignore in CLI source files
+  source:
+    path: CLAUDE.md
+    lines: '104'
+    commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+- id: no_explicit_any
+  type: pass_to_pass
+  origin: agent_config
+  description: No explicit 'any' type annotations or type assertions in completion-cli.ts
+  source:
+    path: CLAUDE.md
+    lines: '102'
+    commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint passes on completion-cli.ts
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxfmt format check passes on CLI files
+- id: test_repo_cli_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for completion-cli pass
 rubric:
-  - rule: "Keep files concise; extract helpers instead of duplicating logic or making 'V2' copies."
-    source:
-      path: "CLAUDE.md"
-      lines: "115"
-      commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "114"
-      commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
-  - rule: "Written English: use American spelling and grammar in code, comments, docs, and UI strings."
-    source:
-      path: "CLAUDE.md"
-      lines: "118"
-      commit: "f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb"
+- rule: Keep files concise; extract helpers instead of duplicating logic or making
+    'V2' copies.
+  source:
+    path: CLAUDE.md
+    lines: '115'
+    commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '114'
+    commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+- rule: 'Written English: use American spelling and grammar in code, comments, docs,
+    and UI strings.'
+  source:
+    path: CLAUDE.md
+    lines: '118'
+    commit: f32f7d0809b088e719ec2f5fcd81cb5fd087c5bb
+- rule: 'Source code: `src/` (CLI wiring in `src/cli`...)'
+  source:
+    path: CLAUDE.md
+    lines: 10-10
+  evidence: The gold solution modifies `src/cli/completion-cli.ts` to fix the completion
+    script generation, adhering to the rule that CLI wiring lives in `src/cli`.
+  category: architecture
+distractors:
+- rule: 'Installers served from `https://openclaw.ai/*`: live in the sibling repo
+    `../openclaw.ai` (`public/install.sh`, `public/install-cli.sh`, `public/install.ps1`).'
+  collision_type: architecture_boundary
+  why_distracting: The issue involves shell scripts and CLI setup (zsh completion).
+    An agent might read the rule about installers living in `../openclaw.ai` (`install-cli.sh`)
+    and attempt to fix the completion sourcing issue there, rather than in the TypeScript
+    generator `src/cli/completion-cli.ts`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 18-18
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical rules. The agent
+  must apply the architectural boundaries correctly, distinguishing between the CLI''s
+  internal completion generator (`src/cli`) and external installer scripts (`../openclaw.ai`).'

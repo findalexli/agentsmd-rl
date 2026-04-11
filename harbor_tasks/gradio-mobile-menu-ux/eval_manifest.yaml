@@ -1,94 +1,118 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
-  base_commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
-
+  repo: gradio-app/gradio
+  base_commit: 7760161258abe6329b754dd6d2511fc3b61fed95
 checks:
-  - id: svelte_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Header.svelte HTML template must parse without errors"
-
-  - id: fullscreen_overlay
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Mobile menu renders as a full-screen overlay inside a conditional block"
-
-  - id: close_button_accessible
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Overlay has a close button with aria-label containing 'close' or 'dismiss'"
-
-  - id: search_and_theme_on_mobile
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Search and ThemeToggle components appear in both desktop and mobile sections"
-
-  - id: overlay_has_nav_links
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Mobile overlay contains at least 2 navigation links"
-
-  - id: state_decoupled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Desktop/mobile visibility is not coupled via reactive show_nav = click_nav || store"
-
-  - id: desktop_elements_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Logo, nav links (/docs, /guides), and Community section still exist"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Header.svelte has real content (>100 lines, >15 elements)"
-
-  - id: prettier_formatting
-    type: pass_to_pass
-    origin: agent_config
-    description: "Frontend code is formatted with prettier"
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
-
-  - id: repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo-wide frontend formatting check (pnpm format:check) passes"
-    source:
-      path: ".github/workflows/tests-js.yml"
-      commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
-
-  - id: repo_client_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @gradio/client package builds successfully"
-    source:
-      path: ".github/workflows/tests-js.yml"
-      commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
-
-  - id: repo_package_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's frontend packages build for distribution (pnpm package) passes"
-    source:
-      path: ".github/workflows/tests-js.yml"
-      commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
-
-  - id: repo_client_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @gradio/client unit tests pass (test:node)"
-    source:
-      path: ".github/workflows/tests-js.yml"
-      commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
-
+- id: svelte_syntax
+  type: pass_to_pass
+  origin: static
+  description: Header.svelte HTML template must parse without errors
+- id: fullscreen_overlay
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mobile menu renders as a full-screen overlay inside a conditional block
+- id: close_button_accessible
+  type: fail_to_pass
+  origin: pr_diff
+  description: Overlay has a close button with aria-label containing 'close' or 'dismiss'
+- id: search_and_theme_on_mobile
+  type: fail_to_pass
+  origin: pr_diff
+  description: Search and ThemeToggle components appear in both desktop and mobile
+    sections
+- id: overlay_has_nav_links
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mobile overlay contains at least 2 navigation links
+- id: state_decoupled
+  type: fail_to_pass
+  origin: pr_diff
+  description: Desktop/mobile visibility is not coupled via reactive show_nav = click_nav
+    || store
+- id: desktop_elements_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Logo, nav links (/docs, /guides), and Community section still exist
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Header.svelte has real content (>100 lines, >15 elements)
+- id: prettier_formatting
+  type: pass_to_pass
+  origin: agent_config
+  description: Frontend code is formatted with prettier
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 7760161258abe6329b754dd6d2511fc3b61fed95
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo-wide frontend formatting check (pnpm format:check) passes
+  source:
+    path: .github/workflows/tests-js.yml
+    commit: 7760161258abe6329b754dd6d2511fc3b61fed95
+- id: repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/client package builds successfully
+  source:
+    path: .github/workflows/tests-js.yml
+    commit: 7760161258abe6329b754dd6d2511fc3b61fed95
+- id: repo_package_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's frontend packages build for distribution (pnpm package) passes
+  source:
+    path: .github/workflows/tests-js.yml
+    commit: 7760161258abe6329b754dd6d2511fc3b61fed95
+- id: repo_client_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/client unit tests pass (test:node)
+  source:
+    path: .github/workflows/tests-js.yml
+    commit: 7760161258abe6329b754dd6d2511fc3b61fed95
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "7760161258abe6329b754dd6d2511fc3b61fed95"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 7760161258abe6329b754dd6d2511fc3b61fed95
+distractors:
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The instruction to 'create an issue first if one doesn't exist'
+    might cause the agent to attempt to use CLI tools (like `gh issue create`) to
+    interact with GitHub before writing code, which is out of scope and likely to
+    fail in an isolated coding evaluation environment.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-20
+- rule: Frontend code is formatted with `prettier`. Run `bash scripts/format_frontend.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The instruction to run `bash scripts/format_frontend.sh` might
+    lead the agent to format the entire frontend codebase or the entire file, creating
+    a massive diff of unrelated formatting changes instead of just fixing the targeted
+    mobile menu UX.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-43
+- rule: Do not open one-off PRs for tiny edits... Mechanical cleanups are acceptable
+    only when bundled into a clear, systematic scope.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret a targeted UX fix for the mobile menu
+    as a 'tiny edit' or 'mechanical cleanup' and either refuse to complete the task
+    or try to bundle it with unrelated changes, violating the specific scope of the
+    prompt.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 52-54
+hierarchy_analysis: The repository has a single `AGENTS.md` file at the root level.
+  There are no conflicting child configurations, so the rules in `AGENTS.md` apply
+  globally. The main challenge is interpreting the scope of PR rules (like issue creation
+  and global formatting) within the context of an isolated coding task.

@@ -62,3 +62,47 @@ checks:
     path: AGENTS.md
     lines: '15'
     commit: b92c2128ddeb679c23954c2bf6825e4d6659d501
+rubric:
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 5-6
+  evidence: The gold solution changes the parameter from `use_token_client` to `is_vllm`
+    and updates the logic without adding any comments explaining the change or referencing
+    the old `use_token_client` behavior.
+  category: documentation
+- rule: Explicit is better than implicit.
+  source:
+    path: AGENTS.md
+    lines: 12-13
+  evidence: The gold solution explicitly calculates `is_vllm = config.teacher_rollout_model
+    is None` in the callers and passes it to `get_sampling_args`, rather than relying
+    on the implicit (and incorrect) assump
+  category: style
+distractors:
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
+    fails if something goes wrong as this helps us to catch non-obvious bugs.
+  collision_type: would_cause_bug
+  why_distracting: The bug description mentions that downstream verifiers crash with
+    `len(None)` because token IDs are missing. An agent might be tempted to add a
+    try/except block or explicit error handling in the verifier to catch this, but
+    doing so would only mask the root cause (incorrect parameter gating in `get_sampling_args`).
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 3-4
+- rule: You are responsible for maintaining the skills folder. When a workflow fails
+    and you fix it... you must update the skills to make implicit knowledge explicit.
+  collision_type: scope_ambiguity
+  why_distracting: Because the bug involves vLLM inference parameters (`return_token_ids`,
+    `top_k`, `min_p`), an agent might think it needs to update the `inference-server`
+    skill to document these parameters or the new `is_vllm` flag. However, this is
+    an internal implementation detail, not a user-facing workflow change.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-43
+hierarchy_analysis: The repository uses a flat configuration structure where `CLAUDE.md`
+  simply includes `AGENTS.md`. All rules are defined in `AGENTS.md` and apply globally
+  to the Python files being edited.

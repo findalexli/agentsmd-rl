@@ -1,140 +1,153 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 177609
-  base_commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"
-  merge_commit: "8b5ba493a117a456242dc935f87f5b6f3b153f8d"
-
+  base_commit: 2a86e1131417aa9fa6b860b03308215bfe2be92c
+  merge_commit: 8b5ba493a117a456242dc935f87f5b6f3b153f8d
 checks:
-  - id: syntax_check
-    type: fail_to_pass
-    origin: static
-    description: "check_wheel_tags.py must exist and parse without syntax errors"
-
-  - id: extract_wheel_tags_basic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_extract_wheel_tags reads Tag: lines from WHEEL metadata in a zip"
-
-  - id: extract_wheel_tags_varied
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_extract_wheel_tags works with different wheel content (anti-hardcode)"
-
-  - id: extract_wheel_tags_no_wheel_file
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_extract_wheel_tags returns empty list when WHEEL metadata is missing"
-
-  - id: platform_tag_accepts_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "check_wheel_platform_tag accepts a valid wheel with matching platform"
-
-  - id: platform_tag_rejects_mismatch
-    type: fail_to_pass
-    origin: pr_diff
-    description: "check_wheel_platform_tag raises RuntimeError for platform mismatch"
-
-  - id: malformed_tag_rejected
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Tags with != 3 dash-separated parts must raise an error"
-
-  - id: platform_patterns_correct
-    type: fail_to_pass
-    origin: pr_diff
-    description: "EXPECTED_PLATFORM_TAGS patterns match correct platforms and reject wrong ones"
-
-  - id: multiple_wheels_rejected
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Having more than one torch wheel raises RuntimeError"
-
-  - id: smoke_test_structure
-    type: pass_to_pass
-    origin: pr_diff
-    description: "smoke_test.py still parses and contains main()"
-
-  - id: smoke_test_integration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "smoke_test.py imports check_wheel_tags and calls its functions"
-
-  - id: not_stub
-    type: fail_to_pass
-    origin: static
-    description: "check_wheel_tags functions have real logic, not empty bodies"
-
-  - id: smoke_test_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's smoke_test Python files compile without syntax errors"
-
-  - id: smoke_test_py_compile[check_binary_symbols.py]
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_binary_symbols.py compiles without syntax errors"
-
-  - id: smoke_test_py_compile[check_gomp.py]
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_gomp.py compiles without syntax errors"
-
-  - id: smoke_test_py_compile[check_wheel_tags.py]
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_wheel_tags.py compiles without syntax errors"
-
-  - id: smoke_test_py_compile[max_autotune.py]
-    type: pass_to_pass
-    origin: repo_tests
-    description: "max_autotune.py compiles without syntax errors"
-
-  - id: smoke_test_py_compile[smoke_test.py]
-    type: pass_to_pass
-    origin: repo_tests
-    description: "smoke_test.py compiles without syntax errors"
-
-  - id: smoke_test_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's smoke_test Python files pass ruff linting"
-
-  - id: smoke_test_flake8
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's smoke_test Python files pass flake8 linting"
-
-  - id: test_repo_shellcheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's check_binary.sh passes shellcheck"
-
-  - id: test_repo_shell_scripts_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's shell scripts in .ci/pytorch pass shellcheck"
-
+- id: syntax_check
+  type: fail_to_pass
+  origin: static
+  description: check_wheel_tags.py must exist and parse without syntax errors
+- id: extract_wheel_tags_basic
+  type: fail_to_pass
+  origin: pr_diff
+  description: '_extract_wheel_tags reads Tag: lines from WHEEL metadata in a zip'
+- id: extract_wheel_tags_varied
+  type: fail_to_pass
+  origin: pr_diff
+  description: _extract_wheel_tags works with different wheel content (anti-hardcode)
+- id: extract_wheel_tags_no_wheel_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: _extract_wheel_tags returns empty list when WHEEL metadata is missing
+- id: platform_tag_accepts_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: check_wheel_platform_tag accepts a valid wheel with matching platform
+- id: platform_tag_rejects_mismatch
+  type: fail_to_pass
+  origin: pr_diff
+  description: check_wheel_platform_tag raises RuntimeError for platform mismatch
+- id: malformed_tag_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tags with != 3 dash-separated parts must raise an error
+- id: platform_patterns_correct
+  type: fail_to_pass
+  origin: pr_diff
+  description: EXPECTED_PLATFORM_TAGS patterns match correct platforms and reject
+    wrong ones
+- id: multiple_wheels_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: Having more than one torch wheel raises RuntimeError
+- id: smoke_test_structure
+  type: pass_to_pass
+  origin: pr_diff
+  description: smoke_test.py still parses and contains main()
+- id: smoke_test_integration
+  type: fail_to_pass
+  origin: pr_diff
+  description: smoke_test.py imports check_wheel_tags and calls its functions
+- id: not_stub
+  type: fail_to_pass
+  origin: static
+  description: check_wheel_tags functions have real logic, not empty bodies
+- id: smoke_test_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's smoke_test Python files compile without syntax errors
+- id: smoke_test_py_compile[check_binary_symbols.py]
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_binary_symbols.py compiles without syntax errors
+- id: smoke_test_py_compile[check_gomp.py]
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_gomp.py compiles without syntax errors
+- id: smoke_test_py_compile[check_wheel_tags.py]
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_wheel_tags.py compiles without syntax errors
+- id: smoke_test_py_compile[max_autotune.py]
+  type: pass_to_pass
+  origin: repo_tests
+  description: max_autotune.py compiles without syntax errors
+- id: smoke_test_py_compile[smoke_test.py]
+  type: pass_to_pass
+  origin: repo_tests
+  description: smoke_test.py compiles without syntax errors
+- id: smoke_test_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's smoke_test Python files pass ruff linting
+- id: smoke_test_flake8
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's smoke_test Python files pass flake8 linting
+- id: test_repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_binary.sh passes shellcheck
+- id: test_repo_shell_scripts_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's shell scripts in .ci/pytorch pass shellcheck
 rubric:
-  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
-    source:
-      path: "CLAUDE.md"
-      lines: "58"
-      commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"
-  - rule: "Prefer clear abstractions. State management should be explicit."
-    source:
-      path: "CLAUDE.md"
-      lines: "63"
-      commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"
-  - rule: "If uncertain, choose the simpler, more concise implementation."
-    source:
-      path: "CLAUDE.md"
-      lines: "72"
-      commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"
-  - rule: "Match existing code style and architectural patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "2a86e1131417aa9fa6b860b03308215bfe2be92c"
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '58'
+    commit: 2a86e1131417aa9fa6b860b03308215bfe2be92c
+- rule: Prefer clear abstractions. State management should be explicit.
+  source:
+    path: CLAUDE.md
+    lines: '63'
+    commit: 2a86e1131417aa9fa6b860b03308215bfe2be92c
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: '72'
+    commit: 2a86e1131417aa9fa6b860b03308215bfe2be92c
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 2a86e1131417aa9fa6b860b03308215bfe2be92c
+distractors:
+- rule: 'Use our test class and test runner: `from torch.testing._internal.common_utils
+    import run_tests, TestCase`'
+  collision_type: architecture_boundary
+  why_distracting: The task is to add validation to CI 'smoke tests', which are standalone
+    Python scripts executed in CI, not standard PyTorch unit tests. Using `TestCase`
+    and `run_tests` would break the smoke test execution model.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 18-24
+- rule: When you are working on a bug, first create a standalone file that reproduces
+    the bug... Once the change is passing, find an appropriate test file to add the
+    test to
+  collision_type: meta_confusion
+  why_distracting: The task is explicitly to create a new standalone validation module
+    (`check_wheel_tags.py`) for CI. Trying to create a separate 'repro' file first
+    is redundant and misunderstands the nature of the CI infrastructure task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 3-6
+- rule: Only use commands provided via `spin` for linting.
+  collision_type: rule_conflict
+  why_distracting: '`AGENTS.md` explicitly instructs to use `lintrunner -a`. An agent
+    might get confused about which tool to use to format the newly created `check_wheel_tags.py`
+    file due to this direct contradiction.'
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 31-33
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` have conflicting instructions regarding
+  linting (`spin lint` vs `lintrunner -a`). Additionally, the general testing guidelines
+  in `CLAUDE.md` (using `torch.testing._internal.common_utils`) conflict with the
+  specific architectural needs of the `.ci/pytorch/smoke_test` directory, which uses
+  standalone scripts raising `RuntimeError`.'

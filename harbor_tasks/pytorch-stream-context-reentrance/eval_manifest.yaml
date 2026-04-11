@@ -109,3 +109,45 @@ rubric:
     path: CLAUDE.md
     lines: '62'
     commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
+- rule: Comments should be useful, for example, comments that remind the reader about
+    some global context that is non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 37-38
+  evidence: The gold solution adds a detailed `// Note [Reentrant Stream Context Manager]`
+    block comment to explain the non-obvious global context of how the stack-based
+    context management works using a Python li
+  category: documentation
+distractors:
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: rule_conflict
+  why_distracting: An agent might try to avoid adding the detailed `Note [Reentrant
+    Stream Context Manager]` comment to be 'concise', but the comment is necessary
+    for understanding the C++ Python list stack implementation.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '36'
+- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
+  collision_type: rule_conflict
+  why_distracting: CLAUDE.md explicitly says 'Only use commands provided via spin
+    for linting.' The agent might use lintrunner instead of spin, causing confusion
+    or errors if lintrunner is not the preferred tool in the newer CLAUDE.md setup.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: '9'
+- rule: Do NOT run setup.py, you do not have a working build environment
+  collision_type: rule_conflict
+  why_distracting: CLAUDE.md provides a specific `pip install` command for building
+    C++ changes. The agent might refuse to build the C++ changes in `Stream.cpp` to
+    test them because AGENTS.md claims there is no working build environment.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '7'
+hierarchy_analysis: There are direct conflicts between CLAUDE.md and AGENTS.md regarding
+  tooling. CLAUDE.md specifies using `spin` for linting and `pip install` for building,
+  while AGENTS.md specifies `lintrunner` and claims there is no working build environment.
+  CLAUDE.md appears to be the more up-to-date source of truth for this repository's
+  modern tooling.

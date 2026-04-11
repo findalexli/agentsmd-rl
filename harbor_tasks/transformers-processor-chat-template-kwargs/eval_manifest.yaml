@@ -1,81 +1,120 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44881
-  base_commit: "6a056a16a856097cb0400ce9a48e96ab9d469e30"
-  merge_commit: "9ef15d7016bd5fb307e961b2e8e56f14748913da"
-
+  base_commit: 6a056a16a856097cb0400ce9a48e96ab9d469e30
+  merge_commit: 9ef15d7016bd5fb307e961b2e8e56f14748913da
 checks:
-  - id: test_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (processing_utils.py, chat_template_utils.py, processing_smolvlm.py, processing_voxtral.py) must parse without errors"
-
-  - id: test_template_variable_extraction_subprocess
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A function in chat_template_utils extracts undeclared Jinja2 variables from template strings, handling custom vars, loop exclusion, empty templates, and nested conditionals"
-
-  - id: test_extraction_is_dynamic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Extraction is dynamic (not a hardcoded list) — different templates yield different variable sets"
-
-  - id: test_kwargs_separation_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Template introspection correctly separates template-level kwargs (messages, add_generation_prompt) from processor kwargs (padding, max_length)"
-
-  - id: test_processing_utils_imports_extraction
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ProcessorMixin.apply_chat_template imports the extraction function for kwarg routing"
-
-  - id: test_extraction_cached
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Extraction function caches results (via lru_cache or equivalent) for performance"
-
-  - id: test_render_jinja_template_backward_compat
-    type: pass_to_pass
-    origin: repo_tests
-    description: "render_jinja_template still works correctly for single and batched conversations"
-
-  - id: test_chat_template_utils_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's chat_template_utils unit tests pass (24 tests in tests/utils/test_chat_template_utils.py)"
-
-  - id: test_get_json_schema_function
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's get_json_schema function works correctly in chat_template_utils"
-
-  - id: test_compile_jinja_template
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's _compile_jinja_template function works correctly in chat_template_utils"
-
-  - id: test_ruff_style_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified Python files pass ruff linting (enforced by CI via make style)"
-    source:
-      path: "AGENTS.md"
-      lines: "2"
-      commit: "6a056a16a856097cb0400ce9a48e96ab9d469e30"
-
-  - id: test_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files pass ruff format check (enforced by CI via make style)"
-
-# Config edit: CLAUDE.md documents the validation approach
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (processing_utils.py, chat_template_utils.py, processing_smolvlm.py,
+    processing_voxtral.py) must parse without errors
+- id: test_template_variable_extraction_subprocess
+  type: fail_to_pass
+  origin: pr_diff
+  description: A function in chat_template_utils extracts undeclared Jinja2 variables
+    from template strings, handling custom vars, loop exclusion, empty templates,
+    and nested conditionals
+- id: test_extraction_is_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Extraction is dynamic (not a hardcoded list) — different templates
+    yield different variable sets
+- id: test_kwargs_separation_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Template introspection correctly separates template-level kwargs (messages,
+    add_generation_prompt) from processor kwargs (padding, max_length)
+- id: test_processing_utils_imports_extraction
+  type: fail_to_pass
+  origin: pr_diff
+  description: ProcessorMixin.apply_chat_template imports the extraction function
+    for kwarg routing
+- id: test_extraction_cached
+  type: fail_to_pass
+  origin: pr_diff
+  description: Extraction function caches results (via lru_cache or equivalent) for
+    performance
+- id: test_render_jinja_template_backward_compat
+  type: pass_to_pass
+  origin: repo_tests
+  description: render_jinja_template still works correctly for single and batched
+    conversations
+- id: test_chat_template_utils_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's chat_template_utils unit tests pass (24 tests in tests/utils/test_chat_template_utils.py)
+- id: test_get_json_schema_function
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's get_json_schema function works correctly in chat_template_utils
+- id: test_compile_jinja_template
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's _compile_jinja_template function works correctly in chat_template_utils
+- id: test_ruff_style_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified Python files pass ruff linting (enforced by CI via make style)
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: 6a056a16a856097cb0400ce9a48e96ab9d469e30
+- id: test_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff format check (enforced by CI via make
+    style)
 config_edits:
-  - path: "CLAUDE.md"
-    tier: 1
-    gold_added: "Validation Task: transformers-processor-chat-template-kwargs"
-    gold_removed: ""
-
-rubric: []
+- path: CLAUDE.md
+  tier: 1
+  gold_added: 'Validation Task: transformers-processor-chat-template-kwargs'
+  gold_removed: ''
+rubric:
+- rule: We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
+  source:
+    path: CLAUDE.md
+    lines: 63-66
+  evidence: The gold solution implements the `apply_chat_template` fix independently
+    in both `src/transformers/models/smolvlm/processing_smolvlm.py` and `src/transformers/models/voxtral/processing_voxtral.py`
+    rat
+  category: architecture
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: In an automated evaluation environment, the agent is expected to
+    output the code fix directly. If it follows this rule, it will fail-closed and
+    refuse to generate the patch because no coordination evidence or issue link is
+    provided in the prompt.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 57-61
+- rule: Pure code-agent PRs are not allowed... Do not raise PRs without human validation.
+  collision_type: meta_confusion
+  why_distracting: The agent might output conversational text asking for a human to
+    validate the changes or refuse to output the final patch entirely, which breaks
+    the automated evaluation harness that expects a direct code solution.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 47-55
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+    Ideally you should edit the code it's copying from.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume that `apply_chat_template` in the model-specific
+    processing files (`processing_smolvlm.py`, `processing_voxtral.py`) are copied
+    from a common source and waste time looking for a non-existent source to edit,
+    or it might hesitate to modify these files directly out of fear that `make fix-repo`
+    will revert its changes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 67-70
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical content. The rules
+  are heavily focused on meta-contribution guidelines (coordination, human validation,
+  fail-closed behavior) which are highly distracting for an autonomous coding agent
+  in a benchmark setting. The agent must ignore the meta-rules about refusing to work
+  without human coordination, while still adhering to the architectural rules about
+  model-specific files.'

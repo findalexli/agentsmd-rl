@@ -1,97 +1,113 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28200
-  base_commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
-  merge_commit: "1d50d640f8fec6ce2d144f0cfd204e30da373c64"
-
+  base_commit: 5693fc1a98116743f16a7db2952d6e436bf9ec98
+  merge_commit: 1d50d640f8fec6ce2d144f0cfd204e30da373c64
 checks:
-  # Fail-to-pass: core behavioral fixes
-  - id: macos_headless_shell_mode
-    type: fail_to_pass
-    origin: pr_diff
-    description: "On macOS, headless mode must be 'shell' (not true) to avoid Gatekeeper blocking Chrome .app bundle"
-
-  - id: executable_path_excluded_on_macos
-    type: fail_to_pass
-    origin: pr_diff
-    description: "On macOS with shell mode, executablePath must not be set (it would point to full Chrome, not headless-shell)"
-
-  - id: finite_timeouts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Launch timeout and protocolTimeout must be finite (>0), not 0/infinite"
-
-  - id: retry_delay_increased
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Retry delay between browser launch attempts must be > 1000ms"
-
-  - id: chmod_cached_binaries
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Downloaded browser binaries in Puppeteer cache must be chmod'd executable"
-
-  # Pass-to-pass: regression + structural
-  - id: retry_loop_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Browser retry loop (for/while + catch + launch) must still exist"
-
-  - id: core_launch_args_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Core Puppeteer launch args (--no-sandbox, --disable-setuid-sandbox, --disable-dev-shm-usage) preserved"
-
-  - id: puppeteer_launch_with_options
-    type: pass_to_pass
-    origin: pr_diff
-    description: "File has Puppeteer import, launch() call with headless and args config"
-
-  - id: xattr_quarantine_removal
-    type: pass_to_pass
-    origin: pr_diff
-    description: "xattr quarantine removal for macOS Gatekeeper must be preserved"
-
-  - id: test_repo_typescript_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript file must have valid syntax"
-
-  - id: test_repo_oxlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo oxlint check passes on target file"
-
-  - id: test_repo_oxlint_config
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo oxlint config file is valid JSONC"
-
-# Note on rubric: The general Bun testing guidelines in test/CLAUDE.md advise
-# against setting timeouts on tests and waiting for time to pass. However, for
-# this specific integration test file (dev-server-puppeteer.ts), the fixes are
-# about Puppeteer browser launch configuration - not Bun test timeouts. The
-# timeout values (30_000, 60_000) are for Puppeteer's launch() function, and the
-# retry delay (3000ms) handles transient macOS launch issues. These are appropriate
-# fixes for macOS Gatekeeper issues that cause browser launch failures.
-
+- id: macos_headless_shell_mode
+  type: fail_to_pass
+  origin: pr_diff
+  description: On macOS, headless mode must be 'shell' (not true) to avoid Gatekeeper
+    blocking Chrome .app bundle
+- id: executable_path_excluded_on_macos
+  type: fail_to_pass
+  origin: pr_diff
+  description: On macOS with shell mode, executablePath must not be set (it would
+    point to full Chrome, not headless-shell)
+- id: finite_timeouts
+  type: fail_to_pass
+  origin: pr_diff
+  description: Launch timeout and protocolTimeout must be finite (>0), not 0/infinite
+- id: retry_delay_increased
+  type: fail_to_pass
+  origin: pr_diff
+  description: Retry delay between browser launch attempts must be > 1000ms
+- id: chmod_cached_binaries
+  type: fail_to_pass
+  origin: pr_diff
+  description: Downloaded browser binaries in Puppeteer cache must be chmod'd executable
+- id: retry_loop_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Browser retry loop (for/while + catch + launch) must still exist
+- id: core_launch_args_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core Puppeteer launch args (--no-sandbox, --disable-setuid-sandbox,
+    --disable-dev-shm-usage) preserved
+- id: puppeteer_launch_with_options
+  type: pass_to_pass
+  origin: pr_diff
+  description: File has Puppeteer import, launch() call with headless and args config
+- id: xattr_quarantine_removal
+  type: pass_to_pass
+  origin: pr_diff
+  description: xattr quarantine removal for macOS Gatekeeper must be preserved
+- id: test_repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript file must have valid syntax
+- id: test_repo_oxlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo oxlint check passes on target file
+- id: test_repo_oxlint_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo oxlint config file is valid JSONC
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "139"
-      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
-
-  - rule: "Avoid dynamic import & require. Only use dynamic import or require when specifically testing dynamic import behavior. Otherwise, always use module-scope import statements."
-    source:
-      path: "test/CLAUDE.md"
-      lines: "156-175"
-      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
-
-  - rule: "Prefer async/await over callbacks. When callbacks must be used and it's just a single callback, use Promise.withResolvers."
-    source:
-      path: "test/CLAUDE.md"
-      lines: "102-110"
-      commit: "5693fc1a98116743f16a7db2952d6e436bf9ec98"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: CLAUDE.md
+    lines: '139'
+    commit: 5693fc1a98116743f16a7db2952d6e436bf9ec98
+- rule: Avoid dynamic import & require. Only use dynamic import or require when specifically
+    testing dynamic import behavior. Otherwise, always use module-scope import statements.
+  source:
+    path: test/CLAUDE.md
+    lines: 156-175
+    commit: 5693fc1a98116743f16a7db2952d6e436bf9ec98
+- rule: Prefer async/await over callbacks. When callbacks must be used and it's just
+    a single callback, use Promise.withResolvers.
+  source:
+    path: test/CLAUDE.md
+    lines: 102-110
+    commit: 5693fc1a98116743f16a7db2952d6e436bf9ec98
+- rule: Modify existing files in appropriate directories (like `test/integration/`
+    for end-to-end tests) when fixing issues without a specific issue number.
+  source:
+    path: CLAUDE.md
+    lines: 30-36
+  evidence: The fix is applied directly to the existing integration test utility `test/integration/next-pages/test/dev-server-puppeteer.ts`
+    rather than creating a new test file.
+  category: architecture
+distractors:
+- rule: 'CRITICAL: Do not set a timeout on tests. Bun already has timeouts.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule strictly forbids setting timeouts on tests because Bun
+    has its own timeouts. However, the gold solution changes Puppeteer's `timeout`
+    and `protocolTimeout` from 0 (infinite) to 30_000 and 60_000. An agent following
+    this rule might leave them at 0 or remove them, causing the CI to hang indefinitely
+    when Puppeteer fails to launch.
+  severity: high
+  source:
+    path: test/CLAUDE.md
+    lines: 101-102
+- rule: never wait for time to pass in tests. Always wait for the condition to be
+    met instead of waiting for an arbitrary amount of time.
+  collision_type: scope_ambiguity
+  why_distracting: The rule forbids waiting for time to pass in tests, but the gold
+    solution explicitly increases a `setTimeout` from 1000ms to 3000ms. An agent might
+    try to implement complex polling instead of a simple retry delay, overcomplicating
+    the Puppeteer launch retry logic.
+  severity: medium
+  source:
+    path: test/CLAUDE.md
+    lines: 15-16
+hierarchy_analysis: The hierarchy includes root `CLAUDE.md` and `test/CLAUDE.md`.
+  The rules in `test/CLAUDE.md` are highly specific to Bun's test runner (`bun:test`),
+  but this specific file (`dev-server-puppeteer.ts`) is a Puppeteer script used within
+  the integration tests. The agent must distinguish between Bun test runner configuration
+  (where timeouts are forbidden) and external tool configuration like Puppeteer (where
+  timeouts are necessary to prevent hangs).

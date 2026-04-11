@@ -62,12 +62,14 @@ checks:
   origin: pr_diff
   description: docs/README.md must use yarn reset:data instead of knex-migrator
 rubric:
-- rule: docs/README.md must use concise command descriptions (e.g., "Install dependencies and initialize submodules" not "This installs dependencies...")
+- rule: docs/README.md must use concise command descriptions (e.g., "Install dependencies
+    and initialize submodules" not "This installs dependencies...")
   source:
     path: docs/README.md
     lines: 30-35
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
-- rule: docs/README.md yarn dev description must mention both backend services and frontend dev servers
+- rule: docs/README.md yarn dev description must mention both backend services and
+    frontend dev servers
   source:
     path: docs/README.md
     lines: 38-42
@@ -77,3 +79,51 @@ rubric:
     path: package.json
     lines: '"setup"'
     commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+- rule: '`yarn setup` is for first-time setup (installs deps + submodules)'
+  source:
+    path: CLAUDE.md
+    lines: 40-44
+  evidence: The gold solution updates the `setup` script in `package.json` to `yarn
+    && git submodule update --init --recursive` and updates `docs/README.md` to describe
+    `yarn setup` as 'Install dependencies and i
+  category: tooling
+- rule: '`yarn dev` starts development (Docker backend + host frontend dev servers)'
+  source:
+    path: CLAUDE.md
+    lines: 40-44
+  evidence: The gold solution updates `docs/README.md` to describe the start command
+    as 'Start development (runs Docker backend services + frontend dev servers)',
+    directly reflecting the config's description of `
+  category: documentation
+- rule: Use `yarn reset:data` to reset the database
+  source:
+    path: CLAUDE.md
+    lines: 65-69
+  evidence: The gold solution replaces the obsolete `yarn knex-migrator reset` and
+    `yarn knex-migrator init` commands in `docs/README.md` with `yarn reset:data`.
+  category: documentation
+distractors:
+- rule: '`yarn knex-migrator migrate` runs database migrations'
+  collision_type: rule_conflict
+  why_distracting: The config lists `yarn knex-migrator migrate` as a valid database
+    command. An agent might see this and assume `knex-migrator` commands should still
+    be documented for database initialization/reset, or might try to replace `knex-migrator
+    init` with `knex-migrator migrate` instead of using the new `yarn reset:data`
+    workflow.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 65-69
+- rule: '`yarn reset:data:empty` resets database with no data'
+  collision_type: scope_ambiguity
+  why_distracting: The config lists both `yarn reset:data` and `yarn reset:data:empty`.
+    An agent might arbitrarily choose `yarn reset:data:empty` when updating the documentation
+    for resetting the database, which deviates from the standard `yarn reset:data`
+    command expected in the general troubleshooting section.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 65-69
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical at Level 0. They provide
+  the source of truth for the new commands (`yarn setup`, `yarn dev`, `yarn reset:data`)
+  that the PR is updating the documentation and scripts to match.'

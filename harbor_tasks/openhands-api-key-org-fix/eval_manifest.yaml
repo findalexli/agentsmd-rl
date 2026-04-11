@@ -1,125 +1,148 @@
-version: "1.0"
-task_id: "openhands-api-key-org-fix"
+version: '1.0'
+task_id: openhands-api-key-org-fix
 source_pr:
-  owner: "All-Hands-AI"
-  repo: "OpenHands"
+  owner: All-Hands-AI
+  repo: OpenHands
   number: 13568
-  title: "fix: use API key's org_id when creating conversations via API key auth"
-  merge_commit: "889754abfd214fa74138db496e06955edb323022"
-  base_commit: "06cd53d752b022a7ae3676ab17c029f1f810c892"
-
+  title: 'fix: use API key''s org_id when creating conversations via API key auth'
+  merge_commit: 889754abfd214fa74138db496e06955edb323022
+  base_commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
 checks:
-  # Fail-to-pass tests (the actual bug fix)
-  - id: "test_api_key_org_id_used_when_available"
-    name: "API key's org_id is used when available"
-    type: "pytest"
-    origin: "regression"
-    file: "test_outputs.py"
-    description: "When API key has org_id binding, conversation should be saved under that org, not user's current org"
-
-  - id: "test_legacy_api_key_falls_back_to_user_org"
-    name: "Legacy API key without org_id falls back to user current_org_id"
-    type: "pytest"
-    origin: "regression"
-    file: "test_outputs.py"
-    description: "Legacy API keys without org binding should use user's current org as fallback"
-
-  - id: "test_cookie_auth_uses_user_current_org"
-    name: "Cookie auth without API key uses user current org"
-    type: "pytest"
-    origin: "regression"
-    file: "test_outputs.py"
-    description: "Browser/cookie authentication should continue to use user's current_org_id"
-
-  # Pass-to-pass tests (existing functionality still works)
-  - id: "test_code_imports_and_syntax"
-    name: "Modified code can be imported without errors"
-    type: "pytest"
-    origin: "regression"
-    file: "test_outputs.py"
-    description: "Verify the modified module has valid Python syntax and imports correctly"
-
-  # Pass-to-pass tests (repo CI/CD checks)
-  - id: "test_repo_syntax_check"
-    name: "Repo Python syntax check passes"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Modified Python file has valid syntax and can be compiled"
-
-  - id: "test_repo_ast_parse"
-    name: "Repo AST parsing passes"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Modified Python file can be parsed into AST without errors"
-
-  - id: "test_repo_enterprise_syntax"
-    name: "Enterprise module syntax check passes"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Key enterprise module Python files have valid syntax"
-
-  - id: "test_repo_class_structure"
-    name: "Repo class structure check passes"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Modified file has expected classes and methods"
-
-  - id: "test_repo_ruff_lint"
-    name: "Repo ruff linting passes"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Modified file passes ruff linter checks (CI lint parity)"
-
-  - id: "test_repo_enterprise_storage_syntax"
-    name: "Enterprise storage test syntax passes"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Related enterprise storage test file has valid syntax"
-
-  - id: "test_repo_import_structure"
-    name: "Repo import structure check passes"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Modified file has syntactically valid import statements"
-
-  # New pass-to-pass tests (enriched CI/CD checks)
-  - id: "test_repo_enterprise_ruff_check_target"
-    name: "Enterprise target file passes enterprise ruff check"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Modified file passes ruff linting with enterprise config (CI lint-enterprise-python parity)"
-
-  - id: "test_repo_enterprise_ruff_format"
-    name: "Enterprise target file passes ruff format check"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Modified file is properly formatted per enterprise ruff config"
-
-  - id: "test_repo_enterprise_pytest_unit"
-    name: "Enterprise unit tests pass for related storage module"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    file: "test_outputs.py"
-    description: "Enterprise pytest unit tests for storage module pass (CI test-enterprise parity)"
-
+- id: test_api_key_org_id_used_when_available
+  name: API key's org_id is used when available
+  type: pytest
+  origin: regression
+  file: test_outputs.py
+  description: When API key has org_id binding, conversation should be saved under
+    that org, not user's current org
+- id: test_legacy_api_key_falls_back_to_user_org
+  name: Legacy API key without org_id falls back to user current_org_id
+  type: pytest
+  origin: regression
+  file: test_outputs.py
+  description: Legacy API keys without org binding should use user's current org as
+    fallback
+- id: test_cookie_auth_uses_user_current_org
+  name: Cookie auth without API key uses user current org
+  type: pytest
+  origin: regression
+  file: test_outputs.py
+  description: Browser/cookie authentication should continue to use user's current_org_id
+- id: test_code_imports_and_syntax
+  name: Modified code can be imported without errors
+  type: pytest
+  origin: regression
+  file: test_outputs.py
+  description: Verify the modified module has valid Python syntax and imports correctly
+- id: test_repo_syntax_check
+  name: Repo Python syntax check passes
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Modified Python file has valid syntax and can be compiled
+- id: test_repo_ast_parse
+  name: Repo AST parsing passes
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Modified Python file can be parsed into AST without errors
+- id: test_repo_enterprise_syntax
+  name: Enterprise module syntax check passes
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Key enterprise module Python files have valid syntax
+- id: test_repo_class_structure
+  name: Repo class structure check passes
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Modified file has expected classes and methods
+- id: test_repo_ruff_lint
+  name: Repo ruff linting passes
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Modified file passes ruff linter checks (CI lint parity)
+- id: test_repo_enterprise_storage_syntax
+  name: Enterprise storage test syntax passes
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Related enterprise storage test file has valid syntax
+- id: test_repo_import_structure
+  name: Repo import structure check passes
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Modified file has syntactically valid import statements
+- id: test_repo_enterprise_ruff_check_target
+  name: Enterprise target file passes enterprise ruff check
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Modified file passes ruff linting with enterprise config (CI lint-enterprise-python
+    parity)
+- id: test_repo_enterprise_ruff_format
+  name: Enterprise target file passes ruff format check
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Modified file is properly formatted per enterprise ruff config
+- id: test_repo_enterprise_pytest_unit
+  name: Enterprise unit tests pass for related storage module
+  type: pass_to_pass
+  origin: repo_tests
+  file: test_outputs.py
+  description: Enterprise pytest unit tests for storage module pass (CI test-enterprise
+    parity)
 rubric:
-  - rule: "Use relative imports from storage.* without 'enterprise.' prefix in enterprise code"
-    source:
-      path: "enterprise/server/utils/saas_app_conversation_info_injector.py"
-      lines: "1-30"
-      commit: "06cd53d752b022a7ae3676ab17c029f1f810c892"
-
-  - rule: "Modified enterprise code passes enterprise-specific ruff lint and format checks"
-    source:
-      path: "enterprise/server/utils/saas_app_conversation_info_injector.py"
-      lines: "1-50"
-      commit: "06cd53d752b022a7ae3676ab17c029f1f810c892"
+- rule: Use relative imports from storage.* without 'enterprise.' prefix in enterprise
+    code
+  source:
+    path: enterprise/server/utils/saas_app_conversation_info_injector.py
+    lines: 1-30
+    commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
+- rule: Modified enterprise code passes enterprise-specific ruff lint and format checks
+  source:
+    path: enterprise/server/utils/saas_app_conversation_info_injector.py
+    lines: 1-50
+    commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
+- rule: Ensure code passes pre-commit hooks and fix common issues including Mypy type
+    errors.
+  source:
+    path: AGENTS.md
+    lines: 28-30
+  evidence: The gold solution uses `hasattr(self.user_context, 'user_auth')` and `hasattr(user_auth,
+    'get_api_key_org_id')` before accessing these attributes. This defensive programming
+    approach acts as a type gu
+  category: tooling
+distractors:
+- rule: 'Repository Structure: Backend: Located in the `openhands` directory'
+  collision_type: architecture_boundary
+  why_distracting: The config explicitly states that the backend is located in the
+    `openhands` directory. However, this specific issue requires modifying the SaaS/Enterprise
+    edition code located in `enterprise/server/`. An agent might get confused, assume
+    it shouldn't touch the `enterprise` directory, or try to find the target file
+    inside `openhands/` instead.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 61-63
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
+  collision_type: scope_ambiguity
+  why_distracting: The instructions for running the full application (`make build
+    && make run ...`) launch the standard open-source OpenHands application. Since
+    this bug is specific to the SaaS/Enterprise edition (involving API keys and organization
+    bindings), attempting to reproduce or test the fix using the standard run command
+    will likely fail or waste time, as the enterprise features may require a different
+    setup or environment variables.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-12
+hierarchy_analysis: The `AGENTS.md` file provides general repository guidelines that
+  are heavily biased towards the open-source `openhands` directory. For enterprise-specific
+  PRs, the agent must override the repository structure guidance and recognize that
+  backend code also exists in the `enterprise/` directory.

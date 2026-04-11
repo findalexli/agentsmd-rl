@@ -1,77 +1,109 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92459
-  base_commit: "98330e3faeff95a51d2c185fc98f1f40bd86726f"
-  merge_commit: "985394417f2ef72466238497576a060ca936821c"
-
+  base_commit: 98330e3faeff95a51d2c185fc98f1f40bd86726f
+  merge_commit: 985394417f2ef72466238497576a060ca936821c
 checks:
-  - id: typescript_syntax
-    type: pass_to_pass
-    origin: static
-    description: "render.tsx must be valid TypeScript with expected structure"
-
-  - id: no_concurrent_style_collection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "styledJsxInsertedHTML must not be called inside Promise.all (race condition)"
-
-  - id: styles_collected_after_content_rendering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Style collection must happen after page content is fully rendered"
-
-  - id: flush_before_style_read
-    type: fail_to_pass
-    origin: pr_diff
-    description: "jsxStyleRegistry.flush() must occur before the standalone styledJsxInsertedHTML call"
-
-  - id: content_html_composition
-    type: pass_to_pass
-    origin: static
-    description: "contentHTML must still be composed from rawStyledJsxInsertedHTML + content"
-
-  - id: null_content_handling
-    type: pass_to_pass
-    origin: static
-    description: "Null content guard must still be present"
-
-  - id: test_repo_prettier_render
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier formatting check on render.tsx passes"
-
-  - id: test_repo_eslint_render
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint check on render.tsx passes"
-
-  - id: test_repo_ast_grep
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ast-grep lint patterns pass"
-
-  - id: test_repo_language_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's inclusive language linting (alex) passes"
-
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: render.tsx must be valid TypeScript with expected structure
+- id: no_concurrent_style_collection
+  type: fail_to_pass
+  origin: pr_diff
+  description: styledJsxInsertedHTML must not be called inside Promise.all (race condition)
+- id: styles_collected_after_content_rendering
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style collection must happen after page content is fully rendered
+- id: flush_before_style_read
+  type: fail_to_pass
+  origin: pr_diff
+  description: jsxStyleRegistry.flush() must occur before the standalone styledJsxInsertedHTML
+    call
+- id: content_html_composition
+  type: pass_to_pass
+  origin: static
+  description: contentHTML must still be composed from rawStyledJsxInsertedHTML +
+    content
+- id: null_content_handling
+  type: pass_to_pass
+  origin: static
+  description: Null content guard must still be present
+- id: test_repo_prettier_render
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier formatting check on render.tsx passes
+- id: test_repo_eslint_render
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check on render.tsx passes
+- id: test_repo_ast_grep
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ast-grep lint patterns pass
+- id: test_repo_language_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's inclusive language linting (alex) passes
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "44-54"
-      commit: "98330e3faeff95a51d2c185fc98f1f40bd86726f"
-
-  - rule: "Respect lifecycle ordering: registry flush must happen before dependent reads"
-    source:
-      path: "AGENTS.md"
-      lines: "335-337"
-      commit: "98330e3faeff95a51d2c185fc98f1f40bd86726f"
-
-  - rule: "Avoid Promise.all for operations with data dependencies that create race conditions"
-    source:
-      path: "AGENTS.md"
-      lines: "361-365"
-      commit: "98330e3faeff95a51d2c185fc98f1f40bd86726f"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: 44-54
+    commit: 98330e3faeff95a51d2c185fc98f1f40bd86726f
+- rule: 'Respect lifecycle ordering: registry flush must happen before dependent reads'
+  source:
+    path: AGENTS.md
+    lines: 335-337
+    commit: 98330e3faeff95a51d2c185fc98f1f40bd86726f
+- rule: Avoid Promise.all for operations with data dependencies that create race conditions
+  source:
+    path: AGENTS.md
+    lines: 361-365
+    commit: 98330e3faeff95a51d2c185fc98f1f40bd86726f
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: would_cause_bug
+  why_distracting: The issue explicitly notes it is 'particularly visible in production
+    deployments'. Next.js development mode (`next dev`) handles styled-jsx and SSR
+    differently than production. Relying on the default rule to use `pnpm --filter=next
+    dev` for the inner loop could prevent the agent from reproducing the bug or verifying
+    the fix, as it requires a production build to observe the exact SSR style registry
+    behavior.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 60-62
+- rule: Read the relevant guide in `dist/docs/` before writing any code.
+  collision_type: meta_confusion
+  why_distracting: The agent is instructed to read guides in `dist/docs/` before writing
+    code because of breaking changes. However, this PR involves a deep internal bug
+    in the Pages Router SSR pipeline (`renderToHTMLImpl` and `styledJsxInsertedHTML`
+    timing). There are no user-facing guides in `dist/docs/` about this internal rendering
+    architecture, so searching for them would be a waste of time.
+  severity: medium
+  source:
+    path: packages/next/AGENTS.md
+    lines: 5-6
+- rule: Before editing or creating files in any subdirectory... read all README.md
+    files in the directory path from the repo root up to and including the target
+    file's directory.
+  collision_type: scope_ambiguity
+  why_distracting: The fix requires a localized change to the execution order of promises
+    in `packages/next/src/server/render.tsx`. Reading all READMEs from the root down
+    to `packages/next/src/server/` is unnecessary and distracting, as the issue is
+    purely about the runtime execution order of `styledJsxInsertedHTML` relative to
+    the page render lifecycle, which is not documented in directory READMEs.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 36-38
+hierarchy_analysis: The root `CLAUDE.md` provides general workflow instructions, while
+  `packages/next/AGENTS.md` adds a warning about breaking changes and reading docs.
+  Both files provide instructions that are misaligned with the specific nature of
+  this PR. The PR requires fixing an internal SSR timing bug that is specific to production
+  builds, making the default `dev` workflow and the instruction to read `dist/docs/`
+  actively misleading.

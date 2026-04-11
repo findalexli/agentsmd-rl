@@ -1,91 +1,111 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/uv"
+  repo: astral-sh/uv
   pr: 18625
-  base_commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
-  merge_commit: "2175e2ffba0bae50e566252a62d37c4477129f79"
-
+  base_commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+  merge_commit: 2175e2ffba0bae50e566252a62d37c4477129f79
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Script must be valid Python"
-
-  - id: patches_checksums_into_manifest
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script injects sha256 checksums into matching artifact entries and preserves existing fields"
-
-  - id: idempotent_rerun
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Running the script twice on the same manifest yields identical output"
-
-  - id: exits_error_no_matches
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script returns non-zero exit code when no sidecar files match any artifact"
-
-  - id: rejects_invalid_checksum_length
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script rejects checksums that aren't exactly 64 characters (too short, too long)"
-
-  - id: rejects_empty_checksum_file
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script rejects empty .sha256 sidecar files"
-
-  - id: warns_unmatched_sidecar
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script warns on stderr about .sha256 files that don't match any manifest artifact"
-
-  - id: existing_scripts_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing Python scripts in scripts/ remain valid Python"
-
-  - id: repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python scripts pass ruff linting"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python scripts pass ruff format check"
-
-  - id: repo_typos
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo passes typos spell check"
-
-  - id: top_level_imports_only
-    type: fail_to_pass
-    origin: agent_config
-    description: "PREFER top-level imports over local imports or fully qualified names"
-    source:
-      path: "CLAUDE.md"
-      lines: "16"
-      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Script must be valid Python
+- id: patches_checksums_into_manifest
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script injects sha256 checksums into matching artifact entries and
+    preserves existing fields
+- id: idempotent_rerun
+  type: fail_to_pass
+  origin: pr_diff
+  description: Running the script twice on the same manifest yields identical output
+- id: exits_error_no_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script returns non-zero exit code when no sidecar files match any artifact
+- id: rejects_invalid_checksum_length
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects checksums that aren't exactly 64 characters (too short,
+    too long)
+- id: rejects_empty_checksum_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects empty .sha256 sidecar files
+- id: warns_unmatched_sidecar
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script warns on stderr about .sha256 files that don't match any manifest
+    artifact
+- id: existing_scripts_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing Python scripts in scripts/ remain valid Python
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python scripts pass ruff linting
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python scripts pass ruff format check
+- id: repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes typos spell check
+- id: top_level_imports_only
+  type: fail_to_pass
+  origin: agent_config
+  description: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: d0f2f3babc7c892958e93419ad6065df0deb2112
 rubric:
-  - rule: "Variable names in Python scripts should not be shortened; use full descriptive names like 'version' instead of 'ver'"
-    source:
-      path: "CLAUDE.md"
-      lines: "17-18"
-      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
-
-  - rule: "Python scripts should avoid bare exception handling patterns; use specific exception types and proper error handling"
-    source:
-      path: "CLAUDE.md"
-      lines: "7-8"
-      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
-
-  - rule: "Python scripts should include a proper module-level docstring explaining the script's purpose and usage"
-    source:
-      path: "CLAUDE.md"
-      lines: "1"
-      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
+- rule: Variable names in Python scripts should not be shortened; use full descriptive
+    names like 'version' instead of 'ver'
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+    commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+- rule: Python scripts should avoid bare exception handling patterns; use specific
+    exception types and proper error handling
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+    commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+- rule: Python scripts should include a proper module-level docstring explaining the
+    script's purpose and usage
+  source:
+    path: CLAUDE.md
+    lines: '1'
+    commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+  evidence: In the release workflow, the bash script uses the descriptive variable
+    name `temp_manifest` rather than a shortened name like `tmp` or `man`.
+  category: naming
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The changes involve GitHub Actions workflows and a release packaging
+    script. Attempting to add a test case for these CI/CD infrastructure changes would
+    be a waste of effort as they are not part of the standard test suite.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '2'
+- rule: PREFER integration tests, e.g., at `it/...` over unit tests
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to add an integration test in the Rust `it/...`
+    directory for the Python script. This crosses an architecture boundary, as the
+    script is a standalone utility for the release workflow, not part of the Rust
+    application.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '3'
+hierarchy_analysis: The CLAUDE.md file provides general Rust-focused guidelines. However,
+  this PR is entirely focused on CI/CD infrastructure (GitHub Actions) and a Python
+  utility script. The Rust-specific testing and style rules do not apply here.

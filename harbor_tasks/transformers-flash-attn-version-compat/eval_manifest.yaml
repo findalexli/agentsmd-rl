@@ -1,103 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
-  pr: 0  # Hand-crafted task; no single source PR
-  base_commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"
-
+  repo: huggingface/transformers
+  pr: 0
+  base_commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (import_utils.py, __init__.py) parse without syntax errors"
-
-  - id: function_importable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "is_flash_attn_greater_or_equal_2_10 is importable from transformers.utils"
-
-  - id: delegation_with_versions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Function returns correct bool for multiple flash_attn versions (>=2.1.0 True, <2.1.0 False)"
-
-  - id: returns_false_without_flash_attn
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Returns False (bool) when flash_attn is not installed"
-
-  - id: deprecation_warning_emitted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Function emits FutureWarning or DeprecationWarning on call"
-
-  - id: existing_version_check_works
-    type: pass_to_pass
-    origin: pr_diff
-    description: "is_flash_attn_greater_or_equal still works and returns bool"
-
-  - id: utils_core_exports
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Core utility functions (is_torch_available, is_flash_attn_2_available) still importable"
-
-  - id: no_bare_type_ignore
-    type: pass_to_pass
-    origin: agent_config
-    description: "Any # type: ignore added in the diff includes a specific error code"
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "185-186"
-      commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"
-
-  - id: ruff_style_clean
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files pass ruff style/lint check (make style runs ruff, necessary to pass code style checks)"
-    source:
-      path: "AGENTS.md"
-      lines: "2"
-      commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"
-
-  - id: test_repo_inits_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository init files check passes (utils/checkers.py inits)"
-
-  - id: test_repo_imports_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository public imports check passes (utils/checkers.py imports)"
-
-  - id: test_repo_init_isort_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository init import ordering check passes (utils/checkers.py init_isort)"
-
-  - id: test_repo_auto_mappings_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository auto mappings check passes (utils/checkers.py auto_mappings)"
-
-  - id: test_repo_modeling_structure_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository modeling file structure check passes (utils/checkers.py modeling_structure)"
-
-  - id: test_repo_dummies_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository dummy objects check passes (utils/checkers.py dummies)"
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified files (import_utils.py, __init__.py) parse without syntax
+    errors
+- id: function_importable
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_flash_attn_greater_or_equal_2_10 is importable from transformers.utils
+- id: delegation_with_versions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Function returns correct bool for multiple flash_attn versions (>=2.1.0
+    True, <2.1.0 False)
+- id: returns_false_without_flash_attn
+  type: fail_to_pass
+  origin: pr_diff
+  description: Returns False (bool) when flash_attn is not installed
+- id: deprecation_warning_emitted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Function emits FutureWarning or DeprecationWarning on call
+- id: existing_version_check_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: is_flash_attn_greater_or_equal still works and returns bool
+- id: utils_core_exports
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core utility functions (is_torch_available, is_flash_attn_2_available)
+    still importable
+- id: no_bare_type_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Any # type: ignore added in the diff includes a specific error code'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 185-186
+    commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
+- id: ruff_style_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files pass ruff style/lint check (make style runs ruff, necessary
+    to pass code style checks)
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
+- id: test_repo_inits_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository init files check passes (utils/checkers.py inits)
+- id: test_repo_imports_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository public imports check passes (utils/checkers.py imports)
+- id: test_repo_init_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository init import ordering check passes (utils/checkers.py init_isort)
+- id: test_repo_auto_mappings_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository auto mappings check passes (utils/checkers.py auto_mappings)
+- id: test_repo_modeling_structure_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository modeling file structure check passes (utils/checkers.py
+    modeling_structure)
+- id: test_repo_dummies_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository dummy objects check passes (utils/checkers.py dummies)
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"
-
-  - rule: "Do not add helper methods or abstractions just to satisfy the type checker (especially for only 1-2 occurrences)."
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "196-197"
-      commit: "b0bba2d832f3cfd94b339a407f2b3e5b90ce3499"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
+- rule: Do not add helper methods or abstractions just to satisfy the type checker
+    (especially for only 1-2 occurrences).
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 196-197
+    commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
+- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
+    style checks'
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+  evidence: The gold solution inserts `is_flash_attn_greater_or_equal_2_10` in strict
+    alphabetical order in `src/transformers/utils/__init__.py` (between `is_flash_attn_greater_or_equal`
+    and `is_flute_available`)
+  category: style
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to fail-closed and refuse to generate
+    PR-ready output if coordination evidence (like issue approval) is missing. In
+    a benchmark or evaluation setting, the agent must output the fix regardless of
+    missing GitHub context, otherwise it will fail the evaluation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 56-59
+- rule: 'Copies and Modular Models: manage code duplication in `src/transformers/models/`
+    using `# Copied from` or `modular_<name>.py`.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to manage code duplication using `# Copied
+    from` comments or modular files, but this rule specifically applies to `src/transformers/models/`.
+    The bug being fixed is in `src/transformers/utils/`, which is outside this architectural
+    boundary.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 61-66
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  rules are heavily focused on contribution policies and repository management rather
+  than specific coding conventions. The agent must distinguish between meta-instructions
+  meant for real-world PR submission (which should be ignored in an evaluation context)
+  and architectural rules (which only apply to specific directories like `models/`).

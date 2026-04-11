@@ -1,86 +1,82 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/vscode"
+  repo: microsoft/vscode
   pr: 306330
-  base_commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
-  merge_commit: "0705ebef87428a3a1d38df65b38da286a7b9174c"
-
+  base_commit: a2d7b9e13bdbe52233ea06b2ca6bc69a81083772
+  merge_commit: 0705ebef87428a3a1d38df65b38da286a7b9174c
 checks:
-  - id: state_interface_has_property
-    type: fail_to_pass
-    origin: pr_diff
-    description: "State interface declares requestUnsandboxedExecutionReason: string | undefined"
-
-  - id: data_event_type_has_property
-    type: fail_to_pass
-    origin: pr_diff
-    description: "requestUnsandboxedExecutionReason: string | undefined appears in both state param and TelemetryEvent type"
-
-  - id: classification_has_property
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Telemetry event classification includes requestUnsandboxedExecutionReason with SystemMetaData/FeatureInsight"
-
-  - id: mapping_includes_property
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Telemetry data construction maps requestUnsandboxedExecutionReason from state"
-
-  - id: tool_passes_property
-    type: fail_to_pass
-    origin: pr_diff
-    description: "runInTerminalTool.ts passes requestUnsandboxedExecutionReason to telemetry reporter"
-
-  - id: existing_properties_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-existing telemetry mappings (isBackground, isNewSession, isSandbox) still present"
-
-  - id: files_have_copyright_header
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files retain the Microsoft copyright header"
-
-  - id: property_indented_with_tabs
-    type: fail_to_pass
-    origin: agent_config
-    description: "New property lines use tab indentation, not spaces"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "107"
-      commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes (tsgo native compiler on src/tsconfig.json)"
-
-  - id: test_repo_monaco_compile_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Monaco editor compile check passes (monaco-compile-check)"
-
-  - id: test_repo_tsec_compile_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's tsec security compile check passes (tsec-compile-check)"
-
+- id: state_interface_has_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'State interface declares requestUnsandboxedExecutionReason: string
+    | undefined'
+- id: data_event_type_has_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'requestUnsandboxedExecutionReason: string | undefined appears in both
+    state param and TelemetryEvent type'
+- id: classification_has_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: Telemetry event classification includes requestUnsandboxedExecutionReason
+    with SystemMetaData/FeatureInsight
+- id: mapping_includes_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: Telemetry data construction maps requestUnsandboxedExecutionReason
+    from state
+- id: tool_passes_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: runInTerminalTool.ts passes requestUnsandboxedExecutionReason to telemetry
+    reporter
+- id: existing_properties_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing telemetry mappings (isBackground, isNewSession, isSandbox)
+    still present
+- id: files_have_copyright_header
+  type: pass_to_pass
+  origin: static
+  description: Both modified files retain the Microsoft copyright header
+- id: property_indented_with_tabs
+  type: fail_to_pass
+  origin: agent_config
+  description: New property lines use tab indentation, not spaces
+  source:
+    path: .github/copilot-instructions.md
+    lines: '107'
+    commit: a2d7b9e13bdbe52233ea06b2ca6bc69a81083772
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (tsgo native compiler on src/tsconfig.json)
+- id: test_repo_monaco_compile_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Monaco editor compile check passes (monaco-compile-check)
+- id: test_repo_tsec_compile_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tsec security compile check passes (tsec-compile-check)
 rubric:
-  - rule: "Use JSDoc style comments for functions, interfaces, enums, and classes"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "123-124"
-      commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
-
-  - rule: "Do not use any or unknown as the type for variables, parameters, or return values unless absolutely necessary"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "173"
-      commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
-
-  - rule: "Do not duplicate code. Always look for existing utility functions, helpers, or patterns in the codebase before implementing new functionality"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "175"
-      commit: "a2d7b9e13bdbe52233ea06b2ca6bc69a81083772"
+- rule: Use JSDoc style comments for functions, interfaces, enums, and classes
+  source:
+    path: .github/copilot-instructions.md
+    lines: 123-124
+    commit: a2d7b9e13bdbe52233ea06b2ca6bc69a81083772
+- rule: Do not use any or unknown as the type for variables, parameters, or return
+    values unless absolutely necessary
+  source:
+    path: .github/copilot-instructions.md
+    lines: '173'
+    commit: a2d7b9e13bdbe52233ea06b2ca6bc69a81083772
+- rule: Do not duplicate code. Always look for existing utility functions, helpers,
+    or patterns in the codebase before implementing new functionality
+  source:
+    path: .github/copilot-instructions.md
+    lines: '175'
+    commit: a2d7b9e13bdbe52233ea06b2ca6bc69a81083772
+hierarchy_analysis: The provided configuration hierarchy only contains `AGENTS.md`
+  which has 0 rules and only serves as a pointer to another file not included in the
+  context. Therefore, no hierarchy analysis can be performed.

@@ -4,68 +4,89 @@ source_pr:
   number: 26015
   merge_commit: 3ad0ff00af03003ea46d1e7b7fed714371c927f3
   base_commit: 9ca3d0f12bf261aab327bd14dfa060bd14495c9f
-
 target_files:
-  - crates/sui-e2e-tests/tests/party_objects_tests.rs
-  - crates/sui-e2e-tests/tests/per_epoch_config_stress_tests.rs
-
-# Fail-to-pass: Tests that should fail on base commit and pass on gold commit
+- crates/sui-e2e-tests/tests/party_objects_tests.rs
+- crates/sui-e2e-tests/tests/per_epoch_config_stress_tests.rs
 checks:
-  - id: test_new_deny_list_test_exists
-    type: fail_to_pass
-    description: New coin_deny_list_v2_party_owner_test function exists
-
-  - id: test_deny_list_test_has_deny_address_assertion
-    type: fail_to_pass
-    description: New test checks for AddressDeniedForCoin error with DENY_ADDRESS
-
-  - id: test_imports_added_to_stress_tests
-    type: fail_to_pass
-    description: Necessary imports (StructTag, ExecutionErrorKind, SUI_FRAMEWORK_ADDRESS) added
-
-  - id: test_mainnet_protocol_config_guards_removed_from_party_tests
-    type: fail_to_pass
-    description: has_mainnet_protocol_config_override guards removed from party_objects_tests.rs
-
-  - id: test_party_tests_no_longer_skip_mainnet
-    type: fail_to_pass
-    description: Specific party tests no longer have mainnet skip guards
-
-  - id: test_new_test_has_proper_test_structure
-    type: fail_to_pass
-    description: New test has proper structure with deny list add, reconfiguration, and transfer
-
-  - id: test_party_tests_have_sim_test_attribute
-    type: pass_to_pass
-    description: Party tests have #[sim_test] attribute
-
-  - id: test_cargo_check_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: Code compiles with cargo check
-
-  - id: test_rustfmt_check
-    type: pass_to_pass
-    origin: agent_config
-    source:
-      file: CLAUDE.md
-      lines: "54-56"
-    description: Code is properly formatted according to rustfmt
-
-  - id: test_cargo_xlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: License headers and project lints pass (cargo xlint)
-
-  - id: test_cargo_clippy_e2e_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Clippy passes on sui-e2e-tests crate
-
-# Rubric for LLJ-judge evaluation of soft criteria
+- id: test_new_deny_list_test_exists
+  type: fail_to_pass
+  description: New coin_deny_list_v2_party_owner_test function exists
+- id: test_deny_list_test_has_deny_address_assertion
+  type: fail_to_pass
+  description: New test checks for AddressDeniedForCoin error with DENY_ADDRESS
+- id: test_imports_added_to_stress_tests
+  type: fail_to_pass
+  description: Necessary imports (StructTag, ExecutionErrorKind, SUI_FRAMEWORK_ADDRESS)
+    added
+- id: test_mainnet_protocol_config_guards_removed_from_party_tests
+  type: fail_to_pass
+  description: has_mainnet_protocol_config_override guards removed from party_objects_tests.rs
+- id: test_party_tests_no_longer_skip_mainnet
+  type: fail_to_pass
+  description: Specific party tests no longer have mainnet skip guards
+- id: test_new_test_has_proper_test_structure
+  type: fail_to_pass
+  description: New test has proper structure with deny list add, reconfiguration,
+    and transfer
+- id: test_party_tests_have_sim_test_attribute
+  type: pass_to_pass
+  description: Party tests have
+- id: test_cargo_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code compiles with cargo check
+- id: test_rustfmt_check
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    file: CLAUDE.md
+    lines: 54-56
+  description: Code is properly formatted according to rustfmt
+- id: test_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: License headers and project lints pass (cargo xlint)
+- id: test_cargo_clippy_e2e_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clippy passes on sui-e2e-tests crate
 rubric:
-  - criterion: Followed license header requirement
-    description: New test file content includes proper license header (Copyright + SPDX)
-
-  - criterion: Code organization
-    description: Test is placed in the appropriate test file (per_epoch_config_stress_tests.rs)
+- criterion: Followed license header requirement
+  description: New test file content includes proper license header (Copyright + SPDX)
+- criterion: Code organization
+  description: Test is placed in the appropriate test file (per_epoch_config_stress_tests.rs)
+- rule: Use simulation tests (`simtest`) for e2e tests to avoid false negatives.
+  source:
+    path: CLAUDE.md
+    lines: 30-31
+  evidence: The new test `coin_deny_list_v2_party_owner_test` is added with the `#[sim_test]`
+    attribute, adhering to the simulation testing framework referenced in the e2e
+    testing commands.
+  category: testing
+distractors:
+- rule: Skip simulation tests as they may cause false negatives with `cargo nextest`.
+  collision_type: meta_confusion
+  why_distracting: The rule mentions skipping simulation tests with `cargo nextest`
+    because they may cause false negatives. An agent might misinterpret this as a
+    discouragement from writing simulation tests and instead use `#[tokio::test]`
+    or `#[test]`, which contradicts the explicit requirement to use `#[sim_test]`
+    for e2e tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 33-34
+- rule: All new files must start with the Mysten Labs license header.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires all new files to start with a specific license
+    header. An agent might mistakenly apply this to the new test function being added,
+    but the test is being added to an existing file (`per_epoch_config_stress_tests.rs`),
+    not a new file.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 18-22
+hierarchy_analysis: The root `CLAUDE.md` provides general testing guidelines, specifically
+  distinguishing between `cargo simtest` for e2e tests and `cargo nextest` for unit
+  tests. `AGENTS.md` defers to `CLAUDE.md`. The agent must carefully apply the `simtest`
+  guidelines without being deterred by the instruction to skip simtests during unit
+  testing.

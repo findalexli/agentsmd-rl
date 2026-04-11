@@ -1,94 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45009
-  base_commit: "1f553bdc1703c78e272656ab8fb86d6494593e18"
-  merge_commit: "23773e7140dc4037f658d263b95aef76bb6ef00d"
-
+  base_commit: 1f553bdc1703c78e272656ab8fb86d6494593e18
+  merge_commit: 23773e7140dc4037f658d263b95aef76bb6ef00d
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified file (utils/check_docstrings.py) parses without syntax errors"
-
-  - id: get_auto_docstring_names_detects_decorated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_get_auto_docstring_names returns correct set of @auto_docstring-decorated names"
-
-  - id: get_auto_docstring_names_caching
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_get_auto_docstring_names cache returns identical object on repeated calls"
-
-  - id: build_ast_indexes_uses_provided_tree
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_build_ast_indexes uses tree= parameter instead of re-parsing source"
-
-  - id: find_typed_dict_classes_uses_provided_tree
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_find_typed_dict_classes uses tree= parameter instead of re-parsing source"
-
-  - id: has_auto_docstring_decorator_uses_cache
-    type: fail_to_pass
-    origin: pr_diff
-    description: "has_auto_docstring_decorator accepts and uses cache parameter"
-
-  - id: get_auto_docstring_names_syntax_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_get_auto_docstring_names returns empty set for files with syntax errors"
-
-  - id: build_ast_indexes_backward_compat
-    type: pass_to_pass
-    origin: pr_diff
-    description: "_build_ast_indexes works without tree parameter (backward compatible)"
-
-  - id: find_typed_dict_classes_backward_compat
-    type: pass_to_pass
-    origin: pr_diff
-    description: "_find_typed_dict_classes works without tree parameter (backward compatible)"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: agent_config
-    description: "ruff lint passes on utils/check_docstrings.py"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "17"
-      commit: "1f553bdc1703c78e272656ab8fb86d6494593e18"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: agent_config
-    description: "ruff format check passes on utils/check_docstrings.py (make style runs formatters and linters)"
-    source:
-      path: "AGENTS.md"
-      lines: "2"
-      commit: "1f553bdc1703c78e272656ab8fb86d6494593e18"
-
-  # Repo CI-derived pass-to-pass tests
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: ruff check passes on modified file (from Makefile style target)"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: ruff format check passes on modified file (from Makefile style target)"
-
-  - id: test_repo_check_docstrings_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI: check_docstrings unit tests pass"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file (utils/check_docstrings.py) parses without syntax errors
+- id: get_auto_docstring_names_detects_decorated
+  type: fail_to_pass
+  origin: pr_diff
+  description: _get_auto_docstring_names returns correct set of @auto_docstring-decorated
+    names
+- id: get_auto_docstring_names_caching
+  type: fail_to_pass
+  origin: pr_diff
+  description: _get_auto_docstring_names cache returns identical object on repeated
+    calls
+- id: build_ast_indexes_uses_provided_tree
+  type: fail_to_pass
+  origin: pr_diff
+  description: _build_ast_indexes uses tree= parameter instead of re-parsing source
+- id: find_typed_dict_classes_uses_provided_tree
+  type: fail_to_pass
+  origin: pr_diff
+  description: _find_typed_dict_classes uses tree= parameter instead of re-parsing
+    source
+- id: has_auto_docstring_decorator_uses_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: has_auto_docstring_decorator accepts and uses cache parameter
+- id: get_auto_docstring_names_syntax_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: _get_auto_docstring_names returns empty set for files with syntax errors
+- id: build_ast_indexes_backward_compat
+  type: pass_to_pass
+  origin: pr_diff
+  description: _build_ast_indexes works without tree parameter (backward compatible)
+- id: find_typed_dict_classes_backward_compat
+  type: pass_to_pass
+  origin: pr_diff
+  description: _find_typed_dict_classes works without tree parameter (backward compatible)
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: ruff lint passes on utils/check_docstrings.py
+  source:
+    path: .github/copilot-instructions.md
+    lines: '17'
+    commit: 1f553bdc1703c78e272656ab8fb86d6494593e18
+- id: ruff_format
+  type: pass_to_pass
+  origin: agent_config
+  description: ruff format check passes on utils/check_docstrings.py (make style runs
+    formatters and linters)
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: 1f553bdc1703c78e272656ab8fb86d6494593e18
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: ruff check passes on modified file (from Makefile style target)'
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: ruff format check passes on modified file (from Makefile style
+    target)'
+- id: test_repo_check_docstrings_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: check_docstrings unit tests pass'
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "1f553bdc1703c78e272656ab8fb86d6494593e18"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 1f553bdc1703c78e272656ab8fb86d6494593e18
+- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
+    style checks'
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+  evidence: 'The gold solution preserves the `# noqa: E402` directive on the expanded
+    `from check_docstrings import ...` statement. Because this import occurs after
+    `sys.path.append(...)`, the directive is necessa'
+  category: style
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the code because it cannot verify
+    coordination or approval in the issue thread from the prompt context, outputting
+    a refusal instead of the requested optimization.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 54-57
+- rule: 'Copies and Modular Models: mark classes or functions with `# Copied from
+    ...` to manage code duplication.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use `# Copied from` comments when refactoring
+    or extracting AST parsing logic to avoid duplication, but this rule strictly applies
+    to model-specific files in `src/transformers/models/`, not utility scripts in
+    `utils/`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 59-63
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits or mechanical
+    cleanups.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misclassify this performance optimization as a
+    'mechanical cleanup' or 'tiny edit' and refuse to proceed, even though fixing
+    a 2-3x slowdown via AST caching is a substantial algorithmic improvement.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 38-40
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules regarding
+  agent contribution policies and repository management. The rules are consistent,
+  but the strict fail-closed policies for agents require careful handling to ensure
+  the agent actually attempts the coding task rather than refusing due to missing
+  meta-context.

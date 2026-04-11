@@ -1,109 +1,119 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
-  pr: 0  # Synthetic task — no upstream PR
-  base_commit: "e8dadd648483b6016913a9b7fa2580dbc08cb823"
-
+  repo: gradio-app/gradio
+  pr: 0
+  base_commit: e8dadd648483b6016913a9b7fa2580dbc08cb823
 checks:
-  - id: general_table_rules_added
-    type: fail_to_pass
-    origin: pr_diff
-    description: "At least one general-purpose rule targeting table/th/td exists"
-
-  - id: table_base_styles
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Table has border-collapse and valid width"
-
-  - id: table_header_styles
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Table headers have valid background color and padding"
-
-  - id: table_cell_styles
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Table cells have valid padding and border"
-
-  - id: dark_mode_header
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dark mode styles table headers with background or color"
-
-  - id: dark_mode_cell
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Dark mode styles table cells with border or color"
-
-  - id: css_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "CSS file has balanced braces (no broken syntax)"
-
-  - id: existing_scoped_dark_styles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing .obj scoped dark table styles preserved"
-
-  - id: existing_summary_styles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing summary::after styles preserved"
-
-  - id: file_not_truncated
-    type: pass_to_pass
-    origin: static
-    description: "CSS file has substantial content (>480 lines, anti-stub)"
-
-  - id: css_parseable_nodejs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CSS file is parseable by Node.js-based parser"
-
-  - id: nodejs_available
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Node.js is available for CSS parsing (CI environment check)"
-
-  - id: tab_indentation
-    type: fail_to_pass
-    origin: agent_config
-    description: "New table CSS uses tab indentation matching file convention"
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "e8dadd648483b6016913a9b7fa2580dbc08cb823"
-
-  # Repo CI/CD pass_to_pass gates — added during p2p enrichment
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo code formatting passes prettier check (mirrors CI: pnpm format:check)"
-
-  - id: test_repo_css_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CSS file passes prettier formatting check"
-
-  - id: test_repo_pnpm_install
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pnpm install completes successfully (CI env health check)"
-
-  - id: test_repo_client_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's client library builds successfully (mirrors CI: pnpm --filter @gradio/client build)"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests pass (mirrors CI: pnpm test:run)"
-
-# Rubric: No config file changes required for this task
-# The CSS styling changes are validated by the existing tests:
-# - test_repo_css_prettier: CSS file passes prettier formatting check
-# - test_tab_indentation: CSS uses tab indentation matching file convention
-# Judge-only evaluation (no rubric rules) - all tests must pass for reward=1
-rubric: []
+- id: general_table_rules_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least one general-purpose rule targeting table/th/td exists
+- id: table_base_styles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table has border-collapse and valid width
+- id: table_header_styles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table headers have valid background color and padding
+- id: table_cell_styles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table cells have valid padding and border
+- id: dark_mode_header
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dark mode styles table headers with background or color
+- id: dark_mode_cell
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dark mode styles table cells with border or color
+- id: css_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: CSS file has balanced braces (no broken syntax)
+- id: existing_scoped_dark_styles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing .obj scoped dark table styles preserved
+- id: existing_summary_styles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing summary::after styles preserved
+- id: file_not_truncated
+  type: pass_to_pass
+  origin: static
+  description: CSS file has substantial content (>480 lines, anti-stub)
+- id: css_parseable_nodejs
+  type: pass_to_pass
+  origin: repo_tests
+  description: CSS file is parseable by Node.js-based parser
+- id: nodejs_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js is available for CSS parsing (CI environment check)
+- id: tab_indentation
+  type: fail_to_pass
+  origin: agent_config
+  description: New table CSS uses tab indentation matching file convention
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: e8dadd648483b6016913a9b7fa2580dbc08cb823
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo code formatting passes prettier check (mirrors CI: pnpm format:check)'
+- id: test_repo_css_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: CSS file passes prettier formatting check
+- id: test_repo_pnpm_install
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm install completes successfully (CI env health check)
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s client library builds successfully (mirrors CI: pnpm --filter
+    @gradio/client build)'
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s unit tests pass (mirrors CI: pnpm test:run)'
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '39'
+  evidence: The gold solution implements dark mode styling by prefixing selectors
+    with the `.dark` class (e.g., `.dark table thead th`), which perfectly matches
+    the existing dark mode pattern already present in t
+  category: style
+distractors:
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  collision_type: architecture_boundary
+  why_distracting: The agent might interpret this rule as a requirement to build a
+    dedicated Svelte component (e.g., `<Table />`) for markdown tables and place it
+    in a new subdirectory under `js/`, rather than simply adding global CSS rules
+    to the existing stylesheet as the issue requires.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '9'
+- rule: Frontend code is formatted with `prettier`. Run `bash scripts/format_frontend.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run the global frontend formatting script
+    (`bash scripts/format_frontend.sh`) after making its CSS changes. In an agentic
+    context, running global formatters often modifies hundreds of unrelated files
+    that were slightly out of sync, polluting the PR with out-of-scope changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '38'
+hierarchy_analysis: The repository has a single root-level `AGENTS.md` file that provides
+  general guidelines. Since there are no deeper config files, there are no direct
+  hierarchy conflicts. However, the general architectural guidelines (like creating
+  Svelte components for frontend code) conflict with the specific, localized nature
+  of this bug fix (adding global CSS to a specific stylesheet).

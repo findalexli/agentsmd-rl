@@ -1,86 +1,110 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44696
-  base_commit: "09fea1e6e970a1051b1141ce320a3d696b2c15ed"
-  merge_commit: "9f93b61209e3a3cac026566bc11a77036941bbeb"
-
+  base_commit: 09fea1e6e970a1051b1141ce320a3d696b2c15ed
+  merge_commit: 9f93b61209e3a3cac026566bc11a77036941bbeb
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified file must parse without syntax errors"
-
-  - id: supports_tp_plan_empty_dict_false
-    type: fail_to_pass
-    origin: pr_diff
-    description: "supports_tp_plan returns False when _tp_plan is empty dict (multiple combos)"
-
-  - id: supports_pp_plan_empty_dict_false
-    type: fail_to_pass
-    origin: pr_diff
-    description: "supports_pp_plan returns False when _pp_plan is empty dict (multiple combos)"
-
-  - id: supports_pp_plan_checks_config
-    type: fail_to_pass
-    origin: pr_diff
-    description: "supports_pp_plan returns True when config.base_model_pp_plan is set"
-
-  - id: pp_setter_rejects_non_dict
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pp_plan setter raises ValueError for non-dict input (string, int, list, bool, tuple)"
-
-  - id: pp_setter_handles_none
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pp_plan setter converts None to empty dict instead of storing None"
-
-  - id: pipeline_parallel_enum_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PipelineParallel enum class removed from modeling_utils.py"
-
-  - id: supports_tp_plan_nonempty_true
-    type: pass_to_pass
-    origin: pr_diff
-    description: "supports_tp_plan returns True for non-empty plans from model, base, or config"
-
-  - id: supports_pp_plan_nonempty_true
-    type: pass_to_pass
-    origin: pr_diff
-    description: "supports_pp_plan returns True for non-empty plans from model, base, or config"
-
-  - id: pp_setter_accepts_valid_dict
-    type: pass_to_pass
-    origin: pr_diff
-    description: "pp_plan setter accepts valid dict input and stores it correctly"
-
-  - id: ruff_imports_clean
-    type: pass_to_pass
-    origin: static
-    description: "Changed file passes ruff import sorting check"
-
-  - id: ruff_check_clean
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed file passes ruff check (all default rules) as required by make style"
-    source:
-      path: "AGENTS.md"
-      lines: "2"
-      commit: "09fea1e6e970a1051b1141ce320a3d696b2c15ed"
-
-  - id: test_syntax_parse_subprocess
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python subprocess can parse the modified file without syntax errors"
-
-  - id: test_doc_toc_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Documentation TOC check passes"
-
-# No rubric rules - this is a code-only bugfix PR. All quality checks are covered by the test cases
-# in the checks section above (syntax, ruff, test outputs). The rubric judge is designed for
-# config/documentation edit tasks, not code changes.
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without syntax errors
+- id: supports_tp_plan_empty_dict_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: supports_tp_plan returns False when _tp_plan is empty dict (multiple
+    combos)
+- id: supports_pp_plan_empty_dict_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: supports_pp_plan returns False when _pp_plan is empty dict (multiple
+    combos)
+- id: supports_pp_plan_checks_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: supports_pp_plan returns True when config.base_model_pp_plan is set
+- id: pp_setter_rejects_non_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: pp_plan setter raises ValueError for non-dict input (string, int, list,
+    bool, tuple)
+- id: pp_setter_handles_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: pp_plan setter converts None to empty dict instead of storing None
+- id: pipeline_parallel_enum_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: PipelineParallel enum class removed from modeling_utils.py
+- id: supports_tp_plan_nonempty_true
+  type: pass_to_pass
+  origin: pr_diff
+  description: supports_tp_plan returns True for non-empty plans from model, base,
+    or config
+- id: supports_pp_plan_nonempty_true
+  type: pass_to_pass
+  origin: pr_diff
+  description: supports_pp_plan returns True for non-empty plans from model, base,
+    or config
+- id: pp_setter_accepts_valid_dict
+  type: pass_to_pass
+  origin: pr_diff
+  description: pp_plan setter accepts valid dict input and stores it correctly
+- id: ruff_imports_clean
+  type: pass_to_pass
+  origin: static
+  description: Changed file passes ruff import sorting check
+- id: ruff_check_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed file passes ruff check (all default rules) as required by make
+    style
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: 09fea1e6e970a1051b1141ce320a3d696b2c15ed
+- id: test_syntax_parse_subprocess
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python subprocess can parse the modified file without syntax errors
+- id: test_doc_toc_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation TOC check passes
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: meta_confusion
+  why_distracting: The fix involves changing `is not None` to truthiness checks and
+    fixing a type hint, which superficially looks like a 'tiny edit' or 'lint cleanup'.
+    An agent might refuse to proceed based on the 'fail-closed' policy, failing to
+    realize this is a critical bug fix for TP/PP conditional logic.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 35-37
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: In an evaluation setting, the agent is expected to provide the
+    code fix directly. If it strictly follows the 'fail-closed' policy requiring coordination
+    evidence or issue approval links, it will refuse to output the fix and instead
+    return an explanation of missing approvals, failing the benchmark.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 50-53
+- rule: Avoid direct inheritance between model-specific files in `src/transformers/models/`
+    and use `# Copied from` or `modular_<name>.py` mechanisms.
+  collision_type: architecture_boundary
+  why_distracting: The agent might hesitate to modify `PreTrainedModel` in `modeling_utils.py`
+    fearing it needs to update copies or modular files. However, `modeling_utils.py`
+    is a core utility file outside of `src/transformers/models/`, so the copy mechanisms
+    don't apply to it.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 55-60
+hierarchy_analysis: The AGENTS.md file contains strict meta-rules about PR submission,
+  coordination, and avoiding low-value busywork. Since this is an evaluation environment,
+  these meta-rules conflict with the agent's goal of generating a code fix.

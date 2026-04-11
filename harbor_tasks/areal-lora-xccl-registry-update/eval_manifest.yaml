@@ -1,93 +1,112 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1021
-  base_commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"
-  merge_commit: "a3e36d4af66ac6fa88e723675060cde591ca133e"
-
+  base_commit: 1927decc369d30df0037854b5d58ec7a9ca2a3b7
+  merge_commit: a3e36d4af66ac6fa88e723675060cde591ca133e
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files must parse without Python syntax errors"
-
-  - id: lora_xccl_update_payload_has_lora_fields
-    type: fail_to_pass
-    origin: pr_diff
-    description: "XCCL update request payload must contain lora_name/lora_int_id when use_lora=True"
-
-  - id: lora_xccl_update_payload_varies_with_version
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Versioned LoRA name in XCCL update payload changes correctly with version number"
-
-  - id: lora_xccl_endpoint_updates_lora_registry
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After LoRA XCCL weight update, openai_serving_models registry reflects the new LoRA name"
-
-  - id: non_lora_xccl_payload_empty
-    type: pass_to_pass
-    origin: pr_diff
-    description: "When use_lora is False, the XCCL update request payload remains empty"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files must not use wildcard imports"
-    source:
-      path: "CLAUDE.md"
-      lines: "93"
-      commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"
-
-  - id: test_repo_python_compilation
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files compile without py_compile errors"
-
-  - id: test_repo_key_functions_exist
-    type: pass_to_pass
-    origin: static
-    description: "Key functions modified in PR exist and are extractable via AST"
-
-  - id: test_repo_function_bodies_parse
-    type: pass_to_pass
-    origin: static
-    description: "Key function bodies parse without syntax errors via AST"
-
-  - id: test_repo_ruff_linting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass ruff linting (CI command: ruff check)"
-    command: "ruff check areal/engine/vllm_ext/areal_vllm_server.py areal/engine/vllm_remote.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass ruff format check (CI command: ruff format --check)"
-    command: "ruff format --check areal/engine/vllm_ext/areal_vllm_server.py areal/engine/vllm_remote.py"
-
-  - id: test_repo_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files have no trailing whitespace (CI check from pre-commit)"
-    command: "pre-commit hook trailing-whitespace (simulated)"
-
-  - id: test_repo_end_of_file_newline
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files end with a newline (CI check from pre-commit)"
-    command: "pre-commit hook end-of-file-fixer (simulated)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without Python syntax errors
+- id: lora_xccl_update_payload_has_lora_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: XCCL update request payload must contain lora_name/lora_int_id when
+    use_lora=True
+- id: lora_xccl_update_payload_varies_with_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: Versioned LoRA name in XCCL update payload changes correctly with version
+    number
+- id: lora_xccl_endpoint_updates_lora_registry
+  type: fail_to_pass
+  origin: pr_diff
+  description: After LoRA XCCL weight update, openai_serving_models registry reflects
+    the new LoRA name
+- id: non_lora_xccl_payload_empty
+  type: pass_to_pass
+  origin: pr_diff
+  description: When use_lora is False, the XCCL update request payload remains empty
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not use wildcard imports
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: 1927decc369d30df0037854b5d58ec7a9ca2a3b7
+- id: test_repo_python_compilation
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files compile without py_compile errors
+- id: test_repo_key_functions_exist
+  type: pass_to_pass
+  origin: static
+  description: Key functions modified in PR exist and are extractable via AST
+- id: test_repo_function_bodies_parse
+  type: pass_to_pass
+  origin: static
+  description: Key function bodies parse without syntax errors via AST
+- id: test_repo_ruff_linting
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Modified files pass ruff linting (CI command: ruff check)'
+  command: ruff check areal/engine/vllm_ext/areal_vllm_server.py areal/engine/vllm_remote.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Modified files pass ruff format check (CI command: ruff format --check)'
+  command: ruff format --check areal/engine/vllm_ext/areal_vllm_server.py areal/engine/vllm_remote.py
+- id: test_repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have no trailing whitespace (CI check from pre-commit)
+  command: pre-commit hook trailing-whitespace (simulated)
+- id: test_repo_end_of_file_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files end with a newline (CI check from pre-commit)
+  command: pre-commit hook end-of-file-fixer (simulated)
 rubric:
-  - rule: "Follow existing code patterns in the same module"
-    source:
-      path: "CLAUDE.md"
-      lines: "76"
-      commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"
-  - rule: "Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation."
-    source:
-      path: "AGENTS.md"
-      lines: "80"
-      commit: "1927decc369d30df0037854b5d58ec7a9ca2a3b7"
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: '76'
+    commit: 1927decc369d30df0037854b5d58ec7a9ca2a3b7
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 1927decc369d30df0037854b5d58ec7a9ca2a3b7
+- rule: 'Logging: never `print`'
+  source:
+    path: AGENTS.md
+    lines: 43-45
+  evidence: The gold solution uses `logger.info` and `logger.warning` to log the LoRA
+    name update and missing adapter warning, avoiding the use of `print`.
+  category: style
+distractors:
+- rule: Add tests for new functionality
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write a unit test for this bug fix. However,
+    testing XCCL weight updates and vLLM server state requires multi-node hardware
+    or complex mocking, and this is a bug fix, not new functionality. Attempting to
+    write a test would likely lead to wasted effort or broken test code.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '54'
+- rule: Register new loggers with color in `areal/utils/logging.py`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think it needs to create and register a new logger
+    with color in `areal/utils/logging.py` for the registry update, but it should
+    just use the existing `logger` already instantiated in the file.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 43-45
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are both Level 0 and contain largely
+  overlapping rules. `AGENTS.md` provides more specific details on logging and performance,
+  while `CLAUDE.md` provides more project context. There are no direct conflicts between
+  the two files.'

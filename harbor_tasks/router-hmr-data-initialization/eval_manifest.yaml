@@ -4,89 +4,107 @@ source_pr:
   number: 7074
   merge_commit: f8351a8d7aa9f5a341377f96966451892acb39f1
   base_commit: 30835cb8e935b740c92fa95909a073e644dde530
-
 checks:
-  # Fail-to-pass tests (verify the fix works)
-  - id: test_source_code_initializes_hot_data
-    type: fail_to_pass
-    origin: task_tests
-    description: Source code must initialize import.meta.hot.data before storing to it
-    file: test_outputs.py
-
-  - id: test_source_has_correct_template_structure
-    type: fail_to_pass
-    origin: task_tests
-    description: Template must have correct structure for HMR handling
-    file: test_outputs.py
-
-  # Pass-to-pass tests (repo CI/CD)
-  - id: test_hmr_test_file_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: HMR test file should exist
-    file: test_outputs.py
-
-  - id: test_router_plugin_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: Router plugin package builds successfully
-    file: test_outputs.py
-
-  - id: test_router_plugin_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Router plugin unit tests pass
-    file: test_outputs.py
-
-  - id: test_router_plugin_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Router plugin ESLint checks pass
-    file: test_outputs.py
-
-  - id: test_router_plugin_types
-    type: pass_to_pass
-    origin: repo_tests
-    description: Router plugin TypeScript type checking passes
-    file: test_outputs.py
-
-  - id: test_router_plugin_build_validation
-    type: pass_to_pass
-    origin: repo_tests
-    description: Router plugin package build validation passes
-    file: test_outputs.py
-
-  - id: test_add_hmr_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Add HMR specific unit tests pass
-    file: test_outputs.py
-
-  - id: test_code_splitter_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Code splitter unit tests pass
-    file: test_outputs.py
-
-# No agent_config checks - the AGENTS.md and SKILL.md don't have specific
-# programmatic rules that apply to this fix
+- id: test_source_code_initializes_hot_data
+  type: fail_to_pass
+  origin: task_tests
+  description: Source code must initialize import.meta.hot.data before storing to
+    it
+  file: test_outputs.py
+- id: test_source_has_correct_template_structure
+  type: fail_to_pass
+  origin: task_tests
+  description: Template must have correct structure for HMR handling
+  file: test_outputs.py
+- id: test_hmr_test_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: HMR test file should exist
+  file: test_outputs.py
+- id: test_router_plugin_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin package builds successfully
+  file: test_outputs.py
+- id: test_router_plugin_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin unit tests pass
+  file: test_outputs.py
+- id: test_router_plugin_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin ESLint checks pass
+  file: test_outputs.py
+- id: test_router_plugin_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin TypeScript type checking passes
+  file: test_outputs.py
+- id: test_router_plugin_build_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin package build validation passes
+  file: test_outputs.py
+- id: test_add_hmr_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Add HMR specific unit tests pass
+  file: test_outputs.py
+- id: test_code_splitter_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code splitter unit tests pass
+  file: test_outputs.py
 agent_config:
   files: []
   rules: []
-
 rubric:
-  - rule: "Use TypeScript strict mode with extensive type safety"
-    source:
-      path: "AGENTS.md"
-      lines: "18-23"
-      commit: "30835cb8e935b740c92fa95909a073e644dde530"
-  - rule: "Add or update tests for any code changes"
-    source:
-      path: "AGENTS.md"
-      lines: "74"
-      commit: "30835cb8e935b740c92fa95909a073e644dde530"
-  - rule: "Always run unit and type tests during development - do not proceed if they fail"
-    source:
-      path: "AGENTS.md"
-      lines: "53"
-      commit: "30835cb8e935b740c92fa95909a073e644dde530"
+- rule: Use TypeScript strict mode with extensive type safety
+  source:
+    path: AGENTS.md
+    lines: 18-23
+    commit: 30835cb8e935b740c92fa95909a073e644dde530
+- rule: Add or update tests for any code changes
+  source:
+    path: AGENTS.md
+    lines: '74'
+    commit: 30835cb8e935b740c92fa95909a073e644dde530
+- rule: Always run unit and type tests during development - do not proceed if they
+    fail
+  source:
+    path: AGENTS.md
+    lines: '53'
+    commit: 30835cb8e935b740c92fa95909a073e644dde530
+- rule: Framework-agnostic core logic separated from React/Solid bindings
+  source:
+    path: AGENTS.md
+    lines: 20-22
+  evidence: The fix is applied specifically to `react-stable-hmr-split-route-components.ts`,
+    which handles React-specific HMR logic, respecting the separation of framework
+    bindings from core router logic.
+  category: architecture
+distractors:
+- rule: 'Fix formatting: `pnpm format`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the global `pnpm format` command after
+    making the fix, which could introduce unrelated formatting changes across the
+    monorepo or within the file, polluting the PR diff.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 47-48
+- rule: 'Full CI suite: `pnpm test:ci`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run the full CI suite (`pnpm test:ci`)
+    or global tests instead of using the highly targeted Nx commands provided in the
+    specific task instructions, leading to wasted time and potential unrelated test
+    failures in the monorepo.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 46-47
+hierarchy_analysis: The AGENTS.md file provides general monorepo guidelines, but the
+  specific task instructions provide exact Nx commands for building and testing the
+  router-plugin. The agent must prioritize the targeted commands in the task instructions
+  over the general testing and formatting commands in AGENTS.md to avoid scope creep.

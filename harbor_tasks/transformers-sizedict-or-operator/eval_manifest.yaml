@@ -1,133 +1,149 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44884
-  base_commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
-  merge_commit: "7cd9b985e0698d4f625a18be0125231b6b930390"
-
+  base_commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+  merge_commit: 7cd9b985e0698d4f625a18be0125231b6b930390
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "image_utils.py must parse without syntax errors"
-
-  - id: test_repo_import_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Transformers module can be imported without syntax errors"
-
-  - id: test_repo_sizedict_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SizeDict basic operations work (instantiation, dict conversion, equality)"
-
-  - id: test_repo_image_utils_ast
-    type: pass_to_pass
-    origin: repo_tests
-    description: "image_utils.py parses without AST errors"
-
-  - id: test_repo_get_size_dict
-    type: pass_to_pass
-    origin: repo_tests
-    description: "get_size_dict works and returns compatible dict with SizeDict"
-
-  - id: test_repo_sizedict_attributes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SizeDict attribute access works for all standard fields"
-
-  - id: sizedict_or_dict
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SizeDict | dict returns a SizeDict with all fields merged"
-
-  - id: dict_or_sizedict
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dict | SizeDict returns a plain dict with all entries merged"
-
-  - id: sizedict_or_sizedict
-    type: fail_to_pass
-    origin: pr_diff
-    description: "SizeDict | SizeDict returns a merged SizeDict"
-
-  - id: or_override_conflict
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Right-side values override left-side on key conflict"
-
-  - id: or_unsupported_type
-    type: pass_to_pass
-    origin: pr_diff
-    description: "SizeDict | non-dict raises TypeError (preserved behavior)"
-
-  - id: equality_with_dict
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SizeDict equality comparison with dict still works"
-
-  - id: getitem_and_contains
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SizeDict __getitem__ and __contains__ still work"
-
-  - id: dict_conversion
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SizeDict dict() conversion still works"
-
-  - id: minimal_diff
-    type: pass_to_pass
-    origin: agent_config
-    description: "Fix should be brief — fewer than 40 lines of non-comment code added"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
-
-  - id: minimal_files_changed
-    type: pass_to_pass
-    origin: agent_config
-    description: "Only image_utils.py (and optionally one test file) should be modified"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
-
-  - id: no_bare_type_ignore
-    type: pass_to_pass
-    origin: agent_config
-    description: "No bare '# type: ignore' without specific error code in added lines"
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "180-186"
-      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
-
-  - id: no_new_test_files
-    type: pass_to_pass
-    origin: agent_config
-    description: "Tests must be added to existing test files, not new ones"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "16"
-      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: image_utils.py must parse without syntax errors
+- id: test_repo_import_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Transformers module can be imported without syntax errors
+- id: test_repo_sizedict_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict basic operations work (instantiation, dict conversion, equality)
+- id: test_repo_image_utils_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: image_utils.py parses without AST errors
+- id: test_repo_get_size_dict
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_size_dict works and returns compatible dict with SizeDict
+- id: test_repo_sizedict_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict attribute access works for all standard fields
+- id: sizedict_or_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: SizeDict | dict returns a SizeDict with all fields merged
+- id: dict_or_sizedict
+  type: fail_to_pass
+  origin: pr_diff
+  description: dict | SizeDict returns a plain dict with all entries merged
+- id: sizedict_or_sizedict
+  type: fail_to_pass
+  origin: pr_diff
+  description: SizeDict | SizeDict returns a merged SizeDict
+- id: or_override_conflict
+  type: fail_to_pass
+  origin: pr_diff
+  description: Right-side values override left-side on key conflict
+- id: or_unsupported_type
+  type: pass_to_pass
+  origin: pr_diff
+  description: SizeDict | non-dict raises TypeError (preserved behavior)
+- id: equality_with_dict
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict equality comparison with dict still works
+- id: getitem_and_contains
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict __getitem__ and __contains__ still work
+- id: dict_conversion
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict dict() conversion still works
+- id: minimal_diff
+  type: pass_to_pass
+  origin: agent_config
+  description: Fix should be brief — fewer than 40 lines of non-comment code added
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- id: minimal_files_changed
+  type: pass_to_pass
+  origin: agent_config
+  description: Only image_utils.py (and optionally one test file) should be modified
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- id: no_bare_type_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No bare ''# type: ignore'' without specific error code in added lines'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 180-186
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- id: no_new_test_files
+  type: pass_to_pass
+  origin: agent_config
+  description: Tests must be added to existing test files, not new ones
+  source:
+    path: .github/copilot-instructions.md
+    lines: '16'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
-
-  - rule: "Do not add helper methods or abstractions just to satisfy the type checker, especially for only one or two occurrences."
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "196"
-      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
-
-  - rule: "Do not use cast() when @overload or generics can eliminate the need at the source."
-    source:
-      path: ".ai/skills/add-or-fix-type-checking/SKILL.md"
-      lines: "195"
-      commit: "b7164eca8675e5223cf73fb430a6aaf6ceafc9cc"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- rule: Do not add helper methods or abstractions just to satisfy the type checker,
+    especially for only one or two occurrences.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '196'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- rule: Do not use cast() when @overload or generics can eliminate the need at the
+    source.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '195'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- rule: '`make typing`: runs the ty type checker and model structure rules'
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+  evidence: The gold solution includes explicit return type annotations (`-> "SizeDict"`
+    and `-> dict`) for the new dunder methods, ensuring compatibility with the repository's
+    type checker.
+  category: tooling
+distractors:
+- rule: 'Copies and Modular Models: avoid direct inheritance between model-specific
+    files in `src/transformers/models/`.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to apply the `# Copied from` or modular model
+    rules to `SizeDict`, but these rules strictly apply to `src/transformers/models/`,
+    whereas `image_utils.py` is a core utility file.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 54-59
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might refuse to implement the fix, misclassifying the
+    addition of two short dunder methods as a 'low-value busywork PR' or 'tiny edit',
+    when it is actually a critical functional fix for downstream libraries like vLLM.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 35-37
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  rules focus heavily on PR workflow, coordination, and model-specific architecture
+  (`src/transformers/models/`). Since the target file `src/transformers/image_utils.py`
+  is a core utility, the model-specific copying rules do not apply, and the agent
+  must rely on general Python data model knowledge (dunder methods) while adhering
+  to the repository's typing standards.

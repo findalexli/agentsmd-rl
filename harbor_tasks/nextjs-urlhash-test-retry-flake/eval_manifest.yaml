@@ -1,83 +1,114 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 91649
-  base_commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
-  merge_commit: "4693685be18ace1818d9c1ade1dae77902013a6f"
-
+  base_commit: 78f73b27069ffe2dc1ddfb2b16013220d2a86569
+  merge_commit: 4693685be18ace1818d9c1ade1dae77902013a6f
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Test file exists and has balanced braces/parens"
-
-  - id: flaky_click_chains_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Flaky .click().text()/.eval() chains are broken apart"
-
-  - id: retry_wraps_browser_assertions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "retry/polling wrappers surround browser assertions (>=5 with proximity check)"
-
-  - id: retry_mechanism_imported
-    type: fail_to_pass
-    origin: pr_diff
-    description: "A retry/polling mechanism (retry, waitFor, toPass, etc.) is imported or defined"
-
-  - id: names_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Existing describe blocks and test names are preserved"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "File has substantial content (>=150 lines, >=10 it blocks, >=10 expects, >=15 browser refs)"
-
-  - id: no_deprecated_check
-    type: pass_to_pass
-    origin: agent_config
-    description: "No deprecated check() usage — must use retry() + expect() instead"
-    source:
-      path: "AGENTS.md"
-      lines: "194"
-      commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
-
-  - id: no_settimeout_waiting
-    type: pass_to_pass
-    origin: agent_config
-    description: "No setTimeout-based waiting — must use retry() instead"
-    source:
-      path: "AGENTS.md"
-      lines: "180"
-      commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
-
-  - id: no_inline_files_object
-    type: pass_to_pass
-    origin: agent_config
-    description: "nextTestSetup uses real fixture directory (files: __dirname) not inline file object literals"
-    source:
-      path: "AGENTS.md"
-      lines: "207-221"
-      commit: "78f73b27069ffe2dc1ddfb2b16013220d2a86569"
-
-  # Pass-to-pass tests using actual subprocess commands (repo_tests)
-  - id: repo_fixture_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo test fixture directory structure is valid (verified via node subprocess)"
-
-  - id: repo_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repo is in clean state (verified via git subprocess)"
-
-  - id: repo_node_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Key test files have valid Node.js-parsable syntax (verified via node subprocess)"
-
-rubric: []
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Test file exists and has balanced braces/parens
+- id: flaky_click_chains_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Flaky .click().text()/.eval() chains are broken apart
+- id: retry_wraps_browser_assertions
+  type: fail_to_pass
+  origin: pr_diff
+  description: retry/polling wrappers surround browser assertions (>=5 with proximity
+    check)
+- id: retry_mechanism_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: A retry/polling mechanism (retry, waitFor, toPass, etc.) is imported
+    or defined
+- id: names_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing describe blocks and test names are preserved
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: File has substantial content (>=150 lines, >=10 it blocks, >=10 expects,
+    >=15 browser refs)
+- id: no_deprecated_check
+  type: pass_to_pass
+  origin: agent_config
+  description: No deprecated check() usage — must use retry() + expect() instead
+  source:
+    path: AGENTS.md
+    lines: '194'
+    commit: 78f73b27069ffe2dc1ddfb2b16013220d2a86569
+- id: no_settimeout_waiting
+  type: pass_to_pass
+  origin: agent_config
+  description: No setTimeout-based waiting — must use retry() instead
+  source:
+    path: AGENTS.md
+    lines: '180'
+    commit: 78f73b27069ffe2dc1ddfb2b16013220d2a86569
+- id: no_inline_files_object
+  type: pass_to_pass
+  origin: agent_config
+  description: 'nextTestSetup uses real fixture directory (files: __dirname) not inline
+    file object literals'
+  source:
+    path: AGENTS.md
+    lines: 207-221
+    commit: 78f73b27069ffe2dc1ddfb2b16013220d2a86569
+- id: repo_fixture_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test fixture directory structure is valid (verified via node subprocess)
+- id: repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repo is in clean state (verified via git subprocess)
+- id: repo_node_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key test files have valid Node.js-parsable syntax (verified via node
+    subprocess)
+rubric:
+- rule: Run tests fast using NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=<dev|start> pnpm testheadless
+  source:
+    path: CLAUDE.md
+    lines: 80-85
+  evidence: The gold solution modifies `test/development/pages-dir/client-navigation/url-hash.test.ts`,
+    which is a test file that should be run and verified using the `testheadless`
+    command described in the confi
+  category: testing
+- rule: Test suites are located in the `test/` directory
+  source:
+    path: CLAUDE.md
+    lines: 14-15
+  evidence: The gold solution correctly targets the test file within the `test/` directory,
+    adhering to the monorepo structure where all test suites are housed.
+  category: architecture
+distractors:
+- rule: prefer `pnpm --filter=next build` when edits are limited to core Next.js files
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `pnpm --filter=next build` thinking it needs
+    to rebuild the framework to test its changes. However, since the edits are strictly
+    within a test file and not core Next.js files, rebuilding the core framework is
+    a waste of time and compute.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 90-91
+- rule: Before editing or creating files in any subdirectory... read all README.md
+    files in the directory path
+  collision_type: meta_confusion
+  why_distracting: The agent might waste time searching for and reading `README.md`
+    files in `test/`, `test/development/`, and `test/development/pages-dir/` when
+    the issue is a standard flaky test that simply requires wrapping assertions in
+    `retry` from `next-test-utils`.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 46-48
+hierarchy_analysis: The config files `CLAUDE.md` and `AGENTS.md` are identical symlinks.
+  The rules primarily focus on local development workflows, building, and testing.
+  The agent must discern which commands apply to modifying test files versus core
+  framework files.

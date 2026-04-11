@@ -90,3 +90,40 @@ rubric:
     path: AGENTS.md
     lines: 13-33
     commit: 714d0ea90421ddfe4b5b5c6dca250e330f5ebe65
+- rule: You can add try catch on code that explicitly aims to be fault tolerant like
+    adding retry mechanisms or explicit and intentional robustness.
+  source:
+    path: AGENTS.md
+    lines: 7-7
+  evidence: 'In `src/prime_rl/utils/monitor/multi.py`, the `log_eval_samples` method
+    wraps the call to each monitor in a `try/except` block, logging a warning on failure.
+    This applies the exception for ''code that '
+  category: architecture
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 9-9
+  evidence: The gold solution adds the new `log_eval_samples` methods across multiple
+    files without adding any explanatory comments about the change, avoiding the anti-pattern
+    of explaining work process.
+  category: style
+distractors:
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
+    fails if something goes wrong as this helps us to catch non-obvious bugs and unforeseen
+    side-effects earlier.
+  collision_type: scope_ambiguity
+  why_distracting: The instruction to 'Avoid try/except blocks... It's fine that a
+    program fails' might lead an agent to omit the `try/except` block in `MultiMonitor.log_eval_samples`.
+    However, in the context of a multi-monitor setup, logging is a non-critical side
+    effect. If one monitor (like W&B) fails due to network issues, it should not crash
+    the entire evaluation process. The agent must recognize this as a case requiring
+    'explicit and intentional robustness.'
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 7-7
+hierarchy_analysis: The configuration is flat with only `AGENTS.md` providing rules.
+  The main tension is within a single rule in `AGENTS.md` regarding `try/except` blocks,
+  where the agent must correctly identify that monitor logging falls under the 'fault
+  tolerant' exception rather than the general 'avoid try/except' rule.

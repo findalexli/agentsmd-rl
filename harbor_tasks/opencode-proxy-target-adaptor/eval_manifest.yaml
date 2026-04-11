@@ -1,131 +1,164 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 21239
-  base_commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-  merge_commit: "37883a9f3a8542ab93ccfa85808b51d9b54cfd9f"
-
+  base_commit: 3c31d046669ca8df09798f690ef5c9cf17021ddd
+  merge_commit: 37883a9f3a8542ab93ccfa85808b51d9b54cfd9f
 checks:
-  - id: typecheck
-    type: pass_to_pass
-    origin: static
-    description: "All modified packages must pass type checking"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's bun typecheck passes (CI turbo typecheck)"
-
-  - id: test_control_plane_sse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Control-plane SSE tests pass (modified module tests)"
-
-  - id: test_server_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Server module tests pass (modified module tests)"
-
-  - id: test_opencode_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Opencode package typecheck passes"
-
-  - id: test_repo_worktree_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Worktree tests pass (modified WorktreeAdaptor with target() method)"
-
-  - id: test_repo_project_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Project tests pass (worktree integration tests)"
-
-  - id: target_type_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Target discriminated union with local and remote variants must exist in types.ts"
-
-  - id: adaptor_has_target_not_fetch
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Adaptor interface must have target() method and not fetch()"
-
-  - id: worktree_target_returns_local
-    type: fail_to_pass
-    origin: pr_diff
-    description: "WorktreeAdaptor must implement target() returning local type"
-
-  - id: proxy_module_exports
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ServerProxy module must export http() and websocket() functions"
-
-  - id: proxy_strips_hop_headers
-    type: fail_to_pass
-    origin: pr_diff
-    description: "HTTP proxy must strip hop-by-hop headers per RFC 2616"
-
-  - id: workspace_uses_target
-    type: fail_to_pass
-    origin: pr_diff
-    description: "workspaceEventLoop must use adaptor.target() and return early for local"
-
-  - id: router_branches_on_target
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Router must branch on target.type instead of workspace.type"
-
-  - id: router_websocket_proxy
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Router must delegate websocket upgrades through proxy module"
-
-  - id: router_workspace_header
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Router must accept workspace ID from x-opencode-workspace header"
-
-  - id: no_try_catch_in_proxy
-    type: fail_to_pass
-    origin: agent_config
-    description: "Proxy module must avoid try/catch (AGENTS.md style rule)"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-
-  - id: no_else_in_proxy
-    type: fail_to_pass
-    origin: agent_config
-    description: "Proxy module must avoid else statements (AGENTS.md style rule)"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-
+- id: typecheck
+  type: pass_to_pass
+  origin: static
+  description: All modified packages must pass type checking
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun typecheck passes (CI turbo typecheck)
+- id: test_control_plane_sse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Control-plane SSE tests pass (modified module tests)
+- id: test_server_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server module tests pass (modified module tests)
+- id: test_opencode_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Opencode package typecheck passes
+- id: test_repo_worktree_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Worktree tests pass (modified WorktreeAdaptor with target() method)
+- id: test_repo_project_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Project tests pass (worktree integration tests)
+- id: target_type_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Target discriminated union with local and remote variants must exist
+    in types.ts
+- id: adaptor_has_target_not_fetch
+  type: fail_to_pass
+  origin: pr_diff
+  description: Adaptor interface must have target() method and not fetch()
+- id: worktree_target_returns_local
+  type: fail_to_pass
+  origin: pr_diff
+  description: WorktreeAdaptor must implement target() returning local type
+- id: proxy_module_exports
+  type: fail_to_pass
+  origin: pr_diff
+  description: ServerProxy module must export http() and websocket() functions
+- id: proxy_strips_hop_headers
+  type: fail_to_pass
+  origin: pr_diff
+  description: HTTP proxy must strip hop-by-hop headers per RFC 2616
+- id: workspace_uses_target
+  type: fail_to_pass
+  origin: pr_diff
+  description: workspaceEventLoop must use adaptor.target() and return early for local
+- id: router_branches_on_target
+  type: fail_to_pass
+  origin: pr_diff
+  description: Router must branch on target.type instead of workspace.type
+- id: router_websocket_proxy
+  type: fail_to_pass
+  origin: pr_diff
+  description: Router must delegate websocket upgrades through proxy module
+- id: router_workspace_header
+  type: fail_to_pass
+  origin: pr_diff
+  description: Router must accept workspace ID from x-opencode-workspace header
+- id: no_try_catch_in_proxy
+  type: fail_to_pass
+  origin: agent_config
+  description: Proxy module must avoid try/catch (AGENTS.md style rule)
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 3c31d046669ca8df09798f690ef5c9cf17021ddd
+- id: no_else_in_proxy
+  type: fail_to_pass
+  origin: agent_config
+  description: Proxy module must avoid else statements (AGENTS.md style rule)
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 3c31d046669ca8df09798f690ef5c9cf17021ddd
 rubric:
-  - rule: "Prefer single word variable names. Use short names like pid, cfg, err, opts, dir, root. Avoid camelCase compounds like inputPID, existingClient, connectTimeout."
-    source:
-      path: "AGENTS.md"
-      lines: "52-68"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-
-  - rule: "Avoid unnecessary destructuring. Use dot notation (obj.a, obj.b) instead of const { a, b } = obj to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "82-92"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-
-  - rule: "Prefer const over let. Use ternaries or early returns instead of variable reassignment."
-    source:
-      path: "AGENTS.md"
-      lines: "94-100"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
-
-  - rule: "Use Bun APIs when possible (Bun.file(), etc.). Rely on type inference; avoid explicit type annotations unless necessary for exports."
-    source:
-      path: "AGENTS.md"
-      lines: "16-24"
-      commit: "3c31d046669ca8df09798f690ef5c9cf17021ddd"
+- rule: Prefer single word variable names. Use short names like pid, cfg, err, opts,
+    dir, root. Avoid camelCase compounds like inputPID, existingClient, connectTimeout.
+  source:
+    path: AGENTS.md
+    lines: 52-68
+    commit: 3c31d046669ca8df09798f690ef5c9cf17021ddd
+- rule: Avoid unnecessary destructuring. Use dot notation (obj.a, obj.b) instead of
+    const { a, b } = obj to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 82-92
+    commit: 3c31d046669ca8df09798f690ef5c9cf17021ddd
+- rule: Prefer const over let. Use ternaries or early returns instead of variable
+    reassignment.
+  source:
+    path: AGENTS.md
+    lines: 94-100
+    commit: 3c31d046669ca8df09798f690ef5c9cf17021ddd
+- rule: Use Bun APIs when possible (Bun.file(), etc.). Rely on type inference; avoid
+    explicit type annotations unless necessary for exports.
+  source:
+    path: AGENTS.md
+    lines: 16-24
+    commit: 3c31d046669ca8df09798f690ef5c9cf17021ddd
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 63-73
+  evidence: In `workspace.ts`, the gold solution uses `if (target.type === "local")
+    { return }` and `if (!res.ok || !res.body) { await sleep(1000); continue }` instead
+    of wrapping the subsequent logic in `else` b
+  category: style
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 43-51
+  evidence: In `workspace.ts`, the gold solution accesses properties directly via
+    `target.type` and `target.url` rather than destructuring them. Similarly, in `worktree.ts`,
+    it uses `config.directory`.
+  category: style
+- rule: Prefer single word variable names where possible / Naming Enforcement
+  source:
+    path: AGENTS.md
+    lines: 18-31
+  evidence: The gold solution uses short, single-word variable names like `hop`, `req`,
+    and `out` in `proxy.ts`, and `res`, `target`, and `stop` in `workspace.ts`.
+  category: naming
+distractors:
+- rule: Prefer `HttpClient.HttpClient` instead of raw `fetch`.
+  collision_type: architecture_boundary
+  why_distracting: The `workspaceEventLoop` in `workspace.ts` is written using standard
+    async/await and native Promises. Applying the Effect `HttpClient` rule here would
+    require either wrapping the call in `Effect.runPromise` or refactoring the entire
+    loop to use `Effect.gen`, which is out of scope and crosses an architectural boundary.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 34-35
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: architecture_boundary
+  why_distracting: The PR modifies existing non-Effect code (`workspace.ts`, `worktree.ts`).
+    An agent might see the Effect rules and attempt to rewrite `workspaceEventLoop`
+    or `WorktreeAdaptor` using `Effect.gen`, which would cause massive scope creep
+    and potential bugs.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 13-14
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript/Node style guidelines
+  (naming, early returns, no destructuring) which apply universally. The `packages/opencode/AGENTS.md`
+  introduces Effect-specific rules (`HttpClient`, `Effect.gen`). However, the files
+  being edited in this PR (`workspace.ts`, `worktree.ts`, `proxy.ts`) are part of
+  the older or non-Effect codebase. The Effect rules in the child config create a
+  strong architectural boundary conflict, as agents might incorrectly attempt to apply
+  Effect patterns to standard async/await code.

@@ -1,91 +1,121 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/uv"
+  repo: astral-sh/uv
   pr: 18831
-  base_commit: "c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87"
-  merge_commit: "f40124f1eec8a813d2040dad2f7ad624179c655a"
-
+  base_commit: c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87
+  merge_commit: f40124f1eec8a813d2040dad2f7ad624179c655a
 checks:
-  - id: rejects_non_tarfile
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script exits non-zero when given a non-tarball file"
-
-  - id: rejects_missing_cargo_lock
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script exits non-zero when sdist tarball has no Cargo.lock"
-
-  - id: rejects_multi_toplevel
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script exits non-zero when tarball has multiple top-level directories"
-
-  - id: repairs_and_repacks_sdist
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script prunes stale Cargo.lock entries and repacks the tarball"
-
-  - id: cli_argument_parsing
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Script provides a CLI with --help that describes its purpose"
-
-  - id: top_level_imports
-    type: fail_to_pass
-    origin: agent_config
-    description: "All imports are at module level, not inside functions"
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87"
-
-  # Pass-to-pass checks — repo CI/CD tests that must pass on base AND fix
-  - id: test_repo_cargo_check_uv_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "uv-build crate compiles cleanly with cargo check"
-
-  - id: test_repo_cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Rust code formatting is correct (cargo fmt --check)"
-
-  - id: test_repo_cargo_clippy_uv_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "uv-build crate passes clippy linting"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python scripts in scripts/ have valid syntax"
-
-  # Additional p2p checks from CI
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python scripts in scripts/ pass ruff linting"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Python scripts in scripts/ pass ruff format check"
-
-  - id: test_repo_cargo_shear
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No unused dependencies found in workspace (cargo shear)"
-
-  - id: test_repo_cargo_deny_uv_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "uv-build crate passes cargo deny bans check"
-
+- id: rejects_non_tarfile
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits non-zero when given a non-tarball file
+- id: rejects_missing_cargo_lock
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits non-zero when sdist tarball has no Cargo.lock
+- id: rejects_multi_toplevel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits non-zero when tarball has multiple top-level directories
+- id: repairs_and_repacks_sdist
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script prunes stale Cargo.lock entries and repacks the tarball
+- id: cli_argument_parsing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script provides a CLI with --help that describes its purpose
+- id: top_level_imports
+  type: fail_to_pass
+  origin: agent_config
+  description: All imports are at module level, not inside functions
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87
+- id: test_repo_cargo_check_uv_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-build crate compiles cleanly with cargo check
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust code formatting is correct (cargo fmt --check)
+- id: test_repo_cargo_clippy_uv_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-build crate passes clippy linting
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python scripts in scripts/ have valid syntax
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python scripts in scripts/ pass ruff linting
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python scripts in scripts/ pass ruff format check
+- id: test_repo_cargo_shear
+  type: pass_to_pass
+  origin: repo_tests
+  description: No unused dependencies found in workspace (cargo shear)
+- id: test_repo_cargo_deny_uv_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-build crate passes cargo deny bans check
 rubric:
-  - rule: "AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`"
-    source:
-      path: "AGENTS.md"
-      lines: "17-18"
-      commit: "c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87"
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and
+    `requires_python` instead of `rp`
+  source:
+    path: AGENTS.md
+    lines: 17-18
+    commit: c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: AGENTS.md
+    lines: 15-15
+  evidence: The `scripts/repair-sdist-cargo-lock.py` script uses top-level imports
+    for all standard library modules (`import argparse`, `import os`, `import subprocess`,
+    etc.) rather than local imports.
+  category: style
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: The `scripts/repair-sdist-cargo-lock.py` script uses descriptive, unshortened
+    variable names like `sdist_path`, `extracted_dir`, `top_level_name`, and `cargo_lock`.
+  category: naming
+distractors:
+- rule: NEVER update all dependencies in the lockfile and ALWAYS use `cargo update
+    --precise` to make lockfile changes
+  collision_type: scope_ambiguity
+  why_distracting: The goal of the script is to prune the `Cargo.lock` inside the
+    generated sdist tarball, which is typically done by running `cargo update --workspace`
+    (as noted in the script's docstring). The rule forbidding non-precise lockfile
+    updates is intended for the main repository's lockfile, not for fixing a generated
+    sdist's lockfile. An agent following this rule might try to manually parse and
+    modify the lockfile or fail to use the correct `cargo update` command.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-13
+- rule: ALWAYS attempt to add a test case for changed behavior / PREFER integration
+    tests, e.g., at `it/...` over unit tests
+  collision_type: architecture_boundary
+  why_distracting: The PR involves adding a Python script for release tooling and
+    modifying a GitHub Actions workflow. The workflow already tests the sdist directly
+    (`Test sdist uv-build`). Attempting to add a Rust integration test in `it/...`
+    for a Python release script would cross architecture boundaries and waste effort.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 2-3
+hierarchy_analysis: The configuration hierarchy consists of `CLAUDE.md` which simply
+  includes `AGENTS.md`. The rules in `AGENTS.md` are heavily Rust-focused, but the
+  task requires writing a Python script and modifying GitHub Actions workflows. This
+  creates a significant context mismatch where the agent must discern which general
+  rules (like variable naming and imports) apply to Python, while ignoring Rust-specific
+  rules (like `it/...` testing and repo-level `Cargo.lock` management) that would
+  be inappropriate for release tooling.

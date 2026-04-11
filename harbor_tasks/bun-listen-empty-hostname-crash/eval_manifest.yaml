@@ -1,102 +1,124 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28426
-  base_commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
-  merge_commit: "2d4c2beb23085873380840c9bd18eeca29645843"
-
+  base_commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
+  merge_commit: 2d4c2beb23085873380840c9bd18eeca29645843
 checks:
-  - id: test_hostname_crash_fixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Hostname assertf removed and replaced with proper error return"
-
-  - id: test_unix_crash_fixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Unix path assertf removed and replaced with proper error return"
-
-  - id: test_throw_tests_added
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Agent added tests verifying throw on truthy-but-empty hostname/unix"
-
-  - id: test_handlers_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "Handlers.zig is substantial, not gutted or replaced with stub"
-
-  - id: test_hostname_unix_branches_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Both hostname and unix handling branches still exist"
-
-  - id: test_socket_test_file_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "socket.test.ts not truncated or deleted"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JS linting passes (oxlint on src/js)"
-
-  - id: test_repo_prettier_socket_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's prettier formatting passes on socket.test.ts"
-
-  - id: test_repo_ban_words
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's banned words check passes"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes (tsc --noEmit)"
-
-  - id: test_repo_node_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Node.js is available and functional in the repo"
-
-  - id: test_repo_bun_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Bun is available and functional in the repo"
-
-  - id: test_no_hardcoded_ports
-    type: pass_to_pass
-    origin: agent_config
-    description: "New tests use port: 0, not hardcoded ports"
-    source:
-      path: "CLAUDE.md"
-      lines: "97"
-      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
-
-  - id: test_no_settimeout_in_new_tests
-    type: pass_to_pass
-    origin: agent_config
-    description: "New tests do not use setTimeout — await conditions instead"
-    source:
-      path: "AGENTS.md"
-      lines: "102"
-      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
-
-  - id: test_no_panic_absence_tests
-    type: pass_to_pass
-    origin: agent_config
-    description: "New tests don't check for absence of 'panic' or 'uncaught exception'"
-    source:
-      path: "AGENTS.md"
-      lines: "99"
-      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
-
+- id: test_hostname_crash_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hostname assertf removed and replaced with proper error return
+- id: test_unix_crash_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unix path assertf removed and replaced with proper error return
+- id: test_throw_tests_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: Agent added tests verifying throw on truthy-but-empty hostname/unix
+- id: test_handlers_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: Handlers.zig is substantial, not gutted or replaced with stub
+- id: test_hostname_unix_branches_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both hostname and unix handling branches still exist
+- id: test_socket_test_file_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: socket.test.ts not truncated or deleted
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JS linting passes (oxlint on src/js)
+- id: test_repo_prettier_socket_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on socket.test.ts
+- id: test_repo_ban_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's banned words check passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (tsc --noEmit)
+- id: test_repo_node_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js is available and functional in the repo
+- id: test_repo_bun_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun is available and functional in the repo
+- id: test_no_hardcoded_ports
+  type: pass_to_pass
+  origin: agent_config
+  description: 'New tests use port: 0, not hardcoded ports'
+  source:
+    path: CLAUDE.md
+    lines: '97'
+    commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
+- id: test_no_settimeout_in_new_tests
+  type: pass_to_pass
+  origin: agent_config
+  description: New tests do not use setTimeout — await conditions instead
+  source:
+    path: AGENTS.md
+    lines: '102'
+    commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
+- id: test_no_panic_absence_tests
+  type: pass_to_pass
+  origin: agent_config
+  description: New tests don't check for absence of 'panic' or 'uncaught exception'
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
 rubric:
-  # Note: This task only involves code changes to Handlers.zig and socket.test.ts.
-  # No config/documentation files (AGENTS.md, CLAUDE.md, etc.) are modified by the gold solution.
-  # The rubric judge is designed for evaluating config edits alongside code changes.
-  # For this code-only task, all validation is handled by the 13 pytest checks.
-  - rule: "Code changes in src/bun.js/api/bun/socket/Handlers.zig and test/js/bun/net/socket.test.ts follow repository conventions."
+- rule: Code changes in src/bun.js/api/bun/socket/Handlers.zig and test/js/bun/net/socket.test.ts
+    follow repository conventions.
+- rule: 'Never use hardcoded port numbers. Always use `port: 0` to get a random port.'
+  source:
+    path: test/CLAUDE.md
+    lines: 17-18
+  evidence: 'The test explicitly passes `port: 0` in the `Bun.listen` and `Bun.connect`
+    calls.'
+  category: testing
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  source:
+    path: CLAUDE.md
+    lines: 86-87
+  evidence: The test asserts that a specific error is thrown (`expect(...).toThrow('Expected
+    a non-empty "hostname"')`) rather than checking process output for panics.
+  category: testing
+distractors:
+- rule: Prefer concurrent tests over sequential tests
+  collision_type: scope_ambiguity
+  why_distracting: The test only performs synchronous validation checks that throw
+    immediately. It does not spawn processes or write files, so concurrency is not
+    needed and the gold solution uses standard `it()` instead of `it.concurrent()`.
+  severity: medium
+  source:
+    path: test/CLAUDE.md
+    lines: 18-20
+- rule: For single-file tests, prefer `-e` over `tempDir`... When spawning processes,
+    tests should expect(stdout).toBe(...)
+  collision_type: meta_confusion
+  why_distracting: Because the original bug was a panic/crash, an agent might think
+    it needs to spawn a separate process using `Bun.spawn` to test the crash behavior.
+    However, the fix converts the panic into a standard JS `TypeError` which can be
+    caught synchronously with `expect().toThrow()`. Spawning a process is unnecessary
+    and inefficient.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 44-45
+hierarchy_analysis: 'The hierarchy includes root-level CLAUDE.md and AGENTS.md, as
+  well as test-specific and src-specific config files. The test-specific config reinforces
+  the root config''s rule about using `port: 0`. The src-specific config focuses on
+  Zig system calls, which is not highly relevant here since the fix only involves
+  throwing a JS error via `global.throwInvalidArguments`.'

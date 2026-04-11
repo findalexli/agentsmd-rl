@@ -1,137 +1,164 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19421
-  base_commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-  merge_commit: "d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3"
-
+  base_commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+  merge_commit: d2bfa92e7438eb7ac7c4e2d72fca708f27c52ba3
 checks:
-  - id: file_parses_as_tsx
-    type: pass_to_pass
-    origin: static
-    description: "session.tsx must parse as valid TypeScript+JSX"
-
-  - id: followup_store_wrapped_with_persistence
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Followup store must be wrapped with a persistence layer"
-
-  - id: persistence_workspace_scoped
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Persistence must be workspace-scoped (per-project), not global"
-
-  - id: page_default_export
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Page function must remain the default export"
-
-  - id: followup_store_core_fields
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Followup store retains core fields: items, failed, paused, edit"
-
-  - id: file_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "session.tsx retains original component complexity"
-
-  - id: no_stub_markers_near_persistence
-    type: pass_to_pass
-    origin: static
-    description: "No TODO/FIXME/stub markers near followup persistence code"
-
-  - id: no_any_type_in_followup_block
-    type: pass_to_pass
-    origin: agent_config
-    description: "No 'any' type usage in followup persistence block"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-
-  - id: followup_uses_create_store_not_signal
-    type: pass_to_pass
-    origin: agent_config
-    description: "Followup state uses createStore, not multiple createSignal calls"
-    source:
-      path: "packages/app/AGENTS.md"
-      lines: "15"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-
-  - id: no_try_catch_in_followup_block
-    type: pass_to_pass
-    origin: agent_config
-    description: "No try/catch in followup persistence block"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-  - id: no_else_in_followup_block
-    type: pass_to_pass
-    origin: agent_config
-    description: "No 'else' statements in followup persistence block"
-    source:
-      path: "AGENTS.md"
-      lines: "84"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-
-  - id: no_for_loop_in_followup_block
-    type: pass_to_pass
-    origin: agent_config
-    description: "No for loops in followup persistence block — prefer functional array methods"
-    source:
-      path: "AGENTS.md"
-      lines: "17"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-
-  - id: test_repo_turbo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's global turbo typecheck passes"
-
-  - id: test_repo_prettier_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's prettier formatting check passes for the modified file"
-
-  - id: test_repo_app_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's app package build passes"
-
-  - id: test_repo_app_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's app package TypeScript typecheck passes"
-
-  - id: test_repo_app_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's app package unit tests pass"
-
+- id: file_parses_as_tsx
+  type: pass_to_pass
+  origin: static
+  description: session.tsx must parse as valid TypeScript+JSX
+- id: followup_store_wrapped_with_persistence
+  type: fail_to_pass
+  origin: pr_diff
+  description: Followup store must be wrapped with a persistence layer
+- id: persistence_workspace_scoped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Persistence must be workspace-scoped (per-project), not global
+- id: page_default_export
+  type: pass_to_pass
+  origin: pr_diff
+  description: Page function must remain the default export
+- id: followup_store_core_fields
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Followup store retains core fields: items, failed, paused, edit'
+- id: file_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: session.tsx retains original component complexity
+- id: no_stub_markers_near_persistence
+  type: pass_to_pass
+  origin: static
+  description: No TODO/FIXME/stub markers near followup persistence code
+- id: no_any_type_in_followup_block
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'any' type usage in followup persistence block
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- id: followup_uses_create_store_not_signal
+  type: pass_to_pass
+  origin: agent_config
+  description: Followup state uses createStore, not multiple createSignal calls
+  source:
+    path: packages/app/AGENTS.md
+    lines: '15'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- id: no_try_catch_in_followup_block
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/catch in followup persistence block
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- id: no_else_in_followup_block
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'else' statements in followup persistence block
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- id: no_for_loop_in_followup_block
+  type: pass_to_pass
+  origin: agent_config
+  description: No for loops in followup persistence block — prefer functional array
+    methods
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- id: test_repo_turbo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's global turbo typecheck passes
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting check passes for the modified file
+- id: test_repo_app_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's app package build passes
+- id: test_repo_app_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's app package TypeScript typecheck passes
+- id: test_repo_app_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's app package unit tests pass
 rubric:
-  - rule: "Avoid unnecessary destructuring. Use dot notation to preserve context."
-    source:
-      path: "AGENTS.md"
-      lines: "57"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-
-  - rule: "Reduce total variable count by inlining when a value is only used once."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-
-  - rule: "Keep things in one function unless composable or reusable."
-    source:
-      path: "AGENTS.md"
-      lines: "11"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
-
-  - rule: "Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "3fb60d05e555dad020d3354602affe166ef0cc22"
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- rule: Keep things in one function unless composable or reusable.
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 3fb60d05e555dad020d3354602affe166ef0cc22
+- rule: Always prefer `createStore` over multiple `createSignal` calls
+  source:
+    path: packages/app/AGENTS.md
+    lines: 14-16
+  evidence: The gold solution wraps the existing `createStore` with `persisted` to
+    persist the complex followup state, rather than breaking it down into multiple
+    `createSignal` calls.
+  category: architecture
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: 11-11
+  evidence: The gold solution carefully defines `FollowupItem` and `FollowupEdit`
+    types and passes them to `createStore` to ensure strict typing without falling
+    back to `any`.
+  category: style
+distractors:
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: would_cause_bug
+  why_distracting: 'The agent might try to omit the generic type parameter `<{ items:
+    ..., failed: ..., paused: ..., edit: ... }>` on `createStore` and rely on inference
+    from the initial state `{ items: {}, failed: {}, paused: {}, edit: {} }`. This
+    would infer the properties as empty objects `{}` rather than `Record<string, ...>`,
+    causing type errors when trying to assign values later.'
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 14-15
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to name the new types `Item` and `Edit` to
+    strictly follow the single-word naming rule. However, in a complex session component,
+    these names are too generic and ambiguous, so `FollowupItem` and `FollowupEdit`
+    are necessary for clarity.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 27-28
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and naming guidelines,
+  while `packages/app/AGENTS.md` provides SolidJS-specific guidelines. The SolidJS
+  rule to use `createStore` aligns perfectly with the solution. However, the root
+  rule to rely on type inference conflicts with the need to explicitly type the `createStore`
+  generic parameter when initializing with empty objects `{}`. The agent must recognize
+  that explicit types are necessary here to prevent TypeScript errors, overriding
+  the general preference for inference.

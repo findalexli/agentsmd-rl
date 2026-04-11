@@ -3,140 +3,162 @@ source:
     owner: gohugoio
     repo: hugo
     number: 14671
-    title: "minifiers: Keep x-bind and blank namespace in SVG minification"
+    title: 'minifiers: Keep x-bind and blank namespace in SVG minification'
     merge_commit: 42289d76f9ccac052c22b84d7024e64cfb0a683b
     base_commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
   files:
-    - minifiers/config.go
-    - minifiers/minifiers_test.go
-    - go.mod
-    - go.sum
-
+  - minifiers/config.go
+  - minifiers/minifiers_test.go
+  - go.mod
+  - go.sum
 checks:
-  - id: svg_alpine_x_bind
-    name: "SVG preserves x-bind:href directives"
-    description: "Fail-to-pass: Alpine.js x-bind directives must not be stripped from SVG"
-    type: behavioral
-    test_function: test_svg_minifier_preserves_alpine_x_bind
-    points: 25
-
-  - id: svg_alpine_shorthand
-    name: "SVG preserves :href shorthand"
-    description: "Fail-to-pass: Alpine.js : shorthand directives must not be stripped from SVG"
-    type: behavioral
-    test_function: test_svg_minifier_preserves_alpine_shorthand
-    points: 25
-
-  - id: alpine_variations
-    name: "Various Alpine.js patterns preserved"
-    description: "Fail-to-pass: Multiple Alpine.js directive patterns work correctly"
-    type: behavioral
-    test_function: test_alpine_variations_preserved
-    points: 20
-
-  - id: config_has_keep_namespaces
-    name: "KeepNamespaces configured in minifiers/config.go"
-    description: "Pass-to-pass: Configuration includes KeepNamespaces setting"
-    type: structural
-    test_function: test_minifiers_config_has_keep_namespaces
-    points: 15
-
-  - id: upstream_version
-    name: "tdewolff/minify updated to v2.24.11"
-    description: "Pass-to-pass: Dependency updated to version with KeepNamespaces support"
-    type: structural
-    test_function: test_upstream_minify_version
-    points: 10
-
-  - id: compilation
-    name: "Hugo compiles successfully"
-    description: "Pass-to-pass: Code compiles without errors"
-    type: structural
-    test_function: test_compilation_passes
-    points: 5
-
-  - id: repo_gofmt
-    name: "Repo passes gofmt check"
-    description: "Pass-to-pass: Repo code is properly formatted"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_gofmt
-    points: 5
-
-  - id: repo_vet_minifiers
-    name: "Repo minifiers passes go vet"
-    description: "Pass-to-pass: Repo minifiers package passes go vet"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_vet_minifiers
-    points: 5
-
-  - id: repo_tests_minifiers
-    name: "Repo minifiers tests pass"
-    description: "Pass-to-pass: Repo minifiers package tests pass"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_tests_minifiers
-    points: 5
-
-  - id: repo_build
-    name: "Repo builds successfully"
-    description: "Pass-to-pass: Repo builds without errors"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_build
-    points: 5
-
-  - id: repo_module_check
-    name: "Repo Go modules valid"
-    description: "Pass-to-pass: Repo Go modules are valid"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_module_check
-    points: 5
-
-  - id: repo_staticcheck
-    name: "Repo minifiers passes staticcheck"
-    description: "Pass-to-pass: Repo minifiers package passes staticcheck linting"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_staticcheck_minifiers
-    points: 5
-
-  - id: repo_race_test
-    name: "Repo minifiers passes race detector"
-    description: "Pass-to-pass: Repo minifiers package passes race detector tests"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_race_minifiers
-    points: 5
-
+- id: svg_alpine_x_bind
+  name: SVG preserves x-bind:href directives
+  description: 'Fail-to-pass: Alpine.js x-bind directives must not be stripped from
+    SVG'
+  type: behavioral
+  test_function: test_svg_minifier_preserves_alpine_x_bind
+  points: 25
+- id: svg_alpine_shorthand
+  name: SVG preserves :href shorthand
+  description: 'Fail-to-pass: Alpine.js : shorthand directives must not be stripped
+    from SVG'
+  type: behavioral
+  test_function: test_svg_minifier_preserves_alpine_shorthand
+  points: 25
+- id: alpine_variations
+  name: Various Alpine.js patterns preserved
+  description: 'Fail-to-pass: Multiple Alpine.js directive patterns work correctly'
+  type: behavioral
+  test_function: test_alpine_variations_preserved
+  points: 20
+- id: config_has_keep_namespaces
+  name: KeepNamespaces configured in minifiers/config.go
+  description: 'Pass-to-pass: Configuration includes KeepNamespaces setting'
+  type: structural
+  test_function: test_minifiers_config_has_keep_namespaces
+  points: 15
+- id: upstream_version
+  name: tdewolff/minify updated to v2.24.11
+  description: 'Pass-to-pass: Dependency updated to version with KeepNamespaces support'
+  type: structural
+  test_function: test_upstream_minify_version
+  points: 10
+- id: compilation
+  name: Hugo compiles successfully
+  description: 'Pass-to-pass: Code compiles without errors'
+  type: structural
+  test_function: test_compilation_passes
+  points: 5
+- id: repo_gofmt
+  name: Repo passes gofmt check
+  description: 'Pass-to-pass: Repo code is properly formatted'
+  type: pass_to_pass
+  origin: repo_tests
+  test_function: test_repo_gofmt
+  points: 5
+- id: repo_vet_minifiers
+  name: Repo minifiers passes go vet
+  description: 'Pass-to-pass: Repo minifiers package passes go vet'
+  type: pass_to_pass
+  origin: repo_tests
+  test_function: test_repo_vet_minifiers
+  points: 5
+- id: repo_tests_minifiers
+  name: Repo minifiers tests pass
+  description: 'Pass-to-pass: Repo minifiers package tests pass'
+  type: pass_to_pass
+  origin: repo_tests
+  test_function: test_repo_tests_minifiers
+  points: 5
+- id: repo_build
+  name: Repo builds successfully
+  description: 'Pass-to-pass: Repo builds without errors'
+  type: pass_to_pass
+  origin: repo_tests
+  test_function: test_repo_build
+  points: 5
+- id: repo_module_check
+  name: Repo Go modules valid
+  description: 'Pass-to-pass: Repo Go modules are valid'
+  type: pass_to_pass
+  origin: repo_tests
+  test_function: test_repo_module_check
+  points: 5
+- id: repo_staticcheck
+  name: Repo minifiers passes staticcheck
+  description: 'Pass-to-pass: Repo minifiers package passes staticcheck linting'
+  type: pass_to_pass
+  origin: repo_tests
+  test_function: test_repo_staticcheck_minifiers
+  points: 5
+- id: repo_race_test
+  name: Repo minifiers passes race detector
+  description: 'Pass-to-pass: Repo minifiers package passes race detector tests'
+  type: pass_to_pass
+  origin: repo_tests
+  test_function: test_repo_race_minifiers
+  points: 5
 agent_config:
-  - rule: "Use qt matchers in tests instead of raw if/t.Fatal checks"
-    file_pattern: "*_test.go"
-    check_type: grep
-    content: "qt\\."
-    source: "AGENTS.md: In tests, use qt matchers"
-
-  - rule: "Avoid exporting symbols not needed outside package"
-    file_pattern: "*.go"
-    check_type: grep
-    content: "^func [A-Z]"
-    negative_check: true
-    source: "AGENTS.md: Never export symbols not needed"
-
-  - rule: "Avoid global state"
-    file_pattern: "*.go"
-    check_type: grep
-    content: "^var\\s+\\w+.*="
-    negative_check: true
-    source: "AGENTS.md: Avoid global state at (almost) all cost"
-
+- rule: Use qt matchers in tests instead of raw if/t.Fatal checks
+  file_pattern: '*_test.go'
+  check_type: grep
+  content: qt\.
+  source: 'AGENTS.md: In tests, use qt matchers'
+- rule: Avoid exporting symbols not needed outside package
+  file_pattern: '*.go'
+  check_type: grep
+  content: ^func [A-Z]
+  negative_check: true
+  source: 'AGENTS.md: Never export symbols not needed'
+- rule: Avoid global state
+  file_pattern: '*.go'
+  check_type: grep
+  content: ^var\s+\w+.*=
+  negative_check: true
+  source: 'AGENTS.md: Avoid global state at (almost) all cost'
 rubric:
-  - criterion: "Solution follows Hugo code style"
-    description: "Code is brief, uses clear variable names, follows Go conventions"
-    weight: optional
-
-  - criterion: "Test cases follow Hugo test conventions"
-    description: "Tests use qt matchers and latest Hugo spec conventions"
-    weight: optional
+- criterion: Solution follows Hugo code style
+  description: Code is brief, uses clear variable names, follows Go conventions
+  weight: optional
+- criterion: Test cases follow Hugo test conventions
+  description: Tests use qt matchers and latest Hugo spec conventions
+  weight: optional
+- rule: Don't use comments to explain the obvious. Use self-explanatory variable and
+    function names.
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: 'The gold solution adds the `KeepNamespaces: []string{"", "x-bind"}` configuration
+    without adding any inline comments explaining that it is for Alpine.js, trusting
+    the field name and context to be self'
+  category: style
+distractors:
+- rule: Avoid global state at (almost) all cost.
+  collision_type: architecture_boundary
+  why_distracting: The agent needs to modify `defaultTdewolffConfig`, which is a package-level
+    global variable. An agent strictly following 'Avoid global state at (almost) all
+    cost' might attempt to refactor the minifier configuration to be injected or instantiated
+    per-use, which would be a massive out-of-scope architectural change for a simple
+    bug fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 6-6
+- rule: assume that a similiar problem has been solved before, look hard for helper
+    functions before creating new ones.
+  collision_type: scope_ambiguity
+  why_distracting: The fix requires updating an external dependency in `go.mod` and
+    setting a declarative configuration field on an external struct. There is no procedural
+    logic involved. An agent might waste time searching the codebase for existing
+    SVG manipulation or namespace preservation helper functions instead of just updating
+    the struct.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 7-7
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  The rules in `AGENTS.md` are general Go best practices and Hugo-specific testing
+  guidelines. The primary tension is between the rule to avoid global state and the
+  existing architecture of the `minifiers` package, which relies on a global default
+  configuration struct.

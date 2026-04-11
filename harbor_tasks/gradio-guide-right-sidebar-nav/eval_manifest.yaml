@@ -1,99 +1,130 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12976
-  base_commit: "41e98f9468bcf322ed55d1470e31e7b4021d0480"
-  merge_commit: "7fb33fc3b80b421817c1d1ddea19c8858a9f2924"
-
+  base_commit: 41e98f9468bcf322ed55d1470e31e7b4021d0480
+  merge_commit: 7fb33fc3b80b421817c1d1ddea19c8858a9f2924
 checks:
-  - id: file_exists_and_parses
-    type: pass_to_pass
-    origin: static
-    description: "Target Svelte file exists and has substantial script + template sections"
-
-  - id: repo_svelte_file_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target Svelte file has valid structure: script block, template, proper syntax"
-
-  - id: repo_svelte_types_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript type declarations in Svelte file are syntactically valid"
-
-  - id: repo_svelte_template_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Svelte template section has valid syntax and required elements"
-
-  - id: repo_typescript_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript script block has balanced braces, parentheses, and valid type declarations"
-
-  - id: repo_svelte_imports_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Svelte imports follow valid ES module syntax with SvelteKit export let data declaration"
-
-  - id: repo_svelte_template_bindings_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Svelte template bindings and directives (bind:, svelte:window) are syntactically valid"
-
-  - id: repo_html_structure_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Template HTML elements are properly balanced and comments are closed"
-
-  - id: repo_js_expressions_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "JavaScript expressions in templates have balanced parentheses and valid syntax"
-
-  - id: level_field_in_slug_type
-    type: fail_to_pass
-    origin: pr_diff
-    description: "guide_slug type declaration includes a numeric level/depth field for heading hierarchy"
-
-  - id: right_sidebar_with_slug_links
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Right-side TOC iterates guide_slug with clickable anchor links in a sidebar container"
-
-  - id: scroll_tracking
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Reactive scroll tracking highlights the currently visible section in the TOC"
-
-  - id: layout_no_mx_auto
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Content area no longer uses mx-auto centering, making room for right sidebar"
-
-  - id: heading_level_indentation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TOC entries indented based on heading level/depth for hierarchy"
-
-  - id: left_sidebar_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Left sidebar iterating guide_names with categories still exists"
-
-  - id: prev_next_navigation_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Previous/next guide navigation links still exist"
-
-  - id: sidebar_uses_tailwind
-    type: fail_to_pass
-    origin: agent_config
-    description: "New sidebar uses Tailwind CSS utilities, consistent with surrounding code"
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "41e98f9468bcf322ed55d1470e31e7b4021d0480"
-
-rubric: []  # No config file edits required for this code-only task
+- id: file_exists_and_parses
+  type: pass_to_pass
+  origin: static
+  description: Target Svelte file exists and has substantial script + template sections
+- id: repo_svelte_file_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Target Svelte file has valid structure: script block, template, proper
+    syntax'
+- id: repo_svelte_types_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type declarations in Svelte file are syntactically valid
+- id: repo_svelte_template_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Svelte template section has valid syntax and required elements
+- id: repo_typescript_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript script block has balanced braces, parentheses, and valid
+    type declarations
+- id: repo_svelte_imports_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Svelte imports follow valid ES module syntax with SvelteKit export
+    let data declaration
+- id: repo_svelte_template_bindings_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Svelte template bindings and directives (bind:, svelte:window) are
+    syntactically valid
+- id: repo_html_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Template HTML elements are properly balanced and comments are closed
+- id: repo_js_expressions_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: JavaScript expressions in templates have balanced parentheses and valid
+    syntax
+- id: level_field_in_slug_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: guide_slug type declaration includes a numeric level/depth field for
+    heading hierarchy
+- id: right_sidebar_with_slug_links
+  type: fail_to_pass
+  origin: pr_diff
+  description: Right-side TOC iterates guide_slug with clickable anchor links in a
+    sidebar container
+- id: scroll_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: Reactive scroll tracking highlights the currently visible section in
+    the TOC
+- id: layout_no_mx_auto
+  type: fail_to_pass
+  origin: pr_diff
+  description: Content area no longer uses mx-auto centering, making room for right
+    sidebar
+- id: heading_level_indentation
+  type: fail_to_pass
+  origin: pr_diff
+  description: TOC entries indented based on heading level/depth for hierarchy
+- id: left_sidebar_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Left sidebar iterating guide_names with categories still exists
+- id: prev_next_navigation_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Previous/next guide navigation links still exist
+- id: sidebar_uses_tailwind
+  type: fail_to_pass
+  origin: agent_config
+  description: New sidebar uses Tailwind CSS utilities, consistent with surrounding
+    code
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 41e98f9468bcf322ed55d1470e31e7b4021d0480
+rubric:
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: 'The gold solution correctly modifies a `.svelte` file in the `js/` directory
+    and uses TypeScript type annotations like `let header_targets: { [key: string]:
+    HTMLElement } = {};`.'
+  category: architecture
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 45-45
+  evidence: 'The gold solution uses Svelte reactive statements (`$: if (...)`) for
+    scroll tracking and Tailwind CSS classes for the sidebar layout, matching the
+    existing patterns in the `+page.svelte` file.'
+  category: style
+distractors:
+- rule: '`guides/` — written guides and tutorials for the website'
+  collision_type: architecture_boundary
+  why_distracting: The issue asks to fix the 'Guide Pages' missing a table of contents.
+    An agent might interpret this as needing to modify the actual guide contents in
+    the `guides/` directory. However, the fix requires changing the Svelte layout
+    component in `js/_website/`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 16-16
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates running backend tests locally, but this PR is
+    strictly a frontend UI change in a Svelte component. Running backend tests would
+    waste agent time and compute.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 35-35
+hierarchy_analysis: The repository uses a single AGENTS.md file at the root level,
+  providing high-level architectural guidance and PR rules. There are no conflicting
+  child configs.

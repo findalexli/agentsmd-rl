@@ -1,108 +1,129 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2093
-  base_commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
-  merge_commit: "a25b3e7a18e76999558a888c1ab1f8e5cd0e3831"
-
+  base_commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
+  merge_commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (config.py, all entrypoints) must parse without errors"
-
-  - id: test_repo_ruff_linting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linting passes on modified files (from .github/workflows/style.yaml)"
-
-  - id: test_repo_ruff_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff formatting check passes on modified files (from .github/workflows/style.yaml)"
-
-  - id: test_repo_toml_configs_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All TOML config files in the repo must be valid"
-
-  - id: test_repo_config_module_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Config module must import and have required exports"
-
-  - id: flat_none_conversion
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Flat dict None values are converted to 'None' strings"
-
-  - id: nested_none_conversion
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Nested dict None values are converted recursively"
-
-  - id: toml_roundtrip
-    type: fail_to_pass
-    origin: pr_diff
-    description: "TOML round-trip preserves None as 'None' string"
-
-  - id: edge_cases
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Handles empty dicts, all-None, bools, lists; does not mutate input"
-
-  - id: entrypoints_no_exclude_none
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Entrypoints no longer use exclude_none=True in model_dump calls"
-
-  - id: non_none_passthrough
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Non-None config values serialize identically after conversion"
-
-  - id: no_try_except_in_converter
-    type: pass_to_pass
-    origin: agent_config
-    description: "Conversion function must not use try/except"
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
-
-  - id: no_process_comments
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed files must not contain comments referring to old code or work process"
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (config.py, all entrypoints) must parse without errors
+- id: test_repo_ruff_linting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on modified files (from .github/workflows/style.yaml)
+- id: test_repo_ruff_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatting check passes on modified files (from .github/workflows/style.yaml)
+- id: test_repo_toml_configs_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All TOML config files in the repo must be valid
+- id: test_repo_config_module_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config module must import and have required exports
+- id: flat_none_conversion
+  type: fail_to_pass
+  origin: pr_diff
+  description: Flat dict None values are converted to 'None' strings
+- id: nested_none_conversion
+  type: fail_to_pass
+  origin: pr_diff
+  description: Nested dict None values are converted recursively
+- id: toml_roundtrip
+  type: fail_to_pass
+  origin: pr_diff
+  description: TOML round-trip preserves None as 'None' string
+- id: edge_cases
+  type: fail_to_pass
+  origin: pr_diff
+  description: Handles empty dicts, all-None, bools, lists; does not mutate input
+- id: entrypoints_no_exclude_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: Entrypoints no longer use exclude_none=True in model_dump calls
+- id: non_none_passthrough
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-None config values serialize identically after conversion
+- id: no_try_except_in_converter
+  type: pass_to_pass
+  origin: agent_config
+  description: Conversion function must not use try/except
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
+- id: no_process_comments
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files must not contain comments referring to old code or work
+    process
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
 rubric:
-  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code. Prefer to use targeted comments sparingly to explain ambiguous code."
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
-  - rule: "Simple is better than complex."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
-  - rule: "Explicit is better than implicit."
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
-  - rule: "Flat is better than nested."
-    source:
-      path: "AGENTS.md"
-      lines: "18"
-      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
-  - rule: "If the implementation is hard to explain, it's a bad idea."
-    source:
-      path: "AGENTS.md"
-      lines: "29"
-      commit: "692dfc8a4b9471e65004d8ac154d07ebb73bc61c"
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code. Prefer to use targeted
+    comments sparingly to explain ambiguous code.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
+- rule: Simple is better than complex.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
+- rule: Explicit is better than implicit.
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
+- rule: Flat is better than nested.
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
+- rule: If the implementation is hard to explain, it's a bad idea.
+  source:
+    path: AGENTS.md
+    lines: '29'
+    commit: 692dfc8a4b9471e65004d8ac154d07ebb73bc61c
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 7-7
+  evidence: The gold solution modifies the serialization logic in `inference.py`,
+    `rl.py`, and `sft.py` without adding any inline comments explaining the removal
+    of `exclude_none=True` or the addition of `none_to
+  category: style
+distractors:
+- rule: Update skills to make implicit knowledge explicit when modifying code.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think that fixing a bug related to TOML config
+    serialization requires updating the `toml-config` skill. However, the fix restores
+    the expected behavior (allowing users to override fields to `None`), so the workflow
+    itself hasn't changed, and modifying the skills folder is out of scope and unnecessary.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 48-50
+- rule: Write tests as plain functions with pytest fixtures.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might spend time writing tests for the new `none_to_none_str`
+    utility or the TOML serialization behavior to ensure it works correctly. However,
+    the gold solution focuses strictly on the code fix and does not include any test
+    files.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 54-54
+hierarchy_analysis: The hierarchy is flat, with `CLAUDE.md` simply delegating to `AGENTS.md`.
+  All rules are contained within `AGENTS.md` and apply uniformly across the codebase
+  without any direct conflicts between config files.

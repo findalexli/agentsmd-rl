@@ -1,70 +1,93 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13182
-  base_commit: "d815881739689f45f5387ea52cc92e2cddf8adcf"
-  merge_commit: "2e36802a04251315454c3872aa888bbf984ae4c1"
-
+  base_commit: d815881739689f45f5387ea52cc92e2cddf8adcf
+  merge_commit: 2e36802a04251315454c3872aa888bbf984ae4c1
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "build.ts must exist and contain the expected function signature"
-
-  - id: missing_example_no_crash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Exports construction must not crash when ./example is absent from package.json"
-
-  - id: missing_example_one_entry
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When ./example is absent the exports array must have exactly 1 entry (component only)"
-
-  - id: null_example_no_crash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Exports construction must not crash when ./example is null"
-
-  - id: example_present_two_entries
-    type: pass_to_pass
-    origin: pr_diff
-    description: "When ./example IS present the exports array must have 2 entries"
-
-  - id: build_function_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "make_build must contain real build logic (vite build call)"
-
-  - id: test_repo_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier format check passes"
-
-  - id: test_repo_preview_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @gradio/preview package builds successfully"
-
-  - id: test_repo_client_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's @gradio/client package builds successfully"
-
-  - id: test_repo_install_frozen_lockfile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's pnpm lockfile is valid and installable"
-
-  - id: test_repo_node_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified build.ts has valid Node.js syntax"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: build.ts must exist and contain the expected function signature
+- id: missing_example_no_crash
+  type: fail_to_pass
+  origin: pr_diff
+  description: Exports construction must not crash when ./example is absent from package.json
+- id: missing_example_one_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: When ./example is absent the exports array must have exactly 1 entry
+    (component only)
+- id: null_example_no_crash
+  type: fail_to_pass
+  origin: pr_diff
+  description: Exports construction must not crash when ./example is null
+- id: example_present_two_entries
+  type: pass_to_pass
+  origin: pr_diff
+  description: When ./example IS present the exports array must have 2 entries
+- id: build_function_not_stub
+  type: pass_to_pass
+  origin: static
+  description: make_build must contain real build logic (vite build call)
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes
+- id: test_repo_preview_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/preview package builds successfully
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's @gradio/client package builds successfully
+- id: test_repo_install_frozen_lockfile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pnpm lockfile is valid and installable
+- id: test_repo_node_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified build.ts has valid Node.js syntax
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "d815881739689f45f5387ea52cc92e2cddf8adcf"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: d815881739689f45f5387ea52cc92e2cddf8adcf
+- rule: Frontend code is formatted with `prettier`. Be consistent with the style of
+    the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 41-43
+  evidence: 'The gold solution maintains the existing indentation style (using tabs)
+    and array structure, seamlessly integrating the conditional spread syntax `...(pkg.exports["./example"]
+    ? [...] : [])` without d'
+  category: style
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The fix for this crash is very small (modifying a single array
+    element construction). An agent might misinterpret this critical bug fix as a
+    'tiny edit' or 'low-value busywork' and either refuse to generate the fix or attempt
+    to bundle it with unrelated mechanical cleanups.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 53-55
+- rule: Tests must pass. Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: architecture_boundary
+  why_distracting: The modified file `js/preview/src/build.ts` is part of the frontend/Node.js
+    build pipeline. Instructing the agent to run backend tests (`bash scripts/run_backend_tests.sh`)
+    for a frontend build script change crosses architectural boundaries and would
+    waste time or cause confusion if backend tests fail for unrelated reasons.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 28-29
+hierarchy_analysis: The repository has a single root-level `AGENTS.md` file. The rules
+  are generally broad and PR-focused. The main conflict arises from the definition
+  of 'tiny edits' versus critical but small bug fixes, and the blanket instruction
+  to run backend tests which does not apply to this frontend TypeScript change.

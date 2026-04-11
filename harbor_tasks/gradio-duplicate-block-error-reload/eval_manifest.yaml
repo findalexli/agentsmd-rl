@@ -1,86 +1,102 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13013
-  base_commit: "a17eb7888b48cbd98b1e0feb17e2614bf3853d66"
-  merge_commit: "356db5c2c66795b281133c4395ef6885d2992242"
-
+  base_commit: a17eb7888b48cbd98b1e0feb17e2614bf3853d66
+  merge_commit: 356db5c2c66795b281133c4395ef6885d2992242
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "gradio/utils.py parses without syntax errors"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check passes on utils.py"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on utils.py"
-
-  - id: test_repo_pytest_reload
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's reload tests pass (test/test_reload.py)"
-
-  - id: test_repo_pytest_utils_configs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's utils config equivalence tests pass"
-
-  - id: test_repo_pytest_utils_ner
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's utils NER format tests pass"
-
-  - id: context_id_bumped_past_block_ids
-    type: fail_to_pass
-    origin: pr_diff
-    description: "After module re-exec, Context.id exceeds max existing block ID"
-
-  - id: context_id_varied_block_distributions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Fix handles sequential, sparse, and single-block ID distributions"
-
-  - id: context_id_preserved_when_already_high
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Context.id not decreased when already higher than max block ID"
-
-  - id: no_crash_when_demo_absent
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No crash when demo is missing, None, or has empty blocks"
-
-  - id: watchfn_structure_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Core watchfn landmarks (exec, Context.id reset, should_watch) still present"
-
-  - id: context_reset_precedes_exec
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Context.id = 0 appears before exec(no_reload_source_code)"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "utils.py has substantial content (not replaced with a stub)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/utils.py parses without syntax errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on utils.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on utils.py
+- id: test_repo_pytest_reload
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's reload tests pass (test/test_reload.py)
+- id: test_repo_pytest_utils_configs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils config equivalence tests pass
+- id: test_repo_pytest_utils_ner
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils NER format tests pass
+- id: context_id_bumped_past_block_ids
+  type: fail_to_pass
+  origin: pr_diff
+  description: After module re-exec, Context.id exceeds max existing block ID
+- id: context_id_varied_block_distributions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix handles sequential, sparse, and single-block ID distributions
+- id: context_id_preserved_when_already_high
+  type: fail_to_pass
+  origin: pr_diff
+  description: Context.id not decreased when already higher than max block ID
+- id: no_crash_when_demo_absent
+  type: fail_to_pass
+  origin: pr_diff
+  description: No crash when demo is missing, None, or has empty blocks
+- id: watchfn_structure_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core watchfn landmarks (exec, Context.id reset, should_watch) still
+    present
+- id: context_reset_precedes_exec
+  type: pass_to_pass
+  origin: pr_diff
+  description: Context.id = 0 appears before exec(no_reload_source_code)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: utils.py has substantial content (not replaced with a stub)
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "a17eb7888b48cbd98b1e0feb17e2614bf3853d66"
-
-  - rule: "Python code must be formatted with ruff (run bash scripts/format_backend.sh)."
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "a17eb7888b48cbd98b1e0feb17e2614bf3853d66"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: a17eb7888b48cbd98b1e0feb17e2614bf3853d66
+- rule: Python code must be formatted with ruff (run bash scripts/format_backend.sh).
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: a17eb7888b48cbd98b1e0feb17e2614bf3853d66
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue.
+  source:
+    path: AGENTS.md
+    lines: 20-21
+  evidence: The gold solution explicitly includes the GitHub issue URL (`# See https://github.com/gradio-app/gradio/issues/12078`)
+    in the code comments to provide context for the fix.
+  category: documentation
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misclassify this targeted, few-line bug fix as
+    a 'tiny edit' and either refuse to implement it or attempt to bundle unrelated
+    mechanical cleanups to justify the PR.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 52-53
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the code or complete the task,
+    stating that 'Pure code-agent PRs are not allowed' and that a human must be involved,
+    which breaks the automated evaluation environment.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 57-58
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
+  No conflicts exist between multiple config files.

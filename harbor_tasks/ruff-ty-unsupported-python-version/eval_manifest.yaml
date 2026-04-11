@@ -1,81 +1,111 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 24402
-  base_commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
-  merge_commit: "f6ef72c291d597fc6716fd00a0ee170b2da076c9"
-
+  base_commit: 62a863cf518086135dfd2321c92fbc3823f95de8
+  merge_commit: f6ef72c291d597fc6716fd00a0ee170b2da076c9
 checks:
-  - id: compiles
-    type: pass_to_pass
-    origin: static
-    description: "ty_project crate compiles successfully after changes"
-
-  - id: rejects_unsupported_python_27
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Deserializing python-version='2.7' in config must fail"
-
-  - id: rejects_unsupported_python_36
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Deserializing python-version='3.6' in config must fail"
-
-  - id: accepts_supported_python_312
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Deserializing python-version='3.12' in config still succeeds"
-
-  - id: accepts_supported_python_313
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Deserializing python-version='3.13' in config still succeeds"
-
-  - id: no_panic_unwrap_in_validation
-    type: pass_to_pass
-    origin: agent_config
-    description: "No panic!/unwrap()/unreachable!() in the version validation function"
-    source:
-      path: "AGENTS.md"
-      lines: "79"
-      commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
-
-  - id: imports_at_file_top
-    type: pass_to_pass
-    origin: agent_config
-    description: "Rust imports at the top of the file, not locally in functions"
-    source:
-      path: "AGENTS.md"
-      lines: "76"
-      commit: "62a863cf518086135dfd2321c92fbc3823f95de8"
-
-  # Repo CI checks (pass_to_pass gates)
-  - id: test_repo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo check on ty_project passes"
-
-  - id: test_repo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo clippy on ty_project passes (no warnings)"
-
-  - id: test_repo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's rustfmt on ty_project passes (correct formatting)"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for ty_project crate pass (41 tests)"
-
-  - id: test_repo_doc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's documentation for ty_project crate builds without warnings"
-
-# Note: Rubric evaluation is designed for config/documentation files, not code implementation.
-# The code implementation is validated by the test suite (NOP=0, Gold=1 checks).
-rubric: []
+- id: compiles
+  type: pass_to_pass
+  origin: static
+  description: ty_project crate compiles successfully after changes
+- id: rejects_unsupported_python_27
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deserializing python-version='2.7' in config must fail
+- id: rejects_unsupported_python_36
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deserializing python-version='3.6' in config must fail
+- id: accepts_supported_python_312
+  type: pass_to_pass
+  origin: pr_diff
+  description: Deserializing python-version='3.12' in config still succeeds
+- id: accepts_supported_python_313
+  type: pass_to_pass
+  origin: pr_diff
+  description: Deserializing python-version='3.13' in config still succeeds
+- id: no_panic_unwrap_in_validation
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!/unwrap()/unreachable!() in the version validation function
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 62a863cf518086135dfd2321c92fbc3823f95de8
+- id: imports_at_file_top
+  type: pass_to_pass
+  origin: agent_config
+  description: Rust imports at the top of the file, not locally in functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 62a863cf518086135dfd2321c92fbc3823f95de8
+- id: test_repo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check on ty_project passes
+- id: test_repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo clippy on ty_project passes (no warnings)
+- id: test_repo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's rustfmt on ty_project passes (correct formatting)
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for ty_project crate pass (41 tests)
+- id: test_repo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation for ty_project crate builds without warnings
+rubric:
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: 64-64
+  evidence: The `Deserializer` trait is added to the existing `use serde::{...}` block
+    at the top of the file rather than being imported locally inside the `deserialize_supported_python_version`
+    function.
+  category: style
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+  source:
+    path: AGENTS.md
+    lines: 67-67
+  evidence: The custom deserializer returns `Err(serde::de::Error::custom(...))` to
+    gracefully handle unsupported versions instead of using `.unwrap()` or `panic!()`.
+  category: style
+- rule: Prefer let chains (`if let` combined with `&&`)
+  source:
+    path: AGENTS.md
+    lines: 68-68
+  evidence: The `deserialize_supported_python_version` function uses an `if let Some(...)
+    = ... && !...` chain to check if the version is supported.
+  category: style
+distractors:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The gold solution only modifies `options.rs` and does not include
+    new tests. An agent strictly following this rule might try to create or modify
+    test files, which could lead to hallucinated test paths or out-of-scope changes
+    for this specific fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 60-60
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to find an existing validation mechanism or
+    macro instead of writing the custom deserializer `deserialize_supported_python_version`,
+    potentially wasting time or failing to implement the required parse-time validation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 66-66
+hierarchy_analysis: The configuration hierarchy is flat, with `CLAUDE.md` simply including
+  `AGENTS.md`. All relevant rules are contained within `AGENTS.md`, so there are no
+  conflicts between different levels of the hierarchy.

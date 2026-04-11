@@ -1,96 +1,129 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 176783
-  base_commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
-  merge_commit: "dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0"
-
+  base_commit: f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e
+  merge_commit: dc12b65cd31ba18cbdc7f2e12e7d1564a67770d0
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Target file parses without syntax errors"
-
-  - id: identity_integer_comparison
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Identity-wrapped integers can be compared (>=) without RecursionError"
-
-  - id: max_with_identity
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Max(0, Identity(x)) evaluates correctly for multiple values"
-
-  - id: rational_comparison
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Identity-wrapped rationals can be compared without RecursionError"
-
-  - id: min_with_identity
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Min(0, Identity(x)) evaluates correctly for multiple values"
-
-  - id: all_comparison_operators
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All four comparison operators (__ge__, __gt__, __le__, __lt__) work on Identity"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Identity class retains __int__, __float__ and has non-trivial body"
-
-  - id: no_dynamic_attr_access_in_identity
-    type: pass_to_pass
-    origin: agent_config
-    description: "Identity class does not use dynamic setattr/getattr for state management"
-    source:
-      path: "CLAUDE.md"
-      lines: "53-56"
-      commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
-
-  - id: repo_flake8_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python flake8 syntax check passes (E9,F63,F7,F82)"
-
-  - id: repo_pydocstyle_module
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Module has docstring and valid Python structure"
-
-  - id: repo_imports_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "File has no unresolved import errors at AST level"
-
-  - id: identity_has_comparison_methods
-    type: fail_to_pass
-    origin: repo_tests
-    description: "Identity class has comparison magic methods (__ge__, __gt__, __le__, __lt__)"
-
-  - id: identity_has_helper_compare_method
-    type: fail_to_pass
-    origin: repo_tests
-    description: "Identity class has _identity_atom_compare helper method for fast-path comparison"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target file parses without syntax errors
+- id: identity_integer_comparison
+  type: fail_to_pass
+  origin: pr_diff
+  description: Identity-wrapped integers can be compared (>=) without RecursionError
+- id: max_with_identity
+  type: fail_to_pass
+  origin: pr_diff
+  description: Max(0, Identity(x)) evaluates correctly for multiple values
+- id: rational_comparison
+  type: fail_to_pass
+  origin: pr_diff
+  description: Identity-wrapped rationals can be compared without RecursionError
+- id: min_with_identity
+  type: fail_to_pass
+  origin: pr_diff
+  description: Min(0, Identity(x)) evaluates correctly for multiple values
+- id: all_comparison_operators
+  type: fail_to_pass
+  origin: pr_diff
+  description: All four comparison operators (__ge__, __gt__, __le__, __lt__) work
+    on Identity
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Identity class retains __int__, __float__ and has non-trivial body
+- id: no_dynamic_attr_access_in_identity
+  type: pass_to_pass
+  origin: agent_config
+  description: Identity class does not use dynamic setattr/getattr for state management
+  source:
+    path: CLAUDE.md
+    lines: 53-56
+    commit: f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e
+- id: repo_flake8_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python flake8 syntax check passes (E9,F63,F7,F82)
+- id: repo_pydocstyle_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Module has docstring and valid Python structure
+- id: repo_imports_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: File has no unresolved import errors at AST level
+- id: identity_has_comparison_methods
+  type: fail_to_pass
+  origin: repo_tests
+  description: Identity class has comparison magic methods (__ge__, __gt__, __le__,
+    __lt__)
+- id: identity_has_helper_compare_method
+  type: fail_to_pass
+  origin: repo_tests
+  description: Identity class has _identity_atom_compare helper method for fast-path
+    comparison
 rubric:
-  - rule: "Minimize comments; code should be self-explanatory and self-documenting."
-    source:
-      path: "CLAUDE.md"
-      lines: "48"
-      commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
-
-  - rule: "If uncertain, choose the simpler, more concise implementation."
-    source:
-      path: "CLAUDE.md"
-      lines: "62"
-      commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
-
-  - rule: "Match existing code style and architectural patterns."
-    source:
-      path: "CLAUDE.md"
-      lines: "57"
-      commit: "f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e"
+- rule: Minimize comments; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '48'
+    commit: f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: '62'
+    commit: f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: f95d7a4bacff6a1e4f11a232c0f8a3f2b42bed4e
+- rule: Comments should be useful, for example, comments that remind the reader about
+    some global context that is non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 44-45
+  evidence: 'The gold solution includes a docstring in `_identity_atom_compare` explaining
+    the interaction with SymPy''s default symbolic path, which provides necessary
+    global context for why the fast path returns '
+  category: documentation
+distractors:
+- rule: Only use commands provided via `spin` for linting. Generally, use `spin lint`
+    as to run the lint and `spin fixlint` to apply automatic fixes.
+  collision_type: rule_conflict
+  why_distracting: AGENTS.md explicitly instructs to use `lintrunner -a`. An agent
+    following CLAUDE.md might try to use `spin lint` and fail if the environment is
+    not set up for it.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 23-25
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: rule_conflict
+  why_distracting: An agent might omit the docstring for `_identity_atom_compare`
+    to be concise, but the explanation of SymPy's symbolic path fallback is crucial
+    for understanding the implementation.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 43-43
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to inline the comparison logic into each dunder
+    method (`__ge__`, `__le__`, etc.) to avoid making a helper function, resulting
+    in duplicated code. Alternatively, it might try to use `@functools.total_ordering`
+    which could break SymPy's specific fallback mechanisms.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 46-47
+hierarchy_analysis: CLAUDE.md and AGENTS.md are both Level 0 config files but contain
+  a direct conflict regarding linting commands (`spin lint` vs `lintrunner -a`). AGENTS.md
+  is typically more specific to the agent environment, so its instruction to use `lintrunner
+  -a` should override CLAUDE.md's instruction to use `spin`. Additionally, there is
+  an internal tension in CLAUDE.md between minimizing comments and providing useful
+  global context, which the gold solution resolves by providing a targeted docstring
+  for the SymPy fallback behavior.

@@ -114,8 +114,39 @@ rubric:
   reference: 'Note: Cascader ellipsis uses minWidth 0 and maxWidth for flexbox ellipsis
     without altering other CSS properties inappropriately, following Ant Design CSS-in-JS
     patterns.'
+- rule: 采用 CSS-in-JS 架构（基于 `@ant-design/cssinjs`）
+  source:
+    path: CLAUDE.md
+    lines: 8-10
+  evidence: 'The gold solution modifies `components/cascader/style/columns.ts` using
+    CSS-in-JS object syntax (e.g., `maxWidth: 400`, `minWidth: 0`) rather than traditional
+    CSS files.'
+  category: architecture
 thresholds:
   min_reward: 0.8
   required_checks:
   - ellipsis_moved
   - min_width_zero
+distractors:
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to modify `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md`
+    to document the bug fix, but the instructions explicitly restrict modifications
+    to `components/cascader/style/columns.ts`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 104-110
+- rule: 'PR 规范: PR 标题始终使用英文，格式：`类型: 简短描述`'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use the `antd-create-pr` skill to create
+    a pull request, but the task is only to write the code fix.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-80
+hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical rules. The primary conflict
+  arises between the repository's strict guidelines for comprehensive PRs (including
+  changelogs and PR templates) and the prompt's explicit restriction to only modify
+  `components/cascader/style/columns.ts`. The agent must prioritize the prompt's file
+  constraints over the general repository maintenance rules.

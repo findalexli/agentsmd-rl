@@ -1,89 +1,121 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92014
-  base_commit: "eab7a23533d9009f24694016d2bdbdc1318df52d"
-  merge_commit: "d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9"
-
+  base_commit: eab7a23533d9009f24694016d2bdbdc1318df52d
+  merge_commit: d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9
 checks:
-  - id: files_exist_and_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified files exist with real Rust code (anti-stub gate)"
-
-  - id: napi_asset_path_fields_rcstr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NapiAssetPath.path and .content_hash use RcStr, From impl avoids allocation"
-
-  - id: napi_issue_fields_rcstr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NapiIssue.file_path and .documentation_link use RcStr; severity/stage remain String"
-
-  - id: napi_additional_issue_source_description_rcstr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NapiAdditionalIssueSource.description uses RcStr"
-
-  - id: napi_source_fields_rcstr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NapiSource.ident and .file_path use RcStr"
-
-  - id: napi_diagnostic_fields_rcstr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NapiDiagnostic.category, .name, and .payload use RcStr"
-
-  - id: napi_route_pathname_rcstr
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NapiRoute.pathname uses RcStr, from_route accepts RcStr, caller uses .clone()"
-
-  - id: from_impls_avoid_allocation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "From impls for NapiIssue, NapiDiagnostic, NapiSource avoid allocating conversions"
-
-  - id: napi_bindings_compile
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Modified next-napi-bindings crate compiles after RcStr changes (behavioral check)"
-
-  - id: helper_structs_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Helper structs NapiIssueSource, NapiSourcePos, NapiIssueSourceRange still exist"
-
-  - id: rcstr_import_sorted
-    type: fail_to_pass
-    origin: agent_config
-    description: "turbo_rcstr::RcStr import in ASCII sort order (cargo fmt convention)"
-    source:
-      path: "CLAUDE.md"
-      lines: "414"
-      commit: "eab7a23533d9009f24694016d2bdbdc1318df52d"
-
-  - id: test_repo_cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Rust code passes cargo fmt check"
-
-  - id: test_repo_cargo_check_napi
-    type: pass_to_pass
-    origin: repo_tests
-    description: "next-napi-bindings crate compiles with cargo check"
-
-  - id: test_repo_cargo_clippy_napi
-    type: pass_to_pass
-    origin: repo_tests
-    description: "next-napi-bindings crate passes cargo clippy"
-
+- id: files_exist_and_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files exist with real Rust code (anti-stub gate)
+- id: napi_asset_path_fields_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiAssetPath.path and .content_hash use RcStr, From impl avoids allocation
+- id: napi_issue_fields_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiIssue.file_path and .documentation_link use RcStr; severity/stage
+    remain String
+- id: napi_additional_issue_source_description_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiAdditionalIssueSource.description uses RcStr
+- id: napi_source_fields_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiSource.ident and .file_path use RcStr
+- id: napi_diagnostic_fields_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiDiagnostic.category, .name, and .payload use RcStr
+- id: napi_route_pathname_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiRoute.pathname uses RcStr, from_route accepts RcStr, caller uses
+    .clone()
+- id: from_impls_avoid_allocation
+  type: fail_to_pass
+  origin: pr_diff
+  description: From impls for NapiIssue, NapiDiagnostic, NapiSource avoid allocating
+    conversions
+- id: napi_bindings_compile
+  type: fail_to_pass
+  origin: pr_diff
+  description: Modified next-napi-bindings crate compiles after RcStr changes (behavioral
+    check)
+- id: helper_structs_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Helper structs NapiIssueSource, NapiSourcePos, NapiIssueSourceRange
+    still exist
+- id: rcstr_import_sorted
+  type: fail_to_pass
+  origin: agent_config
+  description: turbo_rcstr::RcStr import in ASCII sort order (cargo fmt convention)
+  source:
+    path: CLAUDE.md
+    lines: '414'
+    commit: eab7a23533d9009f24694016d2bdbdc1318df52d
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code passes cargo fmt check
+- id: test_repo_cargo_check_napi
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-napi-bindings crate compiles with cargo check
+- id: test_repo_cargo_clippy_napi
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-napi-bindings crate passes cargo clippy
 rubric:
-  - rule: "cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt"
-    source:
-      path: "CLAUDE.md"
-      lines: "414"
-      commit: "eab7a23533d9009f24694016d2bdbdc1318df52d"
+- rule: cargo fmt uses ASCII order (uppercase before lowercase) - just run cargo fmt
+  source:
+    path: CLAUDE.md
+    lines: '414'
+    commit: eab7a23533d9009f24694016d2bdbdc1318df52d
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits for fast local development.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` for fast local
+    development and auto-rebuilding. However, this PR modifies Rust NAPI bindings
+    in `crates/`. The JS dev server watch mode does not automatically hot-reload or
+    recompile Rust crate changes on the fly, which would confuse an agent expecting
+    its Rust modifications to be immediately reflected or checked.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 56-65
+- rule: 'For type errors only: Use `pnpm --filter=next types` instead of `pnpm --filter=next
+    build`.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule advises using `pnpm --filter=next types` for type errors.
+    Since the PR involves changing struct field types from `String` to `RcStr`, the
+    agent might run this command to verify its type changes. However, this command
+    only runs TypeScript type checking (`tsc`), not Rust type checking (`cargo check`),
+    wasting time and providing no feedback on the Rust code.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 76-76
+- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests preferring `pnpm --filter=next build` when edits
+    are limited to core Next.js files. The agent might consider `crates/next-napi-bindings`
+    as core files and run this, but Rust changes require `pnpm build-all` or direct
+    `cargo` commands to compile properly, as the filter primarily targets the JS/TS
+    packages.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 78-79
+hierarchy_analysis: The configuration files (`CLAUDE.md` and `AGENTS.md` are identical
+  symlinks) provide global monorepo instructions that are heavily biased towards the
+  TypeScript/JavaScript workflow (`packages/next`). There is a distinct lack of Rust-specific
+  workflow guidance. The agent must recognize the architectural boundary between the
+  JS packages and the Rust `crates/` and implicitly override the JS-centric tooling
+  rules (like `pnpm dev` and `pnpm types`) in favor of standard Rust tooling (`cargo
+  check`/`cargo build`) or the explicitly mentioned `pnpm build-all`.

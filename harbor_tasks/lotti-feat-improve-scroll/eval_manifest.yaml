@@ -61,3 +61,42 @@ rubric:
     path: lib/features/projects/README.md
     lines: 257-262
     commit: e0ed1461a20edea9ea57c49fda29fb89d72d7882
+- rule: 'types (classes/enums): `PascalCase`'
+  source:
+    path: AGENTS.md
+    lines: 23-24
+  evidence: The gold solution creates a new sliver-compatible widget named `ProjectTasksSliverPanel`,
+    adhering to the PascalCase convention for classes.
+  category: naming
+- rule: '`lib/` — Flutter/Dart source (features, services, widgets).'
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: The gold solution modifies and adds widget code strictly within the `lib/features/projects/ui/widgets/`
+    directory, following the module organization guidelines.
+  category: architecture
+distractors:
+- rule: Aim to maintain/improve coverage; open report with `make coverage`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write widget tests for the new `ProjectTasksSliverPanel`
+    or the modified `ProjectMobileDetailContent` to maintain test coverage. However,
+    the gold solution focuses strictly on the UI performance refactor and README update
+    without adding new tests.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 30-31
+- rule: 'Code generation: `make build_runner`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `make build_runner` assuming that changing
+    the UI components or adding a new widget requires regenerating code (e.g., if
+    it mistakenly modifies a Freezed model or Riverpod provider). This is a pure UI
+    refactor and running build_runner is unnecessary and wastes time.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 14-15
+hierarchy_analysis: The repository uses a single `AGENTS.md` file for rules, with
+  an empty `CLAUDE.md`. The rules are straightforward, but the agent must carefully
+  scope its work to avoid over-applying testing and code generation rules to a pure
+  UI performance refactor.

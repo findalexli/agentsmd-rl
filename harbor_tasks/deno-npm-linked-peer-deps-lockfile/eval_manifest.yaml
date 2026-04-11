@@ -1,98 +1,101 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "denoland/deno"
+  repo: denoland/deno
   pr: 33143
-  base_commit: "dba93738662f4b6ad47356095f230f5be76a7908"
-  merge_commit: "6383876893b0cfe7e6622259e9207a175fa24043"
-
+  base_commit: dba93738662f4b6ad47356095f230f5be76a7908
+  merge_commit: 6383876893b0cfe7e6622259e9207a175fa24043
 checks:
-  - id: deno_npm_compiles
-    type: pass_to_pass
-    origin: static
-    description: "The deno_npm crate compiles successfully after changes"
-
-  - id: no_raw_key_comparison_for_link_packages
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Link package lookup must not compare against raw serialized lockfile key (includes peer dep suffix)"
-
-  - id: dist_check_not_using_raw_key
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The dist assignment must not use raw serialized key for link package matching"
-
-  - id: linked_peer_deps_unit_test_passes
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Unit test for linked packages with peer dep lockfile keys must exist and pass"
-
-  - id: existing_snapshot_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pre-existing snapshot unit tests still pass"
-
-  - id: deno_npm_lib_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All deno_npm library unit tests pass"
-
-  - id: deno_npm_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "deno_npm passes clippy linting"
-
-  - id: deno_npm_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "deno_npm code is properly formatted"
-
-  - id: deno_npm_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "deno_npm passes cargo check"
-
-  - id: deno_npm_lib_tests_locked
-    type: pass_to_pass
-    origin: repo_tests
-    description: "deno_npm library tests pass with --locked flag as CI does"
-  - id: deno_npm_clippy_locked
-    type: pass_to_pass
-    origin: repo_tests
-    description: "deno_npm passes clippy linting with --locked flag as CI does"
-
-  - id: deno_lockfile
-    type: pass_to_pass
-    origin: repo_tests
-    description: "deno_lockfile tests pass (related crate)"
-
-  - id: deno_npm_all_features
-    type: pass_to_pass
-    origin: repo_tests
-    description: "deno_npm compiles with all features enabled"
-
-
+- id: deno_npm_compiles
+  type: pass_to_pass
+  origin: static
+  description: The deno_npm crate compiles successfully after changes
+- id: no_raw_key_comparison_for_link_packages
+  type: fail_to_pass
+  origin: pr_diff
+  description: Link package lookup must not compare against raw serialized lockfile
+    key (includes peer dep suffix)
+- id: dist_check_not_using_raw_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: The dist assignment must not use raw serialized key for link package
+    matching
+- id: linked_peer_deps_unit_test_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unit test for linked packages with peer dep lockfile keys must exist
+    and pass
+- id: existing_snapshot_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing snapshot unit tests still pass
+- id: deno_npm_lib_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All deno_npm library unit tests pass
+- id: deno_npm_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm passes clippy linting
+- id: deno_npm_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm code is properly formatted
+- id: deno_npm_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm passes cargo check
+- id: deno_npm_lib_tests_locked
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm library tests pass with --locked flag as CI does
+- id: deno_npm_clippy_locked
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm passes clippy linting with --locked flag as CI does
+- id: deno_lockfile
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_lockfile tests pass (related crate)
+- id: deno_npm_all_features
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm compiles with all features enabled
 rubric:
-  - rule: "Keep changes minimal and focused; avoid drive-by changes"
-    source:
-      path: "CLAUDE.md"
-      lines: "31-33"
-      commit: "dba93738662f4b6ad47356095f230f5be76a7908"
-
-  - rule: "Run tools/format.js and tools/lint.js before committing changes"
-    source:
-      path: "CLAUDE.md"
-      lines: "26-30"
-      commit: "dba93738662f4b6ad47356095f230f5be76a7908"
-
-  - rule: "Prioritize correctness bugs - logic errors should be the primary focus"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "139-147"
-      commit: "dba93738662f4b6ad47356095f230f5be76a7908"
-
-# Note: Rubric check disabled - requires LLM judge API key
-# The gold solution diff is verified minimal:
-# - 2 lines changed in core logic (rename + fix comparison)
-# - 1 focused unit test added for the specific bug
-# This satisfies "keep changes minimal" principle
+- rule: Keep changes minimal and focused; avoid drive-by changes
+  source:
+    path: CLAUDE.md
+    lines: 31-33
+    commit: dba93738662f4b6ad47356095f230f5be76a7908
+- rule: Run tools/format.js and tools/lint.js before committing changes
+  source:
+    path: CLAUDE.md
+    lines: 26-30
+    commit: dba93738662f4b6ad47356095f230f5be76a7908
+- rule: Prioritize correctness bugs - logic errors should be the primary focus
+  source:
+    path: .github/copilot-instructions.md
+    lines: 139-147
+    commit: dba93738662f4b6ad47356095f230f5be76a7908
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: 39-41
+  evidence: The gold solution strictly modifies the specific lines in `snapshot_from_lockfile`
+    related to linked package identification (changing `link_package_ids` to `link_package_nvs`)
+    and adds a single focuse
+  category: style
+distractors:
+- rule: Unit tests are located in `tests/unit/`
+  collision_type: architecture_boundary
+  why_distracting: The guide states that unit tests belong in `tests/unit/`. An agent
+    might try to create a new test file in that directory, but the `snapshot.rs` file
+    already has an inline `mod tests` block where the new test `test_snapshot_from_lockfile_v5_with_linked_package_with_peer_deps`
+    should be added to follow the local file's convention.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 61-62
+hierarchy_analysis: The `CLAUDE.md` file provides high-level architectural guidance,
+  but omits mention of the `libs/` directory where the target file resides. The global
+  testing guidance points to `tests/unit/`, which conflicts with the local inline
+  testing pattern established in `libs/npm/resolution/snapshot.rs`.

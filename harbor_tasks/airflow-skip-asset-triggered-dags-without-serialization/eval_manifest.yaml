@@ -4,106 +4,133 @@ source_pr:
   number: 64738
   merge_commit: 93d8984a40e43d94c09b82c0cdfa624a5c09bd57
   base_commit: 97deef5f615b17f618a2bf4c2e9e0f8c3ec15cde
-
 target_files:
-  - airflow-core/src/airflow/models/dag.py
-  - airflow-core/tests/unit/models/test_dag.py
-
-distinctive_line: "missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids"
-
+- airflow-core/src/airflow/models/dag.py
+- airflow-core/tests/unit/models/test_dag.py
+distinctive_line: missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids
 checks:
-  # Pass-to-pass tests
-  - id: test_repo_unit_tests_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository's unit tests for the fix are present"
-    points: 1
-
-  - id: test_repo_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository unit tests pass on base commit"
-    points: 1
-
-  - id: test_no_session_commit_in_dags_needing_dagruns
-    type: pass_to_pass
-    origin: behavioral
-    description: "dags_needing_dagruns method does not call session.commit()"
-    points: 1
-
-  # CI/CD pass-to-pass tests - Code Quality
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linting passes on modified dag.py file"
-    points: 1
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff formatting check passes on modified dag.py file"
-    points: 1
-
-  - id: test_repo_mypy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Mypy type checking passes on modified dag.py file"
-    points: 1
-
-  # CI/CD pass-to-pass tests - Unit Tests
-  - id: test_repo_dags_needing_dagruns_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing dags_needing_dagruns tests in repo pass"
-    points: 1
-
-  - id: test_repo_dag_model_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "DagModel unit tests pass (broader regression check)"
-    points: 1
-
-  - id: test_repo_dag_class_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Dag class unit tests pass (sanity check for dag.py module)"
-    points: 1
-
-  - id: test_repo_serialized_dag_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "SerializedDagModel tests pass (related to fix)"
-    points: 1
-
-  - id: test_repo_asset_model_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Asset-related model tests pass (related to fix)"
-    points: 1
-
-# Rubric rules from agent config files
+- id: test_repo_unit_tests_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository's unit tests for the fix are present
+  points: 1
+- id: test_repo_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository unit tests pass on base commit
+  points: 1
+- id: test_no_session_commit_in_dags_needing_dagruns
+  type: pass_to_pass
+  origin: behavioral
+  description: dags_needing_dagruns method does not call session.commit()
+  points: 1
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on modified dag.py file
+  points: 1
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff formatting check passes on modified dag.py file
+  points: 1
+- id: test_repo_mypy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Mypy type checking passes on modified dag.py file
+  points: 1
+- id: test_repo_dags_needing_dagruns_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing dags_needing_dagruns tests in repo pass
+  points: 1
+- id: test_repo_dag_model_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: DagModel unit tests pass (broader regression check)
+  points: 1
+- id: test_repo_dag_class_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dag class unit tests pass (sanity check for dag.py module)
+  points: 1
+- id: test_repo_serialized_dag_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: SerializedDagModel tests pass (related to fix)
+  points: 1
+- id: test_repo_asset_model_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Asset-related model tests pass (related to fix)
+  points: 1
 rubric:
-  - rule: "Functions with a `session` parameter must not call `session.commit()`. Use keyword-only `session` parameters."
-    source: "CLAUDE.md"
-    file: "airflow-core/src/airflow/models/dag.py"
-    relevance: high
-
-  - rule: "Always format and check Python files with ruff immediately after writing or editing them."
-    source: "CLAUDE.md"
-    file: "airflow-core/src/airflow/models/dag.py"
-    relevance: medium
-
-  - rule: "No `assert` in production code."
-    source: "CLAUDE.md"
-    file: "airflow-core/src/airflow/models/dag.py"
-    relevance: high
-
-  - rule: "Add tests for new behavior — cover success, failure, and edge cases."
-    source: "CLAUDE.md"
-    file: "airflow-core/tests/unit/models/test_dag.py"
-    relevance: high
-
-  - rule: "Test location mirrors source structure."
-    source: "CLAUDE.md"
-    file: "airflow-core/tests/unit/models/test_dag.py"
-    relevance: medium
+- rule: Functions with a `session` parameter must not call `session.commit()`. Use
+    keyword-only `session` parameters.
+  source: CLAUDE.md
+  file: airflow-core/src/airflow/models/dag.py
+  relevance: high
+- rule: Always format and check Python files with ruff immediately after writing or
+    editing them.
+  source: CLAUDE.md
+  file: airflow-core/src/airflow/models/dag.py
+  relevance: medium
+- rule: No `assert` in production code.
+  source: CLAUDE.md
+  file: airflow-core/src/airflow/models/dag.py
+  relevance: high
+- rule: Add tests for new behavior — cover success, failure, and edge cases.
+  source: CLAUDE.md
+  file: airflow-core/tests/unit/models/test_dag.py
+  relevance: high
+- rule: Test location mirrors source structure.
+  source: CLAUDE.md
+  file: airflow-core/tests/unit/models/test_dag.py
+  relevance: medium
+- rule: 'Repository Structure: `airflow-core/src/airflow/models/` contains SQLAlchemy
+    models (DagModel, TaskInstance, DagRun, Asset, etc.)'
+  source:
+    path: CLAUDE.md
+    lines: 33-34
+  evidence: The gold solution modifies `airflow-core/src/airflow/models/dag.py`, correctly
+    identifying it as the location for the `DagModel` logic as specified in the repository
+    structure.
+  category: architecture
+- rule: Run a single test using `uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
+    -xvs`
+  source:
+    path: CLAUDE.md
+    lines: 14-15
+  evidence: The gold solution adds a new unit test `test_dags_needing_dagruns_skips_adrq_when_serialized_dag_missing`
+    in `airflow-core/tests/unit/models/test_dag.py`, which should be executed using
+    the provided `
+  category: testing
+distractors:
+- rule: Never run pytest, python, or airflow commands directly on the host — always
+    use `breeze`.
+  collision_type: rule_conflict
+  why_distracting: The instruction explicitly states 'Never run pytest... directly
+    on the host — always use breeze', but immediately follows with `uv run` commands
+    for pytest. An agent might refuse to use `uv run` (which runs on the host) or
+    waste time setting up a full Breeze environment for a simple unit test, getting
+    stuck in a loop trying to resolve the contradiction.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+- rule: 'If uv tests fail with missing system dependencies, run the tests with breeze:
+    `breeze run pytest <tests> -xvs`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might preemptively use `breeze run pytest` instead of
+    `uv run` for the newly added test, assuming that database models or asset queues
+    require system dependencies. This is slower and unnecessary since this is a standard
+    unit test that runs fine with the default SQLite backend via `uv run`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical at the root level.
+  The primary conflict exists within the file itself regarding test execution: a strict
+  rule forbids running pytest on the host, while subsequent examples explicitly use
+  `uv run` (a host command). The agent must infer that `uv run` is the preferred fast
+  path, and `breeze` is the fallback.'

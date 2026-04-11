@@ -1,59 +1,83 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "storybookjs/storybook"
+  repo: storybookjs/storybook
   pr: 34286
-  base_commit: "ce8c743b04264c5e8010df1181c828171a04c33a"
-  merge_commit: "181be22be7e9025375db9d050ee801d3592cdab4"
-
+  base_commit: ce8c743b04264c5e8010df1181c828171a04c33a
+  merge_commit: 181be22be7e9025375db9d050ee801d3592cdab4
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript file has valid structure"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes for core package"
-
-  - id: test_repo_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's code formatting passes for modified file"
-
-  - id: limit_retains_newest
-    type: fail_to_pass
-    origin: pr_diff
-    description: "When actions exceed the limit, the newest actions are kept (not oldest)"
-
-  - id: no_state_mutation_on_duplicate
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Adding a duplicate action does not mutate the previous state objects"
-
-  - id: new_action_immutable
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Adding a new action does not mutate the input action object"
-
-  - id: explicit_ts_extensions
-    type: pass_to_pass
-    origin: agent_config
-    description: "Relative imports use explicit .ts/.tsx extensions"
-    source:
-      path: "AGENTS.md"
-      lines: "246"
-      commit: "ce8c743b04264c5e8010df1181c828171a04c33a"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "The addAction handler contains real state-update logic"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript file has valid structure
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes for core package
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes for modified file
+- id: limit_retains_newest
+  type: fail_to_pass
+  origin: pr_diff
+  description: When actions exceed the limit, the newest actions are kept (not oldest)
+- id: no_state_mutation_on_duplicate
+  type: fail_to_pass
+  origin: pr_diff
+  description: Adding a duplicate action does not mutate the previous state objects
+- id: new_action_immutable
+  type: fail_to_pass
+  origin: pr_diff
+  description: Adding a new action does not mutate the input action object
+- id: explicit_ts_extensions
+  type: pass_to_pass
+  origin: agent_config
+  description: Relative imports use explicit .ts/.tsx extensions
+  source:
+    path: AGENTS.md
+    lines: '246'
+    commit: ce8c743b04264c5e8010df1181c828171a04c33a
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: The addAction handler contains real state-update logic
 rubric:
-  - rule: "Use Storybook loggers instead of raw console.* in normal code paths."
-    source:
-      path: "AGENTS.md"
-      lines: "241-245"
-      commit: "ce8c743b04264c5e8010df1181c828171a04c33a"
+- rule: Use Storybook loggers instead of raw console.* in normal code paths.
+  source:
+    path: AGENTS.md
+    lines: 241-245
+    commit: ce8c743b04264c5e8010df1181c828171a04c33a
+- rule: The main package is `code/core/src/`.
+  source:
+    path: AGENTS.md
+    lines: 44-45
+  evidence: The gold solution modifies `code/core/src/actions/containers/ActionLogger/index.tsx`,
+    which is correctly located within the `code/core/src/` directory.
+  category: architecture
+distractors:
+- rule: Tests are located in the `code/` directory and follow the pattern `*.test.ts`
+    or `*.test.tsx`.
+  collision_type: scope_ambiguity
+  why_distracting: The extensive test configuration and directory structure instructions
+    might lead an agent to believe it must write a unit test (e.g., `ActionLogger.test.tsx`)
+    to verify the new slicing and immutability logic, but the gold solution only fixes
+    the component code without adding tests.
+  severity: medium
+  source:
+    path: .cursorrules
+    lines: 12-15
+- rule: Follow the spy mocking rules defined in `.cursor/rules/spy-mocking.mdc` for
+    consistent mocking patterns with Vitest.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to mock `setActions` or `safeDeepEqual` to
+    write a test for the component, wasting time on test setup that is not required
+    for this PR.
+  severity: low
+  source:
+    path: .cursorrules
+    lines: 42-43
+hierarchy_analysis: The configuration hierarchy is relatively flat, with `.cursorrules`
+  focusing heavily on testing and `AGENTS.md` focusing on repository architecture
+  and commands. There are no direct conflicts between the files, but the strong emphasis
+  on testing in `.cursorrules` could distract an agent from a pure bug-fix implementation
+  if it assumes tests are strictly required for every change.

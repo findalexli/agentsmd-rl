@@ -3,71 +3,114 @@ source:
     owner: MystenLabs
     repo: sui
     number: 26148
-    title: "fix gasless transaction dryrun and simulate"
+    title: fix gasless transaction dryrun and simulate
     base_commit: b11d7b977aab3ab79dc6f783555d1726c34b6ca7
     merge_commit: 4a9af930d043cc9f9bf7a9438ee3f25e4d26e741
-
   agent_config:
     files:
-      - path: CLAUDE.md
-        commit: b11d7b977aab3ab79dc6f783555d1726c34b6ca7
-        rules_applied:
-          - license_headers
-          - cargo_check
-          - cargo_xclippy
-          - test_timeout_10min
-          - no_allow_dead_code
-      - path: .claude/skills/protocol-config/SKILL.md
-        commit: b11d7b977aab3ab79dc6f783555d1726c34b6ca7
-        rules_applied:
-          - protocol_config_versioning
-
+    - path: CLAUDE.md
+      commit: b11d7b977aab3ab79dc6f783555d1726c34b6ca7
+      rules_applied:
+      - license_headers
+      - cargo_check
+      - cargo_xclippy
+      - test_timeout_10min
+      - no_allow_dead_code
+    - path: .claude/skills/protocol-config/SKILL.md
+      commit: b11d7b977aab3ab79dc6f783555d1726c34b6ca7
+      rules_applied:
+      - protocol_config_versioning
 checks:
-  - id: test_dry_exec_has_gasless_check
-    type: fail_to_pass
-    origin: pr_description
-    description: "dry_exec_transaction has is_gasless check to prevent mock gas injection"
-
-  - id: test_dry_exec_skips_mock_gas_for_gasless
-    type: fail_to_pass
-    origin: pr_description
-    description: "dry_exec_transaction skips mock gas when is_gasless is true"
-
-  - id: test_simulate_skips_mock_gas_for_gasless
-    type: fail_to_pass
-    origin: pr_description
-    description: "simulate_transaction skips mock gas for gasless transactions"
-
-  - id: test_gasless_uses_check_transaction_input
-    type: fail_to_pass
-    origin: pr_description
-    description: "Gasless path uses check_transaction_input directly without mock gas"
-
-  - id: test_repo_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "sui-core compiles with cargo check"
-
-  - id: test_no_clippy_errors
-    type: pass_to_pass
-    origin: agent_config
-    source: CLAUDE.md
-    description: "No clippy errors in sui-core (per CLAUDE.md requirement)"
-
-  - id: test_repo_rustfmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's code passes rustfmt check"
-
-  - id: test_repo_license_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's license headers pass lint check"
-
+- id: test_dry_exec_has_gasless_check
+  type: fail_to_pass
+  origin: pr_description
+  description: dry_exec_transaction has is_gasless check to prevent mock gas injection
+- id: test_dry_exec_skips_mock_gas_for_gasless
+  type: fail_to_pass
+  origin: pr_description
+  description: dry_exec_transaction skips mock gas when is_gasless is true
+- id: test_simulate_skips_mock_gas_for_gasless
+  type: fail_to_pass
+  origin: pr_description
+  description: simulate_transaction skips mock gas for gasless transactions
+- id: test_gasless_uses_check_transaction_input
+  type: fail_to_pass
+  origin: pr_description
+  description: Gasless path uses check_transaction_input directly without mock gas
+- id: test_repo_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-core compiles with cargo check
+- id: test_no_clippy_errors
+  type: pass_to_pass
+  origin: agent_config
+  source: CLAUDE.md
+  description: No clippy errors in sui-core (per CLAUDE.md requirement)
+- id: test_repo_rustfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code passes rustfmt check
+- id: test_repo_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's license headers pass lint check
 rubric:
-  - criteria: "Code follows Rust best practices and CLAUDE.md guidelines"
-    points: 10
-  - criteria: "Fix correctly handles both dry_exec_transaction and simulate_transaction"
-    points: 20
-  - criteria: "Gasless transactions skip mock gas injection as intended"
-    points: 20
+- criteria: Code follows Rust best practices and CLAUDE.md guidelines
+  points: 10
+- criteria: Fix correctly handles both dry_exec_transaction and simulate_transaction
+  points: 20
+- criteria: Gasless transactions skip mock gas injection as intended
+  points: 20
+- rule: 'Authority System: Each authority maintains its own state and participates
+    in Byzantine consensus.'
+  source:
+    path: CLAUDE.md
+    lines: 69-70
+  evidence: The gold solution modifies methods on `impl AuthorityState` in `crates/sui-core/src/authority.rs`
+    to correctly handle gasless transactions within the authority's state execution
+    pipeline.
+  category: architecture
+- rule: For faster iteration, use -p to select only the most relevant packages for
+    testing.
+  source:
+    path: CLAUDE.md
+    lines: 41-42
+  evidence: The prompt explicitly instructs the agent to use `-p sui-core` for both
+    `cargo check` and `cargo clippy`, adhering to the rule to use `-p` to select only
+    the most relevant packages.
+  category: tooling
+distractors:
+- rule: '`cargo xclippy does not recognize -p option`'
+  collision_type: meta_confusion
+  why_distracting: The prompt explicitly requires running `cargo clippy -p sui-core`.
+    The agent might read this rule and decide to run `cargo xclippy` without `-p`
+    on the entire workspace, which would take an excessive amount of time and potentially
+    fail on unrelated crates.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 54-55
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run `cargo simtest -p sui-e2e-tests` to
+    verify its changes, but this is a massive test suite that will likely time out
+    or take too long. The prompt only requires `cargo check` and `cargo clippy`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 30-31
+- rule: All new files must start with the following license in comments
+  collision_type: scope_ambiguity
+  why_distracting: The agent might mistakenly try to prepend the license header to
+    `authority.rs` if it misinterprets the file modification as a new file creation,
+    leading to duplicate license headers.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 18-21
+hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md`. The root
+  `CLAUDE.md` provides general guidelines for building, testing, and linting. The
+  prompt's specific instructions to run `cargo clippy -p sui-core` conflict with the
+  `CLAUDE.md` note about `cargo xclippy` not recognizing the `-p` option, creating
+  a meta-level confusion where the agent must prioritize the prompt's explicit instructions
+  over the general config warning.

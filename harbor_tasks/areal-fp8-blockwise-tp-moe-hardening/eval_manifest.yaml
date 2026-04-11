@@ -1,139 +1,158 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1118
-  base_commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
-  merge_commit: "0ee85625db43edc47588f661103ec78ddc5771e4"
-
+  base_commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+  merge_commit: 0ee85625db43edc47588f661103ec78ddc5771e4
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files must parse without errors"
-
-  - id: fp8_config_enabled_property
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ArchonFP8Config has an 'enabled' property returning True for blockwise, False for disabled"
-
-  - id: fp8_config_post_init_uses_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ArchonFP8Config.__post_init__ uses self.enabled instead of raw mode check"
-
-  - id: validate_alignment_handles_grouped_experts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "validate_fp8_shard_alignment checks GroupedExperts w1/w2/w3 per-expert dimensions"
-
-  - id: validate_alignment_not_linear_only
-    type: fail_to_pass
-    origin: pr_diff
-    description: "validate_fp8_shard_alignment does not skip non-Linear modules unconditionally"
-
-  - id: dequant_only_accepts_e4m3fn
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dequant_fp8_state_dict only recognizes float8_e4m3fn (not e5m2/fnuz variants)"
-
-  - id: check_shard_compatibility_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_check_fp8_shard_compatibility exists to fail fast on unsupported DTensor placements"
-
-  - id: fp8_linear_handles_dtensor
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_fp8_linear_fwd calls to_local() on weight to handle DTensor from TP"
-
-  - id: experts_forward_stores_fp8_block
-    type: fail_to_pass
-    origin: pr_diff
-    description: "_patch_fp8_experts_forward stores _fp8_block so alignment validation covers experts"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Key modified functions have real logic, not just pass/return"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "93"
-      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
-
-  - id: config_validation_uses_valueerror
-    type: pass_to_pass
-    origin: agent_config
-    description: "Config validation and early-exit functions raise ValueError with clear message"
-    source:
-      path: ".claude/rules/api-config.md"
-      lines: "37-42"
-      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
-
-  # Repo CI/CD checks (pass_to_pass)
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python files pass ruff linting"
-
-  - id: test_repo_pyproject_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's pyproject.toml is valid"
-
-  - id: test_repo_precommit_yaml
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's YAML files pass pre-commit check-yaml"
-
-  - id: test_repo_precommit_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files pass pre-commit trailing-whitespace check"
-
-  - id: test_repo_precommit_eof_fixer
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Python files pass pre-commit end-of-file-fixer check"
-
-  - id: test_repo_precommit_private_key
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo passes pre-commit detect-private-key check"
-
-  - id: test_repo_precommit_large_files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo passes pre-commit check-added-large-files (no large files committed)"
-
-  - id: test_repo_precommit_json
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's JSON files pass pre-commit check-json"
-
-  - id: test_repo_precommit_nbstripout
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Jupyter notebooks pass nbstripout (no outputs committed)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: fp8_config_enabled_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: ArchonFP8Config has an 'enabled' property returning True for blockwise,
+    False for disabled
+- id: fp8_config_post_init_uses_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: ArchonFP8Config.__post_init__ uses self.enabled instead of raw mode
+    check
+- id: validate_alignment_handles_grouped_experts
+  type: fail_to_pass
+  origin: pr_diff
+  description: validate_fp8_shard_alignment checks GroupedExperts w1/w2/w3 per-expert
+    dimensions
+- id: validate_alignment_not_linear_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: validate_fp8_shard_alignment does not skip non-Linear modules unconditionally
+- id: dequant_only_accepts_e4m3fn
+  type: fail_to_pass
+  origin: pr_diff
+  description: dequant_fp8_state_dict only recognizes float8_e4m3fn (not e5m2/fnuz
+    variants)
+- id: check_shard_compatibility_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: _check_fp8_shard_compatibility exists to fail fast on unsupported DTensor
+    placements
+- id: fp8_linear_handles_dtensor
+  type: fail_to_pass
+  origin: pr_diff
+  description: _fp8_linear_fwd calls to_local() on weight to handle DTensor from TP
+- id: experts_forward_stores_fp8_block
+  type: fail_to_pass
+  origin: pr_diff
+  description: _patch_fp8_experts_forward stores _fp8_block so alignment validation
+    covers experts
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Key modified functions have real logic, not just pass/return
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified files
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- id: config_validation_uses_valueerror
+  type: pass_to_pass
+  origin: agent_config
+  description: Config validation and early-exit functions raise ValueError with clear
+    message
+  source:
+    path: .claude/rules/api-config.md
+    lines: 37-42
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files pass ruff linting
+- id: test_repo_pyproject_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml is valid
+- id: test_repo_precommit_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML files pass pre-commit check-yaml
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass pre-commit trailing-whitespace check
+- id: test_repo_precommit_eof_fixer
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass pre-commit end-of-file-fixer check
+- id: test_repo_precommit_private_key
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes pre-commit detect-private-key check
+- id: test_repo_precommit_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes pre-commit check-added-large-files (no large files committed)
+- id: test_repo_precommit_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JSON files pass pre-commit check-json
+- id: test_repo_precommit_nbstripout
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Jupyter notebooks pass nbstripout (no outputs committed)
 rubric:
-  - rule: "Follow existing code patterns in the same module."
-    source:
-      path: "CLAUDE.md"
-      lines: "76"
-      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
-  - rule: "Prefer composition over inheritance: Avoid deep class hierarchies. Keep inheritance shallow."
-    source:
-      path: ".claude/rules/code-style.md"
-      lines: "7-11"
-      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
-  - rule: "DTensor requires consistent mesh across all ranks. Use DTensor.from_local() with correct placements."
-    source:
-      path: ".claude/rules/distributed.md"
-      lines: "21-22"
-      commit: "d36657168b4929f3b20b2b6c891bdfefa0243bb2"
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: CLAUDE.md
+    lines: '76'
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- rule: 'Prefer composition over inheritance: Avoid deep class hierarchies. Keep inheritance
+    shallow.'
+  source:
+    path: .claude/rules/code-style.md
+    lines: 7-11
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- rule: DTensor requires consistent mesh across all ranks. Use DTensor.from_local()
+    with correct placements.
+  source:
+    path: .claude/rules/distributed.md
+    lines: 21-22
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- rule: No wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  evidence: In `areal/experimental/engine/archon_checkpoint.py`, the gold solution
+    explicitly imports `DTensor` and `Shard` from `torch.distributed.tensor` instead
+    of using wildcard imports.
+  category: style
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The fix addresses a complex distributed training crash (FP8 + TP
+    + MoE) which requires multi-node hardware to test properly. Attempting to add
+    unit tests for this would likely result in complex, fragile mocks or tests that
+    fail in CI without GPUs, wasting agent effort.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 35-35
+- rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
+  collision_type: meta_confusion
+  why_distracting: The prompt requires fixing scattered mode checks by centralizing
+    the FP8 enabled check, which necessitates modifying `areal/api/cli_args.py`. If
+    the agent stops to ask permission, it will fail to provide the complete patch
+    in a single-turn evaluation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 39-41
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules regarding
+  wildcard imports, adding tests, and asking before modifying `cli_args.py`. `AGENTS.md`
+  acts as a condensed operational guide for agents, reinforcing the constraints in
+  `CLAUDE.md`. The conflict arises between the strict 'Ask first' directive and the
+  implicit requirement of single-turn agent evaluations to provide a complete fix.

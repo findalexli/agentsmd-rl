@@ -1,148 +1,160 @@
 source:
   pr:
-    owner: "apache"
-    repo: "superset"
+    owner: apache
+    repo: superset
     number: 39011
-    title: "fix(mcp): Created dashboard should be in draft state by default"
-    base_commit: "25eea295f6c9e8060619beccb267dd9c7628f882"
-    merge_commit: "135e0f809968f14ca4e0ddda3abae7ed1d0eef8c"
-
-  # Agent config files discovered at base commit
+    title: 'fix(mcp): Created dashboard should be in draft state by default'
+    base_commit: 25eea295f6c9e8060619beccb267dd9c7628f882
+    merge_commit: 135e0f809968f14ca4e0ddda3abae7ed1d0eef8c
   agent_configs:
-    - path: "CLAUDE.md"
-      base_commit: "25eea295f6c9e8060619beccb267dd9c7628f882"
-    - path: "AGENTS.md"
-      base_commit: "25eea295f6c9e8060619beccb267dd9c7628f882"
-    - path: ".github/copilot-instructions.md"
-      base_commit: "25eea295f6c9e8060619beccb267dd9c7628f882"
-    - path: ".cursor/rules/dev-standard.mdc"
-      base_commit: "25eea295f6c9e8060619beccb267dd9c7628f882"
-
-# Test-based checks - each maps to a def test_* function in test_outputs.py
+  - path: CLAUDE.md
+    base_commit: 25eea295f6c9e8060619beccb267dd9c7628f882
+  - path: AGENTS.md
+    base_commit: 25eea295f6c9e8060619beccb267dd9c7628f882
+  - path: .github/copilot-instructions.md
+    base_commit: 25eea295f6c9e8060619beccb267dd9c7628f882
+  - path: .cursor/rules/dev-standard.mdc
+    base_commit: 25eea295f6c9e8060619beccb267dd9c7628f882
 checks:
-  # Fail-to-pass tests
-  - id: "test_generate_dashboard_request_defaults_to_draft"
-    name: "Dashboard defaults to draft state"
-    type: "pytest"
-    file: "tests/test_outputs.py"
-    weight: 3
-    description: "Verify GenerateDashboardRequest defaults to published=False"
-
-  - id: "test_generate_dashboard_request_multiple_chart_ids"
-    name: "Draft default with varied inputs"
-    type: "pytest"
-    file: "tests/test_outputs.py"
-    weight: 2
-    description: "Verify draft default works with various chart ID combinations"
-
-  # Pass-to-pass tests (regression checks)
-  - id: "test_generate_dashboard_request_explicit_published_true"
-    name: "Explicit published=True works"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "Verify explicit published=True is respected"
-
-  - id: "test_generate_dashboard_request_explicit_published_false"
-    name: "Explicit published=False works"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "Verify explicit published=False is respected"
-
-  # Structural verification (gated by behavioral tests)
-  - id: "test_schema_field_configuration"
-    name: "Field configuration is correct"
-    type: "pytest"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "Verify the Field() has correct default=False and description"
-
-  # Pass-to-pass: Repo CI/CD tests that should pass on both base and fix
-  - id: "test_repo_mcp_dashboard_schemas"
-    name: "MCP dashboard schema unit tests"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "Repo's MCP dashboard schema tests pass on both base and fix"
-    origin: "repo_tests"
-
-  - id: "test_repo_mcp_dashboard_generation"
-    name: "MCP dashboard generation tool tests"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "Repo's MCP dashboard generation tests pass on both base and fix"
-    origin: "repo_tests"
-
-  # ADDITIONAL P2P ENRICHMENT: CI validation tests
-  - id: "test_repo_schema_syntax"
-    name: "MCP schema Python syntax validation"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "MCP dashboard schema file passes Python syntax check (py_compile)"
-    origin: "repo_tests"
-
-  - id: "test_repo_test_file_syntax"
-    name: "MCP test file Python syntax validation"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "MCP dashboard test file passes Python syntax check (py_compile)"
-    origin: "repo_tests"
-
-  - id: "test_repo_schema_ast_parse"
-    name: "MCP schema AST parsing validation"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "MCP dashboard schema file can be parsed via AST (mypy/pylint style)"
-    origin: "repo_tests"
-
-  - id: "test_repo_imports_check"
-    name: "MCP dependency imports validation"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "Pydantic imports work correctly (core dependency check)"
-    origin: "repo_tests"
-
-  - id: "test_repo_unit_test_discovery"
-    name: "MCP test discovery validation"
-    type: "pass_to_pass"
-    file: "tests/test_outputs.py"
-    weight: 1
-    description: "MCP dashboard tests can be discovered via AST without importing"
-    origin: "repo_tests"
-
-  # Agent config rule checks (from CLAUDE.md, AGENTS.md, etc.)
-  - id: "python_type_hints"
-    name: "Python code has type hints"
-    type: "agent_config"
-    weight: 1
-    description: "Verify the fix maintains proper type annotations per CLAUDE.md"
-    source:
-      config: "CLAUDE.md"
-      line_reference: "Type hints required for all new code"
-
-  - id: "pytest_testing"
-    name: "Uses pytest for testing"
-    type: "agent_config"
-    weight: 1
-    description: "Verify pytest is used for testing per CLAUDE.md"
-    source:
-      config: "CLAUDE.md"
-      line_reference: "pytest for testing"
-
-# Rubric items for LLM-judged criteria (soft/subjective rules)
+- id: test_generate_dashboard_request_defaults_to_draft
+  name: Dashboard defaults to draft state
+  type: pytest
+  file: tests/test_outputs.py
+  weight: 3
+  description: Verify GenerateDashboardRequest defaults to published=False
+- id: test_generate_dashboard_request_multiple_chart_ids
+  name: Draft default with varied inputs
+  type: pytest
+  file: tests/test_outputs.py
+  weight: 2
+  description: Verify draft default works with various chart ID combinations
+- id: test_generate_dashboard_request_explicit_published_true
+  name: Explicit published=True works
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: Verify explicit published=True is respected
+- id: test_generate_dashboard_request_explicit_published_false
+  name: Explicit published=False works
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: Verify explicit published=False is respected
+- id: test_schema_field_configuration
+  name: Field configuration is correct
+  type: pytest
+  file: tests/test_outputs.py
+  weight: 1
+  description: Verify the Field() has correct default=False and description
+- id: test_repo_mcp_dashboard_schemas
+  name: MCP dashboard schema unit tests
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: Repo's MCP dashboard schema tests pass on both base and fix
+  origin: repo_tests
+- id: test_repo_mcp_dashboard_generation
+  name: MCP dashboard generation tool tests
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: Repo's MCP dashboard generation tests pass on both base and fix
+  origin: repo_tests
+- id: test_repo_schema_syntax
+  name: MCP schema Python syntax validation
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: MCP dashboard schema file passes Python syntax check (py_compile)
+  origin: repo_tests
+- id: test_repo_test_file_syntax
+  name: MCP test file Python syntax validation
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: MCP dashboard test file passes Python syntax check (py_compile)
+  origin: repo_tests
+- id: test_repo_schema_ast_parse
+  name: MCP schema AST parsing validation
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: MCP dashboard schema file can be parsed via AST (mypy/pylint style)
+  origin: repo_tests
+- id: test_repo_imports_check
+  name: MCP dependency imports validation
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: Pydantic imports work correctly (core dependency check)
+  origin: repo_tests
+- id: test_repo_unit_test_discovery
+  name: MCP test discovery validation
+  type: pass_to_pass
+  file: tests/test_outputs.py
+  weight: 1
+  description: MCP dashboard tests can be discovered via AST without importing
+  origin: repo_tests
+- id: python_type_hints
+  name: Python code has type hints
+  type: agent_config
+  weight: 1
+  description: Verify the fix maintains proper type annotations per CLAUDE.md
+  source:
+    config: CLAUDE.md
+    line_reference: Type hints required for all new code
+- id: pytest_testing
+  name: Uses pytest for testing
+  type: agent_config
+  weight: 1
+  description: Verify pytest is used for testing per CLAUDE.md
+  source:
+    config: CLAUDE.md
+    line_reference: pytest for testing
 rubric:
-  - id: "follow_existing_patterns"
-    name: "Follows existing code patterns"
-    description: "The fix follows the existing Field() pattern in the codebase"
-    weight: 0.5
-
-  - id: "minimal_change"
-    name: "Change is minimal and focused"
-    description: "Only the necessary default value was changed, no unrelated modifications"
-    weight: 0.5
+- id: follow_existing_patterns
+  name: Follows existing code patterns
+  description: The fix follows the existing Field() pattern in the codebase
+  weight: 0.5
+- id: minimal_change
+  name: Change is minimal and focused
+  description: Only the necessary default value was changed, no unrelated modifications
+  weight: 0.5
+- rule: Use pytest for testing in the Python backend
+  source:
+    path: CLAUDE.md
+    lines: 70-74
+  evidence: The gold solution adds a new test `test_generate_dashboard_explicit_published`
+    using `@pytest.mark.asyncio` and standard `assert` statements, adhering to the
+    pytest convention for the Python backend.
+  category: testing
+distractors:
+- rule: When creating new MCP tools, prompts, or resources, you MUST add their imports
+    to app.py for auto-registration.
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying the schema for an existing tool (`GenerateDashboardRequest`).
+    It might mistakenly interpret the modification of tool-related code as a trigger
+    to check or update tool registration in `app.py`, leading to unnecessary file
+    modifications or context fetching.
+  severity: medium
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 52-54
+- rule: Add type hints - All new Python code needs proper typing
+  collision_type: would_cause_bug
+  why_distracting: 'The agent adds a new test function `test_generate_dashboard_explicit_published`.
+    If it strictly follows the ''all new Python code needs proper typing'' rule, it
+    might attempt to type-hint the mock arguments (e.g., `mock_db_session: MagicMock`),
+    which often requires importing `MagicMock` or specific internal Superset types,
+    potentially causing import errors or mypy failures. The gold solution safely omits
+    type hints for these test arguments.'
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 38-39
+hierarchy_analysis: The hierarchy consists of root-level guidelines (`CLAUDE.md` and
+  `AGENTS.md`) and service-specific guidelines (`superset/mcp_service/CLAUDE.md`).
+  The service-specific guidelines emphasize tool registration and license headers,
+  which are highly relevant to the MCP service but act as distractors here since the
+  PR only modifies an existing schema and its tests. The root-level testing guidelines
+  correctly guide the use of pytest.

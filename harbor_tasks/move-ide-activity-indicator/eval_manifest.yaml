@@ -2,188 +2,169 @@ source_pr:
   owner: MystenLabs
   repo: sui
   number: 26054
-  title: "[move-ide] Added activity indicator"
+  title: '[move-ide] Added activity indicator'
   merge_commit: 887d3a17f89ac367104cb4982ec0d93f4997611f
   base_commit: 383a983d2b14715a4299227920188aa62089a723
-
 target_files:
-  - external-crates/move/crates/move-analyzer/editors/code/src/activity_monitor.ts
-  - external-crates/move/crates/move-analyzer/editors/code/src/context.ts
-  - external-crates/move/crates/move-analyzer/editors/code/src/main.ts
-  - external-crates/move/crates/move-analyzer/src/analyzer.rs
-  - external-crates/move/crates/move-analyzer/src/symbols/runner.rs
-
-# Checks correspond 1:1 with test_outputs.py functions
+- external-crates/move/crates/move-analyzer/editors/code/src/activity_monitor.ts
+- external-crates/move/crates/move-analyzer/editors/code/src/context.ts
+- external-crates/move/crates/move-analyzer/editors/code/src/main.ts
+- external-crates/move/crates/move-analyzer/src/analyzer.rs
+- external-crates/move/crates/move-analyzer/src/symbols/runner.rs
 checks:
-  # Rust compilation - primary F2P check
-  - id: "rust_compiles"
-    description: "Rust code compiles successfully with new SymbolicatorMessage type"
-    type: "fail_to_pass"
-    test: "test_rust_code_compiles"
-
-  # SymbolicatorMessage enum definition
-  - id: "symbolicator_enum"
-    description: "SymbolicatorMessage enum defined with all required variants"
-    type: "fail_to_pass"
-    test: "test_symbolicator_message_enum_exists"
-
-  # Type changes
-  - id: "sender_type"
-    description: "Channel sender type changed from Result<BTreeMap> to SymbolicatorMessage"
-    type: "fail_to_pass"
-    test: "test_symbolicator_sender_type_changed"
-
-  # Progress token
-  - id: "progress_token"
-    description: "PROGRESS_TOKEN constant defined in both Rust and TypeScript"
-    type: "fail_to_pass"
-    test: "test_progress_token_constant_exists"
-
-  # Progress notifications
-  - id: "progress_notifications"
-    description: "Analyzer handles SymbolicationStart and SymbolicationEnd messages"
-    type: "fail_to_pass"
-    test: "test_progress_notifications_handled"
-
-  # Fatal error handling
-  - id: "fatal_error"
-    description: "Fatal errors cause server process exit"
-    type: "fail_to_pass"
-    test: "test_fatal_error_handling"
-
-  # Activity monitor file
-  - id: "activity_monitor_file"
-    description: "activity_monitor.ts exists with ServerActivityMonitor class"
-    type: "fail_to_pass"
-    test: "test_activity_monitor_file_exists"
-
-  # Activity monitor state methods
-  - id: "state_methods"
-    description: "ServerActivityMonitor has all required state transition methods"
-    type: "pass_to_pass"
-    test: "test_activity_monitor_state_methods"
-
-  # Activity monitor rendering
-  - id: "monitor_render"
-    description: "ServerActivityMonitor renders status bar with correct styling"
-    type: "pass_to_pass"
-    test: "test_activity_monitor_render"
-
-  # Context integration
-  - id: "context_wiring"
-    description: "context.ts initializes and wires the activity monitor"
-    type: "fail_to_pass"
-    test: "test_context_wires_activity_monitor"
-
-  # Progress notification handling in client
-  - id: "client_progress"
-    description: "context.ts handles $/progress notifications from server"
-    type: "fail_to_pass"
-    test: "test_context_progress_notifications"
-
-  # Request wrapping
-  - id: "request_wrapping"
-    description: "context.ts wraps sendRequest to track request latency"
-    type: "fail_to_pass"
-    test: "test_context_request_wrapping"
-
-  # Error handler
-  - id: "error_handler"
-    description: "context.ts sets error handler to prevent auto-restart on fatal errors"
-    type: "fail_to_pass"
-    test: "test_context_error_handler"
-
-  # Main initialization
-  - id: "main_init"
-    description: "main.ts initializes activity monitor with version info"
-    type: "fail_to_pass"
-    test: "test_main_initializes_monitor"
-
-  # TypeScript syntax
-  - id: "ts_syntax"
-    description: "TypeScript files have valid syntax"
-    type: "pass_to_pass"
-    test: "test_typescript_syntax_valid"
-
-  # Runner start message
-  - id: "runner_start"
-    description: "runner sends SymbolicationStart at batch start"
-    type: "fail_to_pass"
-    test: "test_runner_sends_start_message"
-
-  # Runner end message
-  - id: "runner_end"
-    description: "runner sends SymbolicationEnd at batch end"
-    type: "fail_to_pass"
-    test: "test_runner_sends_end_message"
-
-  # Error type distinction
-  - id: "error_distinction"
-    description: "runner distinguishes between Error and FatalError variants"
-    type: "fail_to_pass"
-    test: "test_runner_distinguishes_error_types"
-
-  # Output channel persistence
-  - id: "output_channel"
-    description: "moveOutputChannel is created and reused across restarts"
-    type: "fail_to_pass"
-    test: "test_move_output_channel_persisted"
-
-  # --- Pass-to-pass: Repo CI/CD checks ---
-
-  - id: "cargo_check_move_analyzer"
-    description: "cargo check -p move-analyzer compiles without errors"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    test: "test_cargo_check_move_analyzer"
-
-  - id: "cargo_fmt_check"
-    description: "cargo fmt --check passes for move-analyzer"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    test: "test_cargo_fmt_check"
-
-  - id: "cargo_clippy_move_analyzer"
-    description: "cargo clippy -p move-analyzer passes without warnings"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    test: "test_cargo_clippy_move_analyzer"
-
-  - id: "tsc_no_emit"
-    description: "TypeScript compilation (tsc --noEmit) passes for VSCode extension"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    test: "test_tsc_no_emit"
-
-  - id: "eslint_check"
-    description: "ESLint passes for VSCode extension with zero warnings"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    test: "test_eslint_check"
-
-# Agent configuration rules from CLAUDE.md
+- id: rust_compiles
+  description: Rust code compiles successfully with new SymbolicatorMessage type
+  type: fail_to_pass
+  test: test_rust_code_compiles
+- id: symbolicator_enum
+  description: SymbolicatorMessage enum defined with all required variants
+  type: fail_to_pass
+  test: test_symbolicator_message_enum_exists
+- id: sender_type
+  description: Channel sender type changed from Result<BTreeMap> to SymbolicatorMessage
+  type: fail_to_pass
+  test: test_symbolicator_sender_type_changed
+- id: progress_token
+  description: PROGRESS_TOKEN constant defined in both Rust and TypeScript
+  type: fail_to_pass
+  test: test_progress_token_constant_exists
+- id: progress_notifications
+  description: Analyzer handles SymbolicationStart and SymbolicationEnd messages
+  type: fail_to_pass
+  test: test_progress_notifications_handled
+- id: fatal_error
+  description: Fatal errors cause server process exit
+  type: fail_to_pass
+  test: test_fatal_error_handling
+- id: activity_monitor_file
+  description: activity_monitor.ts exists with ServerActivityMonitor class
+  type: fail_to_pass
+  test: test_activity_monitor_file_exists
+- id: state_methods
+  description: ServerActivityMonitor has all required state transition methods
+  type: pass_to_pass
+  test: test_activity_monitor_state_methods
+- id: monitor_render
+  description: ServerActivityMonitor renders status bar with correct styling
+  type: pass_to_pass
+  test: test_activity_monitor_render
+- id: context_wiring
+  description: context.ts initializes and wires the activity monitor
+  type: fail_to_pass
+  test: test_context_wires_activity_monitor
+- id: client_progress
+  description: context.ts handles $/progress notifications from server
+  type: fail_to_pass
+  test: test_context_progress_notifications
+- id: request_wrapping
+  description: context.ts wraps sendRequest to track request latency
+  type: fail_to_pass
+  test: test_context_request_wrapping
+- id: error_handler
+  description: context.ts sets error handler to prevent auto-restart on fatal errors
+  type: fail_to_pass
+  test: test_context_error_handler
+- id: main_init
+  description: main.ts initializes activity monitor with version info
+  type: fail_to_pass
+  test: test_main_initializes_monitor
+- id: ts_syntax
+  description: TypeScript files have valid syntax
+  type: pass_to_pass
+  test: test_typescript_syntax_valid
+- id: runner_start
+  description: runner sends SymbolicationStart at batch start
+  type: fail_to_pass
+  test: test_runner_sends_start_message
+- id: runner_end
+  description: runner sends SymbolicationEnd at batch end
+  type: fail_to_pass
+  test: test_runner_sends_end_message
+- id: error_distinction
+  description: runner distinguishes between Error and FatalError variants
+  type: fail_to_pass
+  test: test_runner_distinguishes_error_types
+- id: output_channel
+  description: moveOutputChannel is created and reused across restarts
+  type: fail_to_pass
+  test: test_move_output_channel_persisted
+- id: cargo_check_move_analyzer
+  description: cargo check -p move-analyzer compiles without errors
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_cargo_check_move_analyzer
+- id: cargo_fmt_check
+  description: cargo fmt --check passes for move-analyzer
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_cargo_fmt_check
+- id: cargo_clippy_move_analyzer
+  description: cargo clippy -p move-analyzer passes without warnings
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_cargo_clippy_move_analyzer
+- id: tsc_no_emit
+  description: TypeScript compilation (tsc --noEmit) passes for VSCode extension
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_tsc_no_emit
+- id: eslint_check
+  description: ESLint passes for VSCode extension with zero warnings
+  type: pass_to_pass
+  origin: repo_tests
+  test: test_eslint_check
 agent_config:
-  - rule: "License header on new files"
-    description: "All new files must start with the Mysten Labs license header"
-    origin: "CLAUDE.md"
-    source: "CLAUDE.md line referencing license comments"
-    check: "test_activity_monitor_file_exists"
-
-  - rule: "Use cargo check for quick verification"
-    description: "Use cargo check instead of cargo build for faster iteration"
-    origin: "CLAUDE.md"
-    source: "CLAUDE.md essential commands section"
-
-# Rubric for soft/subjective aspects
+- rule: License header on new files
+  description: All new files must start with the Mysten Labs license header
+  origin: CLAUDE.md
+  source: CLAUDE.md line referencing license comments
+  check: test_activity_monitor_file_exists
+- rule: Use cargo check for quick verification
+  description: Use cargo check instead of cargo build for faster iteration
+  origin: CLAUDE.md
+  source: CLAUDE.md essential commands section
 rubric:
-  - criterion: "State machine implementation"
-    description: "Activity monitor correctly implements the state transitions (starting→idle, idle↔busy→slow, →stopped)"
-    weight: medium
-
-  - criterion: "Code organization"
-    description: "New code is well-structured with clear separation between server-side (Rust) and client-side (TypeScript)"
-    weight: low
-
-  - criterion: "Error handling"
-    description: "Proper error handling for channel send failures and edge cases"
-    weight: medium
+- criterion: State machine implementation
+  description: Activity monitor correctly implements the state transitions (starting→idle,
+    idle↔busy→slow, →stopped)
+  weight: medium
+- criterion: Code organization
+  description: New code is well-structured with clear separation between server-side
+    (Rust) and client-side (TypeScript)
+  weight: low
+- criterion: Error handling
+  description: Proper error handling for channel send failures and edge cases
+  weight: medium
+- rule: All new files must start with the Mysten Labs copyright and SPDX-License-Identifier
+    license comment.
+  source:
+    path: CLAUDE.md
+    lines: 15-18
+  evidence: The gold solution creates a new file `activity_monitor.ts` for the ServerActivityMonitor
+    class, which requires the Mysten Labs copyright and SPDX license header.
+  category: style
+distractors:
+- rule: cargo build -p sui-core
+  collision_type: scope_ambiguity
+  why_distracting: The instructions suggest building `sui-core`, but the task is entirely
+    within `external-crates/move/crates/move-analyzer`. Building `sui-core` would
+    waste significant time and compute resources without validating the language server
+    changes.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 22-24
+- rule: cargo simtest -p sui-e2e-tests
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run `sui-e2e-tests` to verify its changes,
+    but these tests are for the Sui blockchain core, not the Move language server
+    or VSCode extension.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 30-32
+hierarchy_analysis: The root CLAUDE.md provides general repository guidelines focused
+  on the Sui blockchain core (sui-core, sui-e2e-tests). However, this task is isolated
+  to the Move language server and VSCode extension in `external-crates/move/crates/move-analyzer`.
+  The agent must recognize that the core build and test commands in the root CLAUDE.md
+  do not apply to this specific sub-project.

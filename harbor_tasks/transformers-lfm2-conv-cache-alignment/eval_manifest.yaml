@@ -1,140 +1,163 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44950
-  base_commit: "f5e573080ae0838799c1f9a0ba28be8431120b56"
-  merge_commit: "2dba8e0495974930af02274d75bd182d22cc1686"
-
+  base_commit: f5e573080ae0838799c1f9a0ba28be8431120b56
+  merge_commit: 2dba8e0495974930af02274d75bd182d22cc1686
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All three affected files must parse without syntax errors"
-
-  - id: last_conv_layer_computation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "last_conv_layer attribute correctly identifies the last conv layer index across different layer_types configurations"
-
-  - id: update_conv_state_init
-    type: fail_to_pass
-    origin: pr_diff
-    description: "update_conv_state(cache_init=True) stores full state tensor in cache for multiple layers"
-
-  - id: update_conv_state_decode
-    type: fail_to_pass
-    origin: pr_diff
-    description: "update_conv_state(cache_init=False) rolls cache left and updates last position across multiple steps"
-
-  - id: has_previous_state_lifecycle
-    type: fail_to_pass
-    origin: pr_diff
-    description: "has_previous_state starts False, stays False for non-last conv layers, becomes True after last conv layer, resets on reset()"
-
-  - id: has_previous_state_varied_layouts
-    type: fail_to_pass
-    origin: pr_diff
-    description: "has_previous_state flips only after the actual last conv layer for different layer orderings"
-
-  - id: slow_forward_prefill_decode
-    type: fail_to_pass
-    origin: pr_diff
-    description: "slow_forward produces valid-shaped non-NaN output for both prefill and single-token decode"
-
-  - id: slow_forward_decode_uses_cache
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Decode path reads from conv cache — different cache states produce different outputs"
-
-  - id: moe_cache_alignment
-    type: fail_to_pass
-    origin: pr_diff
-    description: "lfm2_moe cache has update_conv_state and has_previous_state with same init/update/reset behavior"
-
-  - id: cache_api_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Existing cache API (init, get_seq_length, update, len, conv_cache shape) still works"
-
-  - id: modular_file_consistency
-    type: fail_to_pass
-    origin: agent_config
-    description: "modular_lfm2.py also has update_conv_state and has_previous_state"
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "f5e573080ae0838799c1f9a0ba28be8431120b56"
-
-  - id: ruff_lint
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed files pass ruff linting (repo config)"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "f5e573080ae0838799c1f9a0ba28be8431120b56"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Changed files pass ruff format check"
-
-  - id: check_modular_conversion
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modular files are correctly converted to modeling files"
-
-  - id: check_copies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Copied code sections are consistent across files"
-
-  - id: check_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Init files are properly structured"
-
-  - id: check_dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Dummy files are consistent with model structure"
-
-  - id: check_config_attributes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Config attributes are properly defined"
-
-  - id: check_config_docstrings
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Config docstrings are properly formatted"
-
-  - id: check_doc_toc
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Documentation table of contents is consistent"
-
-  - id: check_doctest_list
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Doctest list is up to date"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All three affected files must parse without syntax errors
+- id: last_conv_layer_computation
+  type: fail_to_pass
+  origin: pr_diff
+  description: last_conv_layer attribute correctly identifies the last conv layer
+    index across different layer_types configurations
+- id: update_conv_state_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: update_conv_state(cache_init=True) stores full state tensor in cache
+    for multiple layers
+- id: update_conv_state_decode
+  type: fail_to_pass
+  origin: pr_diff
+  description: update_conv_state(cache_init=False) rolls cache left and updates last
+    position across multiple steps
+- id: has_previous_state_lifecycle
+  type: fail_to_pass
+  origin: pr_diff
+  description: has_previous_state starts False, stays False for non-last conv layers,
+    becomes True after last conv layer, resets on reset()
+- id: has_previous_state_varied_layouts
+  type: fail_to_pass
+  origin: pr_diff
+  description: has_previous_state flips only after the actual last conv layer for
+    different layer orderings
+- id: slow_forward_prefill_decode
+  type: fail_to_pass
+  origin: pr_diff
+  description: slow_forward produces valid-shaped non-NaN output for both prefill
+    and single-token decode
+- id: slow_forward_decode_uses_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: Decode path reads from conv cache — different cache states produce
+    different outputs
+- id: moe_cache_alignment
+  type: fail_to_pass
+  origin: pr_diff
+  description: lfm2_moe cache has update_conv_state and has_previous_state with same
+    init/update/reset behavior
+- id: cache_api_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing cache API (init, get_seq_length, update, len, conv_cache shape)
+    still works
+- id: modular_file_consistency
+  type: fail_to_pass
+  origin: agent_config
+  description: modular_lfm2.py also has update_conv_state and has_previous_state
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: f5e573080ae0838799c1f9a0ba28be8431120b56
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files pass ruff linting (repo config)
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: f5e573080ae0838799c1f9a0ba28be8431120b56
+- id: ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Changed files pass ruff format check
+- id: check_modular_conversion
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modular files are correctly converted to modeling files
+- id: check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copied code sections are consistent across files
+- id: check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Init files are properly structured
+- id: check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dummy files are consistent with model structure
+- id: check_config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config attributes are properly defined
+- id: check_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config docstrings are properly formatted
+- id: check_doc_toc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation table of contents is consistent
+- id: check_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Doctest list is up to date
 rubric:
-  - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "15"
-      commit: "f5e573080ae0838799c1f9a0ba28be8431120b56"
-
-  - rule: "We try to avoid direct inheritance between model-specific files in src/transformers/models/."
-    source:
-      path: "CLAUDE.md"
-      lines: "64"
-      commit: "f5e573080ae0838799c1f9a0ba28be8431120b56"
-
-  - rule: "If a model has a modular file, the modeling file should never be edited directly. Changes should be made in the modular file, and then make fixup should be run to update the modeling file automatically."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "27-29"
-      commit: "f5e573080ae0838799c1f9a0ba28be8431120b56"
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: f5e573080ae0838799c1f9a0ba28be8431120b56
+- rule: We try to avoid direct inheritance between model-specific files in src/transformers/models/.
+  source:
+    path: CLAUDE.md
+    lines: '64'
+    commit: f5e573080ae0838799c1f9a0ba28be8431120b56
+- rule: If a model has a modular file, the modeling file should never be edited directly.
+    Changes should be made in the modular file, and then make fixup should be run
+    to update the modeling file automatically.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 27-29
+    commit: f5e573080ae0838799c1f9a0ba28be8431120b56
+- rule: The newer method is to add a file named `modular_<name>.py` in the model directory...
+    `make fix-repo` will generate the modeling file
+  source:
+    path: CLAUDE.md
+    lines: 56-57
+  evidence: The gold solution modifies `modular_lfm2.py` (the source of truth) as
+    listed in the edited files, ensuring the fix is applied to the modular definition
+    rather than just the generated modeling file.
+  category: architecture
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: In an isolated evaluation environment, there is no live issue thread
+    or coordination evidence. An agent strictly following this rule will refuse to
+    generate the fix, resulting in a failed evaluation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 46-49
+- rule: Ideally you should edit the code it's copying from and propagate the change,
+    but you can break the `# Copied from` link if needed.
+  collision_type: architecture_boundary
+  why_distracting: The agent might choose to break the `# Copied from` link in `modeling_lfm2_moe.py`
+    to apply the fix directly, rather than correctly updating the source modular file
+    and propagating the changes, which undermines the repository's code deduplication
+    strategy.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 55-55
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  agent must navigate the meta-instructions regarding PR coordination (which should
+  be ignored in a benchmark context) while strictly adhering to the architectural
+  instructions regarding modular files and `make fix-repo`.

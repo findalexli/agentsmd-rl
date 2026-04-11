@@ -1,148 +1,156 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 28633
-  base_commit: "9a27ef75697d713dba18b7a9762308197014ecca"
-  merge_commit: "d7b37496a94e8594a2e199e226690b7e1335722b"
-
+  base_commit: 9a27ef75697d713dba18b7a9762308197014ecca
+  merge_commit: d7b37496a94e8594a2e199e226690b7e1335722b
 checks:
-  # --- Gates (pass_to_pass, static) ---
-  - id: test_modified_files_exist
-    type: pass_to_pass
-    origin: static
-    description: "All four modified Zig files must exist"
-
-  - id: test_balanced_braces
-    type: pass_to_pass
-    origin: static
-    description: "Modified files have balanced braces (basic syntax gate)"
-
-  - id: test_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "ColumnDefinition41.deinit has >=6 cleanup calls (not a stub)"
-
-  # --- Fail-to-pass (pr_diff) — core behavioral ---
-  # These tests verify the exact fix patterns from the PR diff
-
-  - id: test_coldef_deinit_frees_name_or_index
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColumnDefinition41.deinit() frees name_or_index field (primary leak fix)"
-
-  - id: test_coldef_deinit_frees_all_data_fields
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColumnDefinition41.deinit() frees all Data fields (catalog, schema, table, etc.)"
-
-  - id: test_decodeinternal_frees_before_reassign
-    type: fail_to_pass
-    origin: pr_diff
-    description: "decodeInternal() frees name_or_index before reassignment (prevents per-query leak)"
-
-  - id: test_execute_deinit_frees_params_slice
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Execute.deinit() frees the params slice after freeing individual params"
-
-  - id: test_checkduplicate_frees_before_overwrite
-    type: fail_to_pass
-    origin: pr_diff
-    description: "checkForDuplicateFields frees name_or_index before .duplicate overwrite"
-
-  - id: test_columns_zero_initialized_after_alloc
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ColumnDefinition41 arrays are zero-initialized after allocation (prevents uninitialized memory)"
-
-  # --- Pass-to-pass (pr_diff) — regression checks ---
-  - id: test_individual_params_still_freed
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Execute.deinit() still frees individual param values in the loop"
-
-  - id: test_columns_array_still_freed
-    type: pass_to_pass
-    origin: pr_diff
-    description: "MySQLStatement.deinit() still frees columns array"
-
-  # --- Static pattern checks (pass_to_pass) ---
-  - id: test_no_std_allocator
-    type: pass_to_pass
-    origin: static
-    description: "No std.heap or std.mem.Allocator usage in modified files (always use bun.default_allocator)"
-
-  - id: test_no_inline_imports
-    type: pass_to_pass
-    origin: static
-    description: "No @import() calls inline inside function bodies in modified files"
-
-  # --- Repo CI-derived (repo_tests) ---
-  - id: test_repo_zig_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified Zig files have balanced braces and valid syntax (repo CI gate)"
-
-  - id: test_repo_modified_files_readable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All modified SQL/MySQL files are readable and non-empty (repo CI gate)"
-
-  - id: test_repo_required_fields_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Required struct fields (name_or_index, params) exist in modified files"
-
-  - id: test_repo_bun_allocator_used
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files use bun.default_allocator for memory (repo CI gate)"
-
-  - id: test_repo_no_std_allocator_usage
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files do not use std.heap or std.mem.Allocator directly (repo CI gate)"
-
-  - id: test_repo_no_banned_words
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files do not contain banned words/patterns from ban-words.test.ts CI check"
-
-  - id: test_repo_no_autofix_comments
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files should not have autofix todo comments (repo CI gate)"
-
-  - id: test_repo_no_enum_tagname
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files should use bun.tagName instead of std.enums.tagName (repo CI gate)"
-
-  # --- Additional Repo CI-derived pass_to_pass tests ---
-  - id: test_repo_decls_use_decl_literals
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files use decl literals convention per CLAUDE.md (repo CI gate)"
-
-  - id: test_repo_allocator_consistency
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Memory allocation and deallocation use consistent allocator patterns (repo CI gate)"
-
-  - id: test_repo_no_debug_log_patterns
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files do not have std.debug.print or std.log patterns (repo CI gate)"
-
-  - id: test_repo_mysql_structs_complete
-    type: pass_to_pass
-    origin: repo_tests
-    description: "MySQL structs have required fields and deinit methods (repo CI gate)"
-
+- id: test_modified_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All four modified Zig files must exist
+- id: test_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: Modified files have balanced braces (basic syntax gate)
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: ColumnDefinition41.deinit has >=6 cleanup calls (not a stub)
+- id: test_coldef_deinit_frees_name_or_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColumnDefinition41.deinit() frees name_or_index field (primary leak
+    fix)
+- id: test_coldef_deinit_frees_all_data_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColumnDefinition41.deinit() frees all Data fields (catalog, schema,
+    table, etc.)
+- id: test_decodeinternal_frees_before_reassign
+  type: fail_to_pass
+  origin: pr_diff
+  description: decodeInternal() frees name_or_index before reassignment (prevents
+    per-query leak)
+- id: test_execute_deinit_frees_params_slice
+  type: fail_to_pass
+  origin: pr_diff
+  description: Execute.deinit() frees the params slice after freeing individual params
+- id: test_checkduplicate_frees_before_overwrite
+  type: fail_to_pass
+  origin: pr_diff
+  description: checkForDuplicateFields frees name_or_index before .duplicate overwrite
+- id: test_columns_zero_initialized_after_alloc
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColumnDefinition41 arrays are zero-initialized after allocation (prevents
+    uninitialized memory)
+- id: test_individual_params_still_freed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Execute.deinit() still frees individual param values in the loop
+- id: test_columns_array_still_freed
+  type: pass_to_pass
+  origin: pr_diff
+  description: MySQLStatement.deinit() still frees columns array
+- id: test_no_std_allocator
+  type: pass_to_pass
+  origin: static
+  description: No std.heap or std.mem.Allocator usage in modified files (always use
+    bun.default_allocator)
+- id: test_no_inline_imports
+  type: pass_to_pass
+  origin: static
+  description: No @import() calls inline inside function bodies in modified files
+- id: test_repo_zig_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Zig files have balanced braces and valid syntax (repo CI gate)
+- id: test_repo_modified_files_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified SQL/MySQL files are readable and non-empty (repo CI gate)
+- id: test_repo_required_fields_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required struct fields (name_or_index, params) exist in modified files
+- id: test_repo_bun_allocator_used
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files use bun.default_allocator for memory (repo CI gate)
+- id: test_repo_no_std_allocator_usage
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files do not use std.heap or std.mem.Allocator directly (repo
+    CI gate)
+- id: test_repo_no_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files do not contain banned words/patterns from ban-words.test.ts
+    CI check
+- id: test_repo_no_autofix_comments
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files should not have autofix todo comments (repo CI gate)
+- id: test_repo_no_enum_tagname
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files should use bun.tagName instead of std.enums.tagName
+    (repo CI gate)
+- id: test_repo_decls_use_decl_literals
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files use decl literals convention per CLAUDE.md (repo CI
+    gate)
+- id: test_repo_allocator_consistency
+  type: pass_to_pass
+  origin: repo_tests
+  description: Memory allocation and deallocation use consistent allocator patterns
+    (repo CI gate)
+- id: test_repo_no_debug_log_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files do not have std.debug.print or std.log patterns (repo
+    CI gate)
+- id: test_repo_mysql_structs_complete
+  type: pass_to_pass
+  origin: repo_tests
+  description: MySQL structs have required fields and deinit methods (repo CI gate)
 rubric:
-  - rule: "Decl literals in Zig are recommended. `const decl: Decl = .{ .binding = 0, .value = 0 };`"
-    source:
-      path: "src/CLAUDE.md"
-      lines: "6"
-      commit: "9a27ef75697d713dba18b7a9762308197014ecca"
+- rule: 'Decl literals in Zig are recommended. `const decl: Decl = .{ .binding = 0,
+    .value = 0 };`'
+  source:
+    path: src/CLAUDE.md
+    lines: '6'
+    commit: 9a27ef75697d713dba18b7a9762308197014ecca
+- rule: Always use `bun.*` APIs instead of `std.*`
+  source:
+    path: src/CLAUDE.md
+    lines: 17-18
+  evidence: The gold solution uses `bun.default_allocator.free(this.params)` and `bun.default_allocator.alloc`
+    instead of reaching for `std.heap` allocators.
+  category: style
+- rule: Decl literals in Zig are recommended.
+  source:
+    path: src/CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution uses anonymous struct literals `.{}` to zero-initialize
+    `ColumnDefinition41` structs (`col.* = .{};`) in `MySQLConnection.zig`.
+  category: style
+distractors:
+- rule: Writing Tests and Test Organization
+  collision_type: scope_ambiguity
+  why_distracting: The config provides extensive instructions on writing and organizing
+    tests. However, testing a native Zig memory leak (RSS growth without JS heap growth)
+    from JavaScript is highly flaky, complex, and often unreliable in CI. The gold
+    solution correctly omits a test, but an agent might waste significant time trying
+    to write one.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 43-78
+hierarchy_analysis: The hierarchy consists of root-level `CLAUDE.md`/`AGENTS.md` focusing
+  on build and test instructions, and `src/CLAUDE.md`/`src/AGENTS.md` focusing on
+  Zig-specific coding conventions. The root-level testing rules create a strong distraction
+  because native memory leaks are exceptionally hard to test reliably in CI, conflicting
+  with the general expectation to add tests for bug fixes.

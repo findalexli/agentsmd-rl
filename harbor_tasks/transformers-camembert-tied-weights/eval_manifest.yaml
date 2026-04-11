@@ -1,96 +1,129 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 45031
-  base_commit: "d81ad48109331f910fd81f699869855cbd50f681"
-  merge_commit: "882ffdbbd6b8ad50feaa860d702e70950cfc95d0"
-
+  base_commit: d81ad48109331f910fd81f699869855cbd50f681
+  merge_commit: 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified camembert files must parse without syntax errors"
-
-  - id: ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Camembert module passes ruff linting"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Camembert module passes ruff format check"
-
-  - id: check_copies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Camembert modeling file passes check_copies validation"
-
-  - id: init_isort
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Init files have correct import ordering"
-
-  - id: modeling_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modeling files have correct structure"
-
-  - id: inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Init files are correctly structured"
-
-  - id: dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Dummy objects are correctly generated"
-
-  - id: pipeline_typing
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Pipeline type hints are correct"
-
-  - id: modeling_file_structure
-    type: pass_to_pass
-    origin: static
-    description: "Camembert modeling files have valid structure and CamembertForCausalLM class exists"
-
-  - id: tied_weights_keys_exists
-    type: pass_to_pass
-    origin: static
-    description: "CamembertForCausalLM has _tied_weights_keys defined in both modeling and modular files"
-
-  - id: model_instantiates
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CamembertForCausalLM can be created without ValueError on tied weights"
-
-  - id: weight_tying_shares_memory
-    type: fail_to_pass
-    origin: pr_diff
-    description: "lm_head.decoder.weight is the same tensor object as roberta embeddings"
-
-  - id: weight_mutation_propagates
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Mutating lm_head weight propagates to embedding weight and vice versa"
-
-  - id: other_camembert_models_unaffected
-    type: pass_to_pass
-    origin: static
-    description: "Other Camembert model variants (CamembertModel, ForMaskedLM, ForSequenceClassification) still load"
-
-  - id: modular_has_roberta_tied_key
-    type: fail_to_pass
-    origin: static
-    description: "modular_camembert.py CamembertForCausalLM defines _tied_weights_keys with roberta path"
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "d81ad48109331f910fd81f699869855cbd50f681"
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified camembert files must parse without syntax errors
+- id: ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Camembert module passes ruff linting
+- id: ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Camembert module passes ruff format check
+- id: check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Camembert modeling file passes check_copies validation
+- id: init_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Init files have correct import ordering
+- id: modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modeling files have correct structure
+- id: inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Init files are correctly structured
+- id: dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dummy objects are correctly generated
+- id: pipeline_typing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pipeline type hints are correct
+- id: modeling_file_structure
+  type: pass_to_pass
+  origin: static
+  description: Camembert modeling files have valid structure and CamembertForCausalLM
+    class exists
+- id: tied_weights_keys_exists
+  type: pass_to_pass
+  origin: static
+  description: CamembertForCausalLM has _tied_weights_keys defined in both modeling
+    and modular files
+- id: model_instantiates
+  type: fail_to_pass
+  origin: pr_diff
+  description: CamembertForCausalLM can be created without ValueError on tied weights
+- id: weight_tying_shares_memory
+  type: fail_to_pass
+  origin: pr_diff
+  description: lm_head.decoder.weight is the same tensor object as roberta embeddings
+- id: weight_mutation_propagates
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mutating lm_head weight propagates to embedding weight and vice versa
+- id: other_camembert_models_unaffected
+  type: pass_to_pass
+  origin: static
+  description: Other Camembert model variants (CamembertModel, ForMaskedLM, ForSequenceClassification)
+    still load
+- id: modular_has_roberta_tied_key
+  type: fail_to_pass
+  origin: static
+  description: modular_camembert.py CamembertForCausalLM defines _tied_weights_keys
+    with roberta path
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: d81ad48109331f910fd81f699869855cbd50f681
 rubric:
-  - rule: "Code fix tasks require only code changes, not config file modifications. The tied weights fix correctly changes only modeling_camembert.py and modular_camembert.py."
-    reference: "_tied_weights_keys defines roberta.embeddings.word_embeddings.weight"
+- rule: Code fix tasks require only code changes, not config file modifications. The
+    tied weights fix correctly changes only modeling_camembert.py and modular_camembert.py.
+  reference: _tied_weights_keys defines roberta.embeddings.word_embeddings.weight
+- rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files can inherit from other models.
+  source:
+    path: CLAUDE.md
+    lines: 58-62
+  evidence: The gold solution modifies `modular_camembert.py` to add the `_tied_weights_keys`
+    override to `CamembertForCausalLM`, which inherits from `RobertaForCausalLM`,
+    aligning with the modular file design pa
+  category: architecture
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The fix requires changing a single string prefix from 'camembert'
+    to 'roberta'. The agent might interpret this as a 'tiny edit' or 'single typo'
+    and refuse to solve the issue or attempt to bundle it with unrelated cleanups
+    to justify the PR.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 36-37
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end... Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate a solution entirely, citing
+    the policy that 'Pure code-agent PRs are not allowed' and that it cannot proceed
+    without human validation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 41-49
+- rule: '`make fix-repo` will copy code to generate standalone `modeling` and other
+    files from the `modular`'
+  collision_type: architecture_boundary
+  why_distracting: The rule states `make fix-repo` generates the `modeling` files
+    from `modular` files. An agent might edit only the modular file and rely on `make
+    fix-repo`, which could fail in the test environment or time out. The gold solution
+    manually patches both files to ensure the fix is applied.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 58-62
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` contain identical content and apply
+  globally. The agent must navigate the meta-rules restricting AI contributions by
+  ignoring them in the context of a benchmark evaluation, while adhering to the architectural
+  guidelines regarding modular models.'

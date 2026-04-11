@@ -1,93 +1,117 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "openclaw/openclaw"
+  repo: openclaw/openclaw
   pr: 57769
-  base_commit: "c6f2db1506873e053bda30f99dea736a1b0e3ba2"
-  merge_commit: "f011d0be28afbc7868f5e55c1117c779bd0a9f10"
-
+  base_commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+  merge_commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
 checks:
-  - id: ts_syntax
-    type: pass_to_pass
-    origin: static
-    description: "openai-http.ts must parse without syntax errors"
-
-  - id: sender_is_owner_false
-    type: fail_to_pass
-    origin: pr_diff
-    description: "buildAgentCommandInput must set senderIsOwner to false for HTTP ingress - verified via vitest execution"
-
-  - id: sender_is_owner_in_source
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Source code must contain senderIsOwner: false (not true) in buildAgentCommandInput function"
-
-  - id: build_agent_command_input_exists
-    type: pass_to_pass
-    origin: pr_diff
-    description: "buildAgentCommandInput function must not be deleted or renamed"
-
-  - id: handle_openai_http_request_exported
-    type: pass_to_pass
-    origin: pr_diff
-    description: "handleOpenAiHttpRequest must still be exported"
-
-  - id: adjacent_fields_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "deliver, bestEffortDeliver, and allowModelOverride retain original values"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "buildAgentCommandInput must have a non-trivial function body"
-
-  - id: no_any_in_function
-    type: pass_to_pass
-    origin: agent_config
-    description: "buildAgentCommandInput must not use any type annotation"
-    source:
-      path: "CLAUDE.md"
-      lines: "144"
-      commit: "c6f2db1506873e053bda30f99dea736a1b0e3ba2"
-
-  - id: no_ts_nocheck
-    type: pass_to_pass
-    origin: agent_config
-    description: "openai-http.ts must not contain @ts-nocheck, @ts-ignore, or eslint-disable"
-    source:
-      path: "CLAUDE.md"
-      lines: "146"
-      commit: "c6f2db1506873e053bda30f99dea736a1b0e3ba2"
-
-  - id: params_pass_through
-    type: pass_to_pass
-    origin: pr_diff
-    description: "buildAgentCommandInput must correctly pass through prompt, model, session, and run fields"
-
-  - id: repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI - pnpm check passes (tsgo typecheck + oxlint + architecture checks)"
-
-  - id: repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI - pnpm build succeeds"
-
-  - id: repo_gateway_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI - openai-http gateway vitest tests pass"
-
+- id: ts_syntax
+  type: pass_to_pass
+  origin: static
+  description: openai-http.ts must parse without syntax errors
+- id: sender_is_owner_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: buildAgentCommandInput must set senderIsOwner to false for HTTP ingress
+    - verified via vitest execution
+- id: sender_is_owner_in_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Source code must contain senderIsOwner: false (not true) in buildAgentCommandInput
+    function'
+- id: build_agent_command_input_exists
+  type: pass_to_pass
+  origin: pr_diff
+  description: buildAgentCommandInput function must not be deleted or renamed
+- id: handle_openai_http_request_exported
+  type: pass_to_pass
+  origin: pr_diff
+  description: handleOpenAiHttpRequest must still be exported
+- id: adjacent_fields_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: deliver, bestEffortDeliver, and allowModelOverride retain original
+    values
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: buildAgentCommandInput must have a non-trivial function body
+- id: no_any_in_function
+  type: pass_to_pass
+  origin: agent_config
+  description: buildAgentCommandInput must not use any type annotation
+  source:
+    path: CLAUDE.md
+    lines: '144'
+    commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: openai-http.ts must not contain @ts-nocheck, @ts-ignore, or eslint-disable
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+- id: params_pass_through
+  type: pass_to_pass
+  origin: pr_diff
+  description: buildAgentCommandInput must correctly pass through prompt, model, session,
+    and run fields
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - pnpm check passes (tsgo typecheck + oxlint + architecture
+    checks)
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - pnpm build succeeds
+- id: repo_gateway_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - openai-http gateway vitest tests pass
 rubric:
-  - rule: "Treat schema changes as protocol changes, not local refactors."
-    source:
-      path: "src/gateway/protocol/CLAUDE.md"
-      lines: "19"
-      commit: "c6f2db1506873e053bda30f99dea736a1b0e3ba2"
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "163"
-      commit: "c6f2db1506873e053bda30f99dea736a1b0e3ba2"
+- rule: Treat schema changes as protocol changes, not local refactors.
+  source:
+    path: src/gateway/protocol/CLAUDE.md
+    lines: '19'
+    commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+- rule: File references must be repo-root relative only.
+  source:
+    path: CLAUDE.md
+    lines: '4'
+  evidence: The patch and script reference the file strictly as `src/gateway/openai-http.ts`,
+    avoiding absolute paths.
+  category: style
+distractors:
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
+    owner explicitly asked for the change.
+  collision_type: meta_confusion
+  why_distracting: The issue explicitly calls out a 'security concern'. The agent
+    might incorrectly assume this file is under a security-focused CODEOWNERS rule
+    and refuse to edit it without explicit owner permission, blocking the fix.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '5'
+- rule: 'Messaging channels: always consider all built-in + extension channels when
+    refactoring shared logic (routing, allowlists, pairing, command gating, onboarding,
+    docs).'
+  collision_type: would_cause_bug
+  why_distracting: 'The agent is fixing a command gating/tool-access issue. Following
+    this rule might lead the agent to audit and modify other messaging channels (Telegram,
+    Discord, etc.) to also set `senderIsOwner: false`, which would break legitimate
+    owner access on those channels.'
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 18-20
+hierarchy_analysis: The repository uses identical CLAUDE.md and AGENTS.md files at
+  the root level. The rules are straightforward but contain potential traps around
+  security policies and cross-channel refactoring that the agent must navigate carefully
+  to keep the fix localized.

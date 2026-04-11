@@ -1,86 +1,115 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 19987
-  base_commit: "ee018d5c82a593907bae9011bc074766e670d593"
-  merge_commit: "6926fe1c7455f4cd075d374b188850c14cda0fb2"
-
+  base_commit: ee018d5c82a593907bae9011bc074766e670d593
+  merge_commit: 6926fe1c7455f4cd075d374b188850c14cda0fb2
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All modified files exist and are non-trivial"
-
-  - id: changelog_help_deterministic
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Running --help must show 'non-draft' release behavior (behavioral: bun execution)"
-
-  - id: changelog_transpile_no_llm_sdk
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Transpiling changelog.ts with Bun must not contain LLM SDK references (behavioral: Bun.Transpiler)"
-
-  - id: version_pins_upper_bound
-    type: fail_to_pass
-    origin: pr_diff
-    description: "version.ts passes --to flag when invoking changelog command"
-
-  - id: command_prompt_consumes_structured_data
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Command prompt consumes pre-computed data instead of instructing LLM to fetch releases"
-
-  - id: gitignore_upcoming_changelog
-    type: fail_to_pass
-    origin: pr_diff
-    description: "UPCOMING_CHANGELOG.md is listed in .gitignore"
-
-  - id: no_try_catch
-    type: fail_to_pass
-    origin: agent_config
-    description: "Changed files must not use try/catch blocks"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "ee018d5c82a593907bae9011bc074766e670d593"
-
-  - id: single_word_function_names
-    type: fail_to_pass
-    origin: agent_config
-    description: "Declared functions in changelog.ts must use single-word names, not multi-word camelCase"
-    source:
-      path: "AGENTS.md"
-      lines: "27-32"
-      commit: "ee018d5c82a593907bae9011bc074766e670d593"
-
-  - id: no_any_type
-    type: pass_to_pass
-    origin: agent_config
-    description: "Changed files must not use the any type"
-    source:
-      path: "AGENTS.md"
-      lines: "13"
-      commit: "ee018d5c82a593907bae9011bc074766e670d593"
-
-  - id: no_camelcase_locals
-    type: fail_to_pass
-    origin: agent_config
-    description: "Local variable declarations in changelog.ts must not use multi-word camelCase names"
-    source:
-      path: "AGENTS.md"
-      lines: "27-32"
-      commit: "ee018d5c82a593907bae9011bc074766e670d593"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo TypeScript typecheck passes via bun turbo typecheck"
-
-  - id: test_repo_prettier_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified files pass Prettier formatting check"
-
-rubric: []  # Rubric rules are evaluated by pytest tests (test_no_try_catch, test_no_any_type, test_single_word_function_names, test_no_camelcase_locals)
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified files exist and are non-trivial
+- id: changelog_help_deterministic
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Running --help must show ''non-draft'' release behavior (behavioral:
+    bun execution)'
+- id: changelog_transpile_no_llm_sdk
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Transpiling changelog.ts with Bun must not contain LLM SDK references
+    (behavioral: Bun.Transpiler)'
+- id: version_pins_upper_bound
+  type: fail_to_pass
+  origin: pr_diff
+  description: version.ts passes --to flag when invoking changelog command
+- id: command_prompt_consumes_structured_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: Command prompt consumes pre-computed data instead of instructing LLM
+    to fetch releases
+- id: gitignore_upcoming_changelog
+  type: fail_to_pass
+  origin: pr_diff
+  description: UPCOMING_CHANGELOG.md is listed in .gitignore
+- id: no_try_catch
+  type: fail_to_pass
+  origin: agent_config
+  description: Changed files must not use try/catch blocks
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: ee018d5c82a593907bae9011bc074766e670d593
+- id: single_word_function_names
+  type: fail_to_pass
+  origin: agent_config
+  description: Declared functions in changelog.ts must use single-word names, not
+    multi-word camelCase
+  source:
+    path: AGENTS.md
+    lines: 27-32
+    commit: ee018d5c82a593907bae9011bc074766e670d593
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files must not use the any type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: ee018d5c82a593907bae9011bc074766e670d593
+- id: no_camelcase_locals
+  type: fail_to_pass
+  origin: agent_config
+  description: Local variable declarations in changelog.ts must not use multi-word
+    camelCase names
+  source:
+    path: AGENTS.md
+    lines: 27-32
+    commit: ee018d5c82a593907bae9011bc074766e670d593
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes via bun turbo typecheck
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass Prettier formatting check
+rubric:
+- rule: Use Bun APIs when possible, like `Bun.file()`
+  source:
+    path: AGENTS.md
+    lines: 15-15
+  evidence: The gold solution imports `{ $ } from "bun"` in `script/changelog.ts`
+    to execute shell commands deterministically, replacing the `@opencode-ai/sdk`
+    usage.
+  category: tooling
+distractors:
+- rule: ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.
+  collision_type: architecture_boundary
+  why_distracting: The original `.opencode/command/changelog.md` instructed the LLM
+    to 'spawn a subagent' for each PR. An agent reading 'ALWAYS USE PARALLEL TOOLS'
+    might try to preserve this parallel subagent architecture or implement parallel
+    LLM tool calls in `script/changelog.ts`. However, the architectural fix is to
+    remove the LLM's responsibility for gathering/fetching entirely, replacing it
+    with deterministic shell commands and a single LLM summarization pass.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 2-2
+- rule: The default branch in this repo is `dev`. Local `main` ref may not exist;
+    use `dev` or `origin/dev` for diffs.
+  collision_type: would_cause_bug
+  why_distracting: The bug is caused by a missing upper bound in the commit range,
+    allowing commits after the release cut to leak into the changelog. The rule states
+    to use `dev` or `origin/dev` for diffs. If an agent uses `dev` as the upper bound
+    for the commit range instead of pinning it to the current `GITHUB_SHA` or `HEAD`
+    at the time of the release cut, it will reproduce the exact bug being fixed.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 3-4
+hierarchy_analysis: The `AGENTS.md` file provides general guidelines for the repository.
+  There are no conflicting child configs, but the general rules about parallel tools
+  and default branches create significant distractors for this specific bug fix, which
+  requires deterministic, linear script execution and precise commit range bounds
+  rather than branch-based diffs.

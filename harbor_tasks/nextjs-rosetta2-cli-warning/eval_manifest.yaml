@@ -1,83 +1,114 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92220
-  base_commit: "a6df8603a4e164da7d758d0eb4082dc70353450d"
-  merge_commit: "93dc872d0d6df3552abef6a7b598d79a9566eea2"
-
+  base_commit: a6df8603a4e164da7d758d0eb4082dc70353450d
+  merge_commit: 93dc872d0d6df3552abef6a7b598d79a9566eea2
 checks:
-  - id: syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "next.ts has valid syntax (balanced braces, reasonable size)"
-
-  - id: rosetta_warning_darwin_x64_apple
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Rosetta 2 detection fires warning when darwin+x64+Apple CPU"
-
-  - id: os_import_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "The os module is imported (needed for CPU model detection)"
-
-  - id: warning_message_content
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Warning mentions Apple Silicon and degraded performance"
-
-  - id: no_false_positive_arm64
-    type: pass_to_pass
-    origin: pr_diff
-    description: "darwin+arm64 (native ARM) must not trigger Rosetta warning"
-
-  - id: no_false_positive_linux
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Linux must not trigger Rosetta warning regardless of arch"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Detection uses all three checks: platform, arch, AND CPU model"
-
-  # Repo CI/CD pass_to_pass gates
-  - id: test_repo_prettier_formatting
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target file follows repo's prettier formatting rules"
-
-  - id: test_repo_package_json_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "packages/next/package.json is valid JSON with correct structure"
-
-  - id: test_repo_git_tracks_changes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository is properly initialized and tracks files"
-
-  - id: test_repo_next_ts_parsable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "packages/next/src/bin/next.ts is syntactically valid TypeScript"
-
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: next.ts has valid syntax (balanced braces, reasonable size)
+- id: rosetta_warning_darwin_x64_apple
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rosetta 2 detection fires warning when darwin+x64+Apple CPU
+- id: os_import_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The os module is imported (needed for CPU model detection)
+- id: warning_message_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: Warning mentions Apple Silicon and degraded performance
+- id: no_false_positive_arm64
+  type: pass_to_pass
+  origin: pr_diff
+  description: darwin+arm64 (native ARM) must not trigger Rosetta warning
+- id: no_false_positive_linux
+  type: pass_to_pass
+  origin: pr_diff
+  description: Linux must not trigger Rosetta warning regardless of arch
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: 'Detection uses all three checks: platform, arch, AND CPU model'
+- id: test_repo_prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file follows repo's prettier formatting rules
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next/package.json is valid JSON with correct structure
+- id: test_repo_git_tracks_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is properly initialized and tracks files
+- id: test_repo_next_ts_parsable
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next/src/bin/next.ts is syntactically valid TypeScript
 rubric:
-  - rule: "Gold solution adds os import: import os from 'os'"
-    source:
-      path: "packages/next/src/bin/next.ts"
-      lines: "1-5"
-    reference: "+import os from 'os'"
-
-  - rule: "Gold solution adds Rosetta detection with all three conditions"
-    source:
-      path: "packages/next/src/bin/next.ts"
-      lines: "90-100"
-    reference: "+process.platform === 'darwin' && process.arch === 'x64' && os.cpus().some"
-
-  - rule: "Gold solution adds warning about Rosetta 2 performance"
-    source:
-      path: "packages/next/src/bin/next.ts"
-      lines: "95-98"
-    reference: "+warn('You are running Next.js on an Apple Silicon Mac with Rosetta 2 translation'"
+- rule: 'Gold solution adds os import: import os from ''os'''
+  source:
+    path: packages/next/src/bin/next.ts
+    lines: 1-5
+  reference: +import os from 'os'
+- rule: Gold solution adds Rosetta detection with all three conditions
+  source:
+    path: packages/next/src/bin/next.ts
+    lines: 90-100
+  reference: +process.platform === 'darwin' && process.arch === 'x64' && os.cpus().some
+- rule: Gold solution adds warning about Rosetta 2 performance
+  source:
+    path: packages/next/src/bin/next.ts
+    lines: 95-98
+  reference: +warn('You are running Next.js on an Apple Silicon Mac with Rosetta 2
+    translation'
+- rule: Source code for the main Next.js framework is located in `packages/next/src/`.
+  source:
+    path: CLAUDE.md
+    lines: 23-24
+  evidence: The patch modifies `packages/next/src/bin/next.ts`, correctly targeting
+    the `packages/next/src/` directory for core framework changes.
+  category: architecture
+distractors:
+- rule: Key entry points for Dev, Production, and Build are in `src/cli/`.
+  collision_type: architecture_boundary
+  why_distracting: The config lists `src/cli/next-dev.ts`, `src/cli/next-start.ts`,
+    and `src/cli/next-build.ts` as the key entry points. An agent might be tempted
+    to add the Rosetta warning to each of these individual command files instead of
+    the root CLI entry point (`src/bin/next.ts`) as requested, leading to duplicated
+    logic and missing other commands.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 26-29
+- rule: Start watch build (`pnpm --filter=next dev`) in background for iterative development.
+  collision_type: meta_confusion
+  why_distracting: The config instructs the agent to start `pnpm --filter=next dev`
+    in the background for iterative development. However, since this change modifies
+    the root CLI entry point (`next.ts`) which runs before the dev server even starts,
+    testing this specific warning requires running the CLI command directly rather
+    than relying on the background watch process's hot-reloading.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 66-71
+- rule: Read all README.md files in the directory path from the repo root up to the
+    target file's directory before editing.
+  collision_type: meta_confusion
+  why_distracting: The agent might waste time and context window trying to read `README.md`
+    files in `packages/`, `packages/next/`, `packages/next/src/`, and `packages/next/src/bin/`
+    before making a simple OS check addition, which is unnecessary for this specific
+    task.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 43-46
+hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
+  at the root level. The rules are primarily workflow-oriented rather than strict
+  coding style guidelines. The main conflict arises between the config's definition
+  of 'Key entry points' (`src/cli/*`) and the specific issue instructions to modify
+  the root CLI entry point (`src/bin/next.ts`).

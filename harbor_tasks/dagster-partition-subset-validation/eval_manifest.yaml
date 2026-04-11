@@ -76,7 +76,38 @@ rubric:
     (b) TYPE_CHECKING blocks, (c) optional dependencies, or (d) expensive lazy loading.
     The gold solution uses a function-scoped import for TimeWindowPartitionsDefinition
     in serializable_entity_subset.py which is justified to avoid circular imports.
-  reference: "from dagster._core.definitions.partitions.definition.time_window import"
+  reference: from dagster._core.definitions.partitions.definition.time_window import
 - rule: Code changes should be minimal and focused on the fix. The gold solution adds
     only the necessary validation logic to check DefaultPartitionsSubset compatibility.
-  reference: "elif isinstance(self.value, DefaultPartitionsSubset)"
+  reference: elif isinstance(self.value, DefaultPartitionsSubset)
+- rule: 'Python: Core framework in `python_modules/dagster/`'
+  source:
+    path: CLAUDE.md
+    lines: 40-40
+  evidence: The patch modifies `python_modules/dagster/dagster/_core/asset_graph_view/serializable_entity_subset.py`,
+    correctly identifying it as part of the core framework.
+  category: architecture
+distractors:
+- rule: ALWAYS check this before writing data structures - use @record instead of
+    @dataclass.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to refactor `SerializableEntitySubset`
+    or other classes to use `@record` instead of `@dataclass` or standard classes,
+    which is out of scope for this specific bug fix and could break serialization.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+- rule: Always search for package dependencies in setup.py files only. This is the
+    current source of truth for dependencies in this repository.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think it needs to modify `setup.py` to handle the
+    new import of `TimeWindowPartitionsDefinition`, but both classes are already within
+    the same core package and no dependency changes are needed.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 64-64
+hierarchy_analysis: Only one config file (`CLAUDE.md`) is provided at the root level,
+  so there are no conflicts between different levels of the hierarchy. The rules apply
+  globally to the repository.

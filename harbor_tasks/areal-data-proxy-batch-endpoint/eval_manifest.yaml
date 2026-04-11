@@ -1,119 +1,155 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 1105
-  base_commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
-  merge_commit: "cbe35f5a4b866596d996d5690085eda0577708f5"
-
+  base_commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+  merge_commit: cbe35f5a4b866596d996d5690085eda0577708f5
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "app.py must be valid Python"
-
-  - id: batch_valid_request
-    type: fail_to_pass
-    origin: pr_diff
-    description: "POST /data/batch with valid shard_ids returns 200 and correct list payload with verified data"
-
-  - id: batch_single_shard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "POST /data/batch with one shard_id returns a list of one item with correct data"
-
-  - id: batch_missing_shard_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "POST /data/batch with nonexistent shard returns error status (400/404/422/500)"
-
-  - id: batch_invalid_input_rejected
-    type: fail_to_pass
-    origin: pr_diff
-    description: "POST /data/batch with non-list shard_ids (string, int, non-string list) is rejected with 400 or 422"
-
-  - id: batch_empty_shard_ids
-    type: fail_to_pass
-    origin: pr_diff
-    description: "POST /data/batch with empty shard_ids list returns 200 with empty result"
-
-  - id: batch_route_before_param_route
-    type: fail_to_pass
-    origin: pr_diff
-    description: "/data/batch declared before /data/{shard_id} so FastAPI routes correctly"
-
-  - id: existing_routes_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Existing PUT/GET/DELETE data routes still registered in app.py"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "POST /data/batch handler has real logic, not just pass/return"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in app.py"
-    source:
-      path: "AGENTS.md"
-      lines: "30"
-      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
-
-  - id: no_hardcoded_endpoints
-    type: pass_to_pass
-    origin: agent_config
-    description: "No hardcoded host:port endpoints in app.py"
-    source:
-      path: "AGENTS.md"
-      lines: "31"
-      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
-
-  - id: no_print_statements
-    type: pass_to_pass
-    origin: agent_config
-    description: "No print() calls in app.py — must use areal.utils.logging"
-    source:
-      path: "AGENTS.md"
-      lines: "90-92"
-      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff linter passes on data_proxy module"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ruff format check passes on data_proxy module"
-
-  - id: test_repo_precommit_trailing_whitespace
-    type: pass_to_pass
-    origin: static
-    description: "No trailing whitespace in app.py"
-
-  - id: test_repo_precommit_end_of_file
-    type: pass_to_pass
-    origin: static
-    description: "app.py ends with exactly one newline"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: app.py must be valid Python
+- id: batch_valid_request
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST /data/batch with valid shard_ids returns 200 and correct list
+    payload with verified data
+- id: batch_single_shard
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST /data/batch with one shard_id returns a list of one item with
+    correct data
+- id: batch_missing_shard_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST /data/batch with nonexistent shard returns error status (400/404/422/500)
+- id: batch_invalid_input_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST /data/batch with non-list shard_ids (string, int, non-string list)
+    is rejected with 400 or 422
+- id: batch_empty_shard_ids
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST /data/batch with empty shard_ids list returns 200 with empty result
+- id: batch_route_before_param_route
+  type: fail_to_pass
+  origin: pr_diff
+  description: /data/batch declared before /data/{shard_id} so FastAPI routes correctly
+- id: existing_routes_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing PUT/GET/DELETE data routes still registered in app.py
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: POST /data/batch handler has real logic, not just pass/return
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in app.py
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+- id: no_hardcoded_endpoints
+  type: pass_to_pass
+  origin: agent_config
+  description: No hardcoded host:port endpoints in app.py
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+- id: no_print_statements
+  type: pass_to_pass
+  origin: agent_config
+  description: No print() calls in app.py — must use areal.utils.logging
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on data_proxy module
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on data_proxy module
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: No trailing whitespace in app.py
+- id: test_repo_precommit_end_of_file
+  type: pass_to_pass
+  origin: static
+  description: app.py ends with exactly one newline
 rubric:
-  - rule: "Code change demonstrates composition over inheritance — POST /data/batch uses flat async function, no class hierarchies introduced"
-    source:
-      path: "AGENTS.md"
-      lines: "81"
-      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
-
-  - rule: "Code change follows existing patterns — handler uses same error handling style, JSONResponse format, and decorator patterns as other routes in app.py"
-    source:
-      path: "AGENTS.md"
-      lines: "40"
-      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
-
-  - rule: "Code change uses async/await correctly — POST /data/batch handler awaits request.json() and stays non-blocking"
-    source:
-      path: "AGENTS.md"
-      lines: "103-104"
-      commit: "0405b5c30c815044d858f15d04d2033c9a3d7760"
+- rule: Code change demonstrates composition over inheritance — POST /data/batch uses
+    flat async function, no class hierarchies introduced
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+- rule: Code change follows existing patterns — handler uses same error handling style,
+    JSONResponse format, and decorator patterns as other routes in app.py
+  source:
+    path: AGENTS.md
+    lines: '40'
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+- rule: Code change uses async/await correctly — POST /data/batch handler awaits request.json()
+    and stays non-blocking
+  source:
+    path: AGENTS.md
+    lines: 103-104
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: 48-50
+  evidence: 'The gold solution implements the new endpoint as an `async def` taking
+    `request: Request` and uses the existing module-level `logger`, matching the style
+    of the adjacent `store_data_shard` endpoint.'
+  category: style
+- rule: No wildcard imports (`from x import *`)
+  source:
+    path: AGENTS.md
+    lines: 21-22
+  evidence: The gold solution explicitly imports `JSONResponse` and `StreamingResponse`
+    from `fastapi.responses` instead of using a wildcard import.
+  category: style
+distractors:
+- rule: Add tests for new functionality
+  collision_type: scope_ambiguity
+  why_distracting: The issue description explicitly states that integration tests
+    are already failing due to this missing endpoint. The tests already exist, so
+    trying to add new unit tests for this specific proxy endpoint is redundant and
+    out of scope for fixing the immediate bug.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 48-50
+- rule: No hardcoded secrets, paths, or endpoints
+  collision_type: meta_confusion
+  why_distracting: An agent might misinterpret 'endpoints' to mean FastAPI route paths
+    and try to extract `"/data/batch"` into a configuration file or environment variable,
+    which is unnecessary and breaks standard FastAPI routing conventions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 21-23
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names'
+  collision_type: rule_conflict
+  why_distracting: The file `app.py` already has a module-level logger configured.
+    If the agent tries to strictly follow this rule by instantiating a new PascalCase
+    logger specifically for this new endpoint, it will violate the 'Follow existing
+    code patterns' rule and create inconsistent logging within the file.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 54-56
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are both Level 0 and contain largely
+  overlapping rules. `AGENTS.md` provides more specific details on logging and code
+  style. The conflict between the strict logging rule in `AGENTS.md` and the general
+  ''Follow existing code patterns'' rule requires the agent to prioritize local file
+  consistency over global logging rules for a small bug fix.'

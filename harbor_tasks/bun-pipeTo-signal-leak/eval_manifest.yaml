@@ -129,3 +129,39 @@ rubric:
     agent did not touch the file at all, this is correct and must PASS.
   source:
     path: SKILL.md
+- rule: Use C++ for JavaScriptCore integration and WebKit engine bindings
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+  evidence: The gold solution modifies files in `src/bun.js/bindings/webcore/` using
+    WebKit and JSC C++ primitives (`JSC::AbstractSlotVisitor`, `WTF::move`, `Locker`)
+    to implement the GC visitation hook, adhering
+  category: architecture
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`
+  collision_type: scope_ambiguity
+  why_distracting: The rule states 'Always use bun.* APIs instead of std.*', which
+    is intended strictly for Zig code. The C++ fix heavily relies on the C++ standard
+    library (e.g., `std::exchange`, `std::make_pair`, `std::pair`). An agent might
+    incorrectly avoid `std::` in C++ or try to use Zig namespaces, leading to compilation
+    errors.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 14-16
+- rule: Use `#` prefix for private fields
+  collision_type: architecture_boundary
+  why_distracting: 'The rule mentions ''Private fields are fully supported in Zig
+    with the # prefix.'' An agent modifying the C++ header `AbortSignal.h` might get
+    confused by this syntax reminder and attempt to use `#` for private fields in
+    C++ instead of the standard `private:` access specifier.'
+  severity: medium
+  source:
+    path: src/CLAUDE.md
+    lines: 3-4
+hierarchy_analysis: The root `CLAUDE.md` correctly establishes the C++/Zig boundary
+  (C++ for JSC integration). However, the deeper `src/CLAUDE.md` provides strong,
+  absolute rules ('Always use bun.* APIs instead of std.*') that implicitly assume
+  the context is Zig. Since the PR is entirely within the C++ JSC bindings (`src/bun.js/bindings/webcore/`),
+  the Zig-specific rules in `src/CLAUDE.md` create a scope ambiguity that the agent
+  must carefully navigate by recognizing the language boundary.

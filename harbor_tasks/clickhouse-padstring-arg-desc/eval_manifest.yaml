@@ -1,165 +1,174 @@
 source_pr:
   repo: ClickHouse/ClickHouse
   number: 102106
-  title: "`left/rightPad`: Fix argument description (follow-up to #101951)"
+  title: '`left/rightPad`: Fix argument description (follow-up to #101951)'
   merge_commit: dea580e0abc03ab181a4d2bc2bc8a65e599216ae
   base_commit: a77cd4c5a6ede8a2d5da637a75348a4cc055c007
-
 task:
   name: clickhouse-padstring-arg-desc
-  title: "Fix argument descriptions in leftPad/rightPad functions"
-  description: |
-    The leftPad and rightPad functions in src/Functions/padString.cpp have
+  title: Fix argument descriptions in leftPad/rightPad functions
+  description: 'The leftPad and rightPad functions in src/Functions/padString.cpp
+    have
+
     incorrect argument descriptions that confuse users. The descriptions
+
     currently say "Array" when they should say "String" or "FixedString",
+
     and "const UInt*" when it should be "UInt*".
 
+    '
   target_files:
-    - src/Functions/padString.cpp
-
+  - src/Functions/padString.cpp
 checks:
-  # ==========================================================================
-  # FAIL-TO-PASS TESTS (must fail on base commit, pass after gold patch)
-  # ==========================================================================
+- id: test_padstring_syntax_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: C++ source compiles syntactically (clang -fsyntax-only)
+  notes: 'Behavioral test that invokes the compiler to verify the source code
 
-  - id: test_padstring_syntax_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: "C++ source compiles syntactically (clang -fsyntax-only)"
-    notes: |
-      Behavioral test that invokes the compiler to verify the source code
-      is syntactically valid. This catches syntax errors from bad edits.
+    is syntactically valid. This catches syntax errors from bad edits.
 
-  - id: test_string_argument_description
-    type: fail_to_pass
-    origin: pr_diff
-    description: "'string' argument description is 'String or FixedString' not 'Array'"
-    notes: |
-      Static analysis check that verifies the correct description string
-      is present in the FunctionArgumentDescriptors for the string argument.
+    '
+- id: test_string_argument_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''string'' argument description is ''String or FixedString'' not ''Array'''
+  notes: 'Static analysis check that verifies the correct description string
 
-  - id: test_length_argument_description
-    type: fail_to_pass
-    origin: pr_diff
-    description: "'length' argument description is 'UInt*' not 'const UInt*'"
-    notes: |
-      Static analysis check that verifies the correct description string
-      is present for the length argument.
+    is present in the FunctionArgumentDescriptors for the string argument.
 
-  - id: test_pad_string_argument_description
-    type: fail_to_pass
-    origin: pr_diff
-    description: "'pad_string' argument description is 'String' not 'Array'"
-    notes: |
-      Static analysis check that verifies the correct description string
-      is present for the optional pad_string argument.
+    '
+- id: test_length_argument_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''length'' argument description is ''UInt*'' not ''const UInt*'''
+  notes: 'Static analysis check that verifies the correct description string
 
-  # ==========================================================================
-  # PASS-TO-PASS TESTS (must pass on both base and fix commits)
-  # ==========================================================================
+    is present for the length argument.
 
-  # Static analysis checks (file content checks using Python)
-  - id: test_no_trailing_whitespace
-    type: pass_to_pass
-    origin: static
-    description: "No trailing whitespace in modified files"
+    '
+- id: test_pad_string_argument_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''pad_string'' argument description is ''String'' not ''Array'''
+  notes: 'Static analysis check that verifies the correct description string
 
-  - id: test_file_not_empty_and_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified C++ file is valid and non-empty"
+    is present for the optional pad_string argument.
 
-  - id: test_no_tabs_for_indentation
-    type: pass_to_pass
-    origin: static
-    description: "Uses spaces for indentation, not tabs"
+    '
+- id: test_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: No trailing whitespace in modified files
+- id: test_file_not_empty_and_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified C++ file is valid and non-empty
+- id: test_no_tabs_for_indentation
+  type: pass_to_pass
+  origin: static
+  description: Uses spaces for indentation, not tabs
+- id: test_include_directives_format
+  type: pass_to_pass
+  origin: static
+  description: Include directives follow project format conventions
+- id: test_validate_function_arguments_usage
+  type: pass_to_pass
+  origin: static
+  description: validateFunctionArguments API is used correctly
+- id: test_allman_brace_style
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    file: .claude/CLAUDE.md
+    rule: When writing C++ code, always use Allman-style braces (opening brace on
+      a new line)
+  description: Code follows Allman brace style conventions
+- id: test_repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: codespell finds no typos in padString.cpp
+  notes: 'Runs codespell tool (used in ClickHouse CI) to check for common
 
-  - id: test_include_directives_format
-    type: pass_to_pass
-    origin: static
-    description: "Include directives follow project format conventions"
+    typos in the modified source file.
 
-  - id: test_validate_function_arguments_usage
-    type: pass_to_pass
-    origin: static
-    description: "validateFunctionArguments API is used correctly"
+    '
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is in clean state
+  notes: 'Verifies git status shows no uncommitted changes at base commit.
 
-  - id: test_allman_brace_style
-    type: pass_to_pass
-    origin: agent_config
-    source:
-      file: .claude/CLAUDE.md
-      rule: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
-    description: "Code follows Allman brace style conventions"
+    This is a sanity check that the environment is properly set up.
 
-  # Repo CI command tests (use subprocess.run() to execute real commands)
-  - id: test_repo_codespell
-    type: pass_to_pass
-    origin: repo_tests
-    description: "codespell finds no typos in padString.cpp"
-    notes: |
-      Runs codespell tool (used in ClickHouse CI) to check for common
-      typos in the modified source file.
+    '
+- id: test_repo_padstring_sql_test_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: pad_string SQL test files exist and are valid
+  notes: 'Verifies the SQL test files for padString functions exist and
 
-  - id: test_repo_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository is in clean state"
-    notes: |
-      Verifies git status shows no uncommitted changes at base commit.
-      This is a sanity check that the environment is properly set up.
+    have the expected structure (tests/queries/0_stateless/01940_pad_string.sql).
 
-  - id: test_repo_padstring_sql_test_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pad_string SQL test files exist and are valid"
-    notes: |
-      Verifies the SQL test files for padString functions exist and
-      have the expected structure (tests/queries/0_stateless/01940_pad_string.sql).
+    '
+- id: test_repo_leftpad_fixedstring_test_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: leftPad FixedString test exists
+  notes: 'Verifies the FixedString-specific test for leftPad exists
 
-  - id: test_repo_leftpad_fixedstring_test_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: "leftPad FixedString test exists"
-    notes: |
-      Verifies the FixedString-specific test for leftPad exists
-      (tests/queries/0_stateless/02986_leftpad_fixedstring.sql).
-      This test was added for issue #59604.
+    (tests/queries/0_stateless/02986_leftpad_fixedstring.sql).
 
-  - id: test_repo_file_in_git
-    type: pass_to_pass
-    origin: repo_tests
-    description: "padString.cpp is tracked in git"
-    notes: |
-      Verifies the modified file is tracked in the git repository
-      using git ls-files.
+    This test was added for issue #59604.
 
-  - id: test_repo_clang_format_style
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C++ file can be parsed by clang-format"
-    notes: |
-      Runs clang-format --dry-run to verify the file can be parsed
-      without errors. Note: This does not enforce style compliance
-      but verifies the file is syntactically valid for the formatter.
+    '
+- id: test_repo_file_in_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: padString.cpp is tracked in git
+  notes: 'Verifies the modified file is tracked in the git repository
 
-# Rubric for LLM evaluation (soft/subjective rules)
+    using git ls-files.
+
+    '
+- id: test_repo_clang_format_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file can be parsed by clang-format
+  notes: 'Runs clang-format --dry-run to verify the file can be parsed
+
+    without errors. Note: This does not enforce style compliance
+
+    but verifies the file is syntactically valid for the formatter.
+
+    '
 rubric:
-  - rule: "Use accurate type descriptions in FunctionArgumentDescriptor. String arguments should be described as 'String or FixedString' not 'Array', and length arguments as 'UInt*' not 'const UInt*'."
-    source:
-      path: "src/Functions/padString.cpp"
-      lines: "167-173"
-      commit: "dea580e0abc03ab181a4d2bc2bc8a65e599216ae"
-    reference: |
-      FunctionArgumentDescriptors mandatory_args{
-          {"string", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isStringOrFixedString), nullptr, "String or FixedString"},
-          {"length", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isInteger), nullptr, "UInt*"},
-      };
-      FunctionArgumentDescriptors optional_args{
-          {"pad_string", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isString), isColumnConst, "String"}
-      };
-
-  # Note: This rule was removed because it checks CLAUDE.md content, but the gold
-  # solution doesn't modify CLAUDE.md - it only modifies padString.cpp. The rubric
-  # should focus on what the gold solution actually changes, which are the type
-  # descriptions in the FunctionArgumentDescriptor entries.
+- rule: Use accurate type descriptions in FunctionArgumentDescriptor. String arguments
+    should be described as 'String or FixedString' not 'Array', and length arguments
+    as 'UInt*' not 'const UInt*'.
+  source:
+    path: src/Functions/padString.cpp
+    lines: 167-173
+    commit: dea580e0abc03ab181a4d2bc2bc8a65e599216ae
+  reference: "FunctionArgumentDescriptors mandatory_args{\n    {\"string\", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isStringOrFixedString),\
+    \ nullptr, \"String or FixedString\"},\n    {\"length\", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isInteger),\
+    \ nullptr, \"UInt*\"},\n};\nFunctionArgumentDescriptors optional_args{\n    {\"\
+    pad_string\", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isString),\
+    \ isColumnConst, \"String\"}\n};\n"
+distractors:
+- rule: 'When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires wrapping literal names and log excerpts in backticks
+    for documentation and comments. An agent might mistakenly apply this to the C++
+    string literals used for error messages (e.g., changing to `"\`String or FixedString\`"`),
+    which would cause literal backticks to appear in the actual user-facing error
+    output.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 5-5
+hierarchy_analysis: The AGENTS.md file contains rules primarily focused on documentation,
+  commit messages, and git workflow. Since this PR only modifies C++ string literals
+  used for error messages, most rules do not apply directly to the code changes.

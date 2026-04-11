@@ -1,100 +1,121 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "denoland/deno"
+  repo: denoland/deno
   pr: 33140
-  base_commit: "d198cda44b7fddb56d892a8ef2349d1630adfa37"
-  merge_commit: "ff775b28644c15915919b0d64cc5010cd3eef87d"
-
+  base_commit: d198cda44b7fddb56d892a8ef2349d1630adfa37
+  merge_commit: ff775b28644c15915919b0d64cc5010cd3eef87d
 checks:
-  - id: stdio_or_fd_enum
-    type: fail_to_pass
-    origin: pr_diff
-    description: "StdioOrRid enum renamed to StdioOrFd in ext/process/lib.rs"
-
-  - id: fd_variant_with_i32
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Fd(i32) variant replaces Rid(ResourceId) in the enum"
-
-  - id: as_stdio_fd_duplication
-    type: fail_to_pass
-    origin: pr_diff
-    description: "as_stdio duplicates fd using libc::dup on Unix"
-
-  - id: child_process_stdio_struct
-    type: fail_to_pass
-    origin: pr_diff
-    description: "ChildProcessStdio struct added to ext/io/lib.rs for handle inheritance"
-
-  - id: extra_stdio_accepts_stdio_or_fd
-    type: fail_to_pass
-    origin: pr_diff
-    description: "extra_stdio field accepts StdioOrFd for numeric fd passthrough"
-
-  - id: inherit_uses_child_process_stdio
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Inherit mode borrows ChildProcessStdio from OpState instead of hardcoded Rid"
-
-  - id: file_resource_import_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FileResource import removed, ChildProcessStdio imported instead"
-
-  - id: numeric_fd_deserialization
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Numeric values deserialized as Fd with i64/i32 validation"
-
-  - id: stdio_string_deserialization_preserved
-    type: pass_to_pass
-    origin: static
-    description: "String variants (inherit, piped, null) still handled in Deserialize"
-
-  - id: child_stdio_struct_fields
-    type: pass_to_pass
-    origin: static
-    description: "ChildStdio struct retains stdin/stdout/stderr fields"
-
-  - id: cargo_check_deno_io
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cargo check deno_io package compiles"
-
-  - id: cargo_check_deno_process
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cargo check deno_process package compiles"
-
-  - id: cargo_clippy_process_io
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cargo clippy passes for process and io packages"
-
-  - id: cargo_fmt_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Cargo fmt check passes on modified files"
-
-  - id: cargo_test_deno_io
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Unit tests for deno_io package pass"
-
-  - id: cargo_test_deno_process
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Unit tests for deno_process package pass"
-
+- id: stdio_or_fd_enum
+  type: fail_to_pass
+  origin: pr_diff
+  description: StdioOrRid enum renamed to StdioOrFd in ext/process/lib.rs
+- id: fd_variant_with_i32
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fd(i32) variant replaces Rid(ResourceId) in the enum
+- id: as_stdio_fd_duplication
+  type: fail_to_pass
+  origin: pr_diff
+  description: as_stdio duplicates fd using libc::dup on Unix
+- id: child_process_stdio_struct
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChildProcessStdio struct added to ext/io/lib.rs for handle inheritance
+- id: extra_stdio_accepts_stdio_or_fd
+  type: fail_to_pass
+  origin: pr_diff
+  description: extra_stdio field accepts StdioOrFd for numeric fd passthrough
+- id: inherit_uses_child_process_stdio
+  type: fail_to_pass
+  origin: pr_diff
+  description: Inherit mode borrows ChildProcessStdio from OpState instead of hardcoded
+    Rid
+- id: file_resource_import_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileResource import removed, ChildProcessStdio imported instead
+- id: numeric_fd_deserialization
+  type: fail_to_pass
+  origin: pr_diff
+  description: Numeric values deserialized as Fd with i64/i32 validation
+- id: stdio_string_deserialization_preserved
+  type: pass_to_pass
+  origin: static
+  description: String variants (inherit, piped, null) still handled in Deserialize
+- id: child_stdio_struct_fields
+  type: pass_to_pass
+  origin: static
+  description: ChildStdio struct retains stdin/stdout/stderr fields
+- id: cargo_check_deno_io
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo check deno_io package compiles
+- id: cargo_check_deno_process
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo check deno_process package compiles
+- id: cargo_clippy_process_io
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo clippy passes for process and io packages
+- id: cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo fmt check passes on modified files
+- id: cargo_test_deno_io
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for deno_io package pass
+- id: cargo_test_deno_process
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for deno_process package pass
 rubric:
-  - rule: "Node.js compatibility code is in ext/node/polyfills/. When reviewing these files, check behavior against Node.js docs, not just Deno conventions."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "322-325"
-      commit: "d198cda44b7fddb56d892a8ef2349d1630adfa37"
-  - rule: "Keep your changes minimal, don't do drive-by changes in a PR."
-    source:
-      path: "CLAUDE.md"
-      lines: "39-41"
-      commit: "d198cda44b7fddb56d892a8ef2349d1630adfa37"
+- rule: Node.js compatibility code is in ext/node/polyfills/. When reviewing these
+    files, check behavior against Node.js docs, not just Deno conventions.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 322-325
+    commit: d198cda44b7fddb56d892a8ef2349d1630adfa37
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: 39-41
+    commit: d198cda44b7fddb56d892a8ef2349d1630adfa37
+- rule: Extensions providing native functionality to JS (fs, net, etc.) belong in
+    the `ext/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 61-62
+  evidence: The gold solution implements the native OS file descriptor handling and
+    stdio inheritance within the `ext/io/lib.rs` and `ext/process/lib.rs` files, correctly
+    placing native system access logic in the
+  category: architecture
+distractors:
+- rule: '`tests/unit/` - Unit tests'
+  collision_type: architecture_boundary
+  why_distracting: The config states that unit tests belong in `tests/unit/`. However,
+    the PR instructions explicitly require adding the test to `tests/unit_node/child_process_test.ts`.
+    An agent strictly following the directory structure in the config might try to
+    create or move the test to `tests/unit/`, violating the PR's specific requirements
+    for Node.js compatibility tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 64-64
+- rule: Before committing, if only non-Rust was changed, make sure to run `tools/lint.js
+    --js`
+  collision_type: scope_ambiguity
+  why_distracting: The rule specifies running `tools/lint.js --js` if only non-Rust
+    code was changed. Since the agent is modifying both TypeScript (`child_process.ts`)
+    and Rust (`lib.rs`) files, it might get confused about which linting command to
+    run or attempt to run the JS-only linter, missing Rust linting errors.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 25-26
+hierarchy_analysis: The `CLAUDE.md` file provides general repository guidelines. There
+  is a conflict between the general directory structure outlined in `CLAUDE.md` (which
+  specifies `tests/unit/` for unit tests) and the specific PR instructions (which
+  require modifying `tests/unit_node/`). The PR-specific instructions must override
+  the general repository documentation.

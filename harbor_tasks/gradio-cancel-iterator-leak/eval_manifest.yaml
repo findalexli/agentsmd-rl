@@ -1,89 +1,88 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 13163
-  base_commit: "0a0378dee463fb10e5a95685d595801171cf641b"
-  merge_commit: "1c4ce3e64480f65a6531f33d38aff2efdeb9632a"
-
+  base_commit: 0a0378dee463fb10e5a95685d595801171cf641b
+  merge_commit: 1c4ce3e64480f65a6531f33d38aff2efdeb9632a
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "gradio/routes.py must parse without syntax errors"
-
-  - id: cancel_closes_generator
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cancel endpoint properly closes the generator (finally block fires)"
-
-  - id: cancel_handles_error_in_cleanup
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cancel gracefully handles a generator whose finally block raises"
-
-  - id: cancel_closes_resource_generator
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cancel properly cleans up resources held by the generator"
-
-  - id: cancel_nonexistent_event
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Cancel for a non-existent event still returns success"
-
-  - id: cancel_removes_iterator_and_marks_reset
-    type: pass_to_pass
-    origin: pr_diff
-    description: "After cancel, iterator is removed and event is in iterators_to_reset"
-
-  - id: double_cancel_safe
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Cancelling the same event twice does not crash"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "cancel_event handler has real logic, not just pass/return"
-
-  - id: ruff_format_compliance
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified file gradio/routes.py passes ruff format check"
-    source:
-      path: "AGENTS.md"
-      lines: "43"
-      commit: "0a0378dee463fb10e5a95685d595801171cf641b"
-
-  # Repo CI/CD pass_to_pass gates
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff lint check passes on modified file"
-    source:
-      path: ".github/workflows/test-python.yml"
-      commit: "0a0378dee463fb10e5a95685d595801171cf641b"
-
-  - id: test_repo_pytest_cancel_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TestCancel tests pass (all 3 cancel-related tests)"
-    source:
-      path: ".github/workflows/test-python.yml"
-      commit: "0a0378dee463fb10e5a95685d595801171cf641b"
-
-  - id: test_repo_safe_aclose_iterator
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TestSafeAcloseIterator tests pass (2 tests for safe_aclose_iterator)"
-    source:
-      path: ".github/workflows/test-python.yml"
-      commit: "0a0378dee463fb10e5a95685d595801171cf641b"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/routes.py must parse without syntax errors
+- id: cancel_closes_generator
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cancel endpoint properly closes the generator (finally block fires)
+- id: cancel_handles_error_in_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cancel gracefully handles a generator whose finally block raises
+- id: cancel_closes_resource_generator
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cancel properly cleans up resources held by the generator
+- id: cancel_nonexistent_event
+  type: pass_to_pass
+  origin: pr_diff
+  description: Cancel for a non-existent event still returns success
+- id: cancel_removes_iterator_and_marks_reset
+  type: pass_to_pass
+  origin: pr_diff
+  description: After cancel, iterator is removed and event is in iterators_to_reset
+- id: double_cancel_safe
+  type: pass_to_pass
+  origin: pr_diff
+  description: Cancelling the same event twice does not crash
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: cancel_event handler has real logic, not just pass/return
+- id: ruff_format_compliance
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file gradio/routes.py passes ruff format check
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on modified file
+  source:
+    path: .github/workflows/test-python.yml
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_pytest_cancel_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TestCancel tests pass (all 3 cancel-related tests)
+  source:
+    path: .github/workflows/test-python.yml
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_safe_aclose_iterator
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TestSafeAcloseIterator tests pass (2 tests for safe_aclose_iterator)
+  source:
+    path: .github/workflows/test-python.yml
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "0a0378dee463fb10e5a95685d595801171cf641b"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misclassify this 4-line bug fix as a 'low-value
+    busywork PR' or 'tiny edit' and refuse to implement it or try to bundle it with
+    unrelated cleanups. However, despite its small size, this is a critical resource
+    leak fix, not a mechanical cleanup.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 54-56
+hierarchy_analysis: Only one configuration file (`AGENTS.md`) is present at the root
+  level, so there are no hierarchical conflicts to resolve.

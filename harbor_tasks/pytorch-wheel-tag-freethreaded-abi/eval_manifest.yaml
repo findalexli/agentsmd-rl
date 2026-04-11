@@ -1,122 +1,136 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "pytorch/pytorch"
+  repo: pytorch/pytorch
   pr: 177993
-  base_commit: "8eaba043803b82549bf4fb42d5e03099be2eb1d9"
-  merge_commit: "549e5c77bb09262be27b441ee27eeaebffcc7905"
-
+  base_commit: 8eaba043803b82549bf4fb42d5e03099be2eb1d9
+  merge_commit: 549e5c77bb09262be27b441ee27eeaebffcc7905
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Source file must parse without syntax errors"
-
-  - id: freethreaded_abi_subprocess
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Subprocess: MATRIX_PYTHON_VERSION=X.Yt triggers free-threaded ABI detection"
-
-  - id: freethreaded_abi_tag_accepted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Free-threaded Python wheel with 't' ABI suffix must pass validation"
-
-  - id: freethreaded_abi_via_env_var
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Free-threaded detection via MATRIX_PYTHON_VERSION ending in 't'"
-
-  - id: freethreaded_abi_via_sysconfig
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Free-threaded detection via sysconfig Py_GIL_DISABLED flag"
-
-  - id: freethreaded_wrong_tag_rejected
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Wheel WITHOUT 't' suffix must fail under free-threaded Python"
-
-  - id: mac_minos_mode2_attempted
-    type: fail_to_pass
-    origin: pr_diff
-    description: "check_mac_wheel_minos attempts Mode 2 when no wheel dir is set"
-
-  - id: dead_code_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No unreachable 'continue' after 'raise' in tag validation loop"
-
-  - id: standard_wheel_validation
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Standard non-free-threaded wheels still validate correctly"
-
-  - id: extract_wheel_tags
-    type: pass_to_pass
-    origin: pr_diff
-    description: "_extract_wheel_tags correctly parses multi-tag WHEEL metadata"
-
-  - id: core_functions_importable
-    type: pass_to_pass
-    origin: pr_diff
-    description: "All core public functions exist and are callable"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Core functions have real implementations, not stubs"
-
-  - id: repo_file_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Source file compiles without errors via py_compile"
-
-  - id: repo_smoke_test_dir_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All Python files in smoke_test directory compile"
-
-  - id: repo_imports_are_standard_lib
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Source file only uses standard library imports"
-
-  - id: repo_shell_scripts_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Shell scripts in .ci/pytorch have valid syntax"
-
-  - id: repo_check_gomp_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_gomp.py compiles without errors"
-
-  - id: repo_check_gomp_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_gomp.py is importable"
-
-  - id: repo_check_wheel_tags_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: "check_wheel_tags.py is importable"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Source file must parse without syntax errors
+- id: freethreaded_abi_subprocess
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Subprocess: MATRIX_PYTHON_VERSION=X.Yt triggers free-threaded ABI
+    detection'
+- id: freethreaded_abi_tag_accepted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Free-threaded Python wheel with 't' ABI suffix must pass validation
+- id: freethreaded_abi_via_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: Free-threaded detection via MATRIX_PYTHON_VERSION ending in 't'
+- id: freethreaded_abi_via_sysconfig
+  type: fail_to_pass
+  origin: pr_diff
+  description: Free-threaded detection via sysconfig Py_GIL_DISABLED flag
+- id: freethreaded_wrong_tag_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: Wheel WITHOUT 't' suffix must fail under free-threaded Python
+- id: mac_minos_mode2_attempted
+  type: fail_to_pass
+  origin: pr_diff
+  description: check_mac_wheel_minos attempts Mode 2 when no wheel dir is set
+- id: dead_code_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: No unreachable 'continue' after 'raise' in tag validation loop
+- id: standard_wheel_validation
+  type: pass_to_pass
+  origin: pr_diff
+  description: Standard non-free-threaded wheels still validate correctly
+- id: extract_wheel_tags
+  type: pass_to_pass
+  origin: pr_diff
+  description: _extract_wheel_tags correctly parses multi-tag WHEEL metadata
+- id: core_functions_importable
+  type: pass_to_pass
+  origin: pr_diff
+  description: All core public functions exist and are callable
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Core functions have real implementations, not stubs
+- id: repo_file_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file compiles without errors via py_compile
+- id: repo_smoke_test_dir_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in smoke_test directory compile
+- id: repo_imports_are_standard_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file only uses standard library imports
+- id: repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in .ci/pytorch have valid syntax
+- id: repo_check_gomp_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_gomp.py compiles without errors
+- id: repo_check_gomp_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_gomp.py is importable
+- id: repo_check_wheel_tags_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_wheel_tags.py is importable
 rubric:
-  - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
-    source:
-      path: "CLAUDE.md"
-      lines: "58"
-      commit: "8eaba043803b82549bf4fb42d5e03099be2eb1d9"
-
-  - rule: "Don't make trivial (1-2 LOC) helper functions that are only used once unless it significantly improves code readability."
-    source:
-      path: "CLAUDE.md"
-      lines: "61-62"
-      commit: "8eaba043803b82549bf4fb42d5e03099be2eb1d9"
-
-  - rule: "If uncertain, choose the simpler, more concise implementation."
-    source:
-      path: "CLAUDE.md"
-      lines: "72"
-      commit: "8eaba043803b82549bf4fb42d5e03099be2eb1d9"
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '58'
+    commit: 8eaba043803b82549bf4fb42d5e03099be2eb1d9
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  source:
+    path: CLAUDE.md
+    lines: 61-62
+    commit: 8eaba043803b82549bf4fb42d5e03099be2eb1d9
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: '72'
+    commit: 8eaba043803b82549bf4fb42d5e03099be2eb1d9
+distractors:
+- rule: 'Use our test class and test runner: from torch.testing._internal.common_utils
+    import run_tests, TestCase'
+  collision_type: scope_ambiguity
+  why_distracting: The bug is in a CI script (`.ci/pytorch/smoke_test/check_wheel_tags.py`),
+    not the main PyTorch library. Writing a test using `torch.testing._internal.common_utils`
+    for a CI script is inappropriate and out of scope.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 18-24
+- rule: Once the change is passing, find an appropriate test file to add the test
+    to and make sure to follow local conventions on the test file.
+  collision_type: scope_ambiguity
+  why_distracting: CI scripts in this repository typically do not have unit tests
+    in the main test suite. The agent might waste time looking for a test file or
+    creating one for `check_wheel_tags.py`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 4-6
+- rule: Only use commands provided via `spin` for linting.
+  collision_type: rule_conflict
+  why_distracting: This rule directly conflicts with AGENTS.md which instructs the
+    agent to use `lintrunner -a`. The agent might get confused about which linting
+    tool to use or fail if `spin` is not configured in the environment.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 33-35
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` provide instructions on testing
+  and linting. There is a direct conflict regarding linting tools (`spin` in CLAUDE.md
+  vs `lintrunner` in AGENTS.md). Additionally, the testing instructions in both files
+  assume the agent is modifying the core PyTorch library, which creates scope ambiguity
+  when modifying CI scripts.

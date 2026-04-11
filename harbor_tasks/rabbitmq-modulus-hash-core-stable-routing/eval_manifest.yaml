@@ -43,7 +43,8 @@ checks:
 - id: test_repo_components_mk_structure
   type: pass_to_pass
   origin: repo_tests
-  description: rabbitmq-components.mk has valid RABBITMQ_BUILTIN list with rabbitmq_sharding (CI check - grep)
+  description: rabbitmq-components.mk has valid RABBITMQ_BUILTIN list with rabbitmq_sharding
+    (CI check - grep)
 - id: test_repo_sharding_readme_valid
   type: pass_to_pass
   origin: repo_tests
@@ -67,3 +68,38 @@ rubric:
 - rule: README must reflect that x-modulus-hash is a built-in/core exchange type
 - rule: README must document the stable routing guarantee of x-modulus-hash
 - rule: The sharding plugin README must still exist and describe the plugin
+- rule: '`deps/rabbit` is the core RabbitMQ server, the most important part of the
+    codebase.'
+  source:
+    path: CLAUDE.md
+    lines: '35'
+  evidence: The gold solution creates `deps/rabbit/src/rabbit_exchange_type_modulus_hash.erl`,
+    placing the new exchange type directly in the core server codebase as requested.
+  category: architecture
+distractors:
+- rule: The consistent hashing exchange (`x-consistent-hash`) is structured as a separate
+    plugin in `deps/rabbitmq_consistent_hash_exchange`.
+  collision_type: architecture_boundary
+  why_distracting: Because `x-consistent-hash` is maintained as a separate plugin,
+    an agent might incorrectly assume that `x-modulus-hash` should also be extracted
+    into its own standalone plugin (e.g., `deps/rabbitmq_modulus_hash_exchange`) instead
+    of being integrated into the core `deps/rabbit` application.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '48'
+- rule: Use `gmake dialyze` and `gmake xref` to run static code analysis tools from
+    individual `deps/` component directories.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run `gmake dialyze` or `gmake xref`
+    within its solution script to verify the Erlang code changes, which is unnecessary
+    for the patch and could cause the script to fail or timeout in the evaluation
+    environment.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 29-30
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` provide identical repository
+  structure guidelines. The primary architectural decision is correctly identifying
+  `deps/rabbit` as the destination for core code, while avoiding the temptation to
+  pattern-match against other exchange plugins like `rabbitmq_consistent_hash_exchange`.

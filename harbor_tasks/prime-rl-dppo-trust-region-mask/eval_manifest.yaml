@@ -1,96 +1,104 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2187
-  base_commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
-  merge_commit: "ff4b125e4b97d0bfeca7fb18d225bd342cedc345"
-
+  base_commit: 09293f3e3eb8bd0fc643bac2d2b80014f0529641
+  merge_commit: ff4b125e4b97d0bfeca7fb18d225bd342cedc345
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files parse without syntax errors"
-
-  - id: repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ruff lint check passes on modified files"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ruff format check passes on modified files"
-
-  - id: repo_ruff_check_test_file
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ruff lint check passes on modified test file"
-
-  - id: repo_ruff_format_test_file
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ruff format check passes on modified test file"
-
-  - id: repo_imports_work
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified modules can be imported and used at base commit"
-
-  - id: repo_pyproject_toml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's pyproject.toml is valid TOML"
-
-  - id: dppo_config_fields
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DefaultLossConfig has dppo_mask_low and dppo_mask_high fields"
-
-  - id: old_ipo_config_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "DefaultLossConfig no longer has ipo_mask_low or ipo_mask_high fields"
-
-  - id: mask_positive_adv_ignores_low_violation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Positive advantages with low-only violations are not masked"
-
-  - id: mask_negative_adv_ignores_high_violation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Negative advantages with high-only violations are not masked"
-
-  - id: mask_mixed_advantages_selective
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Mixed advantages apply masking selectively based on advantage sign"
-
-  - id: mask_positive_adv_applies_high_violation
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Positive advantages with high violations are still masked"
-
-  - id: mask_negative_adv_applies_low_violation
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Negative advantages with low violations are still masked"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files parse without syntax errors
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff lint check passes on modified files
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff format check passes on modified files
+- id: repo_ruff_check_test_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff lint check passes on modified test file
+- id: repo_ruff_format_test_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff format check passes on modified test file
+- id: repo_imports_work
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified modules can be imported and used at base commit
+- id: repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml is valid TOML
+- id: dppo_config_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: DefaultLossConfig has dppo_mask_low and dppo_mask_high fields
+- id: old_ipo_config_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: DefaultLossConfig no longer has ipo_mask_low or ipo_mask_high fields
+- id: mask_positive_adv_ignores_low_violation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Positive advantages with low-only violations are not masked
+- id: mask_negative_adv_ignores_high_violation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Negative advantages with high-only violations are not masked
+- id: mask_mixed_advantages_selective
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mixed advantages apply masking selectively based on advantage sign
+- id: mask_positive_adv_applies_high_violation
+  type: pass_to_pass
+  origin: pr_diff
+  description: Positive advantages with high violations are still masked
+- id: mask_negative_adv_applies_low_violation
+  type: pass_to_pass
+  origin: pr_diff
+  description: Negative advantages with low violations are still masked
 rubric:
-  - rule: "Config field renames must update all usages consistently across the codebase (config definition, loss implementation, tests)."
-    source:
-      path: "skills/config/SKILL.md"
-      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
-
-  - rule: "Use targeted comments to clarify logic. Don't explain your work process or reference old code."
-    source:
-      path: "AGENTS.md"
-      lines: "6"
-      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
-
-  - rule: "Write tests as plain functions with pytest fixtures. Don't use class-based tests."
-    source:
-      path: "AGENTS.md"
-      lines: "44"
-      commit: "09293f3e3eb8bd0fc643bac2d2b80014f0529641"
+- rule: Config field renames must update all usages consistently across the codebase
+    (config definition, loss implementation, tests).
+  source:
+    path: skills/config/SKILL.md
+    commit: 09293f3e3eb8bd0fc643bac2d2b80014f0529641
+- rule: Use targeted comments to clarify logic. Don't explain your work process or
+    reference old code.
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: 09293f3e3eb8bd0fc643bac2d2b80014f0529641
+- rule: Write tests as plain functions with pytest fixtures. Don't use class-based
+    tests.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 09293f3e3eb8bd0fc643bac2d2b80014f0529641
+- rule: 'Targeted comments: don''t explain your work process or reference old code.'
+  source:
+    path: AGENTS.md
+    lines: 6-7
+  evidence: The gold solution rewrites the docstring in `default_loss_fn` to explain
+    the new DPPO+KL logic, completely removing the old references to IPO, GRPO, and
+    CISPO rather than leaving comments explaining t
+  category: documentation
+distractors:
+- rule: 'Skills: When you make changes to the codebase, check if any skills need to
+    be updated to stay accurate.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is renaming config fields (`ipo_mask_low` to `dppo_mask_low`)
+    which are part of the trainer config. The agent might waste time searching through
+    the `skills/` directory (like `skills/config` or `skills/entrypoints`) to see
+    if these specific fields are documented and need updating, but the gold solution
+    correctly scopes the PR to just the code and tests.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 32-37
+hierarchy_analysis: The hierarchy is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  The rules in `AGENTS.md` apply globally to the repository.

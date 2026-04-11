@@ -1,72 +1,81 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 36055
-  base_commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
-  merge_commit: "12ba7d81297abac61012a36f20d4a9d22b9210d9"
-
+  base_commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  merge_commit: 12ba7d81297abac61012a36f20d4a9d22b9210d9
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "ReactFlightReplyServer.js must parse without syntax errors"
-
-  - id: blob_validation_rejects_string
-    type: fail_to_pass
-    origin: pr_diff
-    description: "String-backed $B reference must throw 'Referenced Blob is not a Blob.'"
-
-  - id: test_react_flight_reply_formdata
-    type: pass_to_pass
-    origin: repo_tests
-    description: "FormData with Blob serialization works"
-
-  - id: test_react_flight_reply_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All ReactFlightDOMReply tests pass"
-
-  - id: error_code_registered
-    type: fail_to_pass
-    origin: agent_config
-    description: "New error 'Referenced Blob is not a Blob.' must be registered in scripts/error-codes/codes.json"
-    source:
-      path: ".claude/skills/extract-errors/SKILL.md"
-      lines: "10"
-      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint check passes"
-
-  - id: test_repo_flow
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Flow typecheck passes"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: ReactFlightReplyServer.js must parse without syntax errors
+- id: blob_validation_rejects_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: String-backed $B reference must throw 'Referenced Blob is not a Blob.'
+- id: test_react_flight_reply_formdata
+  type: pass_to_pass
+  origin: repo_tests
+  description: FormData with Blob serialization works
+- id: test_react_flight_reply_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: All ReactFlightDOMReply tests pass
+- id: error_code_registered
+  type: fail_to_pass
+  origin: agent_config
+  description: New error 'Referenced Blob is not a Blob.' must be registered in scripts/error-codes/codes.json
+  source:
+    path: .claude/skills/extract-errors/SKILL.md
+    lines: '10'
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check passes
+- id: test_repo_flow
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Flow typecheck passes
 rubric:
-  - rule: "Run `yarn extract-errors` when adding new error messages or modifying error codes"
-    source:
-      path: ".claude/skills/extract-errors/SKILL.md"
-      lines: "10"
-      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
-
-  - rule: "Use `--silent` flag when running tests to limit output to only failures"
-    source:
-      path: ".claude/skills/test/SKILL.md"
-      lines: "41"
-      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
-
-  - rule: "Use `--no-watchman` flag when running tests (common failure in sandboxing)"
-    source:
-      path: ".claude/skills/test/SKILL.md"
-      lines: "42"
-      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
-
-  - rule: "Use comments to explain invariants and non-obvious behavior, not narrate code"
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "252"
-      commit: "c80a07509582daadf275f36ffe7a88c3b12e9db4"
+- rule: Run `yarn extract-errors` when adding new error messages or modifying error
+    codes
+  source:
+    path: .claude/skills/extract-errors/SKILL.md
+    lines: '10'
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+- rule: Use `--silent` flag when running tests to limit output to only failures
+  source:
+    path: .claude/skills/test/SKILL.md
+    lines: '41'
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+- rule: Use `--no-watchman` flag when running tests (common failure in sandboxing)
+  source:
+    path: .claude/skills/test/SKILL.md
+    lines: '42'
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+- rule: Use comments to explain invariants and non-obvious behavior, not narrate code
+  source:
+    path: compiler/CLAUDE.md
+    lines: '252'
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+- rule: 'React: All files outside `/compiler/`'
+  source:
+    path: CLAUDE.md
+    lines: 7-7
+  evidence: The gold solution modifies files in `packages/react-server/` and `packages/react-server-dom-webpack/`,
+    which are outside the `/compiler/` directory, correctly identifying them as part
+    of React core.
+  category: architecture
+distractors:
+- rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions 'React Server Actions payload deserialization'.
+    An agent might mistakenly associate 'Server Actions' with the React Compiler,
+    but the fix belongs in `packages/react-server/`.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+hierarchy_analysis: The hierarchy consists of a single root CLAUDE.md file that defines
+  the high-level monorepo structure, separating React core from the React Compiler.

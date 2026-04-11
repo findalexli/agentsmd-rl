@@ -1,72 +1,102 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 92081
-  base_commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
-  merge_commit: "9b66a376e7e66c51d1a0952a96e3c377b56bd81a"
-
+  base_commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
+  merge_commit: 9b66a376e7e66c51d1a0952a96e3c377b56bd81a
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "config.ts must be valid TypeScript (parseable by Node)"
-
-  - id: dynamicio_fatal_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dynamicIO in experimental config must produce a fatal error mentioning cacheComponents"
-
-  - id: dynamicio_includes_docs_link
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dynamicIO fatal error must include a link to the cacheComponents docs"
-
-  - id: turbopack_handling_preserved
-    type: pass_to_pass
-    origin: repo_tests
-    description: "turbopackPersistentCaching must still produce a fatal error"
-
-  - id: generic_unrecognized_key_is_warning
-    type: pass_to_pass
-    origin: pr_diff
-    description: "An unrecognized experimental key (not dynamicIO or turbopack) should be a warning, not fatal"
-
-  - id: test_repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ESLint passes on config.ts"
-
-  - id: test_repo_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Prettier formatting passes on config.ts"
-
-  - id: test_repo_typescript
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript type check passes"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's unit tests for config warnings pass"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: config.ts must be valid TypeScript (parseable by Node)
+- id: dynamicio_fatal_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: dynamicIO in experimental config must produce a fatal error mentioning
+    cacheComponents
+- id: dynamicio_includes_docs_link
+  type: fail_to_pass
+  origin: pr_diff
+  description: dynamicIO fatal error must include a link to the cacheComponents docs
+- id: turbopack_handling_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbopackPersistentCaching must still produce a fatal error
+- id: generic_unrecognized_key_is_warning
+  type: pass_to_pass
+  origin: pr_diff
+  description: An unrecognized experimental key (not dynamicIO or turbopack) should
+    be a warning, not fatal
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on config.ts
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier formatting passes on config.ts
+- id: test_repo_typescript
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript type check passes
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for config warnings pass
 rubric:
-  - rule: "When modifying experimental flags, maintain proper wiring across config-shared.ts, config-schema.ts, and define-env.ts. If a flag is consumed in pre-compiled runtime internals, also wire runtime env values (next-server.ts/export/worker.ts as needed)."
-    source:
-      path: "AGENTS.md"
-      lines: "167-174"
-      commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
-
-  - rule: "Replace deprecated experimental.dynamicIO with cacheComponents. The dynamicIO feature has been replaced by cacheComponents - error messages must clearly indicate this migration path."
-    source:
-      path: ".claude-plugin/plugins/cache-components/skills/cache-components/SKILL.md"
-      lines: "9,293-299"
-      commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
-
-  - rule: "Error messages for deprecated/invalid config options must include a link to relevant documentation for user guidance."
-    source:
-      path: "AGENTS.md"
-      lines: "105-113"
-      commit: "4b62ff78c0ad4117477ab78806df809f4c1f8b33"
+- rule: When modifying experimental flags, maintain proper wiring across config-shared.ts,
+    config-schema.ts, and define-env.ts. If a flag is consumed in pre-compiled runtime
+    internals, also wire runtime env values (next-server.ts/export/worker.ts as needed).
+  source:
+    path: AGENTS.md
+    lines: 167-174
+    commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
+- rule: Replace deprecated experimental.dynamicIO with cacheComponents. The dynamicIO
+    feature has been replaced by cacheComponents - error messages must clearly indicate
+    this migration path.
+  source:
+    path: .claude-plugin/plugins/cache-components/skills/cache-components/SKILL.md
+    lines: 9,293-299
+    commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
+- rule: Error messages for deprecated/invalid config options must include a link to
+    relevant documentation for user guidance.
+  source:
+    path: AGENTS.md
+    lines: 105-113
+    commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
+- rule: Source code for the main Next.js framework is located in `packages/next/src/`,
+    while compiled output goes to `packages/next/dist/`.
+  source:
+    path: CLAUDE.md
+    lines: 24-33
+  evidence: The gold solution correctly targets the source file `packages/next/src/server/config.ts`
+    for the Next.js framework rather than attempting to modify compiled output in
+    `packages/next/dist/`.
+  category: architecture
+distractors:
+- rule: This skill should be used when the user asks to 'update documentation for
+    my changes', 'sync docs with code', or 'scaffold docs for this feature'.
+  collision_type: scope_ambiguity
+  why_distracting: The task involves adding a documentation link to an error message.
+    The agent might mistakenly believe it needs to update or create the documentation
+    page for `cacheComponents` or `dynamicIO` using this skill, expanding the scope
+    unnecessarily when the prompt only asks to improve the error message.
+  severity: high
+  source:
+    path: .claude/skills/update-docs
+    lines: 1-2
+- rule: Skill for writing API reference documentation.
+  collision_type: scope_ambiguity
+  why_distracting: The new error message includes a URL pointing to an API reference
+    (`/docs/app/api-reference/config/next-config-js/cacheComponents`). The agent might
+    be tempted to use this skill to write or verify the actual API reference document,
+    which is out of scope.
+  severity: medium
+  source:
+    path: .claude/skills/write-api-reference
+    lines: 1-2
+hierarchy_analysis: The workspace uses `CLAUDE.md` and `AGENTS.md` interchangeably
+  for core repository instructions. The `.claude/skills/` directory contains various
+  documentation-related skills (`update-docs`, `write-api-reference`) that could distract
+  the agent from the core task of simply updating a string in the configuration validation
+  logic.

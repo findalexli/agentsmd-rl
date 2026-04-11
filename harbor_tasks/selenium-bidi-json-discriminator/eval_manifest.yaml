@@ -4,92 +4,132 @@ source_pr:
   pr_number: 17309
   merge_commit: a9285c86005401cef9ac004757f2b43b80ed6964
   base_commit: 5c2bf6b42fb66f895d936cf13a392385fb032689
-
 target_file: dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs
-
 checks:
-  # Core fail-to-pass tests for the fix
-  - id: test_valuetextequals_usage
-    type: fail_to_pass
-    origin: agent_config
-    source:
-      file: dotnet/AGENTS.md
-      section: Code conventions
-      guidance: Use efficient patterns for JSON parsing
-    description: ValueTextEquals is used for property name comparison instead of GetString comparison
-
-  - id: test_no_old_property_name_variable
-    type: fail_to_pass
-    origin: behavioral
-    description: Old propertyName variable assignment using GetString() is removed
-
-  - id: test_valuetextequals_in_property_loop
-    type: fail_to_pass
-    origin: behavioral
-    description: ValueTextEquals is called inside the PropertyName loop in GetDiscriminator method
-
-  - id: test_correct_read_skip_pattern
-    type: fail_to_pass
-    origin: behavioral
-    description: Correct Read-Skip-Read pattern is used when skipping non-matching properties
-
-  # Agent config derived tests (code quality)
-  - id: test_reader_advancement_comments
-    type: fail_to_pass
-    origin: agent_config
-    source:
-      file: AGENTS.md
-      section: General Guidelines
-      guidance: Comments should explain *why*, not *what*
-    description: Comments explain reader advancement logic (why the movement happens)
-
-  # Pass-to-pass tests - repo CI commands that should pass before and after the fix
-  - id: test_repo_dotnet_format_style
-    type: pass_to_pass
-    origin: repo_tests
-    description: CI - dotnet format style passes (file-scoped namespaces, using placement)
-
-  - id: test_repo_dotnet_format_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: CI - dotnet format whitespace passes (indentation, spacing, newlines)
-
-  - id: test_repo_dotnet_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: CI - dotnet format passes (all formatting conventions)
-
-  # Static pass-to-pass tests (file existence/content checks)
-  - id: test_repo_file_header
-    type: pass_to_pass
-    origin: static
-    description: C# source files have proper copyright headers
-
-  # Aliases for backward compatibility with test function names
-  - id: test_discriminator_basic_extraction
-    type: fail_to_pass
-    origin: behavioral
-    description: Alias for test_valuetextequals_usage - ValueTextEquals is used
-
-  - id: test_discriminator_with_nested_objects
-    type: fail_to_pass
-    origin: behavioral
-    description: Alias for test_correct_read_skip_pattern - Read-Skip-Read pattern handles nested objects
-
-  - id: test_discriminator_with_arrays
-    type: fail_to_pass
-    origin: behavioral
-    description: Alias for test_reader_advancement_comments - Comments explain array skipping
-
+- id: test_valuetextequals_usage
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    file: dotnet/AGENTS.md
+    section: Code conventions
+    guidance: Use efficient patterns for JSON parsing
+  description: ValueTextEquals is used for property name comparison instead of GetString
+    comparison
+- id: test_no_old_property_name_variable
+  type: fail_to_pass
+  origin: behavioral
+  description: Old propertyName variable assignment using GetString() is removed
+- id: test_valuetextequals_in_property_loop
+  type: fail_to_pass
+  origin: behavioral
+  description: ValueTextEquals is called inside the PropertyName loop in GetDiscriminator
+    method
+- id: test_correct_read_skip_pattern
+  type: fail_to_pass
+  origin: behavioral
+  description: Correct Read-Skip-Read pattern is used when skipping non-matching properties
+- id: test_reader_advancement_comments
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    section: General Guidelines
+    guidance: Comments should explain *why*, not *what*
+  description: Comments explain reader advancement logic (why the movement happens)
+- id: test_repo_dotnet_format_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI - dotnet format style passes (file-scoped namespaces, using placement)
+- id: test_repo_dotnet_format_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI - dotnet format whitespace passes (indentation, spacing, newlines)
+- id: test_repo_dotnet_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI - dotnet format passes (all formatting conventions)
+- id: test_repo_file_header
+  type: pass_to_pass
+  origin: static
+  description: C# source files have proper copyright headers
+- id: test_discriminator_basic_extraction
+  type: fail_to_pass
+  origin: behavioral
+  description: Alias for test_valuetextequals_usage - ValueTextEquals is used
+- id: test_discriminator_with_nested_objects
+  type: fail_to_pass
+  origin: behavioral
+  description: Alias for test_correct_read_skip_pattern - Read-Skip-Read pattern handles
+    nested objects
+- id: test_discriminator_with_arrays
+  type: fail_to_pass
+  origin: behavioral
+  description: Alias for test_reader_advancement_comments - Comments explain array
+    skipping
 rubric:
-  - rule: "Comments should explain *why*, not *what*. Use well-named methods and variables instead of comments that merely narrate code."
-    source:
-      path: "AGENTS.md"
-      lines: "36-37"
-      commit: "5c2bf6b42fb66f895d936cf13a392385fb032689"
-
-  - rule: "Use efficient patterns for JSON parsing. Prefer Utf8JsonReader.ValueTextEquals(span/readonlySpan) for property name comparison instead of GetString() to avoid unnecessary string allocations."
-    source:
-      path: "dotnet/AGENTS.md"
-      lines: "14-44"
-      commit: "5c2bf6b42fb66f895d936cf13a392385fb032689"
+- rule: Comments should explain *why*, not *what*. Use well-named methods and variables
+    instead of comments that merely narrate code.
+  source:
+    path: AGENTS.md
+    lines: 36-37
+    commit: 5c2bf6b42fb66f895d936cf13a392385fb032689
+- rule: Use efficient patterns for JSON parsing. Prefer Utf8JsonReader.ValueTextEquals(span/readonlySpan)
+    for property name comparison instead of GetString() to avoid unnecessary string
+    allocations.
+  source:
+    path: dotnet/AGENTS.md
+    lines: 14-44
+    commit: 5c2bf6b42fb66f895d936cf13a392385fb032689
+- rule: Comments should explain *why*, not *what*
+  source:
+    path: AGENTS.md
+    lines: 58-58
+  evidence: The gold solution adds inline comments like `// move past StartObject
+    to first PropertyName` and `// skip the value (including nested objects/arrays)`
+    to explain the intent behind the reader state cha
+  category: documentation
+- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+  source:
+    path: AGENTS.md
+    lines: 13-14
+  evidence: The gold solution only modifies the specific lines within the `GetDiscriminator`
+    method to fix the parsing logic, without reformatting the rest of the file or
+    extracting new classes.
+  category: style
+distractors:
+- rule: The codebase is migrating to async
+  collision_type: would_cause_bug
+  why_distracting: The codebase is migrating to async, but `Utf8JsonReader` is a `ref
+    struct` in C#. It cannot be used in async methods, captured in closures, or used
+    in async state machines. Attempting to make `GetDiscriminator` async would result
+    in a compilation error.
+  severity: high
+  source:
+    path: dotnet/AGENTS.md
+    lines: 26-27
+- rule: Add logging where users may need insight into what's happening
+  collision_type: would_cause_bug
+  why_distracting: The primary goal of this PR is to optimize JSON parsing by avoiding
+    unnecessary string allocations. Adding `_logger.Debug()` inside this tight parsing
+    loop would introduce new allocations and performance overhead, directly undermining
+    the PR's objective.
+  severity: high
+  source:
+    path: dotnet/AGENTS.md
+    lines: 17-23
+- rule: prefer well-named methods over comments
+  collision_type: rule_conflict
+  why_distracting: The rule suggests preferring well-named methods over comments.
+    However, the prompt explicitly requests adding clear comments explaining each
+    reader movement. Furthermore, extracting methods for `Utf8JsonReader` operations
+    is cumbersome because it is a `ref struct` and must be passed by `ref`, making
+    inline comments the technically superior choice here.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 58-58
+hierarchy_analysis: The root `AGENTS.md` provides general guidelines on logging, testing,
+  and comments, while `dotnet/AGENTS.md` provides C#-specific implementations (like
+  the `ILogger` syntax and async migration). In this specific PR, the C# language
+  constraints (`ref struct` limitations) override the general architectural directives
+  (async migration and logging).

@@ -1,114 +1,151 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "oven-sh/bun"
+  repo: oven-sh/bun
   pr: 27506
-  base_commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
-  merge_commit: "977506c329f4bf35f89fd20b43c2e68cec22c15b"
-
+  base_commit: f06119ad0cd49bba93908329ef5e53a39c50fb70
+  merge_commit: 977506c329f4bf35f89fd20b43c2e68cec22c15b
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified shell Zig files must exist and contain expected structural elements"
-
-  - id: sentinel_bun_prefix_roundtrip
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Strings with sentinel byte + __bun_ prefix must round-trip through shell interpolation without lex errors"
-
-  - id: sentinel_bunstr_prefix_roundtrip
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Strings with sentinel byte + __bunstr_ prefix must round-trip through shell interpolation without lex errors"
-
-  - id: raw_sentinel_no_crash
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Raw sentinel injection with out-of-bounds index must not crash - should error gracefully"
-
-  - id: shell_escape_api_works
-    type: pass_to_pass
-    origin: repo_tests
-    description: "$.escape() API should continue to work correctly as a regression test"
-
-  - id: bounds_check_logic_present
-    type: pass_to_pass
-    origin: static
-    description: "Modified functions have real bounds-checking logic with proper error messages, not placeholder implementations"
-
-  - id: test_repo_banned_words
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo banned words check passes (CI/CD test)"
-
-  - id: test_repo_shell_file_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Bun shell file tests pass (CI/CD test)"
-
-  - id: test_repo_shell_instance_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Bun shell instance tests pass (CI/CD test)"
-
-  - id: test_repo_run_shell_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's CLI run-shell tests pass (CI/CD test)"
-
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript typecheck passes (CI/CD test)"
-
-  - id: test_repo_shell_default_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Bun shell default tests pass (CI/CD test)"
-
-  - id: test_repo_shell_throw_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Bun shell throw tests pass (CI/CD test)"
-
-  - id: test_repo_shell_output_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Bun shell output tests pass (CI/CD test)"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified shell Zig files must exist and contain expected structural
+    elements
+- id: sentinel_bun_prefix_roundtrip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Strings with sentinel byte + __bun_ prefix must round-trip through
+    shell interpolation without lex errors
+- id: sentinel_bunstr_prefix_roundtrip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Strings with sentinel byte + __bunstr_ prefix must round-trip through
+    shell interpolation without lex errors
+- id: raw_sentinel_no_crash
+  type: fail_to_pass
+  origin: pr_diff
+  description: Raw sentinel injection with out-of-bounds index must not crash - should
+    error gracefully
+- id: shell_escape_api_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: $.escape() API should continue to work correctly as a regression test
+- id: bounds_check_logic_present
+  type: pass_to_pass
+  origin: static
+  description: Modified functions have real bounds-checking logic with proper error
+    messages, not placeholder implementations
+- id: test_repo_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo banned words check passes (CI/CD test)
+- id: test_repo_shell_file_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell file tests pass (CI/CD test)
+- id: test_repo_shell_instance_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell instance tests pass (CI/CD test)
+- id: test_repo_run_shell_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CLI run-shell tests pass (CI/CD test)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (CI/CD test)
+- id: test_repo_shell_default_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell default tests pass (CI/CD test)
+- id: test_repo_shell_throw_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell throw tests pass (CI/CD test)
+- id: test_repo_shell_output_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Bun shell output tests pass (CI/CD test)
 rubric:
-  - rule: "shell.zig: Add jsobjs_len field to Lexer struct and jsobjs_len parameter to new() function for bounds checking"
-    source:
-      path: "src/shell/shell.zig"
-      lines: "2337-2377"
-      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
-    reference: "jsobjs_len: u32 = 0"
-
-  - rule: "shell.zig: Update validateJSObjRefIdx to check against jsobjs_len instead of maxInt(u32)"
-    source:
-      path: "src/shell/shell.zig"
-      lines: "3363-3370"
-      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
-    reference: "if (idx >= self.jsobjs_len)"
-
-  - rule: "interpreter.zig: Calculate jsobjs_len and pass to Lexer.new() calls"
-    source:
-      path: "src/shell/interpreter.zig"
-      lines: "792-805"
-      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
-    reference: "jsobjs_len: u32 = @intCast(jsobjs.len)"
-
-  - rule: "Builtin.zig: Add bounds check for JS object references before accessing interpreter.jsobjs"
-    source:
-      path: "src/shell/Builtin.zig"
-      lines: "510-525"
-      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
-    reference: "if (file.jsbuf.idx >= interpreter.jsobjs.len)"
-
-  - rule: "Cmd.zig: Add bounds check for JS object references before accessing this.base.interpreter.jsobjs"
-    source:
-      path: "src/shell/states/Cmd.zig"
-      lines: "1-50"
-      commit: "f06119ad0cd49bba93908329ef5e53a39c50fb70"
-    reference: "if (val.idx >= this.base.interpreter.jsobjs.len)"
+- rule: 'shell.zig: Add jsobjs_len field to Lexer struct and jsobjs_len parameter
+    to new() function for bounds checking'
+  source:
+    path: src/shell/shell.zig
+    lines: 2337-2377
+    commit: f06119ad0cd49bba93908329ef5e53a39c50fb70
+  reference: 'jsobjs_len: u32 = 0'
+- rule: 'shell.zig: Update validateJSObjRefIdx to check against jsobjs_len instead
+    of maxInt(u32)'
+  source:
+    path: src/shell/shell.zig
+    lines: 3363-3370
+    commit: f06119ad0cd49bba93908329ef5e53a39c50fb70
+  reference: if (idx >= self.jsobjs_len)
+- rule: 'interpreter.zig: Calculate jsobjs_len and pass to Lexer.new() calls'
+  source:
+    path: src/shell/interpreter.zig
+    lines: 792-805
+    commit: f06119ad0cd49bba93908329ef5e53a39c50fb70
+  reference: 'jsobjs_len: u32 = @intCast(jsobjs.len)'
+- rule: 'Builtin.zig: Add bounds check for JS object references before accessing interpreter.jsobjs'
+  source:
+    path: src/shell/Builtin.zig
+    lines: 510-525
+    commit: f06119ad0cd49bba93908329ef5e53a39c50fb70
+  reference: if (file.jsbuf.idx >= interpreter.jsobjs.len)
+- rule: 'Cmd.zig: Add bounds check for JS object references before accessing this.base.interpreter.jsobjs'
+  source:
+    path: src/shell/states/Cmd.zig
+    lines: 1-50
+    commit: f06119ad0cd49bba93908329ef5e53a39c50fb70
+  reference: if (val.idx >= this.base.interpreter.jsobjs.len)
+- rule: 'Decl literals in Zig are recommended. `const decl: Decl = .{ .binding = 0,
+    .value = 0 };`'
+  source:
+    path: src/CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution uses the anonymous struct literal `.{}` when calling
+    `globalObject.throw("Invalid JS object reference in shell", .{})` in both `Builtin.zig`
+    and `Cmd.zig`.
+  category: style
+distractors:
+- rule: 'Private fields are fully supported in Zig with the `#` prefix. `struct {
+    #foo: u32 };` makes a struct with a private field named `#foo`.'
+  collision_type: meta_confusion
+  why_distracting: The agent is adding a new internal field `jsobjs_len` to the `Lexer`
+    struct for bounds validation. It might be tempted to name it `#jsobjs_len` to
+    make it private. However, this field needs to be initialized in the `new` function
+    and copied to sublexers, and mixing `#` fields with regular fields like `string_refs`
+    in this struct would be inconsistent and potentially cause compilation issues.
+  severity: medium
+  source:
+    path: src/CLAUDE.md
+    lines: 4-5
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: would_cause_bug
+  why_distracting: The agent needs to fix the bounds check `idx >= std.math.maxInt(u32)`.
+    Seeing the rule to avoid `std.*`, the agent might mistakenly think the bug is
+    merely the usage of `std.math` and try to replace it with a `bun` equivalent or
+    hardcoded max integer, failing to realize the logic itself must change to check
+    the actual array length.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 15-16
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    `test/regression/issue/${issueNumber}.test.ts`.
+  collision_type: rule_conflict
+  why_distracting: The prompt describes a bug but provides no issue number. An agent
+    might try to create a test file with a fake issue number (e.g., `issue/9999.test.ts`),
+    which explicitly violates the instruction to ensure the issue number is REAL and
+    not a placeholder.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 25-26
+hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` focusing on testing
+  and build commands, and a `src/CLAUDE.md` focusing on Zig conventions and Bun-specific
+  APIs. The agent must navigate the testing rules by realizing that without an issue
+  number, it shouldn't create a regression test with a placeholder. It must also apply
+  Zig conventions carefully, avoiding the temptation to use the `#` private field
+  feature for a simple struct property that needs to be initialized publicly.

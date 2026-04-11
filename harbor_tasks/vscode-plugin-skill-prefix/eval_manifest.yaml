@@ -1,102 +1,94 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/vscode"
+  repo: microsoft/vscode
   pr: 307305
-  base_commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
-  merge_commit: "b826afb9f0b1a201e426d93b954224be11003763"
-
+  base_commit: 559cb3e74d075670b9a03f84751e8fdcd3c52443
+  merge_commit: b826afb9f0b1a201e426d93b954224be11003763
 checks:
-  - id: plugin_prefix_in_discovery
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Plugin skills get canonical plugin prefix applied during slash command discovery"
-
-  - id: frontmatter_override_prefixed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Even when SKILL.md frontmatter overrides the name, plugin prefix is preserved"
-
-  - id: type_signature_widened
-    type: fail_to_pass
-    origin: pr_diff
-    description: "getCanonicalPluginCommandId accepts structural type with uri, not just IAgentPlugin"
-
-  - id: plugin_source_guard
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Prefix is only applied for Plugin sources, not all prompt sources"
-
-  - id: test_repo_build_scripts
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's build scripts tests pass (npm run test-build-scripts)"
-
-  - id: test_repo_build_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's build directory TypeScript typecheck passes (npm run typecheck in build/)"
-
-  - id: test_repo_compile_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's TypeScript native compile check passes (npm run compile-check-ts-native)"
-
-  - id: test_repo_ts_syntax_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified TypeScript files have valid syntax"
-
-  - id: non_plugin_sources_unaffected
-    type: pass_to_pass
-    origin: static
-    description: "Non-plugin sources still use unmodified name (no false prefix application)"
-
-  - id: canonical_function_still_exported
-    type: pass_to_pass
-    origin: static
-    description: "getCanonicalPluginCommandId remains exported with basename and normalizePluginToken"
-
-  - id: no_arrow_function_for_export
-    type: pass_to_pass
-    origin: agent_config
-    description: "Exported function uses function keyword, not arrow expression"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "126"
-      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
-
-  - id: tab_indentation_in_modified_files
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified files use tab indentation"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "72"
-      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
-
-  - id: single_quotes_for_strings
-    type: pass_to_pass
-    origin: agent_config
-    description: "Non-localized strings use single quotes"
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "94"
-      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
-
+- id: plugin_prefix_in_discovery
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin skills get canonical plugin prefix applied during slash command
+    discovery
+- id: frontmatter_override_prefixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Even when SKILL.md frontmatter overrides the name, plugin prefix is
+    preserved
+- id: type_signature_widened
+  type: fail_to_pass
+  origin: pr_diff
+  description: getCanonicalPluginCommandId accepts structural type with uri, not just
+    IAgentPlugin
+- id: plugin_source_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: Prefix is only applied for Plugin sources, not all prompt sources
+- id: test_repo_build_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build scripts tests pass (npm run test-build-scripts)
+- id: test_repo_build_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build directory TypeScript typecheck passes (npm run typecheck
+    in build/)
+- id: test_repo_compile_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript native compile check passes (npm run compile-check-ts-native)
+- id: test_repo_ts_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax
+- id: non_plugin_sources_unaffected
+  type: pass_to_pass
+  origin: static
+  description: Non-plugin sources still use unmodified name (no false prefix application)
+- id: canonical_function_still_exported
+  type: pass_to_pass
+  origin: static
+  description: getCanonicalPluginCommandId remains exported with basename and normalizePluginToken
+- id: no_arrow_function_for_export
+  type: pass_to_pass
+  origin: agent_config
+  description: Exported function uses function keyword, not arrow expression
+  source:
+    path: .github/copilot-instructions.md
+    lines: '126'
+    commit: 559cb3e74d075670b9a03f84751e8fdcd3c52443
+- id: tab_indentation_in_modified_files
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files use tab indentation
+  source:
+    path: .github/copilot-instructions.md
+    lines: '72'
+    commit: 559cb3e74d075670b9a03f84751e8fdcd3c52443
+- id: single_quotes_for_strings
+  type: pass_to_pass
+  origin: agent_config
+  description: Non-localized strings use single quotes
+  source:
+    path: .github/copilot-instructions.md
+    lines: '94'
+    commit: 559cb3e74d075670b9a03f84751e8fdcd3c52443
 rubric:
-  - rule: "Use whole words in names instead of abbreviations."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "80"
-      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
-  - rule: "Use tabs, not spaces, for indentation."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "72"
-      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
-  - rule: "Don't export types/functions unless shared across components."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "84"
-      commit: "559cb3e74d075670b9a03f84751e8fdcd3c52443"
+- rule: Use whole words in names instead of abbreviations.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '80'
+    commit: 559cb3e74d075670b9a03f84751e8fdcd3c52443
+- rule: Use tabs, not spaces, for indentation.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '72'
+    commit: 559cb3e74d075670b9a03f84751e8fdcd3c52443
+- rule: Don't export types/functions unless shared across components.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '84'
+    commit: 559cb3e74d075670b9a03f84751e8fdcd3c52443
+hierarchy_analysis: The provided configuration hierarchy only contains a root `AGENTS.md`
+  file with 0 rules. No other configuration files apply to the modified source files.
+  Therefore, there are no rules to analyze for hierarchy conflicts or overrides.

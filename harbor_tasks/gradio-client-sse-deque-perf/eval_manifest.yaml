@@ -1,100 +1,106 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "gradio-app/gradio"
+  repo: gradio-app/gradio
   pr: 12942
-  base_commit: "83b223b746c3933920dfef670e545a12de9177ed"
-  merge_commit: "e5ba4fa992c0ac389c6af2d143c9ad4c33eea360"
-
+  base_commit: 83b223b746c3933920dfef670e545a12de9177ed
+  merge_commit: e5ba4fa992c0ac389c6af2d143c9ad4c33eea360
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Both modified files must parse without syntax errors"
-
-  - id: stream_sse_deque_single
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stream_sse_v1plus consumes a single message from a deque via popleft"
-
-  - id: stream_sse_deque_fifo
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Multiple messages consumed in FIFO order from deque via popleft"
-
-  - id: stream_sse_deque_varied_protocols
-    type: fail_to_pass
-    origin: pr_diff
-    description: "stream_sse_v1plus works with deque across sse_v1, sse_v2, sse_v2.1"
-
-  - id: pending_init_uses_deque
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pending_messages_per_event must be initialized with deque(), not list()"
-
-  - id: type_annotation_uses_deque
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Type annotations for pending_messages_per_event use deque, not list"
-
-  - id: imports_ok
-    type: pass_to_pass
-    origin: static
-    description: "gradio_client modules import without errors"
-
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "Modified files are not empty or stubbed out"
-
-  - id: repo_no_syntax_errors
-    type: pass_to_pass
-    origin: static
-    description: "Repository Python files have no syntax errors"
-
-  - id: repo_imports_gradio_client
-    type: pass_to_pass
-    origin: static
-    description: "gradio_client package imports without errors"
-
-  - id: repo_utils_api_intact
-    type: pass_to_pass
-    origin: static
-    description: "Utils module public API is intact"
-
-  - id: repo_type_annotations_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified files have valid Python type annotations"
-
-  - id: repo_no_undefined_names
-    type: pass_to_pass
-    origin: static
-    description: "No undefined name references in modified files"
-
-  - id: repo_ruff_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository Python files pass ruff syntax checks (E9,F63,F7,F82)"
-
-  - id: repo_ast_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified files produce valid AST with no syntax errors"
-
-  - id: repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repository Python files pass ruff format check"
-
-  - id: repo_imports_gradio_client_subprocess
-    type: pass_to_pass
-    origin: repo_tests
-    description: "gradio_client package imports via subprocess without errors"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modified files must parse without syntax errors
+- id: stream_sse_deque_single
+  type: fail_to_pass
+  origin: pr_diff
+  description: stream_sse_v1plus consumes a single message from a deque via popleft
+- id: stream_sse_deque_fifo
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple messages consumed in FIFO order from deque via popleft
+- id: stream_sse_deque_varied_protocols
+  type: fail_to_pass
+  origin: pr_diff
+  description: stream_sse_v1plus works with deque across sse_v1, sse_v2, sse_v2.1
+- id: pending_init_uses_deque
+  type: fail_to_pass
+  origin: pr_diff
+  description: pending_messages_per_event must be initialized with deque(), not list()
+- id: type_annotation_uses_deque
+  type: fail_to_pass
+  origin: pr_diff
+  description: Type annotations for pending_messages_per_event use deque, not list
+- id: imports_ok
+  type: pass_to_pass
+  origin: static
+  description: gradio_client modules import without errors
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files are not empty or stubbed out
+- id: repo_no_syntax_errors
+  type: pass_to_pass
+  origin: static
+  description: Repository Python files have no syntax errors
+- id: repo_imports_gradio_client
+  type: pass_to_pass
+  origin: static
+  description: gradio_client package imports without errors
+- id: repo_utils_api_intact
+  type: pass_to_pass
+  origin: static
+  description: Utils module public API is intact
+- id: repo_type_annotations_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified files have valid Python type annotations
+- id: repo_no_undefined_names
+  type: pass_to_pass
+  origin: static
+  description: No undefined name references in modified files
+- id: repo_ruff_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository Python files pass ruff syntax checks (E9,F63,F7,F82)
+- id: repo_ast_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified files produce valid AST with no syntax errors
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository Python files pass ruff format check
+- id: repo_imports_gradio_client_subprocess
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client package imports via subprocess without errors
 rubric:
-  - rule: "Be consistent with the style of the surrounding code."
-    source:
-      path: "AGENTS.md"
-      lines: "45"
-      commit: "83b223b746c3933920dfef670e545a12de9177ed"
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 83b223b746c3933920dfef670e545a12de9177ed
+distractors:
+- rule: 'Format your code before pushing. Backend: bash scripts/format_backend.sh'
+  collision_type: scope_ambiguity
+  why_distracting: The instruction to run `bash scripts/format_backend.sh` might cause
+    the agent to reformat entire files. If the repository's formatting is slightly
+    out of sync with the script, this will introduce unrelated formatting changes
+    and pollute the PR diff. The agent should only ensure its own changes are formatted
+    correctly.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 26-27
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The instruction to 'create an issue first' if one doesn't exist
+    is impossible in a disconnected evaluation environment. An agent might waste time
+    attempting to use tools to interact with the GitHub API to create an issue before
+    writing code.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 15-16
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level,
+  so there are no hierarchy conflicts. The rules apply globally to the repository.

@@ -2,91 +2,112 @@ source_pr:
   owner: All-Hands-AI
   repo: OpenHands
   number: 13580
-  title: "APP-1093 fix(frontend): display 'Starting' status when server reports STARTING on conversation resume"
+  title: 'APP-1093 fix(frontend): display ''Starting'' status when server reports
+    STARTING on conversation resume'
   merge_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
   base_commit: 0b935669f35dff09303f42daf3e39c4cbb2678ed
-
 checks:
-  # Fail-to-pass tests (core behavioral fixes)
-  - id: test_conversation_starting_priority_with_disconnected_websocket
-    type: fail_to_pass
-    origin: behavioral
-    description: "When conversation is STARTING with DISCONNECTED WebSocket, should show 'Starting' not 'Disconnected'"
-
-  - id: test_conversation_starting_priority_with_connected_websocket
-    type: fail_to_pass
-    origin: behavioral
-    description: "When conversation is STARTING with CONNECTED WebSocket, should show 'Starting' not runtime status"
-
-  - id: test_conversation_starting_check_in_code
-    type: fail_to_pass
-    origin: structural
-    description: "The conversationStatus === 'STARTING' check must exist in status.ts"
-
-  - id: test_priority_comment_in_code
-    type: fail_to_pass
-    origin: structural
-    description: "The PRIORITY 2.5 comment explaining the fix must exist"
-
-  - id: test_new_test_case_added
-    type: fail_to_pass
-    origin: structural
-    description: "The test file must include the new test case for STARTING with disconnected websocket"
-
-  # Pass-to-pass tests - file existence checks (origin: static)
-  - id: test_status_utility_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "The status.ts utility file exists"
-
-  - id: test_test_file_exists
-    type: pass_to_pass
-    origin: static
-    description: "The status.test.ts test file exists"
-
-  # Pass-to-pass tests - repo CI/CD gates (origin: repo_tests)
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo TypeScript typecheck passes (npm run typecheck)"
-
-  - id: test_repo_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo unit tests pass (npm test -- --run)"
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo frontend build passes (npm run build)"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo lint checks pass (npm run lint)"
-
-  - id: test_repo_status_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Status utility-specific tests pass (npm test -- --run status.test.ts)"
-
-  - id: test_repo_translation_completeness
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Translation completeness check passes (npm run check-translation-completeness)"
-
-# No agent configs were found in this repo at the base commit
+- id: test_conversation_starting_priority_with_disconnected_websocket
+  type: fail_to_pass
+  origin: behavioral
+  description: When conversation is STARTING with DISCONNECTED WebSocket, should show
+    'Starting' not 'Disconnected'
+- id: test_conversation_starting_priority_with_connected_websocket
+  type: fail_to_pass
+  origin: behavioral
+  description: When conversation is STARTING with CONNECTED WebSocket, should show
+    'Starting' not runtime status
+- id: test_conversation_starting_check_in_code
+  type: fail_to_pass
+  origin: structural
+  description: The conversationStatus === 'STARTING' check must exist in status.ts
+- id: test_priority_comment_in_code
+  type: fail_to_pass
+  origin: structural
+  description: The PRIORITY 2.5 comment explaining the fix must exist
+- id: test_new_test_case_added
+  type: fail_to_pass
+  origin: structural
+  description: The test file must include the new test case for STARTING with disconnected
+    websocket
+- id: test_status_utility_file_exists
+  type: pass_to_pass
+  origin: static
+  description: The status.ts utility file exists
+- id: test_test_file_exists
+  type: pass_to_pass
+  origin: static
+  description: The status.test.ts test file exists
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes (npm run typecheck)
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests pass (npm test -- --run)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo frontend build passes (npm run build)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo lint checks pass (npm run lint)
+- id: test_repo_status_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Status utility-specific tests pass (npm test -- --run status.test.ts)
+- id: test_repo_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Translation completeness check passes (npm run check-translation-completeness)
 agent_config: []
-
 rubric:
-  - rule: "Pre-commit hooks must pass before pushing changes. For frontend changes, run: npm run lint:fix && npm run build"
-    source:
-      path: "AGENTS.md"
-      lines: "24-30"
-      commit: "0b935669f35dff09303f42daf3e39c4cbb2678ed"
-
-  - rule: "Follow existing code style in the frontend. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "104-107"
-      commit: "0b935669f35dff09303f42daf3e39c4cbb2678ed"
+- rule: 'Pre-commit hooks must pass before pushing changes. For frontend changes,
+    run: npm run lint:fix && npm run build'
+  source:
+    path: AGENTS.md
+    lines: 24-30
+    commit: 0b935669f35dff09303f42daf3e39c4cbb2678ed
+- rule: Follow existing code style in the frontend. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: 104-107
+    commit: 0b935669f35dff09303f42daf3e39c4cbb2678ed
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
+  source:
+    path: AGENTS.md
+    lines: 15-16
+  evidence: The gold solution updates `frontend/__tests__/utils/status.test.ts` to
+    modify existing tests and add a new test specifically for the disconnected websocket
+    scenario, ensuring that the test suite passe
+  category: testing
+distractors:
+- rule: When working on a PR that requires design documents, scripts meant for development-only,
+    or other temporary artifacts... store them in a `.pr/` directory
+  collision_type: scope_ambiguity
+  why_distracting: An agent might interpret this bug investigation as requiring an
+    analysis document and create a `.pr/analysis.md` file to document the WebSocket
+    vs conversation status priority. However, this is a straightforward bug fix that
+    does not warrant temporary PR artifacts, and creating one would be a waste of
+    effort.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 32-34
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run `make build` to set up and test
+    the entire repository after making the frontend changes. This is unnecessary and
+    wastes time, as the prompt provides specific, isolated testing instructions (`npm
+    test -- status.test.ts`) for the frontend.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 4-6
+hierarchy_analysis: The repository has a single root-level `AGENTS.md` configuration
+  file. The rules provided are general repository guidelines. The agent must balance
+  the general instruction to run full builds or create PR artifacts against the specific,
+  localized nature of this frontend bug fix.

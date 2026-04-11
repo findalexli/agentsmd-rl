@@ -1,136 +1,159 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "inclusionAI/AReaL"
+  repo: inclusionAI/AReaL
   pr: 970
-  base_commit: "03d71153a72581d83df72d69c30586a41ba71665"
-  merge_commit: "84eaef1292b2a3184d4a565d4abb0758408be018"
-
+  base_commit: 03d71153a72581d83df72d69c30586a41ba71665
+  merge_commit: 84eaef1292b2a3184d4a565d4abb0758408be018
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (cli_args.py, data.py) must parse without errors"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python files must be formatted correctly (from format-check.yml)"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python files must pass ruff linting (from format-check.yml)"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Modified Python files must parse as valid AST"
-
-  - id: normconfig_rejects_invalid_mean_level
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NormConfig raises ValueError for invalid mean_level at construction"
-
-  - id: normconfig_rejects_invalid_std_level
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NormConfig raises ValueError for invalid std_level at construction"
-
-  - id: normconfig_rejects_bad_group_size
-    type: fail_to_pass
-    origin: pr_diff
-    description: "NormConfig rejects group_size<=0 when using group normalization"
-
-  - id: ppo_rejects_negative_sapo_temperature
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PPOActorConfig rejects negative/zero SAPO temperatures"
-
-  - id: ppo_rejects_sapo_with_decoupled_loss
-    type: fail_to_pass
-    origin: pr_diff
-    description: "PPOActorConfig rejects use_sapo_loss + use_decoupled_loss combo"
-
-  - id: base_experiment_rejects_bad_epochs
-    type: fail_to_pass
-    origin: pr_diff
-    description: "BaseExperimentConfig rejects total_train_epochs <= 0"
-
-  - id: valid_normconfig_constructs
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Valid NormConfig values construct without error"
-
-  - id: normalization_init_no_redundant_validation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Normalization.__init__ no longer validates mean_level/std_level"
-
-  - id: validation_uses_valueerror
-    type: pass_to_pass
-    origin: agent_config
-    description: "Config __post_init__ methods raise ValueError"
-    source:
-      path: "AGENTS.md"
-      lines: "156"
-      commit: "03d71153a72581d83df72d69c30586a41ba71665"
-
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports in modified files"
-    source:
-      path: "CLAUDE.md"
-      lines: "88"
-      commit: "03d71153a72581d83df72d69c30586a41ba71665"
-
-  - id: normconfig_postinit_not_stub
-    type: pass_to_pass
-    origin: pr_diff
-    description: "NormConfig.__post_init__ has real validation, not a stub"
-
-  - id: ppo_postinit_calls_super
-    type: pass_to_pass
-    origin: pr_diff
-    description: "PPOActorConfig.__post_init__ calls super().__post_init__()"
-
-  - id: postinit_methods_have_docstrings
-    type: pass_to_pass
-    origin: agent_config
-    description: "New/modified __post_init__ methods have docstrings"
-    source:
-      path: "AGENTS.md"
-      lines: "159-160"
-      commit: "03d71153a72581d83df72d69c30586a41ba71665"
-
-  - id: no_print_calls_in_modified_files
-    type: pass_to_pass
-    origin: agent_config
-    description: "No print() calls in modified files (use areal.utils.logging instead)"
-    source:
-      path: "AGENTS.md"
-      lines: "84-86"
-      commit: "03d71153a72581d83df72d69c30586a41ba71665"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (cli_args.py, data.py) must parse without errors
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files must be formatted correctly (from format-check.yml)
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files must pass ruff linting (from format-check.yml)
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse as valid AST
+- id: normconfig_rejects_invalid_mean_level
+  type: fail_to_pass
+  origin: pr_diff
+  description: NormConfig raises ValueError for invalid mean_level at construction
+- id: normconfig_rejects_invalid_std_level
+  type: fail_to_pass
+  origin: pr_diff
+  description: NormConfig raises ValueError for invalid std_level at construction
+- id: normconfig_rejects_bad_group_size
+  type: fail_to_pass
+  origin: pr_diff
+  description: NormConfig rejects group_size<=0 when using group normalization
+- id: ppo_rejects_negative_sapo_temperature
+  type: fail_to_pass
+  origin: pr_diff
+  description: PPOActorConfig rejects negative/zero SAPO temperatures
+- id: ppo_rejects_sapo_with_decoupled_loss
+  type: fail_to_pass
+  origin: pr_diff
+  description: PPOActorConfig rejects use_sapo_loss + use_decoupled_loss combo
+- id: base_experiment_rejects_bad_epochs
+  type: fail_to_pass
+  origin: pr_diff
+  description: BaseExperimentConfig rejects total_train_epochs <= 0
+- id: valid_normconfig_constructs
+  type: pass_to_pass
+  origin: pr_diff
+  description: Valid NormConfig values construct without error
+- id: normalization_init_no_redundant_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Normalization.__init__ no longer validates mean_level/std_level
+- id: validation_uses_valueerror
+  type: pass_to_pass
+  origin: agent_config
+  description: Config __post_init__ methods raise ValueError
+  source:
+    path: AGENTS.md
+    lines: '156'
+    commit: 03d71153a72581d83df72d69c30586a41ba71665
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified files
+  source:
+    path: CLAUDE.md
+    lines: '88'
+    commit: 03d71153a72581d83df72d69c30586a41ba71665
+- id: normconfig_postinit_not_stub
+  type: pass_to_pass
+  origin: pr_diff
+  description: NormConfig.__post_init__ has real validation, not a stub
+- id: ppo_postinit_calls_super
+  type: pass_to_pass
+  origin: pr_diff
+  description: PPOActorConfig.__post_init__ calls super().__post_init__()
+- id: postinit_methods_have_docstrings
+  type: pass_to_pass
+  origin: agent_config
+  description: New/modified __post_init__ methods have docstrings
+  source:
+    path: AGENTS.md
+    lines: 159-160
+    commit: 03d71153a72581d83df72d69c30586a41ba71665
+- id: no_print_calls_in_modified_files
+  type: pass_to_pass
+  origin: agent_config
+  description: No print() calls in modified files (use areal.utils.logging instead)
+  source:
+    path: AGENTS.md
+    lines: 84-86
+    commit: 03d71153a72581d83df72d69c30586a41ba71665
 rubric:
-  - rule: "Follow existing code patterns in the same module"
-    source:
-      path: "CLAUDE.md"
-      lines: "71"
-      commit: "03d71153a72581d83df72d69c30586a41ba71665"
-  - rule: "Prefer composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation"
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "03d71153a72581d83df72d69c30586a41ba71665"
-  - rule: "All public configs need docstrings with constraints"
-    source:
-      path: "AGENTS.md"
-      lines: "159-160"
-      commit: "03d71153a72581d83df72d69c30586a41ba71665"
-  - rule: "Backward compat: add fields with defaults; deprecate before removing; avoid type changes"
-    source:
-      path: "AGENTS.md"
-      lines: "157-158"
-      commit: "03d71153a72581d83df72d69c30586a41ba71665"
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: '71'
+    commit: 03d71153a72581d83df72d69c30586a41ba71665
+- rule: Prefer composition over inheritance -- keep hierarchies <= 2 levels; prefer
+    delegation
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 03d71153a72581d83df72d69c30586a41ba71665
+- rule: All public configs need docstrings with constraints
+  source:
+    path: AGENTS.md
+    lines: 159-160
+    commit: 03d71153a72581d83df72d69c30586a41ba71665
+- rule: 'Backward compat: add fields with defaults; deprecate before removing; avoid
+    type changes'
+  source:
+    path: AGENTS.md
+    lines: 157-158
+    commit: 03d71153a72581d83df72d69c30586a41ba71665
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: '26'
+  evidence: 'The gold solution calls `super().__post_init__()` at the end of the overridden
+    `__post_init__` methods in `PPOActorConfig` and `EvalGenerationConfig` to ensure
+    parent class validations are preserved, '
+  category: architecture
+- rule: Add tests for new functionality.
+  source:
+    path: AGENTS.md
+    lines: '27'
+  evidence: The gold solution modifies `tests/test_adv_norm_config.py` and `tests/test_prox_approx.py`
+    to align the test suite with the new validation timing (failing at config instantiation
+    rather than downstrea
+  category: testing
+distractors:
+- rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
+  collision_type: rule_conflict
+  why_distracting: The user explicitly instructed the agent to add validation to dataclasses
+    in `areal/api/cli_args.py`. Following this rule and pausing to ask for permission
+    would waste a turn and ignore the direct instruction.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 32-34
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to refactor the existing inheritance hierarchy
+    of `PPOActorConfig` or `EvalGenerationConfig` into composition while adding the
+    `__post_init__` methods, which is out of scope and would break existing downstream
+    code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '56'
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain the strict rule to 'Ask
+  first' before modifying `areal/api/cli_args.py`. However, the specific task instructions
+  explicitly command the agent to modify this exact file. The agent must recognize
+  that explicit prompt instructions supersede the 'Ask first' guidelines in the repository's
+  agent instructions.

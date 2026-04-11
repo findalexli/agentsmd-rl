@@ -1,84 +1,107 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "huggingface/transformers"
+  repo: huggingface/transformers
   pr: 44803
-  base_commit: "8dc7a52d766efe76c121c0654a5d24d633bffe9e"
-  merge_commit: "28e1cc59ecf479ea674f2cc4b443a2969aae3a69"
-
+  base_commit: 8dc7a52d766efe76c121c0654a5d24d633bffe9e
+  merge_commit: 28e1cc59ecf479ea674f2cc4b443a2969aae3a69
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified file must parse without syntax errors"
-
-  - id: docstring_params_match_class_annotations
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Every documented parameter must be an actual class annotation"
-
-  - id: new_mamba_params_documented
-    type: fail_to_pass
-    origin: pr_diff
-    description: "n_groups, expand, use_conv_bias, chunk_size must be documented"
-
-  - id: old_deprecated_names_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: "mamba_dt_* alias names must not appear as documented params"
-
-  - id: existing_params_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Pre-existing documented params remain in docstring"
-
-  - id: backward_compat_aliases_in_post_init
-    type: pass_to_pass
-    origin: pr_diff
-    description: "__post_init__ still handles mamba_dt_* backward-compat aliases"
-
-  - id: annotation_defaults_consistent
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Class annotations for n_groups, expand, use_conv_bias, chunk_size have correct defaults"
-
-  - id: ruff_format
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified file passes ruff format check"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "8dc7a52d766efe76c121c0654a5d24d633bffe9e"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff linter passes on the modified file"
-
-  - id: test_repo_ruff_format_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's ruff format check passes on the modified file"
-
-  - id: test_repo_check_inits
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's init file consistency check passes"
-
-  - id: test_repo_check_dummies
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's dummy objects check passes"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without syntax errors
+- id: docstring_params_match_class_annotations
+  type: fail_to_pass
+  origin: pr_diff
+  description: Every documented parameter must be an actual class annotation
+- id: new_mamba_params_documented
+  type: fail_to_pass
+  origin: pr_diff
+  description: n_groups, expand, use_conv_bias, chunk_size must be documented
+- id: old_deprecated_names_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: mamba_dt_* alias names must not appear as documented params
+- id: existing_params_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pre-existing documented params remain in docstring
+- id: backward_compat_aliases_in_post_init
+  type: pass_to_pass
+  origin: pr_diff
+  description: __post_init__ still handles mamba_dt_* backward-compat aliases
+- id: annotation_defaults_consistent
+  type: pass_to_pass
+  origin: pr_diff
+  description: Class annotations for n_groups, expand, use_conv_bias, chunk_size have
+    correct defaults
+- id: ruff_format
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file passes ruff format check
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: 8dc7a52d766efe76c121c0654a5d24d633bffe9e
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on the modified file
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on the modified file
+- id: test_repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's init file consistency check passes
+- id: test_repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dummy objects check passes
 rubric:
-  - rule: "Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`."
-    source:
-      path: "CLAUDE.md"
-      lines: "66"
-      commit: "8dc7a52d766efe76c121c0654a5d24d633bffe9e"
-  - rule: "When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`."
-    source:
-      path: "CLAUDE.md"
-      lines: "67"
-      commit: "8dc7a52d766efe76c121c0654a5d24d633bffe9e"
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: 8dc7a52d766efe76c121c0654a5d24d633bffe9e
+- rule: When a `modular` file is present, generated files should not be edited, as
+    changes will be overwritten by `make fix-repo`.
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 8dc7a52d766efe76c121c0654a5d24d633bffe9e
+- rule: '`make check-repo` — CI-style consistency checks'
+  source:
+    path: CLAUDE.md
+    lines: 5-5
+  evidence: The gold solution manually updates the docstring parameters (`n_groups`,
+    `expand`, `use_conv_bias`, `chunk_size`) to match the actual class attributes,
+    which directly resolves the `check_docstrings` f
+  category: documentation
+distractors:
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits (single
+    typo, isolated lint cleanup, one mutable default argument, etc.).'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might refuse to fix the docstring mismatch, classifying
+    it as a 'tiny edit' or 'isolated lint cleanup'. However, this mismatch causes
+    the CI (`make check-repo`) to fail, making it a necessary build-breaking fix rather
+    than an optional low-value busywork PR.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 35-37
+- rule: '`make fix-repo`: auto-fixes copies, modular conversions, doc TOCs, docstrings
+    in addition to the `make style` fixes'
+  collision_type: meta_confusion
+  why_distracting: The agent might rely entirely on running `make fix-repo` to fix
+    the issue, assuming the tool will automatically correct the docstring. However,
+    while the tool can flag the mismatch or format existing text, it cannot infer
+    the natural language descriptions for the new parameters (`n_groups`, `expand`,
+    etc.), so manual intervention is required.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 4-4
+hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
+  in content at Level 0. There are no conflicts between the files, and they provide
+  consistent guidance on repository tooling and contribution policies.

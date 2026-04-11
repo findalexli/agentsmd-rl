@@ -2,75 +2,85 @@ source_pr:
   owner: ClickHouse
   repo: ClickHouse
   number: 102158
-  title: "Add MSan support for fibers and fix dragonbox struct padding"
+  title: Add MSan support for fibers and fix dragonbox struct padding
   merge_commit: 231542d8cbfd94a8a73cd0a8f436a7227847d3a3
   base_commit: 97e4a1a630071d7b2ec74b2639d0d6727f8034c9
-
 checks:
-  # Fail-to-pass tests (verify the fix works)
-  - id: test_cmake_boost_use_msan_defined
-    type: fail_to_pass
-    origin: behavior
-    description: "CMakeLists.txt defines BOOST_USE_MSAN for memory sanitizer builds"
-
-  - id: test_fiber_h_comment_updated
-    type: fail_to_pass
-    origin: behavior
-    description: "Fiber.h comment mentions BOOST_USE_MSAN and updated explanation"
-
-  - id: test_fiber_stack_cpp_comment_explains_msan_unpoison
-    type: fail_to_pass
-    origin: behavior
-    description: "FiberStack.cpp comment explains MSan struct padding issue"
-
-  - id: test_dragonbox_msan_test_file_exists
-    type: fail_to_pass
-    origin: behavior
-    description: "gtest_dragonbox_msan.cpp test file exists with correct content"
-
-  # Pass-to-pass tests (verify existing functionality still works)
-  - id: test_repo_style_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "PR-modified files pass ClickHouse C++ style check via check_cpp.sh"
-
-  - id: test_repo_various_checks
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ClickHouse repo passes various_checks.sh validation"
-
-  - id: test_repo_cmake_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CMakeLists.txt has valid CMake syntax validated with cmake"
-
-  - id: test_repo_clang_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C++ files have valid syntax checked with clang -fsyntax-only"
-
-  - id: test_repo_git_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository is in valid state with proper base commit"
-
-# Agent config checks (from applicable config files)
+- id: test_cmake_boost_use_msan_defined
+  type: fail_to_pass
+  origin: behavior
+  description: CMakeLists.txt defines BOOST_USE_MSAN for memory sanitizer builds
+- id: test_fiber_h_comment_updated
+  type: fail_to_pass
+  origin: behavior
+  description: Fiber.h comment mentions BOOST_USE_MSAN and updated explanation
+- id: test_fiber_stack_cpp_comment_explains_msan_unpoison
+  type: fail_to_pass
+  origin: behavior
+  description: FiberStack.cpp comment explains MSan struct padding issue
+- id: test_dragonbox_msan_test_file_exists
+  type: fail_to_pass
+  origin: behavior
+  description: gtest_dragonbox_msan.cpp test file exists with correct content
+- id: test_repo_style_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: PR-modified files pass ClickHouse C++ style check via check_cpp.sh
+- id: test_repo_various_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse repo passes various_checks.sh validation
+- id: test_repo_cmake_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: CMakeLists.txt has valid CMake syntax validated with cmake
+- id: test_repo_clang_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ files have valid syntax checked with clang -fsyntax-only
+- id: test_repo_git_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is in valid state with proper base commit
 agent_config:
-  - id: allman_braces_style
-    file: ".claude/CLAUDE.md"
-    description: "Use Allman-style braces (opening brace on a new line)"
-    lines: "C++ code, always use Allman-style braces"
-
-  - id: sanitizer_naming
-    file: ".claude/CLAUDE.md"
-    description: "Say ASan/MSan, not ASAN/MSAN (two words: Address/Memory Sanitizer)"
-    lines: "When writing messages, say ASan, not ASAN"
-
-# Rubric for soft/subjective checks
+- id: allman_braces_style
+  file: .claude/CLAUDE.md
+  description: Use Allman-style braces (opening brace on a new line)
+  lines: C++ code, always use Allman-style braces
+- id: sanitizer_naming
+  file: .claude/CLAUDE.md
+  description: 'Say ASan/MSan, not ASAN/MSAN (two words: Address/Memory Sanitizer)'
+  lines: When writing messages, say ASan, not ASAN
 rubric:
-  - id: comment_quality
-    description: "Comments should accurately explain the MSan limitation with struct padding"
-    criteria:
-      - "Explains that MSan tracks shadow per-field, not per-byte"
-      - "Mentions that struct padding shadow is lost through return values"
-      - "Explains why __msan_unpoison is needed for fiber stacks"
+- id: comment_quality
+  description: Comments should accurately explain the MSan limitation with struct
+    padding
+  criteria:
+  - Explains that MSan tracks shadow per-field, not per-byte
+  - Mentions that struct padding shadow is lost through return values
+  - Explains why __msan_unpoison is needed for fiber stacks
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()`
+  source:
+    path: AGENTS.md
+    lines: 9-9
+  evidence: In `src/Common/tests/gtest_dragonbox_msan.cpp`, the comment refers to
+    `FiberStack::allocate` and `__msan_unpoison` without parentheses, following the
+    mathematical purity convention.
+  category: style
+distractors:
+- rule: 'Wrap literal names from ClickHouse SQL language, classes and functions, or
+    literal excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule explicitly mentions 'comments', which might lead an agent
+    to use markdown backticks around `FiberStack::allocate` and `__msan_unpoison`
+    in the C++ comments. However, the gold solution demonstrates that standard C++
+    comments in this codebase do not use markdown backticks for class/function names.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-5
+hierarchy_analysis: The AGENTS.md file provides general guidelines for the repository.
+  The rule regarding function parentheses is correctly applied to C++ comments, but
+  the rule regarding markdown backticks in comments is too broad and does not apply
+  to standard C++ source file comments, creating a scope ambiguity.

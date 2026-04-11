@@ -1,74 +1,103 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "astral-sh/ruff"
+  repo: astral-sh/ruff
   pr: 24377
-  base_commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
-  merge_commit: "1fe1c5f32c8b49eaed0e46439871d98da5081ab9"
-
+  base_commit: 9a55bc6568caeba0c78c6f3358cd2f9475006f72
+  merge_commit: 1fe1c5f32c8b49eaed0e46439871d98da5081ab9
 checks:
-  - id: ruff_builds
-    type: pass_to_pass
-    origin: static
-    description: "Ruff compiles successfully after changes"
-
-  - id: test_repo_cargo_check_formatter
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo check passes on ruff_python_formatter"
-
-  - id: test_repo_cargo_clippy_formatter
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo clippy passes on ruff_python_formatter"
-
-  - id: test_repo_cargo_test_formatter
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's cargo test passes on ruff_python_formatter"
-
-  - id: test_repo_cargo_fmt_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's code formatting passes cargo fmt --check"
-
-  - id: fstring_no_multiline_expansion_pre312
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Non-triple-quoted f-string replacement fields must not expand to multiline on pre-3.12"
-
-  - id: fstring_mixed_fields_pre312
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Already-multiline fields preserved but compact fields stay flat on pre-3.12"
-
-  - id: fstring_multiline_allowed_on_312
-    type: pass_to_pass
-    origin: pr_diff
-    description: "On Python 3.12+, compact f-string fields can still expand to multiline"
-
-  - id: no_unwrap_panic_in_modified_file
-    type: pass_to_pass
-    origin: agent_config
-    description: "No .unwrap()/panic!/unreachable! in production code of modified file"
-    source:
-      path: "AGENTS.md"
-      lines: "79"
-      commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
-
+- id: ruff_builds
+  type: pass_to_pass
+  origin: static
+  description: Ruff compiles successfully after changes
+- id: test_repo_cargo_check_formatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check passes on ruff_python_formatter
+- id: test_repo_cargo_clippy_formatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo clippy passes on ruff_python_formatter
+- id: test_repo_cargo_test_formatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test passes on ruff_python_formatter
+- id: test_repo_cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes cargo fmt --check
+- id: fstring_no_multiline_expansion_pre312
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-triple-quoted f-string replacement fields must not expand to multiline
+    on pre-3.12
+- id: fstring_mixed_fields_pre312
+  type: fail_to_pass
+  origin: pr_diff
+  description: Already-multiline fields preserved but compact fields stay flat on
+    pre-3.12
+- id: fstring_multiline_allowed_on_312
+  type: pass_to_pass
+  origin: pr_diff
+  description: On Python 3.12+, compact f-string fields can still expand to multiline
+- id: no_unwrap_panic_in_modified_file
+  type: pass_to_pass
+  origin: agent_config
+  description: No .unwrap()/panic!/unreachable! in production code of modified file
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 9a55bc6568caeba0c78c6f3358cd2f9475006f72
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "AGENTS.md"
-      lines: "75"
-      commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
-  - rule: "Rust imports should always go at the top of the file, never locally in functions."
-    source:
-      path: "AGENTS.md"
-      lines: "76"
-      commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
-  - rule: "Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way."
-    source:
-      path: "AGENTS.md"
-      lines: "82"
-      commit: "9a55bc6568caeba0c78c6f3358cd2f9475006f72"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 9a55bc6568caeba0c78c6f3358cd2f9475006f72
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 9a55bc6568caeba0c78c6f3358cd2f9475006f72
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: 9a55bc6568caeba0c78c6f3358cd2f9475006f72
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  source:
+    path: AGENTS.md
+    lines: 63-63
+  evidence: The gold solution adds a new test fixture `fstring_multiline_replacement_field.py`
+    and its corresponding `.options.json` file to verify the formatting behavior across
+    different Python versions.
+  category: testing
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  source:
+    path: AGENTS.md
+    lines: 69-69
+  evidence: The gold solution keeps the fix concise by leveraging existing utility
+    methods like `supports_pep_701()`, `is_triple_quoted()`, and `contains_line_break()`
+    rather than writing custom parsing or versio
+  category: architecture
+distractors:
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to append the new f-string test case to an
+    existing test file to follow this rule. However, testing this specific fix requires
+    running the formatter against multiple Python target versions (3.11 and 3.12).
+    In Ruff's testing framework, this requires a dedicated `.options.json` file. Adding
+    the test to an existing file would either fail to test the pre-3.12 behavior or
+    incorrectly alter the target version for unrelated tests.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 64-64
+hierarchy_analysis: 'The configuration hierarchy is flat, with all rules originating
+  from `AGENTS.md` (included via `CLAUDE.md`). The primary tension lies within `AGENTS.md`
+  itself: the rule to reuse existing test files conflicts with the architectural requirement
+  of Ruff''s testing framework, which uses side-by-side `.options.json` files to configure
+  parser/formatter settings per fixture.'

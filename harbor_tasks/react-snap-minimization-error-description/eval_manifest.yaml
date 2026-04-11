@@ -1,77 +1,101 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 35689
-  base_commit: "f84ce5a45c47b1081a09c17eea58c16ef145c113"
-  merge_commit: "90c6d1b218bbe07eeb757ce8777805a9b7f8e3c3"
-
+  base_commit: f84ce5a45c47b1081a09c17eea58c16ef145c113
+  merge_commit: 90c6d1b218bbe07eeb757ce8777805a9b7f8e3c3
 checks:
-  - id: minimize_ts_exists
-    type: pass_to_pass
-    origin: static
-    description: "minimize.ts must exist and contain expected function errorsMatch"
-
-  - id: snap_typescript_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Snap package TypeScript must compile"
-
-  - id: snap_builds
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Snap package must build successfully"
-
-  - id: babel_plugin_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "babel-plugin-react-compiler must pass lint checks"
-
-  - id: babel_plugin_jest
-    type: pass_to_pass
-    origin: repo_tests
-    description: "babel-plugin-react-compiler Jest tests must pass"
-
-  - id: errorsMatch_rejects_different_descriptions
-    type: fail_to_pass
-    origin: pr_diff
-    description: "errorsMatch must return false when error descriptions differ (behavioral eval)"
-
-  - id: description_in_error_types
-    type: fail_to_pass
-    origin: pr_diff
-    description: "CompileErrors and error.details types must include description: string | null"
-
-  - id: error_mapping_copies_description
-    type: fail_to_pass
-    origin: pr_diff
-    description: "error.details.map must copy description field via description: detail.description"
-
-  - id: new_generators_defined
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Generator functions removeFunctionParameters, removeArrayPatternElements, removeObjectPatternProperties must be defined"
-
-  - id: new_strategies_registered
-    type: fail_to_pass
-    origin: pr_diff
-    description: "All three new strategies must be registered in simplificationStrategies array"
-
+- id: minimize_ts_exists
+  type: pass_to_pass
+  origin: static
+  description: minimize.ts must exist and contain expected function errorsMatch
+- id: snap_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package TypeScript must compile
+- id: snap_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package must build successfully
+- id: babel_plugin_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: babel-plugin-react-compiler must pass lint checks
+- id: babel_plugin_jest
+  type: pass_to_pass
+  origin: repo_tests
+  description: babel-plugin-react-compiler Jest tests must pass
+- id: errorsMatch_rejects_different_descriptions
+  type: fail_to_pass
+  origin: pr_diff
+  description: errorsMatch must return false when error descriptions differ (behavioral
+    eval)
+- id: description_in_error_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'CompileErrors and error.details types must include description: string
+    | null'
+- id: error_mapping_copies_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'error.details.map must copy description field via description: detail.description'
+- id: new_generators_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generator functions removeFunctionParameters, removeArrayPatternElements,
+    removeObjectPatternProperties must be defined
+- id: new_strategies_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: All three new strategies must be registered in simplificationStrategies
+    array
 rubric:
-  - rule: "Use CompilerError.throwTodo() for unsupported but known patterns (graceful bailout), not CompilerError.invariant() which indicates hard failures."
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "232-248"
-      commit: "f84ce5a45c47b1081a09c17eea58c16ef145c113"
-
-  - rule: "When modifying the compiler, read documentation in compiler/packages/babel-plugin-react-compiler/docs/passes/ to understand the role of that pass."
-    source:
-      path: "compiler/CLAUDE.md"
-      lines: "7"
-      commit: "f84ce5a45c47b1081a09c17eea58c16ef145c113"
-
-  - rule: "Run yarn prettier and yarn linc before committing to ensure CI passes."
-    source:
-      path: ".claude/skills/fix/SKILL.md"
-      lines: "8-11"
-      commit: "f84ce5a45c47b1081a09c17eea58c16ef145c113"
+- rule: Use CompilerError.throwTodo() for unsupported but known patterns (graceful
+    bailout), not CompilerError.invariant() which indicates hard failures.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 232-248
+    commit: f84ce5a45c47b1081a09c17eea58c16ef145c113
+- rule: When modifying the compiler, read documentation in compiler/packages/babel-plugin-react-compiler/docs/passes/
+    to understand the role of that pass.
+  source:
+    path: compiler/CLAUDE.md
+    lines: '7'
+    commit: f84ce5a45c47b1081a09c17eea58c16ef145c113
+- rule: Run yarn prettier and yarn linc before committing to ensure CI passes.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: 8-11
+    commit: f84ce5a45c47b1081a09c17eea58c16ef145c113
+- rule: Use `yarn snap minimize` to automatically reduce a failing test case to its
+    minimal reproduction
+  source:
+    path: compiler/CLAUDE.md
+    lines: 45-46
+  evidence: The gold solution adds `removeFunctionParameters` and `removeArrayPatternElements`
+    generators to `compiler/packages/snap/src/minimize.ts` to enhance the tool that
+    automatically reduces failing test ca
+  category: tooling
+distractors:
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
+  collision_type: architecture_boundary
+  why_distracting: The minimizer is a testing utility in the `snap` package, not a
+    compiler pass in `babel-plugin-react-compiler`. Looking for or adding documentation
+    in `docs/passes/` would be incorrect and cross an architecture boundary.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 7-7
+- rule: This repository uses Sapling (`sl`) for version control.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use `sl` commands for version control operations,
+    but standard git is used in the evaluation environment (as evidenced by `git apply`
+    in the gold script).
+  severity: low
+  source:
+    path: compiler/CLAUDE.md
+    lines: 53-54
+hierarchy_analysis: The root `CLAUDE.md` correctly delegates compiler-specific tasks
+  to `compiler/CLAUDE.md`. The compiler config provides specific commands (`yarn snap`)
+  which override the general React core testing skills.

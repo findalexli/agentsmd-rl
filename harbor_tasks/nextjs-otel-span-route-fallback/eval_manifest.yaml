@@ -1,91 +1,120 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "vercel/next.js"
+  repo: vercel/next.js
   pr: 0
-  base_commit: "3003e17b102699bffca325257ae7be53fda69052"
-
+  base_commit: 3003e17b102699bffca325257ae7be53fda69052
 checks:
-  - id: app_page_route_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "app-page.ts route falls back to page identifier when next.route absent"
-
-  - id: app_route_route_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "app-route.ts route falls back to page identifier when next.route absent"
-
-  - id: pages_api_route_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pages-api.ts route falls back to page identifier when next.route absent"
-
-  - id: pages_handler_route_fallback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pages-handler.ts route falls back to page identifier when next.route absent"
-
-  - id: wrapped_by_server_detection
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pages-handler.ts gates activeSpan path by server-wrapper detection"
-
-  - id: route_uses_next_route_when_present
-    type: pass_to_pass
-    origin: pr_diff
-    description: "All handler files use next.route value when rootSpanAttributes has it"
-
-  - id: parent_span_propagation
-    type: fail_to_pass
-    origin: pr_diff
-    description: "parentSpan http.route set unconditionally, not gated by route truthiness"
-
-  - id: span_logic_not_stubbed
-    type: pass_to_pass
-    origin: static
-    description: "All handler files contain real span logic (setAttributes + updateName)"
-
-  - id: repo_typescript_parse
-    type: pass_to_pass
-    origin: static
-    description: "Repo's TypeScript files have valid syntax structure"
-
-  - id: repo_otel_parent_span_structure
-    type: pass_to_pass
-    origin: static
-    description: "Repo's OTel handler files have expected parentSpan structure"
-
-  - id: repo_pages_handler_structure
-    type: pass_to_pass
-    origin: static
-    description: "Pages handler has expected isWrappedByNextServer pattern"
-
-  - id: repo_tsc_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified TypeScript files have valid syntax via tsc"
-
-  - id: repo_git_status_clean
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repo is in clean state at base commit"
-
+- id: app_page_route_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: app-page.ts route falls back to page identifier when next.route absent
+- id: app_route_route_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: app-route.ts route falls back to page identifier when next.route absent
+- id: pages_api_route_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: pages-api.ts route falls back to page identifier when next.route absent
+- id: pages_handler_route_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: pages-handler.ts route falls back to page identifier when next.route
+    absent
+- id: wrapped_by_server_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: pages-handler.ts gates activeSpan path by server-wrapper detection
+- id: route_uses_next_route_when_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: All handler files use next.route value when rootSpanAttributes has
+    it
+- id: parent_span_propagation
+  type: fail_to_pass
+  origin: pr_diff
+  description: parentSpan http.route set unconditionally, not gated by route truthiness
+- id: span_logic_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: All handler files contain real span logic (setAttributes + updateName)
+- id: repo_typescript_parse
+  type: pass_to_pass
+  origin: static
+  description: Repo's TypeScript files have valid syntax structure
+- id: repo_otel_parent_span_structure
+  type: pass_to_pass
+  origin: static
+  description: Repo's OTel handler files have expected parentSpan structure
+- id: repo_pages_handler_structure
+  type: pass_to_pass
+  origin: static
+  description: Pages handler has expected isWrappedByNextServer pattern
+- id: repo_tsc_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax via tsc
+- id: repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repo is in clean state at base commit
 rubric:
-  - rule: "Read all README.md files in the directory path from repo root up to target file's directory before editing files."
-    source:
-      path: "CLAUDE.md"
-      lines: "44-54"
-      commit: "3003e17b102699bffca325257ae7be53fda69052"
-
-  - rule: "Build templates (app-page.ts) are compiled by the user's bundler - cannot require internal modules with relative paths. Export helpers from entry-base.ts and access via entryBase.* instead."
-    source:
-      path: ".agents/skills/dce-edge/SKILL.md"
-      lines: "62-68"
-      commit: "3003e17b102699bffca325257ae7be53fda69052"
-
-  - rule: "Use pnpm --filter=next dev for watch mode during iterative development on Next.js source."
-    source:
-      path: "CLAUDE.md"
-      lines: "60-68"
-      commit: "3003e17b102699bffca325257ae7be53fda69052"
+- rule: Read all README.md files in the directory path from repo root up to target
+    file's directory before editing files.
+  source:
+    path: CLAUDE.md
+    lines: 44-54
+    commit: 3003e17b102699bffca325257ae7be53fda69052
+- rule: Build templates (app-page.ts) are compiled by the user's bundler - cannot
+    require internal modules with relative paths. Export helpers from entry-base.ts
+    and access via entryBase.* instead.
+  source:
+    path: .agents/skills/dce-edge/SKILL.md
+    lines: 62-68
+    commit: 3003e17b102699bffca325257ae7be53fda69052
+- rule: Use pnpm --filter=next dev for watch mode during iterative development on
+    Next.js source.
+  source:
+    path: CLAUDE.md
+    lines: 60-68
+    commit: 3003e17b102699bffca325257ae7be53fda69052
+- rule: Source code is in packages/next/src/. Compiled output goes to packages/next/dist/
+    (mirrors src/ structure).
+  source:
+    path: CLAUDE.md
+    lines: 23-31
+  evidence: The gold solution correctly targets the TypeScript source files in `packages/next/src/build/templates/`
+    and `packages/next/src/server/` rather than modifying the compiled output in `packages/next/dist
+  category: architecture
+distractors:
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start `pnpm --filter=next dev` in a separate terminal session before making edits'
+  collision_type: meta_confusion
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` for iterative
+    development. However, the bug specifically occurs when handlers are invoked directly
+    *without* `base-server` (e.g., in custom entrypoint servers). Running `next dev`
+    uses the standard dev server which wraps handlers in `base-server`, meaning `next.route`
+    will be set and the bug will not reproduce, leading to wasted time and confusion.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 60-62
+- rule: Before editing or creating files in any subdirectory... read all README.md
+    files in the directory path from the repo root up to and including the target
+    file's directory.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests reading all `README.md` files in the directory
+    path up to the target file. The target files are in deep internal framework directories
+    (`packages/next/src/build/templates/` and `packages/next/src/server/route-modules/pages/`).
+    Searching for and reading READMEs in these directories will waste time as they
+    likely don't exist or don't contain information relevant to OpenTelemetry span
+    naming logic.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 43-45
+hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
+  at the root level. The rules are heavily focused on workflow and build processes
+  rather than code style. The most critical interaction is the conflict between the
+  mandated `next dev` workflow and the specific nature of this bug, which only manifests
+  outside of the standard dev server environment.

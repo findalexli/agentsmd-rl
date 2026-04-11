@@ -1,119 +1,126 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2097
-  base_commit: "b7afd84024531074830143d88bf0f60f506e1588"
-  merge_commit: "27c35b1ce136c85c120b0486128316ae022b53a5"
-
+  base_commit: b7afd84024531074830143d88bf0f60f506e1588
+  merge_commit: 27c35b1ce136c85c120b0486128316ae022b53a5
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "train.py must be valid Python"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's train.py passes Python syntax check via py_compile"
-
-  - id: test_repo_imports_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's train.py imports are syntactically valid (AST parse check)"
-
-  - id: test_repo_config_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's config files have valid TOML syntax"
-
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's train.py passes ruff linting"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's train.py is properly formatted"
-
-  - id: test_repo_toml_syntax_all
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All TOML files in repo have valid syntax"
-
-  - id: model_assigned_before_hybrid_cp
-    type: fail_to_pass
-    origin: pr_diff
-    description: "model must be assigned (via setup_model) before setup_hybrid_cp(model, ...) is called"
-
-  - id: hybrid_cp_after_model_init
-    type: fail_to_pass
-    origin: pr_diff
-    description: "setup_hybrid_cp() must be called after setup_model() in train()"
-
-  - id: setup_hybrid_cp_retained
-    type: pass_to_pass
-    origin: pr_diff
-    description: "setup_hybrid_cp call must still exist (not deleted to avoid NameError)"
-
-  - id: substitute_ring_attn_present
-    type: pass_to_pass
-    origin: pr_diff
-    description: "substitute_ring_attn must still be called"
-
-  - id: setup_model_present
-    type: pass_to_pass
-    origin: pr_diff
-    description: "setup_model must still be called"
-
-  - id: train_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "train() must have >= 20 top-level statements"
-
-  - id: setup_ckpt_managers_retained
-    type: pass_to_pass
-    origin: pr_diff
-    description: "setup_ckpt_managers must still be called"
-
-  - id: hybrid_cp_guarded_by_cp_enabled
-    type: pass_to_pass
-    origin: pr_diff
-    description: "setup_hybrid_cp must be inside a cp_enabled conditional"
-
-  - id: no_try_except_around_hybrid_cp
-    type: pass_to_pass
-    origin: agent_config
-    description: "setup_hybrid_cp must not be wrapped in try/except"
-    source:
-      path: "AGENTS.md"
-      lines: "5"
-      commit: "b7afd84024531074830143d88bf0f60f506e1588"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: train.py must be valid Python
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's train.py passes Python syntax check via py_compile
+- id: test_repo_imports_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's train.py imports are syntactically valid (AST parse check)
+- id: test_repo_config_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config files have valid TOML syntax
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's train.py passes ruff linting
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's train.py is properly formatted
+- id: test_repo_toml_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: All TOML files in repo have valid syntax
+- id: model_assigned_before_hybrid_cp
+  type: fail_to_pass
+  origin: pr_diff
+  description: model must be assigned (via setup_model) before setup_hybrid_cp(model,
+    ...) is called
+- id: hybrid_cp_after_model_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup_hybrid_cp() must be called after setup_model() in train()
+- id: setup_hybrid_cp_retained
+  type: pass_to_pass
+  origin: pr_diff
+  description: setup_hybrid_cp call must still exist (not deleted to avoid NameError)
+- id: substitute_ring_attn_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: substitute_ring_attn must still be called
+- id: setup_model_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: setup_model must still be called
+- id: train_not_stub
+  type: pass_to_pass
+  origin: static
+  description: train() must have >= 20 top-level statements
+- id: setup_ckpt_managers_retained
+  type: pass_to_pass
+  origin: pr_diff
+  description: setup_ckpt_managers must still be called
+- id: hybrid_cp_guarded_by_cp_enabled
+  type: pass_to_pass
+  origin: pr_diff
+  description: setup_hybrid_cp must be inside a cp_enabled conditional
+- id: no_try_except_around_hybrid_cp
+  type: pass_to_pass
+  origin: agent_config
+  description: setup_hybrid_cp must not be wrapped in try/except
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: b7afd84024531074830143d88bf0f60f506e1588
 rubric:
-  - rule: "Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code."
-    source:
-      path: "AGENTS.md"
-      lines: "7"
-      commit: "b7afd84024531074830143d88bf0f60f506e1588"
-  - rule: "Simple is better than complex."
-    source:
-      path: "AGENTS.md"
-      lines: "16"
-      commit: "b7afd84024531074830143d88bf0f60f506e1588"
-  - rule: "Explicit is better than implicit."
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "b7afd84024531074830143d88bf0f60f506e1588"
-  - rule: "Flat is better than nested."
-    source:
-      path: "AGENTS.md"
-      lines: "18"
-      commit: "b7afd84024531074830143d88bf0f60f506e1588"
-  - rule: "Errors should never pass silently. Unless explicitly silenced."
-    source:
-      path: "AGENTS.md"
-      lines: "23-24"
-      commit: "b7afd84024531074830143d88bf0f60f506e1588"
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: b7afd84024531074830143d88bf0f60f506e1588
+- rule: Simple is better than complex.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: b7afd84024531074830143d88bf0f60f506e1588
+- rule: Explicit is better than implicit.
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: b7afd84024531074830143d88bf0f60f506e1588
+- rule: Flat is better than nested.
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: b7afd84024531074830143d88bf0f60f506e1588
+- rule: Errors should never pass silently. Unless explicitly silenced.
+  source:
+    path: AGENTS.md
+    lines: 23-24
+    commit: b7afd84024531074830143d88bf0f60f506e1588
+- rule: Simple is better than complex. (Zen of Python)
+  source:
+    path: AGENTS.md
+    lines: 14-14
+  evidence: The gold solution simply reorders the initialization steps to fix the
+    `NameError`, rather than introducing complex state tracking, lazy initialization,
+    or deferred execution for the hybrid CP setup.
+  category: architecture
+distractors:
+- rule: You can add try catch on code that explicitly aims to be fault tolerant like
+    adding retry mechanisms or explicit and intentional robustness.
+  collision_type: would_cause_bug
+  why_distracting: An agent might misinterpret the `NameError` as an opportunity to
+    make the initialization 'fault tolerant' by wrapping the `setup_hybrid_cp` call
+    in a try/except block and deferring it, rather than fixing the root cause which
+    is simply the incorrect order of operations.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-5
+hierarchy_analysis: The hierarchy is flat, with `CLAUDE.md` simply including `@AGENTS.md`.
+  The rules in `AGENTS.md` apply directly to the codebase without any overrides or
+  conflicts from parent files.

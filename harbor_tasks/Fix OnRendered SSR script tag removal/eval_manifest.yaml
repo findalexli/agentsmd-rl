@@ -1,131 +1,154 @@
-task_name: "tanstack-router-onrendered-ssr-fix"
-source_pr: "https://github.com/TanStack/router/pull/7054"
-source_repo: "TanStack/router"
-base_commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"
-merge_commit: "5ca661c2f8a7e50167b4112c64aa06cef4148ea9"
-difficulty: "medium"
-estimated_time: "25"
-
-# Each check maps 1:1 to a test_* function in test_outputs.py
+task_name: tanstack-router-onrendered-ssr-fix
+source_pr: https://github.com/TanStack/router/pull/7054
+source_repo: TanStack/router
+base_commit: 0e0a2817c30011829a4fefbb7d3bdef1e710d3ef
+merge_commit: 5ca661c2f8a7e50167b4112c64aa06cef4148ea9
+difficulty: medium
+estimated_time: '25'
 checks:
-  - id: "onrendered_returns_null"
-    name: "OnRendered component returns null instead of script tag"
-    description: "Verify OnRendered uses useLayoutEffect and returns null"
-    test: "test_onrendered_returns_null_no_script_tag"
-    type: "f2p"
-    source: "agent_config"
-    source_ref: "TanStack/router:AGENTS.md - Testing instructions"
-
-  - id: "onrendered_emits_event"
-    name: "OnRendered emits onRendered event via useLayoutEffect"
-    description: "Verify onRendered event is still emitted correctly"
-    test: "test_onrendered_emits_event_via_effect"
-    type: "f2p"
-    source: "agent_config"
-    source_ref: "TanStack/router:packages/react-router/skills/react-router/SKILL.md - SSR patterns"
-
-  - id: "ssr_no_sentinel"
-    name: "SSR output does not contain sentinel script tag"
-    description: "Verify expected SSR HTML output was updated"
-    test: "test_ssr_output_no_sentinel_script"
-    type: "f2p"
-    source: "upstream_test"
-    source_ref: "TanStack/router:packages/react-router/tests/Scripts.test.tsx"
-
-  - id: "typescript_types"
-    name: "TypeScript types are correct"
-    description: "Verify OnRendered accepts resetKey prop and imports"
-    test: "test_typescript_types_correct"
-    type: "p2p"
-    source: "agent_config"
-    source_ref: "TanStack/router:AGENTS.md - Code style (TypeScript strict mode)"
-
-  - id: "build_succeeds"
-    name: "React Router package builds successfully"
-    description: "Verify the package builds without errors"
-    test: "test_build_succeeds"
-    type: "f2p"
-    source: "agent_config"
-    source_ref: "TanStack/router:AGENTS.md - Build packages"
-
-  - id: "unit_tests_pass"
-    name: "Unit tests pass"
-    description: "Verify Scripts.test.tsx passes"
-    test: "test_unit_tests_pass"
-    type: "f2p"
-    source: "upstream_test"
-    source_ref: "TanStack/router:packages/react-router/tests/Scripts.test.tsx"
-
-  - id: "solid_consistency"
-    name: "Solid router has consistent OnRendered comment"
-    description: "Verify solid-router Match.tsx comment was updated"
-    test: "test_solid_router_consistency"
-    type: "p2p"
-    source: "upstream"
-    source_ref: "TanStack/router:packages/solid-router/src/Match.tsx"
-
-  # Pass-to-pass: Repo CI/CD checks
-  - id: "p2p_repo_eslint"
-    name: "Repo ESLint check passes"
-    description: "Repo's ESLint check passes on both base and gold"
-    test: "test_p2p_repo_eslint"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source_ref: "TanStack/router:package.json scripts.test:eslint"
-
-  - id: "p2p_repo_typescript"
-    name: "Repo TypeScript check passes"
-    description: "Repo's TypeScript typecheck passes on both base and gold"
-    test: "test_p2p_repo_typescript"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source_ref: "TanStack/router:package.json scripts.test:types"
-
-  - id: "p2p_repo_unit_tests_ssr"
-    name: "Repo SSR unit tests pass"
-    description: "Repo's SSR-related unit tests pass on both base and gold"
-    test: "test_p2p_repo_unit_tests_ssr"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source_ref: "TanStack/router:packages/react-router/tests/Scripts.test.tsx"
-
-  - id: "p2p_repo_unit_tests_matches"
-    name: "Repo Match component unit tests pass"
-    description: "Repo's Match component unit tests pass on both base and gold"
-    test: "test_p2p_repo_unit_tests_matches"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source_ref: "TanStack/router:packages/react-router/tests/Matches.test.tsx"
-
-  - id: "p2p_repo_build"
-    name: "Repo build verification passes"
-    description: "Repo's build verification passes on both base and gold"
-    test: "test_p2p_repo_build"
-    type: "pass_to_pass"
-    origin: "repo_tests"
-    source_ref: "TanStack/router:package.json scripts.test:build"
-
+- id: onrendered_returns_null
+  name: OnRendered component returns null instead of script tag
+  description: Verify OnRendered uses useLayoutEffect and returns null
+  test: test_onrendered_returns_null_no_script_tag
+  type: f2p
+  source: agent_config
+  source_ref: TanStack/router:AGENTS.md - Testing instructions
+- id: onrendered_emits_event
+  name: OnRendered emits onRendered event via useLayoutEffect
+  description: Verify onRendered event is still emitted correctly
+  test: test_onrendered_emits_event_via_effect
+  type: f2p
+  source: agent_config
+  source_ref: TanStack/router:packages/react-router/skills/react-router/SKILL.md -
+    SSR patterns
+- id: ssr_no_sentinel
+  name: SSR output does not contain sentinel script tag
+  description: Verify expected SSR HTML output was updated
+  test: test_ssr_output_no_sentinel_script
+  type: f2p
+  source: upstream_test
+  source_ref: TanStack/router:packages/react-router/tests/Scripts.test.tsx
+- id: typescript_types
+  name: TypeScript types are correct
+  description: Verify OnRendered accepts resetKey prop and imports
+  test: test_typescript_types_correct
+  type: p2p
+  source: agent_config
+  source_ref: TanStack/router:AGENTS.md - Code style (TypeScript strict mode)
+- id: build_succeeds
+  name: React Router package builds successfully
+  description: Verify the package builds without errors
+  test: test_build_succeeds
+  type: f2p
+  source: agent_config
+  source_ref: TanStack/router:AGENTS.md - Build packages
+- id: unit_tests_pass
+  name: Unit tests pass
+  description: Verify Scripts.test.tsx passes
+  test: test_unit_tests_pass
+  type: f2p
+  source: upstream_test
+  source_ref: TanStack/router:packages/react-router/tests/Scripts.test.tsx
+- id: solid_consistency
+  name: Solid router has consistent OnRendered comment
+  description: Verify solid-router Match.tsx comment was updated
+  test: test_solid_router_consistency
+  type: p2p
+  source: upstream
+  source_ref: TanStack/router:packages/solid-router/src/Match.tsx
+- id: p2p_repo_eslint
+  name: Repo ESLint check passes
+  description: Repo's ESLint check passes on both base and gold
+  test: test_p2p_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  source_ref: TanStack/router:package.json scripts.test:eslint
+- id: p2p_repo_typescript
+  name: Repo TypeScript check passes
+  description: Repo's TypeScript typecheck passes on both base and gold
+  test: test_p2p_repo_typescript
+  type: pass_to_pass
+  origin: repo_tests
+  source_ref: TanStack/router:package.json scripts.test:types
+- id: p2p_repo_unit_tests_ssr
+  name: Repo SSR unit tests pass
+  description: Repo's SSR-related unit tests pass on both base and gold
+  test: test_p2p_repo_unit_tests_ssr
+  type: pass_to_pass
+  origin: repo_tests
+  source_ref: TanStack/router:packages/react-router/tests/Scripts.test.tsx
+- id: p2p_repo_unit_tests_matches
+  name: Repo Match component unit tests pass
+  description: Repo's Match component unit tests pass on both base and gold
+  test: test_p2p_repo_unit_tests_matches
+  type: pass_to_pass
+  origin: repo_tests
+  source_ref: TanStack/router:packages/react-router/tests/Matches.test.tsx
+- id: p2p_repo_build
+  name: Repo build verification passes
+  description: Repo's build verification passes on both base and gold
+  test: test_p2p_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  source_ref: TanStack/router:package.json scripts.test:build
 rubric:
-  - rule: "Use TypeScript strict mode with extensive type safety. Types are fully inferred - never cast or annotate inferred values."
-    source:
-      path: "AGENTS.md"
-      lines: "27-29"
-      commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"
-
-  - rule: "Keep framework-agnostic core logic separated from React/Solid framework bindings."
-    source:
-      path: "AGENTS.md"
-      lines: "28"
-      commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"
-
-  - rule: "Do not use browser-only APIs (window, document, localStorage) without environment checks - they throw on the server during SSR."
-    source:
-      path: "packages/router-core/skills/router-core/ssr/SKILL.md"
-      lines: "281-296"
-      commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"
-
-  - rule: "When SSR is enabled, code must work correctly in both environments - component hooks should return null on server when appropriate."
-    source:
-      path: "packages/router-core/skills/router-core/ssr/SKILL.md"
-      lines: "8-10"
-      commit: "0e0a2817c30011829a4fefbb7d3bdef1e710d3ef"
+- rule: Use TypeScript strict mode with extensive type safety. Types are fully inferred
+    - never cast or annotate inferred values.
+  source:
+    path: AGENTS.md
+    lines: 27-29
+    commit: 0e0a2817c30011829a4fefbb7d3bdef1e710d3ef
+- rule: Keep framework-agnostic core logic separated from React/Solid framework bindings.
+  source:
+    path: AGENTS.md
+    lines: '28'
+    commit: 0e0a2817c30011829a4fefbb7d3bdef1e710d3ef
+- rule: Do not use browser-only APIs (window, document, localStorage) without environment
+    checks - they throw on the server during SSR.
+  source:
+    path: packages/router-core/skills/router-core/ssr/SKILL.md
+    lines: 281-296
+    commit: 0e0a2817c30011829a4fefbb7d3bdef1e710d3ef
+- rule: When SSR is enabled, code must work correctly in both environments - component
+    hooks should return null on server when appropriate.
+  source:
+    path: packages/router-core/skills/router-core/ssr/SKILL.md
+    lines: 8-10
+    commit: 0e0a2817c30011829a4fefbb7d3bdef1e710d3ef
+- rule: TypeScript strict mode with extensive type safety
+  source:
+    path: AGENTS.md
+    lines: 16-16
+  evidence: 'The gold solution explicitly adds type annotations to the new implementation,
+    such as typing the component props as `{ resetKey: number }` and the ref as `React.useRef<string
+    | undefined>(undefined)`.'
+  category: style
+distractors:
+- rule: Framework-agnostic core logic separated from React/Solid bindings
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to move the `onRendered` event emission
+    or tracking logic into `@tanstack/router-core` to make it framework-agnostic.
+    However, this specific fix inherently relies on React's rendering lifecycle (`useLayoutEffect`)
+    to know when the subtree has committed, so it must remain in the React-specific
+    `@tanstack/react-router` package.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 17-17
+- rule: 'Critical: Always run unit and type tests during development - do not proceed
+    if they fail'
+  collision_type: meta_confusion
+  why_distracting: The existing test in `Scripts.test.tsx` explicitly asserts the
+    presence of the empty `<script></script>` tag. If an agent strictly follows 'do
+    not proceed if tests fail' without realizing the test expectation itself is now
+    outdated and needs modification, it might revert a correct fix or get stuck trying
+    to satisfy the old test.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 50-50
+hierarchy_analysis: The AGENTS.md file provides high-level architectural and testing
+  guidelines. The instruction to maintain framework-agnostic core logic creates a
+  boundary tension with the need to use React-specific lifecycle hooks for this particular
+  bug. Additionally, the strict testing guardrails conflict with the necessity of
+  updating an outdated test expectation.

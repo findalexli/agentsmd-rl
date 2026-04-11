@@ -129,3 +129,49 @@ rubric:
     path: packages/opencode/AGENTS.md
     lines: '21'
     commit: 9f94bdb49634bda90a2804585b8d739228dde876
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 66-68
+  evidence: The gold solution replaces the mutable `let cachedGlobal` with a `const
+    [cachedGlobal, invalidateGlobal]` declaration, eliminating the need for reassignment
+    when invalidating the cache.
+  category: style
+- rule: Use `Effect.fn("Domain.method")` for named/traced effects and `Effect.fnUntraced`
+    for internal helpers.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 16-17
+  evidence: The gold solution preserves the existing `Effect.fn("Config.getGlobal")`
+    and `Effect.fn("Config.invalidate")` wrappers, maintaining the required tracing
+    conventions without stripping them out during t
+  category: style
+distractors:
+- rule: Use `Effect.cached` when multiple concurrent callers should share a single
+    in-flight computation
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly recommends `Effect.cached` for deduplication.
+    An agent might strictly follow this and try to implement a complex workaround
+    for invalidation while keeping `Effect.cached`, rather than switching to the more
+    appropriate `Effect.cachedInvalidateWithTTL` primitive.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 45-47
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: would_cause_bug
+  why_distracting: The strict single-word naming rule might tempt the agent to rename
+    `invalidateGlobal` to `invalidate` and `cachedGlobal` to `cache`. However, using
+    `invalidate` would shadow the outer `const invalidate = Effect.fn(...)` function,
+    causing a bug.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 24-32
+hierarchy_analysis: The root `AGENTS.md` enforces strict single-word naming and `const`
+  over `let`. The package-level `packages/opencode/AGENTS.md` provides Effect-specific
+  guidance, including a rule to use `Effect.cached`. The agent must balance the strict
+  naming rules against avoiding variable shadowing (e.g., `invalidateGlobal` vs `invalidate`),
+  and recognize that the package-level `Effect.cached` rule needs to be adapted to
+  `Effect.cachedInvalidateWithTTL` to satisfy the PR's specific requirement for idiomatic
+  cache invalidation without violating the root-level `const` over `let` rule.

@@ -100,3 +100,44 @@ rubric:
     commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
   reference: In `Effect.gen`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
     MyError(...))` for direct early-failure branches.
+- rule: Avoid `try`/`catch` where possible
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: The expected behavior specifies using `HttpClient.filterStatusOk` for
+    proper HTTP status handling and structured error handling, which aligns with the
+    rule to avoid traditional `try`/`catch` blocks.
+  category: style
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: 11-11
+  evidence: The expected behavior requires moving helper functions inside the `Effect.gen`
+    scope, which aligns with the rule to keep things in one function.
+  category: style
+distractors:
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: rule_conflict
+  why_distracting: The instructions explicitly require adding a `Service` interface
+    for `AccountService`, which conflicts with the general guidance to avoid explicit
+    interfaces.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 16-16
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  collision_type: scope_ambiguity
+  why_distracting: The instructions require adding branded types like `RefreshToken`,
+    `DeviceCode`, and `UserCode`, and updating methods like `orgsByAccount`. An agent
+    might try to shorten these to single words, violating the explicit naming requirements.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 21-22
+hierarchy_analysis: The AGENTS.md file provides general style and naming guidelines.
+  However, the explicit instructions in the problem description for this specific
+  refactor (e.g., adding a `Service` interface, using specific multi-word names for
+  branded types) override the general guidelines to avoid interfaces and prefer single-word
+  names.
