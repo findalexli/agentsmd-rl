@@ -1,0 +1,98 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11067
+  base_commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+  merge_commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must parse without errors
+- id: standard_schema_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: createTable produces Standard Schema-compatible tables with parseSafe support
+- id: validate_partial_row_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: validatePartialRow is exported from table.ts and callable
+- id: write_path_uses_shared_validator
+  type: fail_to_pass
+  origin: pr_diff
+  description: database.ts imports and uses validatePartialRow from table.ts
+- id: dataschema_type_removed_from_exports
+  type: fail_to_pass
+  origin: pr_diff
+  description: DataSchema type no longer re-exported from data-table index
+- id: timestamp_schema_uses_create_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: timestampSchema uses createSchema from data-schema instead of inline ~standard
+- id: agents_md_cross_package_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents cross-package boundary rule about re-exports
+- id: readme_data_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: README documents data validation and Standard Schema compatibility
+- id: table_still_exports_core_api
+  type: pass_to_pass
+  origin: static
+  description: Core table API (createTable, hasMany, etc.) still exported
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes ESLint checks
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes Prettier format check
+- id: test_repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo change files are valid
+- id: test_repo_data_table_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-table package typechecks successfully
+- id: test_repo_data_table_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-table table.test.ts unit tests pass
+- id: test_repo_data_table_inflection_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-table inflection.test.ts unit tests pass
+- id: test_repo_data_table_operators_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-table operators.test.ts unit tests pass
+- id: test_repo_data_schema_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Data-schema unit tests pass
+rubric:
+- rule: Config update is consistent with the style of existing AGENTS.md entries
+  source:
+    path: AGENTS.md
+    lines: 1-20
+    commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+- rule: README Data Validation section follows the structure and tone of existing
+    README sections
+  source:
+    path: packages/data-table/README.md
+    lines: 1-30
+    commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+- rule: AGENTS.md documents cross-package boundary rule about re-exports
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
+- rule: data-table README documents data validation and Standard Schema compatibility
+  source:
+    path: packages/data-table/README.md
+    lines: 219-259
+    commit: 28d74aae012ca78b82fedaf6f7f5de53094fd002
+- rule: timestampSchema uses createSchema from data-schema instead of inline ~standard

@@ -1,0 +1,58 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11060
+  base_commit: 649aecadeb54fc3027a2b6a85020dd31421b5327
+  merge_commit: 0951cf4968a8332220a10df37ee0bdb0ed0bab2e
+checks:
+- id: test_repo_component_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component package TypeScript typecheck passes
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo lint passes
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo format check passes
+- id: test_repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo change files validation passes
+- id: test_repo_component_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component package builds successfully
+- id: handle_update_returns_promise
+  type: fail_to_pass
+  origin: pr_diff
+  description: "handle.update() returns Promise<AbortSignal> \u2014 TypeScript type\
+    \ check"
+- id: cascading_update_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: Scheduler defines MAX_CASCADING_UPDATES and detects infinite loops
+- id: render_ctrl_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: Component remove() aborts renderCtrl alongside connectedCtrl
+- id: agents_md_promise_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents handle.update() with Promise/await pattern
+- id: readme_md_promise_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents the new Promise-based update() API
+- id: handle_md_promise_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/handle.md documents the await handle.update() pattern
+rubric:
+- rule: Documentation updates are consistent in style with existing content
+  source:
+    path: packages/component/AGENTS.md
+    lines: 1-10
+    commit: 649aecadeb54fc3027a2b6a85020dd31421b5327

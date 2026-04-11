@@ -1,0 +1,101 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T14:55:57.744810",
+  "total_time": 715.95,
+  "sandbox_id": "invd29p9mcf2483uokaa8",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 0.0,
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 199.99,
+      "notes": "Added 3 pass_to_pass tests with origin: repo_tests: (1) test_repo_python_syntax - validates Python syntax via py_compile on llm_analytics files, (2) test_repo_yaml_parses - validates tools.yaml via pyyaml subprocess, (3) test_repo_clustering_tests_syntax - validates clustering test files via py_compile. Docker image builds successfully. All p2p tests pass at base commit. CI commands tested: py_compile (works), pip install pyyaml + yaml parsing (works)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 234.54,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        ".agents/skills/writing-skills/SKILL.md",
+        ".agents/skills/implementing-mcp-tools/SKILL.md",
+        "AGENTS.md",
+        ".cursorrules"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 0,
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 64.92
+    },
+    "rubric_validate": {
+      "status": "error",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.38,
+      "notes": "",
+      "precision": 1.0
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile to install pyyaml. Fixed eval_manifest.yaml YAML parsing error by removing malformed config_edits section with embedded quotes. All 19 tests now pass. NOP reward=0 (base commit fails as expected), Gold reward=1 (solve.sh patch applies correctly). Rubric Phase 1 checks all pass (7 rules validated against source files).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 357.11
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 13.56,
+      "notes": "ICR=0.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "glm",
+      "time": 5835.68,
+      "at": "2026-04-09T07:37:41.076144"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1899.47,
+      "at": "2026-04-10T12:37:02.626665"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 715.95,
+      "at": "2026-04-10T14:55:57.744810"
+    }
+  ]
+}

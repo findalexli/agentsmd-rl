@@ -1,0 +1,77 @@
+version: '2.0'
+source:
+  repo: anthropics/claude-code
+  pr: 10826
+  base_commit: ae411f846195b38c8bec88914dd06132e00eadf8
+  merge_commit: b8a98a8df7605c0030469fb0eaa2e3f14aa3366f
+checks:
+- id: test_plugin_json_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin manifest exists and is valid JSON with required fields
+- id: test_hooks_json_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hooks configuration exists and has valid SessionStart hook
+- id: test_session_start_executable
+  type: fail_to_pass
+  origin: pr_diff
+  description: Session-start hook script is executable and outputs valid JSON
+- id: test_readme_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md exists and contains required documentation
+- id: test_gitignore_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore exists at root and ignores .DS_Store
+- id: test_plugin_directory_structure
+  type: pass_to_pass
+  origin: static
+  description: Plugin directory structure matches expected layout
+- id: test_session_start_has_shebang
+  type: pass_to_pass
+  origin: static
+  description: Session-start script has proper shebang line
+- id: test_repo_all_plugin_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All plugin.json files in the repo are valid JSON
+- id: test_repo_all_hooks_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All hooks.json files in the repo are valid JSON
+- id: test_repo_shellcheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts in plugins pass shellcheck
+- id: test_repo_explanatory_hook_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing explanatory plugin session-start hook executes successfully
+rubric:
+- rule: Hook command paths must use ${CLAUDE_PLUGIN_ROOT} for portability instead of hardcoded or relative paths
+  source:
+    path: plugins/plugin-dev/skills/hook-development/SKILL.md
+    lines: 331-338
+    commit: ae411f846195b38c8bec88914dd06132e00eadf8
+- rule: SessionStart hook scripts must output valid JSON with hookSpecificOutput.hookEventName set to 'SessionStart' and hookSpecificOutput.additionalContext containing the instructions
+  source:
+    path: plugins/plugin-dev/skills/hook-development/SKILL.md
+    lines: 238-257, 278-288
+    commit: ae411f846195b38c8bec88914dd06132e00eadf8
+- rule: "Plugin hooks.json must use the wrapper format with a \"hooks\" field containing the event definitions (e.g., {\"hooks\": {\"SessionStart\": [...]}})"
+  source:
+    path: plugins/plugin-dev/skills/hook-development/SKILL.md
+    lines: 62-99
+    commit: ae411f846195b38c8bec88914dd06132e00eadf8
+- rule: "Plugin manifest (plugin.json) must include required fields: name, version, description, and author (with name and email)"
+  source:
+    path: plugins/plugin-dev/skills/plugin-structure/SKILL.md
+    lines: 46-81
+    commit: ae411f846195b38c8bec88914dd06132e00eadf8
+- rule: Hook handler scripts must be executable (chmod +x) to run as command hooks
+  source:
+    path: plugins/plugin-dev/skills/hook-development/SKILL.md
+    lines: 42-59
+    commit: ae411f846195b38c8bec88914dd06132e00eadf8

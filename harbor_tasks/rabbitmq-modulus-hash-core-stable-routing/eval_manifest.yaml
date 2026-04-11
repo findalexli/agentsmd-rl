@@ -1,0 +1,69 @@
+version: '2.0'
+source:
+  repo: rabbitmq/rabbitmq-server
+  pr: 15849
+  base_commit: 713ecee4846a2816cf828e877820f0f509674f67
+checks:
+- id: core_module_valid_exchange_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Core module must be a valid Erlang exchange type with correct structure,
+    exports, behaviour, and boot step registration
+- id: route_sorts_destinations_for_stability
+  type: fail_to_pass
+  origin: pr_diff
+  description: Route function must sort destinations before selecting to ensure stable
+    routing across node restarts
+- id: sharding_plugin_deregistered
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sharding plugin must not register x-modulus-hash exchange type (avoid
+    duplicate registration with core)
+- id: readme_documents_builtin_exchange
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sharding plugin README must reflect x-modulus-hash as a built-in/core
+    exchange type
+- id: readme_documents_stable_routing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sharding plugin README must document the stable routing guarantee
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and has expected commit (CI check - git rev-parse)
+- id: test_repo_compatibility_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: docs/compatibility.json is valid JSON (CI check - python3 json validation)
+- id: test_repo_makefile_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: RabbitMQ Makefile has valid CI structure (CI check - grep for PARALLEL_CT_SET)
+- id: test_repo_components_mk_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: rabbitmq-components.mk has valid RABBITMQ_BUILTIN list with rabbitmq_sharding (CI check - grep)
+- id: test_repo_sharding_readme_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sharding README is valid and mentions x-modulus-hash (CI check - grep)
+rubric:
+- rule: Only add very important comments, both in tests and in the implementation
+  source:
+    path: CLAUDE.md
+    lines: '145'
+    commit: 713ecee4846a2816cf828e877820f0f509674f67
+- rule: Keep comments concise and to the point
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 713ecee4846a2816cf828e877820f0f509674f67
+- rule: Never add full stops to Markdown list items
+  source:
+    path: CLAUDE.md
+    lines: '180'
+    commit: 713ecee4846a2816cf828e877820f0f509674f67
+- rule: README must reflect that x-modulus-hash is a built-in/core exchange type
+- rule: README must document the stable routing guarantee of x-modulus-hash
+- rule: The sharding plugin README must still exist and describe the plugin

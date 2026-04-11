@@ -1,0 +1,105 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 35537
+  base_commit: 2d8e7f1ce358e8cddc3aae862007269b6bac04ba
+  merge_commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+checks:
+- id: typescript_files_parseable
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: snap_installs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package dependencies install successfully
+- id: snap_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package TypeScript compiles without errors
+- id: snap_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package builds successfully
+- id: snap_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package source files follow prettier formatting
+- id: filter_file_mechanism_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: FILTER_FILENAME, FILTER_PATH, readTestFilter removed from snap
+- id: filter_option_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner.ts removes --filter option and readTestFilter/FILTER_PATH usage
+- id: debug_cli_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner.ts defines --debug / -d CLI option via yargs
+- id: interactive_watch_mode
+  type: fail_to_pass
+  origin: pr_diff
+  description: runner-watch.ts supports interactive pattern entry and debug toggle
+    via keyboard
+- id: watch_runner_signature_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: makeWatchRunner accepts debugMode and initialPattern instead of filterMode
+- id: claudemd_documents_cli
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents snap CLI flags (-p, -d, -u)
+- id: claudemd_documents_project
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/CLAUDE.md documents project structure, HIR, and fixtures
+rubric:
+- rule: CLAUDE.md documentation style is consistent with the content and detail level
+    appropriate for an AI agent knowledge base (knowledge base format with sections for
+    Project Structure, Running Tests, Version Control, Key Concepts, etc.)
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-10
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+  reference: |
+    # React Compiler Knowledge Base
+
+    This document contains knowledge about the React Compiler gathered during development
+    sessions. It serves as a reference for understanding the codebase architecture and
+    key concepts.
+
+    ## Project Structure
+- rule: compiler/CLAUDE.md exists with substantial documentation (200+ lines covering
+    project structure, HIR, fixtures, and test commands)
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-221
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+  reference: |
+    Full CLAUDE.md with Project Structure, Running Tests (yarn snap -p/-d/-u), Version
+    Control, Key Concepts (HIR, AliasingEffects), Feature Flags, Debugging Tips,
+    and Error Handling sections (221 lines total).
+- rule: CLAUDE.md documents yarn snap CLI flags (-p pattern, -d debug, -u update)
+  source:
+    path: compiler/CLAUDE.md
+    lines: 19-34
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+  reference: |
+    ## Running Tests
+    ```bash
+    yarn snap
+    yarn snap -p <pattern>
+    yarn snap -p <file-basename> -d
+    yarn snap -u
+    ```
+- rule: CLAUDE.md documents React Compiler project structure, HIR, and fixtures
+  source:
+    path: compiler/CLAUDE.md
+    lines: 5-16
+    commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+  reference: |
+    ## Project Structure
+    - `packages/babel-plugin-react-compiler/` - Main compiler package
+      - `src/HIR/` - High-level Intermediate Representation types and utilities
+      - `src/__tests__/fixtures/compiler/` - Test fixtures

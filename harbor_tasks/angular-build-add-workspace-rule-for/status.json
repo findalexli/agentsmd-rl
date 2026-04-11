@@ -1,0 +1,104 @@
+{
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:56:18.266338",
+  "total_time": 1649.42,
+  "sandbox_id": "ioms4kynjj2oad6slasck",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "rubric_icr": 1.0,
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 658.24,
+      "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        ".gemini/skills/reference-core/SKILL.md",
+        ".gemini/skills/reference-compiler-cli/SKILL.md",
+        ".gemini/skills/reference-signal-forms/SKILL.md",
+        ".prettierignore",
+        ".pullapprove.yml"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 0,
+      "rejection_reasons": "N/A",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 100.55
+    },
+    "rubric_validate": {
+      "status": "error",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 1.32,
+      "notes": "",
+      "precision": 1.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 39.53,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed solve.sh to be idempotent when adding .agent/**/{*,.*} to .pullapprove.yml - now checks if entry already exists before adding. All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0)",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 968.02
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.68,
+      "notes": "ICR=1.00"
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 3099.81,
+      "at": "2026-04-10T12:05:36.676141"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 863.54,
+      "at": "2026-04-10T14:58:25.336189"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1649.42,
+      "at": "2026-04-10T17:56:18.266338"
+    }
+  ]
+}

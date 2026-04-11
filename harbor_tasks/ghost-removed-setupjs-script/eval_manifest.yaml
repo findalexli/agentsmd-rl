@@ -1,0 +1,79 @@
+version: '2.0'
+source:
+  repo: TryGhost/Ghost
+  pr: 26507
+  base_commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+  merge_commit: 18d19b4124ab54f507b977c82d8424dbeba20fee
+checks:
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has valid git structure and HEAD commit
+- id: test_repo_package_json_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json has valid schema with required fields
+- id: test_repo_gitmodules_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: .gitmodules file exists and is valid
+- id: test_repo_docs_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: docs/README.md exists and has required content
+- id: test_repo_core_package_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: ghost/core/package.json has valid schema
+- id: test_repo_github_workflows_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI workflow files exist and are valid
+- id: test_repo_git_hooks_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git hooks directory exists with required hooks
+- id: test_repo_dockerfile_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dockerfile exists and has required content
+- id: test_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: package.json must be valid JSON with scripts.setup
+- id: test_setup_script_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: .github/scripts/setup.js must be deleted
+- id: test_setup_script_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json setup script must not invoke setup.js and must use --recursive
+- id: test_docs_setup_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md setup section must not mention database initialization
+- id: test_docs_dev_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md yarn dev description must mention frontend dev servers
+- id: test_docs_reset_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md must use yarn reset:data instead of knex-migrator
+rubric:
+- rule: docs/README.md must use concise command descriptions (e.g., "Install dependencies and initialize submodules" not "This installs dependencies...")
+  source:
+    path: docs/README.md
+    lines: 30-35
+    commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+- rule: docs/README.md yarn dev description must mention both backend services and frontend dev servers
+  source:
+    path: docs/README.md
+    lines: 38-42
+    commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+- rule: package.json setup script must use yarn not npm
+  source:
+    path: package.json
+    lines: '"setup"'
+    commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
