@@ -86,7 +86,7 @@ checks:
     test_function: "test_repo_schema_tests"
     category: "pass_to_pass"
     points: 1
-    origin: "repo_ci"
+    origin: "repo_tests"
 
   - id: "p2p_repo_helm_lint"
     name: "Helm chart passes linting"
@@ -94,26 +94,13 @@ checks:
     test_function: "test_repo_helm_lint"
     category: "pass_to_pass"
     points: 1
-    origin: "repo_ci"
+    origin: "repo_tests"
 
 rubric:
-  - rule: "Use @record instead of @dataclass for data structures. Import from dagster_shared.record."
-    source:
-      path: ".claude/coding_conventions.md"
-      lines: "83-95"
-      commit: "f0c823c061cb859c0f6ab8fe1944a2f48e182eb3"
-
-  - rule: "Use built-in generic types for annotations: list[str], dict[str, Any] instead of typing.List, typing.Dict"
-    source:
-      path: ".claude/coding_conventions.md"
-      lines: "55-61"
-      commit: "f0c823c061cb859c0f6ab8fe1944a2f48e182eb3"
-
-  - rule: "Type hints required for all Python code. All code must pass pyright type checking."
-    source:
-      path: ".claude/coding_conventions.md"
-      lines: "53-61"
-      commit: "f0c823c061cb859c0f6ab8fe1944a2f48e182eb3"
+  # This is a Helm chart PR - Python convention rules don't apply
+  # The gold solution properly extends existing Pydantic schema classes
+  - rule: "Helm chart changes follow the existing schema patterns in helm/dagster/schema/"
+    note: "Gold solution uses Pydantic BaseModel following existing patterns"
 
 # Agent config rules to check (from CLAUDE.md)
 agent_config:

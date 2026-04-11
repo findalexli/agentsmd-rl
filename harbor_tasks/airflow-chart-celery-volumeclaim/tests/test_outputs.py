@@ -391,3 +391,88 @@ class TestRepoPassToPass:
         assert "name" in chart, "name missing from Chart.yaml"
         assert "version" in chart, "version missing from Chart.yaml"
         assert chart.get("name") == "airflow", "Chart name should be 'airflow'"
+
+    def test_repo_chart_quality_schema_validation(self):
+        """Repo's chart quality test - values.yaml validates against schema (pass_to_pass)."""
+        import sys
+        HELM_TESTS = REPO / "helm-tests"
+        # Install required dependencies
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "kubernetes", "-q"],
+            capture_output=True, text=True, timeout=60,
+        )
+        # Install helm-tests package
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-e", str(HELM_TESTS), "-q"],
+            capture_output=True, text=True, timeout=120,
+        )
+        # Run chart quality test for schema validation
+        r = subprocess.run(
+            [
+                sys.executable, "-m", "pytest",
+                str(HELM_TESTS / "tests" / "helm_tests" / "airflow_aux" / "test_chart_quality.py"),
+                "-v", "--tb=short",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=str(HELM_TESTS),
+        )
+        assert r.returncode == 0, f"Chart quality tests failed:\n{r.stderr[-1000:]}"
+
+    def test_repo_basic_helm_chart_tests(self):
+        """Repo's basic helm chart tests pass (pass_to_pass)."""
+        import sys
+        HELM_TESTS = REPO / "helm-tests"
+        # Install required dependencies
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "kubernetes", "-q"],
+            capture_output=True, text=True, timeout=60,
+        )
+        # Install helm-tests package
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-e", str(HELM_TESTS), "-q"],
+            capture_output=True, text=True, timeout=120,
+        )
+        # Run basic helm chart tests
+        r = subprocess.run(
+            [
+                sys.executable, "-m", "pytest",
+                str(HELM_TESTS / "tests" / "helm_tests" / "airflow_aux" / "test_basic_helm_chart.py"),
+                "-v", "--tb=short",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            cwd=str(HELM_TESTS),
+        )
+        assert r.returncode == 0, f"Basic helm chart tests failed:\n{r.stderr[-1000:]}"
+
+    def test_repo_worker_volume_claim_template_tests(self):
+        """Repo's worker volume claim template tests pass (pass_to_pass)."""
+        import sys
+        HELM_TESTS = REPO / "helm-tests"
+        # Install required dependencies
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "kubernetes", "-q"],
+            capture_output=True, text=True, timeout=60,
+        )
+        # Install helm-tests package
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-e", str(HELM_TESTS), "-q"],
+            capture_output=True, text=True, timeout=120,
+        )
+        # Run worker volume claim template tests
+        r = subprocess.run(
+            [
+                sys.executable, "-m", "pytest",
+                str(HELM_TESTS / "tests" / "helm_tests" / "airflow_core" / "test_worker.py"),
+                "-k", "volume_claim_template or volume_claim or persistence",
+                "-v", "--tb=short",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            cwd=str(HELM_TESTS),
+        )
+        assert r.returncode == 0, f"Worker volume claim tests failed:\n{r.stderr[-1000:]}"

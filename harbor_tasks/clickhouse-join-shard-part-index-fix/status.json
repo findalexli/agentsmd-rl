@@ -8,13 +8,13 @@
   "sandbox_id": "iinx6qqpmhtr7g80iwhnd",
   "backend": "gemini",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "error": "The sandbox was not found",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 71.54,
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1290.38,
       "notes": ""
     },
     "improve": {
@@ -29,10 +29,7 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed pytest import in test_outputs.py. Docker build passed. NOP test passed (reward=0). Gold test passed (reward=1). All 16 tests synchronized with eval_manifest.yaml.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 32.31
+      "notes": "All 35 tests synchronized with eval_manifest.yaml. 20 checks with origin: repo_tests (subprocess.run() based)."
     },
     "rubric_judge": {
       "status": "fail",
@@ -40,6 +37,37 @@
       "backend": "fireworks",
       "time": 643.34,
       "notes": "ICR=0.50"
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        ".claude/CLAUDE.md",
+        ".claude/skills/review/SKILL.md",
+        ".github/copilot-instructions.md",
+        "AGENTS.md"
+      ],
+      "rules_added": 5,
+      "rules_rejected": 2,
+      "rejection_reasons": "2 rules about PR workflow process (not evaluable from code diff)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 132.7
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 21.46,
+      "notes": "",
+      "precision": 0.4
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 44.03,
+      "notes": "precision was 0.40, fixing hallucinated rules"
     }
   },
   "history": [
@@ -50,38 +78,6 @@
       "backend": "fireworks",
       "time": 987.18,
       "at": "2026-04-09T14:44:38.338909"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 987.45,
-      "at": "2026-04-09T14:44:38.513280"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 95.0,
-      "at": "2026-04-09T14:59:26.475060"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 1614.94,
-      "at": "2026-04-09T20:45:23.476820"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "gemini",
-      "time": 8247.31,
-      "at": "2026-04-10T03:40:43.534184"
     }
   ]
 }

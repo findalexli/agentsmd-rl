@@ -30,7 +30,7 @@ def _run_in_repo(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProc
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -47,7 +47,7 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -157,7 +157,7 @@ def test_skill_md_key_files_updated():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
+# Pass-to-pass (static) -- anti-stub
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -208,7 +208,7 @@ def test_config_classes_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — repo CI/CD checks
+# Pass-to-pass (repo_tests) -- repo CI/CD checks
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
@@ -368,3 +368,55 @@ else:
         timeout=60,
     )
     assert r.returncode == 0, f"Shell script syntax check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_jinja2_templates_syntax():
+    """All Jinja2 template files have valid syntax (pass_to_pass)."""
+    install_result = _run_in_repo(["pip", "install", "jinja2", "-q"], timeout=60)
+    if install_result.returncode != 0:
+        pytest.skip("Could not install jinja2")
+
+    script = '''
+import jinja2
+from pathlib import Path
+import sys
+
+templates_dir = Path("src/prime_rl/templates/")
+env = jinja2.Environment()
+invalid = []
+
+for template_file in templates_dir.glob("*.j2"):
+    try:
+        env.parse(open(template_file).read())
+    except Exception as e:
+        invalid.append(f"{template_file}: {e}")
+
+if invalid:
+    print("Invalid templates:")
+    for i in invalid:
+        print(i)
+    sys.exit(1)
+else:
+    count = len(list(templates_dir.glob("*.j2")))
+    print(f"All {count} Jinja2 templates have valid syntax")
+'''
+    r = _run_in_repo(
+        ["python3", "-c", script],
+        timeout=60,
+    )
+    assert r.returncode == 0, f"Jinja2 template syntax check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint_modified_dirs():
+    """Ruff lint check on modified directories passes (pass_to_pass)."""
+    install_result = _run_in_repo(["pip", "install", "ruff", "-q"], timeout=60)
+    if install_result.returncode != 0:
+        pytest.skip("Could not install ruff")
+
+    r = _run_in_repo(
+        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/configs/", "src/prime_rl/inference/"],
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff check on modified dirs failed:\n{r.stdout}\n{r.stderr}"

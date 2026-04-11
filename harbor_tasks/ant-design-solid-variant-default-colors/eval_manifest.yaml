@@ -49,4 +49,35 @@ checks:
     weight: 0
     description: "Tests should use relative imports, not absolute paths like 'antd'"
 
+  # Pass-to-pass: Repository CI tests (p2p enrichment)
+  - id: "test_repo_biome_lint"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    weight: 5
+    description: "Repository biome linting passes (CI command: npm run lint:biome)"
+
+  - id: "test_repo_biome_check"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    weight: 5
+    description: "Repository biome check passes on modified files (CI command: npx biome check)"
+
+  - id: "test_repo_version"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    weight: 5
+    description: "Repository version script passes (CI command: npm run version)"
+
+  - id: "test_repo_button_preset_colors"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    weight: 5
+    description: "Repository Button preset colors tests exist and run (CI command: npx jest with --testNamePattern)"
+
+  - id: "test_repo_tag_variant_class"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+    weight: 5
+    description: "Repository Tag variant className tests exist and run (CI command: npx jest with --testNamePattern)"
+
 rubric: []

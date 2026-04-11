@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:00:01.178133",
-  "total_time": 129.7,
-  "sandbox_id": "iyis2ldx2c1xz1ay9ma87",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:46:51.504324",
+  "total_time": 1076.22,
+  "sandbox_id": "irub0bb64al7ttwa66ior",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -28,36 +28,28 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed Dockerfile to install nodejs and npm for Svelte file parsing. All 4 validation checks now pass: Docker build succeeds, NOP test returns reward=0 (fail-to-pass tests correctly fail on buggy base), Gold test returns reward=1 (all tests pass after solve.sh patch), Rubric judge ICR=1.0.",
+      "attempts": 1,
+      "notes": "Fixed eval_manifest.yaml by removing non-applicable rubric rule. The rule referenced AGENTS.md line 45 (\"Be consistent with style\"), but this is a code-only task - the gold solution only modifies a Svelte file, not AGENTS.md. All 4 validation checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.56
+      "time": 117.85
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 72.43,
+      "time": 363.48,
       "notes": ""
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.32,
+      "time": 0.17,
       "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4777.61,
-      "at": "2026-04-09T10:31:30.772943"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +81,14 @@
       "backend": "fireworks",
       "time": 129.7,
       "at": "2026-04-09T15:00:01.178133"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1076.22,
+      "at": "2026-04-10T17:46:51.504324"
     }
   ]
 }

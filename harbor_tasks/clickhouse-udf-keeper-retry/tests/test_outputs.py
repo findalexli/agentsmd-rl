@@ -446,10 +446,18 @@ def test_repo_yaml_linting():
     """
     PASS TO PASS: CI workflow YAML files are valid.
 
-    Validates that GitHub workflow YAML files have valid syntax.
-    Only checks files that exist and are relevant to the PR CI.
+    Validates that GitHub workflow YAML files have valid syntax using yamllint.
+    This is a real CI command from the repo's style checks.
     """
-    import yaml
+    # First install yamllint if not present
+    r = subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "yamllint"],
+        capture_output=True, text=True, timeout=120,
+    )
 
     workflow_dir = os.path.join(REPO, ".github/workflows")
     if not os.path.exists(workflow_dir):
@@ -464,8 +472,156 @@ def test_repo_yaml_linting():
         if not os.path.exists(yaml_path):
             continue
 
-        with open(yaml_path, 'r') as f:
-            try:
-                yaml.safe_load(f)
-            except yaml.YAMLError as e:
-                assert False, f"Invalid YAML in {yaml_file}: {e}"
+        r = subprocess.run(
+            ["yamllint", "--config-file", "./.yamllint", yaml_path],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"YAML lint failed for {yaml_file}:\n{r.stdout}\n{r.stderr}"
+
+
+def test_target_file_codespell():
+    """
+    PASS TO PASS: Target file passes codespell typo check.
+
+    Runs codespell on the target file only to check for typos.
+    This is a real CI command from check_typos.sh.
+    """
+    # Install codespell if not present
+    r = subprocess.run(
+        ["apt-get", "update", "-qq"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["apt-get", "install", "-y", "-qq", "codespell"],
+        capture_output=True, text=True, timeout=120,
+    )
+    if r.returncode != 0:
+        pytest.skip("Could not install codespell")
+
+    ignore_words = os.path.join(REPO, "ci/jobs/scripts/check_style/codespell-ignore-words.list")
+    ignore_lines = os.path.join(REPO, "ci/jobs/scripts/check_style/codespell-ignore-lines.list")
+
+    cmd = [
+        "codespell",
+        "--quiet-level", "2",
+        FULL_PATH,
+    ]
+
+    # Add ignore files if they exist
+    if os.path.exists(ignore_words):
+        cmd.extend(["--ignore-words", ignore_words])
+    if os.path.exists(ignore_lines):
+        cmd.extend(["--exclude-file", ignore_lines])
+
+    r = subprocess.run(
+        cmd,
+        capture_output=True, text=True, timeout=60,
+    )
+
+    # codespell exits 0 if no typos, 65 if typos found
+    assert r.returncode == 0, f"Typos found in target file:\n{r.stdout}\n{r.stderr}"
+
+
+def test_target_file_no_tabs():
+    """
+    PASS TO PASS: Target file has no tab characters (repo style check).
+
+    Checks for tabs using grep -F with actual tab character.
+    This matches the repo's check_cpp.sh tab check.
+    """
+    r = subprocess.run(
+        ["grep", "-F", "\t", FULL_PATH],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode != 0, f"Tab characters found in target file:\n{r.stdout}"
+
+
+def test_target_file_no_trailing_whitespace():
+    """
+    PASS TO PASS: Target file has no trailing whitespace (repo style check).
+
+    Checks for trailing whitespace using grep -P ' $'.
+    This matches the repo's check_cpp.sh trailing whitespace check.
+    """
+    r = subprocess.run(
+        ["grep", "-n", "-P", " $", FULL_PATH],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode != 0, f"Trailing whitespace found in target file:\n{r.stdout}"
+
+
+def test_target_file_unix_newlines():
+    """
+    PASS TO PASS: Target file uses Unix line endings (repo style check).
+
+    Checks for DOS/Windows newlines using grep -P '\r$'.
+    This matches the repo's various_checks.sh DOS newline check.
+    """
+    r = subprocess.run(
+        ["grep", "-l", "-P", "\r$", FULL_PATH],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode != 0, f"DOS/Windows newlines found in target file"
+
+
+def test_target_file_no_bom():
+    """
+    PASS TO PASS: Target file has no UTF BOM markers.
+
+    Checks for UTF-8, UTF-16LE, and UTF-16BE BOM markers.
+    This matches the repo's various_checks.sh BOM check.
+    """
+    with open(FULL_PATH, 'rb') as f:
+        content = f.read()
+
+    # Check for UTF-8 BOM
+    assert not content.startswith(b'\xef\xbb\xbf'), "File has UTF-8 BOM marker"
+    # Check for UTF-16LE BOM
+    assert not content.startswith(b'\xff\xfe'), "File has UTF-16LE BOM marker"
+    # Check for UTF-16BE BOM
+    assert not content.startswith(b'\xfe\xff'), "File has UTF-16BE BOM marker"
+
+
+def test_target_file_no_conflict_markers():
+    """
+    PASS TO PASS: Target file has no git conflict markers.
+
+    Checks for git conflict markers using grep -P.
+    This matches the repo's various_checks.sh conflict marker check.
+    """
+    r = subprocess.run(
+        ["grep", "-P", "^(<<<<<<<|=======|>>>>>>>)$", FULL_PATH],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode != 0, f"Git conflict markers found in target file:\n{r.stdout}"
+
+
+def test_target_file_valid_utf8():
+    """
+    PASS TO PASS: Target file is valid UTF-8 encoded.
+
+    Uses Python decode to verify valid UTF-8 encoding.
+    """
+    with open(FULL_PATH, 'rb') as f:
+        raw_content = f.read()
+
+    try:
+        raw_content.decode('utf-8')
+    except UnicodeDecodeError as e:
+        assert False, f"File is not valid UTF-8: {e}"
+
+
+def test_target_file_no_duplicate_includes():
+    """
+    PASS TO PASS: Target file has no duplicate #include directives.
+
+    Uses awk to find and count duplicate include lines.
+    This matches the repo's check_style.py duplicate include check.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         f"awk '/^#include /{{print}}' {FULL_PATH} | sort | uniq -c | grep -v '1 ' || true"],
+        capture_output=True, text=True, timeout=30,
+    )
+    # If output is empty, no duplicates found
+    assert r.stdout.strip() == "", f"Duplicate includes found:\n{r.stdout}"

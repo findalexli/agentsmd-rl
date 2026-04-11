@@ -305,7 +305,7 @@ def test_testing_codegen_skill_updated():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
+# Pass-to-pass (static) — anti-stub and code quality
 # ---------------------------------------------------------------------------
 
 
@@ -316,3 +316,71 @@ def test_directive_ext_not_stub():
     assert match_arms >= 8, \
         f"directive_ext.rs must have 8 match arms (has {match_arms}) — not a stub"
 
+
+def test_markdown_table_formatting():
+    """SKILL.md files must use proper markdown table formatting with spaces around separators (pass_to_pass)."""
+    import re
+
+    # Check biome-developer SKILL.md for proper table formatting
+    skill_path = Path(f"{REPO}/.claude/skills/biome-developer/SKILL.md")
+    if skill_path.exists():
+        content = skill_path.read_text()
+        # Check for proper table separator format: | --- | --- | --- |
+        # Not: |---|---|---| (without spaces)
+        bad_tables = re.findall(r'\|[-]+\|', content)
+        if bad_tables:
+            assert False, f"Found improperly formatted markdown tables (missing spaces): {bad_tables[:3]}"
+
+    # Check testing-codegen SKILL.md
+    testing_skill_path = Path(f"{REPO}/.claude/skills/testing-codegen/SKILL.md")
+    if testing_skill_path.exists():
+        content = testing_skill_path.read_text()
+        bad_tables = re.findall(r'\|[-]+\|', content)
+        if bad_tables:
+            assert False, f"Found improperly formatted markdown tables in testing-codegen (missing spaces): {bad_tables[:3]}"
+
+
+def test_vue_svelte_test_specs_exist():
+    """Vue and Svelte test spec files must exist in the HTML parser tests (pass_to_pass)."""
+    import os
+
+    # Check that Vue test specs exist
+    vue_ok_dir = Path(f"{REPO}/crates/biome_html_parser/tests/html_specs/ok/vue")
+    vue_error_dir = Path(f"{REPO}/crates/biome_html_parser/tests/html_specs/error/vue")
+
+    vue_ok_count = len(list(vue_ok_dir.glob("*.vue"))) if vue_ok_dir.exists() else 0
+    vue_error_count = len(list(vue_error_dir.glob("*.vue"))) if vue_error_dir.exists() else 0
+
+    assert vue_ok_count >= 3, f"Expected at least 3 Vue ok test specs, found {vue_ok_count}"
+    assert vue_error_count >= 3, f"Expected at least 3 Vue error test specs, found {vue_error_count}"
+
+    # Check that Svelte test specs exist
+    svelte_dir = Path(f"{REPO}/crates/biome_html_parser/tests/html_specs/error/svelte")
+    svelte_ok_dir = Path(f"{REPO}/crates/biome_html_parser/tests/html_specs/ok/svelte")
+
+    svelte_error_count = len(list(svelte_dir.glob("*.svelte"))) if svelte_dir.exists() else 0
+    svelte_ok_count = len(list(svelte_ok_dir.glob("*.svelte"))) if svelte_ok_dir.exists() else 0
+
+    # Svelte error specs should exist (the PR adds directive tracking for Svelte)
+    assert svelte_error_count >= 5, f"Expected at least 5 Svelte error test specs, found {svelte_error_count}"
+
+
+def test_lib_rs_module_declaration():
+    """biome_html_syntax::lib.rs uses proper module declaration style (pass_to_pass)."""
+    import re
+
+    lib_rs = Path(f"{REPO}/crates/biome_html_syntax/src/lib.rs").read_text()
+
+    # Check that mod directive_ext is declared (it will exist after the patch)
+    # But also verify the existing style pattern for other modules
+    # Look for 'mod module_name;' declarations without braces (inline modules)
+    inline_mods = re.findall(r'^mod\s+(\w+)\s*;', lib_rs, re.MULTILINE)
+
+    # At least some modules should be declared this way
+    assert len(inline_mods) >= 1, "lib.rs should have inline module declarations"
+
+    # Check for proper file structure - modules declared as 'mod name;' style
+    # (as opposed to 'mod name { ... }' inline modules)
+    brace_mods = re.findall(r'^mod\s+\w+\s*\{', lib_rs, re.MULTILINE)
+    # There shouldn't be many inline brace-style modules in this file
+    assert len(brace_mods) <= 2, f"Expected <=2 inline brace modules, found {len(brace_mods)}"

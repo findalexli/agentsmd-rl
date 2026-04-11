@@ -15,6 +15,42 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Basic bun script execution works (hello script)
+- id: test_repo_opencode_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes on packages/opencode
+- id: test_repo_opencode_compaction_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Compaction tests pass for packages/opencode (38 tests covering isOverflow, prune, create, process)
+- id: test_repo_opencode_config_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config tests pass for packages/opencode (75 tests covering tail_turns/tail_tokens config)
+- id: test_compaction_has_tail_constants
+  type: fail_to_pass
+  origin: agent_config
+  description: Compaction module has DEFAULT_TAIL_TURNS, MIN_TAIL_TOKENS, MAX_TAIL_TOKENS constants
+- id: test_compaction_has_tail_budget_function
+  type: fail_to_pass
+  origin: agent_config
+  description: Compaction module has tailBudget function for calculating tail size
+- id: test_compaction_has_select_function
+  type: fail_to_pass
+  origin: agent_config
+  description: Compaction module has select function for choosing messages to preserve
+- id: test_compaction_prompt_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: Compaction prompt mentions retaining recent turns
+- id: test_compaction_imports_provider_transform
+  type: fail_to_pass
+  origin: agent_config
+  description: Compaction module imports ProviderTransform for token calculations
+- id: test_config_has_compaction_tail_settings
+  type: fail_to_pass
+  origin: agent_config
+  description: Config schema supports compaction tail_turns and tail_tokens
 rubric:
 - rule: Compaction module must define DEFAULT_TAIL_TURNS constant for recent context retention
   source:

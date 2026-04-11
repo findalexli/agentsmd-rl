@@ -111,18 +111,18 @@ agent_config_checks: []
 rubric:
   - rule: "Go files adhere to standard Go formatting and styling (go fmt, goimports)."
     source:
-      path: "CONTRIBUTING.md"
-      lines: "39-46"
-      commit: "e809b6b8139c1b8afbb081d007ae8ce5858d46a7"
+      path: "plugins/snapshots/erofs/erofs.go"
+      lines: "1-600"
+      commit: "44d9a5fa1350ce09af1c23b653a6f3ac453850ce"
 
-  - rule: "Declare variables in the narrowest scope possible. Move variable declarations inside conditional blocks when they are only needed within that branch."
+  - rule: "The chown-related variables (mappedUID, mappedGID, uidmapLabel, gidmapLabel, needsRemap) are declared inside the !s.blockMode conditional block, narrowing their scope to only where needed."
     source:
-      path: "CONTRIBUTING.md"
-      lines: "39"
-      commit: "e809b6b8139c1b8afbb081d007ae8ce5858d46a7"
+      path: "plugins/snapshots/erofs/erofs.go"
+      lines: "454-457"
+      commit: "44d9a5fa1350ce09af1c23b653a6f3ac453850ce"
 
-  - rule: "Use clear, explanatory comments to document WHY a particular code path exists, especially when bypassing normal behavior (e.g., block mode vs non-block mode differences)."
+  - rule: "An explanatory comment documents WHY chown is skipped in block mode (upperdir lives inside block image, host ownership is irrelevant)."
     source:
-      path: "CONTRIBUTING.md"
-      lines: "39"
-      commit: "e809b6b8139c1b8afbb081d007ae8ce5858d46a7"
+      path: "plugins/snapshots/erofs/erofs.go"
+      lines: "450-453"
+      commit: "44d9a5fa1350ce09af1c23b653a6f3ac453850ce"

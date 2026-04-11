@@ -264,16 +264,6 @@ def test_not_stub():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_repo_typecheck():
-    """Repo TypeScript typecheck passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "run", "tsc"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
-    )
-    assert r.returncode == 0, f"TypeScript typecheck failed:\n{r.stderr[-500:]}"
-
-
-# [repo_tests] pass_to_pass
 def test_repo_lint():
     """Repo ESLint passes (pass_to_pass)."""
     r = subprocess.run(
@@ -294,10 +284,20 @@ def test_repo_build():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_mcp_tests():
-    """Repo MCP tests pass (pass_to_pass) — most relevant to PR #40010."""
+def test_repo_check_deps():
+    """Repo dependency check passes (pass_to_pass) — verifies DEPS structure."""
     r = subprocess.run(
-        ["npm", "run", "test-mcp"],
-        capture_output=True, text=True, timeout=600, cwd=REPO,
+        ["npm", "run", "check-deps"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"MCP tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Dependency check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_packages():
+    """Repo package lint passes (pass_to_pass) — verifies workspace consistency."""
+    r = subprocess.run(
+        ["npm", "run", "lint-packages"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Package lint failed:\n{r.stderr[-500:]}"

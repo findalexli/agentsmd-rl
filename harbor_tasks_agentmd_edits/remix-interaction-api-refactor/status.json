@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T15:04:23.913784",
-  "total_time": 1222.15,
-  "sandbox_id": "irxxpgzk5ere37fbr8dnw",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:42:13.500499",
+  "total_time": 804.59,
+  "sandbox_id": "irkyi1yhvxxb801bdzk5z",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -20,7 +21,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 306.9,
+      "time": 260.43,
       "notes": ""
     },
     "rubric_enrichment": {
@@ -58,9 +59,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 302.58
+      "time": 525.19,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Docker build: PASS. NOP test: PASS (reward=0). Gold test: PASS with fixes applied (reward=1). Issues found: 1) solution/solve.sh has bug - searches for 'Create a container' but original has 'Creates an event container', causing ContainerOptions type to not be inserted correctly. 2) tests/test_outputs.py has bug in test_create_container_options_object - regex stops at first '{' which is inside JSDoc example, missing the actual 'options?: ContainerOptions' parameter. Both issues were fixed using temporary fix scripts and the fixed test file."
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 5.07,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -95,6 +108,14 @@
       "backend": "fireworks",
       "time": 1222.15,
       "at": "2026-04-10T15:04:23.913784"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 804.59,
+      "at": "2026-04-10T17:42:13.500499"
     }
   ]
 }

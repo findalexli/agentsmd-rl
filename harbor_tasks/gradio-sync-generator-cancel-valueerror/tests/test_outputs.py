@@ -85,7 +85,7 @@ def test_syntax_check():
 
 # [repo_ci] pass_to_pass
 def test_repo_ruff_check():
-    """Repo's Python linting passes (pass_to_pass)."""
+    """Repo's Python linting passes (ruff check on gradio/utils.py) (pass_to_pass)."""
     _install_ruff()
     r = subprocess.run(
         ["python", "-m", "ruff", "check", f"{REPO}/gradio/utils.py"],
@@ -96,7 +96,7 @@ def test_repo_ruff_check():
 
 # [repo_ci] pass_to_pass
 def test_repo_ruff_format():
-    """Repo's Python formatting passes (pass_to_pass)."""
+    """Repo's Python formatting passes (ruff format check on gradio/utils.py) (pass_to_pass)."""
     _install_ruff()
     r = subprocess.run(
         ["python", "-m", "ruff", "format", "--check", f"{REPO}/gradio/utils.py"],
@@ -115,6 +115,16 @@ def test_repo_gradio_imports():
         capture_output=True, text=True, timeout=60, cwd=REPO, env=env,
     )
     assert r.returncode == 0, f"gradio import failed:\n{r.stderr}"
+
+
+# [repo_ci] pass_to_pass
+def test_repo_utils_syntax():
+    """gradio/utils.py has valid Python syntax via py_compile (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "py_compile", f"{REPO}/gradio/utils.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

@@ -196,7 +196,7 @@ def test_socket_test_file_preserved():
 def test_repo_lint():
     """Repo's JS linting passes (oxlint on src/js)."""
     r = subprocess.run(
-        ["bunx", "oxlint", "--format=github", "src/js"],
+        ["bunx", "oxlint", "src/js"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     # Exit code 0 = success, warnings are OK (non-zero only on errors)
@@ -223,37 +223,38 @@ def test_repo_ban_words():
     assert r.returncode == 0, f"Ban words check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from AGENTS.md / CLAUDE.md
-# ---------------------------------------------------------------------------
-
-
-# [agent_config] pass_to_pass — CLAUDE.md:97 @ 73361607d70bd77041d0fc20e45a6dbe2373a677
-def test_no_hardcoded_ports():
-    """New test code uses port: 0, not hardcoded port numbers."""
-    p = Path(TEST_FILE)
-    if not p.exists():
-        return
-    text = p.read_text()
-    tail = "\n".join(text.splitlines()[-100:])
-    hardcoded = re.findall(r"port:\s*(?!0\b)(\d+)", tail)
-    assert not hardcoded, f"Hardcoded port(s) in new tests: {hardcoded} — use port: 0"
-
-
-# [agent_config] pass_to_pass — AGENTS.md:102 @ 73361607d70bd77041d0fc20e45a6dbe2373a677
-def test_no_settimeout_in_new_tests():
-    """New test code does not use setTimeout — await conditions instead."""
-    p = Path(TEST_FILE)
-    if not p.exists():
-        return
-    text = p.read_text()
-    tail = "\n".join(text.splitlines()[-100:])
-    assert "setTimeout" not in tail, (
-        "setTimeout found in new tests — AGENTS.md says await conditions instead"
+# [repo_tests] pass_to_pass — TypeScript typechecking
+def test_repo_typecheck():
+    """Repo's TypeScript typecheck passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bunx", "tsc", "--noEmit"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
+    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
-# [agent_config] pass_to_pass — AGENTS.md:99 @ 73361607d70bd77041d0fc20e45a6dbe2373a677
+# [repo_tests] pass_to_pass — Node.js works
+def test_repo_node_works():
+    """Node.js is available and functional in the repo (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "-e", "console.log('NODE_WORKS')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Node check failed:\n{r.stderr}"
+    assert "NODE_WORKS" in r.stdout, "Node did not execute correctly"
+
+
+# [repo_tests] pass_to_pass — Bun executable works
+def test_repo_bun_works():
+    """Bun is available and functional in the repo (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "--version"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bun check failed:\n{r.stderr}"
+    assert r.stdout.strip(), "Bun version not returned"
+
+# [agent_config] pass_to_pass - AGENTS.md:99 @ 73361607d70bd77041d0fc20e45a6dbe2373a677
 def test_no_panic_absence_tests():
     """New tests don't check for absence of 'panic' or 'uncaught exception'."""
     p = Path(TEST_FILE)

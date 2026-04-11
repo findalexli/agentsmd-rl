@@ -8,6 +8,11 @@ RUN apt-get update && \
         git curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Node.js 22 (LTS) - required for Playwright TypeScript project
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
 # Clone repo at base commit
 RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
     cd /workspace/playwright && \
@@ -16,6 +21,9 @@ RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /wo
     git config user.name "Agent"
 
 WORKDIR /workspace/playwright
+
+# Install npm dependencies (required for running CI commands)
+RUN npm ci
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

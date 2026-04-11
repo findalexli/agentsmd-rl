@@ -146,6 +146,98 @@ print("PASS")
 # Repo CI tests (pass_to_pass, repo_tests) — real CI commands
 # ---------------------------------------------------------------------------
 
+def test_make_deps():
+    """Trust store dependencies can be fetched and compiled (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang elixir p7zip-full > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store
+make deps 2>&1
+""",
+        shell=True, capture_output=True, text=True, timeout=600,
+    )
+    assert r.returncode == 0, f"make deps failed:\n{r.stderr[-1000:]}"
+
+
+def test_all_erl_files_syntax():
+    """All Erlang source files in trust store pass syntax check (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store/src
+for f in *.erl; do
+    erlc +syntax_check -I../../rabbit_common/include -I../../rabbit/include "$f" 2>&1 || exit 1
+done
+echo "PASS"
+""",
+        shell=True, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Syntax check failed:\n{r.stderr}"
+
+
+def test_certificate_provider_behaviour():
+    """Trust store certificate provider behaviour file is valid (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store/src
+if [ ! -f rabbit_trust_store_certificate_provider.erl ]; then
+    echo "FAIL: behaviour file not found"
+    exit 1
+fi
+erlc +syntax_check -I../../rabbit_common/include -I../../rabbit/include rabbit_trust_store_certificate_provider.erl 2>&1 || exit 1
+echo "PASS"
+""",
+        shell=True, capture_output=True, text=True, timeout=180,
+    )
+    assert r.returncode == 0, f"Behaviour check failed:\n{r.stderr}"
+
+
+def test_trust_store_app_file():
+    """Trust store generates valid .app file after compilation (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang elixir p7zip-full > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store
+make app > /dev/null 2>&1
+if [ ! -f ebin/rabbitmq_trust_store.app ]; then
+    echo "FAIL: .app file not generated"
+    exit 1
+fi
+if ! grep -q "rabbitmq_trust_store" ebin/rabbitmq_trust_store.app; then
+    echo "FAIL: invalid .app file content"
+    exit 1
+fi
+if ! grep -q "rabbit_trust_store" ebin/rabbitmq_trust_store.app; then
+    echo "FAIL: main module not listed in .app file"
+    exit 1
+fi
+echo "PASS"
+""",
+        shell=True, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f".app file check failed:\n{r.stderr}"
+
+
+def test_make_clean():
+    """make clean works and removes build artifacts (pass_to_pass)."""
+    r = subprocess.run(
+        """apt-get update > /dev/null 2>&1
+apt-get install -y --no-install-recommends erlang elixir p7zip-full > /dev/null 2>&1
+cd /workspace/rabbitmq-server/deps/rabbitmq_trust_store
+make app > /dev/null 2>&1
+make clean > /dev/null 2>&1
+if [ -d ebin ]; then
+    echo "FAIL: ebin directory still exists after clean"
+    exit 1
+fi
+echo "PASS"
+""",
+        shell=True, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"make clean failed:\n{r.stderr}"
+
+
 def test_trust_store_erlc_syntax():
     """Erlang syntax check for rabbit_trust_store.erl using erlc (pass_to_pass)."""
     r = subprocess.run(

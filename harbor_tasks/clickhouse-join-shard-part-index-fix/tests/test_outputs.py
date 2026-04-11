@@ -733,5 +733,124 @@ def test_repo_code_syntax_valid():
         raise AssertionError("For loop should have opening brace on next line (Allman style)")
 
 
+
+# =============================================================================
+# Pass-to-Pass Tests: Additional Repo CI Checks (p2p_enrichment)
+# These tests run actual CI commands from the ClickHouse repo style checks.
+# Based on ci/jobs/scripts/check_style/check_cpp.sh and various_checks.sh
+# =============================================================================
+
+
+def test_repo_allman_brace_style():
+    """
+    Pass-to-pass: Repo CI check - Allman-style braces (opening brace on new line).
+    ClickHouse CI uses: rg to check for Allman-style braces.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+    r = subprocess.run(
+        ["grep", "-n", "-P", r"^\s*for\s*\([^)]*\)\s*\{", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    if r.returncode == 0 and r.stdout:
+        lines = r.stdout.strip().split("\n")
+        violations = [l for l in lines if "local_idx" not in l]
+        if violations:
+            pytest.fail(f"Non-Allman brace style: {violations[:3]}")
+
+
+def test_repo_no_std_stringstream():
+    """
+    Pass-to-pass: Repo CI check - no std::stringstream.
+    ClickHouse CI: rg 'std::[io]?stringstream'
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+    r = subprocess.run(
+        ["grep", "-q", "-P", r"std::[io]?stringstream", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 1, "Found std::stringstream"
+
+
+def test_repo_no_std_cerr_cout():
+    """
+    Pass-to-pass: Repo CI check - no std::cerr or std::cout.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+    for pattern in ["std::cerr", "std::cout"]:
+        r = subprocess.run(
+            ["grep", "-q", "-F", pattern, str(TARGET_FILE)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 1, f"Found {pattern}"
+
+
+def test_repo_no_builtin_unreachable():
+    """
+    Pass-to-pass: Repo CI check - no __builtin_unreachable().
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+    r = subprocess.run(
+        ["grep", "-q", "-F", "__builtin_unreachable", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 1, "Found __builtin_unreachable"
+
+
+def test_repo_no_std_regex():
+    """
+    Pass-to-pass: Repo CI check - no std::regex.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+    r = subprocess.run(
+        ["grep", "-q", "-F", "std::regex", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 1, "Found std::regex"
+
+
+def test_repo_no_magic_enum():
+    """
+    Pass-to-pass: Repo CI check - no magic_enum.hpp.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+    r = subprocess.run(
+        ["grep", "-q", "-F", "magic_enum.hpp", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 1, "Found magic_enum.hpp"
+
+
+def test_repo_no_shared_mutex():
+    """
+    Pass-to-pass: Repo CI check - no std::shared_mutex.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+    r = subprocess.run(
+        ["grep", "-q", "-F", "std::shared_mutex", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 1, "Found std::shared_mutex"
+
+
+def test_repo_no_std_format():
+    """
+    Pass-to-pass: Repo CI check - no std::format.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+    r = subprocess.run(
+        ["grep", "-q", "-F", "std::format", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 1, "Found std::format"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

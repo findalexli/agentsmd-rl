@@ -169,6 +169,22 @@ def test_repo_biome():
     assert result.returncode == 0, f"Biome lint failed:\n{result.stderr[-500:]}"
 
 
+def test_repo_test_node():
+    """Repo's Node.js tests pass (pass_to_pass).
+
+    Node.js demo tests must pass on the base commit.
+    This validates component demos work in Node.js environment.
+    """
+    result = subprocess.run(
+        ["npm", "run", "test:node"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO
+    )
+    assert result.returncode == 0, f"Node tests failed:\n{result.stderr[-500:]}"
+
+
 def test_no_relative_component_imports_in_dumi():
     """No relative imports to components/ directory in .dumi (fail-to-pass).
 

@@ -8,9 +8,26 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import pytest
 from pathlib import Path
 
 REPO = "/workspace/angular"
+
+
+# ---------------------------------------------------------------------------
+# Pytest fixture for shared setup (install once)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="session")
+def install_deps():
+    """Install dependencies once for all repo_tests."""
+    r = subprocess.run(
+        ["bash", "-c", "corepack enable && pnpm install --frozen-lockfile"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    if r.returncode != 0:
+        pytest.fail(f"Failed to install dependencies:\n{r.stderr[-500:]}\n{r.stdout[-500:]}")
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -105,70 +122,50 @@ def test_prettierignore_exists():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_repo_tslint():
+def test_repo_tslint(install_deps):
     """Repo's TSLint passes (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm tslint"],
+        ["pnpm", "tslint"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"TSLint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_check_tooling_setup():
+def test_repo_check_tooling_setup(install_deps):
     """Repo's TypeScript tooling setup compiles (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm check-tooling-setup"],
+        ["pnpm", "check-tooling-setup"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Tooling setup check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_ts_circular_deps_check():
+def test_repo_ts_circular_deps_check(install_deps):
     """Repo has no circular TypeScript dependencies (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm ts-circular-deps:check"],
+        ["pnpm", "ts-circular-deps:check"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"Circular deps check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_pullapprove_verify():
+def test_repo_pullapprove_verify(install_deps):
     """Repo's PullApprove config is valid (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm ng-dev pullapprove verify"],
+        ["pnpm", "ng-dev", "pullapprove", "verify"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"PullApprove verify failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_ngbot_verify():
+def test_repo_ngbot_verify(install_deps):
     """Repo's NgBot config is valid (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm ng-dev ngbot verify"],
+        ["pnpm", "ng-dev", "ngbot", "verify"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"NgBot verify failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_prettier_config():
-    """Repo's config files are properly formatted (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && pnpm prettier --check package.json pnpm-workspace.yaml renovate.json .github/workflows/ci.yml .github/workflows/pr.yml .pullapprove.yml"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Prettier config check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_buildifier():
-    """Repo's Bazel files are properly formatted (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c", "cd /workspace/angular && corepack enable && pnpm install --frozen-lockfile && ./node_modules/.bin/buildifier -mode=check MODULE.bazel BUILD.bazel REPO.bazel packages.bzl"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Buildifier check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

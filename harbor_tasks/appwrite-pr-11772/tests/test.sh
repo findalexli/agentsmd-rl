@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-cd /workspace/task/tests
+cd /tests
 
 # Install pytest if not present
-pip install pytest -q
+pip install pytest pyyaml -q --break-system-packages || pip install pytest pyyaml -q
 
 # Run the tests and capture output
 pytest test_outputs.py -v 2>&1 | tee /logs/verifier/test_output.log

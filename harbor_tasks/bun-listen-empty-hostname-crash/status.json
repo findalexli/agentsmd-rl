@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T20:45:24.866369",
-  "total_time": 1616.33,
-  "sandbox_id": "is13suxob278necqqs3uk",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:42:21.375303",
+  "total_time": 806.08,
+  "sandbox_id": "inwdkechx7krw3wp2kxyb",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 887.92,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 283.38,
       "notes": ""
     },
     "p2p_enrich": {
@@ -22,7 +22,7 @@
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 101.66,
-      "notes": ""
+      "notes": "Enriched with CI commands: oxlint (src/js), prettier (socket.test.ts), ban-words, tsc --noEmit, node -e, bun --version. Added 3 new repo_tests p2p gates: test_repo_typecheck, test_repo_node_works, test_repo_bun_works."
     },
     "improve": {
       "status": "skipped",
@@ -34,7 +34,7 @@
     "validate": {
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 6.54,
+      "time": 492.97,
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
@@ -42,22 +42,14 @@
       "notes": "All validation tests passed. Docker build succeeds. NOP test correctly returns reward=0 (3 fail-to-pass tests fail on buggy base). Gold test returns reward=1 (all 12 tests pass after fix). Rubric judge skipped due to missing taskforge module (infrastructure limitation, not a task issue)."
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 3.41,
-      "notes": "ICR=0.50"
+      "time": 3.05,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 414.83,
-      "at": "2026-04-09T01:44:12.271973"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +81,14 @@
       "backend": "fireworks",
       "time": 1616.33,
       "at": "2026-04-09T20:45:24.866369"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 806.08,
+      "at": "2026-04-10T17:42:21.375303"
     }
   ]
 }

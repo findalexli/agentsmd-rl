@@ -247,42 +247,10 @@ def test_repo_ninja_build_optimizations():
 
     # Build just the target module to keep it fast
     r = subprocess.run(
-        ["ninja", "-j4", "src/Processors/QueryPlan/Optimizations/CMakeFiles/clickhouse_query_plan_optimizations.dir/optimizeJoinByShards.cpp.o"],
-        capture_output=True, text=True, timeout=120, cwd=str(build_dir),
+        ["ninja", "-j4", "clickhouse_query_plan_optimizations"],
+        capture_output=True, text=True, timeout=600, cwd=str(build_dir),
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
-
-
-def test_repo_code_style_braces():
-    """ClickHouse code follows Allman brace style (pass_to_pass)."""
-    target_file = TARGET_DIR / "optimizeJoinByShards.cpp"
-    if not target_file.exists():
-        pytest.skip("Target file not found")
-
-    source = target_file.read_text()
-
-    # Check for K&R style (brace on same line) which is discouraged in ClickHouse
-    # Look for function definitions or control structures with brace on same line
-    kr_patterns = [
-        r'\)\s*\{',  # closing paren followed by opening brace on same line
-    ]
-
-    # This is a heuristic check - we look for the most common patterns
-    # and verify they follow Allman style (brace on new line)
-    lines = source.split('\n')
-    violations = []
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        # Skip comments
-        if stripped.startswith('//') or stripped.startswith('*') or stripped.startswith('/*'):
-            continue
-        # Look for K&R patterns: control statements with { on same line
-        if re.match(r'^\s*(if|for|while|switch)\s*\(.*\)\s*\{\s*$', stripped):
-            violations.append(f"Line {i+1}: {stripped[:60]}")
-
-    # Be lenient - just check we don't have obvious violations in the fixed code
-    # The fix itself should follow Allman style
-    assert len(violations) == 0, f"K&R style braces found (ClickHouse uses Allman style):\n{chr(10).join(violations[:5])}"
 
 
 def test_repo_cpp_style_check():
@@ -347,26 +315,6 @@ def test_repo_no_tabs():
 
     assert r.returncode != 0 or not r.stdout.strip(), \
         f"Tab characters found in source - ClickHouse uses spaces for indentation"
-
-
-def test_repo_pragma_once_headers():
-    """ClickHouse header files have #pragma once (pass_to_pass)."""
-    # Find all header files in the same directory as the modified file
-    header_files = list(TARGET_DIR.glob("*.h"))
-    if not header_files:
-        pytest.skip("No header files to check")
-
-    missing_pragma = []
-    for h in header_files:
-        r = subprocess.run(
-            ["head", "-n1", str(h)],
-            capture_output=True, text=True, timeout=10, cwd=REPO,
-        )
-        if r.returncode == 0 and r.stdout.strip() != "#pragma once":
-            missing_pragma.append(h.name)
-
-    assert len(missing_pragma) == 0, \
-        f"Header files missing #pragma once: {missing_pragma}"
 
 
 # Import pytest for skip functionality

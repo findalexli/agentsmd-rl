@@ -36,6 +36,19 @@ def _run_build():
 # ---------------------------------------------------------------------------
 
 
+def test_repo_cli_lint():
+    """CLI tools source files pass ESLint (pass_to_pass)."""
+    _run_npm_ci()
+    r = subprocess.run(
+        ["npm", "run", "eslint", "--",
+         "packages/playwright-core/src/tools/cli-client/",
+         "packages/playwright-core/src/tools/cli-daemon/",
+         "packages/playwright-core/src/tools/mcp/"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CLI tools ESLint failed:\n{r.stderr[-500:]}"
+
+
 def test_repo_eslint():
     """Repo's ESLint passes on the codebase (pass_to_pass)."""
     _run_npm_ci()
@@ -294,7 +307,7 @@ if (!/cdpEndpoint\s*:\s*options\.cdp/.test(src)) {
 }
 
 // Check cdpEndpoint is considered in the isolated browser check
-const lines = src.split('\n');
+const lines = src.split('\\n');
 const isolatedLines = lines.filter(l => l.includes('.isolated') && l.includes('='));
 const joined = isolatedLines.join(' ');
 if (!joined.includes('cdpEndpoint')) {

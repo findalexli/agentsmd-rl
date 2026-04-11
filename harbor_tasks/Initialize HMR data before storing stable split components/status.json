@@ -3,11 +3,47 @@
   "reason": "",
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 4.26,
+      "notes": "Added 3 new pass_to_pass tests from repo CI: test_repo_lint_passes (pnpm nx run @tanstack/router-plugin:test:eslint), test_repo_types_pass (pnpm nx run @tanstack/router-plugin:test:types), test_repo_build_verification_passes (pnpm nx run @tanstack/router-plugin:test:build). All verified to exit 0 in Docker. Total p2p tests: 5 (2 existing + 3 new)."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 456.89,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "packages/router-plugin/skills/router-plugin/SKILL.md"
+      ],
+      "rules_added": 4,
+      "rules_rejected": 3,
+      "rejection_reasons": "2 rules about plugin ordering (not applicable to HMR fix), 1 rule about PR workflow (not evaluable from diff)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 87.86
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 5.78,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 35.16,
+      "notes": "precision was 0.00, fixing hallucinated rules"
     }
   }
 }

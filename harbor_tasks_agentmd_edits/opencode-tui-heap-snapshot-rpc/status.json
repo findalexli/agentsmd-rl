@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T14:55:53.229127",
-  "total_time": 711.43,
-  "sandbox_id": "il6lxqmfqcgkrk8htx6y5",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:47:52.417950",
+  "total_time": 1143.53,
+  "sandbox_id": "izfzn9xt4po63xb87qew4",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -20,7 +21,7 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 446.29,
+      "time": 748.73,
       "notes": ""
     },
     "improve": {
@@ -32,21 +33,23 @@
     },
     "validate": {
       "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test_outputs.py line 173: changed '\\n' to '\\\\n' to fix TypeScript syntax error in inline Bun code. The newline escape sequence was being interpreted as a literal newline, causing unterminated string literal error.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 246.04,
-      "notes": "All checks passed. Fixed: 1) Dockerfile - added --break-system-packages flag for pip install and pytest-json-ctrf dependency, also added bun install for dependencies. 2) tests/test_outputs.py - simplified syntax check (bun build had issues with JSX), fixed test_repo_tui_config_tests to allow 1 pre-existing test failure. 3) solution/solve.sh - rewrote to use direct file edits instead of git apply (patch was corrupt). NOP reward=0, Gold reward=1."
+      "time": 378.75
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.49,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 2.0,
-      "at": "2026-04-09T14:26:32.526769"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -78,6 +81,14 @@
       "backend": "fireworks",
       "time": 711.43,
       "at": "2026-04-10T14:55:53.229127"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1143.53,
+      "at": "2026-04-10T17:47:52.417950"
     }
   ]
 }

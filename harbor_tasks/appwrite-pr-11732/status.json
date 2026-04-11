@@ -1,11 +1,80 @@
 {
+  "schema_version": 2,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:42:44.806991",
+  "total_time": 829.52,
+  "sandbox_id": "isxlrahh2u9gp9lug7svv",
+  "backend": "fireworks",
+  "pipeline": "agents",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "rate_limited",
+    "p2p_enrichment": {
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 20.58,
+      "time": 594.12,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        "src/Appwrite/Platform/AGENTS.md",
+        ".claude/skills/pr-workflow/SKILL.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 4,
+      "rejection_reasons": "PSKIP: PR workflow rules (not evaluable from diff); sparse document rule (not applicable to this PR); Hooks directory rule (gold solution uses inline method); File naming convention (not applicable to extensibility hooks)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 95.84
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.21,
+      "notes": "",
+      "precision": 1.0
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile test.sh to properly write reward file. NOP test: 0 (6 fail_to_pass tests correctly fail). Gold test: 1 (all 10 tests pass). Rubric judge has misconfigured rules (checks AGENTS.md modifications instead of code conventions).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 126.71
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.14,
+      "notes": "ICR=1.00"
     }
-  }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 829.52,
+      "at": "2026-04-10T17:42:44.806991"
+    }
+  ]
 }

@@ -1,26 +1,26 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T22:04:09.166573",
-  "total_time": 300.65,
-  "sandbox_id": "",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:37:39.723795",
+  "total_time": 524.41,
+  "sandbox_id": "i2lpkjqyus8f36xv61eut",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "Failed after 5 E2B rate-limit retries",
+  "rubric_icr": 0.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 9.01,
-      "notes": "Added 2 repo_tests pass_to_pass checks: (1) test_repo_ruff_lint - runs 'ruff check areal/' from .github/workflows/format-check.yml, (2) test_repo_ruff_format - runs 'ruff format --check areal/'. CI commands discovered: ruff check/format from format-check.yml. pytest commands from test-areal.yml require GPU/torch so not included. Both p2p tests verified passing on base commit."
+      "notes": "Added 3 new repo_tests pass_to_pass checks: (1) test_repo_proxy_gateway_syntax - runs 'python3 -m py_compile' on proxy_gateway.py, (2) test_repo_online_agent_syntax - runs 'python3 -m py_compile' on online_agent.py, (3) test_repo_pytest_available - verifies pytest is functional. Combined with existing checks: test_repo_ruff_lint, test_repo_ruff_format, test_repo_workflow_syntax. Total 6 repo_tests p2p gates. CI commands discovered: ruff check/format from format-check.yml, py_compile for syntax validation on proxy modules. Full pytest suite requires GPU/torch so not included. All p2p tests verified passing on base commit."
     },
     "improve": {
       "status": "skipped",
-      "model": "opus",
-      "backend": "gemini",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
     },
@@ -29,35 +29,27 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Docker build: OK. NOP test (base commit): reward=0 - fail-to-pass tests correctly fail on buggy code (empty_interactions_returns_none, empty_interactions_logs_warning). Gold test (solve.sh applied): reward=1 - all 12 tests pass. Rubric judge: Cannot properly evaluate due to missing Anthropic API key (returns default 0.5). Gold solution DOES follow all rubric rules (async patterns, no wildcard imports, no print, no GPU-CPU sync, composition) as verified by test suite.",
+      "notes": "Docker build: OK. NOP test (base commit): reward=0 - fail-to-pass tests correctly fail on buggy code (empty_interactions_returns_none, empty_interactions_logs_warning). Gold test (solve.sh applied): reward=1 - all 15 tests pass. Rubric judge: Cannot properly evaluate due to missing Anthropic API key (returns default 0.5). Gold solution DOES follow all rubric rules (async patterns, no wildcard imports, no print, no GPU-CPU sync, composition) as verified by test suite.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 84.84
+      "time": 272.49
     },
     "rubric_judge": {
       "status": "fail",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.18,
-      "notes": "ICR=0.50"
+      "time": 4.99,
+      "notes": "ICR=0.00"
     },
     "p2p_enrichment": {
       "status": "ok",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 35.78,
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 233.83,
       "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 82.06,
-      "at": "2026-04-09T14:29:33.181251"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -89,6 +81,14 @@
       "backend": "fireworks",
       "time": 300.65,
       "at": "2026-04-09T22:04:09.166573"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 524.41,
+      "at": "2026-04-10T17:37:39.723795"
     }
   ]
 }

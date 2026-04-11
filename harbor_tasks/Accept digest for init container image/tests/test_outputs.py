@@ -329,12 +329,25 @@ def test_values_schema_updated():
         # Check that initContainers uses the union type
         user_deployment = defs.get("UserDeployment", {})
         init_containers_prop = user_deployment.get("properties", {}).get("initContainers", {})
-        items = init_containers_prop.get("items", {})
-        any_of = items.get("anyOf", [])
 
-        # Should have anyOf with Container and InitContainerWithStructuredImage
-        refs = [ref.get("$ref") for item in any_of for ref in [item] if "$ref" in ref]
-        assert any("InitContainerWithStructuredImage" in str(r) for r in refs), \
+        # The schema has nested anyOf: initContainers.anyOf[0].items.anyOf[] contains the refs
+        init_any_of = init_containers_prop.get("anyOf", [])
+
+        # Find the array type entry and check its items.anyOf
+        found_ref = False
+        for entry in init_any_of:
+            if entry.get("type") == "array":
+                items = entry.get("items", {})
+                item_any_of = items.get("anyOf", [])
+                for ref_item in item_any_of:
+                    ref = ref_item.get("$ref", "")
+                    if "InitContainerWithStructuredImage" in ref:
+                        found_ref = True
+                        break
+                if found_ref:
+                    break
+
+        assert found_ref, \
             f"InitContainers should reference InitContainerWithStructuredImage in {schema_path}"
 
 
@@ -396,6 +409,16 @@ def test_repo_schema_tests():
     P2P: These tests verify the Dagster Helm chart schema and templates work correctly.
     Origin: helm/dagster/schema/schema_tests/test_user_deployments.py
     """
+    import shutil
+
+    # If REPO_ROOT doesn't exist or doesn't have the files, copy from /dagster-src mount
+    if not os.path.exists(f"{REPO_ROOT}/helm/dagster/schema/schema_tests"):
+        if os.path.exists("/dagster-src"):
+            os.makedirs(os.path.dirname(REPO_ROOT), exist_ok=True)
+            if os.path.exists(REPO_ROOT):
+                shutil.rmtree(REPO_ROOT)
+            shutil.copytree("/dagster-src", REPO_ROOT, symlinks=True)
+
     # Install required dependencies
     r = subprocess.run(
         ["pip", "install", "-e", f"{REPO_ROOT}/python_modules/libraries/dagster-k8s", "-q"],
@@ -424,6 +447,16 @@ def test_repo_helm_lint():
     P2P: This verifies the Helm chart passes linting.
     Origin: CI workflow helm chart validation
     """
+    import shutil
+
+    # If REPO_ROOT doesn't exist or doesn't have the chart, copy from /dagster-src mount
+    if not os.path.exists(HELM_CHART_PATH):
+        if os.path.exists("/dagster-src"):
+            os.makedirs(os.path.dirname(REPO_ROOT), exist_ok=True)
+            if os.path.exists(REPO_ROOT):
+                shutil.rmtree(REPO_ROOT)
+            shutil.copytree("/dagster-src", REPO_ROOT, symlinks=True)
+
     r = subprocess.run(
         ["helm", "lint", "."],
         capture_output=True, text=True, timeout=30, cwd=HELM_CHART_PATH

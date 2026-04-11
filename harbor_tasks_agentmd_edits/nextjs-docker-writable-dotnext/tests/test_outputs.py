@@ -10,6 +10,8 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import subprocess
 import tempfile
 from pathlib import Path
+import json
+import re
 
 REPO = "/workspace/next.js"
 DOCKERFILE = f"{REPO}/examples/with-docker/Dockerfile"
@@ -25,7 +27,7 @@ def _get_stage_lines(dockerfile_path: str, stage_name: str) -> list[str]:
     for line in lines:
         stripped = line.strip()
         # Detect stage start: FROM ... AS <name> (case-insensitive)
-        if stripped.upper().startswith("FROM") and f"AS {stage_name}" in line.upper().replace("  ", " "):
+        if stripped.upper().startswith("FROM") and f"AS {stage_name.upper()}" in line.upper().replace("  ", " "):
             in_stage = True
             stage_lines.append(line)
             continue
@@ -126,6 +128,117 @@ def test_dockerfile_hadolint():
             capture_output=True, text=True, timeout=60, cwd=REPO,
         )
         assert r.returncode == 0, f"hadolint failed for {df_path}:\n{r.stdout}\n{r.stderr}"
+
+
+# [static] pass_to_pass
+def test_package_json_valid():
+    """package.json files are valid JSON (pass_to_pass)."""
+    for pkg_path in [
+        f"{REPO}/examples/with-docker/package.json",
+        f"{REPO}/examples/with-docker-export-output/package.json",
+    ]:
+        content = Path(pkg_path).read_text()
+        try:
+            json.loads(content)
+        except json.JSONDecodeError as e:
+            assert False, f"Invalid JSON in {pkg_path}: {e}"
+
+
+# [static] pass_to_pass
+def test_compose_yml_valid():
+    """compose.yml files have valid YAML structure (pass_to_pass)."""
+    # Basic YAML validation - check structure without pyyaml
+    for compose_path in [
+        f"{REPO}/examples/with-docker/compose.yml",
+        f"{REPO}/examples/with-docker-export-output/compose.yml",
+    ]:
+        content = Path(compose_path).read_text()
+        lines = content.splitlines()
+
+        # Check for YAML structural validity
+        prev_indent = 0
+        for i, line in enumerate(lines, 1):
+            if not line.strip() or line.strip().startswith("#"):
+                continue
+
+            # Calculate indentation
+            indent = len(line) - len(line.lstrip())
+
+            # YAML uses 2-space indentation typically
+            # Indentation should not increase by more than 2 spaces at a time
+            if indent > prev_indent and indent - prev_indent > 2:
+                # Allow this only if previous line ended with :
+                prev_line = lines[i - 2] if i > 1 else ""
+                if not prev_line.rstrip().endswith(":"):
+                    assert False, f"Invalid indentation jump at {compose_path}:{i}"
+
+            # Check for tab characters (invalid in YAML)
+            assert "\t" not in line, f"Tab character found in {compose_path}:{i}"
+
+            prev_indent = indent
+
+        # Must have required YAML keys for a valid compose file
+        assert "version:" in content or "services:" in content, (
+            f"compose.yml missing required structure (version or services)"
+        )
+
+
+# [repo_tests] pass_to_pass
+def test_dockerfile_export_output_lint():
+    """with-docker-export-output Dockerfiles pass dockerfilelint validation (pass_to_pass)."""
+    # Ensure dockerfilelint is installed
+    r = subprocess.run(
+        ["npm", "install", "-g", "dockerfilelint"],
+        capture_output=True, text=True, timeout=120,
+    )
+    # Run dockerfilelint on both Dockerfiles
+    for df_path in [
+        f"{REPO}/examples/with-docker-export-output/Dockerfile",
+        f"{REPO}/examples/with-docker-export-output/Dockerfile.serve",
+    ]:
+        r = subprocess.run(
+            ["dockerfilelint", df_path],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"dockerfilelint failed for {df_path}:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_dockerfile_export_output_hadolint():
+    """with-docker-export-output Dockerfiles pass hadolint validation (pass_to_pass)."""
+    # Download hadolint binary
+    hadolint_path = "/tmp/hadolint"
+    r = subprocess.run(
+        ["curl", "-sL", "-o", hadolint_path,
+         "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to download hadolint: {r.stderr}"
+
+    r = subprocess.run(["chmod", "+x", hadolint_path], capture_output=True, text=True, timeout=10)
+    assert r.returncode == 0, f"Failed to chmod hadolint: {r.stderr}"
+
+    # Run hadolint on both Dockerfiles
+    for df_path in [
+        f"{REPO}/examples/with-docker-export-output/Dockerfile",
+        f"{REPO}/examples/with-docker-export-output/Dockerfile.serve",
+    ]:
+        r = subprocess.run(
+            [hadolint_path, df_path],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"hadolint failed for {df_path}:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_readme_export_output_prettier():
+    """with-docker-export-output/README.md passes prettier formatting check (pass_to_pass)."""
+    readme_path = f"{REPO}/examples/with-docker-export-output/README.md"
+    r = subprocess.run(
+        ["npx", "prettier", "--check", readme_path],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Prettier check failed for export-output README:\n{r.stdout}\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -255,15 +368,3 @@ def test_compose_prettier():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed for compose.yml:\n{r.stdout}\n{r.stderr}"
-
-
-# [repo_tests] pass_to_pass
-def test_package_json_valid():
-    """package.json is valid JSON (pass_to_pass)."""
-    import json
-    pkg_path = f"{REPO}/examples/with-docker/package.json"
-    content = Path(pkg_path).read_text()
-    try:
-        json.loads(content)
-    except json.JSONDecodeError as e:
-        assert False, f"Invalid JSON in package.json: {e}"

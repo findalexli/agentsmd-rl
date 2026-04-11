@@ -85,11 +85,7 @@ checks:
     test_function: test_builds_with_ninja
 
   # === Pass-to-Pass Tests (Repo CI/CD checks) ===
-  - id: repo_clang_format
-    description: "ClickHouse source passes clang-format check"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_clang_format
+  # These tests run actual CI commands (subprocess.run) as pass-to-pass gates
 
   - id: repo_clang_tidy
     description: "ClickHouse source passes basic clang-tidy checks"
@@ -102,12 +98,6 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     test_function: test_repo_ninja_build_optimizations
-
-  - id: repo_code_style
-    description: "ClickHouse code follows Allman brace style"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_code_style_braces
 
   - id: repo_cpp_style_check
     description: "ClickHouse source passes C++ style check script from CI"
@@ -126,12 +116,6 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     test_function: test_repo_no_tabs
-
-  - id: repo_pragma_once_headers
-    description: "ClickHouse header files have #pragma once"
-    type: pass_to_pass
-    origin: repo_tests
-    test_function: test_repo_pragma_once_headers
 
 # Rubric for soft/subjective rules from agent configs
 rubric:

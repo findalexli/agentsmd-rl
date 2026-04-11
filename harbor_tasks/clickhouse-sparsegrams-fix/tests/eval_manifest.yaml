@@ -4,33 +4,40 @@ source_pr:
   number: 101934
   merge_commit: 7385689a1e28dbc564bc4ea0d22dc861aef72fda
   base_commit: 1dc0c61cb50c6591ce100672ec6340e72f174a58
-
 files:
   primary:
-    - src/Functions/sparseGramsImpl.h
+  - src/Functions/sparseGramsImpl.h
   test:
-    - tests/queries/0_stateless/03403_function_tokens.sql
-    - tests/queries/0_stateless/03403_function_tokens.reference
-
+  - tests/queries/0_stateless/03403_function_tokens.sql
+  - tests/queries/0_stateless/03403_function_tokens.reference
 checks:
-  - id: test_min_ngram_length_used_in_length_calculation
-    type: pytest
-    description: "Verify min_ngram_length - 1 is used, not hard-coded + 2"
-    origin: behavioral
-
-  - id: test_length_calculation_in_calculateRemoveBatch
-    type: pytest
-    description: "Verify fix appears in both while loops of calculateRemoveBatch"
-    origin: behavioral
-
-  - id: test_compilation_succeeds
-    type: pytest
-    description: "Verify the code is syntactically correct after fix"
-    origin: behavioral
-
-  - id: test_distinctive_fix_line_present
-    type: pytest
-    description: "Idempotency check - distinctive fix line is present"
-    origin: behavioral
-
-rubric: []
+- id: test_min_ngram_length_used_in_length_calculation
+  type: pytest
+  description: Verify min_ngram_length - 1 is used, not hard-coded + 2
+  origin: behavioral
+- id: test_length_calculation_in_calculateRemoveBatch
+  type: pytest
+  description: Verify fix appears in both while loops of calculateRemoveBatch
+  origin: behavioral
+- id: test_compilation_succeeds
+  type: pytest
+  description: Verify the code is syntactically correct after fix
+  origin: behavioral
+- id: test_distinctive_fix_line_present
+  type: pytest
+  description: Idempotency check - distinctive fix line is present
+  origin: behavioral
+rubric:
+- rule: Bug fixes involving parameterized calculations must use the parameter variable
+    instead of hard-coded magic constants (e.g., use 'min_ngram_length - 1' not '+
+    2')
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: '212'
+    commit: 1dc0c61cb50c6591ce100672ec6340e72f174a58
+- rule: When writing C++ code, always use Allman-style braces (opening brace on a
+    new line)
+  source:
+    path: .claude/CLAUDE.md
+    lines: '145'
+    commit: 1dc0c61cb50c6591ce100672ec6340e72f174a58

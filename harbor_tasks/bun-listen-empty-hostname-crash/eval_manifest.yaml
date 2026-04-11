@@ -52,6 +52,21 @@ checks:
     origin: repo_tests
     description: "Repo's banned words check passes"
 
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript typecheck passes (tsc --noEmit)"
+
+  - id: test_repo_node_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Node.js is available and functional in the repo"
+
+  - id: test_repo_bun_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Bun is available and functional in the repo"
+
   - id: test_no_hardcoded_ports
     type: pass_to_pass
     origin: agent_config
@@ -80,14 +95,8 @@ checks:
       commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
 
 rubric:
-  - rule: "Follow existing code style — check neighboring files for patterns before making changes."
-    source:
-      path: "AGENTS.md"
-      lines: "228"
-      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
-
-  - rule: "All changes must be tested — if you're not testing your changes, you're not done."
-    source:
-      path: "AGENTS.md"
-      lines: "226"
-      commit: "73361607d70bd77041d0fc20e45a6dbe2373a677"
+  # Note: This task only involves code changes to Handlers.zig and socket.test.ts.
+  # No config/documentation files (AGENTS.md, CLAUDE.md, etc.) are modified by the gold solution.
+  # The rubric judge is designed for evaluating config edits alongside code changes.
+  # For this code-only task, all validation is handled by the 13 pytest checks.
+  - rule: "Code changes in src/bun.js/api/bun/socket/Handlers.zig and test/js/bun/net/socket.test.ts follow repository conventions."

@@ -281,3 +281,65 @@ def test_cert_chain_depth():
     assert "CN=localhost" in stdout, (
         "Certificate should have localhost as issuer/subject"
     )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD git tracking and shell script checks
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_cert_tracked_by_git():
+    """Certificate file must be tracked by git (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-files", "test/js/valkey/docker-unified/server.crt"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0 and "server.crt" in r.stdout, (
+        f"Certificate file is not tracked by git: {r.stdout}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_key_tracked_by_git():
+    """Private key file must be tracked by git (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "ls-files", "test/js/valkey/docker-unified/server.key"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0 and "server.key" in r.stdout, (
+        f"Private key file is not tracked by git: {r.stdout}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_init_redis_script_syntax():
+    """Redis init script must have valid bash syntax (pass_to_pass)."""
+    r = subprocess.run(
+        ["bash", "-n", "test/js/valkey/docker-unified/scripts/init-redis.sh"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"init-redis.sh has syntax errors: {r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_cert_valid_for_ssl_server():
+    """Certificate must be valid for SSL server use per openssl (pass_to_pass)."""
+    r = subprocess.run(
+        ["openssl", "x509", "-in", CERT, "-noout", "-purpose"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0 and "SSL server : Yes" in r.stdout, (
+        f"Certificate is not valid for SSL server use: {r.stdout}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_private_key_valid():
+    """Private key must pass openssl validation (pass_to_pass)."""
+    r = subprocess.run(
+        ["openssl", "pkey", "-in", KEY, "-noout", "-check"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0 and "Key is valid" in r.stdout, (
+        f"Private key validation failed: {r.stderr}"
+    )

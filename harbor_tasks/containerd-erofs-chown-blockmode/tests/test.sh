@@ -8,16 +8,19 @@ pip3 install pytest --break-system-packages 2>/dev/null || pip3 install pytest 2
 cd /tests
 python3 -m pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log || true
 
-# Count results
-PASSED=$(grep -c "PASSED\|passed" /logs/verifier/test_output.log 2>/dev/null || echo "0")
-FAILED=$(grep -c "FAILED\|failed\|ERROR\|error" /logs/verifier/test_output.log 2>/dev/null || echo "0")
+# Count results - use head -1 to ensure single line output
+PASSED=$(grep -c "test_outputs.py::.*PASSED" /logs/verifier/test_output.log 2>/dev/null | head -1 || echo "0")
+FAILED=$(grep -c "test_outputs.py::.*FAILED" /logs/verifier/test_output.log 2>/dev/null | head -1 || echo "0")
 
-# Write binary reward file (pass if all tests pass, fail if any fail)
-# We have 6 tests, all must pass for reward=1.0
-TOTAL_TESTS=6
-PASSED_NUM=$(python3 -m pytest test_outputs.py --collect-only 2>/dev/null | grep "test session" | grep -oP '\d+' | head -1 || echo "$TOTAL_TESTS")
+# Trim whitespace
+PASSED=$(echo "$PASSED" | tr -d '[:space:]')
+FAILED=$(echo "$FAILED" | tr -d '[:space:]')
 
-if [ "$FAILED" -eq "0" ] && [ "$PASSED" -ge "$TOTAL_TESTS" ]; then
+# Ensure we have numeric values
+if ! [[ "$PASSED" =~ ^[0-9]+$ ]]; then PASSED=0; fi
+if ! [[ "$FAILED" =~ ^[0-9]+$ ]]; then FAILED=0; fi
+
+if [ "$FAILED" -eq 0 ] && [ "$PASSED" -ge 6 ]; then
     echo "1.0" > /logs/verifier/reward.txt
     echo "All tests passed!" >> /logs/verifier/test_output.log
 else

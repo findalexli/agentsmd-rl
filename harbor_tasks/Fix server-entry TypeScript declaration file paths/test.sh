@@ -2,7 +2,7 @@
 set -e
 
 # Install pytest
-pip3 install pytest --quiet
+pip3 install pytest --quiet --break-system-packages
 
 # Run the test file
 cd /workspace/task

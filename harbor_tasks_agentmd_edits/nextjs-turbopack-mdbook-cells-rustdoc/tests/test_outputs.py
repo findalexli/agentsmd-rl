@@ -100,6 +100,19 @@ def test_cargo_unit_tests():
     assert r.returncode == 0, f"Unit tests failed:\n{r.stderr.decode()[-500:]}"
 
 
+# [repo_tests] pass_to_pass - cargo bench compile check
+def test_cargo_bench_compile():
+    """Repo s benchmarks for turbo-tasks compile without errors (pass_to_pass)."""
+    _fix_workspace()
+    r = subprocess.run(
+        ["cargo", "bench", "--no-run", "-p", "turbo-tasks"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=600,
+    )
+    assert r.returncode == 0, f"Benchmark compile failed:\n{r.stderr.decode()[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core documentation refactor tests
 # ---------------------------------------------------------------------------
@@ -227,3 +240,4 @@ def test_alexrc_updated():
     content = alexrc_path.read_text()
 
     assert "\"dirty\"" in content, ".alexrc should include dirty in denylist"
+

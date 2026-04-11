@@ -170,29 +170,35 @@ def test_error_response_header_ordering():
     """
     content = TARGET_FILE.read_text()
 
-    # Find the line number of the CORS header addition
-    cors_lines = []
-    cache_lines = []
-
     lines = content.split('\n')
+
+    # Find the error handler section - look for Http::error()
+    error_handler_start = None
     for i, line in enumerate(lines):
-        if '$cors->headers' in line or '$utopia->getResource' in line and 'cors' in line:
-            cors_lines.append(i)
-        if "addHeader('Cache-Control'" in line or "addHeader('Expires'" in line:
-            cache_lines.append(i)
+        if "Http::error(" in line:
+            error_handler_start = i
+            break
 
-    # Both should exist
-    assert len(cors_lines) > 0, "CORS header addition not found"
-    assert len(cache_lines) > 0, "Cache headers not found"
+    # Find CORS addition within the error handler (after error handler start)
+    cors_line = None
+    cache_line = None
 
-    # The CORS addition should be before cache headers in the same scope
-    min_cors = min(cors_lines)
-    min_cache = min(cache_lines)
+    if error_handler_start:
+        for i in range(error_handler_start, min(len(lines), error_handler_start + 400)):
+            line = lines[i]
+            if '$utopia->getResource' in line and 'cors' in line:
+                cors_line = i
+            # Look for Cache-Control in the $response chain that comes after the cors block
+            if cors_line and "->addHeader('Cache-Control'" in line:
+                cache_line = i
+                break
 
-    # In the error handler, cors should come before cache headers
-    # This is a heuristic - the cors addition in the try block should come
-    # before the response->addHeader('Cache-Control') chain
-    assert min_cors < min_cache, (
+    # Both should exist within the error handler section
+    assert cors_line is not None, "CORS header addition not found in error handler"
+    assert cache_line is not None, "Cache headers not found after CORS in error handler"
+
+    # CORS should come before Cache-Control in the error handler
+    assert cors_line < cache_line, (
         "CORS headers should be added before Cache-Control headers "
         "to ensure they are present in error responses."
     )

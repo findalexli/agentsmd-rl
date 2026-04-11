@@ -92,3 +92,46 @@ def test_no_duplicate_method_definitions():
     content = TARGET_FILE.read_text()
     matches = list(re.finditer(r'protected\s+function\s+beforeCreateGitDeployment', content))
     assert len(matches) == 1, f"Expected exactly one method definition, found {len(matches)}"
+
+
+def test_repo_deployment_php_syntax():
+    """PHP syntax check on Deployment.php passes (pass_to_pass)."""
+    target = REPO / "src/Appwrite/Platform/Modules/VCS/Http/GitHub/Deployment.php"
+    r = subprocess.run(
+        ["php", "-l", str(target)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"PHP syntax check failed:\n{r.stderr}"
+
+
+def test_repo_vcs_module_php_syntax():
+    """VCS module PHP files have valid syntax (pass_to_pass)."""
+    vcs_dir = REPO / "src/Appwrite/Platform/Modules/VCS"
+    php_files = list(vcs_dir.rglob("*.php"))
+    assert len(php_files) > 0, "No PHP files found in VCS module"
+
+    for php_file in php_files:
+        r = subprocess.run(
+            ["php", "-l", str(php_file)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"PHP syntax check failed for {php_file}:\n{r.stderr}"
+
+
+def test_repo_composer_json_valid():
+    """composer.json is valid JSON (pass_to_pass)."""
+    composer_file = REPO / "composer.json"
+    r = subprocess.run(
+        ["php", "-r", f'json_decode(file_get_contents("{composer_file}")); echo json_last_error() === JSON_ERROR_NONE ? "OK" : "INVALID";'],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert "OK" in r.stdout, f"composer.json is not valid JSON:\n{r.stdout}{r.stderr}"

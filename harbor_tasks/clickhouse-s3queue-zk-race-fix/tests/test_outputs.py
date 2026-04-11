@@ -40,6 +40,50 @@ def test_repo_typos():
     assert r.returncode == 0, f"Typos check failed: {r.stdout[-500:]}"
 
 
+def test_repo_cpp_style():
+    """Repo C++ style check passes (pass_to_pass).
+
+    Runs ClickHouse's C++ style check script which validates:
+    - No tabs in source files
+    - No trailing whitespace
+    - Proper header guards (#pragma once)
+    - Balanced braces and indentation
+    - No incorrect abbreviations (Sql, Html, Xml, etc.)
+    This is an actual CI command from the repo's style checks.
+    """
+    # Configure git safe directory
+    subprocess.run(
+        ["git", "config", "--global", "--add", "safe.directory", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    # Run the C++ style check from the repo
+    r = subprocess.run(
+        ["bash", "ci/jobs/scripts/check_style/check_cpp.sh"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"C++ style check failed: {r.stderr[-500:]}"
+
+
+def test_repo_yamllint():
+    """Repo YAML files pass yamllint validation (pass_to_pass).
+
+    Validates that the GitHub workflow files follow YAML syntax standards.
+    Uses the repo's own .yamllint configuration file.
+    This is a lightweight CI-style check that does not require compilation.
+    """
+    # Install yamllint if needed
+    r = subprocess.run(
+        ["pip3", "install", "yamllint", "-q"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # Run yamllint on workflow files using the repo's config
+    r = subprocess.run(
+        ["yamllint", "-c", f"{REPO}/.yamllint", f"{REPO}/.github/workflows/pull_request.yml"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"YAML lint failed: {r.stderr[-500:]}"
+
+
 def test_repo_git_status():
     """Repo has clean git status at base commit (pass_to_pass).
 
@@ -120,7 +164,7 @@ def test_no_trailing_whitespace_in_target():
 
     trailing_whitespace = []
     for i, line in enumerate(lines, 1):
-        if line.rstrip() != line.rstrip('\n').rstrip():
+        if line.rstrip() != line.rstrip("\n").rstrip():
             trailing_whitespace.append(i)
 
     assert len(trailing_whitespace) == 0, f"Trailing whitespace found on lines: {trailing_whitespace[:10]}"
@@ -136,10 +180,10 @@ def test_no_tabs_in_target():
         content = f.read()
 
     # Check for tabs (but allow in certain contexts like makefiles or special comments)
-    lines = content.split('\n')
+    lines = content.split("\n")
     tabs_found = []
     for i, line in enumerate(lines, 1):
-        if '\t' in line:
+        if "\t" in line:
             tabs_found.append(i)
 
     assert len(tabs_found) == 0, f"Tabs found on lines: {tabs_found[:10]}"
@@ -151,7 +195,7 @@ def test_include_guards_for_target_dir():
     Verifies all .h files in the ObjectStorageQueue directory have proper guards.
     """
     target_path = os.path.join(REPO, TARGET_DIR)
-    h_files = [f for f in os.listdir(target_path) if f.endswith('.h')]
+    h_files = [f for f in os.listdir(target_path) if f.endswith(".h")]
 
     for h_file in h_files:
         filepath = os.path.join(target_path, h_file)
@@ -201,7 +245,7 @@ def test_no_dos_newlines_in_target():
         content = f.read()
 
     # Check for \r\n (DOS newlines)
-    assert b'\r\n' not in content, "DOS/Windows newlines found in file"
+    assert b"\r\n" not in content, "DOS/Windows newlines found in file"
 
 
 # ============================================================================

@@ -73,8 +73,8 @@ def test_derived_keys_use_coalesced_list():
 def test_upstream_unit_tests_pass():
     """Run the upstream regression test for this specific bug."""
     result = subprocess.run(
-        ["npm", "test", "--", "--testPathPattern=Table.rowSelection",
-         "--testNamePattern=works with preserveSelectedRowKeys after receive selectedRowKeys from",
+        ["npm", "test", "--", "--testPathPatterns=Table.rowSelection",
+         "--testNamePatterns=receive selectedRowKeys from",
          "--no-coverage", "--maxWorkers=1"],
         cwd=REPO,
         capture_output=True,

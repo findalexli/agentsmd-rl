@@ -230,3 +230,30 @@ def test_repo_unit_tests():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_ttd_chat_utils():
+    """TTDDialog chat utils tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test:app", "--run", "packages/excalidraw/components/TTDDialog/utils/chat.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TTD chat utils tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_ttd_stream_fetch():
+    """TTDDialog stream fetch tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test:app", "--run", "packages/excalidraw/components/TTDDialog/utils/TTDstreamFetch.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TTD stream fetch tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_ttd_mermaid_validation():
+    """TTDDialog mermaid validation tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test:app", "--run", "packages/excalidraw/components/TTDDialog/utils/mermaidValidation.test.ts"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TTD mermaid validation tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

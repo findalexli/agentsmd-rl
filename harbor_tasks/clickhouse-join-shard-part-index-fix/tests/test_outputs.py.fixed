@@ -1,0 +1,738 @@
+#!/usr/bin/env python3
+"""
+Test suite for ClickHouse optimizeJoinByShards fix.
+Uses behavioral tests (code execution) where possible, with structural checks as fallback.
+"""
+
+import subprocess
+import re
+import json
+import pytest
+from pathlib import Path
+
+REPO = Path("/workspace/ClickHouse")
+TARGET_FILE = REPO / "src/Processors/QueryPlan/Optimizations/optimizeJoinByShards.cpp"
+
+
+def _run_git(args, cwd=REPO, timeout=30):
+    """Execute git command in the repo."""
+    r = subprocess.run(
+        ["git"] + args,
+        capture_output=True, text=True, timeout=timeout, cwd=cwd,
+    )
+    return r
+
+
+def _check_clang_syntax(file_path, timeout=60):
+    """Check C++ syntax using clang -fsyntax-only if available."""
+    r = subprocess.run(
+        ["clang", "-fsyntax-only", "-std=c++20", "-xc++", str(file_path)],
+        capture_output=True, text=True, timeout=timeout,
+    )
+    return r
+
+
+def test_fix_part_index_renumbering():
+    """
+    Fail-to-pass: The fix must renumber part_index_in_query to be contiguous.
+
+    BEFORE the fix:
+      for (const auto & part : analysis_result->parts_with_ranges)
+      {
+          all_parts.push_back(part);
+          all_parts.back().part_index_in_query += added_parts;
+      }
+    This was buggy because filterPartsByQueryConditionCache can drop parts,
+    leaving gaps in indices. The += added_parts preserved those gaps.
+
+    AFTER the fix:
+      for (size_t local_idx = 0; local_idx < analysis_result->parts_with_ranges.size(); ++local_idx)
+      {
+          all_parts.push_back(analysis_result->parts_with_ranges[local_idx]);
+          all_parts.back().part_index_in_query = added_parts + local_idx;
+      }
+    This creates contiguous indices starting from added_parts.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # Check for the fix: should use local_idx loop variable
+    has_indexed_loop = "for (size_t local_idx = 0;" in content
+
+    # Check for the fix: should assign part_index_in_query = added_parts + local_idx
+    has_correct_assignment = "part_index_in_query = added_parts + local_idx" in content
+
+    # Check that old buggy pattern is NOT present
+    old_pattern = "all_parts.back().part_index_in_query += added_parts"
+    has_old_buggy_pattern = old_pattern in content
+
+    # The fix must be present AND the old pattern must be absent
+    assert has_indexed_loop, "Fix missing: should use indexed loop with local_idx"
+    assert has_correct_assignment, "Fix missing: should assign part_index_in_query using local_idx"
+    assert not has_old_buggy_pattern, f"Old buggy pattern still present: {old_pattern}"
+
+
+def test_fix_compiles_syntax_only():
+    """
+    Fail-to-pass: The modified C++ code must have valid syntax.
+
+    Uses clang -fsyntax-only to verify the code compiles without errors.
+    This catches syntax errors, missing semicolons, mismatched braces, etc.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    # Check if clang is available
+    clang_check = subprocess.run(
+        ["which", "clang"],
+        capture_output=True, text=True, timeout=10,
+    )
+
+    if clang_check.returncode != 0:
+        # Fallback: verify basic syntax via grep patterns
+        content = TARGET_FILE.read_text()
+
+        # The fix should have balanced braces in the modified for loop
+        # Find the modified section and check for balanced braces
+        lines = content.split('\n')
+        fix_line_idx = None
+        for i, line in enumerate(lines):
+            if "for (size_t local_idx = 0" in line:
+                fix_line_idx = i
+                break
+
+        if fix_line_idx is None:
+            pytest.fail("Fix not found - cannot verify syntax")
+
+        # Extract just the for loop body (approximately 5 lines: for, {, push, assign, })
+        start = fix_line_idx
+        end = min(len(lines), fix_line_idx + 5)
+        block = '\n'.join(lines[start:end])
+
+        # Check for balanced braces in the for loop body only
+        open_count = block.count('{')
+        close_count = block.count('}')
+
+        # For the for loop body, we expect 1 opening brace and 1 closing brace
+        # The closing brace might be on line 5 or later depending on formatting
+        assert open_count >= 1, "No opening braces in fix block"
+        assert close_count >= 1, "No closing braces in fix block"
+
+        # Check for semicolons at end of statements
+        assert ";" in block, "Missing semicolons in fix block"
+
+        return
+
+    # Use clang to check syntax
+    r = _check_clang_syntax(TARGET_FILE)
+
+    # Allow warnings but not errors
+    if r.returncode != 0 and "error:" in r.stderr:
+        # Filter only actual errors (not warnings)
+        errors = [line for line in r.stderr.split('\n') if 'error:' in line.lower()]
+        if errors:
+            error_msg = '\n'.join(errors[:10])  # Show first 10 errors
+            raise AssertionError(f"C++ syntax errors in target file:\n{error_msg}")
+
+
+def test_fix_preserves_loop_semantics():
+    """
+    Fail-to-pass: The fix must preserve loop semantics - iterating all parts.
+
+    The fix changes from range-for to index-for but must still:
+    1. Iterate over ALL parts in analysis_result->parts_with_ranges
+    2. Push each part to all_parts
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # The fix should still iterate over the full range
+    has_full_range = "local_idx < analysis_result->parts_with_ranges.size()" in content
+
+    # Should still push back all parts with correct indexing
+    has_push_back = "all_parts.push_back(analysis_result->parts_with_ranges[local_idx])" in content
+
+    assert has_full_range, "Loop should iterate over full range of parts"
+    assert has_push_back, "All parts should be pushed to all_parts"
+
+
+def test_fix_has_explanatory_comment():
+    """
+    Pass-to-pass: The fix should include explanatory comment about cache filtering.
+
+    Per ClickHouse conventions, complex logic needs explanatory comments.
+    The comment should explain WHY the fix is needed (filterPartsByQueryConditionCache
+    dropping parts), not just WHAT it does.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # Check for key phrases from the explanatory comment
+    has_contiguous_comment = "contiguous" in content.lower()
+    has_filter_comment = "filterPartsByQueryConditionCache" in content
+    has_drop_comment = "drop parts" in content.lower() or "dropping parts" in content.lower()
+
+    assert has_contiguous_comment, "Missing comment about contiguous indices"
+    assert has_filter_comment, "Missing comment about filterPartsByQueryConditionCache"
+
+
+def test_allman_brace_style():
+    """
+    Pass-to-pass: ClickHouse requires Allman-style braces (opening brace on new line).
+
+    This is enforced by CI style check. The fix and surrounding code must follow this.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Find the modified section
+    fix_line_idx = None
+    for i, line in enumerate(lines):
+        if "for (size_t local_idx = 0" in line:
+            fix_line_idx = i
+            break
+
+    if fix_line_idx is None:
+        pytest.skip("Fix not found - cannot check style")
+
+    # Check the fix line and next line for Allman style
+    # The for loop should have its opening brace on the next line
+    for_line = lines[fix_line_idx].rstrip()
+    next_line = lines[fix_line_idx + 1].strip() if fix_line_idx + 1 < len(lines) else ""
+
+    # For loop should end with ) and brace should be on next line (Allman)
+    assert for_line.endswith(")"), f"For loop should end with ): {for_line}"
+    assert next_line == "{", f"Opening brace should be on its own line (Allman style), got: {next_line}"
+
+
+def test_no_sleep_in_code():
+    """
+    Pass-to-pass: ClickHouse rule - never use sleep in C++ code to fix race conditions.
+
+    Per CLAUDE.md: "Never use sleep in C++ code to fix race conditions"
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # Check for sleep functions
+    sleep_patterns = [
+        r'\bsleep\s*\(',
+        r'\busleep\s*\(',
+        r'\bstd::this_thread::sleep_for\b',
+        r'\bstd::this_thread::sleep_until\b',
+        r'\bSleep\s*\(',
+    ]
+
+    for pattern in sleep_patterns:
+        matches = re.findall(pattern, content, re.IGNORECASE)
+        assert len(matches) == 0, f"Found sleep in code (pattern: {pattern})"
+
+
+def test_function_naming_convention():
+    """
+    Pass-to-pass: ClickHouse uses lowercase_with_underscores for variable names.
+
+    Per CLAUDE.md: "Use lowercase_with_underscores for variable names"
+    The fix introduces local_idx which follows this convention.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # Check that the fix uses correct naming convention
+    has_local_idx = "local_idx" in content
+    has_added_parts = "added_parts" in content
+
+    assert has_local_idx, "Fix should use local_idx (lowercase_with_underscores)"
+    assert has_added_parts, "Fix should use added_parts (lowercase_with_underscores)"
+
+
+def test_no_raw_pointers_in_fix():
+    """
+    Pass-to-pass: Check that the fix doesn't introduce raw pointer issues.
+
+    Per AGENTS.md: "Raw pointers with unclear ownership are risky"
+    The fix should use references, not raw pointers.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Find the modified section (around local_idx)
+    fix_line_idx = None
+    for i, line in enumerate(lines):
+        if "local_idx = 0" in line:
+            fix_line_idx = i
+            break
+
+    if fix_line_idx is None:
+        pytest.skip("Fix not found - cannot check for raw pointers")
+
+    # Check surrounding 20 lines for raw pointer declarations
+    start = max(0, fix_line_idx - 20)
+    end = min(len(lines), fix_line_idx + 20)
+    modified_section = '\n'.join(lines[start:end])
+
+    # Check for raw pointer declarations in modified section (excluding const char* which is common)
+    raw_ptr_pattern = r'\b(?!const\s)(?!static\s)\w+\s*\*\s*\w+'
+    raw_ptrs = re.findall(raw_ptr_pattern, modified_section)
+
+    # Filter out false positives (analysis_result is a reference parameter)
+    suspicious = [p for p in raw_ptrs if 'analysis_result' not in p]
+
+    # The fix should not introduce new raw pointers
+    assert len(suspicious) == 0, f"Suspicious raw pointer usage in fix: {suspicious}"
+
+
+def test_target_file_exists():
+    """
+    Pass-to-pass: Target file must exist in repo (basic repo structure check).
+    """
+    assert TARGET_FILE.exists(), f"Target file not found: {TARGET_FILE}"
+    assert TARGET_FILE.is_file(), f"Target path is not a file: {TARGET_FILE}"
+
+
+def test_no_tabs_in_target_file():
+    """
+    Pass-to-pass: No tabs in the modified file (ClickHouse style uses spaces).
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    for i, line in enumerate(lines, 1):
+        if '\t' in line:
+            raise AssertionError(f"Found tab character at line {i}: {line[:80]}")
+
+
+def test_line_ending_lf():
+    """
+    Pass-to-pass: File uses LF line endings (Unix-style), not CRLF.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_bytes()
+    if b'\r\n' in content:
+        raise AssertionError("File contains CRLF line endings (Windows-style). Should use LF only.")
+
+
+def test_no_trailing_whitespace():
+    """
+    Pass-to-pass: No trailing whitespace in the modified section.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Find the modified section
+    fix_line_idx = None
+    for i, line in enumerate(lines):
+        if "local_idx = 0" in line:
+            fix_line_idx = i
+            break
+
+    if fix_line_idx is None:
+        pytest.skip("Fix not found - cannot check trailing whitespace")
+
+    # Check 30 lines around the fix
+    start_line = max(0, fix_line_idx - 30)
+    end_line = min(len(lines), fix_line_idx + 30)
+
+    violations = []
+    for i in range(start_line, end_line):
+        line = lines[i]
+        if line.rstrip() != line:
+            violations.append(i + 1)
+
+    if violations:
+        raise AssertionError(f"Trailing whitespace on lines near fix: {violations[:5]}")
+
+
+def test_file_size_reasonable():
+    """
+    Pass-to-pass: File should be a reasonable size (not truncated/corrupted).
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    size = TARGET_FILE.stat().st_size
+    assert size > 1024, f"File too small ({size} bytes), possibly truncated"
+    assert size < 1024 * 1024, f"File too large ({size} bytes), possibly corrupted"
+
+
+def test_no_merge_conflict_markers():
+    """
+    Pass-to-pass: File should not contain merge conflict markers.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    conflict_markers = ['<<<<<<<', '=======', '>>>>>>>']
+    for marker in conflict_markers:
+        assert marker not in content, f"Found merge conflict marker: {marker}"
+
+
+def test_basic_cpp_file_structure():
+    """
+    Pass-to-pass: Basic C++ file structure validation.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # Basic C++ file indicators
+    assert '#include' in content or 'namespace' in content or 'void ' in content or 'static ' in content, \
+        "File doesn't appear to be valid C++ (missing common C++ constructs)"
+
+    # Should have balanced braces overall
+    open_braces = content.count('{')
+    close_braces = content.count('}')
+    assert open_braces > 0, "No opening braces found"
+    assert open_braces == close_braces, f"Unbalanced braces: {open_braces} open, {close_braces} close"
+
+
+def test_no_print_debug_statements():
+    """
+    Pass-to-pass: No debug print statements (cout, printf, cerr) in modified section.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Find the modified section
+    fix_line_idx = None
+    for i, line in enumerate(lines):
+        if "local_idx = 0" in line:
+            fix_line_idx = i
+            break
+
+    if fix_line_idx is None:
+        pytest.skip("Fix not found - cannot check for debug prints")
+
+    # Check 10 lines around the fix (the actual modified section)
+    start = max(0, fix_line_idx - 2)
+    end = min(len(lines), fix_line_idx + 10)
+    modified_section = '\n'.join(lines[start:end])
+
+    debug_patterns = [
+        r'std::cout\s*<<',
+        r'std::cerr\s*<<',
+        r'printf\s*\(',
+        r'fprintf\s*\(',
+    ]
+
+    for pattern in debug_patterns:
+        matches = re.findall(pattern, modified_section)
+        assert len(matches) == 0, f"Found debug print statement: {pattern}"
+
+
+def test_explanatory_comment_formatting():
+    """
+    Pass-to-pass: Check that comments follow ClickHouse conventions.
+    - Explain WHY, not just WHAT
+    - Function names without () in comments
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # The fix should have the explanatory comment
+    has_cache_mention = "filterPartsByQueryConditionCache" in content
+    has_part_index_mention = "part_index_in_query" in content
+
+    assert has_cache_mention, "Comment should mention filterPartsByQueryConditionCache"
+    assert has_part_index_mention, "Comment should mention part_index_in_query"
+
+
+# =============================================================================
+# Pass-to-Pass Tests: Repo CI/CD Checks
+# These tests verify that the fix doesn't break the repo's style/quality rules.
+# =============================================================================
+
+
+def test_repo_no_tabs_in_target():
+    """
+    Pass-to-pass: Repo CI check - no tab characters in modified C++ file.
+
+    ClickHouse CI runs: find . -name '*.cpp' | xargs grep $'\t'
+    Tabs are not allowed, spaces must be used for indentation.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    r = subprocess.run(
+        ["grep", "-q", "-P", r"\t", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # grep returns 0 if found (bad), 1 if not found (good)
+    assert r.returncode == 1, f"Found tab characters in {TARGET_FILE}"
+
+
+def test_repo_no_trailing_whitespace():
+    """
+    Pass-to-pass: Repo CI check - no trailing whitespace in modified file.
+
+    ClickHouse CI runs: find . -name '*.cpp' | xargs grep -n -P ' $'
+    Trailing whitespace is not allowed.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    r = subprocess.run(
+        ["grep", "-q", "-n", "-P", " $", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # grep returns 0 if found (bad), 1 if not found (good)
+    assert r.returncode == 1, f"Found trailing whitespace in {TARGET_FILE}"
+
+
+def test_repo_lf_line_endings_subprocess():
+    """
+    Pass-to-pass: Repo CI check - file uses LF line endings, not CRLF.
+
+    ClickHouse CI runs: find . -name '*.cpp' | xargs grep -l -P '\r$'
+    Files must use Unix-style LF line endings, not Windows-style CRLF.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    r = subprocess.run(
+        ["grep", "-q", "-P", r"\r", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # grep returns 0 if found (bad), 1 if not found (good)
+    assert r.returncode == 1, f"Found CRLF line endings in {TARGET_FILE}"
+
+
+def test_repo_no_merge_conflict_markers():
+    """
+    Pass-to-pass: Repo CI check - no merge conflict markers in file.
+
+    ClickHouse CI checks for: ^(<<<<<<<|=======|>>>>>>>)$
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    markers = ["<<<<<<<", "=======", ">>>>>>>"]
+    for marker in markers:
+        r = subprocess.run(
+            ["grep", "-q", "-F", marker, str(TARGET_FILE)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 1, f"Found merge conflict marker '{marker}' in {TARGET_FILE}"
+
+
+def test_repo_no_bom_in_file():
+    """
+    Pass-to-pass: Repo CI check - no UTF-8 BOM in file.
+
+    ClickHouse CI checks for BOM markers in source files.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_bytes()
+    assert not content.startswith(b"\xef\xbb\xbf"), f"File {TARGET_FILE} has UTF-8 BOM"
+
+
+def test_repo_file_has_pragma_once_if_header():
+    """
+    Pass-to-pass: Repo CI check - header files must have #pragma once.
+
+    ClickHouse CI requires: head -n1 file.h must be '#pragma once'
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    # Only check .h files
+    if not str(TARGET_FILE).endswith('.h'):
+        pytest.skip("Not a header file, skipping #pragma once check")
+        return
+
+    r = subprocess.run(
+        ["head", "-n1", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    first_line = r.stdout.strip()
+    assert first_line == "#pragma once", f"Header file must have '#pragma once' in first line, got: {first_line}"
+
+
+def test_repo_clang_format_style():
+    """
+    Pass-to-pass: Modified C++ file must pass basic clang-format style checks.
+
+    ClickHouse CI runs style checks that enforce:
+    - Allman-style braces (opening brace on new line)
+    - No tabs, spaces only
+    - No trailing whitespace
+    - Proper indentation
+
+    This test verifies the fix section follows these rules.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Find the modified section (around local_idx)
+    fix_line_idx = None
+    for i, line in enumerate(lines):
+        if "local_idx = 0" in line:
+            fix_line_idx = i
+            break
+
+    if fix_line_idx is None:
+        pytest.skip("Fix not found - cannot check style")
+
+    # Check 20 lines around the fix for style issues
+    start_line = max(0, fix_line_idx - 20)
+    end_line = min(len(lines), fix_line_idx + 20)
+
+    violations = []
+
+    for i in range(start_line, end_line):
+        line = lines[i]
+
+        # Check for tabs
+        if '\t' in line:
+            violations.append(f"Tab character at line {i + 1}")
+
+        # Check for trailing whitespace (but allow empty lines)
+        if line.rstrip() != line and line.strip():
+            violations.append(f"Trailing whitespace at line {i + 1}")
+
+    if violations:
+        raise AssertionError(f"Style violations in fix:\n" + "\n".join(violations[:10]))
+
+
+def test_repo_lf_line_endings():
+    """
+    Pass-to-pass: File uses LF line endings (CI style check).
+
+    ClickHouse CI checks that source files use Unix-style LF line endings,
+    not Windows-style CRLF.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_bytes()
+    if b'\r\n' in content:
+        raise AssertionError("File contains CRLF line endings (Windows-style). Should use LF only.")
+
+
+def test_repo_file_structure_valid():
+    """
+    Pass-to-pass: File has valid structure for CI build system.
+
+    ClickHouse CI uses CMake and requires valid C++ syntax.
+    This test verifies the file can be parsed as valid C++.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+
+    # Basic C++ file structure checks
+    # Check for balanced braces in the file
+    open_braces = content.count('{')
+    close_braces = content.count('}')
+
+    if open_braces == 0:
+        raise AssertionError("No opening braces found - not valid C++")
+
+    if open_braces != close_braces:
+        raise AssertionError(f"Unbalanced braces: {open_braces} open, {close_braces} close")
+
+    # Check for required C++ constructs
+    has_include = '#include' in content
+    has_namespace = 'namespace' in content
+
+    if not (has_include or has_namespace):
+        raise AssertionError("File missing expected C++ constructs (includes or namespace)")
+
+
+def test_repo_code_syntax_valid():
+    """
+    Pass-to-pass: Modified code section has valid C++ syntax.
+
+    ClickHouse CI compiles the code with strict compiler settings.
+    This test verifies basic syntax validity of the fix section.
+    """
+    if not TARGET_FILE.exists():
+        raise FileNotFoundError(f"Target file not found: {TARGET_FILE}")
+
+    content = TARGET_FILE.read_text()
+    lines = content.split('\n')
+
+    # Find the modified section
+    fix_line_idx = None
+    for i, line in enumerate(lines):
+        if "local_idx = 0" in line:
+            fix_line_idx = i
+            break
+
+    if fix_line_idx is None:
+        pytest.skip("Fix not found - cannot check syntax")
+
+    # Extract ~8 lines around the fix (just the for loop)
+    start = max(0, fix_line_idx - 2)
+    end = min(len(lines), fix_line_idx + 6)
+    block = '\n'.join(lines[start:end])
+
+    # Check for basic syntax issues
+    # 1. Check that there's at least one opening brace (for the for loop)
+    open_count = block.count('{')
+
+    if open_count < 1:
+        raise AssertionError("Missing opening brace for for loop")
+
+    # 2. Check for semicolons after statements (basic check)
+    # The for loop and assignment should have semicolons
+    if ";" not in block:
+        raise AssertionError("Missing semicolons in fix block")
+
+    # 3. Check that the for loop has correct structure
+    has_for_with_brace = False
+    for i in range(start, min(end, len(lines))):
+        if "for (size_t local_idx = 0;" in lines[i]:
+            # Check next non-empty line starts with {
+            for j in range(i + 1, min(i + 3, len(lines))):
+                if lines[j].strip():
+                    if lines[j].strip() == "{":
+                        has_for_with_brace = True
+                    break
+            break
+
+    if not has_for_with_brace:
+        raise AssertionError("For loop should have opening brace on next line (Allman style)")
+
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

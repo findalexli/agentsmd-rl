@@ -193,6 +193,15 @@ def test_p2p_repo_unit_tests_ssr():
     assert r.returncode == 0, f"Unit tests (Scripts) failed:\n{r.stderr[-500:]}"
 
 
+def test_p2p_repo_unit_tests_matches():
+    """Repo's Match component unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/react-router:test:unit", "--", "--run", "tests/Matches.test.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests (Matches) failed:\n{r.stderr[-500:]}"
+
+
 def test_p2p_repo_build():
     """Repo's build verification passes (pass_to_pass)."""
     r = subprocess.run(

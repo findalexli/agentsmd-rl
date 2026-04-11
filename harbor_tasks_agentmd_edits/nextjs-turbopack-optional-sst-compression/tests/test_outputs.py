@@ -220,3 +220,57 @@ def test_python_syntax_valid():
         timeout=30,
     )
     assert r.returncode == 0, f"Syntax error in main.py: {r.stderr}"
+
+
+def test_repo_import_main():
+    """Repo's main module can be imported without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"import sys; sys.path.insert(0, '{REPO}'); import main; print('OK')"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Failed to import main module: {r.stderr}"
+    assert "OK" in r.stdout, "Module import did not complete successfully"
+
+
+def test_repo_process_file_runs():
+    """Repo's process_file function runs with valid input (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+import tempfile
+import os
+from pathlib import Path
+sys.path.insert(0, '{REPO}')
+from main import process_file
+
+# Create a temp file with test content
+with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+    f.write('test')
+    temp_path = f.name
+
+try:
+    result = process_file(Path(temp_path))
+    assert result is not None, "process_file returned None for valid file"
+    print('OK')
+finally:
+    os.unlink(temp_path)
+"""],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"process_file test failed: {r.stderr}"
+    assert "OK" in r.stdout, "process_file did not run successfully"
+
+
+def test_repo_pytest_self():
+    """Repo's pytest can collect tests without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "/tests/test_outputs.py", "--co", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"pytest collection failed: {r.stderr}"

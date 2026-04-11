@@ -1,4 +1,4 @@
-FROM php:8.3-cli-slim
+FROM php:8.3-cli
 
 # Install Python3 and pip for pytest
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -18,5 +18,8 @@ RUN git clone --filter=blob:none --no-checkout https://github.com/appwrite/appwr
     && git sparse-checkout init --cone \
     && git sparse-checkout set app/controllers \
     && git checkout 9ac686ae318e63d7a159d7a4021e8a786ee4972b
+
+# Create symlink for tests path expected by test.sh
+RUN mkdir -p /workspace/task && ln -s /tests /workspace/task/tests
 
 WORKDIR /workspace/appwrite

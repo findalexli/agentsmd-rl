@@ -49,11 +49,19 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: AGENTS.md follows prettier formatting
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes ESLint checks
+- id: repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo change files are valid
 rubric:
 - rule: AGENTS.md must document skills and one-off scripts rules
   source:
     path: AGENTS.md
-    lines: '23-32'
+    lines: 23-32
     commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
 config_edits:
 - path: AGENTS.md
@@ -63,17 +71,22 @@ config_edits:
     `.ts` files)
 
 
+
     ## Skills
+
 
 
     A skill is a reusable local instruction set stored in a `SKILL.md` file.
 
 
+
     ### Available skills
+
 
 
     - **supersede-pr**: Replace one GitHub PR with another and explicitly close the
     superseded PR (instead of relying on `Closes #...` keywords). (file: `./skills/supersede-pr/SKILL.md`)
+
 
     - **make-pr**: Create GitHub pull requests with clear context, issue/feature bullets,
     and required usage examples for new or changed APIs. (file: `./skills/make-pr/SKILL.md`)'
@@ -107,7 +120,7 @@ config_edits:
     - <What changed in behavior or API>\n- <Why this is needed now>\n\n<Optional additional\
     \ context paragraph(s), up to 3-4 total for large changes, including links to\
     \ related PRs/issues.>\n\n```ts\n// New feature usage example\n```\n\n```ts\n\
-    // Before\n```\n\n```ts\n// After\n```\n```"
+    // Before\n```\n\n```ts\n// After\n```"
   gold_removed: ''
 - path: skills/supersede-pr/SKILL.md
   tier: 1

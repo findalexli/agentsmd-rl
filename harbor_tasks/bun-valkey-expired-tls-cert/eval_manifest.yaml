@@ -127,21 +127,30 @@ checks:
     origin: repo_tests
     description: "Self-signed certificate must have localhost as issuer and subject"
 
-rubric:
-  - rule: "Follow existing code style - check neighboring files for patterns"
-    source:
-      path: "CLAUDE.md"
-      lines: "144"
-      commit: "c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25"
+  # New pass-to-pass tests (repo_tests - CI/CD git tracking and shell script checks)
+  - id: test_cert_tracked_by_git
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate file must be tracked by git"
 
-  - rule: "All changes must be tested - if you're not testing your changes, you're not done"
-    source:
-      path: "CLAUDE.md"
-      lines: "142"
-      commit: "c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25"
+  - id: test_key_tracked_by_git
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Private key file must be tracked by git"
 
-  - rule: "Use absolute paths - Always use absolute paths in file operations"
-    source:
-      path: "CLAUDE.md"
-      lines: "145"
-      commit: "c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25"
+  - id: test_init_redis_script_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Redis init script must have valid bash syntax"
+
+  - id: test_cert_valid_for_ssl_server
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Certificate must be valid for SSL server use per openssl purpose check"
+
+  - id: test_private_key_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Private key must pass openssl validation check"
+
+rubric: []  # No rubric rules - task is TLS cert replacement, covered by comprehensive tests

@@ -16,17 +16,6 @@ from pathlib import Path
 REPO = Path("/workspace/effect")
 
 
-def _run_node_extract(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute Node.js code in the repo directory for extracting/checking file content."""
-    return subprocess.run(
-        ["node", "-e", code],
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        cwd=REPO,
-    )
-
-
 # ─── F2P: AGENTS.md documentation tests ─────────────────────────────────────
 
 
@@ -73,30 +62,33 @@ def test_agentsmd_v4_learning_section():
 
 def test_eslint_ignores_repos():
     """eslint.config.mjs must include .repos/ and .lalph/ in ignore patterns."""
-    result = _run_node_extract(
-        "const content = require('fs').readFileSync('eslint.config.mjs','utf8');"
-        "const m = content.match(/ignores:\\s*\[([\s\S]*?)\]/);"
-        "if (!m) throw new Error('No ignores array found');"
-        "if (!m[1].includes('.repos')) throw new Error('.repos not in ignores');"
-        "if (!m[1].includes('.lalph')) throw new Error('.lalph not in ignores');"
-        "console.log('OK');"
+    content = (REPO / "eslint.config.mjs").read_text()
+    # Check that ignores array contains .repos and .lalph
+    ignores_match = subprocess.run(
+        ["node", "-e", f"""
+const content = require('fs').readFileSync('{REPO}/eslint.config.mjs','utf8');
+const m = content.match(/ignores:\\s*\\[([\\s\\S]*?)\\]/);
+if (!m) {{ console.error('No ignores array found'); process.exit(1); }}
+console.log(m[0]);
+"""],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
     )
-    assert result.returncode == 0, f"eslint ignores check failed: {result.stderr}"
+    assert ignores_match.returncode == 0, f"Failed to parse eslint config: {ignores_match.stderr}"
+    assert ".repos" in ignores_match.stdout, ".repos not in ignores"
+    assert ".lalph" in ignores_match.stdout, ".lalph not in ignores"
 
 
 def test_eslint_formatted_correctly():
     """eslint.config.mjs must have proper formatting (selector on its own line, single-line packageNames)."""
-    result = _run_node_extract(
-        "const content = require('fs').readFileSync('eslint.config.mjs','utf8');"
-        # Check that selector property is on its own line (formatted correctly)
-        "if (!content.includes(\"selector:\\n\")) throw new Error('selector not on its own line');"
-        # Check that packageNames array is on single line
-        "if (!content.includes('packageNames: [\"effect\", \"@effect/platform\", \"@effect/sql\"]')) {"
-        "  throw new Error('packageNames not formatted as single line');"
-        "}"
-        "console.log('OK');"
+    content = (REPO / "eslint.config.mjs").read_text()
+    # Check that selector property is on its own line (formatted correctly)
+    assert "selector:\n" in content, "selector not on its own line"
+    # Check that packageNames array is on single line
+    assert 'packageNames: ["effect", "@effect/platform", "@effect/sql"]' in content, (
+        "packageNames not formatted as single line"
     )
-    assert result.returncode == 0, f"eslint formatting check failed: {result.stderr}"
 
 
 # ─── F2P: packages/sql/tsconfig.test.json test ────────────────────────────────
@@ -104,14 +96,11 @@ def test_eslint_formatted_correctly():
 
 def test_sql_tsconfig_outdir():
     """packages/sql/tsconfig.test.json must specify outDir for test build output."""
-    result = _run_node_extract(
-        "const c = JSON.parse(require('fs').readFileSync('packages/sql/tsconfig.test.json','utf8'));"
-        "if (c.compilerOptions?.outDir !== 'build/test') {"
-        "  throw new Error('outDir missing or wrong: ' + c.compilerOptions?.outDir);"
-        "}"
-        "console.log('OK');"
+    tsconfig_path = REPO / "packages/sql/tsconfig.test.json"
+    config = json.loads(tsconfig_path.read_text())
+    assert config.get("compilerOptions", {}).get("outDir") == "build/test", (
+        f"outDir missing or wrong: {config.get('compilerOptions', {}).get('outDir')}"
     )
-    assert result.returncode == 0, f"tsconfig outDir check failed: {result.stderr}"
 
 
 # ─── F2P: packages/effect/src/Schema.ts JSDoc test ──────────────────────────
@@ -119,23 +108,15 @@ def test_sql_tsconfig_outdir():
 
 def test_schema_jsdoc_example_reference():
     """packages/effect/src/Schema.ts JSDoc example must use Schema.JsonNumber (not S.JsonNumber)."""
-    result = _run_node_extract(
-        "const content = require('fs').readFileSync('packages/effect/src/Schema.ts','utf8');"
-        "const lines = content.split('\\n');"
-        "for (let i = 0; i < lines.length; i++) {"
-        "  if (lines[i].includes('Schema.is(') && lines[i].includes('JsonNumber')) {"
-        "    if (lines[i].includes('S.JsonNumber')) {"
-        "      throw new Error('Found S.JsonNumber at line ' + (i+1));"
-        "    }"
-        "    if (lines[i].includes('Schema.JsonNumber')) {"
-        "      console.log('OK at line ' + (i+1));"
-        "      process.exit(0);"
-        "    }"
-        "  }"
-        "}"
-        "throw new Error('JsonNumber example line not found');"
-    )
-    assert result.returncode == 0, f"Schema example check failed: {result.stderr}"
+    content = (REPO / "packages/effect/src/Schema.ts").read_text()
+    lines = content.split("\n")
+    for i, line in enumerate(lines):
+        if "Schema.is(" in line and "JsonNumber" in line:
+            if "S.JsonNumber" in line:
+                raise AssertionError(f"Found S.JsonNumber at line {i+1}")
+            if "Schema.JsonNumber" in line:
+                return  # Success
+    raise AssertionError("JsonNumber example line not found")
 
 
 # ─── F2P: AI package JSDoc import pattern tests ─────────────────────────────
@@ -143,105 +124,122 @@ def test_schema_jsdoc_example_reference():
 
 def test_ai_chat_jsdoc_import_pattern():
     """packages/ai/ai/src/Chat.ts JSDoc must use 'effect/Effect' import and Chat.Chat service access."""
-    result = _run_node_extract(
-        r"const content = require('fs').readFileSync('packages/ai/ai/src/Chat.ts','utf8');"
-        r"const exampleMatch = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/);"
-        r"if (!exampleMatch) throw new Error('No @example found in Chat.ts');"
-        r"const example = exampleMatch[1];"
-        r"if (!example.includes(\"import * as Effect from 'effect/Effect'\")) {"
-        r"  throw new Error('Chat.ts JSDoc missing correct Effect import pattern');"
-        r"}"
-        r"if (!example.includes('yield* Chat.Chat')) {"
-        r"  throw new Error('Chat.ts JSDoc should use Chat.Chat (not just Chat)');"
-        r"}"
-        r"console.log('OK');"
+    content = (REPO / "packages/ai/ai/src/Chat.ts").read_text()
+    # Find @example block
+    example_match = content.find("@example")
+    assert example_match != -1, "No @example found in Chat.ts"
+
+    # Get the example content (from @example to the next ```)
+    example_start = content.find("```ts", example_match)
+    example_end = content.find("```", example_start + 1)
+    example = content[example_start:example_end + 3]
+
+    assert "import * as Effect from 'effect/Effect'" in example, (
+        "Chat.ts JSDoc missing correct Effect import pattern"
     )
-    assert result.returncode == 0, f"Chat.ts JSDoc check failed: {result.stderr}"
+    assert "yield* Chat.Chat" in example, (
+        "Chat.ts JSDoc should use Chat.Chat (not just Chat)"
+    )
 
 
 def test_ai_aierror_jsdoc_import_patterns():
     """packages/ai/ai/src/AiError.ts JSDoc must use 'effect/Effect' and 'effect/Option' imports."""
-    result = _run_node_extract(
-        r"const content = require('fs').readFileSync('packages/ai/ai/src/AiError.ts','utf8');"
-        r"const examples = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/g);"
-        r"if (!examples) throw new Error('No @examples found in AiError.ts');"
-        r"const firstEx = examples[0].match(/\`\`\`ts([\s\S]*?)\`\`\`/)[1];"
-        r"if (!firstEx.includes(\"import * as Effect from 'effect/Effect'\")) {"
-        r"  throw new Error('AiError.ts first example missing Effect import');"
-        r"}"
-        r"if (!firstEx.includes(\"import * as Option from 'effect/Option'\")) {"
-        r"  throw new Error('AiError.ts first example missing Option import');"
-        r"}"
-        r"const secondEx = examples[1].match(/\`\`\`ts([\s\S]*?)\`\`\`/)[1];"
-        r"if (!secondEx.includes('Effect.Effect<string, AiError.MalformedInput>')) {"
-        r"  throw new Error('AiError.ts second example missing proper return type');"
-        r"}"
-        r"console.log('OK');"
+    content = (REPO / "packages/ai/ai/src/AiError.ts").read_text()
+
+    # Find all @example blocks
+    examples = []
+    idx = 0
+    while True:
+        example_match = content.find("@example", idx)
+        if example_match == -1:
+            break
+        example_start = content.find("```ts", example_match)
+        if example_start == -1:
+            break
+        example_end = content.find("```", example_start + 1)
+        examples.append(content[example_start:example_end + 3])
+        idx = example_end + 3
+
+    assert len(examples) >= 2, "No @examples found in AiError.ts"
+
+    first_ex = examples[0]
+    assert "import * as Effect from 'effect/Effect'" in first_ex, (
+        "AiError.ts first example missing Effect import"
     )
-    assert result.returncode == 0, f"AiError.ts JSDoc check failed: {result.stderr}"
+    assert "import * as Option from 'effect/Option'" in first_ex, (
+        "AiError.ts first example missing Option import"
+    )
+
+    second_ex = examples[1]
+    assert "Effect.Effect<string, AiError.MalformedInput>" in second_ex, (
+        "AiError.ts second example missing proper return type"
+    )
 
 
 def test_ai_embeddingmodel_jsdoc_import_pattern():
     """packages/ai/ai/src/EmbeddingModel.ts JSDoc must use 'effect/Effect' and EmbeddingModel.EmbeddingModel."""
-    result = _run_node_extract(
-        r"const content = require('fs').readFileSync('packages/ai/ai/src/EmbeddingModel.ts','utf8');"
-        r"const exampleMatch = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/);"
-        r"if (!exampleMatch) throw new Error('No @example found in EmbeddingModel.ts');"
-        r"const example = exampleMatch[1];"
-        r"if (!example.includes(\"import * as Effect from 'effect/Effect'\")) {"
-        r"  throw new Error('EmbeddingModel.ts JSDoc missing correct Effect import');"
-        r"}"
-        r"if (!example.includes('yield* EmbeddingModel.EmbeddingModel')) {"
-        r"  throw new Error('EmbeddingModel.ts JSDoc should use EmbeddingModel.EmbeddingModel');"
-        r"}"
-        r"if (!example.includes('cosineSimilarity')) {"
-        r"  throw new Error('EmbeddingModel.ts JSDoc missing cosineSimilarity helper');"
-        r"}"
-        r"console.log('OK');"
+    content = (REPO / "packages/ai/ai/src/EmbeddingModel.ts").read_text()
+
+    example_match = content.find("@example")
+    assert example_match != -1, "No @example found in EmbeddingModel.ts"
+
+    example_start = content.find("```ts", example_match)
+    example_end = content.find("```", example_start + 1)
+    example = content[example_start:example_end + 3]
+
+    assert "import * as Effect from 'effect/Effect'" in example, (
+        "EmbeddingModel.ts JSDoc missing correct Effect import"
     )
-    assert result.returncode == 0, f"EmbeddingModel.ts JSDoc check failed: {result.stderr}"
+    assert "yield* EmbeddingModel.EmbeddingModel" in example, (
+        "EmbeddingModel.ts JSDoc should use EmbeddingModel.EmbeddingModel"
+    )
+    assert "cosineSimilarity" in example, (
+        "EmbeddingModel.ts JSDoc missing cosineSimilarity helper"
+    )
 
 
 def test_ai_languagemodel_jsdoc_import_pattern():
     """packages/ai/ai/src/LanguageModel.ts JSDoc must use 'effect/Effect' and LanguageModel.LanguageModel."""
-    result = _run_node_extract(
-        r"const content = require('fs').readFileSync('packages/ai/ai/src/LanguageModel.ts','utf8');"
-        r"const exampleMatch = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/);"
-        r"if (!exampleMatch) throw new Error('No @example found in LanguageModel.ts');"
-        r"const example = exampleMatch[1];"
-        r"if (!example.includes(\"import * as Effect from 'effect/Effect'\")) {"
-        r"  throw new Error('LanguageModel.ts JSDoc missing correct Effect import');"
-        r"}"
-        r"if (!example.includes('yield* LanguageModel.LanguageModel')) {"
-        r"  throw new Error('LanguageModel.ts JSDoc should use LanguageModel.LanguageModel');"
-        r"}"
-        r"console.log('OK');"
+    content = (REPO / "packages/ai/ai/src/LanguageModel.ts").read_text()
+
+    example_match = content.find("@example")
+    assert example_match != -1, "No @example found in LanguageModel.ts"
+
+    example_start = content.find("```ts", example_match)
+    example_end = content.find("```", example_start + 1)
+    example = content[example_start:example_end + 3]
+
+    assert "import * as Effect from 'effect/Effect'" in example, (
+        "LanguageModel.ts JSDoc missing correct Effect import"
     )
-    assert result.returncode == 0, f"LanguageModel.ts JSDoc check failed: {result.stderr}"
+    assert "yield* LanguageModel.LanguageModel" in example, (
+        "LanguageModel.ts JSDoc should use LanguageModel.LanguageModel"
+    )
 
 
 def test_ai_telemetry_jsdoc_updated():
     """packages/ai/ai/src/Telemetry.ts JSDoc must use 'effect/Effect' and options.response.length."""
-    result = _run_node_extract(
-        r"const content = require('fs').readFileSync('packages/ai/ai/src/Telemetry.ts','utf8');"
-        r"const exampleMatch = content.match(/@example[\s\S]*?\`\`\`ts([\s\S]*?)\`\`\`/);"
-        r"if (!exampleMatch) throw new Error('No @example found in Telemetry.ts');"
-        r"const example = exampleMatch[1];"
-        r"if (!example.includes(\"import * as Effect from 'effect/Effect'\")) {"
-        r"  throw new Error('Telemetry.ts JSDoc missing correct Effect import');"
-        r"}"
-        r"if (example.includes(\"import { Context \")) {"
-        r"  throw new Error('Telemetry.ts JSDoc should not import Context');"
-        r"}"
-        r"if (!example.includes('options.response.length')) {"
-        r"  throw new Error('Telemetry.ts JSDoc should use options.response.length');"
-        r"}"
-        r"if (example.includes('options.model')) {"
-        r"  throw new Error('Telemetry.ts JSDoc should not reference options.model');"
-        r"}"
-        r"console.log('OK');"
+    content = (REPO / "packages/ai/ai/src/Telemetry.ts").read_text()
+
+    example_match = content.find("@example")
+    assert example_match != -1, "No @example found in Telemetry.ts"
+
+    example_start = content.find("```ts", example_match)
+    example_end = content.find("```", example_start + 1)
+    example = content[example_start:example_end + 3]
+
+    assert "import * as Effect from 'effect/Effect'" in example, (
+        "Telemetry.ts JSDoc missing correct Effect import"
     )
-    assert result.returncode == 0, f"Telemetry.ts JSDoc check failed: {result.stderr}"
+    assert "import { Context" not in example, (
+        "Telemetry.ts JSDoc should not import Context"
+    )
+    assert "options.response.length" in example, (
+        "Telemetry.ts JSDoc should use options.response.length"
+    )
+    assert "options.model" not in example, (
+        "Telemetry.ts JSDoc should not reference options.model"
+    )
 
 
 # ─── P2P: Structure/regression tests ─────────────────────────────────────────
@@ -257,16 +255,9 @@ def test_agentsmd_core_sections_intact():
 
 def test_eslint_standard_ignores():
     """eslint.config.mjs must still include standard ignore patterns (dist, build, docs, md)."""
-    result = _run_node_extract(
-        "const content = require('fs').readFileSync('eslint.config.mjs','utf8');"
-        "const m = content.match(/ignores:\\s*\[([\s\S]*?)\]/);"
-        "if (!m) throw new Error('No ignores found');"
-        "for (const p of ['**/dist', '**/build', '**/docs', '**/*.md']) {"
-        "  if (!m[1].includes(p)) throw new Error(p + ' missing from ignores');"
-        "}"
-        "console.log('OK');"
-    )
-    assert result.returncode == 0, f"eslint standard ignores check failed: {result.stderr}"
+    content = (REPO / "eslint.config.mjs").read_text()
+    for pattern in ['"**/dist"', '"**/build"', '"**/docs"', '"**/*.md"']:
+        assert pattern in content, f"{pattern} missing from ignores"
 
 
 def test_gitignore_repos_added():

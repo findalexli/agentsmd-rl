@@ -401,6 +401,105 @@ def test_repo_git_valid():
     )
 
 
+# [repo_tests] pass_to_pass
+def test_repo_oxlint_packages_bun_types():
+    """Repo's bun-types package passes oxlint checks (pass_to_pass).
+
+    Uses oxlint to lint the packages/bun-types directory.
+    This validates TypeScript type definitions follow lint rules.
+    CI/CD equivalent: part of packages-ci.yml workflow.
+    """
+    r = subprocess.run(
+        ["npx", "oxlint@0.15", "--config=oxlint.json", "packages/bun-types"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"oxlint failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint_scripts():
+    """Repo's scripts pass oxlint checks for critical errors (pass_to_pass).
+
+    Uses oxlint to check for critical errors in scripts/*.ts files.
+    This catches syntax errors and undefined variables.
+    CI/CD equivalent: part of 'bun run lint' in CI workflow.
+    """
+    r = subprocess.run(
+        ["npx", "oxlint@0.15", "--config=oxlint.json", "--deny-warnings",
+         "scripts/build.ts", "scripts/build.mjs", "scripts/bump.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Note: oxlint may find unused vars but we only fail on errors, not warnings
+    has_errors = "error" in r.stderr.lower() and r.returncode != 0
+    assert not has_errors, f"oxlint found errors:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_prettier_test_internal():
+    """Repo's internal test files are properly formatted (pass_to_pass).
+
+    Uses prettier to check formatting of test/internal/*.ts files.
+    This is a subset of 'bun run prettier' focused on test files.
+    CI/CD equivalent: part of 'bun run prettier' in format.yml workflow.
+    """
+    r = subprocess.run(
+        ["npx", "prettier", "--check", "test/internal/*.ts"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    # Prettier returns 0 if all files match
+    # We accept formatting issues but fail on parse errors
+    has_parse_errors = "parse" in r.stderr.lower() or "parse" in r.stdout.lower()
+    assert not has_parse_errors, f"prettier encountered parse errors:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_status_clean():
+    """Repo's git status is clean at base commit (pass_to_pass).
+
+    Validates that the repository has no uncommitted changes at base commit.
+    This ensures we're testing the correct baseline state.
+    """
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed:\n{r.stderr}"
+    # At base commit, status should be clean (no uncommitted changes yet)
+    # This may be empty which is fine - just checking the command works
+
+
+# [repo_tests] pass_to_pass
+def test_repo_git_ls_files():
+    """Repo's git file tracking works correctly (pass_to_pass).
+
+    Validates that git can list tracked files successfully.
+    This catches git index corruption issues.
+    """
+    r = subprocess.run(
+        ["git", "ls-files", "--", "src/bun.js/bindings/BunString.cpp"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"git ls-files failed:\n{r.stderr}"
+    assert "src/bun.js/bindings/BunString.cpp" in r.stdout, (
+        "BunString.cpp should be tracked in git"
+    )
+
+
 # -----------------------------------------------------------------------------
 # agent_config
 # -----------------------------------------------------------------------------

@@ -104,6 +104,20 @@ checks:
     origin: repo_tests
     command: "php -l"
 
+  - id: composer_lint
+    type: pass_to_pass
+    description: "Target PHP file passes Pint/PSR-12 lint check"
+    function: test_composer_lint
+    origin: repo_tests
+    command: "composer lint"
+
+  - id: composer_analyze
+    type: pass_to_pass
+    description: "Target PHP file passes PHPStan static analysis"
+    function: test_composer_analyze
+    origin: repo_tests
+    command: "composer analyze"
+
   # Pass-to-pass checks - Static file validation (origin: static)
   - id: composer_json_valid
     type: pass_to_pass

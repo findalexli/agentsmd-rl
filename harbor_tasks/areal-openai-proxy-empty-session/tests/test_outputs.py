@@ -172,6 +172,36 @@ def test_repo_workflow_syntax():
     assert r.returncode == 0, f"Syntax check failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass - syntax check for proxy_gateway module
+def test_repo_proxy_gateway_syntax():
+    """Proxy gateway module compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/areal/experimental/openai/proxy/proxy_gateway.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"proxy_gateway.py syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - syntax check for online_agent module
+def test_repo_online_agent_syntax():
+    """Online agent module compiles without syntax errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", f"{REPO}/areal/experimental/openai/proxy/online_agent.py"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"online_agent.py syntax check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - verify pytest is available
+def test_repo_pytest_available():
+    """pytest is installed and functional (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "pytest", "--version"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"pytest check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------

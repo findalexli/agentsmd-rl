@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T02:23:47.249032",
-  "total_time": 3630.7,
-  "sandbox_id": "ipz6p4lb2058762vfmu8s",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:53:49.812340",
+  "total_time": 1494.58,
+  "sandbox_id": "iyxmbpi1hpyi55dsn6zxn",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 0.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 93.64,
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 408.53,
       "notes": ""
     },
     "improve": {
@@ -25,20 +25,24 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 3,
+      "notes": "Fixed test_outputs.py render_chart (removed incorrect {values: ...} wrapper). Fixed solve.sh patch: added worker-hpa.yaml template update to support workers.celery.hpa path, fixed values.yaml deprecation comments, fixed typo stabilizationSeconds->stabilizationWindowSeconds in test_hpa.py. All 23 tests pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 5.28
+      "time": 1052.67
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 7.13,
+      "notes": "ICR=0.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 703.02,
-      "at": "2026-04-09T14:39:54.175814"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -70,6 +74,14 @@
       "backend": "gemini",
       "time": 3630.7,
       "at": "2026-04-10T02:23:47.249032"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1494.58,
+      "at": "2026-04-10T17:53:49.812340"
     }
   ]
 }

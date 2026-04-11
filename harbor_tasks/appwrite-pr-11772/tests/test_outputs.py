@@ -104,7 +104,7 @@ def test_no_pre_check_exists():
     """The old pattern of pre-checking exists() before create() should be removed."""
     content = TARGET_FILE.read_text()
 
-    # The old pattern was: if (!$dbForDatabases->exists(null, Database::METADATA)) { try { $dbForDatabases->create(); } ... }
+    # The old pattern was: if (!\$dbForDatabases->exists(null, Database::METADATA)) { try { \$dbForDatabases->create(); } ... }
     # We should not see exists() used as a pre-condition before create()
 
     # Find the create() call context - it should be inside the retry loop, not preceded by an exists check
@@ -121,7 +121,7 @@ def test_create_called_in_loop():
     """create() must be called inside the retry loop."""
     content = TARGET_FILE.read_text()
 
-    # Verify that $dbForDatabases->create() is inside a for loop
+    # Verify that \$dbForDatabases->create() is inside a for loop
     # Look for create() call followed by break inside loop braces
     create_in_loop = r'for\s*\([^)]*\)\s*\{[^}]*\$dbForDatabases->create\s*\(\s*\)[^}]*break\s*;[^}]*\}'
     assert re.search(create_in_loop, content, re.DOTALL), \
@@ -132,19 +132,23 @@ def test_retry_logic_comprehensive():
     """Comprehensive check for all retry logic components in correct order."""
     content = TARGET_FILE.read_text()
 
-    # Find the try block structure - it should have:
-    # 1. for loop with 5 attempts
-    # 2. inner try with create() and break
-    # 3. catch DuplicateException with break
-    # 4. catch Throwable with exists check, retry logic, and rethrow
+    # Find the retry loop by looking for the comment about race conditions
+    # followed by the for loop with $attempt
+    race_comment = 'Bootstrap the database metadata without a separate existence'
+    comment_pos = content.find(race_comment)
+    assert comment_pos != -1, "Must have bootstrap comment about race conditions"
 
-    # Check sequence of elements in the try block
-    try_block_start = content.find('try {')
-    assert try_block_start != -1, "Must have a try block"
+    # Find the for loop that starts after the comment
+    loop_match = re.search(r'for\s*\(\s*\$attempt\s*=\s*0\s*;\s*\$attempt\s*<\s*5', content[comment_pos:])
+    assert loop_match is not None, "Must have retry loop with $attempt = 0; $attempt < 5"
 
-    # Get the try block content (simplified - find the matching closing brace)
+    # Get the for loop block content (find the matching closing brace)
+    loop_start = comment_pos + loop_match.start()
+    brace_start = content.find('{', loop_start)
+    assert brace_start != -1, "For loop must have an opening brace"
+
     brace_count = 1
-    idx = try_block_start + 5
+    idx = brace_start + 1
     while brace_count > 0 and idx < len(content):
         if content[idx] == '{':
             brace_count += 1
@@ -152,23 +156,29 @@ def test_retry_logic_comprehensive():
             brace_count -= 1
         idx += 1
 
-    try_block = content[try_block_start:idx]
+    loop_block = content[brace_start:idx]
 
-    # Check for required components in order
-    assert '$attempt = 0' in try_block or '$attempt=0' in try_block, \
-        "Retry loop must start with $attempt = 0"
-    assert '$attempt < 5' in try_block or '$attempt<5' in try_block, \
-        "Retry loop must check $attempt < 5"
-    assert '$dbForDatabases->create()' in try_block, \
-        "Must call $dbForDatabases->create() in the loop"
+    # Check for required components inside the loop
+    assert '$dbForDatabases->create()' in loop_block,         "Must call $dbForDatabases->create() in the loop"
+    assert 'break' in loop_block,         "Must have break statement in the loop"
+
+    # Check for inner try block with create() and break
+    inner_try_start = loop_block.find('try {')
+    assert inner_try_start != -1, "Must have inner try block inside the loop"
 
     # Check that DuplicateException comes before Throwable (order matters)
-    dup_pos = try_block.find('DuplicateException')
-    throwable_pos = try_block.find('Throwable')
+    dup_pos = loop_block.find('DuplicateException')
+    throwable_pos = loop_block.find('Throwable')
 
     if dup_pos != -1 and throwable_pos != -1:
-        assert dup_pos < throwable_pos, \
-            "DuplicateException catch must come before Throwable catch"
+        assert dup_pos < throwable_pos,             "DuplicateException catch must come before Throwable catch"
+
+    # Check for the max attempts check and usleep in Throwable catch
+    throwable_catch_pos = loop_block.find(r'catch (\Throwable $e)')
+    if throwable_catch_pos != -1:
+        throwable_section = loop_block[throwable_catch_pos:]
+        assert '$attempt === 4' in throwable_section or '$attempt == 4' in throwable_section,             "Must check if $attempt === 4 before throwing in Throwable catch"
+        assert 'usleep(100_000)' in throwable_section or r'\usleep(100_000)' in throwable_section,             "Must have usleep(100_000) in Throwable catch"
 
 
 # =============================================================================
@@ -213,6 +223,30 @@ def test_php_syntax_check():
         cwd=REPO,
     )
     assert result.returncode == 0, f"PHP syntax check failed:\n{result.stderr}"
+
+
+def test_composer_lint():
+    """Target PHP file passes composer lint (Pint/PSR-12 check) (pass_to_pass)."""
+    result = subprocess.run(
+        ["composer", "lint", str(TARGET_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"composer lint failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
+
+
+def test_composer_analyze():
+    """Target PHP file passes composer analyze (PHPStan) (pass_to_pass)."""
+    result = subprocess.run(
+        ["composer", "analyze", str(TARGET_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"composer analyze failed:\n{result.stdout[-1000:]}{result.stderr[-500:]}"
 
 
 # =============================================================================

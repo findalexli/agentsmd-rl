@@ -207,13 +207,14 @@ def test_imports_are_valid():
 
 def test_repo_biome_lint():
     """
-    Pass-to-pass: Biome linting passes on Cascader component (repo_tests).
+    Pass-to-pass: Biome linting passes on Cascader style file (repo_tests).
 
-    This runs the repo's Biome linter on the cascader component files,
-    matching the CI workflow's lint job.
+    This runs the repo's Biome linter on the cascader style file,
+    matching the CI workflow's lint:biome job.
     """
+    # Use installed biome via npx
     result = subprocess.run(
-        ["npx", "biome", "lint", "components/cascader"],
+        ["npx", "@biomejs/biome", "lint", "components/cascader/style/columns.ts"],
         cwd=REPO,
         capture_output=True,
         text=True,
@@ -222,23 +223,55 @@ def test_repo_biome_lint():
     assert result.returncode == 0, f"Biome lint failed:\n{result.stderr[-500:]}"
 
 
-def test_repo_cascader_style_file_valid():
+def test_repo_biome_format():
     """
-    Pass-to-pass: Cascader style file is valid TypeScript (repo_tests).
+    Pass-to-pass: Biome format check passes on Cascader style file (repo_tests).
 
-    This uses Node.js to verify the file can be read.
+    This verifies the file follows the repo's formatting standards
+    as configured in biome.json. The command checks if formatting is needed
+    (exit code 0 = no changes needed, formatted correctly).
     """
     result = subprocess.run(
-        [
-            "node", "-e",
-            "try { require('fs').readFileSync('components/cascader/style/columns.ts', 'utf8'); console.log('OK'); } catch(e) { console.error(e); process.exit(1); }",
-        ],
+        ["npx", "@biomejs/biome", "format", "components/cascader/style/columns.ts"],
         cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    # Biome format returns 0 when no formatting is needed (file is already formatted)
+    assert result.returncode == 0, f"Biome format check failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_cascader_tests_exist():
+    """
+    Pass-to-pass: Cascader component has test files (repo_tests).
+
+    Verifies that the Cascader component has the expected test structure.
+    """
+    result = subprocess.run(
+        ["test", "-d", f"{REPO}/components/cascader/__tests__"],
         capture_output=True,
         text=True,
         timeout=30,
     )
-    assert result.returncode == 0, f"Style file validation failed:\n{result.stderr}"
+    assert result.returncode == 0, "Cascader __tests__ directory should exist"
+
+
+def test_repo_cascader_unit_tests():
+    """
+    Pass-to-pass: Cascader component unit tests exist and can run (repo_tests).
+
+    Verifies the Cascader component has the main index.test.tsx file
+    which tests component functionality.
+    """
+    test_file = f"{REPO}/components/cascader/__tests__/index.test.tsx"
+    result = subprocess.run(
+        ["test", "-f", test_file],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"Cascader unit test file should exist at {test_file}"
 
 
 def test_repo_node_version():
@@ -259,3 +292,46 @@ def test_repo_node_version():
     # Check that version starts with v18, v19, v20, etc
     assert version.startswith("v18") or version.startswith("v19") or version.startswith("v20") or version.startswith("v2"), \
         f"Node version {version} may not be compatible"
+
+
+def test_repo_tsc_syntax_check():
+    """
+    Pass-to-pass: TypeScript syntax is valid (repo_tests).
+
+    Uses Node.js to parse the TypeScript file and verify basic syntax.
+    A more lightweight alternative to full tsc --noEmit.
+    """
+    result = subprocess.run(
+        [
+            "node", "-e",
+            f"""
+            const fs = require('fs');
+            const content = fs.readFileSync('{COLUMNS_FILE}', 'utf8');
+            // Basic TypeScript syntax validation - check balanced braces
+            let open = 0;
+            let inString = false;
+            let stringChar = '';
+            for (let i = 0; i < content.length; i++) {{
+                const c = content[i];
+                const prev = content[i-1];
+                if (!inString && (c === '"' || c === "'" || c === '`')) {{
+                    inString = true;
+                    stringChar = c;
+                }} else if (inString && c === stringChar && prev !== '\\\\') {{
+                    inString = false;
+                }} else if (!inString) {{
+                    if (c === '{{') open++;
+                    else if (c === '}}') open--;
+                    if (open < 0) throw new Error('Unbalanced braces');
+                }}
+            }}
+            if (open !== 0) throw new Error('Unbalanced braces: ' + open);
+            console.log('OK');
+            """,
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"TypeScript syntax check failed:\n{result.stderr}"

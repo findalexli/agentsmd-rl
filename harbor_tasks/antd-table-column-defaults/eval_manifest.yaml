@@ -100,6 +100,36 @@ checks:
     origin: repo_tests
     description: "Repo's Table component unit tests pass"
 
+  - id: test_repo_lint_biome_all_table
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Biome linting passes on all table files"
+
+  - id: test_repo_table_filter_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Table filter tests pass"
+
+  - id: test_repo_table_rowSelection_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Table rowSelection tests pass"
+
+  - id: test_repo_table_sorter_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Table sorter tests pass"
+
+  - id: test_repo_table_expand_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Table expand tests pass"
+
+  - id: test_repo_table_pagination_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Table pagination tests pass"
+
 
   # ============================================================================
   # Static checks (file content/structure)
@@ -122,48 +152,16 @@ checks:
       commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
     description: "Test file uses relative imports per project convention"
 
-rubric:
-  - criterion: "Demo files use absolute imports"
-    weight: 1
-    source:
-      file: CLAUDE.md
-      section: "Demo 导入规范"
-      commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
-    description: |
-      Demo files must use absolute paths (antd, antd/es/*, etc.) for importing
-      Ant Design components, not relative paths (../, ./).
-
-  - criterion: "Test files use relative imports"
-    weight: 1
-    source:
-      file: CLAUDE.md
-      section: "Test 导入规范"
-      commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
-    description: |
-      Test files must use relative paths (.., ../index, etc.) for importing
-      Ant Design components, not absolute paths (antd, antd/es/*, etc.).
-
-  - criterion: "Hook properly uses mergeProps from rc-component/util"
-    weight: 2
-    description: |
-      The useFilledColumns hook should use mergeProps from @rc-component/util
-      to properly merge column defaults with individual column props, with
-      individual column props taking precedence.
-
-  - criterion: "Special columns are handled correctly"
-    weight: 1
-    description: |
-      SELECTION_COLUMN and EXPAND_COLUMN should be detected and returned
-      unchanged without attempting to merge props on them.
-
-  - criterion: "Recursive handling of column groups"
-    weight: 1
-    description: |
-      The hook should recursively process nested column groups, applying
-      defaults to children columns while preserving the group structure.
-
-  - criterion: "TypeScript types are correct"
-    weight: 1
-    description: |
-      The column prop should be typed as Partial<ColumnType<RecordType>>
-      in the TableProps interface.
+# Note: Rubric rules are not needed for this task because:
+# 1. This is a code-only feature implementation (no config/documentation changes)
+# 2. All rubric criteria are already verified by the 22 tests in test_outputs.py:
+#    - test_demo_uses_absolute_imports: verifies demo uses 'antd' imports
+#    - test_internal_tests_use_relative_imports: verifies tests use relative imports
+#    - test_column_default_inheritance_logic: verifies mergeProps usage
+#    - test_special_columns_preserved: verifies SELECTION_COLUMN/EXPAND_COLUMN handling
+#    - test_nested_column_groups: verifies recursive children handling
+#    - test_column_prop_types_exist: verifies TypeScript types
+# 3. The judge.py's extract_config_hunks only extracts config/doc files, not code files
+# 4. All tests pass on gold solution (reward=1), confirming correct implementation
+#
+# Rubric judge disabled to avoid false failures on code-only tasks.

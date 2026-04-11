@@ -47,28 +47,6 @@ def _run_python_code(code: str, timeout: int = 30) -> subprocess.CompletedProces
     )
 
 
-def _parse_sql_queries(sql_content: str) -> list:
-    """Parse SQL content and extract executable queries."""
-    queries = []
-    current_query = []
-
-    for line in sql_content.split('\n'):
-        stripped = line.strip()
-        # Skip comments and empty lines
-        if not stripped or stripped.startswith('--'):
-            continue
-        current_query.append(line)
-        if stripped.endswith(';'):
-            queries.append('\n'.join(current_query))
-            current_query = []
-
-    # Handle queries without trailing semicolon
-    if current_query:
-        queries.append('\n'.join(current_query))
-
-    return queries
-
-
 # ============================================================================
 # FAIL-TO-PASS TESTS (Behavioral changes that fail without the fix)
 # ============================================================================
@@ -444,7 +422,7 @@ with open(\"{PADSTRING_FILE}\", \"r\") as f:
 # Old code used cast: reinterpret_cast<const UInt8 *
 # Check that we don't have the old cast pattern
 import re
-write_slice_calls = re.findall(r'writeSlice\([^)]+\)', content)
+write_slice_calls = re.findall(r'writeSlice\\([^)]+\\)', content)
 for call in write_slice_calls:
     if "reinterpret_cast" in call:
         print(\"FAIL: writeSlice should not cast pad_string.data()\")
@@ -464,273 +442,14 @@ print(\"PASS: writeSlice uses pad_string.data() correctly\")
 
 
 # ============================================================================
-# PASS-TO-PASS TESTS (Repo compliance tests)
+# PASS-TO-PASS TESTS (Repo CI/CD compliance - actual subprocess commands)
 # ============================================================================
 
-def test_regression_sql_file_valid():
-    """
-    BEHAVIORAL: Verify regression SQL file can be fetched and parsed.
-
-    Downloads the SQL test file from PR and validates it contains executable queries.
-    """
-    test_sql = f"{REPO}/tests/queries/0_stateless/04070_pad_string_asan_overflow.sql"
-
-    # Fetch from merge commit if not present
-    assert _fetch_file_from_commit(test_sql, MERGE_COMMIT, "04070_pad_string_asan_overflow.sql"), \
-        "Could not fetch regression SQL test file"
-
-    # Now parse and validate the SQL
-    code = f'''
-import sys
-
-with open("{test_sql}", "r") as f:
-    content = f.read()
-
-if not content.strip():
-    print("FAIL: SQL file is empty")
-    sys.exit(1)
-
-# Parse queries
-queries = []
-current = []
-for line in content.split("\\n"):
-    stripped = line.strip()
-    if not stripped or stripped.startswith("--"):
-        continue
-    current.append(line)
-    if stripped.endswith(";"):
-        queries.append("\\n".join(current))
-        current = []
-
-if current:
-    queries.append("\\n".join(current))
-
-if len(queries) == 0:
-    print("FAIL: No queries found in SQL file")
-    sys.exit(1)
-
-# Verify test coverage
-if "leftPad" not in content and "rightPad" not in content:
-    print("FAIL: Should test leftPad and/or rightPad")
-    sys.exit(1)
-
-# Verify long pad string test (triggers the overflow)
-if "abcdefghijklmnopq" not in content:
-    print("FAIL: Should test with long pad strings")
-    sys.exit(1)
-
-print(f"PASS: Found {{len(queries)}} queries in regression test")
-'''
-    result = _run_python_code(code)
-    assert result.returncode == 0, f"Test failed: {result.stdout} {result.stderr}"
-    assert "PASS" in result.stdout
-
-
-def test_regression_reference_file_valid():
-    """
-    BEHAVIORAL: Verify regression reference file can be fetched and parsed.
-
-    Downloads the reference file from PR and validates it contains expected results.
-    """
-    test_ref = f"{REPO}/tests/queries/0_stateless/04070_pad_string_asan_overflow.reference"
-
-    # Fetch from merge commit if not present
-    assert _fetch_file_from_commit(test_ref, MERGE_COMMIT, "04070_pad_string_asan_overflow.reference"), \
-        "Could not fetch regression reference file"
-
-    # Validate the reference file
-    code = f'''
-import sys
-
-with open("{test_ref}", "r") as f:
-    content = f.read()
-
-if not content.strip():
-    print("FAIL: Reference file is empty")
-    sys.exit(1)
-
-# Count result lines (non-empty)
-results = [l for l in content.split("\\n") if l.strip()]
-
-if len(results) == 0:
-    print("FAIL: No expected results in reference file")
-    sys.exit(1)
-
-print(f"PASS: Found {{len(results)}} expected results in reference file")
-'''
-    result = _run_python_code(code)
-    assert result.returncode == 0, f"Test failed: {result.stdout} {result.stderr}"
-    assert "PASS" in result.stdout
-
-
-def test_regression_test_paired():
-    """
-    BEHAVIORAL: Verify SQL and reference files are properly paired.
-
-    Both files must exist and have matching query/result structure.
-    """
-    test_sql = f"{REPO}/tests/queries/0_stateless/04070_pad_string_asan_overflow.sql"
-    test_ref = f"{REPO}/tests/queries/0_stateless/04070_pad_string_asan_overflow.reference"
-
-    code = f'''
-import sys
-
-# Fetch both files
-import urllib.request
-import os
-
-def fetch(filepath, suffix):
-    if os.path.exists(filepath):
-        return True
-    url = f"https://raw.githubusercontent.com/ClickHouse/ClickHouse/{MERGE_COMMIT}/tests/queries/0_stateless/{{suffix}}"
-    try:
-        urllib.request.urlretrieve(url, filepath)
-        return os.path.exists(filepath)
-    except:
-        return False
-
-sql_exists = fetch("{test_sql}", "04070_pad_string_asan_overflow.sql")
-ref_exists = fetch("{test_ref}", "04070_pad_string_asan_overflow.reference")
-
-if sql_exists != ref_exists:
-    print("FAIL: SQL and reference files must both exist or both be missing")
-    sys.exit(1)
-
-if not sql_exists:
-    print("FAIL: Neither SQL nor reference file could be fetched")
-    sys.exit(1)
-
-with open("{test_sql}", "r") as f:
-    sql_content = f.read()
-with open("{test_ref}", "r") as f:
-    ref_content = f.read()
-
-# Both files should have content
-if not sql_content.strip():
-    print("FAIL: SQL file is empty")
-    sys.exit(1)
-
-if not ref_content.strip():
-    print("FAIL: Reference file is empty")
-    sys.exit(1)
-
-# Count queries (SELECT statements, not comments)
-queries = [l for l in sql_content.split("\\n") if l.strip() and not l.strip().startswith("--")]
-results = [l for l in ref_content.split("\\n") if l.strip()]
-
-if len(queries) == 0:
-    print("FAIL: No queries in SQL file")
-    sys.exit(1)
-
-if len(results) == 0:
-    print("FAIL: No results in reference file")
-    sys.exit(1)
-
-print(f"PASS: Files paired: {{len(queries)}} queries, {{len(results)}} results")
-'''
-    result = _run_python_code(code)
-    assert result.returncode == 0, f"Test failed: {result.stdout} {result.stderr}"
-    assert "PASS" in result.stdout
-
-
-def test_cpp_syntax_valid():
-    """
-    BEHAVIORAL: Verify C++ source has valid structure.
-
-    Basic structural validation: balanced braces, required includes, namespace.
-    """
-    code = f'''
-import sys
-
-with open("{PADSTRING_FILE}", "r") as f:
-    content = f.read()
-
-# Check balanced braces
-if content.count("{{") != content.count("}}"):
-    print("FAIL: Unbalanced braces")
-    sys.exit(1)
-
-# Check balanced parentheses
-if content.count("(") != content.count(")"):
-    print("FAIL: Unbalanced parentheses")
-    sys.exit(1)
-
-# Check for required includes
-if "#include <" not in content:
-    print("FAIL: Should have include statements")
-    sys.exit(1)
-
-# Check for namespace
-if "namespace DB" not in content:
-    print("FAIL: Should have DB namespace")
-    sys.exit(1)
-
-print("PASS: C++ syntax appears valid")
-'''
-    result = _run_python_code(code)
-    assert result.returncode == 0, f"Test failed: {result.stdout} {result.stderr}"
-    assert "PASS" in result.stdout
-
-
-def test_source_file_no_trailing_whitespace():
-    """
-    BEHAVIORAL: Verify source file has no trailing whitespace.
-
-    Style check: trailing whitespace is not allowed in ClickHouse codebase.
-    """
-    code = f'''
-import sys
-
-with open("{PADSTRING_FILE}", "r") as f:
-    lines = f.readlines()
-
-for i, line in enumerate(lines, 1):
-    if line.rstrip().endswith(" "):
-        print(f"FAIL: Line {{i}} has trailing whitespace")
-        sys.exit(1)
-
-print("PASS: No trailing whitespace found")
-'''
-    result = _run_python_code(code)
-    assert result.returncode == 0, f"Test failed: {result.stdout} {result.stderr}"
-    assert "PASS" in result.stdout
-
-
-def test_source_file_ends_with_newline():
-    """
-    BEHAVIORAL: Verify source file ends with newline.
-
-    POSIX standard requires files end with newline.
-    """
-    code = f'''
-import sys
-
-with open("{PADSTRING_FILE}", "rb") as f:
-    content = f.read()
-
-if not content.endswith(b"\\n"):
-    print("FAIL: Source file should end with newline")
-    sys.exit(1)
-
-print("PASS: Source file ends with newline")
-'''
-    result = _run_python_code(code)
-    assert result.returncode == 0, f"Test failed: {result.stdout} {result.stderr}"
-    assert "PASS" in result.stdout
-
-
-
-
-# ============================================================================
-# PASS-TO-PASS CI TESTS (Actual CI commands from the repo)
-# ============================================================================
-
-def test_git_repo_initialized():
+def test_repo_git_initialized():
     """
     CI: Git repository is properly initialized (pass_to_pass).
 
-    Verifies git can track files in the workspace.
-    Initializes git if needed (for base commit without git history).
+    Verifies git can track files in the workspace using subprocess.run().
     """
     # Initialize git if not already done
     subprocess.run(
@@ -744,48 +463,148 @@ def test_git_repo_initialized():
     assert r.returncode == 0, f"Git status failed:\n{r.stderr[-500:]}"
 
 
-def test_cpp_file_compiles_syntax():
+def test_repo_no_duplicate_includes():
     """
-    CI: C++ syntax check passes (pass_to_pass).
+    CI: No duplicate #include statements (pass_to_pass).
 
-    Verifies the C++ file can be parsed by the compiler (syntax only).
-    This catches obvious syntax errors without doing a full build.
+    Based on ClickHouse CI check_duplicate_includes from check_style.py.
     """
-    # Check if g++ or clang++ is available for syntax checking
     r = subprocess.run(
-        ["which", "g++"],
-        capture_output=True, text=True, timeout=10,
+        ["python3", "-c", f"""
+import re
+import sys
+
+with open('{PADSTRING_FILE}', 'r', encoding='utf-8', errors='ignore') as f:
+    includes = []
+    for line in f:
+        if re.match(r'^#include ', line):
+            includes.append(line.strip())
+
+include_counts = {{line: includes.count(line) for line in includes}}
+duplicates = {{line: count for line, count in include_counts.items() if count > 1}}
+
+if duplicates:
+    print(f"Duplicate includes found: {{duplicates}}")
+    sys.exit(1)
+print("PASS: No duplicate includes")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    compiler = "g++" if r.returncode == 0 else None
-
-    if not compiler:
-        r = subprocess.run(
-            ["which", "clang++"],
-            capture_output=True, text=True, timeout=10,
-        )
-        compiler = "clang++" if r.returncode == 0 else None
-
-    if compiler:
-        # Syntax-only check (don't generate output)
-        # Note: This will fail due to missing includes, but -fsyntax-only
-        # helps catch basic syntax errors in the file itself
-        r = subprocess.run(
-            [compiler, "-std=c++20", "-fsyntax-only", "-c",
-             f"{REPO}/src/Functions/padString.cpp"],
-            capture_output=True, text=True, timeout=60,
-        )
-        # For syntax-only, we accept any result since missing headers are expected
-        # The test passes if the compiler doesn't crash on basic syntax
-        assert "error: expected" not in r.stderr, f"Syntax errors found in C++ file:\n{r.stderr[:500]}"
+    assert r.returncode == 0, f"Duplicate includes check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
 
 
-def test_shell_scripts_executable():
+def test_repo_no_trailing_whitespace():
+    """
+    CI: Source file has no trailing whitespace (pass_to_pass).
+
+    Based on ClickHouse CI check from check_cpp.sh.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'r', encoding='utf-8', errors='ignore') as f:
+    lines = f.readlines()
+
+for i, line in enumerate(lines, 1):
+    if line.rstrip().endswith(' '):
+        print(f"Line {{i}} has trailing whitespace")
+        sys.exit(1)
+
+print("PASS: No trailing whitespace")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_no_tabs():
+    """
+    CI: Source file uses spaces, not tabs (pass_to_pass).
+
+    Based on ClickHouse CI check for tabs in source files.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'r', encoding='utf-8', errors='ignore') as f:
+    content = f.read()
+
+if '\\t' in content:
+    print("FAIL: Tabs found in source file")
+    sys.exit(1)
+
+print("PASS: No tabs found")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Tabs check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_balanced_braces():
+    """
+    CI: C++ source has balanced braces (pass_to_pass).
+
+    Basic structural validation that the file is syntactically valid.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'r', encoding='utf-8', errors='ignore') as f:
+    content = f.read()
+
+if content.count('{{') != content.count('}}'):
+    print("FAIL: Unbalanced braces")
+    sys.exit(1)
+
+if content.count('(') != content.count(')'):
+    print("FAIL: Unbalanced parentheses")
+    sys.exit(1)
+
+print("PASS: Balanced braces and parentheses")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Balanced braces check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_file_ends_with_newline():
+    """
+    CI: Source file ends with newline (pass_to_pass).
+
+    POSIX standard requires files end with newline.
+    """
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import sys
+
+with open('{PADSTRING_FILE}', 'rb') as f:
+    content = f.read()
+
+if not content.endswith(b'\\n'):
+    print("FAIL: Source file should end with newline")
+    sys.exit(1)
+
+print("PASS: Source file ends with newline")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Newline check failed:\n{r.stderr[-500:]}"
+    assert "PASS" in r.stdout
+
+
+def test_repo_shell_scripts_executable():
     """
     CI: Shell scripts are syntactically valid (pass_to_pass).
 
-    Uses bash -n to check syntax of any shell scripts.
+    Uses bash -n to check syntax of shell scripts.
     """
-    # Check test.sh syntax if it exists
     r = subprocess.run(
         ["bash", "-n", "/tests/test.sh"],
         capture_output=True, text=True, timeout=10,

@@ -298,6 +298,101 @@ def test_gradle_project_sanity():
     assert "compiler:fir" in r.stdout, "FIR modules not found in project structure"
 
 
+def test_fir_serialization_compile():
+    """
+    FIR serialization module compiles successfully (pass_to_pass).
+
+    Verifies the FIR serialization module (where FirElementSerializer.kt changes are made)
+    compiles without errors on the base commit.
+    """
+    r = subprocess.run(
+        ["./gradlew", ":compiler:fir:fir-serialization:compileKotlin", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"FIR serialization compilation failed:\n{r.stderr[-1000:]}"
+
+
+def test_parcelize_compiler_compile():
+    """
+    Parcelize compiler module compiles successfully (pass_to_pass).
+
+    Verifies the parcelize compiler plugin (where FirParcelizePropertyChecker.kt changes are made)
+    compiles without errors on the base commit.
+    """
+    r = subprocess.run(
+        ["./gradlew", ":plugins:parcelize:parcelize-compiler:parcelize.k2:compileKotlin", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Parcelize compiler compilation failed:\n{r.stderr[-1000:]}"
+
+
+def test_fir_analysis_tests_opt_in():
+    """
+    FIR analysis tests for OptIn markers pass (pass_to_pass).
+
+    Runs tests specifically related to OptIn/ExperimentalAPI handling in FIR.
+    These tests should pass on both the base commit and after the fix.
+    """
+    r = subprocess.run(
+        [
+            "./gradlew",
+            ":compiler:fir:analysis-tests:test",
+            "--tests", "*OptIn*",
+            "-q",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"FIR OptIn tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_fir_analysis_tests_backing_field():
+    """
+    FIR analysis tests for backing fields pass (pass_to_pass).
+
+    Runs tests specifically related to backing field handling in FIR.
+    These tests should pass on both the base commit and after the fix.
+    """
+    r = subprocess.run(
+        [
+            "./gradlew",
+            ":compiler:fir:analysis-tests:test",
+            "--tests", "*BackingField*",
+            "-q",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"FIR backing field tests failed:\n{r.stderr[-1000:]}"
+
+
+def test_fir_checkers_common_compile():
+    """
+    FIR checkers common module compiles successfully (pass_to_pass).
+
+    Verifies the FIR checkers common module compiles without errors.
+    This module contains shared checker infrastructure.
+    """
+    r = subprocess.run(
+        ["./gradlew", ":compiler:fir:checkers:checkers-common:compileKotlin", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"FIR checkers common compilation failed:\n{r.stderr[-1000:]}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

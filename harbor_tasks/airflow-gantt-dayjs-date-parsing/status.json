@@ -1,0 +1,49 @@
+{
+  "task_id": "airflow-helm-extra-init-containers",
+  "nodes": {
+    "extract_gold": {
+      "status": "completed",
+      "notes": "Gold solution extracted from commit 52c4d32c0c - adds workers.celery.extraInitContainers and workers.kubernetes.extraInitContainers"
+    },
+    "create_dockerfile": {
+      "status": "completed",
+      "notes": "Created Dockerfile with helm, pytest, and required Python dependencies (jmespath, pyyaml, jsonschema)"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 289.86,
+      "notes": ""
+    },
+    "verify_tests": {
+      "status": "completed",
+      "notes": "All 7 tests pass with reward=1. Docker image builds successfully and tests run in ~22 seconds."
+    }
+  },
+  "ci_commands_found": [
+    "helm template test-release chart --namespace default",
+    "pytest helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py -v",
+    "pytest helm-tests/tests/helm_tests/airflow_core/test_worker.py -v",
+    "pytest helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py -v"
+  ],
+  "tests_added": [
+    "test_helm_tests_pod_template_extra_init_containers",
+    "test_helm_tests_pod_template_extra_init_containers_templating",
+    "test_helm_tests_worker_deployment_extra_init_containers",
+    "test_helm_tests_worker_deployment_extra_init_containers_templating",
+    "test_helm_tests_worker_sets_deployment_extra_init_containers",
+    "test_helm_chart_schema_valid",
+    "test_helm_chart_render_basic"
+  ],
+  "modified_files": [
+    "chart/values.yaml",
+    "chart/values.schema.json",
+    "chart/files/pod-template-file.kubernetes-helm-yaml",
+    "chart/templates/NOTES.txt",
+    "chart/templates/workers/worker-deployment.yaml",
+    "helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py",
+    "helm-tests/tests/helm_tests/airflow_core/test_worker.py",
+    "helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py"
+  ]
+}

@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+from pathlib import Path
 
 # Docker-internal path to the repo (from Dockerfile WORKDIR)
 REPO = "/workspace/opencode"
@@ -54,6 +55,51 @@ def test_repo_hello_script():
     )
     assert r.returncode == 0, f"Hello script failed:\n{r.stderr}"
     assert "Hello World!" in r.stdout, f"Expected 'Hello World!' in output, got: {r.stdout}"
+
+
+def test_repo_opencode_typecheck():
+    """TypeScript typecheck passes on packages/opencode (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "--cwd", "packages/opencode", "typecheck"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Opencode typecheck failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_opencode_compaction_tests():
+    """Compaction tests pass for packages/opencode (pass_to_pass).
+
+    Tests specifically covering the compaction.ts module that PR #21822 modifies.
+    These tests verify the core compaction functionality including isOverflow,
+    prune, create, and process functions.
+    """
+    r = subprocess.run(
+        ["bun", "--cwd", "packages/opencode", "test", "test/session/compaction.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Compaction tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
+
+
+def test_repo_opencode_config_tests():
+    """Config tests pass for packages/opencode (pass_to_pass).
+
+    Tests covering the config module that PR #21822 modifies for tail_turns
+    and tail_tokens configuration options.
+    """
+    r = subprocess.run(
+        ["bun", "--cwd", "packages/opencode", "test", "test/config/config.test.ts"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Config tests failed:\n{r.stderr[-1000:]}\n{r.stdout[-1000:]}"
 
 
 # Fail-to-pass tests for PR #21822: compaction should retain recent conversation context

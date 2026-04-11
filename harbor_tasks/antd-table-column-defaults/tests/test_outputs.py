@@ -113,7 +113,7 @@ def test_children_omitted_from_merge():
 
 
 def test_repo_lint_biome():
-    """Repo's Biome linting passes (pass_to_pass)."""
+    """Repo's Biome linting passes on table files (pass_to_pass)."""
     result = subprocess.run(
         ["npx", "biome", "lint", "components/table/InternalTable.tsx", "components/table/__tests__/Table.test.tsx"],
         cwd=REPO,
@@ -124,10 +124,22 @@ def test_repo_lint_biome():
     assert result.returncode == 0, f"Biome lint failed:\n{result.stderr[-500:]}"
 
 
-def test_repo_lint_eslint():
-    """Repo's ESLint linting passes on modified files (pass_to_pass)."""
+def test_repo_lint_biome_all_table():
+    """Repo's Biome linting passes on all table files (pass_to_pass)."""
     result = subprocess.run(
-        ["npx", "eslint", "components/table/InternalTable.tsx", "components/table/__tests__/Table.test.tsx"],
+        ["npx", "biome", "lint", "components/table/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, f"Biome lint on table dir failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_lint_eslint():
+    """Repo's ESLint linting passes on modified table files (pass_to_pass)."""
+    result = subprocess.run(
+        ["npx", "eslint", "components/table/InternalTable.tsx", "components/table/__tests__/Table.test.tsx", "--cache"],
         cwd=REPO,
         capture_output=True,
         text=True,
@@ -146,6 +158,66 @@ def test_repo_table_tests():
         timeout=180,
     )
     assert result.returncode == 0, f"Table tests failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_table_filter_tests():
+    """Repo's Table filter tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "test", "--", "components/table/__tests__/Table.filter.test.tsx", "--maxWorkers=1", "--testTimeout=30000"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert result.returncode == 0, f"Table filter tests failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_table_rowSelection_tests():
+    """Repo's Table rowSelection tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "test", "--", "components/table/__tests__/Table.rowSelection.test.tsx", "--maxWorkers=1", "--testTimeout=30000"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert result.returncode == 0, f"Table rowSelection tests failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_table_sorter_tests():
+    """Repo's Table sorter tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "test", "--", "components/table/__tests__/Table.sorter.test.tsx", "--maxWorkers=1", "--testTimeout=30000"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert result.returncode == 0, f"Table sorter tests failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_table_expand_tests():
+    """Repo's Table expand tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "test", "--", "components/table/__tests__/Table.expand.test.tsx", "--maxWorkers=1", "--testTimeout=30000"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert result.returncode == 0, f"Table expand tests failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_table_pagination_tests():
+    """Repo's Table pagination tests pass (pass_to_pass)."""
+    result = subprocess.run(
+        ["npm", "test", "--", "components/table/__tests__/Table.pagination.test.tsx", "--maxWorkers=1", "--testTimeout=30000"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert result.returncode == 0, f"Table pagination tests failed:\n{result.stderr[-500:]}"
 
 
 # ============================================================================

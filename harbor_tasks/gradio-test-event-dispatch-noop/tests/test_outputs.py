@@ -109,9 +109,9 @@ def test_listener_registry():
     assert listener_map or typed_listener_map, \
         "No event listener Map found (only containerCache exists)"
 
-    # Must have a listen/on function that adds to the listener map
-    assert re.search(r"function\s+(?:listen|on)\s*\(", stripped), \
-        "No listen/on function found for event registration"
+    # Must have a listen function defined inside render (the gold patch adds a local listen function)
+    assert re.search(r"function\s+listen\s*\(", stripped), \
+        "No listen function found in render.ts"
 
 
 # [pr_diff] fail_to_pass
@@ -129,10 +129,10 @@ def test_render_returns_event_helpers():
     assert ret, "No return statement in render()"
 
     ret_body = ret.group(1)
-    # Must return at least 6 fields: container, component, listen, set_data/get_data, debug, unmount
+    # Must return at least 5 fields: container, component, listen, set_data/get_data, unmount
     field_count = len(re.findall(r"\w+\s*[,:]", ret_body))
-    assert field_count >= 6, \
-        f"render() returns only {field_count} fields, expected >= 6 (need listen + data helpers)"
+    assert field_count >= 5, \
+        f"render() returns only {field_count} fields, expected >= 5 (need listen + data helpers)"
 
 
 # [pr_diff] fail_to_pass

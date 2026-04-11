@@ -10,6 +10,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import subprocess
+import os
 from pathlib import Path
 
 REPO = "/workspace/expo"
@@ -207,6 +208,76 @@ def test_repo_build_syntax():
         timeout=30,
     )
     assert r.returncode == 0, f"build/import-meta-transform-plugin.js syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_meta_plugin_factory():
+    """Repo's import-meta-transform-plugin factory creates valid plugin instances (pass_to_pass)."""
+    script = """
+const { expoImportMetaTransformPluginFactory } = require("./build/import-meta-transform-plugin");
+// Test that factory creates a valid plugin
+const pluginEnabled = expoImportMetaTransformPluginFactory(true);
+const pluginDisabled = expoImportMetaTransformPluginFactory(false);
+if (typeof pluginEnabled === "function" && typeof pluginDisabled === "function") {
+    console.log("PLUGIN_FACTORY_OK");
+} else {
+    console.log("PLUGIN_FACTORY_FAILED");
+    process.exit(1);
+}
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Plugin factory test failed:\n{r.stderr}"
+    assert "PLUGIN_FACTORY_OK" in r.stdout, f"Plugin factory did not create valid plugins:\n{r.stdout}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_meta_transform_both_modes():
+    """Repo's import.meta transform works correctly in both enabled and disabled modes (pass_to_pass)."""
+    script = """
+const babel = require("@babel/core");
+const { expoImportMetaTransformPluginFactory } = require("./build/import-meta-transform-plugin");
+
+// Test enabled mode (transforms import.meta)
+const pluginEnabled = expoImportMetaTransformPluginFactory(true);
+const resultEnabled = babel.transformSync("var url = import.meta.url;", {
+    plugins: [pluginEnabled],
+    filename: "test.js",
+    caller: { name: "metro", platform: "ios" }
+});
+
+// Test disabled mode with web (passes through)
+const pluginDisabled = expoImportMetaTransformPluginFactory(false);
+const resultDisabled = babel.transformSync("var url = import.meta.url;", {
+    plugins: [pluginDisabled],
+    filename: "test.js",
+    caller: { name: "metro", platform: "web" }
+});
+
+const enabledOk = resultEnabled.code.includes("globalThis.__ExpoImportMetaRegistry");
+const disabledOk = resultDisabled.code.includes("import.meta.url");
+
+if (enabledOk && disabledOk) {
+    console.log("BOTH_MODES_OK");
+} else {
+    console.log("MODES_FAILED:", "enabled:", enabledOk, "disabled:", disabledOk);
+    process.exit(1);
+}
+"""
+    r = subprocess.run(
+        ["node", "-e", script],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"Both modes test failed:\n{r.stderr}"
+    assert "BOTH_MODES_OK" in r.stdout, f"Transform modes test failed:\n{r.stdout}"
 
 
 # ---------------------------------------------------------------------------

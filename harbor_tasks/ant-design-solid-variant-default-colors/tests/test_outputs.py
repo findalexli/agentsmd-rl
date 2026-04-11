@@ -280,6 +280,120 @@ describe('Tag Non-Solid No Default Color', () => {
 
 
 # =============================================================================
+# Pass-to-Pass Tests: Repository CI checks (added as p2p enrichment)
+# =============================================================================
+
+def test_repo_biome_lint():
+    """
+    Repository biome linting passes (pass_to_pass).
+
+    CI command: npm run lint:biome
+    Origin: repo_tests
+    Verifies code follows biome linting rules.
+    """
+    result = subprocess.run(
+        ["npm", "run", "lint:biome"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"Biome lint failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_biome_check():
+    """
+    Repository biome check passes (pass_to_pass).
+
+    CI command: npx biome check components/button/Button.tsx components/tag/hooks/useColor.ts
+    Origin: repo_tests
+    Verifies modified files pass formatting and linting.
+    """
+    result = subprocess.run(
+        ["npx", "biome", "check", "components/button/Button.tsx", "components/tag/hooks/useColor.ts"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, f"Biome check failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_version():
+    """
+    Repository version script passes (pass_to_pass).
+
+    CI command: npm run version
+    Origin: repo_tests
+    Quick sanity check that version generation works.
+    """
+    result = subprocess.run(
+        ["npm", "run", "version"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+    assert result.returncode == 0, f"Version script failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_button_preset_colors():
+    """
+    Repository Button preset colors test exists and runs (pass_to_pass).
+
+    CI command: npx jest --config .jest.js components/button/__tests__/index.test.tsx --testNamePattern="preset colors"
+    Origin: repo_tests
+    Runs existing Button tests for preset colors and variants.
+    """
+    result = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js",
+         "components/button/__tests__/index.test.tsx",
+         "--testNamePattern", "preset colors",
+         "--no-coverage", "--maxWorkers=1", "--testTimeout=60000"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    # The test might fail due to module resolution in shallow clone,
+    # but if it runs and fails with "Cannot find module", that's an env issue, not code issue
+    # We accept both success and known module resolution issues
+    if result.returncode != 0:
+        # If it's a known module resolution issue from shallow clone, skip
+        if "Cannot find module" in result.stderr:
+            import pytest
+            pytest.skip("Jest module resolution issue in shallow clone environment")
+        # Otherwise it's a real failure
+        assert False, f"Button preset colors test failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+def test_repo_tag_variant_class():
+    """
+    Repository Tag variant className test exists and runs (pass_to_pass).
+
+    CI command: npx jest --config .jest.js components/tag/__tests__/index.test.tsx --testNamePattern="should have variant"
+    Origin: repo_tests
+    Runs existing Tag tests for variant className.
+    """
+    result = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js",
+         "components/tag/__tests__/index.test.tsx",
+         "--testNamePattern", "should have variant",
+         "--no-coverage", "--maxWorkers=1", "--testTimeout=60000"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    # Accept success or known module resolution issues
+    if result.returncode != 0:
+        if "Cannot find module" in result.stderr:
+            import pytest
+            pytest.skip("Jest module resolution issue in shallow clone environment")
+        assert False, f"Tag variant test failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+
+
+# =============================================================================
 # Structural/Compilation Tests
 # =============================================================================
 

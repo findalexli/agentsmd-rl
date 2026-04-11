@@ -19,7 +19,7 @@ def render_chart(values, show_only=None):
 
     proc = subprocess.run(
         cmd,
-        input=yaml.dump({"values": values}),
+        input=yaml.dump(values),
         capture_output=True,
         text=True,
         timeout=60,

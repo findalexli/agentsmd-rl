@@ -77,53 +77,77 @@ checks:
     description: "Fix: writeSlice uses pad_string.data() directly without cast since PaddedPODArray<UInt8>::data() returns UInt8*"
 
   # ============================================================================
-  # PASS-TO-PASS TESTS (Repo CI/CD compliance - must pass on both commits)
+  # PASS-TO-PASS TESTS - Repo CI (subprocess.run() commands)
+  # ============================================================================
+
+  - id: test_repo_git_initialized
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Git repository is properly initialized using git status command"
+
+  - id: test_repo_no_duplicate_includes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: No duplicate #include statements in source file (ClickHouse style check)"
+
+  - id: test_repo_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Source file has no trailing whitespace (ClickHouse style check)"
+
+  - id: test_repo_no_tabs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Source file uses spaces not tabs (ClickHouse style check)"
+
+  - id: test_repo_balanced_braces
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: C++ source has balanced braces and parentheses (structural validation)"
+
+  - id: test_repo_file_ends_with_newline
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Source file ends with newline (POSIX standard, via Python subprocess)"
+
+  - id: test_repo_shell_scripts_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI: Shell scripts pass bash -n syntax check"
+
+  # ============================================================================
+  # PASS-TO-PASS TESTS - Static analysis (file content checks)
   # ============================================================================
 
   - id: test_regression_sql_file_valid
     type: pass_to_pass
-    origin: repo_tests
-    description: "Regression test SQL file (04070_pad_string_asan_overflow.sql) exists and contains valid queries"
+    origin: static
+    description: "Regression test SQL file exists and contains valid queries"
 
   - id: test_regression_reference_file_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Regression test reference file exists and contains expected results"
 
   - id: test_regression_test_paired
     type: pass_to_pass
-    origin: repo_tests
-    description: "Regression test SQL and reference files are properly paired with matching structure"
+    origin: static
+    description: "Regression test SQL and reference files are properly paired"
 
   - id: test_cpp_syntax_valid
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Source code has valid C++ structure (balanced braces, includes, namespace)"
 
   - id: test_source_file_no_trailing_whitespace
     type: pass_to_pass
-    origin: repo_tests
-    description: "Source file has no trailing whitespace (style check)"
+    origin: static
+    description: "Source file has no trailing whitespace (style check via file read)"
 
   - id: test_source_file_ends_with_newline
     type: pass_to_pass
-    origin: repo_tests
-    description: "Source file ends with newline (POSIX standard)"
-
-  - id: test_git_repo_initialized
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository is properly initialized for CI operations"
-
-  - id: test_cpp_file_compiles_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C++ syntax check passes basic compiler validation"
-
-  - id: test_shell_scripts_executable
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Shell scripts have valid syntax (bash -n)"
+    origin: static
+    description: "Source file ends with newline (POSIX via file read)"
 
   # ============================================================================
   # AGENT_CONFIG TESTS (Compliance with project conventions from CLAUDE.md)
@@ -151,27 +175,50 @@ rubric:
       path: ".claude/CLAUDE.md"
       lines: "52"
       commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+    reference: |
+      FunctionPadString(const char * name_, bool is_right_pad_, bool is_utf8_)
+          : function_name(name_)
+          , is_right_pad(is_right_pad_)
+          , is_utf8(is_utf8_)
+      {
 
   - rule: "When writing messages, say ASan, not ASAN, and similar (because there are two words: Address Sanitizer)."
     source:
       path: ".claude/CLAUDE.md"
       lines: "54"
       commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+    reference: |
+      /// This is a requirement of `memcpySmallAllowReadWriteOverflow15` which is called by `writeSlice` in `appendTo`.
 
   - rule: "Use C++14 digit separators (e.g., 1'000'000) for large numeric literals to improve readability."
     source:
       path: "AGENTS.md"
       lines: "52"
       commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+    reference: |
+      constexpr ssize_t MAX_NEW_LENGTH = 1'000'000;
 
   - rule: "Use validateFunctionArguments helper with FunctionArgumentDescriptors instead of manual argument validation for cleaner, more maintainable code."
     source:
       path: ".claude/CLAUDE.md"
       lines: "52"
       commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+    reference: |
+      FunctionArgumentDescriptors mandatory_args{
+          {"string", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isStringOrFixedString), nullptr, "Array"},
+          {"length", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isInteger), nullptr, "const UInt*"},
+      };
+      FunctionArgumentDescriptors optional_args{
+          {"pad_string", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isString), isColumnConst, "Array"}
+      };
+      validateFunctionArguments(*this, arguments, mandatory_args, optional_args);
 
   - rule: "For memory safety with PaddedPODArray, use insertFromItself instead of += for expanding container content to avoid heap-buffer-overflow."
     source:
       path: ".claude/CLAUDE.md"
       lines: "52"
       commit: "73ad233a01a81190b2a45b820878e54c36a9a22c"
+    reference: |
+      while (numCharsInPadString() < 16)
+      {
+          pad_string.insertFromItself(pad_string.begin(), pad_string.end());

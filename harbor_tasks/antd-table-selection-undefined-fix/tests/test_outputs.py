@@ -74,6 +74,18 @@ def test_lint_md():
     assert r.returncode == 0, f"Markdown lint failed:\n{r.stdout}\n{r.stderr}"
 
 
+def test_lint_changelog():
+    """Component changelog lint passes without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "lint:changelog"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Changelog lint failed:\n{r.stdout}\n{r.stderr}"
+
+
 def test_node_tests():
     """Node.js specific tests pass (pass_to_pass)."""
     r = subprocess.run(
@@ -140,7 +152,7 @@ def test_rowSelection_regression_preserveSelectedRowKeys():
             "npm", "test", "--",
             "Table.rowSelection.test.tsx",
             "--testNamePattern",
-            r"works with preserveSelectedRowKeys after receive selectedRowKeys from \[\] to undefined",
+            "works with preserveSelectedRowKeys after receive selectedRowKeys from \\\[\\\] to undefined",
             "--no-coverage",
         ],
         cwd=REPO,
@@ -161,7 +173,7 @@ def test_rowSelection_radio_undefined_keys():
             "npm", "test", "--",
             "Table.rowSelection.test.tsx",
             "--testNamePattern",
-            r"works with selectionType radio receive selectedRowKeys from \[\] to undefined",
+            "works with selectionType radio receive selectedRowKeys from \\\[\\\] to undefined",
             "--no-coverage",
         ],
         cwd=REPO,

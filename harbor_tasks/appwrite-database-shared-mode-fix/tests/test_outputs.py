@@ -129,8 +129,8 @@ class TestSharedModeFixes:
         content = read_file('src/Appwrite/Platform/Modules/Databases/Http/Databases/Create.php')
 
         # Should check for both !empty($dsn) AND !empty($databaseSharedTables)
-        assert "if (!empty(\$dsn) && !empty(\$databaseSharedTables))" in content, \
-            "Create.php should check both !empty(\$dsn) && !empty(\$databaseSharedTables) before filtering"
+        assert "if (!empty($dsn) && !empty($databaseSharedTables))" in content, \
+            "Create.php should check both !empty($dsn) && !empty($databaseSharedTables) before filtering"
 
     def test_create_php_has_exception_for_empty_pools(self):
         """Test that Create.php throws exception when no database pool available."""
@@ -149,7 +149,7 @@ class TestSharedModeFixes:
         content = read_file('src/Appwrite/Platform/Modules/Databases/Http/Databases/Create.php')
 
         # Should have explicit empty check before array_rand
-        assert "if (empty(\$databases))" in content, \
+        assert "if (empty($databases))" in content, \
             "Create.php should have explicit empty check before array_rand"
 
 

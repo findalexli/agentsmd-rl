@@ -115,17 +115,40 @@ def test_lchown_in_blockmode_guard():
     """
     source = TARGET_FILE.read_text()
 
-    # Find Lchown call and check it's inside a !s.blockMode conditional
-    # We look for the pattern where Lchown is inside an if !s.blockMode block
-
     # First check Lchown exists
     assert "Lchown" in source, "Lchown call not found in code"
 
-    # Check that there's a !s.blockMode or s.blockMode check before Lchown
-    # Pattern: if !s.blockMode { ... Lchown ... }
-    pattern = r'if\s*!s\.blockMode\s*\{[^}]*Lchown'
-    match = re.search(pattern, source, re.DOTALL)
-    assert match is not None, "Lchown call must be inside !s.blockMode conditional block"
+    # Find the if !s.blockMode block and check Lchown is inside it
+    # The block starts with "if !s.blockMode {" and contains nested blocks
+    # Lchown should be inside this block (at any nesting level)
+
+    # Find the position of if !s.blockMode (the one in createSnapshot function)
+    # We need to find the specific one that wraps the Lchown logic
+    # Look for the pattern near the "In block mode the upperdir" comment
+    comment_pos = source.find("In block mode the upperdir lives inside the block image")
+    assert comment_pos != -1, "Block mode comment not found"
+    
+    # Find if !s.blockMode after the comment
+    block_start = source.find("if !s.blockMode {", comment_pos)
+    assert block_start != -1, "if !s.blockMode block not found after comment"
+
+    # Find the corresponding closing brace for this block
+    # Count braces to find the matching closing brace
+    brace_count = 0
+    block_end = block_start
+    for i in range(block_start, len(source)):
+        if source[i] == '{':
+            brace_count += 1
+        elif source[i] == '}':
+            brace_count -= 1
+            if brace_count == 0:
+                block_end = i
+                break
+
+    # Check Lchown is inside this block
+    lchown_pos = source.find("os.Lchown", block_start)
+    assert lchown_pos != -1 and lchown_pos < block_end, \
+        "Lchown call must be inside !s.blockMode conditional block"
 
 
 def test_blockmode_comment_present():

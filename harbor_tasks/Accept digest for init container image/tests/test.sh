@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Copy repo from mount point if available
+if [ -d /dagster-src ]; then
+    rm -rf /workspace/dagster
+    mkdir -p /workspace/dagster
+    cp -r /dagster-src/. /workspace/dagster/
+fi
+
 cd /workspace/dagster
 
 # Install pytest and required dependencies

@@ -57,22 +57,63 @@ checks:
   - id: test_target_file_no_typos
     type: pass_to_pass
     origin: repo_tests
-    description: "Target file typo check using codespell"
+    description: "Target file typo check using codespell (subprocess command)"
 
   - id: test_target_file_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Target file structure validation (UTF-8, balanced braces/parens, no trailing whitespace)"
 
   - id: test_target_file_includes
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Target file include validation (no duplicates, proper format)"
 
   - id: test_repo_yaml_linting
     type: pass_to_pass
     origin: repo_tests
-    description: "GitHub workflow YAML syntax validation"
+    description: "GitHub workflow YAML syntax validation using yamllint (subprocess command)"
+
+  # New p2p tests added during p2p enrichment - real CI commands via subprocess
+  - id: test_target_file_codespell
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file codespell check (subprocess.run with codespell command)"
+
+  - id: test_target_file_no_tabs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file tab check using grep -F (matches check_cpp.sh)"
+
+  - id: test_target_file_no_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file trailing whitespace check using grep -P (matches check_cpp.sh)"
+
+  - id: test_target_file_unix_newlines
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file Unix newlines check using grep -P (matches various_checks.sh)"
+
+  - id: test_target_file_no_bom
+    type: pass_to_pass
+    origin: static
+    description: "Target file has no UTF BOM markers (UTF-8/16LE/16BE)"
+
+  - id: test_target_file_no_conflict_markers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file git conflict marker check using grep -P (matches various_checks.sh)"
+
+  - id: test_target_file_valid_utf8
+    type: pass_to_pass
+    origin: static
+    description: "Target file valid UTF-8 encoding check"
+
+  - id: test_target_file_no_duplicate_includes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target file duplicate include check using awk/grep (matches check_style.py)"
 
 # Agent config rules to follow (from .claude/CLAUDE.md and .github/copilot-instructions.md)
 agent_config:
@@ -93,21 +134,6 @@ agent_config:
     severity: blocker
 
 # Rubric for LLM evaluation (soft/subjective rules)
-rubric:
-  - rule: "When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks."
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "4-5"
-      commit: "dae8318c5ed52baecd784a85a67c45d985b20d6a"
-
-  - rule: "When writing text such as documentation, comments, or commit messages, write names of functions and methods without parentheses (as f instead of f()) when referring to the function itself rather than its application."
-    source:
-      path: ".claude/CLAUDE.md"
-      lines: "7-8"
-      commit: "dae8318c5ed52baecd784a85a67c45d985b20d6a"
-
-  - rule: "Include clear, explanatory comments for complex retry logic and error handling paths, explaining the why behind the implementation choices."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "102-104"
-      commit: "dae8318c5ed52baecd784a85a67c45d985b20d6a"
+# Note: The rubric judge (judge.py) only evaluates CONFIG file changes (CLAUDE.md, README.md, etc.)
+# This task is a pure code fix with no config/documentation changes, so no rubric rules apply.
+rubric: []

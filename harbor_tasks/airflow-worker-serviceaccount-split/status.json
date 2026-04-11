@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T02:27:43.255865",
-  "total_time": 3866.73,
-  "sandbox_id": "iztry7p8b7zrpk6799afe",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:36:04.833831",
+  "total_time": 429.5,
+  "sandbox_id": "i9my7dxifepm4wt2yuqus",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 0.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 233.51,
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 234.78,
       "notes": ""
     },
     "improve": {
@@ -25,20 +25,24 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build OK, NOP test reward=0 (correctly fails on base commit), Gold test reward=1 (correctly passes after fix applied). Rubric judge checking config edits is not applicable for this Helm chart PR task.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 360.72
+      "time": 170.57
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.32,
+      "notes": "ICR=0.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 18443.94,
-      "at": "2026-04-09T14:19:16.148639"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -70,6 +74,14 @@
       "backend": "gemini",
       "time": 3866.73,
       "at": "2026-04-10T02:27:43.255865"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 429.5,
+      "at": "2026-04-10T17:36:04.833831"
     }
   ]
 }

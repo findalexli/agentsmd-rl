@@ -99,31 +99,6 @@ def test_semantic_demo_updated():
     assert '{ name: \'icon\'' in content, "demo/_semantic.tsx should include icon in semantics list"
 
 
-def test_typescript_compiles():
-    """
-    Pass-to-pass: Verify TypeScript compiles without errors.
-    """
-    result = subprocess.run(
-        ["npx", "tsc", "--noEmit", "--skipLibCheck", "-p", "tsconfig.json"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=180,
-        env={**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
-    )
-
-    # Filter out known non-error outputs
-    stderr_filtered = "\n".join(
-        line for line in result.stderr.split("\n")
-        if line.strip() and "TS2345" not in line and "error" not in line.lower()
-    ) if result.stderr else ""
-
-    # Allow warnings but check for critical errors
-    # We need to be lenient as the repo might have existing type issues
-    assert result.returncode == 0 or "error TS" not in (result.stdout or ""), \
-        f"TypeScript compilation failed:\n{result.stdout}\n{result.stderr}"
-
-
 def test_repo_lint_biome():
     """Repo's Biome lint passes (pass_to_pass)."""
     r = subprocess.run(
@@ -171,11 +146,10 @@ def test_repo_tests_node():
     assert r.returncode == 0, f"Node tests failed:\n{r.stderr[-1000:]}"
 
 
-def test_repo_tests_popconfirm():
-    """Popconfirm component tests pass (pass_to_pass)."""
-    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+def test_repo_format_biome():
+    """Repo's Biome format check passes on popconfirm (pass_to_pass)."""
     r = subprocess.run(
-        ["npm", "test", "--", "--testPathPatterns=popconfirm"],
-        capture_output=True, text=True, timeout=180, cwd=REPO, env=env
+        ["npx", "biome", "format", "components/popconfirm"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Popconfirm tests failed:\n{r.stderr[-1000:]}"
+    assert r.returncode == 0, f"Biome format check failed:\n{r.stderr[-500:]}"

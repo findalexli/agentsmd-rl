@@ -476,3 +476,61 @@ def test_check_typos_runs():
         f"Script failed with unexpected token: {output[:500]}"
 
 
+def test_clickhouse_proc_py_syntax():
+    """clickhouse_proc.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/clickhouse_proc.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"clickhouse_proc.py has syntax errors: {result.stderr}"
+
+
+def test_clickhouse_version_py_syntax():
+    """clickhouse_version.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/clickhouse_version.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"clickhouse_version.py has syntax errors: {result.stderr}"
+
+
+def test_docker_image_py_syntax():
+    """docker_image.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/docker_image.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"docker_image.py has syntax errors: {result.stderr}"
+
+
+def test_build_master_head_hook_py_syntax():
+    """build_master_head_hook.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/job_hooks/build_master_head_hook.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"build_master_head_hook.py has syntax errors: {result.stderr}"
+
+
+def test_docker_clean_up_hook_py_syntax():
+    """docker_clean_up_hook.py has valid Python syntax (pass-to-pass)."""
+    script_path = f"{REPO}/ci/jobs/scripts/job_hooks/docker_clean_up_hook.py"
+    result = subprocess.run(
+        ["python3", "-m", "py_compile", script_path],
+        capture_output=True,
+        text=True
+    )
+    assert result.returncode == 0, \
+        f"docker_clean_up_hook.py has syntax errors: {result.stderr}"

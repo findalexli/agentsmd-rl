@@ -12,19 +12,14 @@ REPO = "/workspace/ant-design"
 
 def test_file_syntax():
     """Verify useSelection.tsx has valid TypeScript syntax."""
-    # Use the repo's typecheck command instead of running tsc directly on a single file
-    # Running tsc on a single file without tsconfig.json causes JSX/module resolution errors
-    env = os.environ.copy()
-    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
     result = subprocess.run(
-        ["npx", "tsc", "--noEmit", "-p", "tsconfig.json"],
+        ["npx", "tsc", "--noEmit", "components/table/hooks/useSelection.tsx"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=300,
-        env=env,
+        timeout=120,
     )
-    assert result.returncode == 0, f"TypeScript syntax error:\n{result.stdout[-2000:]}\n{result.stderr[-500:]}"
+    assert result.returncode == 0, f"TypeScript syntax error:\n{result.stdout}\n{result.stderr}"
 
 
 def test_merged_selected_keys_coalescing():
@@ -46,9 +41,13 @@ def test_merged_selected_keys_coalescing():
         "Cache update should use mergedSelectedKeyList"
 
     # Check that updatePreserveRecordsCache is NOT called with raw mergedSelectedKeys
-    # (only in the effect that updates the cache - other calls with different args are OK)
-    assert "updatePreserveRecordsCache(mergedSelectedKeys)" not in content, \
-        "Cache update should NOT use raw mergedSelectedKeys - use mergedSelectedKeyList instead"
+    lines = content.split(chr(10))
+    for i, line in enumerate(lines):
+        if "updatePreserveRecordsCache(" in line and "mergedSelectedKeyList" not in line:
+            # Allow the effect dependency array line
+            if "updatePreserveRecordsCache" in line and ("[" in line or "]" in line):
+                continue
+            assert False, f"Line {i+1} calls updatePreserveRecordsCache without mergedSelectedKeyList: {line}"
 
 
 def test_derived_keys_use_coalesced_list():
@@ -73,11 +72,9 @@ def test_derived_keys_use_coalesced_list():
 
 def test_upstream_unit_tests_pass():
     """Run the upstream regression test for this specific bug."""
-    # Run jest directly instead of npm test to avoid option parsing issues
     result = subprocess.run(
-        ["npx", "jest", "--config", ".jest.js", "--no-cache",
-         "Table.rowSelection",
-         "--testNamePattern=works with preserveSelectedRowKeys after receive selectedRowKeys from",
+        ["npm", "test", "--", "--testPathPatterns=Table.rowSelection",
+         "--testNamePatterns=receive selectedRowKeys from",
          "--no-coverage", "--maxWorkers=1"],
         cwd=REPO,
         capture_output=True,
@@ -86,24 +83,24 @@ def test_upstream_unit_tests_pass():
     )
     # Check that the test passed
     assert result.returncode == 0, \
-        f"Upstream unit test failed:\nSTDOUT:\n{result.stdout[-2000:]}\nSTDERR:\n{result.stderr[-500:]}"
+        f"Upstream unit test failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
 
 
 def test_no_crash_on_undefined_selected_row_keys():
     """
     Integration test: Verify no crash when selectedRowKeys becomes undefined
     with preserveSelectedRowKeys enabled.
-
-    Uses tsx to run TypeScript directly without building.
     """
-    # Create a TypeScript test script that reproduces the crash
+    # Create a test script that reproduces the crash
     test_script = """
-import * as React from "react";
-import * as ReactDOMServer from "react-dom/server";
-import Table from "./components/table";
+const React = require("react");
+const ReactDOMServer = require("react-dom/server");
 
-// Test: Render with selectedRowKeys, then rerender with undefined + preserveSelectedRowKeys
-function testNoCrash(): boolean {
+// Mock antd Table
+const { default: Table } = require("./components/table");
+
+// Test: Render with selectedRowKeys=[], then rerender with undefined + preserveSelectedRowKeys
+function testNoCrash() {
   try {
     // First render with selectedRowKeys
     const elem1 = React.createElement(Table, {
@@ -132,7 +129,7 @@ function testNoCrash(): boolean {
 
     console.log("SUCCESS: No crash occurred");
     return true;
-  } catch (err: any) {
+  } catch (err) {
     console.error("FAILED:", err.message);
     return false;
   }
@@ -141,20 +138,17 @@ function testNoCrash(): boolean {
 process.exit(testNoCrash() ? 0 : 1);
 """
 
-    # Write and run test script with tsx
-    test_file = f"{REPO}/test_crash.tsx"
+    # Write and run test script
+    test_file = f"{REPO}/test_crash.js"
     with open(test_file, "w") as f:
         f.write(test_script)
 
-    env = os.environ.copy()
-    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
     result = subprocess.run(
-        ["npx", "tsx", "test_crash.tsx"],
+        ["node", "test_crash.js"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=60,
-        env=env,
+        timeout=30,
     )
 
     # Cleanup
@@ -201,10 +195,8 @@ def test_repo_biome_lint():
 
 def test_repo_rowselection_tests():
     """Table rowSelection unit tests pass (pass_to_pass)."""
-    # Run jest directly instead of npm test to avoid option parsing issues
     r = subprocess.run(
-        ["npx", "jest", "--config", ".jest.js", "--no-cache",
-         "Table.rowSelection",
+        ["npm", "test", "--", "--testPathPatterns=Table.rowSelection",
          "--no-coverage", "--maxWorkers=1"],
         capture_output=True, text=True, timeout=180, cwd=REPO,
     )

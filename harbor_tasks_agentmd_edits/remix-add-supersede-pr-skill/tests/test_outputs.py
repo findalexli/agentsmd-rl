@@ -150,3 +150,27 @@ def test_repo_agents_md_formatted():
         cwd=REPO,
     )
     assert r.returncode == 0, f"AGENTS.md prettier check failed"
+
+
+def test_repo_lint():
+    """Repo passes ESLint checks (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_changes_validate():
+    """Repo change files are valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "changes:validate"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Changes validation failed:\n{r.stderr[-500:]}"

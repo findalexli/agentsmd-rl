@@ -1,4 +1,4 @@
-FROM php:8.3-cli-slim
+FROM php:8.3-cli
 
 # Install git and dependencies
 RUN apt-get update && apt-get install -y \
@@ -27,7 +27,27 @@ RUN pip install --upgrade pip pytest pyyaml
 
 # Copy test files
 COPY tests/test_outputs.py /workspace/tests/
-COPY tests/test.sh /workspace/tests/
 COPY solution/solve.sh /workspace/solution/
+
+# Create fixed test.sh that properly writes reward file
+RUN cat > /workspace/tests/test.sh << 'EOF'
+#!/bin/bash
+
+# Install pytest if needed
+pip install pytest pyyaml 2>/dev/null || true
+
+# Run the verifier tests
+cd /workspace
+python -m pytest tests/test_outputs.py -v --tb=short
+exit_code=$?
+
+# Write binary reward for the harness (reward, not reward.txt)
+if [ $exit_code -eq 0 ]; then
+    echo "1" > /logs/verifier/reward
+else
+    echo "0" > /logs/verifier/reward
+fi
+EOF
+RUN chmod +x /workspace/tests/test.sh
 
 WORKDIR /workspace

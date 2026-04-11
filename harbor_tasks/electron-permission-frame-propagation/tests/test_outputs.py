@@ -375,3 +375,118 @@ def test_web_contents_permission_helper_structure():
         "CheckSerialAccessPermission must be implemented"
     assert "WebContentsPermissionHelper::CheckPermission" in cc_content, \
         "CheckPermission must be implemented"
+
+
+def test_shell_directory_clang_format():
+    """
+    P2P: All C++ files in shell/browser must pass clang-format.
+
+    Repo CI requires all C++ code to follow the project's formatting style.
+    This test checks a broader set of files in the shell/browser directory.
+    """
+    r = subprocess.run(
+        ['python3', 'script/run-clang-format.py', '-r', '-c', 'shell/browser/'],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, \
+        f"clang-format check failed for shell/browser/:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_git_repository_valid():
+    """
+    P2P: Git repository must be in a valid state.
+
+    Verifies that the cloned repository is a valid git repo with expected commit.
+    """
+    # Check git status works
+    r = subprocess.run(
+        ['git', 'status', '--short'],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, "Git status failed"
+
+    # Check we're at the expected base commit
+    r = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, "Git rev-parse failed"
+    commit = r.stdout.strip()
+    # Base commit for this PR
+    expected_commit = '821b738db0a64c863e8371e7141564cef70d56b8'
+    assert commit == expected_commit, \
+        f"Expected commit {expected_commit}, got {commit}"
+
+
+def test_no_merge_conflict_markers():
+    """
+    P2P: Modified files must not contain merge conflict markers.
+
+    Repo CI requires clean source files without Git merge artifacts.
+    """
+    modified_files = [
+        'shell/browser/web_contents_permission_helper.h',
+        'shell/browser/web_contents_permission_helper.cc',
+        'shell/browser/api/electron_api_web_contents.cc',
+        'shell/browser/serial/electron_serial_delegate.cc',
+    ]
+
+    for filepath in modified_files:
+        content = read_file(filepath)
+        assert '<<<<<<<' not in content, f"{filepath}: Contains merge conflict markers (<<<<<<<)"
+        assert '=======' not in content, f"{filepath}: Contains merge conflict markers (=======)"
+        assert '>>>>>>>' not in content, f"{filepath}: Contains merge conflict markers (>>>>>>>)"
+
+
+def test_file_utf8_encoding():
+    """
+    P2P: All modified files must be valid UTF-8 encoded.
+
+    Repo CI requires source files to be properly encoded.
+    """
+    modified_files = [
+        'shell/browser/web_contents_permission_helper.h',
+        'shell/browser/web_contents_permission_helper.cc',
+        'shell/browser/api/electron_api_web_contents.cc',
+        'shell/browser/serial/electron_serial_delegate.cc',
+    ]
+
+    for filepath in modified_files:
+        full_path = REPO / filepath
+        # Try to read as UTF-8
+        try:
+            with open(full_path, 'r', encoding='utf-8') as f:
+                f.read()
+        except UnicodeDecodeError as e:
+            assert False, f"{filepath}: Not valid UTF-8 encoded: {e}"
+
+
+def test_no_trailing_whitespace_in_modified():
+    """
+    P2P: Modified files must not have trailing whitespace.
+
+    Electron's coding standards prohibit trailing whitespace in source files.
+    """
+    modified_files = [
+        'shell/browser/web_contents_permission_helper.h',
+        'shell/browser/web_contents_permission_helper.cc',
+        'shell/browser/api/electron_api_web_contents.cc',
+        'shell/browser/serial/electron_serial_delegate.cc',
+    ]
+
+    for filepath in modified_files:
+        content = read_file(filepath)
+        # Check for trailing whitespace on any line
+        lines = content.split('\n')
+        for i, line in enumerate(lines, 1):
+            if line.rstrip() != line:
+                assert False, f"{filepath}:{i} has trailing whitespace"

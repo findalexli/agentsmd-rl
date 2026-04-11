@@ -21,6 +21,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo Dockerfiles pass hadolint validation
+- id: test_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: package.json files are valid JSON
+- id: test_compose_yml_valid
+  type: pass_to_pass
+  origin: static
+  description: compose.yml files have valid YAML structure
+- id: test_dockerfile_export_output_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: with-docker-export-output Dockerfiles pass dockerfilelint validation
+- id: test_dockerfile_export_output_hadolint
+  type: pass_to_pass
+  origin: repo_tests
+  description: with-docker-export-output Dockerfiles pass hadolint validation
+- id: test_readme_export_output_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: with-docker-export-output/README.md passes prettier formatting check
 - id: test_readme_prettier
   type: pass_to_pass
   origin: repo_tests
@@ -29,10 +49,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: compose.yml passes prettier formatting check
-- id: test_package_json_valid
-  type: pass_to_pass
-  origin: repo_tests
-  description: package.json is valid JSON
 - id: dockerfile_runner_creates_dotnext
   type: fail_to_pass
   origin: pr_diff
@@ -53,24 +69,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: README.md explains the BuildKit .next/cache mount is optional
-rubric:
-- rule: When editing files in a subdirectory, consult all README.md files in the directory
-    path from repo root to target directory first (per AGENTS.md convention)
-  source:
-    path: AGENTS.md
-    lines: 44-53
-    commit: 15fcfb9ce4ec73c6ff8d08d72201726b983127fa
-- rule: Code blocks in documentation must include the filename attribute for all code
-    examples
-  source:
-    path: .claude/skills/update-docs/references/DOC-CONVENTIONS.md
-    lines: 47-102
-    commit: 15fcfb9ce4ec73c6ff8d08d72201726b983127fa
-- rule: Documentation updates must pass pnpm lint validation (prettier formatting)
-  source:
-    path: .claude/skills/update-docs/SKILL.md
-    lines: 92-96
-    commit: 15fcfb9ce4ec73c6ff8d08d72201726b983127fa
 config_edits:
 - path: examples/with-docker-export-output/README.md
   tier: 2

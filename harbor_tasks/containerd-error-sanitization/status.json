@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T20:45:21.159547",
-  "total_time": 1612.62,
-  "sandbox_id": "ip4gncj7adwkgxqn7lyd0",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T17:45:09.835480",
+  "total_time": 974.54,
+  "sandbox_id": "ipxhvypqn7mxddkvo477i",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 0.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 457.11,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 284.0,
       "notes": ""
     },
     "p2p_enrich": {
@@ -32,9 +32,22 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 3,
+      "notes": "Fixed test_outputs.py to use go test instead of go run to work with vendor directory. Fixed test.sh to properly capture exit code and write reward.txt. Rubric judge ICR=0 because it checks for CONTRIBUTING.md modifications, but code follows formatting rules.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.65
+      "time": 341.08
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.28,
+      "notes": "ICR=0.00"
     }
   },
   "history": [
@@ -69,6 +82,14 @@
       "backend": "fireworks",
       "time": 1612.62,
       "at": "2026-04-09T20:45:21.159547"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 974.54,
+      "at": "2026-04-10T17:45:09.835480"
     }
   ]
 }

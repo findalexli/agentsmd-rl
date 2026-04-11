@@ -4,6 +4,10 @@ source:
   pr: 40017
   base_commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
 checks:
+- id: repo_cli_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI tools source files pass ESLint
 - id: repo_eslint
   type: pass_to_pass
   origin: repo_tests
@@ -55,7 +59,8 @@ checks:
 - id: config_cdp_endpoint
   type: fail_to_pass
   origin: pr_diff
-  description: Config resolution uses cdpEndpoint and includes it in isolated browser check
+  description: Config resolution uses cdpEndpoint and includes it in isolated browser
+    check
 - id: skill_extension_under_attach
   type: fail_to_pass
   origin: agent_config
@@ -65,10 +70,30 @@ checks:
     lines: 185-186
     commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
 rubric:
-# Rubric removed - the gold solution follows existing documentation style
-# The SKILL.md change moves the extension example from 'open' to 'attach'
-# maintaining the exact same format (# comment + command)
-# This is verified by test_skill_extension_under_attach
+- rule: When adding CLI commands with optional positional arguments, use z.string().optional()
+    in the Zod schema declaration
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 211-216
+    commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+- rule: When adding a new config option that needs to be passed through to the daemon,
+    add it to CLIOptions type in config.ts
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 334-343
+    commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+- rule: When adding CLI commands or options, write CLI tests in tests/mcp/cli-<category>.spec.ts
+    using the cli fixture
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 283-298
+    commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+- rule: When adding a new config option, update the Config type in packages/playwright-core/src/tools/mcp/config.d.ts
+    with JSDoc
+  source:
+    path: .claude/skills/playwright-dev/tools.md
+    lines: 319-332
+    commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1

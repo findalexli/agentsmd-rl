@@ -290,7 +290,7 @@ def test_no_panic_unwrap():
             "validate_typed_dict_constructor",
             "validate_from_keywords",
         ]:
-            if func_name not in source:
+            if f"fn {func_name}" not in source:
                 continue
             func_body = _extract_function_body(filepath, func_name)
             for i, line in enumerate(func_body.splitlines(), 1):
@@ -317,7 +317,7 @@ def test_no_local_imports():
             "validate_typed_dict_constructor",
             "validate_from_keywords",
         ]:
-            if func_name not in source:
+            if f"fn {func_name}" not in source:
                 continue
             func_body = _extract_function_body(filepath, func_name)
             for i, line in enumerate(func_body.splitlines(), 1):

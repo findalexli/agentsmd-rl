@@ -4,193 +4,207 @@ set -euo pipefail
 cd /workspace/next.js
 
 # Idempotent: skip if already applied
-if grep -q 'Set the correct permission for prerender cache' examples/with-docker/Dockerfile 2>/dev/null; then
+if grep -q "Set the correct permission for prerender cache" examples/with-docker/Dockerfile 2>/dev/null; then
     echo "Patch already applied."
     exit 0
 fi
 
-# Use --whitespace=fix if patch has trailing whitespace issues
-# IMPORTANT: patch content MUST end with a blank line before the PATCH delimiter
-git apply - <<'PATCH'
-diff --git a/examples/with-docker-export-output/README.md b/examples/with-docker-export-output/README.md
-index 07f25a3ce6cba1..dfc77b1bcbe8fe 100644
---- a/examples/with-docker-export-output/README.md
-+++ b/examples/with-docker-export-output/README.md
-@@ -4,14 +4,14 @@ A production-ready example demonstrating how to Dockerize Next.js applications u
+python3 << 'PYTHON'
+import re
 
- ## Features
+# Fix with-docker README.md
+with open("examples/with-docker/README.md", "r") as f:
+    content = f.read()
 
--- ✅ Multi-stage Docker build for optimal image size
--- ✅ Static export: Fully static HTML/CSS/JavaScript site
--- ✅ Two serving options: Nginx (production-grade) and serve (simple Node.js server)
--- ✅ Security best practices (non-root user)
--- ✅ Slim/Alpine Linux base images for optimal compatibility and smaller size
--- ✅ BuildKit cache mounts for faster builds
--- ✅ Production-ready configuration with optimized Nginx settings
--- ✅ Docker Compose support for easy deployment
-+- Multi-stage Docker build for optimal image size
-+- Static export: Fully static HTML/CSS/JavaScript site
-+- Two serving options: Nginx (production-grade) and serve (simple Node.js server)
-+- Security best practices (non-root user)
-+- Slim/Alpine Linux base images for optimal compatibility and smaller size
-+- BuildKit cache mounts for faster builds
-+- Production-ready configuration with optimized Nginx settings
-+- Docker Compose support for easy deployment
+# Remove checkmark bullets
+content = content.replace("- ✅ Multi-stage Docker build for optimal image size", "- Multi-stage Docker build for optimal image size")
+content = content.replace("- ✅ Next.js standalone mode for minimal production builds", "- Next.js standalone mode for minimal production builds")
+content = content.replace("- ✅ Security best practices (non-root user)", "- Security best practices (non-root user)")
+content = content.replace("- ✅ Slim Linux base image for optimal compatibility and smaller size", "- Slim Linux base image for optimal compatibility and smaller size")
+content = content.replace("- ✅ BuildKit cache mounts for faster builds", "- BuildKit cache mounts for faster builds")
+content = content.replace("- ✅ Production-ready configuration", "- Production-ready configuration")
 
- ## Prerequisites
+# Update BuildKit cache mounts line
+content = content.replace(
+    "- **BuildKit cache mounts**: Speeds up builds by caching package manager stores (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`) and Next.js build cache (`/app/.next/cache`)",
+    "- **BuildKit cache mounts**: Speeds up builds by caching package manager stores (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`). See the Dockerfile for an optional `.next/cache` mount to speed up rebuilds."
+)
 
-@@ -165,13 +165,12 @@ Learn more about [Next.js static export](https://nextjs.org/docs/app/api-referen
+# Add writable .next directory bullet
+content = content.replace(
+    "- **Standalone output**: Copies only the necessary files from `.next/standalone` and `.next/static`",
+    "- **Standalone output**: Copies only the necessary files from `.next/standalone` and `.next/static`\n- **Writable `.next` directory**: The `.next` directory is created and owned by the `node` user so the server can write prerender cache and optimized images at runtime"
+)
 
- To switch to Alpine, simply change the `NODE_VERSION` ARG in the Dockerfile to `24.11.1-alpine`.
+# Update standalone output line in bun section
+content = content.replace(
+    "- **Standalone output**: Same optimized output as the Node.js version",
+    "- **Standalone output**: Same optimized output as the Node.js version, with writable `.next` directory for runtime cache"
+)
 
--**⚠️ Important - Version Maintenance**:
--
--- **Node.js**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing. To ensure security and stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js LTS version. Check the latest version at [Node.js official website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).
--
--- **Nginx**: The Nginx Dockerfile uses `nginxinc/nginx-unprivileged:alpine3.22`. Regularly check and update the `NGINXINC_IMAGE_TAG` ARG to the latest version. Browse available Nginx images on [Docker Hub](https://hub.docker.com/r/nginxinc/nginx-unprivileged).
--
--- **serve package**: The serve Dockerfile uses `serve@14.2.5`. Update to the latest version as needed for bug fixes and features.
-+> [!IMPORTANT]
-+> **Version Maintenance**:
-+>
-+> - **Node.js**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing. To ensure security and stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js LTS version. Check the latest version at [Node.js official website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).
-+> - **Nginx**: The Nginx Dockerfile uses `nginxinc/nginx-unprivileged:alpine3.22`. Regularly check and update the `NGINXINC_IMAGE_TAG` ARG to the latest version. Browse available Nginx images on [Docker Hub](https://hub.docker.com/r/nginxinc/nginx-unprivileged).
-+> - **serve package**: The serve Dockerfile uses `serve@14.2.5`. Update to the latest version as needed for bug fixes and features.
+# Convert Important section to GitHub callout
+old_important = """**⚠️ Important - Node.js Version Maintenance**:
 
- ### Package Manager Support
+- **Node.js**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing. To ensure security and stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js LTS version. Check the latest version at [Nodejs official website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node)."""
 
-diff --git a/examples/with-docker/Dockerfile b/examples/with-docker/Dockerfile
-index 420ce8ecfaa88e..607a92a5a3b0c3 100644
---- a/examples/with-docker/Dockerfile
-+++ b/examples/with-docker/Dockerfile
-@@ -52,8 +52,12 @@ ENV NODE_ENV=production
- # ENV NEXT_TELEMETRY_DISABLED=1
+new_important = """> [!IMPORTANT]
+> **Node.js Version Maintenance**:
+>
+> - **Node.js**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing. To ensure security and stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js LTS version. Check the latest version at [Nodejs official website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node)."""
 
- # Build Next.js application
--RUN --mount=type=cache,target=/app/.next/cache \
--  if [ -f package-lock.json ]; then \
-+# If you want to speed up Docker rebuilds, you can cache the build artifacts
-+# by adding: --mount=type=cache,target=/app/.next/cache
-+# This caches the .next/cache directory across builds, but it also prevents
-+# .next/cache/fetch-cache from being included in the final image, meaning
-+# cached fetch responses from the build won't be available at runtime.
-+RUN if [ -f package-lock.json ]; then \
-     npm run build; \
-   elif [ -f yarn.lock ]; then \
-     corepack enable yarn && yarn build; \
-@@ -84,9 +88,20 @@ ENV HOSTNAME="0.0.0.0"
+content = content.replace(old_important, new_important)
 
- # Copy production assets
- COPY --from=builder --chown=node:node /app/public ./public
-+
-+# Set the correct permission for prerender cache
-+RUN mkdir .next
-+RUN chown node:node .next
-+
-+# Automatically leverage output traces to reduce image size
-+# https://nextjs.org/docs/advanced-features/output-file-tracing
- COPY --from=builder --chown=node:node /app/.next/standalone ./
- COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+with open("examples/with-docker/README.md", "w") as f:
+    f.write(content)
 
-+# If you want to persist the fetch cache generated during the build so that
-+# cached responses are available immediately on startup, uncomment this line:
-+# COPY --from=builder --chown=node:node /app/.next/cache ./.next/cache
-+
- # Switch to non-root user for security best practices
- USER node
+print("with-docker/README.md updated")
 
-diff --git a/examples/with-docker/Dockerfile.bun b/examples/with-docker/Dockerfile.bun
-index 7c0d14674b6341..35de9f3fab2e1d 100644
---- a/examples/with-docker/Dockerfile.bun
-+++ b/examples/with-docker/Dockerfile.bun
-@@ -63,9 +63,20 @@ ENV HOSTNAME="0.0.0.0"
+# Fix with-docker-export-output README.md
+with open("examples/with-docker-export-output/README.md", "r") as f:
+    content = f.read()
 
- # Copy production assets
- COPY --from=builder --chown=bun:bun /app/public ./public
-+
-+# Set the correct permission for prerender cache
-+RUN mkdir .next
-+RUN chown bun:bun .next
-+
-+# Automatically leverage output traces to reduce image size
-+# https://nextjs.org/docs/advanced-features/output-file-tracing
- COPY --from=builder --chown=bun:bun /app/.next/standalone ./
- COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
+# Remove checkmark bullets
+content = content.replace("- ✅ Multi-stage Docker build for optimal image size", "- Multi-stage Docker build for optimal image size")
+content = content.replace("- ✅ Static export: Fully static HTML/CSS/JavaScript site", "- Static export: Fully static HTML/CSS/JavaScript site")
+content = content.replace("- ✅ Two serving options: Nginx (production-grade) and serve (simple Node.js server)", "- Two serving options: Nginx (production-grade) and serve (simple Node.js server)")
+content = content.replace("- ✅ Security best practices (non-root user)", "- Security best practices (non-root user)")
+content = content.replace("- ✅ Slim/Alpine Linux base images for optimal compatibility and smaller size", "- Slim/Alpine Linux base images for optimal compatibility and smaller size")
+content = content.replace("- ✅ BuildKit cache mounts for faster builds", "- BuildKit cache mounts for faster builds")
+content = content.replace("- ✅ Production-ready configuration with optimized Nginx settings", "- Production-ready configuration with optimized Nginx settings")
+content = content.replace("- ✅ Docker Compose support for easy deployment", "- Docker Compose support for easy deployment")
 
-+# If you want to persist the fetch cache generated during the build so that
-+# cached responses are available immediately on startup, uncomment this line:
-+# COPY --from=builder --chown=bun:bun /app/.next/cache ./.next/cache
-+
- # Switch to non-root user for security best practices
- USER bun
+# Convert Important section to GitHub callout
+old_important = """**⚠️ Important - Version Maintenance**:
 
-diff --git a/examples/with-docker/README.md b/examples/with-docker/README.md
-index cca3ecaff158d..7db8a64ccaf67d 100644
---- a/examples/with-docker/README.md
-+++ b/examples/with-docker/README.md
-@@ -4,12 +4,12 @@ A production-ready example demonstrating how to Dockerize Next.js applications u
 
- ## Features
+- **Node.js**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing. To ensure security and stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js LTS version. Check the latest version at [Node.js official website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).
 
--- ✅ Multi-stage Docker build for optimal image size
--- ✅ Next.js standalone mode for minimal production builds
--- ✅ Security best practices (non-root user)
--- ✅ Slim Linux base image for optimal compatibility and smaller size
--- ✅ BuildKit cache mounts for faster builds
--- ✅ Production-ready configuration
-+- Multi-stage Docker build for optimal image size
-+- Next.js standalone mode for minimal production builds
-+- Security best practices (non-root user)
-+- Slim Linux base image for optimal compatibility and smaller size
-+- BuildKit cache mounts for faster builds
-+- Production-ready configuration
 
- ## Prerequisites
+- **Nginx**: The Nginx Dockerfile uses `nginxinc/nginx-unprivileged:alpine3.22`. Regularly check and update the `NGINXINC_IMAGE_TAG` ARG to the latest version. Browse available Nginx images on [Docker Hub](https://hub.docker.com/r/nginxinc/nginx-unprivileged).
 
-@@ -127,10 +127,11 @@ Learn more about [Next.js standalone output](https://nextjs.org/docs/pages/api-r
 
- - **Multi-stage build**: Separates dependency installation (`dependencies`), build (`builder`), and runtime (`runner`) stages
- - **Slim Linux**: Uses `slim` image tag for optimal compatibility and smaller image size
--- **BuildKit cache mounts**: Speeds up builds by caching package manager stores (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`) and Next.js build cache (`/app/.next/cache`)
-+- **BuildKit cache mounts**: Speeds up builds by caching package manager stores (`/root/.npm`, `/usr/local/share/.cache/yarn`, `/root/.local/share/pnpm/store`). See the Dockerfile for an optional `.next/cache` mount to speed up rebuilds.
- - **Non-root user**: Runs as `node` user for security
- - **Optimized layers**: Leverages Docker layer caching effectively
- - **Standalone output**: Copies only the necessary files from `.next/standalone` and `.next/static`
-+- **Writable `.next` directory**: The `.next` directory is created and owned by the `node` user so the server can write prerender cache and optimized images at runtime
- - **Node.js version maintenance**: Uses Node.js 24.13.0-slim (latest LTS at time of writing). Update the `NODE_VERSION` ARG to the latest LTS version for security updates.
+- **serve package**: The serve Dockerfile uses `serve@14.2.5`. Update to the latest version as needed for bug fixes and features."""
 
- ### Dockerfile.bun Highlights (Bun)
-@@ -139,7 +140,7 @@ Learn more about [Next.js standalone output](https://nextjs.org/docs/pages/api-r
- - **Official Bun image**: Uses `oven/bun:1` for optimal Bun performance
- - **Non-root user**: Runs as built-in `bun` user for security
- - **Frozen lockfile**: Uses `bun.lock` for reproducible builds
--- **Standalone output**: Same optimized output as the Node.js version
-+- **Standalone output**: Same optimized output as the Node.js version, with writable `.next` directory for runtime cache
+new_important = """> [!IMPORTANT]
+> **Version Maintenance**:
+>
+> - **Node.js**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing. To ensure security and stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js LTS version. Check the latest version at [Node.js official website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).
+> - **Nginx**: The Nginx Dockerfile uses `nginxinc/nginx-unprivileged:alpine3.22`. Regularly check and update the `NGINXINC_IMAGE_TAG` ARG to the latest version. Browse available Nginx images on [Docker Hub](https://hub.docker.com/r/nginxinc/nginx-unprivileged).
+> - **serve package**: The serve Dockerfile uses `serve@14.2.5`. Update to the latest version as needed for bug fixes and features."""
 
- **Why Node.js slim image tag?**: The slim variant provides optimal compatibility with npm packages and native dependencies while maintaining a smaller image size (~226MB). Slim uses glibc (standard Linux), ensuring better compatibility than Alpine's musl libc, which can cause issues with some npm packages. This makes it ideal for public examples where reliability and compatibility are priorities.
+content = content.replace(old_important, new_important)
 
-@@ -152,7 +153,8 @@ Learn more about [Next.js standalone output](https://nextjs.org/docs/pages/api-r
+with open("examples/with-docker-export-output/README.md", "w") as f:
+    f.write(content)
 
- To switch to Alpine, simply change the `NODE_VERSION` ARG in the Dockerfile to `24.11.1-alpine`.
+print("with-docker-export-output/README.md updated")
 
--**⚠️ Important - Node.js Version Maintenance**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing. To ensure security and stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js LTS version. Check the latest version at [Nodejs official website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).
-+> [!IMPORTANT]
-+> **Node.js Version Maintenance**: This Dockerfile uses Node.js 24.13.0-slim, which was the latest LTS version at the time of writing. To ensure security and stay up-to-date, regularly check and update the `NODE_VERSION` ARG in the Dockerfile to the latest Node.js LTS version. Check the latest version at [Nodejs official website](https://nodejs.org/) and browse available Node.js images on [Docker Hub](https://hub.docker.com/_/node).
+# Fix Dockerfile
+with open("examples/with-docker/Dockerfile", "r") as f:
+    content = f.read()
 
- ## Deployment
+# Remove cache mount from build stage and add comments
+old_build = """# Build Next.js application
+RUN --mount=type=cache,target=/app/.next/cache \\
+  if [ -f package-lock.json ]; then \\
+    npm run build; \\
+  elif [ -f yarn.lock ]; then \\
+    corepack enable yarn && yarn build; \\
+  elif [ -f pnpm-lock.yaml ]; then \\
+    corepack enable pnpm && pnpm build; \\
+  else \\
+    echo "No lockfile found." && exit 1; \\
+  fi"""
 
-@@ -175,9 +177,11 @@ This example can be deployed to any container-based platform:
-    ```
-    This will also enable Cloud Build for your project.
-  5. Deploy to Cloud Run:
-+
-    ```bash
-    gcloud run deploy --image gcr.io/PROJECT-ID/nextjs-docker --project PROJECT-ID --platform managed --allow-unauthenticated
-    ```
-+
-    - You will be prompted for the service name: press Enter to accept the default name, `nextjs-docker`.
-    - You will be prompted for [region](https://cloud.google.com/run/docs/quickstarts/build-and-deploy#follow-cloud-run): select the region of your choice, for example `us-central1`.
+new_build = """# If you want to speed up Docker rebuilds, you can cache the build artifacts
+# by adding: --mount=type=cache,target=/app/.next/cache
+# This caches the .next/cache directory across builds, but it also prevents
+# .next/cache/fetch-cache from being included in the final image, meaning
+# cached fetch responses from the build won't be available at runtime.
+RUN if [ -f package-lock.json ]; then \\
+    npm run build; \\
+  elif [ -f yarn.lock ]; then \\
+    corepack enable yarn && yarn build; \\
+  elif [ -f pnpm-lock.yaml ]; then \\
+    corepack enable pnpm && pnpm build; \\
+  else \\
+    echo "No lockfile found." && exit 1; \\
+  fi"""
 
-PATCH
+content = content.replace(old_build, new_build)
+
+# Add .next directory creation and fetch cache comment in runner stage (combined RUN to satisfy hadolint)
+old_runner = """# Copy production assets
+COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+
+# Switch to non-root user for security best practices
+USER node"""
+
+new_runner = """# Copy production assets
+COPY --from=builder --chown=node:node /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next && chown node:node .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+
+# If you want to persist the fetch cache generated during the build so that
+# cached responses are available immediately on startup, uncomment this line:
+# COPY --from=builder --chown=node:node /app/.next/cache ./.next/cache
+
+# Switch to non-root user for security best practices
+USER node"""
+
+content = content.replace(old_runner, new_runner)
+
+with open("examples/with-docker/Dockerfile", "w") as f:
+    f.write(content)
+
+print("Dockerfile updated")
+
+# Fix Dockerfile.bun
+with open("examples/with-docker/Dockerfile.bun", "r") as f:
+    content = f.read()
+
+# Add .next directory creation and fetch cache comment in runner stage (combined RUN)
+old_runner_bun = """# Copy production assets
+COPY --from=builder --chown=bun:bun /app/public ./public
+COPY --from=builder --chown=bun:bun /app/.next/standalone ./
+COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
+
+# Switch to non-root user for security best practices
+USER bun"""
+
+new_runner_bun = """# Copy production assets
+COPY --from=builder --chown=bun:bun /app/public ./public
+
+# Set the correct permission for prerender cache
+RUN mkdir .next && chown bun:bun .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=bun:bun /app/.next/standalone ./
+COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
+
+# If you want to persist the fetch cache generated during the build so that
+# cached responses are available immediately on startup, uncomment this line:
+# COPY --from=builder --chown=bun:bun /app/.next/cache ./.next/cache
+
+# Switch to non-root user for security best practices
+USER bun"""
+
+content = content.replace(old_runner_bun, new_runner_bun)
+
+with open("examples/with-docker/Dockerfile.bun", "w") as f:
+    f.write(content)
+
+print("Dockerfile.bun updated")
+
+PYTHON
 
 echo "Patch applied successfully."

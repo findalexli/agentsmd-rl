@@ -447,89 +447,67 @@ def test_repo_yaml_lint():
 # =============================================================================
 
 
-def test_repo_scripts_pytest():
-    """Repo's scripts CI prek tests pass (pass_to_pass)."""
-    # Install required dependencies for scripts tests
+def test_repo_uv_scripts_tests():
+    """Repo's scripts CI tests pass with uv (pass_to_pass).
+
+    This runs the actual CI test suite from basic-tests.yml:
+    uv run --project . pytest --color=yes -n auto
+    """
+    # Install uv
     install_r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "pytest", "python-dateutil",
-         "pyyaml", "rich", "rich-click", "packaging", "tabulate",
-         "jsonschema", "astor", "requests", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        [sys.executable, "-m", "pip", "install", "uv", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert install_r.returncode == 0, f"Failed to install dependencies: {install_r.stderr}"
+    assert install_r.returncode == 0, f"Failed to install uv: {install_r.stderr}"
 
-    # Run the scripts tests (CI checks from basic-tests.yml)
+    # Run the scripts tests using uv (matching CI command from basic-tests.yml)
     r = subprocess.run(
-        [sys.executable, "-m", "pytest", "scripts/tests/ci/prek/",
-         "-v", "--tb=short", "-x"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
+        [sys.executable, "-m", "uv", "run", "--project", ".",
+         "pytest", "tests/ci/prek/", "-v", "--tb=short", "-x"],
+        capture_output=True, text=True, timeout=300, cwd=str(REPO / "scripts"),
     )
-    assert r.returncode == 0, f"Scripts tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Scripts CI tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_common_prek_utils():
-    """Repo's common_prek_utils tests pass (pass_to_pass)."""
-    # Install required dependencies
+def test_repo_uv_common_prek_utils():
+    """Repo's common_prek_utils tests pass with uv (pass_to_pass).
+
+    Tests the core CI utilities that are commonly used across the repo.
+    """
+    # Install uv
     install_r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "pytest", "python-dateutil",
-         "pyyaml", "rich", "rich-click", "packaging", "tabulate",
-         "jsonschema", "astor", "requests", "libcst", "-q"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        [sys.executable, "-m", "pip", "install", "uv", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert install_r.returncode == 0, f"Failed to install dependencies: {install_r.stderr}"
+    assert install_r.returncode == 0, f"Failed to install uv: {install_r.stderr}"
 
-    # Run the common_prek_utils tests specifically (core CI utilities)
+    # Run specific common_prek_utils tests
     r = subprocess.run(
-        [sys.executable, "-m", "pytest",
-         "scripts/tests/ci/prek/test_common_prek_utils.py",
+        [sys.executable, "-m", "uv", "run", "--project", ".",
+         "pytest", "tests/ci/prek/test_common_prek_utils.py",
          "-v", "--tb=short", "-x"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=str(REPO / "scripts"),
     )
     assert r.returncode == 0, f"Common prek utils tests failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
 
 
-def test_repo_py_compile():
-    """Python syntax check via py_compile passes on target file (pass_to_pass)."""
-    r = subprocess.run(
-        [sys.executable, "-m", "py_compile", str(TARGET_FILE)],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+def test_repo_uv_ruff_format():
+    """Ruff format check passes with uv on target file (pass_to_pass).
 
-
-def test_repo_ruff_full():
-    """Ruff full check passes on install_airflow_and_providers.py (pass_to_pass)."""
-    # Install ruff
+    Uses uv run to execute ruff format --check as in CI.
+    """
+    # Install uv
     install_r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        [sys.executable, "-m", "pip", "install", "uv", "-q"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
-    assert install_r.returncode == 0, f"Failed to install ruff: {install_r.stderr}"
+    assert install_r.returncode == 0, f"Failed to install uv: {install_r.stderr}"
 
-    # Run full ruff check (excluding line-length and ambiguous variable names)
+    # Run ruff format check using uv
     r = subprocess.run(
-        [sys.executable, "-m", "ruff", "check",
-         "--select", "E,W,F,I",
-         "--ignore", "E501,E741",
-         str(TARGET_FILE)],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
-
-
-def test_repo_ruff_format_full():
-    """Ruff format check passes on install_airflow_and_providers.py (pass_to_pass)."""
-    # Install ruff
-    install_r = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    assert install_r.returncode == 0, f"Failed to install ruff: {install_r.stderr}"
-
-    # Run ruff format check
-    r = subprocess.run(
-        [sys.executable, "-m", "ruff", "format", "--check", str(TARGET_FILE)],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        [sys.executable, "-m", "uv", "run", "--project", ".",
+         "ruff", "format", "--check", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=120, cwd=str(REPO / "scripts"),
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
 

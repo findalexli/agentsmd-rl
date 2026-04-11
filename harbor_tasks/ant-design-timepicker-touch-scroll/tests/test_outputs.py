@@ -8,6 +8,7 @@ so columns can't scroll directly.
 The fix: Set overflowY: 'auto' as default and remove the hover override.
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -139,3 +140,29 @@ def test_repo_eslint():
     )
     # ESLint exits with 0 for warnings only, non-zero for errors
     assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_tsc():
+    """Repo's TypeScript compilation passes (pass_to_pass)."""
+    _install_deps()
+    # TypeScript compilation needs more memory for this large project
+    import os
+    env = os.environ.copy()
+    env["NODE_OPTIONS"] = "--max-old-space-size=4096"
+    r = subprocess.run(
+        ["pnpm", "exec", "tsc", "--noEmit", "--skipLibCheck"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_prettier_check():
+    """Repo's Prettier format check passes (pass_to_pass)."""
+    _install_deps()
+    # Only check the specific file related to the fix
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "-c", "components/date-picker/style/panel.ts"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    # Prettier returns 0 if file is formatted correctly, 1 if not
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"

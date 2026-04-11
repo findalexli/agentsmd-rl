@@ -293,5 +293,26 @@ def test_repo_go_mod_tidy():
     assert result.returncode == 0, f"go mod tidy would make changes:\n{result.stdout}"
 
 
+def test_repo_staticcheck():
+    """Repo's staticcheck passes on warpc package (pass_to_pass)."""
+    # Install staticcheck if not already installed
+    subprocess.run(
+        ["go", "install", "honnef.co/go/tools/cmd/staticcheck@latest"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    # staticcheck is installed to $GOPATH/bin or $HOME/go/bin
+    result = subprocess.run(
+        ["staticcheck", "./internal/warpc/..."],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+    assert result.returncode == 0, f"staticcheck failed:\n{result.stderr}\n{result.stdout}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

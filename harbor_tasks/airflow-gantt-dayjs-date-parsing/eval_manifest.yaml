@@ -1,0 +1,73 @@
+# Eval manifest for Airflow Helm Chart extraInitContainers task
+# This task adds support for workers.celery.extraInitContainers and
+# workers.kubernetes.extraInitContainers in the Helm chart.
+
+verifier:
+  command: "bash /tests/test.sh"
+  outputs:
+    reward: "/logs/verifier/reward.txt"
+
+# Rubric for evaluation
+rubric:
+  - rule: "The Helm chart values.schema.json includes schema for workers.celery.extraInitContainers"
+    source:
+      path: "chart/values.schema.json"
+      type: "json"
+
+  - rule: "The Helm chart values.yaml includes default values for workers.celery.extraInitContainers"
+    source:
+      path: "chart/values.yaml"
+      type: "yaml"
+
+  - rule: "The pod template file template renders workers.kubernetes.extraInitContainers"
+    source:
+      path: "chart/files/pod-template-file.kubernetes-helm-yaml"
+      type: "yaml"
+
+  - rule: "The worker deployment template renders workers.kubernetes.extraInitContainers"
+    source:
+      path: "chart/templates/workers/worker-deployment.yaml"
+      type: "yaml"
+
+  - rule: "The worker deployment template renders workers.celery.extraInitContainers"
+    source:
+      path: "chart/templates/workers/worker-deployment.yaml"
+      type: "yaml"
+
+# Checks (tests)
+checks:
+  # Pass-to-pass tests (repo CI tests)
+  - id: test_helm_tests_pod_template_extra_init_containers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm test: pod template file supports workers.kubernetes.extraInitContainers"
+
+  - id: test_helm_tests_pod_template_extra_init_containers_templating
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm test: pod template extraInitContainers supports Helm templating"
+
+  - id: test_helm_tests_worker_deployment_extra_init_containers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm test: worker deployment supports workers.kubernetes and workers.celery extraInitContainers"
+
+  - id: test_helm_tests_worker_deployment_extra_init_containers_templating
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm test: worker deployment extraInitContainers supports Helm templating"
+
+  - id: test_helm_tests_worker_sets_deployment_extra_init_containers
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm test: worker sets deployment supports workers.celery.sets[].extraInitContainers"
+
+  - id: test_helm_chart_schema_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm chart: values.schema.json is valid JSON"
+
+  - id: test_helm_chart_render_basic
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm chart: basic helm template rendering works"

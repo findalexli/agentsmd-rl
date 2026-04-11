@@ -76,6 +76,9 @@ function component() {
         env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
     )
 
+    # Escape single quotes for JavaScript string
+    escaped_test_code = test_code.replace("'", "\\'")
+
     # Create a Node.js script to run the compilation
     compile_script = f'''
 const {{ compileCodeSplitReferenceRoute }} = require('{REPO_PATH}/packages/router-plugin/dist/index.cjs');
@@ -86,7 +89,7 @@ const defaultCodeSplitGroupings = [
   ['notFoundComponent'],
 ];
 
-const code = `{test_code.replace("'", "\\'")}`;
+const code = `{escaped_test_code}`;
 
 const compileResult = compileCodeSplitReferenceRoute({{
   code,
@@ -152,7 +155,7 @@ def test_add_hmr_unit_tests_pass():
     This includes the new test that verifies data initialization.
     """
     result = subprocess.run(
-        ["pnpm", "nx", "run", "@tanstack/router-plugin:test:unit", "--", "tests/add-hmr.test.ts"],
+        ["pnpm", "nx", "run", "@tanstack/router-plugin:test:unit", "--", "--run", "tests/add-hmr.test.ts"],
         cwd=REPO_PATH,
         capture_output=True,
         text=True,
@@ -212,6 +215,63 @@ def test_code_compiles_after_fix():
 
     assert result.returncode == 0, \
         f"Build failed:\n{result.stdout}\n{result.stderr}"
+
+
+def test_repo_lint_passes():
+    """
+    PASS-TO-PASS: The router-plugin package passes ESLint checks.
+
+    Repo CI command: pnpm nx run @tanstack/router-plugin:test:eslint
+    """
+    result = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/router-plugin:test:eslint"],
+        cwd=REPO_PATH,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+
+    assert result.returncode == 0, \
+        f"ESLint check failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_types_pass():
+    """
+    PASS-TO-PASS: The router-plugin package passes TypeScript type checking.
+
+    Repo CI command: pnpm nx run @tanstack/router-plugin:test:types
+    """
+    result = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/router-plugin:test:types"],
+        cwd=REPO_PATH,
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+
+    assert result.returncode == 0, \
+        f"Type check failed:\n{result.stderr[-500:]}"
+
+
+def test_repo_build_verification_passes():
+    """
+    PASS-TO-PASS: The router-plugin package passes build verification (publint/attw).
+
+    Repo CI command: pnpm nx run @tanstack/router-plugin:test:build
+    """
+    result = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/router-plugin:test:build"],
+        cwd=REPO_PATH,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+
+    assert result.returncode == 0, \
+        f"Build verification failed:\n{result.stderr[-500:]}"
 
 
 def test_no_direct_data_access_without_check():

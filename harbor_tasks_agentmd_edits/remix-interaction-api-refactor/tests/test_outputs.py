@@ -356,3 +356,33 @@ def test_repo_format():
     assert r.returncode == 0, (
         f"Format check failed:\n{r.stdout}\n{r.stderr}"
     )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint():
+    """Repo's eslint passes for interaction package (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "eslint", f"{PKG}/src", "--max-warnings=0"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Lint failed:\n{r.stdout}\n{r.stderr}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tsc_strict():
+    """Repo's TypeScript compiler passes with --noEmit for interaction package (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit"],
+        cwd=PKG,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"TypeScript strict check failed:\n{r.stdout}\n{r.stderr}"
+    )

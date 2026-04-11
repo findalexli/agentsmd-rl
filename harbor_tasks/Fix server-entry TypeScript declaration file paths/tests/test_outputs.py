@@ -310,3 +310,82 @@ def test_vue_start_tsconfig_server_entry_exists():
         f"tsconfig.server-entry.json should include 'src/default-entry'\n"
         f"Config: {config}"
     )
+
+
+# ============================================================================
+# Pass-to-Pass Tests: Repo CI Commands
+# ============================================================================
+# These tests run actual CI commands from the repository to verify
+# the codebase passes linting and formatting checks at the base commit.
+
+
+def test_repo_react_start_format():
+    """React-start vite config passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--check", "vite.config.server-entry.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REACT_START,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_solid_start_format():
+    """Solid-start vite config passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--check", "vite.config.server-entry.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=SOLID_START,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_vue_start_format():
+    """Vue-start vite config passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--check", "vite.config.server-entry.ts"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=VUE_START,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_react_start_package_format():
+    """React-start package.json passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--check", "package.json"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REACT_START,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_solid_start_package_format():
+    """Solid-start package.json passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--check", "package.json"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=SOLID_START,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_vue_start_package_format():
+    """Vue-start package.json passes prettier formatting check (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "exec", "prettier", "--check", "package.json"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=VUE_START,
+    )
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"

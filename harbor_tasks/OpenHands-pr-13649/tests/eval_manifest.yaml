@@ -1,0 +1,123 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  pr_number: 13649
+  merge_commit: b75c83d92abfcbbb63b7b82e0fdd0e981f69a66f
+  base_commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+metadata:
+  title: Fix duplicate payment toast by stabilizing React useEffect dependencies
+  description: 'Fixes a bug where the "Payment successful" toast was displayed multiple
+    times after Stripe checkout. The root cause was that the `searchParams` object
+    and `trackCreditsPurchased` function in the useEffect dependency array had unstable
+    references, causing the effect to re-fire on every re-render.
+
+    '
+  bug_type: stale_closure
+  category: frontend
+  language: typescript
+  framework: react
+agent_config:
+- id: search_params_outside_effect
+  description: Extract searchParams as primitive strings outside useEffect
+  category: programmatic
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    lines: null
+    commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+  test: test_search_params_extracted_outside_effect
+  weight: 3
+- id: useeffect_primitive_deps
+  description: UseEffect dependency array should use primitives, not objects
+  category: programmatic
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    lines: null
+    commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+  test: test_useeffect_dependencies_use_primitives
+  weight: 3
+- id: no_get_inside_effect
+  description: No searchParams.get() calls inside useEffect body
+  category: programmatic
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    lines: null
+    commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+  test: test_no_searchparams_get_inside_effect
+  weight: 2
+- id: unit_tests_pass
+  description: Billing unit tests pass (fail-to-pass)
+  category: programmatic
+  origin: programmatic
+  source: null
+  test: test_unit_tests_pass
+  weight: 4
+- id: checkout_tests_exist
+  description: New checkout flow tests exist
+  category: programmatic
+  origin: programmatic
+  source: null
+  test: test_checkout_success_flow_test_exists
+  weight: 1
+- id: lint_passes
+  description: Code passes frontend linting (per AGENTS.md)
+  category: programmatic
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    lines: null
+    commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+  test: test_lint_passes
+  weight: 2
+- id: build_passes
+  description: Code builds successfully (per AGENTS.md)
+  category: programmatic
+  origin: agent_config
+  source:
+    file: AGENTS.md
+    lines: null
+    commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+  test: test_build_passes
+  weight: 2
+rubric:
+- rule: Frontend code changes must pass linting with npm run lint (no AGENTS.md modification
+    required)
+  reference:
+    path: frontend/src/routes/billing.tsx
+    lines: "56-90"
+- rule: Frontend code must build successfully with npm run build (no AGENTS.md modification
+    required)
+  reference:
+    path: frontend/src/routes/billing.tsx
+    lines: "56-90"
+- rule: React useEffect dependencies should use primitive values (amount, sessionId)
+    rather than unstable object references (searchParams)
+  reference:
+    path: frontend/src/routes/billing.tsx
+    lines: 56-90
+pass_to_pass:
+- id: test_p2p_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+  test: test_p2p_typecheck
+  weight: 2
+- id: test_p2p_payment_form_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Payment form unit tests pass
+  test: test_p2p_payment_form_tests
+  weight: 2
+- id: test_p2p_custom_toast_handlers_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Custom toast handlers unit tests pass
+  test: test_p2p_custom_toast_handlers_tests
+  weight: 2
+weights:
+  total: 23
+  programmatic: 23
+  p2p: 16
+  f2p: 7

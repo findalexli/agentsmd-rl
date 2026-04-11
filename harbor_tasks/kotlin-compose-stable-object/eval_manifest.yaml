@@ -33,17 +33,17 @@ checks:
     origin: test_behavior
     description: "Test methods for object stability should exist in test files"
 
-  # Pass-to-pass tests (repo CI/tests that should continue working)
+  # Pass-to-pass tests (static file checks)
   - id: test_compose_compiler_sources_exist
     type: pass_to_pass
-    origin: repo_tests
-    description: "Compose compiler plugin source files exist and are valid Kotlin"
+    origin: static
+    description: "Compose compiler plugin source files exist"
     file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/analysis/Stability.kt
 
   - id: test_static_expression_detection_compiles
     type: pass_to_pass
-    origin: repo_tests
-    description: "Static expression detection tests compile"
+    origin: static
+    description: "Static expression detection test file exists and has expected content"
     file: plugins/compose/compiler-hosted/integration-tests/src/jvmTest/kotlin/androidx/compose/compiler/plugins/kotlin/StaticExpressionDetectionTests.kt
 
   # New pass-to-pass tests (kotlinc syntax validation)
@@ -73,35 +73,35 @@ checks:
 
   - id: test_compose_plugin_source_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Compose compiler plugin source directory structure is valid"
 
   - id: test_integration_tests_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Integration tests directory structure is valid"
 
-  # New pass-to-pass tests (CI-based repo tests)
+  # New pass-to-pass tests (CI-based repo tests using kotlinc)
   - id: test_kotlin_analysis_dir_structure
     type: pass_to_pass
-    origin: repo_tests
-    description: "Analysis directory contains expected source files (repo CI structure check)"
+    origin: static
+    description: "Analysis directory contains expected source files (structure check)"
 
   - id: test_kotlinc_lower_file_validation
     type: pass_to_pass
     origin: repo_tests
-    description: "AbstractComposeLowering.kt passes kotlinc syntax validation (repo CI check)"
+    description: "AbstractComposeLowering.kt passes kotlinc syntax validation"
     file: plugins/compose/compiler-hosted/src/main/java/androidx/compose/compiler/plugins/kotlin/lower/AbstractComposeLowering.kt
 
   - id: test_kotlin_golden_file_format
     type: pass_to_pass
-    origin: repo_tests
-    description: "Golden files have valid format with Source/Transformed IR sections (repo CI check)"
+    origin: static
+    description: "Golden files have valid format with Source/Transformed IR sections"
 
   - id: test_compose_test_files_syntax
     type: pass_to_pass
     origin: repo_tests
-    description: "Key compose test files have valid Kotlin syntax (repo CI check)"
+    description: "Key compose test files have valid Kotlin syntax (kotlinc validation)"
 
 # Agent config rules (from CLAUDE.md and AGENTS.md)
 # This PR touches the compose compiler plugin area

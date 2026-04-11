@@ -145,6 +145,31 @@ checks:
     origin: repo_tests
     description: check_typos.sh runs without crashing
 
+  - id: test_clickhouse_proc_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: clickhouse_proc.py has valid Python syntax
+
+  - id: test_clickhouse_version_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: clickhouse_version.py has valid Python syntax
+
+  - id: test_docker_image_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: docker_image.py has valid Python syntax
+
+  - id: test_build_master_head_hook_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: build_master_head_hook.py has valid Python syntax
+
+  - id: test_docker_clean_up_hook_py_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: docker_clean_up_hook.py has valid Python syntax
+
   # Agent config rules from .claude/skills/review/SKILL.md
   - id: agent_config_no_large_binary_files
     type: fail_to_pass
@@ -162,15 +187,36 @@ rubric:
       path: ".claude/skills/review/SKILL.md"
       lines: "226-230"
       commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
+    reference: |
+      # Every byte committed is cloned by every contributor forever and cannot be removed without history rewriting.
+      # Bulk stat all tracked files via xargs (avoids fork-per-file which takes minutes on large repos).
 
-  - rule: "Scripts should detect platform differences (GNU vs BSD tools) explicitly rather than failing per-file. Use feature detection, not version checks."
+  - rule: "Scripts should detect platform differences (GNU vs BSD tools) explicitly rather than failing per-file. Use feature detection, not version checks. The code must detect once instead of failing per file, and handle both GNU and BSD formats."
     source:
       path: ".claude/skills/review/SKILL.md"
       lines: "141-150"
       commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
+    reference: |
+      REQUIRED PATTERN: Platform detection using feature detection (not version checks):
+      # GNU stat (Linux) uses -c, BSD stat (macOS) uses -f — detect once instead of failing per file.
+      if stat -c '%s %n' /dev/null >/dev/null 2>&1; then
+          STAT_FMT_FLAG='-c'
+          STAT_FMT='%s %n'
+      else
+          STAT_FMT_FLAG='-f'
+          STAT_FMT='%z %N'
+      fi
+
+      Look for:
+      1. Comment explaining the platform difference
+      2. if/else with stat -c test on /dev/null to detect GNU vs BSD
+      3. Setting different format flags for each platform
 
   - rule: "Follow existing code style in the file being modified. Match surrounding brace style, indentation, and quoting patterns."
     source:
       path: ".claude/CLAUDE.md"
       lines: "1-50"
       commit: "cf5fb461472203d56bb0c169a61d194dd97fc2f2"
+    reference: |
+      # Code follows existing bash style: proper indentation, matching brace style,
+      # consistent quoting with surrounding code in various_checks.sh
