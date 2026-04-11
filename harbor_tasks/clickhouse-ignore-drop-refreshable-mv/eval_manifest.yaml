@@ -1,28 +1,11 @@
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 102008
-  base_commit: 32310ea30010c92c101d7e93c535c6bd17057dcf
-  merge_commit: a77cd4c5a6ede8a2d5da637a75348a4cc055c007
-  title: Do not ignore DROP for refreshable materialized views in stress tests
-implementation:
-  file: src/Interpreters/InterpreterDropQuery.cpp
-  description: 'Fix the ignore_drop_queries_probability setting to not convert DROP
-    to TRUNCATE
-
-    for refreshable materialized views. TRUNCATE doesn''t stop the periodic refresh
-
-    task, causing orphaned views to keep refreshing indefinitely.
-
-    '
 checks:
 - id: test_refreshable_view_check_exists
   type: fail_to_pass
-  origin: task_spec
+  origin: pr_diff
   description: Verify refreshable materialized view check is properly implemented
 - id: test_truncate_behavior_documented
   type: fail_to_pass
-  origin: task_spec
+  origin: pr_diff
   description: Verify TRUNCATE behavior documentation is present
 - id: test_cpp_syntax_valid
   type: pass_to_pass
@@ -30,7 +13,7 @@ checks:
   description: C++ file has valid syntax
 - id: test_logic_structure
   type: fail_to_pass
-  origin: task_spec
+  origin: pr_diff
   description: Verify logic structure is correct
 - id: test_repo_cpp_structure_valid
   type: pass_to_pass
@@ -117,3 +100,9 @@ hierarchy_analysis: The AGENTS.md file provides general documentation and coding
   The rules about formatting text (backticks, function names, exception terminology)
   apply to comments and documentation, but agents must be careful not to apply text-formatting
   rules (like omitting parentheses on function calls) to actual C++ code.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102008
+  base_commit: 32310ea30010c92c101d7e93c535c6bd17057dcf
+  merge_commit: a77cd4c5a6ede8a2d5da637a75348a4cc055c007

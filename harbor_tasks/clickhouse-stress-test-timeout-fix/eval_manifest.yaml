@@ -1,26 +1,19 @@
-task_id: clickhouse-stress-test-timeout-fix
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 102014
-  merge_commit: 507d8b1523ae3c7f4b0e97fe6d13c7df9267e762
-  base_commit: 0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661
 checks:
 - id: test_randomization_uses_random_not_date
   type: fail_to_pass
-  origin: gold_patch
+  origin: pr_diff
   description: async_load_databases uses $RANDOM instead of date-based randomization
 - id: test_post_stress_start_server_has_timeout
   type: fail_to_pass
-  origin: gold_patch
+  origin: pr_diff
   description: Post-stress start_server call has timeout argument of 30
 - id: test_no_date_based_randomization_anywhere
   type: fail_to_pass
-  origin: gold_patch
+  origin: pr_diff
   description: No date-based randomization patterns remain in the file
 - id: test_start_server_timeout_has_comment
   type: fail_to_pass
-  origin: gold_patch
+  origin: pr_diff
   description: Timeout change has explanatory comment about sanitizers
 - id: test_shellcheck_no_errors
   type: pass_to_pass
@@ -78,24 +71,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Bash syntax check passes on attach_gdb.lib
-agent_config:
-- rule: Do not use rebase or amend - add new commits instead
-  origin: agent_config
-  source: AGENTS.md
-  applicable: true
-- rule: Wrap ClickHouse SQL names, classes, functions, log messages in inline code
-    blocks
-  origin: agent_config
-  source: CLAUDE.md
-  applicable: true
-- rule: Write function names as f instead of f() for mathematical purity
-  origin: agent_config
-  source: AGENTS.md
-  applicable: true
-- rule: Say 'exception' instead of 'crash' for logical errors
-  origin: agent_config
-  source: AGENTS.md
-  applicable: true
 rubric:
 - rule: Comments should explain the 'why' behind non-obvious changes, not narrate
     the code
@@ -146,3 +121,9 @@ hierarchy_analysis: The AGENTS.md file contains rules primarily aimed at documen
   bash script (`tests/docker_scripts/stress_runner.sh`), applying markdown-specific
   formatting rules (like backticks for code blocks) to bash strings can lead to unintended
   command substitution bugs.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102014
+  base_commit: 0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661
+  merge_commit: 507d8b1523ae3c7f4b0e97fe6d13c7df9267e762

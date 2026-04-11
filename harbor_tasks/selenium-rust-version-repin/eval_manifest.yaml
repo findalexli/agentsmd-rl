@@ -1,113 +1,101 @@
-source_pr:
-  repo: SeleniumHQ/selenium
-  number: 17320
-  merge_commit: 8797d1650c771217e6a6b3edee5c0c862a6ddf52
-  base_commit: 2fed1c09849431329f3e414479c627d652424f4e
-
-task_metadata:
-  name: selenium-rust-version-repin
-  description: |
-    Fix the Rust pre-release workflow to automatically repin cargo
-    dependencies after version updates, preventing Bazel lockfile conflicts.
-
 checks:
-  # Fail-to-pass tests (verify the fix is present)
-  - id: test_rust_rake_file_contains_reenable
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md: High risk changes - Dependency updates / repin flows"
-    description: rust.rake contains reenable call for rust:update task
-
-  - id: test_rust_rake_file_contains_invoke_after_version
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md: High risk changes - Dependency updates / repin flows"
-    description: rust.rake invokes rust:update after version update
-
-  - id: test_rust_rake_has_comment_explaining_fix
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md: Comments should explain why"
-    description: rust.rake has comment explaining the repin fix
-
-  - id: test_rust_rake_comment_mentions_cargo_bazel_repin
-    type: fail_to_pass
-    origin: agent_config
-    source: "rust/AGENTS.md: Repin crates command"
-    description: rust.rake comment mentions CARGO_BAZEL_REPIN
-
-  - id: test_rust_rake_comment_mentions_mid_evaluation_conflict
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md: Comments should explain why"
-    description: rust.rake comment explains mid-evaluation file-hash conflict
-
-  - id: test_workflow_simplified_command
-    type: fail_to_pass
-    origin: code_review
-    description: workflow uses simplified update command without conditional
-
-  - id: test_reenable_comes_before_invoke
-    type: fail_to_pass
-    origin: code_review
-    description: reenable is called before invoke (correct ordering)
-
-  - id: test_invoke_in_version_task_block
-    type: fail_to_pass
-    origin: code_review
-    description: invoke is inside the version task block
-
-  # Pass-to-pass tests (repo baseline quality)
-  - id: test_rust_update_task_defined
-    type: pass_to_pass
-    origin: static
-    description: rust:update task is defined in rake file
-
-  - id: test_version_task_exists
-    type: pass_to_pass
-    origin: static
-    description: version task exists in rust.rake
-
-  - id: test_rake_file_valid_ruby_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: rust.rake has valid Ruby syntax (ruby -c)
-
-  - id: test_rust_bazel_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: Rust Bazel build passes (bazel build //rust:selenium-manager)
-
-  - id: test_rust_unit_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: Rust code formatting check passes (bazel test //rust:unit-fmt)
-
-  - id: test_bazel_query_rust_target
-    type: pass_to_pass
-    origin: repo_tests
-    description: Bazel can query Rust target (bazel query)
-
-  - id: test_rust_rake_file_has_cargo_toml_reference
-    type: pass_to_pass
-    origin: static
-    description: rust.rake references Cargo.toml for version updates
-
+- id: test_rust_rake_file_contains_reenable
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: ''
+  description: rust.rake contains reenable call for rust:update task
+- id: test_rust_rake_file_contains_invoke_after_version
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: ''
+  description: rust.rake invokes rust:update after version update
+- id: test_rust_rake_has_comment_explaining_fix
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: ''
+  description: rust.rake has comment explaining the repin fix
+- id: test_rust_rake_comment_mentions_cargo_bazel_repin
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: rust/AGENTS.md
+    lines: ''
+  description: rust.rake comment mentions CARGO_BAZEL_REPIN
+- id: test_rust_rake_comment_mentions_mid_evaluation_conflict
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: ''
+  description: rust.rake comment explains mid-evaluation file-hash conflict
+- id: test_workflow_simplified_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: workflow uses simplified update command without conditional
+- id: test_reenable_comes_before_invoke
+  type: fail_to_pass
+  origin: pr_diff
+  description: reenable is called before invoke (correct ordering)
+- id: test_invoke_in_version_task_block
+  type: fail_to_pass
+  origin: pr_diff
+  description: invoke is inside the version task block
+- id: test_rust_update_task_defined
+  type: pass_to_pass
+  origin: static
+  description: rust:update task is defined in rake file
+- id: test_version_task_exists
+  type: pass_to_pass
+  origin: static
+  description: version task exists in rust.rake
+- id: test_rake_file_valid_ruby_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: rust.rake has valid Ruby syntax (ruby -c)
+- id: test_rust_bazel_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust Bazel build passes (bazel build //rust:selenium-manager)
+- id: test_rust_unit_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust code formatting check passes (bazel test //rust:unit-fmt)
+- id: test_bazel_query_rust_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel can query Rust target (bazel query)
+- id: test_rust_rake_file_has_cargo_toml_reference
+  type: pass_to_pass
+  origin: static
+  description: rust.rake references Cargo.toml for version updates
 rubric:
-  - rule: "Comments should explain why, not what. Prefer well-named methods over comments that narrate code."
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "2fed1c09849431329f3e414479c627d652424f4e"
-
-  - rule: "After making changes to high-risk areas (dependency updates, repin flows), call out the risk areas touched and note any cross-binding impact."
-    source:
-      path: "AGENTS.md"
-      lines: "76-79, 82-84"
-      commit: "2fed1c09849431329f3e414479c627d652424f4e"
-
-  - rule: "When modifying Rake tasks that invoke other tasks, use reenable before invoke to ensure idempotent execution within the same Ruby process."
-    source:
-      path: "AGENTS.md"
-      lines: "17-18, 76-79"
-      commit: "2fed1c09849431329f3e414479c627d652424f4e"
+- rule: Comments should explain why, not what. Prefer well-named methods over comments
+    that narrate code.
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 2fed1c09849431329f3e414479c627d652424f4e
+- rule: After making changes to high-risk areas (dependency updates, repin flows),
+    call out the risk areas touched and note any cross-binding impact.
+  source:
+    path: AGENTS.md
+    lines: 76-79, 82-84
+    commit: 2fed1c09849431329f3e414479c627d652424f4e
+- rule: When modifying Rake tasks that invoke other tasks, use reenable before invoke
+    to ensure idempotent execution within the same Ruby process.
+  source:
+    path: AGENTS.md
+    lines: 17-18, 76-79
+    commit: 2fed1c09849431329f3e414479c627d652424f4e
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17320
+  base_commit: 2fed1c09849431329f3e414479c627d652424f4e
+  merge_commit: 8797d1650c771217e6a6b3edee5c0c862a6ddf52

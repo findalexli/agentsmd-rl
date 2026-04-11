@@ -1,14 +1,3 @@
-source_pr:
-  owner: MystenLabs
-  repo: sui
-  number: 26155
-  title: Re-enable benchmark smoke tests in CI
-  merge_commit: f6a774c2b71765b0bad451efe9b5ca171438eb72
-  base_commit: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
-agent_configs:
-- file: CLAUDE.md
-  lines: License comments section
-  rule: All new files must start with Apache-2.0 license and Copyright header
 checks:
 - id: test_min_tps_compiles
   type: fail_to_pass
@@ -23,45 +12,39 @@ checks:
   origin: pr_diff
   description: min_tps field exists in Opts struct with proper type Option<f64>
   source:
-    file: crates/sui-benchmark/src/options.rs
-    ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+    path: crates/sui-benchmark/src/options.rs
 - id: test_min_tps_validation_in_stress
   type: fail_to_pass
   origin: pr_diff
   description: min_tps validation logic exists in stress.rs with TPS calculation and
     error handling
   source:
-    file: crates/sui-benchmark/src/bin/stress.rs
-    ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+    path: crates/sui-benchmark/src/bin/stress.rs
 - id: test_license_header_options_rs
   type: pass_to_pass
   origin: agent_config
   description: options.rs has required Apache-2.0 license header per CLAUDE.md
   source:
-    file: CLAUDE.md
-    ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+    path: CLAUDE.md
 - id: test_license_header_stress_rs
   type: pass_to_pass
   origin: agent_config
   description: stress.rs has required Apache-2.0 license header per CLAUDE.md
   source:
-    file: CLAUDE.md
-    ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+    path: CLAUDE.md
 - id: test_repo_cargo_fmt
   type: pass_to_pass
   origin: repo_tests
   description: Repo code passes cargo fmt --check linting
   source:
-    file: .github/workflows/rust.yml
-    ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+    path: .github/workflows/rust.yml
 - id: test_repo_git_checks
   type: pass_to_pass
   origin: repo_tests
   description: Repo passes git sanity checks (no submodules, bad filenames, whitespace
     errors)
   source:
-    file: scripts/git-checks.sh
-    ref: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+    path: scripts/git-checks.sh
 rubric:
 - rule: 'All new files must start with Apache-2.0 license header: ''Copyright (c)
     Mysten Labs, Inc.'' and ''SPDX-License-Identifier: Apache-2.0'''
@@ -121,3 +104,9 @@ distractors:
 hierarchy_analysis: The hierarchy consists of a root CLAUDE.md and AGENTS.md. The
   root CLAUDE.md provides general Rust tooling commands. AGENTS.md delegates to crate-specific
   files which do not exist for sui-benchmark in this context.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26155
+  base_commit: b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
+  merge_commit: f6a774c2b71765b0bad451efe9b5ca171438eb72

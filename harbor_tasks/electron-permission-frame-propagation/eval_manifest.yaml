@@ -1,97 +1,81 @@
 source:
-  pr:
-    owner: electron
-    repo: electron
-    number: 50687
-    base_commit: 821b738db0a64c863e8371e7141564cef70d56b8
-    merge_commit: dbc7cbd00064e0f5791154ed6279cb49c1fcaef8
-  description: 'Fix permission checks to propagate the requesting frame (RenderFrameHost)
-    through
-
-    '
+  repo: electron/electron.git
+  pr: 0
+  base_commit: 821b738db0a64c863e8371e7141564cef70d56b8
+  merge_commit: ''
 checks:
 - id: check_permission_signature
   description: CheckPermission must accept requesting_frame as first parameter
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: C++ header guards and function signatures should follow Chromium style
+    path: CLAUDE.md
 - id: check_permission_uses_requesting_frame
   description: CheckPermission must use requesting_frame to get origin
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: Follows Chromium coding style for C++ code
+    path: CLAUDE.md
 - id: check_media_access_signature
   description: CheckMediaAccessPermission must accept requesting_frame parameter
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: Follows Chromium coding style
+    path: CLAUDE.md
 - id: check_media_access_passes_frame
   description: CheckMediaAccessPermission must pass requesting_frame to CheckPermission
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: Follows Chromium coding style
+    path: CLAUDE.md
 - id: web_contents_passes_render_frame_host
   description: WebContents::CheckMediaAccessPermission must pass render_frame_host
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: Follows Chromium coding style
+    path: CLAUDE.md
 - id: check_serial_access_signature
   description: CheckSerialAccessPermission must accept requesting_frame instead of
     origin
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: Follows Chromium coding style
+    path: CLAUDE.md
 - id: serial_delegate_passes_frame
   description: ElectronSerialDelegate must pass frame to CheckSerialAccessPermission
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: Follows Chromium coding style
+    path: CLAUDE.md
 - id: check_serial_access_uses_requesting_frame
   description: CheckSerialAccessPermission must use requesting_frame for security
     origin
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: Follows Chromium coding style
+    path: CLAUDE.md
 - id: header_guards_follow_convention
   description: Header guards must follow Electron's ELECTRON_SHELL_BROWSER_*_H_ convention
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: 'Header guards: #ifndef ELECTRON_SHELL_BROWSER_API_ELECTRON_API_{NAME}_H_'
+    path: CLAUDE.md
 - id: no_web_contents_primary_main_frame
   description: CheckPermission must not use GetPrimaryMainFrame, should use requesting_frame
-  type: agent_config
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 95-96
-    rule: Follows Chromium coding style
+    path: CLAUDE.md
 - id: clang_format
   description: Modified C++ files must pass clang-format check (pass_to_pass)
   type: pass_to_pass
@@ -191,3 +175,4 @@ distractors:
 hierarchy_analysis: Only a single root-level `CLAUDE.md` file is provided, so there
   are no hierarchical conflicts. The guidance focuses heavily on the build system
   (`e` commands) and the boundary between Electron code and Chromium patches.
+version: '2.0'

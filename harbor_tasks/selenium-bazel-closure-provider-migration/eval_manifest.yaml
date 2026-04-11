@@ -1,109 +1,80 @@
-source_pr:
-  owner: SeleniumHQ
-  repo: selenium
-  number: 17317
-  title: "fix(js): migrate closure_js_binary provider access to modern Starlark API"
-  merge_commit: 375a1fd34e90a884317fcac3522a4de7c08bff05
-  base_commit: 7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26
-
 checks:
-  # Fail-to-pass checks - these verify the fix was applied
-  - id: test_load_statement_present
-    type: fail_to_pass
-    origin: task_outputs
-    description: "ClosureJsBinaryInfo must be loaded from rules_closure"
-
-  - id: test_no_deprecated_getattr
-    type: fail_to_pass
-    origin: task_outputs
-    description: "Deprecated getattr(d, 'closure_js_binary', None) must be removed"
-
-  - id: test_new_provider_check_present
-    type: fail_to_pass
-    origin: task_outputs
-    description: "New provider check 'ClosureJsBinaryInfo in d' must be present"
-
-  - id: test_no_deprecated_field_access
-    type: fail_to_pass
-    origin: task_outputs
-    description: "Deprecated d.closure_js_binary.bin access must be removed"
-
-  - id: test_new_provider_access_present
-    type: fail_to_pass
-    origin: task_outputs
-    description: "New provider access d[ClosureJsBinaryInfo].bin must be present"
-
-  - id: test_bazel_syntax_valid
-    type: fail_to_pass
-    origin: task_outputs
-    description: "ClosureJsBinaryInfo should be used consistently throughout the file"
-
-  # Pass-to-pass checks - these verify general correctness
-  - id: test_file_exists
-    type: pass_to_pass
-    origin: task_outputs
-    description: "Target file must exist"
-
-  - id: test_binary_dict_update_correct
-    type: pass_to_pass
-    origin: task_outputs
-    description: "The binaries.update() call uses correct provider access"
-
-  - id: test_provider_check_in_loop
-    type: pass_to_pass
-    origin: task_outputs
-    description: "Provider check is correctly placed inside the deps loop"
-
-  - id: test_repo_build_files_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Required Bazel build files exist"
-
-  - id: test_repo_bazel_query
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Bazel query on javascript/private works"
-
-  - id: test_repo_bazel_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Bazel build of javascript/private works"
-
-  - id: test_repo_bazel_syntax_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Starlark syntax in javascript/private is valid"
-
-  - id: test_repo_buildifier_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Bazel Starlark files pass buildifier lint"
-
-# Agent config rules (from AGENTS.md and CLAUDE.md)
-agent_config:
-  - rule: "Prefer targeted Bazel commands; use bazel query to locate labels"
-    source: "AGENTS.md"
-    check_id: null  # Soft guideline, not programmatically verifiable
-
-  - rule: "Avoid repo-wide refactors/formatting; prefer small, reversible diffs"
-    source: "AGENTS.md"
-    check_id: null  # Soft guideline, covered by minimal change requirement
-
+- id: test_load_statement_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: ClosureJsBinaryInfo must be loaded from rules_closure
+- id: test_no_deprecated_getattr
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deprecated getattr(d, 'closure_js_binary', None) must be removed
+- id: test_new_provider_check_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: New provider check 'ClosureJsBinaryInfo in d' must be present
+- id: test_no_deprecated_field_access
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deprecated d.closure_js_binary.bin access must be removed
+- id: test_new_provider_access_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: New provider access d[ClosureJsBinaryInfo].bin must be present
+- id: test_bazel_syntax_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: ClosureJsBinaryInfo should be used consistently throughout the file
+- id: test_file_exists
+  type: pass_to_pass
+  origin: pr_diff
+  description: Target file must exist
+- id: test_binary_dict_update_correct
+  type: pass_to_pass
+  origin: pr_diff
+  description: The binaries.update() call uses correct provider access
+- id: test_provider_check_in_loop
+  type: pass_to_pass
+  origin: pr_diff
+  description: Provider check is correctly placed inside the deps loop
+- id: test_repo_build_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required Bazel build files exist
+- id: test_repo_bazel_query
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel query on javascript/private works
+- id: test_repo_bazel_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel build of javascript/private works
+- id: test_repo_bazel_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Starlark syntax in javascript/private is valid
+- id: test_repo_buildifier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel Starlark files pass buildifier lint
 rubric:
-  - rule: "Maintain API/ABI compatibility - users upgrade by changing only version number"
-    source:
-      path: "AGENTS.md"
-      lines: "12"
-      commit: "7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26"
-
-  - rule: "Comments should explain *why*, not *what* - prefer well-named methods over comments"
-    source:
-      path: "AGENTS.md"
-      lines: "70"
-      commit: "7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26"
-
-  - rule: "Prefer copying files to deleting and recreating to maintain git history"
-    source:
-      path: "AGENTS.md"
-      lines: "72"
-      commit: "7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26"
+- rule: Maintain API/ABI compatibility - users upgrade by changing only version number
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26
+- rule: Comments should explain *why*, not *what* - prefer well-named methods over
+    comments
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26
+- rule: Prefer copying files to deleting and recreating to maintain git history
+  source:
+    path: AGENTS.md
+    lines: '72'
+    commit: 7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17317
+  base_commit: 7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26
+  merge_commit: 375a1fd34e90a884317fcac3522a4de7c08bff05

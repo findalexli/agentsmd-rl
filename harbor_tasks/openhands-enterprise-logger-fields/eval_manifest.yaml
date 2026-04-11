@@ -1,41 +1,37 @@
-task_name: openhands-enterprise-logger-fields
-source_pr: All-Hands-AI/OpenHands#13612
-base_commit: 8f87ef59c72f1c7bae2b937164caf99731ac8e83
-merge_commit: 5f064fa88b683b28e00568cc637e4473c714d12d
 checks:
 - id: test_logger_includes_module_field
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Logger output must include 'module' field with correct module name
 - id: test_logger_includes_funcname_field
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Logger output must include 'funcName' field with calling function name
 - id: test_logger_includes_lineno_field
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Logger output must include 'lineno' field with line number
 - id: test_logger_all_fields_present
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: All required log fields (message, severity, module, funcName, lineno)
     must be present
 - id: test_logger_error_level_includes_fields
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Error level logs must also include module, funcName, lineno fields
 - id: test_logger_with_extra_fields
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Logs with extra fields must include module, funcName, lineno alongside
     extras
 - id: test_code_syntax_valid
   type: pass_to_pass
-  origin: structural
+  origin: pr_diff
   description: Modified file must have valid Python syntax
 - id: test_logger_json_formatter_imports
   type: pass_to_pass
-  origin: structural
+  origin: pr_diff
   description: Logger module must import JsonFormatter and setup_json_logger correctly
 - id: test_repo_ruff_lint
   type: pass_to_pass
@@ -106,3 +102,9 @@ hierarchy_analysis: The `AGENTS.md` file provides general repository guidelines 
   boundary with its own testing commands (using `poetry` instead of the root `make`
   commands). The agent must prioritize the specific instructions in the issue description
   over the general repository structure and testing rules in `AGENTS.md`.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13612
+  base_commit: 8f87ef59c72f1c7bae2b937164caf99731ac8e83
+  merge_commit: ''

@@ -1,93 +1,62 @@
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 102109
-  title: Use Settings for CIDB secrets in collect_statistics.py
-  merge_commit: da8ef1e1609917391264ae6710b3546afba8e482
-  base_commit: bc855b917b3f456bfd6198c5bc29a1bc5672aabf
-agent_config_sources:
-- file: .claude/CLAUDE.md
-  url: https://github.com/ClickHouse/ClickHouse/blob/bc855b917b3f456bfd6198c5bc29a1bc5672aabf/.claude/CLAUDE.md
-- file: AGENTS.md
-  url: https://github.com/ClickHouse/ClickHouse/blob/bc855b917b3f456bfd6198c5bc29a1bc5672aabf/AGENTS.md
-- file: .github/copilot-instructions.md
-  url: https://github.com/ClickHouse/ClickHouse/blob/bc855b917b3f456bfd6198c5bc29a1bc5672aabf/.github/copilot-instructions.md
 checks:
 - id: syntax_valid
-  name: Python syntax validation
   type: pass_to_pass
   description: Verifies the file has valid Python syntax
+  origin: pr_diff
 - id: no_hardcoded_secret_names
-  name: No hardcoded secret names
   type: fail_to_pass
   description: Hardcoded secret names like 'clickhouse-test-stat-url' should be removed
-  origin: behavioral
+  origin: pr_diff
 - id: settings_imported
-  name: Settings class imported
   type: fail_to_pass
   description: Settings should be imported from ci.praktika.settings
-  origin: behavioral
+  origin: pr_diff
 - id: info_imported
-  name: Info class imported
   type: fail_to_pass
   description: Info should be imported from ci.praktika.info
-  origin: behavioral
+  origin: pr_diff
 - id: settings_constants_used
-  name: Settings constants used
   type: fail_to_pass
   description: Should use Settings.SECRET_CI_DB_URL, SECRET_CI_DB_USER, SECRET_CI_DB_PASSWORD
-  origin: behavioral
+  origin: pr_diff
 - id: info_get_secret_used
-  name: Info.get_secret pattern used
   type: fail_to_pass
   description: Should use info.get_secret() pattern instead of Secret.Config().get_value()
-  origin: behavioral
+  origin: pr_diff
 - id: cidb_initialized_with_variables
-  name: CIDB initialized with variables
   type: pass_to_pass
   description: CIDB should be initialized with url/user/pwd variables
+  origin: pr_diff
 - id: no_secret_class_import
-  name: No direct Secret import
   type: fail_to_pass
   description: Should not import Secret directly from ci.praktika
-  origin: behavioral
+  origin: pr_diff
 - id: repo_black_formatting
-  name: Repo Black formatting check
   type: pass_to_pass
   description: Black formatting check passes on the modified file
   origin: repo_tests
 - id: repo_python_ast_valid
-  name: Repo Python AST validation
   type: pass_to_pass
   description: Python files have valid AST
   origin: repo_tests
 - id: repo_python_syntax
-  name: Repo Python syntax validation
   type: pass_to_pass
   description: Python file has valid syntax (py_compile)
   origin: repo_tests
 - id: repo_ci_pytest_xfail
-  name: Repo CI pytest xfail/xpass tests
   type: pass_to_pass
   description: CI internal tests for pytest result parsing pass
   origin: repo_tests
 rubric:
 - rule: When mentioning logical errors, say 'exception' instead of 'crash'
-  source: .claude/CLAUDE.md
-  description: ClickHouse uses 'exception' terminology for logical errors
+  source:
+    path: .claude/CLAUDE.md
 - rule: Write names of functions and methods without parentheses
-  source: .claude/CLAUDE.md
-  description: Prefer 'get_secret' over 'get_secret()' for function references
+  source:
+    path: .claude/CLAUDE.md
 - rule: Wrap literal names from ClickHouse code inside inline code blocks
-  source: .claude/CLAUDE.md
-  description: Code elements like Settings, CIDB, Secret should be in backticks
-metadata:
-  language: python
-  domain: ci
-  change_type: refactoring
-  estimated_difficulty: easy
-  lines_changed: 23 (14 deletions, 9 additions)
-  files_modified: 1
+  source:
+    path: .claude/CLAUDE.md
 distractors:
 - rule: Links to ClickHouse CI should be analyzed using the tool at .claude/tools/fetch_ci_report.js
     (which has options like --cidb for CIDB links).
@@ -105,3 +74,9 @@ hierarchy_analysis: The AGENTS.md file contains general repository guidelines an
   tool instructions. Since the task is a straightforward Python refactoring job, most
   of the rules in AGENTS.md (which focus on git workflow, documentation formatting,
   and CI analysis tools) do not apply directly to the code changes.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102109
+  base_commit: bc855b917b3f456bfd6198c5bc29a1bc5672aabf
+  merge_commit: da8ef1e1609917391264ae6710b3546afba8e482

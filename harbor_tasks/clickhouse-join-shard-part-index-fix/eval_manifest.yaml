@@ -1,13 +1,3 @@
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 101961
-  base_commit: 283163272e7318fb1825ebf1b68fdc510cd984d9
-  merge_commit: f43fa1b85ca52d96dd869afee6bdf8fbe39e7c32
-task_metadata:
-  name: clickhouse-join-shard-part-index-fix
-  difficulty: medium
-  estimated_time: 45 minutes
 checks:
 - id: test_fix_part_index_renumbering
   type: fail_to_pass
@@ -26,33 +16,45 @@ checks:
 - id: test_fix_has_explanatory_comment
   type: pass_to_pass
   origin: agent_config
-  source: .claude/CLAUDE.md - Complex code should have explanatory comments
+  source:
+    path: .claude/CLAUDE.md - Complex code should have explanatory comments
+    lines: ''
   description: Fix includes explanatory comment about filterPartsByQueryConditionCache
 - id: test_allman_brace_style
   type: pass_to_pass
   origin: agent_config
-  source: .claude/CLAUDE.md - Allman-style braces required (opening brace on new line)
+  source:
+    path: .claude/CLAUDE.md - Allman-style braces required (opening brace on new line)
+    lines: ''
   description: Code follows Allman-style braces (enforced by CI style check)
 - id: test_no_sleep_in_code
   type: pass_to_pass
   origin: agent_config
-  source: .claude/CLAUDE.md - Never use sleep in C++ code to fix race conditions
+  source:
+    path: .claude/CLAUDE.md - Never use sleep in C++ code to fix race conditions
+    lines: ''
   description: No sleep calls in the modified code
 - id: test_function_naming_convention
   type: pass_to_pass
   origin: agent_config
-  source: .claude/CLAUDE.md - Use lowercase_with_underscores for variable names
+  source:
+    path: .claude/CLAUDE.md - Use lowercase_with_underscores for variable names
+    lines: ''
   description: Variable names follow lowercase_with_underscores convention
 - id: test_no_raw_pointers_in_fix
   type: pass_to_pass
   origin: agent_config
-  source: AGENTS.md / .claude/skills/review/SKILL.md - Raw pointers with unclear ownership
-    are risky
+  source:
+    path: AGENTS.md / .claude/skills/review/SKILL.md - Raw pointers with unclear ownership
+      are risky
+    lines: ''
   description: Fix doesn't introduce raw pointer issues
 - id: test_explanatory_comment_formatting
   type: pass_to_pass
   origin: agent_config
-  source: .claude/CLAUDE.md - Write function names as `f` instead of `f()`
+  source:
+    path: .claude/CLAUDE.md - Write function names as `f` instead of `f()`
+    lines: ''
   description: Comments follow function naming convention (no () in function references)
 - id: test_target_file_exists
   type: pass_to_pass
@@ -172,12 +174,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'Repo CI: No std::format - use fmt::format'
-- item: Code quality
-  description: The fix is minimal and focused on the specific bug
-  weight: low
-- item: Comment quality
-  description: The comment explains WHY the fix is needed, not just WHAT
-  weight: low
+- description: The fix is minimal and focused on the specific bug
+  type: fail_to_pass
+  origin: pr_diff
+  id: the_fix_is_minimal_and_focused_on_the_specific_bug
+- description: The comment explains WHY the fix is needed, not just WHAT
+  type: fail_to_pass
+  origin: pr_diff
+  id: the_comment_explains_why_the_fix_is_needed_not_jus
 rubric:
 - rule: C++ code must use Allman-style braces (opening brace on a new line) - enforced
     by CI style check
@@ -243,3 +247,9 @@ hierarchy_analysis: The AGENTS.md file contains rules about documentation and co
   scope ambiguity because 'comments' could mean GitHub PR comments or C++ source code
   comments. The gold solution demonstrates that these markdown-specific formatting
   rules do not strictly apply to C++ source code comments (`///`).
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 101961
+  base_commit: 283163272e7318fb1825ebf1b68fdc510cd984d9
+  merge_commit: f43fa1b85ca52d96dd869afee6bdf8fbe39e7c32

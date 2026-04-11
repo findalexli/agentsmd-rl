@@ -1,121 +1,79 @@
 source:
-  pr: All-Hands-AI/OpenHands#13579
-  title: APP-1115 Fix for AWS config (Minio) for feature branches
-  merge_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
+  repo: All-Hands-AI/OpenHands
+  pr: 13579
   base_commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
+  merge_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
 checks:
 - id: test_endpoint_no_env_returns_none
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestGetDefaultAwsEndpointUrl::test_no_env_vars_returns_none
-  category: f2p
+  type: fail_to_pass
   description: _get_default_aws_endpoint_url returns None when no env vars set
+  origin: pr_diff
 - id: test_endpoint_https_prefix_secure
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestGetDefaultAwsEndpointUrl::test_endpoint_with_https_prefix_secure
-  category: f2p
+  type: fail_to_pass
   description: Endpoint URL with https:// prefix when secure=true
+  origin: pr_diff
 - id: test_endpoint_adds_https_when_secure
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestGetDefaultAwsEndpointUrl::test_endpoint_without_prefix_secure_adds_https
-  category: f2p
+  type: fail_to_pass
   description: Adds https:// prefix when secure=true and no protocol
+  origin: pr_diff
 - id: test_endpoint_http_prefix_insecure
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestGetDefaultAwsEndpointUrl::test_endpoint_with_http_prefix_insecure
-  category: f2p
+  type: fail_to_pass
   description: Endpoint URL with http:// prefix when secure=false
+  origin: pr_diff
 - id: test_endpoint_adds_http_when_insecure
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestGetDefaultAwsEndpointUrl::test_endpoint_without_prefix_insecure_adds_http
-  category: f2p
+  type: fail_to_pass
   description: Adds http:// prefix when secure=false and no protocol
+  origin: pr_diff
 - id: test_endpoint_http_to_https_conversion
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestGetDefaultAwsEndpointUrl::test_endpoint_http_converted_to_https_when_secure
-  category: f2p
+  type: fail_to_pass
   description: Converts http:// to https:// when secure=true
+  origin: pr_diff
 - id: test_endpoint_https_to_http_conversion
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestGetDefaultAwsEndpointUrl::test_endpoint_https_converted_to_http_when_insecure
-  category: f2p
+  type: fail_to_pass
   description: Converts https:// to http:// when secure=false
+  origin: pr_diff
 - id: test_secure_defaults_true
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestGetDefaultAwsEndpointUrl::test_secure_defaults_to_true
-  category: f2p
+  type: fail_to_pass
   description: AWS_S3_SECURE defaults to true when not set
+  origin: pr_diff
 - id: test_injector_endpoint_from_env
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestAwsEventServiceInjectorEndpointUrl::test_injector_endpoint_url_populated_from_env
-  category: f2p
+  type: fail_to_pass
   description: AwsEventServiceInjector.endpoint_url populated from env via Field default_factory
+  origin: pr_diff
 - id: test_injector_accepts_custom_endpoint
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestAwsEventServiceInjectorEndpointUrl::test_injector_accepts_custom_endpoint_url
-  category: f2p
+  type: fail_to_pass
   description: AwsEventServiceInjector accepts custom endpoint_url parameter
+  origin: pr_diff
 - id: test_injector_endpoint_none_no_env
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestAwsEventServiceInjectorEndpointUrl::test_injector_endpoint_url_none_when_no_env
-  category: f2p
+  type: fail_to_pass
   description: AwsEventServiceInjector.endpoint_url is None when no env vars set
+  origin: pr_diff
 - id: test_injector_has_endpoint_attribute
-  type: pytest
-  file: tests/test_outputs.py
-  test: TestEndpointUrlUsedInS3Client::test_injector_has_endpoint_url_attribute
-  category: f2p
+  type: fail_to_pass
   description: AwsEventServiceInjector has endpoint_url as a class field
+  origin: pr_diff
 - id: test_repo_python_syntax
   type: pass_to_pass
-  file: tests/test_outputs.py
-  test: test_repo_python_syntax
-  category: p2p
   origin: repo_tests
   description: Python syntax validation for modified file
 - id: test_repo_ast_parses
   type: pass_to_pass
-  file: tests/test_outputs.py
-  test: test_repo_ast_parses
-  category: p2p
   origin: repo_tests
   description: Python AST parsing for modified file
 - id: test_repo_ruff_check
   type: pass_to_pass
-  file: tests/test_outputs.py
-  test: test_repo_ruff_check
-  category: p2p
   origin: repo_tests
   description: Repo's ruff linter passes for modified file
 - id: test_repo_ruff_format_check
   type: pass_to_pass
-  file: tests/test_outputs.py
-  test: test_repo_ruff_format_check
-  category: p2p
   origin: repo_tests
   description: Repo's ruff format check passes for modified file
 - id: test_repo_mypy_typecheck
   type: pass_to_pass
-  file: tests/test_outputs.py
-  test: test_repo_mypy_typecheck
-  category: p2p
   origin: repo_tests
   description: Repo's mypy typecheck passes for modified file
 - id: test_repo_modified_file_exists
   type: pass_to_pass
-  file: tests/test_outputs.py
-  test: test_repo_modified_file_exists
-  category: p2p
   origin: repo_tests
   description: Primary modified file exists and is readable
 rubric:
@@ -166,3 +124,4 @@ distractors:
 hierarchy_analysis: The repository has a single root-level `AGENTS.md` file providing
   general setup, git practices, and PR artifact guidelines. There are no conflicting
   child configs.
+version: '2.0'

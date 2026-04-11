@@ -1,98 +1,57 @@
-source_pr:
-  owner: dagster-io
-  repo: dagster
-  number: 33296
-  title: Accept digest for init container image
-  merge_commit: 2bf0f9b68618e6a0f9010512fded4d9dc869b1bd
-  base_commit: f0c823c061cb859c0f6ab8fe1944a2f48e182eb3
 checks:
 - id: f2p_init_container_string
-  name: Legacy string image format works
   description: Init containers with legacy string image format still work
-  test_function: test_init_container_string_image_format
-  category: fail_to_pass
-  points: 2
+  type: fail_to_pass
+  origin: pr_diff
 - id: f2p_init_container_structured_tag
-  name: Structured image with tag works
   description: Init container with structured image format using tag renders correctly
-  test_function: test_init_container_structured_image_with_tag
-  category: fail_to_pass
-  points: 2
+  type: fail_to_pass
+  origin: pr_diff
 - id: f2p_init_container_structured_digest
-  name: Structured image with digest works
   description: Init container with structured image format using digest renders correctly
-  test_function: test_init_container_structured_image_with_digest
-  category: fail_to_pass
-  points: 2
+  type: fail_to_pass
+  origin: pr_diff
 - id: f2p_digest_precedence
-  name: Digest takes precedence over tag
   description: When both tag and digest specified, digest should take precedence
-  test_function: test_init_container_digest_takes_precedence
-  category: fail_to_pass
-  points: 2
+  type: fail_to_pass
+  origin: pr_diff
 - id: f2p_pull_policy
-  name: pullPolicy is properly set
   description: pullPolicy is properly passed through for structured images
-  test_function: test_init_container_pull_policy
-  category: fail_to_pass
-  points: 1
+  type: fail_to_pass
+  origin: pr_diff
 - id: f2p_multiple_mixed
-  name: Multiple init containers with mixed formats
   description: Multiple init containers with string and structured formats work together
-  test_function: test_init_container_multiple_mixed_formats
-  category: fail_to_pass
-  points: 1
+  type: fail_to_pass
+  origin: pr_diff
 - id: f2p_python_schema
-  name: Python schema classes exist
   description: InitContainerImage and InitContainerWithStructuredImage classes are
     properly defined
-  test_function: test_python_schema_classes_exist
-  category: fail_to_pass
-  points: 2
+  type: fail_to_pass
+  origin: pr_diff
 - id: p2p_schema_updated
-  name: values.schema.json includes new schema
   description: JSON schema files include InitContainerImage and InitContainerWithStructuredImage
     definitions
-  test_function: test_values_schema_updated
-  category: pass_to_pass
-  points: 1
+  type: fail_to_pass
+  origin: pr_diff
 - id: p2p_helpers_tpl
-  name: _helpers.tpl has helper definitions
   description: Helm template helpers for init container image processing are defined
-  test_function: test_helpers_tpl_has_init_container_definitions
-  category: pass_to_pass
-  points: 1
+  type: fail_to_pass
+  origin: pr_diff
 - id: p2p_deployment_template
-  name: deployment template uses helper
   description: deployment-user.yaml uses the dagster.initContainer helper
-  test_function: test_deployment_template_uses_helper
-  category: pass_to_pass
-  points: 1
+  type: fail_to_pass
+  origin: pr_diff
 - id: p2p_repo_schema_tests
-  name: Repo's schema tests pass
   description: Run the repo's own schema_tests/test_user_deployments.py tests (65
     tests)
-  test_function: test_repo_schema_tests
-  category: pass_to_pass
-  points: 1
   origin: repo_tests
+  type: fail_to_pass
 - id: p2p_repo_helm_lint
-  name: Helm chart passes linting
   description: Run helm lint on dagster-user-deployments chart
-  test_function: test_repo_helm_lint
-  category: pass_to_pass
-  points: 1
   origin: repo_tests
+  type: fail_to_pass
 rubric:
 - rule: Helm chart changes follow the existing schema patterns in helm/dagster/schema/
-  note: Gold solution uses Pydantic BaseModel following existing patterns
-agent_config:
-- rule: Code quality - RUN AFTER EVERY PYTHON EDIT
-  description: After ANY Python code changes, ALWAYS run `make ruff`
-  applicable: false
-scoring:
-  max_points: 17
-  passing_threshold: 12
 distractors:
 - rule: ALWAYS check this before writing data structures - use @record instead of
     @dataclass.
@@ -118,3 +77,9 @@ hierarchy_analysis: The CLAUDE.md file provides general Python and UI developmen
   guidelines, but lacks specific instructions for Helm chart development. The rules
   are heavily biased towards the core Python framework and React UI, which can mislead
   an agent working on the Helm schema generation scripts located in the `helm/` directory.
+version: '2.0'
+source:
+  repo: dagster-io/dagster
+  pr: 33296
+  base_commit: f0c823c061cb859c0f6ab8fe1944a2f48e182eb3
+  merge_commit: 2bf0f9b68618e6a0f9010512fded4d9dc869b1bd

@@ -1,21 +1,21 @@
 source:
   repo: SeleniumHQ/selenium
-  pr_number: 17233
+  pr: 0
   base_commit: 4bb23f484eec6f986b563fb3146cb64dcbcc0187
   merge_commit: d4fb256426eed10e0b0e37c8d16a7b969d1e1848
 checks:
 - id: test_runtime_exception_not_wrapped
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: RuntimeException from supplier is NOT wrapped in InitializationException
 - id: test_various_runtime_exceptions
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Various RuntimeException subclasses (IllegalArgument, NullPointer,
     etc.) are preserved
 - id: test_checked_exception_still_wrapped
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Checked exceptions are still properly wrapped in InitializationException
 - id: test_file_compiles
   type: pass_to_pass
@@ -36,12 +36,12 @@ checks:
 - id: agent_config_exception_handling
   type: fail_to_pass
   origin: agent_config
-  source: java/AGENTS.md
+  source:
+    path: java/AGENTS.md
+    lines: ''
   description: Preserve RuntimeException types instead of wrapping in InitializationException
 rubric:
 - rule: Follow Java code conventions from java/AGENTS.md
-  description: Logging, deprecation, and documentation style
-  weight: optional
 - rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
   source:
     path: AGENTS.md
@@ -85,3 +85,4 @@ hierarchy_analysis: The root `AGENTS.md` provides general guidelines on testing,
   in the config hierarchy. Furthermore, the prompt's instruction to write a 'small
   Java program' for testing overrides the general 'prefer writing a test for it first'
   rule which implies adding a test to the repo.
+version: '2.0'

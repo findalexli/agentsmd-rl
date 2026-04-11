@@ -1,37 +1,31 @@
-evaluation_format_version: 1.0
-task:
-  name: kotlin-noreturn-exception-fix
-  source_pr: JetBrains/kotlin#5745
-  base_commit: c962899eaa18746e5b6f2e4d9a6d0f5785d49a06
-  merge_commit: ba6c05e8cd6a1eb47df280eba395c2043a881f9f
 checks:
 - id: test_exceptions_h_has_noreturn
   type: fail_to_pass
-  origin: task_outputs
+  origin: pr_diff
   description: Exceptions.h declares HandleCurrentExceptionWhenLeavingKotlinCode with
     RUNTIME_NORETURN
 - id: test_exceptions_cpp_has_noreturn
   type: fail_to_pass
-  origin: task_outputs
+  origin: pr_diff
   description: Exceptions.cpp defines HandleCurrentExceptionWhenLeavingKotlinCode
     with RUNTIME_NORETURN
 - id: test_c_adapter_exporter_has_noreturn
   type: fail_to_pass
-  origin: task_outputs
+  origin: pr_diff
   description: CAdapterApiExporter.kt generates HandleCurrentExceptionWhenLeavingKotlinCode
     with RUNTIME_NORETURN
 - id: test_function_actually_terminates
   type: fail_to_pass
-  origin: task_outputs
+  origin: pr_diff
   description: HandleCurrentExceptionWhenLeavingKotlinCode implementation calls std::terminate
     or rethrows
 - id: test_noreturn_macro_defined
   type: fail_to_pass
-  origin: task_outputs
+  origin: pr_diff
   description: RUNTIME_NORETURN macro is defined and used in the codebase
 - id: test_all_three_locations_consistent
   type: fail_to_pass
-  origin: task_outputs
+  origin: pr_diff
   description: All three locations (h, cpp, kt) consistently use RUNTIME_NORETURN
 - id: test_files_exist
   type: pass_to_pass
@@ -105,12 +99,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: Common.h defines required attribute macros
-agent_config:
-- rule: When modifying C++ headers and implementations, keep declarations consistent
-  source: general C++ best practices
-  check_type: programmatic
-  test_ids:
-  - test_all_three_locations_consistent
 rubric:
 - rule: Use area prefix in commit subject line (e.g., [K/N] for Kotlin/Native changes)
   source:
@@ -137,3 +125,9 @@ hierarchy_analysis: The provided configuration files (`CLAUDE.md` and `AGENTS.md
   contain no specific coding rules or conventions applicable to this PR. They primarily
   serve as pointers to external guideline files (`.ai/guidelines.md` and `.claude/local.md`)
   which are not present in the context.
+version: '2.0'
+source:
+  repo: JetBrains/kotlin.git
+  pr: 0
+  base_commit: c962899eaa18746e5b6f2e4d9a6d0f5785d49a06
+  merge_commit: ''

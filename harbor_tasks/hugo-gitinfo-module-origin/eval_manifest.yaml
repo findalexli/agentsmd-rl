@@ -1,59 +1,48 @@
-source_pr:
-  owner: gohugoio
-  repo: hugo
-  number: 14565
-  base_commit: 68059972e8789258447e31ca23641c79598d66be
-  merge_commit: d98cd4aecf25b9df78d811759ea6135b0c7610f1
 checks:
 - id: test_module_origin_iszero_true_when_empty
   description: ModuleOrigin.IsZero() returns true when URL is empty
-  type: f2p
-  points: 15
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_loadgitinfo_returns_error
   description: loadGitInfo returns error instead of just logging
-  type: f2p
-  points: 15
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_origin_check_with_iszero_in_gitinfo
   description: gitinfo.go checks !mod.Origin().IsZero() before using Origin
-  type: f2p
-  points: 15
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_client_handles_nil_origin
   description: client.go handles nil Origin by loading from .info file
-  type: f2p
-  points: 20
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_syntax_compiles
   description: Modified Go code compiles without syntax errors
-  type: p2p
-  points: 20
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_module_origin_struct_has_fields
   description: ModuleOrigin struct has expected fields
-  type: p2p
-  points: 15
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_repo_gofmt
   description: Repo's Go code passes gofmt formatting check
   type: pass_to_pass
   origin: repo_tests
-  points: 10
 - id: test_repo_vet
   description: Repo's Go code passes go vet static analysis
   type: pass_to_pass
   origin: repo_tests
-  points: 10
 - id: test_repo_build
   description: Repo's Go code builds successfully
   type: pass_to_pass
   origin: repo_tests
-  points: 10
 - id: test_repo_modules_tests
   description: Tests for modules package pass
   type: pass_to_pass
   origin: repo_tests
-  points: 10
 - id: test_repo_hugolib_tests
   description: Tests for hugolib package pass
   type: pass_to_pass
   origin: repo_tests
-  points: 10
 rubric:
 - rule: 'Go code fix: IsZero() method should be concise and follow brevity principle'
   source:
@@ -74,20 +63,6 @@ rubric:
   evidence: The `info` struct used to unmarshal the JSON file in `modules/client.go`
     is defined inline and unexported, preventing unnecessary package-level exports.
   category: architecture
-agent_config:
-- file: AGENTS.md
-  lines: 1-14
-  rules:
-  - Brevity is good - don't write novels in code or comments
-  - Assume Go experts - don't explain the obvious
-  - Use self-explanatory variable and function names
-  - Use short variable names when context is clear
-  - Use hdebug.Printf for temporary debug (CI fails if not removed)
-  - Never export symbols not needed outside the package
-  - Avoid global state at (almost) all cost
-  - Look for helper functions before creating new ones
-  - In tests, use qt matchers instead of raw if/t.Fatal
-  - In tests, use latest Hugo specification (layouts/page.html not layouts/_default/single.html)
 distractors:
 - rule: Brevity is good. This applies to code, comments and commit messages. Don't
     write a novel.
@@ -115,3 +90,9 @@ hierarchy_analysis: 'The AGENTS.md file provides general Go conventions. The rul
   a complex workaround for an upstream Go bug (issue #67363). The agent must recognize
   that documenting a hack/workaround is not ''explaining the obvious'' and supersedes
   the brevity rule.'
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14565
+  base_commit: 68059972e8789258447e31ca23641c79598d66be
+  merge_commit: d98cd4aecf25b9df78d811759ea6135b0c7610f1

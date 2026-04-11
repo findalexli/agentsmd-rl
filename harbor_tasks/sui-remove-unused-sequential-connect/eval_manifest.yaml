@@ -1,39 +1,23 @@
-source_pr:
-  owner: MystenLabs
-  repo: sui
-  number: 26092
-  merge_commit: 1cc9377f4f6646c89e85e257ff8509e6df11e945
-  base_commit: 3ac6f119a3ce41fccb9df0293a51e40ed6fadae3
-task_name: sui-remove-unused-sequential-connect
-title: Remove unused SequentialStore::sequential_connect function
-description: 'The SequentialStore trait in sui-indexer-alt-framework-store-traits
-  has a vestigial
-
-  `sequential_connect` method that is no longer used anywhere. This task requires
-
-  removing this unused method along with its associated unused import.
-
-  '
 checks:
 - id: test_compilation_after_removal
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Crate compiles after removing the unused function
 - id: test_sequential_connect_function_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: SequentialStore::sequential_connect function has been removed
 - id: test_unused_import_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Unused anyhow::Context import has been removed
 - id: test_transaction_method_still_present
   type: pass_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: The transaction method still exists (structural sanity check)
 - id: test_sequential_store_trait_intact
   type: pass_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: SequentialStore trait definition is still intact
 - id: test_cargo_check_entire_indexer
   type: pass_to_pass
@@ -59,20 +43,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo custom xlint (license check) passes
-agent_config:
-- rule: 'All new files must start with license header: Copyright (c) Mysten Labs,
-    Inc. SPDX-License-Identifier: Apache-2.0'
-  source: CLAUDE.md
-  type: programmatic
-- rule: Use cargo check instead of cargo build for faster feedback
-  source: CLAUDE.md
-  type: programmatic
-- rule: 'Run tests with: SUI_SKIP_SIMTESTS=1 cargo nextest run'
-  source: CLAUDE.md
-  type: programmatic
-- rule: Consult crate-specific CLAUDE.md files when changing files in those crates
-  source: CLAUDE.md
-  type: soft
 rubric:
 - rule: 'Never use #[allow(dead_code)], #[allow(unused)], or other linting suppressions
     - fix the underlying issues instead'
@@ -92,15 +62,6 @@ rubric:
     path: CLAUDE.md
     lines: '118'
     commit: 3ac6f119a3ce41fccb9df0293a51e40ed6fadae3
-metadata:
-  difficulty: easy
-  language: rust
-  estimated_time: 10
-  tags:
-  - rust
-  - cleanup
-  - dead-code-removal
-  - indexer
 distractors:
 - rule: Run e2e tests with `cargo simtest` and Rust unittests with `cargo nextest
     run`
@@ -126,3 +87,9 @@ hierarchy_analysis: The root CLAUDE.md provides general testing and linting comm
   that apply globally. However, the prompt provides specific, scoped verification
   instructions (`cargo check -p ...`) that should override the global, time-consuming
   test commands for this specific task.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26092
+  base_commit: 3ac6f119a3ce41fccb9df0293a51e40ed6fadae3
+  merge_commit: 1cc9377f4f6646c89e85e257ff8509e6df11e945

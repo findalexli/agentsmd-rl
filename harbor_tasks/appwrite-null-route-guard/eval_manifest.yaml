@@ -1,92 +1,63 @@
-source_pr:
-  owner: appwrite
-  repo: appwrite
-  number: 11809
-  merge_commit: d200b07466ae8db6ce9b100f8c41b3569f46cf28
-  base_commit: 951a96ae01bceaabe6e2fb936686b7953209ce19
-title: 'Appwrite: Handle null routes in API middleware'
-description: Fix null pointer exception when requests reach API middleware without
-  a matched route. Add guards that throw GENERAL_ROUTE_NOT_FOUND instead of fatalling
-  on null $route.
 checks:
 - id: null_route_guard_in_init_action
   type: pass_to_pass
   description: Verify the Http::init action has a null guard after $route = $utopia->getRoute()
     that throws GENERAL_ROUTE_NOT_FOUND
-  points: 2
+  origin: pr_diff
 - id: null_route_guard_in_shutdown_action
   type: fail_to_pass
   description: Verify the shutdown action has a null guard after $route = $utopia->getRoute()
     that throws GENERAL_ROUTE_NOT_FOUND
-  points: 2
+  origin: pr_diff
 - id: no_direct_route_dereference_without_check
   type: pass_to_pass
   description: Verify that $route is not directly dereferenced without a preceding
     null guard
-  points: 1
+  origin: pr_diff
 - id: php_syntax_valid
   type: pass_to_pass
   description: Verify the PHP file has valid syntax after modifications
-  points: 1
+  origin: pr_diff
 - id: correct_exception_constant_used
   type: pass_to_pass
   description: Verify that GENERAL_ROUTE_NOT_FOUND is used consistently in both guards
-  points: 1
+  origin: pr_diff
 - id: repo_composer_valid
   type: pass_to_pass
   origin: repo_tests
   description: Repo's composer.json passes validation (composer validate)
-  points: 1
 - id: repo_php_syntax_all
   type: pass_to_pass
   origin: repo_tests
   description: Repo's PHP files have valid syntax (php -l)
-  points: 1
 - id: repo_lint
   type: pass_to_pass
   origin: repo_tests
   description: Repo's PHP files pass PSR-12 linting (pint)
-  points: 1
 - id: repo_static_analysis
   type: pass_to_pass
   origin: repo_tests
   description: Repo's PHP files pass PHPStan static analysis
-  points: 1
 - id: repo_static_analysis_full
   type: pass_to_pass
   origin: repo_tests
   description: Full PHPStan analysis on src, app, bin, tests
-  points: 1
 - id: repo_unit_cors
   type: pass_to_pass
   origin: repo_tests
   description: CORS unit tests pass (related to API handling)
-  points: 1
 - id: repo_unit_detector
   type: pass_to_pass
   origin: repo_tests
   description: Detector unit tests pass (client/device detection used in API)
-  points: 1
 - id: repo_unit_collections
   type: pass_to_pass
   origin: repo_tests
   description: Collections validation unit tests pass
-  points: 1
 - id: repo_unit_branch_domain
   type: pass_to_pass
   origin: repo_tests
   description: Branch domain validation unit tests pass (routing logic)
-  points: 1
-agent_config:
-- source: AGENTS.md
-  applies: true
-  description: PHP PSR-12 formatting, sparse Document updates, no hardcoded credentials
-- source: CLAUDE.md
-  applies: true
-  description: '@AGENTS.md - references main project conventions'
-- source: src/Appwrite/Platform/AGENTS.md
-  applies: false
-  description: Module structure rules - not relevant for shared controller fix
 rubric:
 - rule: 'Follow PSR-12 formatting enforced by Pint: proper brace placement, indentation,
     and spacing.'
@@ -135,3 +106,9 @@ hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply includ
   `AGENTS.md`. The primary tension arises from `AGENTS.md` heavily documenting the
   new module architecture (`src/Appwrite/Platform/Modules/`), while the bug is located
   in the legacy shared controller system (`app/controllers/shared/api.php`).
+version: '2.0'
+source:
+  repo: appwrite/appwrite
+  pr: 11809
+  base_commit: 951a96ae01bceaabe6e2fb936686b7953209ce19
+  merge_commit: d200b07466ae8db6ce9b100f8c41b3569f46cf28

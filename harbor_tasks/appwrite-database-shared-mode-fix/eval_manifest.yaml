@@ -1,78 +1,74 @@
 source:
   repo: appwrite/appwrite
-  pr_number: 11750
+  pr: 0
   base_commit: 6e1f0d57af305affe7dbebf9d71f19ec4d6f68e5
   merge_commit: 7d9cf48ca3a5b647232fc712081dc43fa7e71637
-  title: bump utopia-php/database to 5.3.19 and fix shared-mode CI failures
 checks:
 - id: request_php_array_filter
   type: fail_to_pass
   description: request.php uses array_filter on _APP_DATABASE_SHARED_TABLES
-  origin: behavioral
+  origin: pr_diff
 - id: request_php_remove_int_cast
   type: fail_to_pass
   description: request.php removes (int) cast from setTenant() calls
-  origin: behavioral
+  origin: pr_diff
 - id: request_php_separate_pool_detection
   type: fail_to_pass
   description: request.php has separate pool detection for documentsdb/vectorsdb
-  origin: behavioral
+  origin: pr_diff
 - id: worker_php_array_filter
   type: fail_to_pass
   description: worker message.php uses array_filter on _APP_DATABASE_SHARED_TABLES
-  origin: behavioral
+  origin: pr_diff
 - id: worker_php_remove_int_cast
   type: fail_to_pass
   description: worker message.php removes (int) cast from setTenant() calls
-  origin: behavioral
+  origin: pr_diff
 - id: worker_php_separate_pool_detection
   type: fail_to_pass
   description: worker message.php has separate pool detection for documentsdb/vectorsdb
-  origin: behavioral
+  origin: pr_diff
 - id: create_php_documentsdb_array_filter
   type: fail_to_pass
   description: Create.php uses array_filter for documentsdb shared tables
-  origin: behavioral
+  origin: pr_diff
 - id: create_php_vectorsdb_array_filter
   type: fail_to_pass
   description: Create.php uses array_filter for vectorsdb shared tables
-  origin: behavioral
+  origin: pr_diff
 - id: create_php_empty_shared_tables_check
   type: fail_to_pass
   description: Create.php checks for empty shared tables before filtering pools
-  origin: behavioral
+  origin: pr_diff
 - id: create_php_exception_empty_pools
   type: fail_to_pass
   description: Create.php throws exception when no database pool available
-  origin: behavioral
+  origin: pr_diff
 - id: create_php_explicit_empty_check
   type: fail_to_pass
   description: Create.php explicitly checks for empty databases after filtering
-  origin: behavioral
+  origin: pr_diff
 - id: syntax_request_php
   type: pass_to_pass
   description: request.php has valid PHP syntax
   origin: agent_config
   source:
-    file: AGENTS.md
     lines: 22-23
-    text: composer format - Auto-format code (Pint, PSR-12)
+    path: AGENTS.md
 - id: syntax_worker_php
   type: pass_to_pass
   description: worker message.php has valid PHP syntax
   origin: agent_config
   source:
-    file: AGENTS.md
     lines: 22-23
-    text: composer format - Auto-format code (Pint, PSR-12)
+    path: AGENTS.md
 - id: syntax_create_php
   type: pass_to_pass
   description: Create.php has valid PHP syntax
   origin: agent_config
   source:
-    file: AGENTS.md
     lines: 22-23
-    text: composer format - Auto-format code (Pint, PSR-12)
+    path: AGENTS.md
 - id: repo_composer_validate
   type: pass_to_pass
   description: Repo's composer.json is valid
@@ -177,3 +173,4 @@ hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` defining the ov
   reinforce the root rules without conflict. The primary challenge is avoiding over-engineering
   the database engine differences and adhering to the existing dependency injection
   flow without modifying the Action constructors unnecessarily.
+version: '2.0'

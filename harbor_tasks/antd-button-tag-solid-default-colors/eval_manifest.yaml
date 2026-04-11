@@ -1,36 +1,31 @@
-source_pr: https://github.com/ant-design/ant-design/pull/57495
-source_repo: ant-design/ant-design
-base_commit: df5547f2ade5fe0bd9906bb9a386e7865afa4835
-merge_commit: 8e10c284f1780a5caa0e646bd0bba9875da63573
-task_name: antd-button-tag-solid-default-colors
 checks:
 - id: test_button_solid_default_code
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: Button.tsx contains logic for variant='solid' default color
 - id: test_button_context_solid_default_code
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: Button.tsx contains logic for contextVariant='solid' default color
 - id: test_tag_solid_default_code
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: useColor.ts contains logic for nextVariant='solid' and nextColor=undefined
 - id: test_tag_uses_nextcolor_for_preset
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: useColor.ts uses nextColor for isPresetColor check
 - id: test_tag_uses_nextcolor_for_status
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: useColor.ts uses nextColor for isPresetStatusColor check
 - id: test_button_returns_primary_for_solid
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: Button.tsx returns 'primary' as default color for solid variant
 - id: test_tag_returns_default_for_solid
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: useColor.ts sets nextColor='default' for solid variant
 - id: test_repo_typescript_compiles
   type: pass_to_pass
@@ -62,30 +57,29 @@ checks:
   description: Repo's Node.js-specific tests pass
 rubric:
 - rule: Follow test import convention - use relative paths in __tests__
-  source: CLAUDE.md:Test import specification
-  description: Tests should use relative imports, not absolute paths like 'antd'
+  source:
+    path: CLAUDE.md:Test import specification
 - rule: Follow demo import convention - use absolute paths in demo/
-  source: CLAUDE.md:Demo import specification
-  description: Demo files should use absolute imports like 'antd', not relative paths
+  source:
+    path: CLAUDE.md:Demo import specification
 - rule: Follow API documentation table format
-  source: CLAUDE.md:API Documentation format
-  description: 'API tables should have correct columns: Property/Description/Type/Default/Version/Global
-    Config'
+  source:
+    path: CLAUDE.md:API Documentation format
 - rule: Default values should be documented in backticks
-  source: CLAUDE.md:API table format
-  description: String defaults in backticks, boolean/number as literals
+  source:
+    path: CLAUDE.md:API table format
 - rule: Maintain backward compatibility
-  source: .github/copilot-instructions.md:React Component Guidelines
-  description: Changes should not break existing behavior
+  source:
+    path: .github/copilot-instructions.md:React Component Guidelines
 - rule: Use TypeScript with strict typing
-  source: .github/copilot-instructions.md:TypeScript Requirements
-  description: No 'any' types, use precise types and interfaces
+  source:
+    path: .github/copilot-instructions.md:TypeScript Requirements
 - rule: Use functional components with hooks exclusively
-  source: .github/copilot-instructions.md:React Component Guidelines
-  description: No class components
+  source:
+    path: .github/copilot-instructions.md:React Component Guidelines
 - rule: Support ref forwarding with ComponentRef pattern
-  source: .github/copilot-instructions.md:React Component Guidelines
-  description: Components must support ref forwarding
+  source:
+    path: .github/copilot-instructions.md:React Component Guidelines
 - rule: 使用 TypeScript 和 React 开发，采用 CSS-in-JS 架构
   source:
     path: CLAUDE.md
@@ -128,3 +122,9 @@ hierarchy_analysis: The config hierarchy consists of `CLAUDE.md` and `AGENTS.md`
   act as distractors, as the agent must recognize the narrow scope of the requested
   fix (only modifying two source files) and ignore the broader repository guidelines
   that would typically apply to a full PR submission.
+version: '2.0'
+source:
+  repo: ant-design/ant-design.git
+  pr: 0
+  base_commit: df5547f2ade5fe0bd9906bb9a386e7865afa4835
+  merge_commit: ''

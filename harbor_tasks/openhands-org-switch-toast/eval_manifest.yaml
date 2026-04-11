@@ -1,54 +1,53 @@
 source:
   repo: All-Hands-AI/OpenHands
-  pr_number: 13598
+  pr: 0
   base_commit: 30b7af31b9cc6c7e1dbdb88f311ae4da3fdfb3c3
   merge_commit: aeda0ea76245be1ecae69a2aabaa5317e08fac10
-  task_name: openhands-org-switch-toast
 checks:
 - id: test_i18n_keys_exist
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: i18n translation keys must be added to declaration.ts
 - id: test_i18n_translations_exist
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: All 15 language translations must exist for both toast messages
 - id: test_use_switch_organization_imports_toast_handler
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: useSwitchOrganization hook must import displaySuccessToast
 - id: test_use_switch_organization_uses_i18n_keys
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: useSwitchOrganization must use ORG$SWITCHED_TO_ORGANIZATION and ORG$SWITCHED_TO_PERSONAL_WORKSPACE
     i18n keys
 - id: test_use_switch_organization_mutation_params
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: useSwitchOrganization mutation must accept orgName and isPersonal parameters
 - id: test_org_selector_passes_org_details
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: OrgSelector component must pass orgName and isPersonal flag to switchOrganization
 - id: test_org_selector_finds_org_by_id
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: OrgSelector must look up organization by ID before switching
 - id: test_org_selector_tests_include_toast_assertions
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: Unit tests must verify displaySuccessToast is called
 - id: test_org_selector_tests_cover_team_org
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: Unit tests must cover switching to team organization
 - id: test_org_selector_tests_cover_personal_workspace
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: Unit tests must cover switching to personal workspace
 - id: test_org_selector_test_accepts_params_in_translation
   type: fail_to_pass
-  origin: functional_requirement
+  origin: pr_diff
   description: Test translation mock must accept params for interpolated strings
 - id: test_repo_unit_tests
   type: pass_to_pass
@@ -78,34 +77,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Frontend build must succeed
-agent_config:
-- id: frontend_tanstack_query
-  source: AGENTS.md
-  lines: Data Fetching & Cache Management section
-  rule: UI components must use TanStack Query hooks, never call API client methods
-    directly
-  applicable: true
-- id: frontend_i18n_pattern
-  source: AGENTS.md
-  lines: Internationalization section
-  rule: i18n keys must be added to both declaration.ts and translation.json
-  applicable: true
-- id: frontend_hook_naming
-  source: AGENTS.md
-  lines: Mutation hooks should follow pattern use[Action]
-  rule: Mutation hooks follow naming convention use[Action]
-  applicable: true
 rubric:
-- id: proper_error_handling
-  criterion: Toast notifications should only show on successful organization switch
-  applicable: false
-- id: code_organization
-  criterion: Hook logic should remain clean and readable after adding toast functionality
-  applicable: true
-- id: test_quality
-  criterion: Tests should properly mock external dependencies and verify behavior
-    not implementation
-  applicable: true
+- rule: Toast notifications should only show on successful organization switch
+- rule: Hook logic should remain clean and readable after adding toast functionality
+- rule: Tests should properly mock external dependencies and verify behavior not implementation
 - rule: React frontend code is located in the `frontend` directory.
   source:
     path: AGENTS.md
@@ -147,3 +122,4 @@ distractors:
     lines: 20-20
 hierarchy_analysis: The AGENTS.md file provides general repository guidelines. There
   are no conflicting rules in the hierarchy since only one config file is provided.
+version: '2.0'

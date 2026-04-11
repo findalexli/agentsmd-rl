@@ -1,67 +1,58 @@
-source_repo: example-org/example-repo
-base_commit: abc123def456
-fix_commit: def789abc012
-
 checks:
-  # Fail-to-pass tests - these verify the actual behavior of the fix
-  - id: test_delete_user_returns_deleted_user
-    type: fail_to_pass
-    origin: pr_diff
-    description: deleteUser returns the deleted user record when successful
-
-  - id: test_delete_user_throws_app_error_when_not_found
-    type: fail_to_pass
-    origin: pr_diff
-    description: deleteUser throws AppError with proper context when user not found
-
-  - id: test_delete_user_includes_operation_in_error_context
-    type: fail_to_pass
-    origin: pr_diff
-    description: deleteUser includes operation name in error context on unexpected failures
-
-  - id: test_delete_user_logs_deletion
-    type: fail_to_pass
-    origin: pr_diff
-    description: deleteUser logs the deletion operation with user ID
-
-  - id: test_delete_user_has_jsdoc
-    type: fail_to_pass
-    origin: agent_config
-    description: deleteUser function has JSDoc documentation with @param and @return tags
-    source:
-      path: CLAUDE.md
-      lines: '9'
-      commit: abc123def456
-      content: All public API methods must have JSDoc comments with @param and @return tags
-
-  # Pass-to-pass tests - these verify existing functionality still works
-  - id: test_typescript_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: TypeScript code compiles without errors
-
-  - id: test_app_error_class_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: AppError class exists and is properly exported
-
+- id: test_delete_user_returns_deleted_user
+  type: fail_to_pass
+  origin: pr_diff
+  description: deleteUser returns the deleted user record when successful
+- id: test_delete_user_throws_app_error_when_not_found
+  type: fail_to_pass
+  origin: pr_diff
+  description: deleteUser throws AppError with proper context when user not found
+- id: test_delete_user_includes_operation_in_error_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: deleteUser includes operation name in error context on unexpected failures
+- id: test_delete_user_logs_deletion
+  type: fail_to_pass
+  origin: pr_diff
+  description: deleteUser logs the deletion operation with user ID
+- id: test_delete_user_has_jsdoc
+  type: fail_to_pass
+  origin: agent_config
+  description: deleteUser function has JSDoc documentation with @param and @return
+    tags
+  source:
+    path: CLAUDE.md
+    lines: '9'
+    commit: abc123def456
+- id: test_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript code compiles without errors
+- id: test_app_error_class_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: AppError class exists and is properly exported
 rubric:
-  - rule: API error handling must use the project's AppError class, not raw HTTP exceptions
-      or native Error
-    source:
-      path: CLAUDE.md
-      lines: '6-7'
-      commit: abc123def456
-
-  - rule: Error messages must include the operation that failed and the resource identifier
-      when available
-    source:
-      path: CLAUDE.md
-      lines: '7'
-      commit: abc123def456
-
-  - rule: All public API methods must have JSDoc comments with @param and @return tags
-    source:
-      path: CLAUDE.md
-      lines: '10'
-      commit: abc123def456
+- rule: API error handling must use the project's AppError class, not raw HTTP exceptions
+    or native Error
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+    commit: abc123def456
+- rule: Error messages must include the operation that failed and the resource identifier
+    when available
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: abc123def456
+- rule: All public API methods must have JSDoc comments with @param and @return tags
+  source:
+    path: CLAUDE.md
+    lines: '10'
+    commit: abc123def456
+version: '2.0'
+source:
+  repo: example-org/example-repo
+  pr: 0
+  base_commit: abc123def456
+  merge_commit: ''

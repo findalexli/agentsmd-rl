@@ -1,58 +1,55 @@
-source_pr: apache/airflow#64871
-base_commit: fc861cbf12857fbfed34d6e934706639d9d761f1
-merge_commit: 8dc4305675a6817f55d5ebcc88367859da21beca
 checks:
 - id: test_new_celery_hpa_config_path_exists
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: workers.celery.hpa.enabled should create HPA resource for CeleryExecutor
 - id: test_celery_hpa_min_max_replicas
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: workers.celery.hpa.min/maxReplicaCount should configure replica counts
 - id: test_celery_hpa_custom_metrics
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: workers.celery.hpa.metrics should configure custom scaling metrics
 - id: test_celery_hpa_default_metrics
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: workers.celery.hpa with defaults should use CPU 80% utilization metric
 - id: test_celery_hpa_behavior_config
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: workers.celery.hpa.behavior should configure scaling behavior
 - id: test_worker_sets_celery_hpa_override
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Worker sets should support celery.hpa configuration override
 - id: test_values_schema_has_celery_hpa_section
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: values.schema.json should define workers.celery.hpa structure
 - id: test_old_hpa_path_still_works
   type: pass_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Old workers.hpa.enabled should still create HPA (backward compatibility)
 - id: test_hpa_disabled_by_default
   type: pass_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: HPA should not be created by default when not enabled
 - id: test_hpa_not_created_for_non_celery_executor
   type: pass_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: HPA should not be created for non-Celery executors
 - id: test_hpa_scale_target_ref
   type: pass_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: HPA scaleTargetRef should match worker persistence configuration
 - id: test_celery_hpa_disabled_when_keda_enabled
   type: pass_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: HPA should not be created when KEDA is enabled
 - id: test_old_hpa_schema_has_deprecation_note
   type: pass_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Old workers.hpa schema should have deprecation notice in description
 - id: test_repo_helm_hpa_tests
   type: pass_to_pass
@@ -76,21 +73,17 @@ checks:
   description: Repo's Helm chart passes linting
 rubric:
 - rule: Follow existing Helm template patterns for conditional rendering
-  source: CLAUDE.md:Helm chart structure in chart/
-  description: HPA template should follow existing patterns for conditionals and resource
-    generation
+  source:
+    path: CLAUDE.md:Helm chart structure in chart/
 - rule: Add tests for new behavior covering success, failure, and edge cases
-  source: CLAUDE.md:Testing Standards
-  description: Tests should cover both old (deprecated) and new config paths, various
-    executors, and parameter combinations
+  source:
+    path: CLAUDE.md:Testing Standards
 - rule: Use @pytest.mark.parametrize for multiple similar inputs
-  source: CLAUDE.md:Testing Standards
-  description: Tests should use parametrize for testing different executor types and
-    config combinations
+  source:
+    path: CLAUDE.md:Testing Standards
 - rule: Update JSON schema descriptions to reflect deprecation status
-  source: CLAUDE.md:Coding Standards
-  description: Schema descriptions should indicate deprecated fields and point to
-    new alternatives
+  source:
+    path: CLAUDE.md:Coding Standards
 - rule: 'Run specific Helm test type: `breeze testing helm-tests --use-xdist --test-type
     <type>`'
   source:
@@ -126,3 +119,9 @@ hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical. The main conflic
   commands (`breeze testing helm-tests`). The agent must recognize that files in `helm-tests/`
   require the specialized Helm testing commands rather than the generic Python testing
   commands.'
+version: '2.0'
+source:
+  repo: apache/airflow
+  pr: 64871
+  base_commit: fc861cbf12857fbfed34d6e934706639d9d761f1
+  merge_commit: ''

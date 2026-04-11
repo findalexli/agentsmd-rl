@@ -1,11 +1,10 @@
-id: excalidraw-clipboard-copy-no-event
 source:
-  pr: https://github.com/excalidraw/excalidraw/pull/10729
+  repo: excalidraw/excalidraw.git
+  pr: 0
   base_commit: d29fd62e417b8cb73d1d5dc3e207735046401491
   merge_commit: 54a98268177c19cee7a49d05ce56e64f7a424db1
 checks:
 - id: clipboard-flow-control
-  title: Clipboard flow control returns in correct scope
   description: 'The copyTextToSystemClipboard function must return inside the clipboardEvent
 
     block only when clipboardEvent is provided, and return after navigator.clipboard.writeText
@@ -13,48 +12,35 @@ checks:
     succeeds. This ensures proper fallback behavior when no ClipboardEvent is available.
 
     '
-  type: pytest
-  origin: behavior
-  file: test_outputs.py
-  function: test_clipboard_flow_control
+  type: fail_to_pass
+  origin: pr_diff
 - id: plain-text-const
-  title: plainTextEntry uses const instead of let
   description: 'The plainTextEntry variable should be declared as const since it is
     never reassigned.
 
     '
-  type: pytest
+  type: fail_to_pass
   origin: agent_config
   source:
     path: CLAUDE.md
-    rule: Prefer immutable data (const, readonly)
-  file: test_outputs.py
-  function: test_plain_text_const
 - id: no-redundant-undefined
-  title: No redundant undefined assignment
   description: 'After successful navigator.clipboard.writeText(), the code should
     return directly
 
     instead of setting plainTextEntry to undefined and continuing.
 
     '
-  type: pytest
-  origin: behavior
-  file: test_outputs.py
-  function: test_no_redundant_undefined
+  type: fail_to_pass
+  origin: pr_diff
 - id: scss-success-color
-  title: FilledButton SCSS adds success background color
   description: 'The FilledButton.scss file should include background-color: var(--color-success)
 
     for loading and success states.
 
     '
-  type: pytest
-  origin: behavior
-  file: test_outputs.py
-  function: test_scss_success_color
+  type: fail_to_pass
+  origin: pr_diff
 - id: repo-clipboard-ts-syntax
-  title: clipboard.ts has valid TypeScript syntax
   description: 'The clipboard.ts file must have valid TypeScript syntax that can be
     parsed.
 
@@ -63,10 +49,7 @@ checks:
     '
   type: pass_to_pass
   origin: repo_tests
-  file: test_outputs.py
-  function: test_repo_clipboard_ts_syntax
 - id: repo-clipboard-test-ts-syntax
-  title: clipboard.test.ts has valid TypeScript syntax
   description: 'The clipboard.test.ts file must have valid TypeScript syntax that
     can be parsed.
 
@@ -77,10 +60,7 @@ checks:
     '
   type: pass_to_pass
   origin: repo_tests
-  file: test_outputs.py
-  function: test_repo_clipboard_test_ts_syntax
 - id: repo-filledbutton-scss-syntax
-  title: FilledButton.scss has valid SCSS syntax
   description: 'The FilledButton.scss file must have valid SCSS syntax that can be
     parsed.
 
@@ -89,10 +69,7 @@ checks:
     '
   type: pass_to_pass
   origin: repo_tests
-  file: test_outputs.py
-  function: test_repo_filledbutton_scss_syntax
 - id: repo-clipboard-test-syntax
-  title: clipboard.test.ts has valid TypeScript syntax
   description: 'The clipboard.test.ts file must have valid TypeScript syntax that
     can be parsed.
 
@@ -103,10 +80,7 @@ checks:
     '
   type: pass_to_pass
   origin: repo_tests
-  file: test_outputs.py
-  function: test_repo_clipboard_test_syntax
 - id: repo-constants-ts-syntax
-  title: constants.ts has valid TypeScript syntax
   description: 'The constants.ts file must have valid TypeScript syntax that can be
     parsed.
 
@@ -117,14 +91,11 @@ checks:
     '
   type: pass_to_pass
   origin: repo_tests
-  file: test_outputs.py
-  function: test_repo_constants_ts_syntax
 rubric:
-- id: clipboard-fallback-docs
-  description: Document clipboard fallback architecture
-  source:
+- source:
     path: CLAUDE.md
     lines: Clipboard operations must have fallbacks
+  rule: Document clipboard fallback architecture
 - rule: 'Package Development: Work in `packages/*` for editor features'
   source:
     path: CLAUDE.md
@@ -164,3 +135,4 @@ hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root le
   The primary challenge is distinguishing between editor features (`packages/excalidraw/`)
   and app-specific features (`excalidraw-app/`), as clipboard interaction could conceptually
   belong to either depending on the architecture.
+version: '2.0'

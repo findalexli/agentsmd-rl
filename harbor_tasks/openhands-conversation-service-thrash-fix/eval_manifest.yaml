@@ -1,37 +1,36 @@
 source:
   repo: All-Hands-AI/OpenHands
-  pr_number: 13610
-  title: APP-1142 Reduced thrash on sandbox service
+  pr: 0
   base_commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
   merge_commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
 checks:
 - id: test_uses_app_conversation_info_service
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: Code uses AppConversationInfoService instead of AppConversationService
 - id: test_has_get_v1_conversation_info_function
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: Has new _get_v1_conversation_info function with correct return type
 - id: test_no_is_v1_conversation_function
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: Old _is_v1_conversation function removed
 - id: test_no_get_v1_conversation_config_function
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: Old _get_v1_conversation_config function removed
 - id: test_service_called_only_once_per_request
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: Service is called only once per request (no thrashing)
 - id: test_endpoint_returns_json_response_directly_for_v1
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: V1 conversations return JSONResponse directly without extra calls
 - id: test_imports_app_conversation_info_model
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: Imports AppConversationInfo model
 - id: test_syntax_valid
   type: pass_to_pass
@@ -49,7 +48,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's conversation routes unit tests pass
-agent_config: []
 rubric:
 - rule: 'Run pre-commit hooks for backend changes and ensure they pass. Use: pre-commit
     run --config ./dev_config/python/.pre-commit-config.yaml'
@@ -100,3 +98,4 @@ distractors:
     lines: 36-58
 hierarchy_analysis: Only a single root-level `AGENTS.md` file is provided, so there
   are no hierarchical conflicts. All rules apply globally to the repository.
+version: '2.0'

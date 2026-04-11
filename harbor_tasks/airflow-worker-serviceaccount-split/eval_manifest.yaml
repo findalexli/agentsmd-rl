@@ -1,59 +1,53 @@
 source:
-  pr:
-    url: https://github.com/apache/airflow/pull/64730
-    title: Add workers.celery.serviceAccount & workers.kubernetes.serviceAccount
-    merge_commit: 59ddf5698ab7ada2edce24f284c827db5242b170
-    base_commit: a02fbaa00cc51bce42c4375ca65febbe5589d6b2
-repository:
-  owner: apache
-  name: airflow
-  type: github
-  language: helm/yaml
+  repo: apache/airflow.git
+  pr: 0
+  base_commit: a02fbaa00cc51bce42c4375ca65febbe5589d6b2
+  merge_commit: ''
 checks:
 - id: test_worker_kubernetes_serviceaccount_template_exists
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: worker-kubernetes-serviceaccount.yaml template must exist
 - id: test_worker_kubernetes_serviceaccount_helper_exists
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: worker.kubernetes.serviceAccountName helper must exist
 - id: test_serviceaccountnamegen_helper_exists
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: _serviceAccountNameGen helper must exist for refactored logic
 - id: test_helpers_supports_subkey
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: _serviceAccountName helper must support subKey parameter
 - id: test_pod_template_uses_conditional_serviceaccount
   type: fail_to_pass
-  origin: code_behavior
+  origin: pr_diff
   description: pod-template-file must conditionally use kubernetes service account
 - id: test_notes_deprecation_warnings_exist
   type: fail_to_pass
-  origin: code_behavior
+  origin: pr_diff
   description: NOTES.txt must include deprecation warnings for old serviceAccount
     fields
 - id: test_values_has_celery_serviceaccount_section
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: values.yaml must have workers.celery.serviceAccount section
 - id: test_values_has_kubernetes_serviceaccount_section
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: values.yaml must have workers.kubernetes.serviceAccount section
 - id: test_schema_has_celery_serviceaccount
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: values.schema.json must have workers.celery.serviceAccount schema
 - id: test_schema_has_kubernetes_serviceaccount
   type: fail_to_pass
-  origin: code_structure
+  origin: pr_diff
   description: values.schema.json must have workers.kubernetes.serviceAccount schema
 - id: test_newsfragment_exists
   type: fail_to_pass
-  origin: code_behavior
+  origin: pr_diff
   description: Newsfragment must exist documenting the deprecation
 - id: test_helm_lint
   type: pass_to_pass
@@ -102,38 +96,29 @@ checks:
     compat)
 - id: test_helm_render_with_kubernetes_executor_and_sa
   type: pass_to_pass
-  origin: code_behavior
+  origin: pr_diff
   description: KubernetesExecutor with custom service account renders correctly
 - id: test_helm_render_with_celery_executor
   type: pass_to_pass
-  origin: code_behavior
+  origin: pr_diff
   description: CeleryExecutor with custom service account renders correctly
 - id: test_deprecated_serviceaccount_fallback
   type: pass_to_pass
-  origin: code_behavior
+  origin: pr_diff
   description: Deprecated workers.serviceAccount still works as fallback
 rubric:
 - rule: Add tests for new behavior
-  source: CLAUDE.md:Testing Standards
-  weight: 1.0
-  description: The PR includes new tests in helm-tests/ for the serviceAccount feature.
-    Ensure tests cover both celery and kubernetes worker service accounts.
+  source:
+    path: CLAUDE.md:Testing Standards
 - rule: Apache License header on all new files
-  source: CLAUDE.md:Coding Standards
-  weight: 1.0
-  description: New template files like worker-kubernetes-serviceaccount.yaml must
-    include the Apache License header comment block.
+  source:
+    path: CLAUDE.md:Coding Standards
 - rule: Follow Helm templating conventions for helper functions
-  source: CLAUDE.md:Repository Structure
-  weight: 0.5
-  description: Helm helpers should use consistent naming (define "name") and support
-    fallback values using default/dict patterns.
+  source:
+    path: CLAUDE.md:Repository Structure
 - rule: Maintain backward compatibility with deprecated fields
-  source: PR description
-  weight: 1.0
-  description: The new workers.celery.serviceAccount and workers.kubernetes.serviceAccount
-    sections must fall back to workers.serviceAccount values when not specified, maintaining
-    backward compatibility.
+  source:
+    path: PR description
 distractors:
 - rule: 'Run a single test: uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
     -xvs'
@@ -171,3 +156,4 @@ hierarchy_analysis: The configuration files CLAUDE.md and AGENTS.md are identica
   and provide general Python/Airflow testing instructions alongside specific Helm
   testing commands. The primary conflict arises from the general `uv run pytest` commands
   overlapping with the specialized `breeze testing helm-tests` commands.
+version: '2.0'

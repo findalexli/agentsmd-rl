@@ -1,13 +1,3 @@
-task_name: clickhouse-splitbystring-empty-separator-validation
-source_pr: ClickHouse/ClickHouse#102094
-title: Extend argument validation in splitByString tokenizer to reject empty separators
-difficulty: medium
-tags:
-- c++
-- validation
-- error-handling
-- clickhouse
-estimated_time: 30
 checks:
 - id: test_empty_separator_validation_compiles
   type: fail_to_pass
@@ -40,7 +30,9 @@ checks:
 - id: test_allman_brace_style
   type: pass_to_pass
   origin: agent_config
-  source: .claude/CLAUDE.md
+  source:
+    path: .claude/CLAUDE.md
+    lines: ''
   description: C++ code uses Allman-style braces (opening brace on new line)
 - id: test_no_curly_brace_on_same_line
   type: pass_to_pass
@@ -101,3 +93,9 @@ distractors:
 hierarchy_analysis: The AGENTS.md file contains general workflow and documentation
   guidelines. There are no C++ specific coding standards in the config hierarchy that
   apply to this PR.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102094
+  base_commit: 4735a442e4fd8d0b317a2171945fbcaf8cfa7ec7
+  merge_commit: ''

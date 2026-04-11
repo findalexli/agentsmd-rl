@@ -1,97 +1,3 @@
-source_pr:
-  repo: MystenLabs/sui
-  number: 26056
-  title: '[consensus] probe before fetching commits and blocks from a peer'
-  merge_commit: 52203ecc02e7a3fd810ed88c1fd24a3a99ba98db
-  base_commit: 192a628cc56fcd901af4330d91c123fe8f493187
-behavioral_checks:
-- id: f2p_1
-  name: test_parameters_has_timeout_fields
-  type: functional
-  description: Parameters struct has new timeout fields with correct defaults
-- id: f2p_2
-  name: test_probe_connectivity_method_exists
-  type: functional
-  description: NetworkClient has the probe_connectivity method
-- id: f2p_3
-  name: test_commit_syncer_uses_configurable_timeout
-  type: functional
-  description: commit_syncer uses configurable timeout instead of hardcoded constant
-- id: f2p_4
-  name: test_authority_service_implements_observer_trait
-  type: functional
-  description: AuthorityService implements ObserverNetworkService trait methods
-- id: f2p_5
-  name: test_probe_call_in_fetch_commits_once
-  type: functional
-  description: fetch_commits_once calls probe_connectivity before fetching
-- id: p2p_1
-  name: test_config_compiles_with_new_defaults
-  type: functional
-  description: Config compiles and snapshot test passes with new fields
-- id: p2p_2
-  name: test_network_client_has_probe_method
-  type: functional
-  description: NetworkClient has probe_connectivity with correct signature
-- id: p2p_repo_fmt_check
-  name: test_repo_cargo_fmt_check
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's cargo fmt --check passes (code formatting)
-- id: p2p_repo_check_config
-  name: test_repo_cargo_check_consensus_config
-  type: pass_to_pass
-  origin: repo_tests
-  description: cargo check -p consensus-config passes (verified in Docker)
-- id: p2p_repo_check_types
-  name: test_repo_cargo_check_consensus_types
-  type: pass_to_pass
-  origin: repo_tests
-  description: cargo check -p consensus-types passes (verified in Docker)
-- id: p2p_repo_clippy_config
-  name: test_repo_cargo_clippy_consensus_config
-  type: pass_to_pass
-  origin: repo_tests
-  description: cargo clippy -p consensus-config passes (verified in Docker)
-- id: p2p_repo_test_config_lib
-  name: test_repo_cargo_test_consensus_config_lib
-  type: pass_to_pass
-  origin: repo_tests
-  description: cargo test -p consensus-config --lib passes (verified in Docker)
-- id: p2p_repo_test_config_snapshot
-  name: test_repo_cargo_test_consensus_config_snapshot
-  type: pass_to_pass
-  origin: repo_tests
-  description: consensus-config snapshot test passes (parameters_test)
-- id: p2p_repo_test_committee
-  name: test_repo_cargo_test_consensus_committee
-  type: pass_to_pass
-  origin: repo_tests
-  description: consensus-config committee tests pass (verified in Docker)
-- id: p2p_repo_test_types_lib
-  name: test_repo_cargo_test_consensus_types_lib
-  type: pass_to_pass
-  origin: repo_tests
-  description: cargo test -p consensus-types --lib passes (verified in Docker)
-agent_config:
-- id: ac_1
-  name: license_header
-  type: structural
-  origin: agent_config
-  source: CLAUDE.md
-  description: All new files must have the license header
-- id: ac_2
-  name: cargo_check
-  type: structural
-  origin: agent_config
-  source: CLAUDE.md
-  description: Code must pass cargo check
-- id: ac_3
-  name: no_lint_suppression
-  type: structural
-  origin: agent_config
-  source: CLAUDE.md
-  description: 'No #[allow(dead_code)] or similar lint suppressions'
 rubric:
 - rule: Follow existing code style in the consensus crate. Check neighboring files
     for patterns on error handling, async patterns, and naming conventions.
@@ -129,12 +35,6 @@ rubric:
     in `consensus/core/src/authority_service.rs`, which aligns with the architectural
     definition of authorities participating i
   category: architecture
-scoring:
-  total_checks: 16
-  f2p_weight: 0.4
-  p2p_weight: 0.4
-  agent_config_weight: 0.2
-  passing_threshold: 0.75
 distractors:
 - rule: All new files must start with the following license in comments at the top
     of the file
@@ -174,3 +74,9 @@ hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md` that 
   apply directly. The root config focuses heavily on testing commands, formatting,
   and high-level architecture, but lacks specific guidance on snapshot testing (`cargo
   insta`), which is required for this PR.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26056
+  base_commit: 192a628cc56fcd901af4330d91c123fe8f493187
+  merge_commit: 52203ecc02e7a3fd810ed88c1fd24a3a99ba98db

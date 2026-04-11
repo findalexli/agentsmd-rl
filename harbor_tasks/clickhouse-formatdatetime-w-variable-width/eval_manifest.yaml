@@ -1,86 +1,67 @@
-version: 1.0.0
+version: '2.0'
 source:
   repo: ClickHouse/ClickHouse
-  pr_number: 102096
+  pr: 0
   base_commit: 61a4296fdce9d13cafb931cf73e4490b6d2bb315
   merge_commit: 9e16e21cfe66ae5d89970e86ccb4d8238b0389f3
-  target_file: src/Functions/formatDateTime.cpp
-
-# Test checks - each maps to a def test_* function in test_outputs.py
 checks:
-  # Fail-to-pass tests (bug behavior)
-  - id: test_w_variable_width_with_m_is_month_name
-    type: fail_to_pass
-    description: "%W is detected as variable-width when mysql_M_is_month_name=true"
-
-  - id: test_w_variable_width_with_various_flags
-    type: fail_to_pass
-    description: "%W is consistently variable-width across all flag combinations"
-
-  # Pass-to-pass tests (regression safety)
-  - id: test_m_behavior_unchanged
-    type: pass_to_pass
-    description: "%M behavior unchanged (variable-width only when mysql_M_is_month_name=true)"
-
-  - id: test_fixed_width_formatters_still_work
-    type: pass_to_pass
-    description: "Fixed-width formatters (%Y, %m, %d) still work correctly"
-
-  # Repo CI/CD pass-to-pass tests (verify repo structure and integrity)
-  - id: test_repo_file_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's essential files exist and are accessible"
-
-  - id: test_repo_files_valid_utf8
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's source files are valid UTF-8 and readable"
-
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's Python CI scripts have valid syntax"
-
-  - id: test_repo_git_state
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo has clean git state at expected base commit"
-
-  - id: test_repo_cmake_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's CMakeLists.txt has valid syntax and structure"
-
-  # Structural tests (verify fix applied)
-  - id: test_w_removed_from_m_is_month_name_array
-    type: fail_to_pass
-    description: "'W' removed from variable_width_formatter_M_is_month_name array"
-
-  - id: test_w_check_moved_before_conditionals
-    type: fail_to_pass
-    description: "%W check moved to before conditional branches"
-
-  - id: test_no_else_clause_for_w
-    type: fail_to_pass
-    description: "Old else clause for %W check removed"
-
-agent_config_rules:
-  - source: "docs/en/development/style.md"
-    rule: "Follow existing code style. If you are editing code, follow the formatting of the existing code around it."
-  - source: "docs/en/development/style.md"
-    rule: "Be sure to add comments for all non-trivial parts of code. Writing the comment might help you realize that the code isn't necessary, or that it is designed wrong."
-  - source: "src/Functions/README.md"
-    rule: "When implementing functions, provide in-source documentation which is used by registerFunction, including description, syntax, arguments, and examples."
-
+- id: test_w_variable_width_with_m_is_month_name
+  type: fail_to_pass
+  description: '%W is detected as variable-width when mysql_M_is_month_name=true'
+  origin: pr_diff
+- id: test_w_variable_width_with_various_flags
+  type: fail_to_pass
+  description: '%W is consistently variable-width across all flag combinations'
+  origin: pr_diff
+- id: test_m_behavior_unchanged
+  type: pass_to_pass
+  description: '%M behavior unchanged (variable-width only when mysql_M_is_month_name=true)'
+  origin: pr_diff
+- id: test_fixed_width_formatters_still_work
+  type: pass_to_pass
+  description: Fixed-width formatters (%Y, %m, %d) still work correctly
+  origin: pr_diff
+- id: test_repo_file_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's essential files exist and are accessible
+- id: test_repo_files_valid_utf8
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's source files are valid UTF-8 and readable
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python CI scripts have valid syntax
+- id: test_repo_git_state
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has clean git state at expected base commit
+- id: test_repo_cmake_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CMakeLists.txt has valid syntax and structure
+- id: test_w_removed_from_m_is_month_name_array
+  type: fail_to_pass
+  description: '''W'' removed from variable_width_formatter_M_is_month_name array'
+  origin: pr_diff
+- id: test_w_check_moved_before_conditionals
+  type: fail_to_pass
+  description: '%W check moved to before conditional branches'
+  origin: pr_diff
+- id: test_no_else_clause_for_w
+  type: fail_to_pass
+  description: Old else clause for %W check removed
+  origin: pr_diff
 rubric:
-  - rule: "Follow existing code style. Check neighboring files for patterns."
-    source:
-      path: "docs/en/development/style.md"
-      lines: "11-14"
-      commit: "61a4296fdce9d13cafb931cf73e4490b6d2bb315"
-  - rule: "Use comments to explain invariants, not narrate code. Add comments for all non-trivial parts of code."
-    source:
-      path: "docs/en/development/style.md"
-      lines: "253-261"
-      commit: "61a4296fdce9d13cafb931cf73e4490b6d2bb315"
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: docs/en/development/style.md
+    lines: 11-14
+    commit: 61a4296fdce9d13cafb931cf73e4490b6d2bb315
+- rule: Use comments to explain invariants, not narrate code. Add comments for all
+    non-trivial parts of code.
+  source:
+    path: docs/en/development/style.md
+    lines: 253-261
+    commit: 61a4296fdce9d13cafb931cf73e4490b6d2bb315

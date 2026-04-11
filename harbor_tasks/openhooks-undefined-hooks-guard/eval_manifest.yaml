@@ -1,54 +1,51 @@
 source:
-  pr:
-    owner: All-Hands-AI
-    repo: OpenHands
-    number: 13589
-    title: 'fix(frontend): guard against undefined matcher.hooks in hooks modal'
-    base_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
-    merge_commit: f7b53283b5692e1ba1755bfba8a51f09c76f5ec7
+  repo: All-Hands-AI/OpenHands.git
+  pr: 0
+  base_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+  merge_commit: ''
 checks:
 - id: test_undefined_hooks_no_crash
   type: fail_to_pass
-  origin: task_specific
+  origin: pr_diff
   description: Fix prevents crash when matcher.hooks is undefined
 - id: test_typescript_type_updated
   type: fail_to_pass
-  origin: task_specific
+  origin: pr_diff
   description: HookMatcher type updated to make hooks optional
 - id: test_repo_hooks_modal_tests_pass
   type: pass_to_pass
   origin: repo_tests
   source:
-    file: .github/workflows/fe-unit-tests.yml
     lines: npm run test:coverage
+    path: .github/workflows/fe-unit-tests.yml
   description: Frontend hooks-modal unit tests pass (vitest)
 - id: test_repo_conversation_panel_tests_pass
   type: pass_to_pass
   origin: repo_tests
   source:
-    file: .github/workflows/fe-unit-tests.yml
     lines: npm run test:coverage
+    path: .github/workflows/fe-unit-tests.yml
   description: Frontend conversation-panel tests including hooks-modal (vitest)
 - id: test_repo_lint_passes
   type: pass_to_pass
   origin: repo_tests
   source:
-    file: .github/workflows/lint.yml
     lines: npm run lint
+    path: .github/workflows/lint.yml
   description: Frontend linting passes (eslint + prettier)
 - id: test_typescript_compiles
   type: pass_to_pass
   origin: repo_tests
   source:
-    file: .github/workflows/lint.yml
     lines: npm run typecheck && tsc
+    path: .github/workflows/lint.yml
   description: TypeScript type checking passes
 - id: test_translation_completeness
   type: pass_to_pass
   origin: repo_tests
   source:
-    file: .github/workflows/lint.yml
     lines: npm run check-translation-completeness
+    path: .github/workflows/lint.yml
   description: Translation keys have complete language coverage
 rubric:
 - rule: TypeScript code should use nullish coalescing (??) or optional chaining (?.)
@@ -105,3 +102,4 @@ distractors:
     lines: 35-43
 hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level,
   so there are no hierarchy conflicts. The rules apply globally to the repository.
+version: '2.0'

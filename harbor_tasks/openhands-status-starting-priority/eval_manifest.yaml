@@ -1,33 +1,25 @@
-source_pr:
-  owner: All-Hands-AI
-  repo: OpenHands
-  number: 13580
-  title: 'APP-1093 fix(frontend): display ''Starting'' status when server reports
-    STARTING on conversation resume'
-  merge_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
-  base_commit: 0b935669f35dff09303f42daf3e39c4cbb2678ed
 checks:
 - id: test_conversation_starting_priority_with_disconnected_websocket
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: When conversation is STARTING with DISCONNECTED WebSocket, should show
     'Starting' not 'Disconnected'
 - id: test_conversation_starting_priority_with_connected_websocket
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: When conversation is STARTING with CONNECTED WebSocket, should show
     'Starting' not runtime status
 - id: test_conversation_starting_check_in_code
   type: fail_to_pass
-  origin: structural
+  origin: pr_diff
   description: The conversationStatus === 'STARTING' check must exist in status.ts
 - id: test_priority_comment_in_code
   type: fail_to_pass
-  origin: structural
+  origin: pr_diff
   description: The PRIORITY 2.5 comment explaining the fix must exist
 - id: test_new_test_case_added
   type: fail_to_pass
-  origin: structural
+  origin: pr_diff
   description: The test file must include the new test case for STARTING with disconnected
     websocket
 - id: test_status_utility_file_exists
@@ -62,7 +54,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Translation completeness check passes (npm run check-translation-completeness)
-agent_config: []
 rubric:
 - rule: 'Pre-commit hooks must pass before pushing changes. For frontend changes,
     run: npm run lint:fix && npm run build'
@@ -111,3 +102,9 @@ hierarchy_analysis: The repository has a single root-level `AGENTS.md` configura
   file. The rules provided are general repository guidelines. The agent must balance
   the general instruction to run full builds or create PR artifacts against the specific,
   localized nature of this frontend bug fix.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13580
+  base_commit: 0b935669f35dff09303f42daf3e39c4cbb2678ed
+  merge_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802

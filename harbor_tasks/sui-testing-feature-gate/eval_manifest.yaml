@@ -1,11 +1,8 @@
 source:
-  pr:
-    owner: MystenLabs
-    repo: sui
-    number: 26025
-    title: Replace debug_assertions with testing feature gate for test-only code
-    base_commit: 715582d4e58d46aa7d7a5e7b153b0e9c99978f9e
-    merge_commit: 3214ac42f2a0ecdf14676eee53a3b44613f4fd47
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: 715582d4e58d46aa7d7a5e7b153b0e9c99978f9e
+  merge_commit: ''
 checks:
 - id: test_repo_rustfmt_check
   description: Repo code must be properly formatted
@@ -29,75 +26,72 @@ checks:
   origin: repo_tests
 - id: test_sui_types_testing_feature_defined
   description: sui-types has testing feature defined in Cargo.toml
-  type: programmatic
+  type: fail_to_pass
   origin: static
   source:
-    file: crates/sui-types/Cargo.toml
+    path: crates/sui-types/Cargo.toml
 - id: test_sui_types_gasless_functions_use_testing_gate
   description: 'Gasless token testing functions use #[cfg(feature = "testing")]'
-  type: programmatic
+  type: fail_to_pass
   origin: static
   source:
-    file: crates/sui-types/src/transaction.rs
+    path: crates/sui-types/src/transaction.rs
 - id: test_apply_test_token_uses_testing_gate
   description: 'apply_test_token_overrides uses #[cfg(feature = "testing")] not debug_assertions'
-  type: programmatic
+  type: fail_to_pass
   origin: static
   source:
-    file: crates/sui-types/src/transaction.rs
+    path: crates/sui-types/src/transaction.rs
 - id: test_transactional_test_runner_testing_feature
   description: sui-transactional-test-runner has testing feature with sui-types/testing
     dep
-  type: programmatic
+  type: fail_to_pass
   origin: static
   source:
-    file: crates/sui-transactional-test-runner/Cargo.toml
+    path: crates/sui-transactional-test-runner/Cargo.toml
 - id: test_transactional_test_runner_lib_gated
   description: 'sui-transactional-test-runner lib.rs has proper #[cfg(feature = "testing")]
     gates'
-  type: programmatic
+  type: fail_to_pass
   origin: static
   source:
-    file: crates/sui-transactional-test-runner/src/lib.rs
+    path: crates/sui-transactional-test-runner/src/lib.rs
 - id: test_transactional_test_runner_no_debug_assertions
   description: sui-transactional-test-runner must not use debug_assertions for gating
   type: pass_to_pass
   origin: static
   source:
-    file: crates/sui-transactional-test-runner/src/lib.rs
+    path: crates/sui-transactional-test-runner/src/lib.rs
 - id: test_transactional_test_runner_test_adapter
   description: test_adapter.rs calls gasless functions without debug_assertions check
-  type: programmatic
+  type: fail_to_pass
   origin: static
   source:
-    file: crates/sui-transactional-test-runner/src/test_adapter.rs
+    path: crates/sui-transactional-test-runner/src/test_adapter.rs
 - id: test_upstream_crates_enable_testing_feature
   description: Upstream test crates enable testing feature via dev-dependencies
-  type: programmatic
+  type: fail_to_pass
   origin: static
   source:
-    files:
-    - crates/sui-adapter-transactional-tests/Cargo.toml
-    - crates/sui-verifier-transactional-tests/Cargo.toml
-    - crates/sui-indexer-alt-e2e-tests/Cargo.toml
+    path: crates/sui-adapter-transactional-tests/Cargo.toml
 - id: test_cargo_check_transactional_test_runner_release
   description: cargo check --release -p sui-transactional-test-runner passes
   type: pass_to_pass
   origin: repo_tests
 - id: test_claude_md_has_testing_guidance
   description: CLAUDE.md includes guidance on test-only code feature usage
-  type: programmatic
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
     lines: 101-105
     commit: 3214ac42f2a0ecdf14676eee53a3b44613f4fd47
+    path: CLAUDE.md
 - id: test_no_panic_on_gasless_in_release
   description: test_adapter.rs must not panic for gasless tokens in release mode
-  type: programmatic
+  type: fail_to_pass
   origin: static
   source:
-    file: crates/sui-transactional-test-runner/src/test_adapter.rs
+    path: crates/sui-transactional-test-runner/src/test_adapter.rs
 rubric:
 - rule: 'Use #[cfg(feature = "testing")] for test-only code that must be callable
     cross-crate. Define testing = [] in the crate''s Cargo.toml, and callers must
@@ -159,3 +153,4 @@ hierarchy_analysis: The repository has a root `CLAUDE.md` and an `AGENTS.md`. Th
   update the root `CLAUDE.md` to document the new `testing` feature gate convention,
   showing that the config file itself is a living document that should be updated
   when new architectural patterns are introduced.
+version: '2.0'

@@ -1,83 +1,47 @@
-source_pr:
-  owner: ant-design
-  repo: ant-design
-  number: 57545
-  title: 'feat: support column for Table'
-  merge_commit: 1b5323ef1771c54441d386b6dbe14240e7ae7ca3
-  base_commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
-behavioral_requirements:
-  description: 'Add a `column` prop to the Table component that provides shared default
-
-    column configuration. Individual columns should inherit from this default
-
-    when they don''t explicitly declare a property, and should be able to
-
-    override the default when they do.
-
-
-    The implementation must:
-
-    1. Add column prop type to TableProps interface
-
-    2. Create useFilledColumns hook that merges column defaults with individual columns
-
-    3. Handle special columns (SELECTION_COLUMN, EXPAND_COLUMN) without modification
-
-    4. Support nested column groups with recursive merging
-
-    5. Omit children property when merging to avoid duplication
-
-    6. Import and use the hook in InternalTable.tsx
-
-    7. Omit column from tableProps passed to rc-table
-
-    8. Add demo and tests following project conventions
-
-    '
 checks:
 - id: test_useFilledColumns_hook_exists
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: useFilledColumns hook is implemented with proper logic
 - id: test_useFilledColumns_imported
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: useFilledColumns is imported and used in InternalTable
 - id: test_column_prop_types_exist
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: TableProps interface includes column prop type definition
 - id: test_column_prop_passed_to_hook
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: column prop is destructured and passed to useFilledColumns
 - id: test_column_omitted_from_table_props
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: column prop is omitted from rc-table props
 - id: test_column_default_inheritance_logic
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Columns inherit defaults from column prop when not explicitly set
 - id: test_special_columns_preserved
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: SELECTION_COLUMN and EXPAND_COLUMN are preserved
 - id: test_nested_column_groups
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Nested column groups properly merge recursively
 - id: test_children_omitted_from_merge
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: children property is omitted when merging
 - id: test_internal_test_file_exists
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Test file has column prop tests
 - id: test_demo_file_exists
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Demo file for column defaults exists
 - id: test_repo_lint_biome
   type: pass_to_pass
@@ -119,17 +83,15 @@ checks:
   type: pass_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
-    section: Demo 导入规范
     commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+    path: CLAUDE.md
   description: Demo file uses absolute imports per project convention
 - id: test_internal_tests_use_relative_imports
   type: pass_to_pass
   origin: agent_config
   source:
-    file: CLAUDE.md
-    section: Test 导入规范
     commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+    path: CLAUDE.md
   description: Test file uses relative imports per project convention
 rubric:
 - rule: 'Test 导入规范: 测试文件应优先从当前组件目录、相邻内部模块或共享测试工具目录通过相对路径引用，禁止使用绝对路径引用仓库内代码。'
@@ -181,3 +143,9 @@ hierarchy_analysis: 'The configuration files `CLAUDE.md` and `AGENTS.md` are ide
   specific code-level implementation task. Additionally, the agent must correctly
   distinguish between Demo import rules (absolute) and Test/Internal import rules
   (relative).'
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57545
+  base_commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+  merge_commit: 1b5323ef1771c54441d386b6dbe14240e7ae7ca3

@@ -1,86 +1,85 @@
-task_name: openhooks-undefined-hooks-fix
-source_pr: https://github.com/All-Hands-AI/OpenHands/pull/13589
-base_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
-merge_commit: f7b53283b5692e1ba1755bfba8a51f09c76f5ec7
-repository: All-Hands-AI/OpenHands
-description: Fix runtime crash when matcher.hooks is undefined in hooks modal
 checks:
 - id: type_definition_updated
-  name: HookMatcher hooks marked optional
   type: fail_to_pass
   description: TypeScript interface marks hooks as optional with comment
-  target_file: frontend/src/api/conversation-service/v1-conversation-service.types.ts
+  origin: pr_diff
 - id: hook_event_item_handles_undefined
-  name: hook-event-item nullish coalescing
   type: fail_to_pass
   description: hook-event-item.tsx uses matcher.hooks ?? [] for reduce
-  target_file: frontend/src/components/features/conversation-panel/hook-event-item.tsx
+  origin: pr_diff
 - id: hook_matcher_content_handles_undefined
-  name: hook-matcher-content nullish coalescing
   type: fail_to_pass
   description: hook-matcher-content.tsx uses matcher.hooks ?? [] for map
-  target_file: frontend/src/components/features/conversation-panel/hook-matcher-content.tsx
+  origin: pr_diff
 - id: typescript_compiles
-  name: TypeScript compilation
   type: pass_to_pass
   description: TypeScript compiles without errors
+  origin: pr_diff
 - id: lint_passes
-  name: Lint passes
   type: pass_to_pass
   description: Frontend linting passes
   origin: agent_config
-  source: AGENTS.md - "If you've made changes to the frontend, you should run cd frontend
-    && npm run lint:fix && npm run build"
+  source:
+    path: AGENTS.md - "If you've made changes to the frontend, you should run cd frontend
+      && npm run lint
+    lines: ''
 - id: unit_tests_pass
-  name: Unit tests pass
   type: pass_to_pass
   description: Hooks modal unit tests pass
+  origin: pr_diff
 - id: mixed_matchers_test
-  name: Mixed matchers test
   type: pass_to_pass
   description: Tests handle mix of matchers with and without hooks
+  origin: pr_diff
 - id: eslint_passes
-  name: ESLint passes
   type: pass_to_pass
   description: Repo's ESLint check passes
   origin: repo_tests
-  source: CI workflow lint.yml - "eslint src --ext .ts,.tsx,.js"
+  source:
+    path: CI workflow lint.yml - "eslint src --ext .ts,.tsx,.js"
+    lines: ''
 - id: prettier_passes
-  name: Prettier passes
   type: pass_to_pass
   description: Repo's Prettier formatting check passes
   origin: repo_tests
-  source: CI workflow lint.yml - "prettier --check src/**/*.{ts,tsx}"
+  source:
+    path: CI workflow lint.yml - "prettier --check src/**/*.{ts,tsx}"
+    lines: ''
 - id: repo_builds
-  name: Frontend build passes
   type: pass_to_pass
   description: Repo's frontend build passes
   origin: repo_tests
-  source: CI workflow fe-unit-tests.yml - "npm run build"
+  source:
+    path: CI workflow fe-unit-tests.yml - "npm run build"
+    lines: ''
 - id: translation_completeness
-  name: Translation completeness
   type: pass_to_pass
   description: Repo's translation completeness check passes
   origin: repo_tests
-  source: CI workflow lint.yml - "npm run check-translation-completeness"
+  source:
+    path: CI workflow lint.yml - "npm run check-translation-completeness"
+    lines: ''
 - id: conversation_panel_tests
-  name: Conversation panel tests
   type: pass_to_pass
   description: Repo's conversation-panel specific tests pass
   origin: repo_tests
-  source: CI test path pattern for conversation-panel components
+  source:
+    path: CI test path pattern for conversation-panel components
+    lines: ''
 - id: hooks_modal_unit_tests
-  name: Hooks modal unit tests
   type: pass_to_pass
   description: Repo's hooks-modal specific unit tests pass
   origin: repo_tests
-  source: CI workflow fe-unit-tests.yml - "npm run test -- hooks-modal.test.tsx"
+  source:
+    path: CI workflow fe-unit-tests.yml - "npm run test -- hooks-modal.test.tsx"
+    lines: ''
 - id: typecheck
-  name: TypeScript typecheck
   type: pass_to_pass
   description: Repo's TypeScript typecheck passes
   origin: repo_tests
-  source: CI workflow lint.yml - "npm run typecheck"
+  source:
+    path: CI workflow lint.yml - "npm run typecheck"
+    lines: ''
 rubric:
 - rule: 'Frontend changes must pass lint and build. Run: cd frontend && npm run lint:fix
     && npm run build'
@@ -134,3 +133,9 @@ hierarchy_analysis: The repository has a single root-level `AGENTS.md` file. The
   conflict arises from the general debugging instructions (running the full app via
   `make build && make run`) versus the specific, localized testing instructions provided
   in the task prompt (`npm run test` in the frontend directory).
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands.git
+  pr: 0
+  base_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+  merge_commit: ''

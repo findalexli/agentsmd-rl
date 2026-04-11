@@ -1,126 +1,97 @@
-task_id: tanstack-router-7035
-name: Fix server-entry TypeScript declaration file paths
 source:
   repo: TanStack/router
-  pr_number: 7035
+  pr: 0
   base_commit: 77ad7925d4a6ea88ecd523ca7445ca192ce7a91a
   merge_commit: 5016e4e4c7387a1c0342e474e3e83bdf664e2f1d
 checks:
 - id: react-start-server-dts-exists
-  name: React Start server entry declaration file exists at correct path
   description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts
     for react-start
-  type: behavioral
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: solid-start-server-dts-exists
-  name: Solid Start server entry declaration file exists at correct path
   description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts
     for solid-start
-  type: behavioral
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: vue-start-server-dts-exists
-  name: Vue Start server entry declaration file exists at correct path
   description: Verify that server.d.ts is emitted at dist/default-entry/esm/server.d.ts
     for vue-start
-  type: behavioral
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: react-start-publint-pass
-  name: React Start package passes publint validation
   description: Verify that react-start package passes strict publint checks
-  type: behavioral
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: solid-start-publint-pass
-  name: Solid Start package passes publint validation
   description: Verify that solid-start package passes strict publint checks
-  type: behavioral
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: vue-start-publint-pass
-  name: Vue Start package passes publint validation
   description: Verify that vue-start package passes strict publint checks
-  type: behavioral
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: react-start-vite-config-has-tsconfig-path
-  name: React Start vite.config.server-entry.ts references tsconfig.server-entry.json
   description: Verify that react-start's vite config has tsconfigPath set correctly
-  type: structural
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: AGENTS.md
-    note: Build configuration standards
+    path: AGENTS.md
 - id: solid-start-vite-config-has-tsconfig-path
-  name: Solid Start vite.config.server-entry.ts references tsconfig.server-entry.json
   description: Verify that solid-start's vite config has tsconfigPath set correctly
-  type: structural
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: AGENTS.md
-    note: Build configuration standards
+    path: AGENTS.md
 - id: vue-start-vite-config-has-tsconfig-path
-  name: Vue Start vite.config.server-entry.ts references tsconfig.server-entry.json
   description: Verify that vue-start's vite config has tsconfigPath set correctly
-  type: structural
+  type: fail_to_pass
   origin: agent_config
   source:
-    file: AGENTS.md
-    note: Build configuration standards
+    path: AGENTS.md
 - id: react-start-tsconfig-server-entry-exists
-  name: React Start has tsconfig.server-entry.json with correct rootDir
   description: Verify that react-start's tsconfig.server-entry.json exists with rootDir
     set to ./src/default-entry
-  type: structural
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: solid-start-tsconfig-server-entry-exists
-  name: Solid Start has tsconfig.server-entry.json with correct rootDir
   description: Verify that solid-start's tsconfig.server-entry.json exists with rootDir
     set to ./src/default-entry
-  type: structural
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: vue-start-tsconfig-server-entry-exists
-  name: Vue Start has tsconfig.server-entry.json with correct rootDir
   description: Verify that vue-start's tsconfig.server-entry.json exists with rootDir
     set to ./src/default-entry
-  type: structural
-  origin: task_requirement
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_repo_react_start_format
-  name: React-start vite config passes prettier formatting check
   description: Verify that react-start vite.config.server-entry.ts is properly formatted
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_solid_start_format
-  name: Solid-start vite config passes prettier formatting check
   description: Verify that solid-start vite.config.server-entry.ts is properly formatted
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_vue_start_format
-  name: Vue-start vite config passes prettier formatting check
   description: Verify that vue-start vite.config.server-entry.ts is properly formatted
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_react_start_package_format
-  name: React-start package.json passes prettier formatting check
   description: Verify that react-start package.json is properly formatted
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_solid_start_package_format
-  name: Solid-start package.json passes prettier formatting check
   description: Verify that solid-start package.json is properly formatted
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_vue_start_package_format
-  name: Vue-start package.json passes prettier formatting check
   description: Verify that vue-start package.json is properly formatted
   type: pass_to_pass
   origin: repo_tests
 rubric:
-- criterion: Proper tsconfig files created
-  description: Each package has a tsconfig.server-entry.json with correct rootDir
-  weight: 0.3
-- criterion: Vite configs updated
-  description: All three vite.config.server-entry.ts files reference the new tsconfig
-  weight: 0.3
-- criterion: Package validation passes
-  description: Build-time validation with publint/attw is configured and passes
-  weight: 0.4
+- rule: Proper tsconfig files created
+- rule: Vite configs updated
+- rule: Package validation passes
 - rule: 'Test types: `pnpm test:unit`, `pnpm test:types`, `pnpm test:eslint`, `pnpm
     test:e2e`, `pnpm test:build`'
   source:
@@ -155,3 +126,4 @@ distractors:
   source:
     path: AGENTS.md
     lines: 53-53
+version: '2.0'

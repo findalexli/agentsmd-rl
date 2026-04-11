@@ -1,64 +1,45 @@
-source_pr:
-  owner: TanStack
-  repo: router
-  number: 7074
-  merge_commit: f8351a8d7aa9f5a341377f96966451892acb39f1
-  base_commit: 30835cb8e935b740c92fa95909a073e644dde530
 checks:
 - id: test_source_code_initializes_hot_data
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: Source code must initialize import.meta.hot.data before storing to
     it
-  file: test_outputs.py
 - id: test_source_has_correct_template_structure
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: Template must have correct structure for HMR handling
-  file: test_outputs.py
 - id: test_hmr_test_file_exists
   type: pass_to_pass
   origin: repo_tests
   description: HMR test file should exist
-  file: test_outputs.py
 - id: test_router_plugin_build
   type: pass_to_pass
   origin: repo_tests
   description: Router plugin package builds successfully
-  file: test_outputs.py
 - id: test_router_plugin_unit_tests
   type: pass_to_pass
   origin: repo_tests
   description: Router plugin unit tests pass
-  file: test_outputs.py
 - id: test_router_plugin_lint
   type: pass_to_pass
   origin: repo_tests
   description: Router plugin ESLint checks pass
-  file: test_outputs.py
 - id: test_router_plugin_types
   type: pass_to_pass
   origin: repo_tests
   description: Router plugin TypeScript type checking passes
-  file: test_outputs.py
 - id: test_router_plugin_build_validation
   type: pass_to_pass
   origin: repo_tests
   description: Router plugin package build validation passes
-  file: test_outputs.py
 - id: test_add_hmr_unit_tests
   type: pass_to_pass
   origin: repo_tests
   description: Add HMR specific unit tests pass
-  file: test_outputs.py
 - id: test_code_splitter_unit_tests
   type: pass_to_pass
   origin: repo_tests
   description: Code splitter unit tests pass
-  file: test_outputs.py
-agent_config:
-  files: []
-  rules: []
 rubric:
 - rule: Use TypeScript strict mode with extensive type safety
   source:
@@ -108,3 +89,9 @@ hierarchy_analysis: The AGENTS.md file provides general monorepo guidelines, but
   specific task instructions provide exact Nx commands for building and testing the
   router-plugin. The agent must prioritize the targeted commands in the task instructions
   over the general testing and formatting commands in AGENTS.md to avoid scope creep.
+version: '2.0'
+source:
+  repo: TanStack/router
+  pr: 7074
+  base_commit: 30835cb8e935b740c92fa95909a073e644dde530
+  merge_commit: f8351a8d7aa9f5a341377f96966451892acb39f1

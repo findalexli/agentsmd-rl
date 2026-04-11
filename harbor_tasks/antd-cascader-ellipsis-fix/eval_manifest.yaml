@@ -1,4 +1,4 @@
-version: '1.0'
+version: '2.0'
 source:
   repo: ant-design/ant-design
   pr: 57540
@@ -14,71 +14,42 @@ source:
     the content node, causing long text labels not to display ellipsis correctly.
 
     '
-target:
-  primary_file: components/cascader/style/columns.ts
-  distinct_line: 'minWidth: 0'
-agent_configs:
-- file: CLAUDE.md
-  rules:
-  - 'Demo import convention: use absolute paths like ''antd'', ''antd/es/*'', never
-    relative paths like ''../xxx'''
-  - 'Test import convention: use relative paths like ''..'', ''../index'', never absolute
-    paths like ''antd'''
-  - 'API table format: use backticks for string defaults, booleans as literals, no
-    colons after component names'
-  - 'Changelog: use emoji at start, no colons after component names, include both
-    English and Chinese versions'
-  - 'PR title: use English format like ''type: description'''
-- file: AGENTS.md
-  rules:
-  - 'Demo import convention: use absolute paths like ''antd'', ''antd/es/*'', never
-    relative paths'
-  - 'Test import convention: use relative paths like ''..'', ''../index'', never absolute
-    paths'
-- file: .github/copilot-instructions.md
-  rules:
-  - Use CSS-in-JS with @ant-design/cssinjs, never hardcode colors/sizes
-  - Support both light and dark themes using design tokens
-  - Use CSS logical properties for RTL support (margin-inline-start vs margin-left)
-  - Respect prefers-reduced-motion for animations
-  - Component props interfaces named ComponentNameProps
-  - Never use 'any' type - define precise types
 checks:
 - id: test_text_ellipsis_moved_to_content
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: textEllipsis should be in &-content block, not directly in &-item
 - id: test_content_has_minWidth_zero
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: '&-content should have minWidth: 0 for proper flex ellipsis behavior'
 - id: test_content_has_text_ellipsis
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: '&-content should have textEllipsis spread for ellipsis styling'
 - id: test_item_has_maxWidth
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: '&-item should have maxWidth: 400 to constrain the flex item'
 - id: test_file_exists
   type: pass_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: The columns.ts file exists
 - id: test_item_has_flex_display
   type: pass_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: '&-item uses display: ''flex'' for proper layout'
 - id: test_typescript_compiles
   type: pass_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: TypeScript compiles without syntax errors
 - id: test_style_exports_correctly
   type: pass_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: The style module exports getColumnsStyle correctly
 - id: test_imports_are_valid
   type: pass_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: Required imports are present
 - id: test_repo_biome_lint
   type: pass_to_pass

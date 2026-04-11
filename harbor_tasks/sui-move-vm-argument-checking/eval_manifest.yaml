@@ -1,7 +1,3 @@
-source_pr: https://github.com/MystenLabs/sui/pull/26052
-base_commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
-merge_commit: b85ea336af4c727655108209640becf2c8514c0e
-description: Add additional argument checking in Move VM runtime
 checks:
 - id: test_compilation
   type: pass_to_pass
@@ -37,43 +33,43 @@ checks:
   description: Repo's function_arg_tests module passes
 - id: test_argument_count_mismatch_0_expected_1_got
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling function expecting 0 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH
 - id: test_argument_count_mismatch_1_expected_0_got
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling function expecting 1 arg with 0 args fails with NUMBER_OF_ARGUMENTS_MISMATCH
 - id: test_argument_count_mismatch_2_expected_1_got
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling function expecting 2 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH
 - id: test_argument_count_mismatch_2_expected_3_got
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling function expecting 2 args with 3 args fails with NUMBER_OF_ARGUMENTS_MISMATCH
 - id: test_type_argument_count_mismatch_0_expected_1_got
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling generic function with 0 type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH
 - id: test_type_argument_count_mismatch_1_expected_2_got
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling generic function with 2 type args when 1 expected fails
 - id: test_type_argument_count_mismatch_non_generic_with_args
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling non-generic function with type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH
 - id: test_type_argument_count_mismatch_2_expected_1_got
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling function expecting 2 type args with 1 fails
 - id: test_type_argument_count_mismatch_2_expected_3_got
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Calling function expecting 2 type args with 3 fails
 - id: test_vm_code_present
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: VM argument checking code is present in vm.rs
 rubric:
 - rule: All new files must start with the Mysten Labs Apache-2.0 license header
@@ -133,3 +129,9 @@ hierarchy_analysis: The root `CLAUDE.md` provides global testing commands (`carg
   a specific `cargo test` command for the `move-vm-runtime` crate. The agent must
   prioritize the prompt's localized testing instructions over the global repository
   defaults to avoid massive test execution times.
+version: '2.0'
+source:
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+  merge_commit: ''

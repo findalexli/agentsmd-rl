@@ -1,106 +1,57 @@
-source_pr:
-  owner: MystenLabs
-  repo: sui
-  number: 26041
-  title: sui-rpc-resolver in Analytics Indexer
-  merge_commit: 8a866b804e6b1008de776e12df7a5f629e0fdf41
-  base_commit: 591ac7c96a2877709479724edeea7038d01f064b
-task:
-  name: sui-analytics-indexer-rpc-resolver
-  title: Migrate analytics indexer from custom PackageCache to sui-rpc-resolver
-  description: 'The analytics indexer uses a custom 2-level package cache (in-memory
-    LRU + RocksDB) for type layouts.
-
-    This cache has stale cache issues when system packages change during epoch transitions.
-    Migrate to
-
-    use sui-rpc-resolver instead, with proper cache eviction on epoch changes via
-    a new SystemPackageEviction handler.
-
-    '
 checks:
 - id: repo_format_check
   description: Repo code formatting passes
   type: pass_to_pass
   origin: repo_tests
-  test_function: test_repo_format_check
-  points: 5
 - id: repo_license_headers
   description: Repo license headers are valid
   type: pass_to_pass
   origin: repo_tests
-  test_function: test_repo_license_headers
-  points: 5
 - id: repo_git_checks
   description: Repo git checks pass
   type: pass_to_pass
   origin: repo_tests
-  test_function: test_repo_git_checks
-  points: 5
 - id: repo_clippy
   description: Repo clippy lints pass
   type: pass_to_pass
   origin: repo_tests
-  test_function: test_repo_clippy
-  points: 5
 - id: compilation
   description: Crate compiles successfully after migration
   type: fail_to_pass
-  test_function: test_cargo_check_passes
-  points: 15
+  origin: pr_diff
 - id: eviction_module_exists
   description: SystemPackageEviction handler module exists with correct structure
   type: fail_to_pass
-  test_function: test_system_package_eviction_module_exists
-  points: 15
+  origin: pr_diff
 - id: old_cache_removed
   description: Old PackageCache module is removed
   type: fail_to_pass
-  test_function: test_old_package_cache_removed
-  points: 10
+  origin: pr_diff
 - id: package_store_not_in_lib
   description: package_store is no longer declared in lib.rs
   type: fail_to_pass
-  test_function: test_package_store_not_in_lib
-  points: 10
+  origin: pr_diff
 - id: handlers_use_new_resolver
   description: Handlers use PackageStoreWithLruCache instead of PackageCache
   type: fail_to_pass
-  test_function: test_handlers_use_new_resolver
-  points: 15
+  origin: pr_diff
 - id: object_processor_rpc_client
   description: ObjectProcessor has new rpc_client field and get_original_package_id
     method
   type: fail_to_pass
-  test_function: test_object_processor_has_rpc_client
-  points: 10
+  origin: pr_diff
 - id: cargo_toml_updated
   description: Cargo.toml has sui-rpc-resolver and removed old dependencies
   type: fail_to_pass
-  test_function: test_cargo_toml_dependencies_updated
-  points: 10
+  origin: pr_diff
 - id: indexer_uses_rpc_store
   description: indexer.rs uses RpcPackageStore with cache and registers SystemPackageEviction
   type: fail_to_pass
-  test_function: test_indexer_uses_rpc_package_store
-  points: 10
+  origin: pr_diff
 - id: pipeline_signature
   description: pipeline.rs has updated function signature with rpc_url parameter
   type: fail_to_pass
-  test_function: test_pipeline_signature_updated
-  points: 5
-agent_config:
-- source: CLAUDE.md
-  rules:
-  - All new files must start with license header
-  - Use cargo check instead of cargo build for faster iteration
-  - Set timeout limits to at least 10 minutes due to large codebase
-  - Use -p flag to select relevant packages for testing
-  - Run ./scripts/lint.sh before commit for formatting and linting
-  - Always run cargo xclippy after finishing development
-  - Never disable or ignore tests - all tests must pass and be enabled
-  - Never use
-  - Do NOT comment the obvious - comments for non-obvious algorithms only
+  origin: pr_diff
 rubric:
 - rule: 'All new files must start with the Mysten Labs license header: // Copyright
     (c) Mysten Labs, Inc. and // SPDX-License-Identifier: Apache-2.0'
@@ -146,3 +97,9 @@ hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md`. The 
   followed in the new `system_package_eviction.rs` file. The architecture section
   in `CLAUDE.md` is incomplete regarding the analytics indexer, which could cause
   scope confusion, but the prompt explicitly directs the agent to the analytics indexer.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26041
+  base_commit: 591ac7c96a2877709479724edeea7038d01f064b
+  merge_commit: 8a866b804e6b1008de776e12df7a5f629e0fdf41

@@ -1,38 +1,29 @@
-source_pr:
-  owner: gohugoio
-  repo: hugo
-  pr_number: 14599
-  title: 'internal/warpc: Fix SIGSEGV in Close() when dispatcher fails to start'
-  base_commit: 54c804876a5b63c3447b612ce6823339f3f486fc
-  merge_commit: c9b88e4d15b96bcf0468ac165f9df53a5fbcd1a5
-target_files:
-- internal/warpc/warpc.go
 checks:
 - id: code_compiles
   description: The modified code compiles without errors
-  type: pytest
-  origin: test_outputs
+  type: fail_to_pass
+  origin: pr_diff
 - id: lazy_dispatcher_started_flag_guarded
   description: lazyDispatcher.start() only sets started=true on successful Start()
-  type: pytest
-  origin: test_outputs
+  type: fail_to_pass
+  origin: pr_diff
 - id: close_handles_failed_start
   description: Dispatchers.Close() properly checks started flag before accessing dispatcher
-  type: pytest
-  origin: test_outputs
+  type: fail_to_pass
+  origin: pr_diff
 - id: no_unconditional_started_assignment
   description: No unconditional 'd.started = true' in startOnce.Do block (this was
     the bug)
-  type: pytest
-  origin: test_outputs
+  type: fail_to_pass
+  origin: pr_diff
 - id: no_sigsegv_in_tests
   description: Existing tests don't SIGSEGV (regression check)
-  type: pytest
-  origin: test_outputs
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_repo_unit_tests_warpc_no_sigsegv
   description: Repo warpc unit tests don't crash with SIGSEGV (pass_to_pass)
   type: pass_to_pass
-  origin: test_outputs
+  origin: pr_diff
 - id: test_repo_go_vet
   description: Repo's go vet passes on the warpc package (pass_to_pass)
   type: pass_to_pass
@@ -75,15 +66,6 @@ rubric:
     simply wrapping the success-dependent state updates inside an `if d.startErr ==
     nil` block, rather than refactoring the entire `s
   category: style
-agent_configs:
-- path: AGENTS.md
-  commit: 54c804876a5b63c3447b612ce6823339f3f486fc
-  rules_checked:
-  - Never export symbols that's not needed outside of the package
-  - Avoid global state at (almost) all cost
-- path: CLAUDE.md
-  commit: 54c804876a5b63c3447b612ce6823339f3f486fc
-  note: References AGENTS.md, contains no additional rules
 distractors:
 - rule: If you need to add temporary debug printing, use `hdebug.Printf`.
   collision_type: would_cause_bug
@@ -108,3 +90,9 @@ distractors:
     lines: 2-2
 hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
   All rules originate from `AGENTS.md` and apply uniformly to the Go source files.
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 0
+  base_commit: 54c804876a5b63c3447b612ce6823339f3f486fc
+  merge_commit: c9b88e4d15b96bcf0468ac165f9df53a5fbcd1a5

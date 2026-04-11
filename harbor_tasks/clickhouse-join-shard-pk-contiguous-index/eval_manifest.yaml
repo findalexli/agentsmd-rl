@@ -1,36 +1,8 @@
-version: '1.0'
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 101960
-  merge_commit: 5f35e27d1a1192a54aabe56b74664bc8452f71ec
-  base_commit: f4eb1501802bc9f274870d147ae82979956939e6
-description: 'Fix wrong results in JOIN with shard-by-PK optimization and query condition
-  cache.
-
-
-  The bug was in optimizeJoinByShards::apply() which assumed contiguous part_index_in_query
-
-  values, but filterPartsByQueryConditionCache can drop parts from selectRangesToRead(),
-
-  leaving non-contiguous part_index_in_query values. The distribution logic assigns
-  parts
-
-  back to their sources using these indices, so gaps caused parts to be assigned to
-  the
-
-  wrong source, producing 0 rows.
-
-
-  The fix renumbers part_index_in_query to be contiguous starting from added_parts,
-
-  using a local_idx counter instead of relying on the original part indices.
-
-  '
+version: '2.0'
 checks:
 - id: test_fix_contiguous_index_renumbering
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: 'Fix renumbers part_index_in_query contiguously using local_idx instead
     of
 
@@ -41,7 +13,7 @@ checks:
     '
 - id: test_fix_comment_explains_issue
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: 'Fix includes explanatory comment about why contiguous renumbering
     is needed
 
@@ -58,19 +30,18 @@ checks:
   description: C++ code compiles without syntax errors
 - id: test_no_raw_pointers_in_fix_area
   type: pass_to_pass
-  origin: code_quality
+  origin: pr_diff
   description: Fix area doesn't introduce unsafe raw pointer usage
 - id: test_preserves_analysis_result_access
   type: fail_to_pass
-  origin: code_quality
+  origin: pr_diff
   description: Fix correctly accesses analysis_result->parts_with_ranges by index
 - id: test_allman_brace_style
   type: pass_to_pass
   origin: agent_config
   source:
-    file: .claude/CLAUDE.md
     lines: 44-45
-    rule: Always use Allman-style braces (opening brace on a new line)
+    path: .claude/CLAUDE.md
   description: Fix follows ClickHouse Allman brace style (opening brace on new line)
 - id: test_no_trailing_whitespace_in_target
   type: pass_to_pass
@@ -105,20 +76,16 @@ checks:
   origin: repo_tests
   description: Repo shell scripts syntax check passes (pass_to_pass)
 rubric:
-- id: allman_braces
-  description: Use Allman-style braces (opening brace on new line) per CLAUDE.md
-  type: style
-- id: no_raw_pointers
-  description: Avoid raw pointers where ownership is unclear per copilot-instructions.md
-  type: safety
-- id: explanatory_comments
-  description: Explain complex logic with comments per copilot-instructions.md
-  type: documentation
-- id: correct_variable_names
-  description: 'Use local_idx for loop counter (matching fix pattern), not arbitrary
-    names.
+- rule: Use Allman-style braces (opening brace on new line) per CLAUDE.md
+- rule: Avoid raw pointers where ownership is unclear per copilot-instructions.md
+- rule: Explain complex logic with comments per copilot-instructions.md
+- rule: 'Use local_idx for loop counter (matching fix pattern), not arbitrary names.
 
     Per copilot-instructions.md: avoid magic constants and unclear variable names.
 
     '
-  type: naming
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 101960
+  base_commit: f4eb1501802bc9f274870d147ae82979956939e6
+  merge_commit: 5f35e27d1a1192a54aabe56b74664bc8452f71ec

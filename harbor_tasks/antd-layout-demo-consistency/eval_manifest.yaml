@@ -1,24 +1,8 @@
 source:
   repo: ant-design/ant-design
-  pr_number: 57544
+  pr: 0
   base_commit: a120c05faf259ef45d23ab689bde5e9e5f7630fb
   merge_commit: 9702dbb57d3cb8ce4346b96c895e6fd6f43e56d3
-  title: 'docs: demo move currentYear initialization inside App component for consistency'
-agent_config:
-  files:
-  - source: CLAUDE.md
-    commit: a120c05faf259ef45d23ab689bde5e9e5f7630fb
-    relevant_rules:
-    - Demo code should be concise and copy-pasteable
-    - 'Follow import order: React → dependencies → antd components → custom components
-      → types → styles'
-    - Use 2-space indentation
-    - Prefer antd built-in components over external dependencies
-  - source: .github/copilot-instructions.md
-    commit: a120c05faf259ef45d23ab689bde5e9e5f7630fb
-    relevant_rules:
-    - Keep demo code concise and copy-pasteable
-    - Focus each demo on a single feature
 rubric:
 - rule: Keep demo code concise and copy-pasteable
   source:
@@ -46,57 +30,71 @@ rubric:
   category: architecture
 checks:
 - id: repo_tsc
-  name: Repo TypeScript Typecheck
   description: Repository TypeScript typecheck passes (tsc --noEmit)
   type: pass_to_pass
   origin: repo_tests
-  source: test_outputs.py::test_repo_tsc
+  source:
+    path: test_outputs.py
+    lines: ''
 - id: repo_eslint_layout
-  name: Repo ESLint (Layout Demos)
   description: Repository ESLint passes on layout demo files
   type: pass_to_pass
   origin: repo_tests
-  source: test_outputs.py::test_repo_eslint_layout
+  source:
+    path: test_outputs.py
+    lines: ''
 - id: repo_biome_lint_layout
-  name: Repo Biome Lint (Layout Demos)
   description: Repository Biome lint passes on layout demo files
   type: pass_to_pass
   origin: repo_tests
-  source: test_outputs.py::test_repo_biome_lint_layout
+  source:
+    path: test_outputs.py
+    lines: ''
 - id: repo_layout_demo_tests
-  name: Repo Layout Demo Tests
   description: Repository Jest tests for layout component pass
   type: pass_to_pass
   origin: repo_tests
-  source: test_outputs.py::test_repo_layout_demo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
 - id: typescript_compiles
-  name: TypeScript Syntax Validation
   description: All layout demo files must have valid TypeScript/React syntax and proper
     imports/exports
-  type: p2p
-  source: test_outputs.py::test_typescript_compiles
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
 - id: no_module_level_current_year
-  name: No Module-Level currentYear Declaration
   description: currentYear should not be declared at module level outside the App
     component
-  type: f2p
-  source: test_outputs.py::test_no_module_level_current_year
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
 - id: current_year_inside_component
-  name: currentYear Inside App Component
   description: currentYear must be declared inside the App component, after theme.useToken()
-  type: f2p
-  source: test_outputs.py::test_current_year_inside_component
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
 - id: consistent_component_structure
-  name: Consistent Component Structure
   description: All demos should follow the same pattern with theme.useToken() followed
     by currentYear
-  type: p2p
-  source: test_outputs.py::test_consistent_component_structure
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
 - id: footer_uses_current_year
-  name: Footer Uses currentYear Variable
   description: The Footer component must reference the currentYear variable
-  type: p2p
-  source: test_outputs.py::test_footer_uses_current_year
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
 distractors:
 - rule: Changelog core principles require providing both English and Chinese versions
     for changes.
@@ -125,3 +123,4 @@ hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. Th
   files. The primary challenge is recognizing that this is a minor demo refactor where
   logic should be inlined rather than extracted, and that it doesn't warrant a changelog
   entry.
+version: '2.0'

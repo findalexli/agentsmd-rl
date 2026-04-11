@@ -6,64 +6,48 @@ source:
 checks:
 - id: prev_promise_let_declaration
   description: prevLoadPromise uses 'let' instead of 'const' in executeBeforeLoad
-  test: test_load_matches_prev_promise_cleared
-  origin: programmatic
-  reward: 0.2
+  origin: pr_diff
+  type: fail_to_pass
 - id: prev_promise_cleared
   description: prevLoadPromise is set to undefined after resolve
-  test: test_load_matches_prev_promise_cleared
-  origin: programmatic
-  reward: 0.2
+  origin: pr_diff
+  type: fail_to_pass
 - id: load_promise_cleared_in_loader
   description: match._nonReactive.loadPromise is cleared to undefined in error handler
-  test: test_load_matches_load_promise_cleared_in_loader
-  origin: programmatic
-  reward: 0.2
+  origin: pr_diff
+  type: fail_to_pass
 - id: load_promise_cleared_normal_flow
   description: match._nonReactive.loadPromise is cleared to undefined in normal flow
-  test: test_load_matches_load_promise_cleared_in_loader
-  origin: programmatic
-  reward: 0.0
+  origin: pr_diff
+  type: fail_to_pass
 - id: commit_promise_let_declaration
   description: previousCommitPromise uses 'let' instead of 'const' in commitLocation
-  test: test_router_commit_promise_cleared
-  origin: programmatic
-  reward: 0.2
+  origin: pr_diff
+  type: fail_to_pass
 - id: commit_promise_cleared
   description: previousCommitPromise is set to undefined after resolve
-  test: test_router_commit_promise_cleared
-  origin: programmatic
-  reward: 0.2
+  origin: pr_diff
+  type: fail_to_pass
 - id: unit_tests_pass
   description: Existing unit tests pass
-  test: test_unit_tests_pass
   type: pass_to_pass
   origin: repo_tests
-  reward: 0.0
 - id: typescript_compiles
   description: TypeScript compiles without errors
-  test: test_typescript_compiles
   type: pass_to_pass
   origin: repo_tests
-  reward: 0.0
 - id: build_succeeds
   description: Package builds successfully
-  test: test_build_succeeds
   type: pass_to_pass
   origin: repo_tests
-  reward: 0.0
 - id: eslint_passes
   description: Repo's ESLint check passes on router-core
-  test: test_repo_eslint
   type: pass_to_pass
   origin: repo_tests
-  reward: 0.0
 - id: publint_passes
   description: Repo's package validation (publint + attw) passes on router-core
-  test: test_repo_publint
   type: pass_to_pass
   origin: repo_tests
-  reward: 0.0
 rubric:
 - rule: Use TypeScript strict mode with extensive type safety. Core logic should be
     framework-agnostic and separated from React/Solid bindings.
@@ -121,3 +105,4 @@ hierarchy_analysis: The AGENTS.md file provides general monorepo guidelines. The
   must balance the strict testing requirements with the practical scope of a patch
   script, adhering to the tooling preferences (pnpm nx) without over-complicating
   the execution environment.
+version: '2.0'

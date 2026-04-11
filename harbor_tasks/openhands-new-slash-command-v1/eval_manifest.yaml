@@ -1,11 +1,3 @@
-source_pr:
-  owner: All-Hands-AI
-  repo: OpenHands
-  number: 13599
-  title: 'feat: add /new to slash command menu for V1 conversations'
-  merge_commit: c210d5294fa82459443e6163b9b1c9c9f55073fc
-  base_commit: c7190ddb308de5a8c00b790049c5027d122159f7
-agent_config: []
 rubric:
 - rule: Use TanStack Query (React Query) for data fetching and cache management. Data
     Access Layer API client methods in frontend/src/api must never be called directly
@@ -52,19 +44,19 @@ rubric:
 checks:
 - id: test_test_file_exists
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: Test file use-slash-command.test.ts exists
 - id: test_v1_conversation_has_new_command
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: /new command appears for V1 conversations
 - id: test_v0_conversation_no_new_command
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: /new command does NOT appear for V0 conversations
 - id: test_empty_items_while_loading
   type: fail_to_pass
-  origin: task_tests
+  origin: pr_diff
   description: Returns empty items while skills are loading (prevents staggered menu
     bug)
 - id: test_typecheck
@@ -113,3 +105,9 @@ distractors:
 hierarchy_analysis: The repository has a single root-level `AGENTS.md` file containing
   general setup, testing, and PR artifact guidelines. There are no conflicting child
   configs.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13599
+  base_commit: c7190ddb308de5a8c00b790049c5027d122159f7
+  merge_commit: c210d5294fa82459443e6163b9b1c9c9f55073fc

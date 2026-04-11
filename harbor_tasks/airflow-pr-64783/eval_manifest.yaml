@@ -1,87 +1,70 @@
-source_pr:
-  owner: apache
-  repo: airflow
-  number: 64783
-  title: '[v3-2-test] Allow revent packages when testing RC versions (#64774)'
-  merge_commit: ab94c71d68f46d98236e9e2506ac9251d673c60e
-  base_commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
 checks:
 - id: f2p_install_together_exclude_newer
   description: When pre_release=True, _install_airflow_and_optionally_providers_together
     adds --pre and --exclude-newer with timestamp
   type: fail_to_pass
-  test: test_install_together_adds_exclude_newer_with_timestamp
+  origin: pr_diff
 - id: f2p_install_constraints_exclude_newer
   description: When pre_release=True, _install_only_airflow_airflow_core_task_sdk_with_constraints
     adds --pre and --exclude-newer with timestamp
   type: fail_to_pass
-  test: test_install_with_constraints_adds_exclude_newer_with_timestamp
+  origin: pr_diff
 - id: f2p_timestamp_is_current
   description: The timestamp used should be the current time when the function runs
   type: fail_to_pass
-  test: test_timestamp_is_current_time
+  origin: pr_diff
 - id: p2p_no_prerelease_no_exclude_newer
   description: When pre_release=False, command should NOT include --pre or --exclude-newer
   type: pass_to_pass
-  test: test_non_prerelease_does_not_add_exclude_newer
+  origin: pr_diff
 - id: p2p_no_prerelease_constraints_no_exclude_newer
   description: Second function also should NOT add flags when pre_release=False
   type: pass_to_pass
-  test: test_non_prerelease_with_constraints_no_exclude_newer
+  origin: pr_diff
 - id: p2p_console_message_providers
   description: Console message should mention 'providers' for first function
   type: pass_to_pass
-  test: test_console_message_updated_for_providers
+  origin: pr_diff
 - id: p2p_repo_python_syntax
   description: Python syntax check passes on install_airflow_and_providers.py
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_python_syntax
 - id: p2p_repo_ast_parsing
   description: AST parsing succeeds on install_airflow_and_providers.py
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_ast_parsing
 - id: p2p_repo_ruff_critical
   description: Ruff critical checks (E9,F) pass on install_airflow_and_providers.py
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_ruff_critical
 - id: p2p_repo_ruff_format
   description: Ruff format check passes on install_airflow_and_providers.py
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_ruff_format
 - id: p2p_repo_ruff_imports
   description: Ruff import checks (I) pass on install_airflow_and_providers.py
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_ruff_imports
 - id: p2p_repo_shellcheck_scripts
   description: Shell scripts in in_container pass shellcheck
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_shellcheck_scripts
 - id: p2p_repo_yaml_lint
   description: Basic YAML linting passes on workflow files
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_yaml_lint
 - id: p2p_repo_uv_scripts_tests
   description: Repo's scripts CI tests pass with uv
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_uv_scripts_tests
 - id: p2p_repo_uv_common_prek_utils
   description: Repo's common_prek_utils tests pass with uv
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_uv_common_prek_utils
 - id: p2p_repo_uv_ruff_format
   description: Ruff format check passes with uv on target file
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_uv_ruff_format
 rubric:
 - rule: Include Apache License header on all new/modified Python files.
   source:
@@ -93,19 +76,6 @@ rubric:
     path: CLAUDE.md
     lines: '78'
     commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
-agent_config:
-- file: CLAUDE.md
-  applicable: true
-  reason: Root-level config applies to all changes
-  rules:
-  - 'Imports at top of file. Valid exceptions: circular imports, lazy loading for
-    TYPE_CHECKING blocks.'
-  - Always format and check Python files with ruff immediately after writing or editing
-    them.
-- file: AGENTS.md
-  applicable: true
-  reason: Root-level config applies to all changes
-  rules: []
 distractors:
 - rule: Never run pytest, python, or airflow commands directly on the host — always
     use `breeze`.
@@ -143,3 +113,9 @@ hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are iden
   container build script (`scripts/in_container/`), standard local testing commands
   (like `breeze` or `uv run`) are largely inapplicable, creating potential meta-confusion
   for an agent trying to verify its changes.
+version: '2.0'
+source:
+  repo: apache/airflow
+  pr: 64783
+  base_commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
+  merge_commit: ab94c71d68f46d98236e9e2506ac9251d673c60e

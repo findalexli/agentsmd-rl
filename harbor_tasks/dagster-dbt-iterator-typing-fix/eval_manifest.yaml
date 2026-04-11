@@ -1,17 +1,3 @@
-source_pr:
-  owner: dagster-io
-  repo: dagster
-  number: 33615
-  title: Fix return type on DbtProjectComponent._get_dbt_event_iterator
-  merge_commit: ca3d311541c8fc8e12a0fbd1e79ad956bba4a752
-  base_commit: f44352a8a384296e999c33df60bb785bd69953c4
-files:
-- path: python_modules/libraries/dagster-dbt/dagster_dbt/components/dbt_project/component.py
-  description: DbtProjectComponent class with _get_dbt_event_iterator method
-- path: python_modules/libraries/dagster-dbt/dagster_dbt/core/dbt_event_iterator.py
-  description: DbtEventIterator class with fetch_row_counts, fetch_column_metadata,
-    and with_insights methods
-agent_config: []
 rubric:
 - rule: Use specific, accurate type annotations - not generic types like Iterator
     when a more precise type (DbtEventIterator[DbtDagsterEventType]) is available
@@ -43,84 +29,66 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Ruff linter check passes on component.py
-  weight: 1
-  function: test_ruff_check_component
 - id: test_ruff_check_iterator
   type: pass_to_pass
   origin: repo_tests
   description: Ruff linter check passes on dbt_event_iterator.py
-  weight: 1
-  function: test_ruff_check_iterator
 - id: test_component_py_compile
   type: pass_to_pass
   origin: repo_tests
   description: Python syntax check passes on component.py
-  weight: 1
-  function: test_component_py_compile
 - id: test_iterator_py_compile
   type: pass_to_pass
   origin: repo_tests
   description: Python syntax check passes on dbt_event_iterator.py
-  weight: 1
-  function: test_iterator_py_compile
 - id: test_dagster_dbt_package_structure
   type: pass_to_pass
   origin: static
   description: dagster-dbt package has expected directory structure
-  weight: 1
-  function: test_dagster_dbt_package_structure
 - id: test_pyproject_toml_exists
   type: pass_to_pass
   origin: static
   description: dagster-dbt pyproject.toml exists and is valid
-  weight: 1
-  function: test_pyproject_toml_exists
 - id: test_component_ast_valid
   type: pass_to_pass
   origin: static
   description: component.py has valid AST with DbtProjectComponent class
-  weight: 1
-  function: test_component_ast_valid
 - id: test_iterator_ast_valid
   type: pass_to_pass
   origin: static
   description: dbt_event_iterator.py has valid AST with DbtEventIterator class
-  weight: 1
-  function: test_iterator_ast_valid
 - id: test_dbt_event_iterator_has_event_type_alias
   type: pass_to_pass
   origin: static
   description: DbtDagsterEventType TypeAlias is defined in dbt_event_iterator.py
-  weight: 1
-  function: test_dbt_event_iterator_has_event_type_alias
 - id: test_component_iterator_return_type
   description: _get_dbt_event_iterator returns DbtEventIterator[DbtDagsterEventType]
-  weight: 2
-  function: test_component_iterator_return_type
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_iterator_fetch_row_counts_return_type
   description: fetch_row_counts returns DbtEventIterator[DbtDagsterEventType]
-  weight: 1
-  function: test_iterator_fetch_row_counts_return_type
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_iterator_fetch_column_metadata_return_type
   description: fetch_column_metadata returns DbtEventIterator[DbtDagsterEventType]
-  weight: 1
-  function: test_iterator_fetch_column_metadata_return_type
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_iterator_with_insights_return_type
   description: with_insights returns DbtEventIterator[DbtDagsterEventType]
-  weight: 1
-  function: test_iterator_with_insights_return_type
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_component_imports_event_types
   description: component.py imports DbtEventIterator and DbtDagsterEventType
-  weight: 1
-  function: test_component_imports_event_types
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_imports_are_callable
   description: The imports work at runtime
-  weight: 1
-  function: test_imports_are_callable
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_dbt_dagster_event_type_is_type_alias
   description: DbtDagsterEventType is properly defined as TypeAlias
-  weight: 1
-  function: test_dbt_dagster_event_type_is_type_alias
+  type: fail_to_pass
+  origin: pr_diff
 distractors:
 - rule: 'MANDATORY: After any code changes, ALWAYS run `make ruff` to format, lint,
     and autofix code'
@@ -138,3 +106,9 @@ hierarchy_analysis: 'Only a single root-level `CLAUDE.md` file is provided, so t
   are no inter-file conflicts. The primary tension lies within the file itself: balancing
   the strict mandate to run code quality tools (`make ruff`) against the practical
   reality of making a minimal, precise type hint fix without polluting the diff.'
+version: '2.0'
+source:
+  repo: dagster-io/dagster
+  pr: 33615
+  base_commit: f44352a8a384296e999c33df60bb785bd69953c4
+  merge_commit: ca3d311541c8fc8e12a0fbd1e79ad956bba4a752

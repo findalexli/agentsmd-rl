@@ -1,35 +1,25 @@
-version: '1.0'
+version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands
-  pr_number: 13649
+  pr: 0
   base_commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
   merge_commit: b75c83d92abfcbbb63b7b82e0fdd0e981f69a66f
-  title: 'fix(frontend): prevent duplicate payment successful toast after Stripe checkout'
-  description: 'Extract search params as primitive strings outside the useEffect to
-    stabilize the
-
-    dependency array.
-
-    '
-scoring:
-  total_checks: 7
-  threshold: 7
 checks:
 - id: test_useeffect_has_primitive_dependencies
   type: fail_to_pass
-  origin: code_analysis
+  origin: pr_diff
   description: useEffect dependency array uses primitive string values
 - id: test_searchparams_extracted_outside_effect
   type: fail_to_pass
-  origin: code_analysis
+  origin: pr_diff
   description: amount and sessionId extracted outside useEffect
 - id: test_no_searchparams_get_inside_effect
   type: fail_to_pass
-  origin: code_analysis
+  origin: pr_diff
   description: searchParams.get() calls outside useEffect
 - id: test_checkout_status_extraction
   type: fail_to_pass
-  origin: code_analysis
+  origin: pr_diff
   description: checkoutStatus extracted as primitive outside useEffect
 - id: test_vitest_billing_tests
   type: pass_to_pass

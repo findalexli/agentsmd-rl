@@ -1,11 +1,3 @@
-source_pr:
-  owner: All-Hands-AI
-  repo: OpenHands
-  number: 13755
-  title: 'feat(backend): route gitlab resolver conversations to claimed org workspaces'
-  merge_commit: d058323a8725d45086e9d5a44a6ad55247c3a69d
-  base_commit: 7d04cffe4ec3e723fee04d89a8ba0e19d910c049
-agent_config: []
 rubric:
 - rule: Use relative imports without 'enterprise.' prefix in enterprise code
   source:
@@ -35,95 +27,88 @@ checks:
 - id: resolve_org_for_repo_imported
   description: resolve_org_for_repo is imported from resolver_org_router
   type: fail_to_pass
-  test: test_resolve_org_for_repo_imported
+  origin: pr_diff
 - id: resolve_org_for_repo_called_in_initialize
   description: resolve_org_for_repo is called in initialize_new_conversation
   type: fail_to_pass
-  test: test_resolve_org_for_repo_called_in_initialize
+  origin: pr_diff
 - id: resolve_org_for_repo_called_with_correct_args
   description: resolve_org_for_repo is called with provider='gitlab' and correct arguments
   type: fail_to_pass
-  test: test_resolve_org_for_repo_called_with_correct_args
+  origin: pr_diff
 - id: saas_conversation_store_imported
   description: SaasConversationStore is imported from storage.saas_conversation_store
   type: fail_to_pass
-  test: test_saas_conversation_store_imported
+  origin: pr_diff
 - id: initialize_conversation_not_imported
   description: initialize_conversation is NOT imported (replaced by direct store creation)
   type: fail_to_pass
-  test: test_initialize_conversation_not_imported
+  origin: pr_diff
 - id: get_resolver_instance_called
   description: SaasConversationStore.get_resolver_instance is called in initialize_new_conversation
   type: fail_to_pass
-  test: test_get_resolver_instance_called
+  origin: pr_diff
 - id: get_resolver_instance_passes_resolver_org_id
   description: get_resolver_instance receives self.resolved_org_id as third argument
   type: fail_to_pass
-  test: test_get_resolver_instance_passes_resolver_org_id
+  origin: pr_diff
 - id: resolver_org_id_stored_on_self
   description: resolved_org_id is stored on self (self.resolved_org_id = ...)
   type: fail_to_pass
-  test: test_resolver_org_id_stored_on_self
+  origin: pr_diff
 - id: resolver_user_context_receives_org_id
   description: ResolverUserContext receives resolver_org_id parameter in V1 path
   type: fail_to_pass
-  test: test_resolver_user_context_receives_org_id
+  origin: pr_diff
 - id: github_callback_uses_should_request_summary
   description: GitHub callback processor uses should_request_summary parameter (renamed
     from send_summary_instruction)
   type: fail_to_pass
-  test: test_github_callback_uses_should_request_summary
+  origin: pr_diff
 - id: get_default_conversation_title_imported
   description: get_default_conversation_title is imported for manual metadata creation
   type: fail_to_pass
-  test: test_get_default_conversation_title_imported
+  origin: pr_diff
 - id: manual_conversation_metadata_creation
   description: ConversationMetadata is created manually with all required fields
   type: pass_to_pass
-  test: test_manual_conversation_metadata_creation
+  origin: pr_diff
 - id: conversation_id_generated_via_uuid
   description: conversation_id is generated via uuid4().hex
   type: pass_to_pass
-  test: test_conversation_id_generated_via_uuid
+  origin: pr_diff
 - id: save_metadata_called
   description: store.save_metadata is called with the created metadata
   type: fail_to_pass
-  test: test_save_metadata_called
+  origin: pr_diff
 - id: test_repo_pre_commit_lint
   description: Repo's pre-commit hooks pass on modified files
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_pre_commit_lint
 - id: test_repo_enterprise_integration_tests
   description: Enterprise integration unit tests pass
   type: pass_to_pass
   origin: repo_tests
-  test: test_repo_enterprise_integration_tests
 - id: gitlab_view_syntax_valid
   description: GitLab view file has valid Python syntax
   type: pass_to_pass
   origin: static
-  test: test_gitlab_view_syntax_valid
 - id: github_view_syntax_valid
   description: GitHub view file has valid Python syntax
   type: pass_to_pass
   origin: static
-  test: test_github_view_syntax_valid
 - id: enterprise_tests_exist
   description: Enterprise tests directory exists with GitLab/GitHub tests
   type: pass_to_pass
   origin: static
-  test: test_enterprise_tests_exist
 - id: gitlab_view_imports_resolve
   description: GitLab view imports are syntactically valid
   type: pass_to_pass
   origin: static
-  test: test_gitlab_view_imports_resolve
 - id: github_view_imports_resolve
   description: GitHub view imports are syntactically valid
   type: pass_to_pass
   origin: static
-  test: test_github_view_imports_resolve
 distractors:
 - rule: Store design documents or temporary artifacts in a `.pr/` directory.
   collision_type: scope_ambiguity
@@ -146,3 +131,9 @@ distractors:
 hierarchy_analysis: The repository has a single root-level AGENTS.md file providing
   general guidelines for setup, linting, git practices, and PR artifacts. No conflicting
   child configs exist.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13755
+  base_commit: 7d04cffe4ec3e723fee04d89a8ba0e19d910c049
+  merge_commit: d058323a8725d45086e9d5a44a6ad55247c3a69d

@@ -1,52 +1,32 @@
-source_pr:
-  owner: dagster-io
-  repo: dagster
-  number: 33620
-  title: 'fix(dlt): drop local state before run'
-  merge_commit: b776602f1381cd661d3328ed7835ac0120f33111
-  base_commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
 checks:
 - id: test_stale_state_interference_regression
-  type: behavioral
+  type: fail_to_pass
   description: Verify stale state from previous runs doesn't interfere
-  points: 5
+  origin: pr_diff
 - id: test_drop_state_called
-  type: behavioral
+  type: fail_to_pass
   description: Verify drop() is called during dagster-dlt runs
-  points: 5
+  origin: pr_diff
 - id: test_repo_dagster_dlt_tests
   type: pass_to_pass
   origin: repo_tests
   description: dagster-dlt test suite passes
-  points: 1
 - id: test_repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
   description: Ruff lint check on dagster-dlt passes
-  points: 1
 - id: test_repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
   description: Ruff format check on dagster-dlt passes
-  points: 1
 - id: test_repo_pyright
   type: pass_to_pass
   origin: repo_tests
   description: Pyright type check on dagster-dlt passes
-  points: 1
 - id: test_repo_dagster_core_imports
   type: pass_to_pass
   origin: repo_tests
   description: Dagster core and dagster-dlt can be imported without errors
-  points: 1
-agent_config:
-- file: CLAUDE.md
-  rules:
-  - id: run_ruff_after_changes
-    description: Run make ruff after any Python code changes
-    applicable: true
-    origin: CLAUDE.md
-    lines: 'MANDATORY: After ANY Python code changes, ALWAYS run make ruff'
 rubric:
 - rule: Use comments to explain invariants, design decisions, and WHY code exists,
     not just narrate WHAT the code does.
@@ -68,9 +48,6 @@ rubric:
     correctly locating the `dagster-dlt` integration in the libraries directory rather
     than the core framework.
   category: architecture
-scoring:
-  max_points: 10
-  passing_threshold: 8
 distractors:
 - rule: 'pytest python_modules/dagster/dagster_tests/  # Run core tests'
   collision_type: scope_ambiguity
@@ -97,3 +74,9 @@ hierarchy_analysis: The config file `CLAUDE.md` provides general repository guid
   The distinction between core framework and libraries is clear, but test commands
   are overly focused on the core framework, which could mislead an agent working on
   a specific library like `dagster-dlt`.
+version: '2.0'
+source:
+  repo: dagster-io/dagster
+  pr: 33620
+  base_commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+  merge_commit: b776602f1381cd661d3328ed7835ac0120f33111

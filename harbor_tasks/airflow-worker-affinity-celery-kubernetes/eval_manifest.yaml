@@ -1,124 +1,89 @@
-source_pr:
-  owner: apache
-  repo: airflow
-  number: 64910
-  merge_commit: 1c3ec8ab662534fb11187772c9ba1af29759ccba
-  base_commit: 8dc4305675a6817f55d5ebcc88367859da21beca
 checks:
 - id: test_kubernetes_affinity_in_pod_template
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: workers.kubernetes.affinity is properly applied to pod template file
-  points: 2
 - id: test_celery_affinity_in_worker_deployment
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: workers.celery.affinity is properly applied to worker deployment
-  points: 2
 - id: test_deprecated_workers_affinity_deprecation_warning
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: NOTES.txt includes deprecation warning when workers.affinity is used
-  points: 1
 - id: test_schema_includes_celery_affinity
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: values.schema.json includes workers.celery.affinity definition
-  points: 1
 - id: test_schema_includes_kubernetes_affinity
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: values.schema.json includes workers.kubernetes.affinity definition
-  points: 1
 - id: test_deprecated_affinity_backwards_compatibility
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: workers.affinity backwards compatibility is maintained
-  points: 1
 - id: test_helm_lint
   type: pass_to_pass
   origin: repo_tests
   description: Helm lint passes on the chart
-  points: 0.5
 - id: test_chart_values_schema_validation
   type: pass_to_pass
   origin: repo_tests
   description: Chart values validate against schema
-  points: 0.5
 - id: test_helm_tests_worker_affinity
   type: pass_to_pass
   origin: repo_tests
   description: Repo helm worker affinity tests pass
-  points: 1
 - id: test_helm_tests_pod_template_affinity
   type: pass_to_pass
   origin: repo_tests
   description: Repo helm pod template affinity tests pass
-  points: 1
 - id: test_helm_tests_worker_sets_affinity
   type: pass_to_pass
   origin: repo_tests
   description: Repo helm worker sets affinity tests pass
-  points: 1
 - id: test_schema_is_valid_json
   type: pass_to_pass
   origin: static
   description: values.schema.json is valid JSON
-  points: 0.5
 - id: test_values_yaml_is_valid_yaml
   type: pass_to_pass
   origin: static
   description: values.yaml is valid YAML
-  points: 0.5
 - id: test_repo_helm_tests_scheduler_affinity
   type: pass_to_pass
   origin: repo_tests
   description: Repo helm scheduler affinity tests pass
-  points: 0.5
 - id: test_repo_helm_tests_triggerer_affinity
   type: pass_to_pass
   origin: repo_tests
   description: Repo helm triggerer affinity tests pass
-  points: 0.5
 - id: test_repo_helm_tests_dag_processor_affinity
   type: pass_to_pass
   origin: repo_tests
   description: Repo helm DAG processor affinity tests pass
-  points: 0.5
 - id: test_repo_helm_tests_celery_kubernetes_executor
   type: pass_to_pass
   origin: repo_tests
   description: Repo helm CeleryKubernetes executor tests pass
-  points: 0.5
 rubric:
 - rule: Use @pytest.mark.parametrize for multiple similar inputs
-  type: agent_config
-  source: CLAUDE.md:120-121
-  description: Tests should use pytest.mark.parametrize for testing multiple affinity
-    configurations
+  source:
+    path: CLAUDE.md
+    lines: 120-121
 - rule: Add tests for new behavior — cover success, failure, and edge cases
-  type: agent_config
-  source: CLAUDE.md:125
-  description: Any new test files or test modifications should include tests for success,
-    failure, and edge cases
+  source:
+    path: CLAUDE.md
+    lines: '125'
 - rule: Always format and check Python files with ruff immediately after writing or
     editing
-  type: agent_config
-  source: CLAUDE.md:95-96
-  description: Python files must be formatted with ruff format and checked with ruff
-    check --fix
+  source:
+    path: CLAUDE.md
+    lines: 95-96
 - rule: Helm chart changes must include updates to values.schema.json
-  type: inferred
-  description: When adding new configuration fields to values.yaml, the schema must
-    be updated
 - rule: Deprecated fields should show deprecation warnings in NOTES.txt
-  type: inferred
-  description: When deprecating a field, NOTES.txt should warn users about the change
-    and suggest alternatives
 - rule: New affinity fields should take precedence over old deprecated field
-  type: inferred
-  description: workers.kubernetes.affinity and workers.celery.affinity should take
-    precedence over workers.affinity
 - rule: 'Run specific Helm test type: `breeze testing helm-tests --use-xdist --test-type
     <type>`'
   source:
@@ -156,3 +121,9 @@ hierarchy_analysis: The config files CLAUDE.md and AGENTS.md are identical and p
   commands (`uv run pytest`) versus domain-specific testing commands (`breeze testing
   helm-tests`). The agent must recognize that Helm chart modifications fall under
   a specialized testing domain.
+version: '2.0'
+source:
+  repo: apache/airflow
+  pr: 64910
+  base_commit: 8dc4305675a6817f55d5ebcc88367859da21beca
+  merge_commit: 1c3ec8ab662534fb11187772c9ba1af29759ccba

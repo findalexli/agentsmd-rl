@@ -1,97 +1,88 @@
 rubric:
-  - rule: "Brevity is good. Keep code, comments, and changes minimal."
-    source:
-      path: "AGENTS.md"
-      lines: "1,11"
-      commit: "cc338a9d4854c7e7273a5c3c8fee436c642f4dde"
-
-  - rule: "Don't use comments to explain the obvious. Use comments to explain invariants and rationale, not to narrate code."
-    source:
-      path: "AGENTS.md"
-      lines: "3"
-      commit: "cc338a9d4854c7e7273a5c3c8fee436c642f4dde"
-
-  - rule: "Use self-explanatory variable and function names. Short variable names are fine when context is clear."
-    source:
-      path: "AGENTS.md"
-      lines: "4-5"
-      commit: "cc338a9d4854c7e7273a5c3c8fee436c642f4dde"
-
-  - rule: "Look hard for helper functions before creating new ones - similar problems have likely been solved before."
-    source:
-      path: "AGENTS.md"
-      lines: "9"
-      commit: "cc338a9d4854c7e7273a5c3c8fee436c642f4dde"
-
+- rule: Brevity is good. Keep code, comments, and changes minimal.
+  source:
+    path: AGENTS.md
+    lines: 1,11
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+- rule: Don't use comments to explain the obvious. Use comments to explain invariants
+    and rationale, not to narrate code.
+  source:
+    path: AGENTS.md
+    lines: '3'
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+- rule: Use self-explanatory variable and function names. Short variable names are
+    fine when context is clear.
+  source:
+    path: AGENTS.md
+    lines: 4-5
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+- rule: Look hard for helper functions before creating new ones - similar problems
+    have likely been solved before.
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
 checks:
-  # Fail-to-pass tests (behavioral)
-  - id: test_ancestors_with_problematic_config
-    type: fail_to_pass
-    origin: task
-    description: Test that .Ancestors works with problematic TOML config (TestDisableKindsEmptySliceAncestors)
-
-  - id: test_taxonomy_parsing_no_panic
-    type: fail_to_pass
-    origin: task
-    description: Verify Hugo doesn't panic or hang with empty taxonomy values
-
-  # Pass-to-pass tests (repo CI checks)
-  - id: test_compilation
-    type: pass_to_pass
-    origin: repo_tests
-    description: Hugo compiles successfully (go build)
-
-  - id: test_gofmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: Code passes gofmt formatting check
-
-  - id: test_go_vet
-    type: pass_to_pass
-    origin: repo_tests
-    description: Code passes go vet static analysis on config and hugolib packages
-
-  - id: test_config_package
-    type: pass_to_pass
-    origin: repo_tests
-    description: Config package tests pass (go test ./config/...)
-
-  - id: test_hugolib_package_smoke
-    type: pass_to_pass
-    origin: repo_tests
-    description: Hugolib basic tests pass (go test -run ^TestBuild ./hugolib/)
-
-  - id: test_disable_kinds_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: All disableKinds tests pass (go test -run ^TestDisableKinds ./hugolib/)
-
-  - id: test_taxonomy_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: All taxonomy tests pass (go test -run ^TestTaxonomies ./hugolib/)
-
-  - id: test_hugolib_config_loading
-    type: pass_to_pass
-    origin: repo_tests
-    description: Hugolib config loading tests pass (go test -run ^TestLoadConfig ./hugolib/)
-
-  - id: test_hugolib_cascade_taxonomies
-    type: pass_to_pass
-    origin: repo_tests
-    description: Cascade taxonomies config tests pass (go test -run ^TestCascadeBuildOptionsTaxonomies ./hugolib/)
-
-  # Structural test (fails before fix, passes after)
-  - id: test_taxonomies_decoder_has_filtering
-    type: structural
-    origin: task
-    description: Verify the fix is present in the decoder (empty key/value filtering)
-  - id: test_allconfig_package
-    type: pass_to_pass
-    origin: repo_tests
-    description: Config allconfig package explicitly passes (pass_to_pass)
-
-  - id: test_staticcheck_allconfig
-    type: pass_to_pass
-    origin: repo_tests
-    description: staticcheck passes for the modified allconfig package
+- id: test_ancestors_with_problematic_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test that .Ancestors works with problematic TOML config (TestDisableKindsEmptySliceAncestors)
+- id: test_taxonomy_parsing_no_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify Hugo doesn't panic or hang with empty taxonomy values
+- id: test_compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Hugo compiles successfully (go build)
+- id: test_gofmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code passes gofmt formatting check
+- id: test_go_vet
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code passes go vet static analysis on config and hugolib packages
+- id: test_config_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config package tests pass (go test ./config/...)
+- id: test_hugolib_package_smoke
+  type: pass_to_pass
+  origin: repo_tests
+  description: Hugolib basic tests pass (go test -run ^TestBuild ./hugolib/)
+- id: test_disable_kinds_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: All disableKinds tests pass (go test -run ^TestDisableKinds ./hugolib/)
+- id: test_taxonomy_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: All taxonomy tests pass (go test -run ^TestTaxonomies ./hugolib/)
+- id: test_hugolib_config_loading
+  type: pass_to_pass
+  origin: repo_tests
+  description: Hugolib config loading tests pass (go test -run ^TestLoadConfig ./hugolib/)
+- id: test_hugolib_cascade_taxonomies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cascade taxonomies config tests pass (go test -run ^TestCascadeBuildOptionsTaxonomies
+    ./hugolib/)
+- id: test_taxonomies_decoder_has_filtering
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify the fix is present in the decoder (empty key/value filtering)
+- id: test_allconfig_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config allconfig package explicitly passes (pass_to_pass)
+- id: test_staticcheck_allconfig
+  type: pass_to_pass
+  origin: repo_tests
+  description: staticcheck passes for the modified allconfig package
+version: '2.0'
+source:
+  repo: gohugoio/hugo.git
+  pr: 0
+  base_commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+  merge_commit: ''

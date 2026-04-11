@@ -1,17 +1,3 @@
-source_pr:
-  owner: All-Hands-AI
-  repo: OpenHands
-  number: 13658
-  merge_commit: 9c0f5d785ee71c7d16d157333994245cb242a885
-  base_commit: 73ba66faeae1520fc2671b07677db4b5e3e235d3
-source_commit:
-  relevant_diff_files:
-  - enterprise/storage/user.py
-  - enterprise/migrations/versions/104_add_disabled_skills_to_user.py
-  agent_config_files:
-  - path: AGENTS.md
-    lines_referenced:
-    - 1-100
 checks:
 - id: test_user_model_has_disabled_skills_column
   type: fail_to_pass
@@ -104,19 +90,9 @@ checks:
   description: Ruff linting passes on user.py (CI linter)
 rubric:
 - rule: Add disabled_skills column to User model with JSON type
-  weight: 40
-  description: The User model must have a disabled_skills column defined as Column(JSON,
-    nullable=True)
 - rule: Import JSON type from sqlalchemy in user.py
-  weight: 20
-  description: The user.py file must include JSON in its sqlalchemy imports
 - rule: Create Alembic migration 104
-  weight: 30
-  description: A migration file must be created to add the disabled_skills column
-    to the user table
 - rule: Follow enterprise code conventions
-  weight: 10
-  description: Code should follow the patterns in AGENTS.md for enterprise directory
 - rule: Ensure no lint errors such as trailing whitespace or missing newlines at the
     end of files are introduced.
   source:
@@ -154,3 +130,9 @@ hierarchy_analysis: The `AGENTS.md` file provides general repository guidelines 
   the root level. The instructions for debugging and PR artifacts are broad and could
   distract an agent from the specific, targeted fix required for this issue, especially
   since the root cause is already identified in the prompt.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13658
+  base_commit: 73ba66faeae1520fc2671b07677db4b5e3e235d3
+  merge_commit: 9c0f5d785ee71c7d16d157333994245cb242a885

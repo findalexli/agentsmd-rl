@@ -1,36 +1,23 @@
-source_pr:
-  owner: MystenLabs
-  repo: sui
-  number: 26106
-  title: '[chore] Fix sui-framework UPDATE to not delete the existing files unless
-    the build succeeds'
-  merge_commit: 6a391733c6a07cda5d3c9939ef3ee306490d16bd
-  base_commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
-task:
-  name: sui-framework-update-delete-order
-  description: Fix the build-system-packages test to delete files AFTER build succeeds,
-    not before
-  target_file: crates/sui-framework/tests/build-system-packages.rs
 checks:
 - id: test_buggy_pattern_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Verify buggy pattern (delete before build) is removed
 - id: test_fixed_deletes_after_build
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Verify fixed pattern (build to tempdir, then copy) is present
 - id: test_update_builds_to_tempdir_first
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Verify build always happens to tempdir first, not crate_root
 - id: test_safe_deletion_checks_existence
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Verify existence checks before deletion are present
 - id: test_copy_from_tempdir_after_build
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Verify copy from tempdir to crate_root after successful build
 - id: test_compilation_passes
   type: pass_to_pass
@@ -107,3 +94,9 @@ hierarchy_analysis: The repository uses a root CLAUDE.md and AGENTS.md. The root
   provides general testing and building commands, but some of its examples (like `-p
   sui-core` or `--lib`) are scoped to different contexts and can mislead an agent
   working on an integration test in `sui-framework`.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26106
+  base_commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+  merge_commit: 6a391733c6a07cda5d3c9939ef3ee306490d16bd

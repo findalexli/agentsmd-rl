@@ -1,84 +1,49 @@
 source:
-  pr:
-    owner: MystenLabs
-    repo: sui
-    number: 26085
-    merge_commit: b9b9628b2040de6b8f02af1e59d7a119dd4bbc10
-    base_commit: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-agent_config:
-  files:
-  - source: CLAUDE.md
-    ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-  - source: AGENTS.md
-    ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-  - source: crates/sui-framework/README.md
-    ref: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-rules:
-- id: license_header
-  type: programmatic
-  origin: agent_config
-  source:
-    file: CLAUDE.md
-    line: 15-18
-  description: All new files must include the Mysten Labs Apache-2.0 license header
-  applicable: true
-- id: run_tests
-  type: programmatic
-  origin: agent_config
-  source:
-    file: CLAUDE.md
-    line: 35-44
-  description: Framework changes require running tests and potentially updating snapshots
-  applicable: true
-- id: cargo_xclippy
-  type: programmatic
-  origin: agent_config
-  source:
-    file: CLAUDE.md
-    line: 60-61
-  description: Always run cargo xclippy after finishing development
-  applicable: true
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: 63cb7f767409e0589a9d5265e55a727cb8a020b5
+  merge_commit: ''
 checks:
 - id: test_map_mut_macro_exists
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: map_mut macro must exist in option.move with correct signature
 - id: test_is_none_or_macro_exists
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: is_none_or macro must exist in option.move
 - id: test_fold_macro_exists
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: fold macro must exist in option.move with consume semantics
 - id: test_fold_ref_macro_exists
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: fold_ref macro must exist in option.move
 - id: test_fold_mut_macro_exists
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: fold_mut macro must exist in option.move
 - id: test_map_mut_functionality
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: map_mut tests must cover Some, None, and mutation cases
 - id: test_is_none_or_functionality
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: is_none_or tests must cover all three cases (Some+match, Some+no-match,
     None)
 - id: test_fold_functionality
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: fold tests must cover both Some and None cases
 - id: test_fold_ref_functionality
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: fold_ref tests must exist
 - id: test_fold_mut_functionality
   type: fail_to_pass
-  origin: code_check
+  origin: pr_diff
   description: fold_mut tests must cover mutation validation
 - id: test_move_tests_compile
   type: pass_to_pass
@@ -101,15 +66,9 @@ checks:
   origin: repo_tests
   description: sui-move crate passes cargo check
 rubric:
-- id: doc_comments
-  description: New macros should have proper doc comments explaining behavior
-  required: true
-- id: consistent_style
-  description: Implementation should follow existing macro patterns in the file
-  required: true
-- id: test_quality
-  description: Tests should be comprehensive and validate edge cases
-  required: false
+- rule: New macros should have proper doc comments explaining behavior
+- rule: Implementation should follow existing macro patterns in the file
+- rule: Tests should be comprehensive and validate edge cases
 distractors:
 - rule: Use `#[cfg(test)]` for test-only code used within the same crate.
   collision_type: would_cause_bug
@@ -125,3 +84,4 @@ hierarchy_analysis: The repository uses a root CLAUDE.md file that primarily foc
   on Rust development patterns (like `cargo nextest` and `#[cfg(test)]`). Since the
   target files for this task are Move source code (`.move`), agents must be careful
   not to blindly apply Rust-specific rules to Move files.
+version: '2.0'

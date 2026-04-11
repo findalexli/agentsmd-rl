@@ -1,48 +1,47 @@
 source:
   repo: JetBrains/kotlin
-  pr_number: 5782
+  pr: 0
   base_commit: aa96b1eb9878f7e427671338882cd24dc514a090
   merge_commit: 86147403c7400cd4f37c1edcaacb51e6fc0349fc
-  title: '[Swift Export] Properly cancel Flow collection'
 checks:
 - id: test_coroutine_scope_parameter
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: SwiftFlowIterator has coroutineScope parameter with default value
 - id: test_cancel_uses_scope_cancel
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: cancel() method uses coroutineScope.cancel() instead of complete()
 - id: test_invoke_on_cancellation_ready_state
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: State.Ready handler has invokeOnCancellation to cancel on suspension
     cancel
 - id: test_invoke_on_cancellation_awaiting_consumer_state
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: State.AwaitingConsumer handler has invokeOnCancellation to cancel on
     suspension cancel
 - id: test_launch_uses_coroutine_scope
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: launch() method uses coroutineScope.launch instead of creating new
     scope each time
 - id: test_swift_iterator_class
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: Swift file has new Iterator class that handles deinit cancellation
 - id: test_swift_iterator_deinit_cancels
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: Iterator.deinit calls cancel on the underlying KotlinFlowIterator
 - id: test_kotlin_flow_iterator_is_internal
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: KotlinFlowIterator is marked as internal (not public)
 - id: test_kotlin_flow_iterator_no_deinit
   type: fail_to_pass
-  origin: solution
+  origin: pr_diff
   description: KotlinFlowIterator no longer has deinit (it was moved to Iterator class)
 - id: test_repo_gradle_settings_exist
   type: pass_to_pass
@@ -123,7 +122,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: 'CI: Swift coroutine support file has reasonable size'
-agent_config: []
 rubric:
 - rule: Commit messages must explain not just WHAT but also WHY and HOW the changes
     work.
@@ -152,3 +150,4 @@ hierarchy_analysis: The provided config files (CLAUDE.md and AGENTS.md) contain 
   specific coding rules, style guidelines, or architectural constraints. They only
   contain pointers to other files (.ai/guidelines.md, .claude/local.md) which are
   not included in the context, and a meta-rule about updating memory.
+version: '2.0'

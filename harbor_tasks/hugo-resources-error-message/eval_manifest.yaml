@@ -1,99 +1,8 @@
 source:
   repo: gohugoio/hugo
-  pr_number: 14572
+  pr: 0
   base_commit: 44dc3847f4c91e86b1afa2350d42559bdecbaca9
   merge_commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
-  title: 'resources: Improve getImageOps error message'
-f2p_checks:
-- id: svg_width_error
-  description: SVG Width() call produces improved error message with resource info
-    and hints
-  test: test_svg_width_error_message
-p2p_checks:
-- id: transform_compiles
-  description: resources/transform.go compiles successfully
-  test: test_transform_compiles
-- id: no_old_error
-  description: Old error messages are no longer present in code
-  test: test_no_old_error_message
-- id: fmt_import
-  description: fmt package is imported for Sprintf usage
-  test: test_fmt_import_present
-- id: error_format
-  description: Error message format uses fmt.Sprintf with correct pattern
-  test: test_error_message_format
-- id: gofmt_resources
-  type: pass_to_pass
-  origin: repo_tests
-  description: gofmt reports no formatting issues in resources directory
-  test: test_gofmt_resources
-- id: gofmt_transform_go
-  type: pass_to_pass
-  origin: repo_tests
-  description: transform.go passes gofmt formatting check
-  test: test_gofmt_transform_go
-- id: transform_go_syntax_valid
-  type: pass_to_pass
-  origin: repo_tests
-  description: transform.go has valid Go syntax (parses correctly)
-  test: test_transform_go_syntax_valid
-- id: go_vet_resources_images
-  type: pass_to_pass
-  origin: repo_tests
-  description: go vet passes on resources/images subdirectory
-  test: test_go_vet_resources_images
-- id: go_build_all_possible
-  type: pass_to_pass
-  origin: repo_tests
-  description: Full project build check (only fails on Go version, not code issues)
-  test: test_go_build_all_possible
-- id: go_vet_all
-  type: pass_to_pass
-  origin: repo_tests
-  description: go vet passes on entire project (comprehensive check)
-  test: test_go_vet_all
-- id: go_build_all
-  type: pass_to_pass
-  origin: repo_tests
-  description: go build passes on entire project (comprehensive check)
-  test: test_go_build_all
-- id: repo_files_exist
-  type: pass_to_pass
-  origin: static
-  description: Essential repo files exist and are readable
-  test: test_repo_files_exist
-- id: repo_test_files_exist
-  type: pass_to_pass
-  origin: static
-  description: Test files exist for the resources package
-  test: test_repo_test_files_exist
-- id: go_mod_valid
-  type: pass_to_pass
-  origin: static
-  description: go.mod is valid and readable
-  test: test_go_mod_valid
-- id: resources_package_declaration
-  type: pass_to_pass
-  origin: static
-  description: All resources package files have correct package declarations
-  test: test_resources_package_declaration
-agent_config:
-- id: use_qt_matchers
-  description: Tests should use qt matchers instead of raw if/t.Fatal checks
-  source: AGENTS.md
-  applies_to: resources/resources_integration_test.go
-- id: brevity
-  description: Code should be brief - don't explain the obvious
-  source: AGENTS.md
-  applies_to: resources/transform.go
-- id: self_explanatory_names
-  description: Use self-explanatory variable and function names
-  source: AGENTS.md
-  applies_to: resources/transform.go
-- id: dont_export_unneeded
-  description: Never export symbols not needed outside the package
-  source: AGENTS.md
-  applies_to: resources/transform.go
 rubric:
 - rule: Avoid global state at (almost) all cost. Don't introduce new global variables.
   source:
@@ -149,3 +58,4 @@ hierarchy_analysis: The configuration is flat, with rules defined in `AGENTS.md`
   in the prompt versus the testing rules in the config, where the agent must realize
   that no test modifications are actually required despite the prompt pointing out
   the test file.
+version: '2.0'

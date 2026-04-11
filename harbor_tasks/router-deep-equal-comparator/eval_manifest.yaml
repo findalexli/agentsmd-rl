@@ -1,82 +1,73 @@
 source:
-  pr:
-    owner: TanStack
-    repo: router
-    number: 6886
-    merge_commit: dd39707c6957abb390e9e2b694da6da0e054c282
-    base_commit: d5622bb413a2d1ac99c546c5336be949dfb351d9
-task:
-  name: router-deep-equal-comparator
-  description: Add deepEqual comparator to useStore calls to prevent unnecessary re-renders
-  primary_languages:
-  - typescript
-  - react
-  difficulty: easy
+  repo: TanStack/router.git
+  pr: 0
+  base_commit: d5622bb413a2d1ac99c546c5336be949dfb351d9
+  merge_commit: ''
 checks:
 - id: scripts_imports_deep_equal
   description: Scripts.tsx must import deepEqual from @tanstack/router-core
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: scripts_use_store_has_deepequal_comparator
   description: Scripts.tsx useStore calls must have deepEqual as the comparator
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: head_utils_imports_deep_equal
   description: headContentUtils.tsx must import deepEqual from @tanstack/router-core
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: head_utils_use_store_comparators
   description: headContentUtils.tsx useStore calls must use deepEqual as comparator
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: build_succeeds
   description: The package must build successfully after changes
-  type: pytest
-  origin: p2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: unit_tests_pass
   description: Unit tests for react-router package must pass
-  type: pytest
-  origin: p2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: scripts_deepequal_in_get_asset_scripts
   description: Scripts.tsx getAssetScripts useStore call must have deepEqual
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: scripts_deepequal_in_get_scripts
   description: Scripts.tsx getScripts useStore call must have deepEqual
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: head_utils_route_meta_deepequal
   description: headContentUtils.tsx routeMeta useStore must use deepEqual
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: head_utils_links_deepequal
   description: headContentUtils.tsx links useStore must use deepEqual
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: head_utils_preload_links_deepequal
   description: headContentUtils.tsx preloadLinks useStore must use deepEqual
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: head_utils_styles_deepequal
   description: headContentUtils.tsx styles useStore must use deepEqual
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: head_utils_scripts_deepequal
   description: headContentUtils.tsx scripts useStore must use deepEqual
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: no_unused_deepequal
   description: deepEqual should be used in all relevant useStore calls, not just imported
-  type: pytest
-  origin: f2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_repo_types_check
   description: Repo's TypeScript type check for react-router passes
-  type: pytest
-  origin: p2p
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_repo_scripts_unit_tests
   description: Repo's unit tests for Scripts.tsx pass
-  type: pytest
-  origin: p2p
+  type: fail_to_pass
+  origin: pr_diff
 rubric:
 - rule: Use deepEqual from @tanstack/router-core as the comparator for useStore calls
     that return arrays or objects to prevent unnecessary re-renders
@@ -127,3 +118,4 @@ hierarchy_analysis: The AGENTS.md file provides high-level architectural and wor
   and framework bindings. The negative rubrics highlight potential pitfalls where
   an agent might over-apply general repository instructions (like formatting or dependency
   management) to a narrowly scoped bug fix.
+version: '2.0'

@@ -1,141 +1,148 @@
 source:
-  pr: apache/airflow#64779
-  title: '[chart/v1-2x-test] Add workers.celery.volumeClaimTemplates'
+  repo: apache/airflow
+  pr: 64779
   base_commit: afcde65e4d129817affb694fd5f214ddd1544013
   merge_commit: 0b8d9f9d716836789f54e377379acf4bb213ff42
 checks:
 - id: values_celery_volumeclaimtemplates_exists
-  test: test_outputs.TestValuesYaml.test_celery_volumeclaimtemplates_exists
   description: workers.celery.volumeClaimTemplates field exists in values.yaml
-  type: behavioral
+  type: fail_to_pass
   origin: agent_config
-  source: 'AGENTS.md: Helm chart structure requirements'
+  source:
+    path: AGENTS.md
+    lines: ''
 - id: values_deprecated_comment
-  test: test_outputs.TestValuesYaml.test_deprecated_field_has_comment
   description: Deprecated field has deprecation comment in values.yaml
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: schema_valid_json
-  test: test_outputs.TestValuesSchema.test_schema_is_valid_json
   description: values.schema.json is valid JSON
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: schema_celery_volumeclaimtemplates
-  test: test_outputs.TestValuesSchema.test_celery_volumeclaimtemplates_in_schema
   description: workers.celery.volumeClaimTemplates is in values.schema.json
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: schema_deprecated_description
-  test: test_outputs.TestValuesSchema.test_deprecated_description_updated
   description: Old field description mentions deprecation
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: schema_examples_valid
-  test: test_outputs.TestValuesSchema.test_schema_examples_are_valid
   description: Schema examples for new field are valid
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: notes_deprecation_warning
-  test: test_outputs.TestNotesTxt.test_deprecation_warning_exists
   description: NOTES.txt contains deprecation warning
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: helm_new_location_works
-  test: test_outputs.TestHelmRender.test_new_volumeclaimtemplates_location_works
   description: New workers.celery.volumeClaimTemplates location renders correctly
-  type: behavioral
+  type: fail_to_pass
   origin: agent_config
-  source: 'AGENTS.md: Helm testing requirements'
+  source:
+    path: AGENTS.md
+    lines: ''
 - id: helm_backward_compat
-  test: test_outputs.TestHelmRender.test_backward_compatibility
   description: Backward compatibility with old location works
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: helm_precedence
-  test: test_outputs.TestHelmRender.test_new_location_takes_precedence
   description: New location takes precedence when both are specified
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: yaml_valid
-  test: test_outputs.TestYamlStructure.test_values_yaml_is_valid
   description: values.yaml is valid YAML
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: celery_section_structure
-  test: test_outputs.TestYamlStructure.test_celery_section_has_all_fields
   description: workers.celery section has expected structure
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: documentation_comment
-  test: test_outputs.TestCommentsAndDocumentation.test_new_field_has_documentation_comment
   description: New field has documentation comment
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: p2p_helm_lint
-  test: test_outputs.TestRepoPassToPass.test_repo_helm_lint
   description: Helm lint passes
   type: pass_to_pass
   origin: repo_tests
-  source: Helm lint validation
+  source:
+    path: Helm lint validation
+    lines: ''
 - id: p2p_helm_lint_with_deps
-  test: test_outputs.TestRepoPassToPass.test_repo_helm_lint_with_deps
   description: Helm lint with dependencies passes
   type: pass_to_pass
   origin: repo_tests
-  source: Helm lint with dependency build
+  source:
+    path: Helm lint with dependency build
+    lines: ''
 - id: p2p_helm_template
-  test: test_outputs.TestRepoPassToPass.test_repo_helm_template_default
   description: Helm template with default values passes
   type: pass_to_pass
   origin: repo_tests
-  source: Helm template validation
+  source:
+    path: Helm template validation
+    lines: ''
 - id: p2p_helm_template_celery
-  test: test_outputs.TestRepoPassToPass.test_repo_helm_template_celery
   description: Helm template with CeleryExecutor passes
   type: pass_to_pass
   origin: repo_tests
-  source: Helm template with Celery-specific settings
+  source:
+    path: Helm template with Celery-specific settings
+    lines: ''
 - id: p2p_helm_tests_worker_volumeclaim
-  test: test_outputs.TestRepoPassToPass.test_repo_helm_tests_worker_volumeclaim
   description: Helm worker volume claim tests pass
   type: pass_to_pass
   origin: repo_tests
-  source: Repo's helm-tests for worker volume claims
+  source:
+    path: Repo's helm-tests for worker volume claims
+    lines: ''
 - id: p2p_chart_quality_schema
-  test: test_outputs.TestRepoPassToPass.test_repo_chart_quality_schema_validation
   description: Chart quality test - values.yaml validates against schema
   type: pass_to_pass
   origin: repo_tests
-  source: Repo's chart quality test for schema validation
+  source:
+    path: Repo's chart quality test for schema validation
+    lines: ''
 - id: p2p_basic_helm_chart_tests
-  test: test_outputs.TestRepoPassToPass.test_repo_basic_helm_chart_tests
   description: Basic helm chart tests pass
   type: pass_to_pass
   origin: repo_tests
-  source: Repo's basic helm chart validation tests
+  source:
+    path: Repo's basic helm chart validation tests
+    lines: ''
 - id: p2p_worker_volume_claim_template_tests
-  test: test_outputs.TestRepoPassToPass.test_repo_worker_volume_claim_template_tests
   description: Worker volume claim template tests pass
   type: pass_to_pass
   origin: repo_tests
-  source: Repo's worker volume claim template specific tests
+  source:
+    path: Repo's worker volume claim template specific tests
+    lines: ''
 - id: p2p_schema_valid_json
-  test: test_outputs.TestRepoPassToPass.test_repo_values_schema_valid_json
   description: values.schema.json is valid JSON with expected structure
   type: pass_to_pass
   origin: static
-  source: Schema JSON validation
+  source:
+    path: Schema JSON validation
+    lines: ''
 - id: p2p_values_yaml_valid
-  test: test_outputs.TestRepoPassToPass.test_repo_values_yaml_valid
   description: values.yaml is valid YAML with expected structure
   type: pass_to_pass
   origin: static
-  source: Values YAML validation
+  source:
+    path: Values YAML validation
+    lines: ''
 - id: p2p_chart_yaml_valid
-  test: test_outputs.TestRepoPassToPass.test_repo_chart_yaml_valid
   description: Chart.yaml is valid with required fields
   type: pass_to_pass
   origin: static
-  source: Chart.yaml validation
+  source:
+    path: Chart.yaml validation
+    lines: ''
 rubric:
 - rule: Add deprecation warning in NOTES.txt
-  type: soft
-  description: NOTES.txt should warn users about the deprecated field
 - rule: Update values.schema.json description for deprecated field
-  type: soft
-  description: Old field should be marked deprecated in schema
 - rule: Add examples in schema for new field
-  type: soft
-  description: Schema should include examples for the new location
 distractors:
 - rule: Run Helm tests in parallel with xdist `breeze testing helm-tests --use-xdist`
   collision_type: scope_ambiguity
@@ -164,3 +171,4 @@ hierarchy_analysis: The config files (`CLAUDE.md` and `AGENTS.md`) are identical
   Helm chart YAML, JSON schemas, and documentation, most of the repository-wide Python
   tooling rules are irrelevant and serve as potential distractors if the agent tries
   to apply Python testing workflows to Helm chart template rendering.
+version: '2.0'

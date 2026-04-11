@@ -1,26 +1,19 @@
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 102158
-  title: Add MSan support for fibers and fix dragonbox struct padding
-  merge_commit: 231542d8cbfd94a8a73cd0a8f436a7227847d3a3
-  base_commit: 97e4a1a630071d7b2ec74b2639d0d6727f8034c9
 checks:
 - id: test_cmake_boost_use_msan_defined
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: CMakeLists.txt defines BOOST_USE_MSAN for memory sanitizer builds
 - id: test_fiber_h_comment_updated
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: Fiber.h comment mentions BOOST_USE_MSAN and updated explanation
 - id: test_fiber_stack_cpp_comment_explains_msan_unpoison
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: FiberStack.cpp comment explains MSan struct padding issue
 - id: test_dragonbox_msan_test_file_exists
   type: fail_to_pass
-  origin: behavior
+  origin: pr_diff
   description: gtest_dragonbox_msan.cpp test file exists with correct content
 - id: test_repo_style_check
   type: pass_to_pass
@@ -42,23 +35,8 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Git repository is in valid state with proper base commit
-agent_config:
-- id: allman_braces_style
-  file: .claude/CLAUDE.md
-  description: Use Allman-style braces (opening brace on a new line)
-  lines: C++ code, always use Allman-style braces
-- id: sanitizer_naming
-  file: .claude/CLAUDE.md
-  description: 'Say ASan/MSan, not ASAN/MSAN (two words: Address/Memory Sanitizer)'
-  lines: When writing messages, say ASan, not ASAN
 rubric:
-- id: comment_quality
-  description: Comments should accurately explain the MSan limitation with struct
-    padding
-  criteria:
-  - Explains that MSan tracks shadow per-field, not per-byte
-  - Mentions that struct padding shadow is lost through return values
-  - Explains why __msan_unpoison is needed for fiber stacks
+- rule: Comments should accurately explain the MSan limitation with struct padding
 - rule: When writing text such as documentation, comments, or commit messages, write
     names of functions and methods as `f` instead of `f()`
   source:
@@ -84,3 +62,9 @@ hierarchy_analysis: The AGENTS.md file provides general guidelines for the repos
   The rule regarding function parentheses is correctly applied to C++ comments, but
   the rule regarding markdown backticks in comments is too broad and does not apply
   to standard C++ source file comments, creating a scope ambiguity.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102158
+  base_commit: 97e4a1a630071d7b2ec74b2639d0d6727f8034c9
+  merge_commit: 231542d8cbfd94a8a73cd0a8f436a7227847d3a3

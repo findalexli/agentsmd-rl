@@ -1,40 +1,29 @@
-source_pr:
-  owner: SeleniumHQ
-  repo: selenium
-  pr_number: 17309
-  merge_commit: a9285c86005401cef9ac004757f2b43b80ed6964
-  base_commit: 5c2bf6b42fb66f895d936cf13a392385fb032689
-target_file: dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs
 checks:
 - id: test_valuetextequals_usage
   type: fail_to_pass
   origin: agent_config
   source:
-    file: dotnet/AGENTS.md
-    section: Code conventions
-    guidance: Use efficient patterns for JSON parsing
+    path: dotnet/AGENTS.md
   description: ValueTextEquals is used for property name comparison instead of GetString
     comparison
 - id: test_no_old_property_name_variable
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Old propertyName variable assignment using GetString() is removed
 - id: test_valuetextequals_in_property_loop
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: ValueTextEquals is called inside the PropertyName loop in GetDiscriminator
     method
 - id: test_correct_read_skip_pattern
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Correct Read-Skip-Read pattern is used when skipping non-matching properties
 - id: test_reader_advancement_comments
   type: fail_to_pass
   origin: agent_config
   source:
-    file: AGENTS.md
-    section: General Guidelines
-    guidance: Comments should explain *why*, not *what*
+    path: AGENTS.md
   description: Comments explain reader advancement logic (why the movement happens)
 - id: test_repo_dotnet_format_style
   type: pass_to_pass
@@ -54,16 +43,16 @@ checks:
   description: C# source files have proper copyright headers
 - id: test_discriminator_basic_extraction
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Alias for test_valuetextequals_usage - ValueTextEquals is used
 - id: test_discriminator_with_nested_objects
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Alias for test_correct_read_skip_pattern - Read-Skip-Read pattern handles
     nested objects
 - id: test_discriminator_with_arrays
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: Alias for test_reader_advancement_comments - Comments explain array
     skipping
 rubric:
@@ -133,3 +122,9 @@ hierarchy_analysis: The root `AGENTS.md` provides general guidelines on logging,
   the `ILogger` syntax and async migration). In this specific PR, the C# language
   constraints (`ref struct` limitations) override the general architectural directives
   (async migration and logging).
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 0
+  base_commit: 5c2bf6b42fb66f895d936cf13a392385fb032689
+  merge_commit: a9285c86005401cef9ac004757f2b43b80ed6964

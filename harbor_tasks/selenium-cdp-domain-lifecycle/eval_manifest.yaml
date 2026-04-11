@@ -1,43 +1,52 @@
-task_name: selenium-cdp-domain-lifecycle
 source:
-  pr: https://github.com/SeleniumHQ/selenium/pull/17305
-  merge_commit: 1d58a30530101d6ff84ecabb4422ac3078f8e40d
+  repo: SeleniumHQ/selenium.git
+  pr: 0
   base_commit: e78c3900fdef5d729cc3a24cfc7e2e7ea3421de4
-  description: Fix domain lifecycle in CDP adapters by implementing lazy initialization
+  merge_commit: 1d58a30530101d6ff84ecabb4422ac3078f8e40d
 checks:
 - id: test_v143domains_has_lazy_fields
   type: fail_to_pass
   description: V143Domains has Lazy<T> fields for network, javaScript, target, log
+  origin: pr_diff
 - id: test_v143domains_lazy_initialized_in_constructor
   type: fail_to_pass
   description: V143Domains constructor initializes Lazy fields with correct factory
     lambdas
+  origin: pr_diff
 - id: test_v143domains_properties_return_lazy_value
   type: fail_to_pass
   description: V143Domains properties return cached Lazy value instead of new instances
+  origin: pr_diff
 - id: test_v144domains_has_lazy_fields
   type: fail_to_pass
   description: V144Domains has Lazy<T> fields for network, javaScript, target, log
+  origin: pr_diff
 - id: test_v144domains_lazy_initialized_in_constructor
   type: fail_to_pass
   description: V144Domains constructor initializes Lazy fields with correct factory
     lambdas
+  origin: pr_diff
 - id: test_v144domains_properties_return_lazy_value
   type: fail_to_pass
   description: V144Domains properties return cached Lazy value instead of new instances
+  origin: pr_diff
 - id: test_v145domains_has_lazy_fields
   type: fail_to_pass
   description: V145Domains has Lazy<T> fields for network, javaScript, target, log
+  origin: pr_diff
 - id: test_v145domains_lazy_initialized_in_constructor
   type: fail_to_pass
   description: V145Domains constructor initializes Lazy fields with correct factory
     lambdas
+  origin: pr_diff
 - id: test_v145domains_properties_return_lazy_value
   type: fail_to_pass
   description: V145Domains properties return cached Lazy value instead of new instances
+  origin: pr_diff
 - id: test_devtools_domains_tests_file_exists
   type: fail_to_pass
   description: DevToolsDomainsTests.cs test file exists with proper content
+  origin: pr_diff
 - id: test_repo_bazel_build_webdriver
   type: pass_to_pass
   origin: repo_tests
@@ -58,17 +67,6 @@ checks:
   type: pass_to_pass
   origin: static
   description: C# source files have no obvious syntax errors
-agent_config:
-- rule: Use XML documentation comments for public APIs
-  source: dotnet/AGENTS.md
-  file_pattern: dotnet/src/webdriver/DevTools/**/*.cs
-- rule: The codebase is migrating to async - use async patterns where applicable
-  source: dotnet/AGENTS.md
-  file_pattern: dotnet/src/webdriver/DevTools/**/*.cs
-- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
-  source: AGENTS.md
-- rule: Use targeted Bazel commands; use bazel query to locate labels before build/test
-  source: AGENTS.md
 rubric:
 - rule: Comments should explain *why*, not *what* - prefer well-named methods over
     comments that narrate code
@@ -152,3 +150,4 @@ hierarchy_analysis: The root `AGENTS.md` provides general invariants like API co
   properties to async methods would break the public API and base class overrides.
   The agent must prioritize the root invariant over the language-specific migration
   trend.
+version: '2.0'

@@ -1,11 +1,3 @@
-source_pr:
-  owner: MystenLabs
-  repo: sui
-  number: 26123
-  title: test for coin res with shared object
-  merge_commit: a9773b63b34983935554286a637dc8a62b2233c8
-  base_commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
-agent_config: []
 rubric:
 - rule: Do NOT comment the obvious. Comments should explain non-obvious algorithms,
     business logic, temporary timeouts/thresholds, complex calculations, subtle race
@@ -29,29 +21,29 @@ rubric:
 checks:
 - id: test_rust_syntax_valid
   type: pass_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Target Rust file has valid syntax and structure
 - id: test_no_panic_assert_in_code
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Old panic-inducing assert! removed from execution_time_estimator
 - id: test_defensive_timing_handling_exists
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Defensive logic added to handle excess timings by slicing trailing
     entries
 - id: test_warning_log_for_excess_timings
   type: fail_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Warning log added when execution produces more timings than original
     commands
 - id: test_epoch_store_check_preserved
   type: pass_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Epoch store upgrade check preserved and positioned correctly
 - id: test_function_signature_unchanged
   type: pass_to_pass
-  origin: implementation
+  origin: pr_diff
   description: Function signature remains compatible with existing callers
 - id: test_cargo_fmt_check
   type: pass_to_pass
@@ -103,3 +95,9 @@ hierarchy_analysis: The repository has a root CLAUDE.md and AGENTS.md. The AGENT
   defers to CLAUDE.md. The root CLAUDE.md provides essential commands for building,
   testing, and linting, along with high-level architectural context. There are no
   conflicting rules between the provided config files.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26123
+  base_commit: bafd093c8ab75e4dd16d1e574bb808d7fcd1a4e2
+  merge_commit: a9773b63b34983935554286a637dc8a62b2233c8

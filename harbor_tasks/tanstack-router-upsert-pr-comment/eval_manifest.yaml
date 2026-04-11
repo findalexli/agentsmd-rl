@@ -1,37 +1,36 @@
-source_pr:
-  owner: TanStack
-  repo: router
-  number: 6948
-  title: 'ci: add back upsert-pr-comment'
-  merge_commit: 97dc9f66f3a0e48719f9a167d7e707e432371506
-  base_commit: 13ef4c2e7c92e276185c112d486248b7447535de
-target_files:
-- scripts/benchmarks/common/upsert-pr-comment.mjs
 checks:
 - id: file_exists
-  type: f2p
+  type: fail_to_pass
   description: upsert-pr-comment.mjs file is created
+  origin: pr_diff
 - id: node_syntax_valid
-  type: f2p
+  type: fail_to_pass
   description: Script has valid Node.js syntax and can be parsed
+  origin: pr_diff
 - id: parseArgs_function_works
-  type: f2p
+  type: fail_to_pass
   description: parseArgs function correctly parses CLI arguments
+  origin: pr_diff
 - id: required_args_validated
-  type: f2p
+  type: fail_to_pass
   description: Required arguments (--pr, --body-file) are validated
+  origin: pr_diff
 - id: env_fallback_works
-  type: f2p
+  type: fail_to_pass
   description: Environment variables are used as fallback for repo, token, apiUrl
+  origin: pr_diff
 - id: githubRequest_structure
-  type: f2p
+  type: fail_to_pass
   description: githubRequest function makes proper API calls with correct headers
+  origin: pr_diff
 - id: marker_logic_works
-  type: f2p
+  type: fail_to_pass
   description: Marker is added to body content when not present
+  origin: pr_diff
 - id: listIssueComments_pagination
-  type: f2p
+  type: fail_to_pass
   description: listIssueComments handles pagination correctly
+  origin: pr_diff
 - id: repo_benchmarks_node_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -86,3 +85,9 @@ distractors:
 hierarchy_analysis: Only AGENTS.md is present. The rules in AGENTS.md are heavily
   focused on the core library (TypeScript, Nx, testing), which creates scope ambiguity
   when the agent is asked to write a standalone Node.js script in the scripts/ directory.
+version: '2.0'
+source:
+  repo: TanStack/router
+  pr: 6948
+  base_commit: 13ef4c2e7c92e276185c112d486248b7447535de
+  merge_commit: 97dc9f66f3a0e48719f9a167d7e707e432371506

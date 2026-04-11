@@ -1,78 +1,71 @@
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 102032
-  title: Rename HTML_S3_PATH to S3_REPORT_BUCKET, add upstream catalog merge
-  merge_commit: 47a1d36eb5723869b8a32c2dcf441aa5386f280c
-  base_commit: d0432097aed783bd35054dce2edcefe0c4e5122c
 checks:
 - id: test_html_s3_path_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: HTML_S3_PATH is completely removed from all CI files
 - id: test_s3_report_bucket_exists_in_settings
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: S3_REPORT_BUCKET setting is defined in settings.py
 - id: test_s3_upstream_report_bucket_exists
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: S3_UPSTREAM_REPORT_BUCKET setting is defined in settings.py
 - id: test_s3_upstream_report_bucket_in_user_defined
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: S3_UPSTREAM_REPORT_BUCKET is in _USER_DEFINED_SETTINGS list
 - id: test_download_catalog_method_exists
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: TestCaseIssueCatalog has _download_catalog method
 - id: test_settings_import_in_issue_py
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: issue.py imports Settings from praktika.settings
 - id: test_issue_to_s3_uses_settings
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: to_s3 uses Settings.S3_REPORT_BUCKET
 - id: test_from_s3_merge_logic
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: from_s3 has merge logic for upstream catalogs
 - id: test_validator_uses_new_setting_name
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: validator.py uses S3_REPORT_BUCKET in assertions
 - id: test_hook_html_uses_new_setting
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: hook_html.py uses Settings.S3_REPORT_BUCKET
 - id: test_html_prepare_uses_new_setting
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: html_prepare.py uses Settings.S3_REPORT_BUCKET
 - id: test_info_uses_new_setting
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: info.py uses Settings.S3_REPORT_BUCKET
 - id: test_result_uses_new_setting
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: result.py uses Settings.S3_REPORT_BUCKET
 - id: test_s3_uses_new_setting
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: s3.py uses Settings.S3_REPORT_BUCKET
 - id: test_settings_has_both_new_settings
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: settings.py has both S3_REPORT_BUCKET and S3_UPSTREAM_REPORT_BUCKET
 - id: test_collect_statistics_uses_settings
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: collect_statistics.py imports and uses Settings
 - id: test_ci_settings_uses_new_name
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: ci/settings/settings.py defines S3_REPORT_BUCKET
 - id: test_settings_importable
   type: pass_to_pass
@@ -185,3 +178,9 @@ hierarchy_analysis: The AGENTS.md file contains general repository guidelines, m
   focused on documentation, git workflow, and specific debugging tools. Since this
   task is a straightforward Python refactoring and feature addition in the `ci/` directory,
   most of these rules are not directly applicable and serve as potential distractors.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102032
+  base_commit: d0432097aed783bd35054dce2edcefe0c4e5122c
+  merge_commit: 47a1d36eb5723869b8a32c2dcf441aa5386f280c

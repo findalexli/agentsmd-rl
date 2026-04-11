@@ -7,11 +7,11 @@ source:
 checks:
 - id: repo_git_state_clean
   type: pass_to_pass
-  origin: repo_state
+  origin: pr_diff
   description: Repository has clean git state with no uncommitted changes
 - id: repo_base_commit_verified
   type: pass_to_pass
-  origin: repo_state
+  origin: pr_diff
   description: Repository is at the expected base commit
 - id: files_exist_and_not_stub
   type: pass_to_pass
@@ -86,10 +86,7 @@ rubric:
     path: CLAUDE.md
     lines: '414'
     commit: 5a922bc9bb9b4435da87f5b6783e3b14e26aadf9
-- id: repo_check_error_codes
-  type: pass_to_pass
-  origin: repo_tests
-  description: Next.js error codes script passes
+- rule: Next.js error codes script passes
 distractors:
 - rule: Start `pnpm --filter=next dev` in a separate terminal session before making
     edits for iterative development.

@@ -1,99 +1,59 @@
-task_id: excalidraw-arrow-binding-fix
-name: Excalidraw Arrow Binding Fix
-description: Fix arrow drag start behavior in bindable area to prevent unintended
-  jumps
 source:
-  owner: excalidraw
-  repo: excalidraw
-  pr_number: 10676
+  repo: excalidraw/excalidraw
+  pr: 0
   base_commit: 60ab14c2f633112613843eec3c049f6da0f566e8
   merge_commit: 9ba0f5dbc9d551aad9277341a82449e04043c5ae
-verification:
-  type: pytest
-  test_file: tests/test_outputs.py
 checks:
 - id: typescript_compiles
-  name: TypeScript Compilation
   description: TypeScript must compile without errors
-  test: test_typescript_compiles
   type: fail_to_pass
-  points: 15
+  origin: pr_diff
 - id: fix_has_import
-  name: Required Import Present
   description: Fix must include pointsEqual or equivalent import for point comparison
-  test: test_fix_has_required_import
   type: fail_to_pass
-  points: 15
   source:
-    origin: agent_config
-    file: CLAUDE.md
-    rule: Package Development - Work in packages/* for editor features
+    path: CLAUDE.md
+  origin: pr_diff
 - id: initial_arrow_guard
-  name: Initial Arrow Guard Logic
   description: updateBoundPoint must check for initial arrow state and return null
-  test: test_updateboundpoint_has_initial_arrow_guard
   type: fail_to_pass
-  points: 25
+  origin: pr_diff
 - id: existing_logic_preserved
-  name: Existing Logic Preserved
   description: Fix must not break existing binding functionality
-  test: test_fix_does_not_break_existing_logic
   type: pass_to_pass
-  points: 10
+  origin: pr_diff
 - id: move_tests_pass
-  name: Move Tests Pass
   description: Arrow move tests must pass with correct positions
-  test: test_move_tests_pass
   type: fail_to_pass
-  points: 20
+  origin: pr_diff
 - id: history_tests_pass
-  name: History Tests Pass
   description: Bidirectional binding history tests must pass
-  test: test_history_tests_pass
   type: fail_to_pass
-  points: 15
+  origin: pr_diff
 - id: repo_eslint
-  name: Repo ESLint Check
   description: Repo's ESLint check passes on the fix
-  test: test_repo_eslint_passes
   type: pass_to_pass
   origin: repo_tests
-  points: 5
 - id: repo_prettier
-  name: Repo Prettier Check
   description: Repo's Prettier formatting check passes on the fix
-  test: test_repo_prettier_passes
   type: pass_to_pass
   origin: repo_tests
-  points: 5
 - id: repo_element_tests
-  name: Repo Element Package Tests
   description: Repo's element package tests pass on the fix
-  test: test_repo_element_tests_pass
   type: pass_to_pass
   origin: repo_tests
-  points: 5
 - id: repo_math_tests
-  name: Repo Math Package Tests
   description: Repo's math package tests pass on the fix
-  test: test_repo_math_tests_pass
   type: pass_to_pass
   origin: repo_tests
-  points: 5
 - id: repo_common_tests
-  name: Repo Common Package Tests
   description: Repo's common package tests pass on the fix
-  test: test_repo_common_tests_pass
   type: pass_to_pass
   origin: repo_tests
-  points: 5
 - id: repo_utils_tests
-  name: Repo Utils Package Tests
   description: Repo's utils package tests pass on the fix
-  test: test_repo_utils_tests_pass
   type: pass_to_pass
   origin: repo_tests
-  points: 5
 rubric:
 - rule: Prefer implementations without allocation where possible. Use efficient point
     comparison methods.
@@ -128,16 +88,6 @@ rubric:
     to account for the new arrow coordinates, which aligns with running `yarn test:update`
     to update snapshots and inl
   category: testing
-metadata:
-  difficulty: medium
-  tags:
-  - typescript
-  - react
-  - excalidraw
-  - arrow
-  - binding
-  - ui
-  estimated_time: 30
 distractors:
 - rule: Work in `excalidraw-app/` for app-specific features
   collision_type: architecture_boundary
@@ -152,3 +102,4 @@ hierarchy_analysis: The configuration is flat with a single `CLAUDE.md` file at 
   root. The primary architectural boundary is between `packages/*` (core editor features)
   and `excalidraw-app/` (app-specific features). The agent must correctly identify
   arrow dragging as a core editor feature to apply the fix in the right package.
+version: '2.0'

@@ -1,69 +1,48 @@
-source_pr: All-Hands-AI/OpenHands#13638
-source_pr_title: 'fix: planning agent auth error due to missing base_url'
-base_commit: e1afc95b6c76b7493deb5d7f7dd4ecc2a8cb719b
-merge_commit: ed5ab11fccd75b5b98c9f51ebc536713dc519275
-target_files:
-- openhands/app_server/app_conversation/live_status_app_conversation_service.py
 checks:
 - id: test_litellm_proxy_model_uses_provider_base_url
   type: fail_to_pass
-  origin: functional
+  origin: pr_diff
   description: litellm_proxy/* model falls back to provider base URL
-  points: 2
 - id: test_litellm_proxy_model_prefers_user_base_url
   type: fail_to_pass
-  origin: functional
+  origin: pr_diff
   description: litellm_proxy/* model uses user.llm_base_url when provided
-  points: 1
 - id: test_litellm_proxy_various_models
   type: fail_to_pass
-  origin: functional
+  origin: pr_diff
   description: litellm_proxy/ prefix works for various model names
-  points: 1
 - id: test_openhands_model_uses_provider_base_url
   type: pass_to_pass
-  origin: functional
+  origin: pr_diff
   description: openhands/* model still falls back to provider base URL
-  points: 1
 - id: test_openhands_model_prefers_user_base_url
   type: pass_to_pass
-  origin: functional
+  origin: pr_diff
   description: openhands/* model uses user.llm_base_url when provided
-  points: 1
 - id: test_regular_model_ignores_provider_base_url
   type: pass_to_pass
-  origin: functional
+  origin: pr_diff
   description: Non-openhands/non-litellm_proxy model ignores provider base URL
-  points: 1
 - id: test_repo_configure_llm_tests
   type: pass_to_pass
   origin: repo_tests
   description: Existing repo unit tests for configure_llm should pass
-  points: 1
 - id: test_repo_app_server_unit_tests
   type: pass_to_pass
   origin: repo_tests
   description: Repo's app_server unit tests pass
-  points: 1
 - id: test_repo_target_file_unit_tests
   type: pass_to_pass
   origin: repo_tests
   description: Repo unit tests for the modified file pass
-  points: 1
 - id: test_repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
   description: Repo code formatting passes (ruff format --check)
-  points: 1
 - id: test_repo_unit_tests_broad
   type: pass_to_pass
   origin: repo_tests
   description: Broader repo unit tests pass (tests/unit/ without heavy runtime tests)
-  points: 1
-agent_config:
-- rule: Run pre-commit hooks before making changes
-  source: AGENTS.md
-  severity: info
 rubric:
 - rule: Before pushing changes, ensure any lint errors or simple test errors have
     been fixed.
@@ -85,9 +64,6 @@ rubric:
   evidence: The gold solution modifies `openhands/app_server/app_conversation/live_status_app_conversation_service.py`,
     correctly targeting the V1 application server in the backend directory.
   category: architecture
-scoring:
-  max_score: 12
-  passing_threshold: 10
 distractors:
 - rule: Store design documents, scripts meant for development-only, or other temporary
     artifacts in a `.pr/` directory.
@@ -112,3 +88,9 @@ distractors:
     lines: 8-12
 hierarchy_analysis: Only the root `AGENTS.md` file applies to this task. There are
   no conflicting rules from child configurations.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13638
+  base_commit: e1afc95b6c76b7493deb5d7f7dd4ecc2a8cb719b
+  merge_commit: ''

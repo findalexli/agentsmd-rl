@@ -1,97 +1,58 @@
 source:
-  pr:
-    owner: ant-design
-    repo: ant-design
-    number: 57540
-    title: 'fix: correct Cascader menu item ellipsis styles'
-    base_commit: 1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299
-    merge_commit: ffe7ccf17f689af990c4757c8197c8727c8f4184
-  task_name: cascader-ellipsis-fix
-  description: 'Fix Cascader menu item ellipsis styles for long option labels.
-
-    The ellipsis styles were incorrectly applied to the parent flex container
-
-    instead of the text content element, preventing proper text truncation
-
-    in flex layouts.
-
-    '
-reward: 1.0
+  repo: ant-design/ant-design.git
+  pr: 0
+  base_commit: 1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299
+  merge_commit: ''
 checks:
 - id: file_exists
   description: Cascader columns style file exists
-  test: test_cascader_columns_file_exists
-  weight: 0.1
+  type: fail_to_pass
+  origin: pr_diff
 - id: ellipsis_moved
   description: textEllipsis moved from &-item to &-content block
-  test: test_text_ellipsis_moved_to_content
-  weight: 0.3
-  origin: behavioral
+  origin: pr_diff
+  type: fail_to_pass
 - id: min_width_zero
   description: '&-content has minWidth: 0 for flexbox ellipsis'
-  test: test_content_has_min_width_zero
-  weight: 0.25
-  origin: behavioral
+  origin: pr_diff
+  type: fail_to_pass
 - id: max_width_constraint
   description: '&-item has maxWidth constraint'
-  test: test_item_has_max_width
-  weight: 0.15
-  origin: behavioral
+  origin: pr_diff
+  type: fail_to_pass
 - id: typescript_valid
   description: TypeScript file compiles without syntax errors
-  test: test_typescript_compiles
-  weight: 0.1
+  type: fail_to_pass
+  origin: pr_diff
 - id: structure_valid
   description: Style file structure is valid
-  test: test_style_structure_valid
-  weight: 0.1
+  type: fail_to_pass
+  origin: pr_diff
 - id: repo_typescript_check
   description: Repo TypeScript typecheck passes (npx tsc --noEmit --skipLibCheck with
     NODE_OPTIONS=--max-old-space-size=4096)
-  test: test_repo_typescript_check
   type: pass_to_pass
   origin: repo_tests
-  weight: 0.05
 - id: repo_biome_lint
   description: Repo Biome lint passes (npm run lint:biome)
-  test: test_repo_biome_lint
   type: pass_to_pass
   origin: repo_tests
-  weight: 0.05
 - id: repo_eslint
   description: Repo ESLint passes (npm run lint:script)
-  test: test_repo_eslint
   type: pass_to_pass
   origin: repo_tests
-  weight: 0.05
 - id: repo_cascader_index_tests
   description: Repo Cascader index component tests pass
-  test: test_repo_cascader_index_tests
   type: pass_to_pass
   origin: repo_tests
-  weight: 0.04
 - id: repo_cascader_demo_tests
   description: Repo Cascader demo tests pass
-  test: test_repo_cascader_demo_tests
   type: pass_to_pass
   origin: repo_tests
-  weight: 0.04
 - id: repo_cascader_a11y_tests
   description: Repo Cascader a11y tests pass
-  test: test_repo_cascader_a11y_tests
   type: pass_to_pass
   origin: repo_tests
-  weight: 0.02
-agent_config:
-- rule: CSS-in-JS styling approach using @ant-design/cssinjs
-  source: 'CLAUDE.md: Styling Approach'
-  check: Uses GenerateStyle and CascaderToken properly
-- rule: Use CSS logical properties for RTL support
-  source: 'CLAUDE.md: Styling Approach'
-  check: N/A - this fix doesn't involve directional properties
-- rule: Never hardcode colors, sizes, or spacing values
-  source: 'CLAUDE.md: Styling Approach'
-  check: 'Uses maxWidth: 400 as a reasonable constraint'
 rubric:
 - rule: CSS fix follows Ant Design patterns. The fix should use CSS-in-JS patterns
     consistent with Ant Design
@@ -122,11 +83,6 @@ rubric:
     CSS-in-JS object syntax (e.g., `maxWidth: 400`, `minWidth: 0`) rather than traditional
     CSS files.'
   category: architecture
-thresholds:
-  min_reward: 0.8
-  required_checks:
-  - ellipsis_moved
-  - min_width_zero
 distractors:
 - rule: 'Changelog 规范: 必须同时提供中英文两个版本'
   collision_type: scope_ambiguity
@@ -150,3 +106,4 @@ hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical rules. The primary
   changelogs and PR templates) and the prompt's explicit restriction to only modify
   `components/cascader/style/columns.ts`. The agent must prioritize the prompt's file
   constraints over the general repository maintenance rules.
+version: '2.0'

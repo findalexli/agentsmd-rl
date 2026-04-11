@@ -1,9 +1,8 @@
 source:
   repo: All-Hands-AI/OpenHands
-  pr_number: 13579
+  pr: 0
   base_commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
   merge_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
-  title: APP-1115 Fix for AWS config (Minio) for feature branches
 checks:
 - id: test_repo_python_syntax_valid
   type: pass_to_pass
@@ -39,58 +38,53 @@ checks:
   description: Repo's unit tests for event service config selection pass
 - id: test_pydantic_field_import_present
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: Module imports pydantic Field
 - id: test_injector_uses_self_endpoint_url
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: Injector uses self.endpoint_url instead of os.getenv in inject method
 - id: test_get_default_aws_endpoint_url_function_exists
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: _get_default_aws_endpoint_url function exists
 - id: test_get_default_aws_endpoint_url_function_structure
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: _get_default_aws_endpoint_url function handles secure and insecure
     properly
 - id: test_get_default_aws_endpoint_url_returns_none_when_no_env
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: Function returns None when AWS_S3_ENDPOINT not set
 - id: test_get_default_aws_endpoint_url_handles_https_secure
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: Function handles https:// with secure=true
 - id: test_get_default_aws_endpoint_url_handles_http_insecure
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: Function handles http:// with secure=false
 - id: test_get_default_aws_endpoint_url_converts_protocol
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: Function converts protocol based on secure setting
 - id: test_injector_has_endpoint_url_field
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: Injector class has endpoint_url field
 - id: test_injector_endpoint_url_type
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: endpoint_url field has correct type annotation str | None
 - id: test_injector_endpoint_url_has_default_factory
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: endpoint_url field has default_factory using _get_default_aws_endpoint_url
 - id: test_injector_endpoint_url_not_required
   type: fail_to_pass
-  origin: task_test
+  origin: pr_diff
   description: endpoint_url field is not required (has default)
-agent_config:
-- source: AGENTS.md
-  rules:
-  - 'Run pre-commit hooks before pushing changes: pre-commit run --config ./dev_config/python/.pre-commit-config.yaml'
-  - Write tests with pytest for new code
 rubric:
 - rule: Follow existing code style and patterns in the target file. Type annotations
     should use modern Python syntax (e.g., str | None).
@@ -143,3 +137,4 @@ hierarchy_analysis: The repository has a single root-level configuration file (`
   The rules are straightforward, but the agent must exercise judgment regarding the
   scope of the task to avoid over-engineering the solution (e.g., spinning up the
   full app or creating PR design docs for a simple URL parsing fix).
+version: '2.0'

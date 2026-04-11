@@ -7,32 +7,32 @@ source:
 checks:
 - id: test_protocol_config_has_new_fields
   type: fail_to_pass
-  origin: source_code
+  origin: pr_diff
   description: Protocol config has transfer_receive_object_cost_per_byte and transfer_receive_object_type_cost_per_byte
     fields
 - id: test_protocol_config_sets_values_for_version_119
   type: fail_to_pass
-  origin: source_code
+  origin: pr_diff
   description: Protocol version 119 sets the new cost values to Some(1) and Some(2)
 - id: test_native_cost_params_has_new_fields
   type: fail_to_pass
-  origin: source_code
+  origin: pr_diff
   description: TransferReceiveObjectInternalCostParams struct has the new cost fields
 - id: test_native_receive_charges_type_cost
   type: fail_to_pass
-  origin: source_code
+  origin: pr_diff
   description: receive_object_internal charges gas based on child_ty.size()
 - id: test_native_receive_charges_per_byte_cost
   type: fail_to_pass
-  origin: source_code
+  origin: pr_diff
   description: receive_object_internal charges gas based on child abstract_memory_size
 - id: test_natives_cost_table_passes_new_params
   type: fail_to_pass
-  origin: source_code
+  origin: pr_diff
   description: NativesCostTable passes new protocol config values to TransferReceiveObjectInternalCostParams
 - id: test_transfer_rs_imports_sizeconfig
   type: fail_to_pass
-  origin: source_code
+  origin: pr_diff
   description: transfer.rs imports SizeConfig and ValueView for size calculation
 - id: test_cargo_check_passes
   type: pass_to_pass
@@ -82,27 +82,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: git checks script passes (whitespace/filename validation)
-agent_config:
-- source: .claude/skills/protocol-config/SKILL.md
-  rule: When modifying ProtocolConfig, ensure new fields are Option<T> and use as_option()
-    accessors
-  relevant: true
-- source: .claude/skills/protocol-config/SKILL.md
-  rule: Update protocol config snapshots with 'cargo insta test -p sui-protocol-config
-    --accept'
-  relevant: true
-- source: .claude/skills/protocol-config/SKILL.md
-  rule: Protocol version settings CANNOT be changed once released to production networks
-  relevant: false
-- source: CLAUDE.md
-  rule: Always run 'cargo xclippy' after finishing development
-  relevant: false
-- source: CLAUDE.md
-  rule: Never use
-  relevant: true
-- source: CLAUDE.md
-  rule: All new files must start with SPDX license header
-  relevant: false
 rubric:
 - rule: Do NOT comment the obvious. Comments should explain non-obvious algorithms,
     business logic, or subtle assumptions - not narrate what the code does.
@@ -159,3 +138,4 @@ hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md` which
   files, though none are provided in this context. The agent must navigate the global
   testing and linting commands, being careful with custom tools like `cargo xclippy`
   and `cargo simtest`.
+version: '2.0'

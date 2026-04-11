@@ -1,22 +1,3 @@
-task_id: openhands-slack-org-routing
-pr_source: All-Hands-AI/OpenHands#13758
-description: Route Slack resolver conversations to claimed org workspaces based on
-  git organization membership
-difficulty: medium
-agent_config:
-  applicable_configs:
-  - source: AGENTS.md
-    relevant_sections:
-    - Enterprise Directory
-    - Enterprise Development Setup
-    - Enterprise Testing Best Practices
-    - Mocking Strategy
-  - source: .agents/skills/cross-repo-testing/SKILL.md
-    relevant_sections: []
-  - source: .agents/skills/upcoming-release/SKILL.md
-    relevant_sections: []
-  - source: .agents/skills/update-sdk/SKILL.md
-    relevant_sections: []
 rubric:
 - rule: 'Use relative imports without ''enterprise.'' prefix in enterprise code. Example:
     ''from storage.database import a_session_maker'' not ''from enterprise.storage.database
@@ -38,83 +19,76 @@ rubric:
     commit: 732a1c19911a182653556c18c4fd1c19a38ff44a
 checks:
 - id: test_slack_view_imports_resolve_org_for_repo
-  name: Import resolve_org_for_repo
   description: slack_view.py imports resolve_org_for_repo from integrations.resolver_org_router
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_slack_view_imports_saas_conversation_store
-  name: Import SaasConversationStore
   description: slack_view.py imports SaasConversationStore from storage.saas_conversation_store
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_slack_view_imports_start_conversation
-  name: Import start_conversation
   description: slack_view.py imports start_conversation (replaces create_new_conversation)
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_slack_view_has_resolved_org_id_attribute
-  name: Set resolved_org_id attribute
   description: Slack view sets self.resolved_org_id and calls resolve_org_for_repo
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_v0_path_uses_saas_conversation_store
-  name: V0 path uses SaasConversationStore
   description: V0 conversation creation uses SaasConversationStore.get_resolver_instance
     with resolver_org_id
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_v0_path_uses_start_conversation
-  name: V0 path uses start_conversation
   description: V0 path calls start_conversation instead of create_new_conversation
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_v0_path_saves_conversation_metadata
-  name: V0 path saves metadata
   description: V0 path creates and saves ConversationMetadata via store.save_metadata
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_v1_path_passes_resolver_org_id_to_context
-  name: V1 path passes resolver_org_id
   description: V1 path passes resolver_org_id to ResolverUserContext
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_v1_path_uses_resolved_git_provider
-  name: V1 path uses resolved git provider
   description: V1 path uses self._resolved_git_provider instead of computing locally
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_git_provider_resolved_early
-  name: Git provider resolved early
   description: Git provider is resolved early in create_or_update_conversation and
     stored in _resolved_git_provider
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_enterprise_unit_tests_pass
-  name: Enterprise unit tests pass
   description: All enterprise unit tests in test_slack_view.py pass
-  type: behavioral
+  type: fail_to_pass
+  origin: pr_diff
 - id: test_repo_poetry_check
-  name: Poetry configuration valid
   description: Repo's poetry configuration passes validation (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_enterprise_poetry_check
-  name: Enterprise poetry configuration valid
   description: Enterprise poetry configuration passes validation (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_syntax_valid
-  name: Python syntax valid
   description: Key Python files have valid syntax via py_compile (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_enterprise_syntax_valid
-  name: Enterprise Python syntax valid
   description: Enterprise key Python files have valid syntax (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_imports_resolve
-  name: Package imports resolve
   description: Key package imports can be resolved after installation (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_unit_tests_utils
-  name: Utils unit tests pass
   description: Unit tests in tests/unit/utils pass after package installation (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
 - id: test_repo_unit_tests_agent_server
-  name: Agent server unit tests pass
   description: Agent server env override tests pass (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
@@ -153,3 +127,9 @@ distractors:
 hierarchy_analysis: The repository has a single root-level `AGENTS.md` file containing
   general setup, git best practices, and PR artifact guidelines. No deeper config
   files are present to override these rules.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands.git
+  pr: 0
+  base_commit: 732a1c19911a182653556c18c4fd1c19a38ff44a
+  merge_commit: ''

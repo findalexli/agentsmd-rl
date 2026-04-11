@@ -1,61 +1,20 @@
-source_pr:
-  repo: ClickHouse/ClickHouse
-  number: 102106
-  title: '`left/rightPad`: Fix argument description (follow-up to #101951)'
-  merge_commit: dea580e0abc03ab181a4d2bc2bc8a65e599216ae
-  base_commit: a77cd4c5a6ede8a2d5da637a75348a4cc055c007
-task:
-  name: clickhouse-padstring-arg-desc
-  title: Fix argument descriptions in leftPad/rightPad functions
-  description: 'The leftPad and rightPad functions in src/Functions/padString.cpp
-    have
-
-    incorrect argument descriptions that confuse users. The descriptions
-
-    currently say "Array" when they should say "String" or "FixedString",
-
-    and "const UInt*" when it should be "UInt*".
-
-    '
-  target_files:
-  - src/Functions/padString.cpp
 checks:
 - id: test_padstring_syntax_valid
   type: fail_to_pass
   origin: pr_diff
   description: C++ source compiles syntactically (clang -fsyntax-only)
-  notes: 'Behavioral test that invokes the compiler to verify the source code
-
-    is syntactically valid. This catches syntax errors from bad edits.
-
-    '
 - id: test_string_argument_description
   type: fail_to_pass
   origin: pr_diff
   description: '''string'' argument description is ''String or FixedString'' not ''Array'''
-  notes: 'Static analysis check that verifies the correct description string
-
-    is present in the FunctionArgumentDescriptors for the string argument.
-
-    '
 - id: test_length_argument_description
   type: fail_to_pass
   origin: pr_diff
   description: '''length'' argument description is ''UInt*'' not ''const UInt*'''
-  notes: 'Static analysis check that verifies the correct description string
-
-    is present for the length argument.
-
-    '
 - id: test_pad_string_argument_description
   type: fail_to_pass
   origin: pr_diff
   description: '''pad_string'' argument description is ''String'' not ''Array'''
-  notes: 'Static analysis check that verifies the correct description string
-
-    is present for the optional pad_string argument.
-
-    '
 - id: test_no_trailing_whitespace
   type: pass_to_pass
   origin: static
@@ -80,68 +39,32 @@ checks:
   type: pass_to_pass
   origin: agent_config
   source:
-    file: .claude/CLAUDE.md
-    rule: When writing C++ code, always use Allman-style braces (opening brace on
-      a new line)
+    path: .claude/CLAUDE.md
   description: Code follows Allman brace style conventions
 - id: test_repo_codespell
   type: pass_to_pass
   origin: repo_tests
   description: codespell finds no typos in padString.cpp
-  notes: 'Runs codespell tool (used in ClickHouse CI) to check for common
-
-    typos in the modified source file.
-
-    '
 - id: test_repo_git_status_clean
   type: pass_to_pass
   origin: repo_tests
   description: Git repository is in clean state
-  notes: 'Verifies git status shows no uncommitted changes at base commit.
-
-    This is a sanity check that the environment is properly set up.
-
-    '
 - id: test_repo_padstring_sql_test_exists
   type: pass_to_pass
   origin: repo_tests
   description: pad_string SQL test files exist and are valid
-  notes: 'Verifies the SQL test files for padString functions exist and
-
-    have the expected structure (tests/queries/0_stateless/01940_pad_string.sql).
-
-    '
 - id: test_repo_leftpad_fixedstring_test_exists
   type: pass_to_pass
   origin: repo_tests
   description: leftPad FixedString test exists
-  notes: 'Verifies the FixedString-specific test for leftPad exists
-
-    (tests/queries/0_stateless/02986_leftpad_fixedstring.sql).
-
-    This test was added for issue #59604.
-
-    '
 - id: test_repo_file_in_git
   type: pass_to_pass
   origin: repo_tests
   description: padString.cpp is tracked in git
-  notes: 'Verifies the modified file is tracked in the git repository
-
-    using git ls-files.
-
-    '
 - id: test_repo_clang_format_style
   type: pass_to_pass
   origin: repo_tests
   description: C++ file can be parsed by clang-format
-  notes: 'Runs clang-format --dry-run to verify the file can be parsed
-
-    without errors. Note: This does not enforce style compliance
-
-    but verifies the file is syntactically valid for the formatter.
-
-    '
 rubric:
 - rule: Use accurate type descriptions in FunctionArgumentDescriptor. String arguments
     should be described as 'String or FixedString' not 'Array', and length arguments
@@ -172,3 +95,9 @@ distractors:
 hierarchy_analysis: The AGENTS.md file contains rules primarily focused on documentation,
   commit messages, and git workflow. Since this PR only modifies C++ string literals
   used for error messages, most rules do not apply directly to the code changes.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102106
+  base_commit: a77cd4c5a6ede8a2d5da637a75348a4cc055c007
+  merge_commit: dea580e0abc03ab181a4d2bc2bc8a65e599216ae

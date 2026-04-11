@@ -1,11 +1,8 @@
 source:
-  pr: https://github.com/ClickHouse/ClickHouse/pull/101928
-  title: Extend argument validation in `splitByString` tokenizer
+  repo: ClickHouse/ClickHouse.git
+  pr: 0
   base_commit: 2ffea49f37f25c9a09a74b9ecb338b05eb426370
   merge_commit: ac7a313a2fe360f672ecfad47ff515748f9ec151
-  files:
-  - src/Interpreters/TokenizerFactory.cpp
-  - tests/queries/0_stateless/03403_function_tokens.sql
 checks:
 - id: test_cpp_code_compiles
   type: fail_to_pass
@@ -84,20 +81,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: SQL test files have valid structure and are readable
-agent_config:
-- rule: Use Allman-style braces (opening brace on a new line)
-  source: .claude/CLAUDE.md
-  applicable: true
-  check_type: style
-- rule: Say ASan not ASAN
-  source: .claude/CLAUDE.md
-  applicable: false
-- rule: Write names of functions and methods as `f` instead of `f()`
-  source: .claude/CLAUDE.md
-  applicable: false
-- rule: When mentioning logical errors, say exception instead of crash
-  source: .claude/CLAUDE.md
-  applicable: true
 rubric:
 - rule: When writing tests in tests/queries, prefer adding a new test instead of extending
     existing ones
@@ -140,3 +123,4 @@ hierarchy_analysis: The `AGENTS.md` file contains general guidelines for documen
   code to add an exception, these text-formatting rules do not apply to the C++ string
   literals. Agents must be careful not to over-apply documentation rules to user-facing
   error messages in the codebase.
+version: '2.0'

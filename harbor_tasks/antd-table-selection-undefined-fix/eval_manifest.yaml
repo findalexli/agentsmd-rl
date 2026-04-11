@@ -1,22 +1,3 @@
-source_pr:
-  owner: ant-design
-  repo: ant-design
-  number: 57547
-  merge_commit: 393c5137522116575940179201785c7840ca7f44
-  base_commit: aa0594058b3735533a59c83feb5c309e88b544bd
-task:
-  name: antd-table-selection-undefined-fix
-  title: Fix Table rowSelection crash when selectedRowKeys becomes undefined with
-    preserveSelectedRowKeys
-  description: 'The Table component crashes with a runtime error when rowSelection.selectedRowKeys
-
-    changes from [] to undefined while preserveSelectedRowKeys is enabled.
-
-    The fix ensures mergedSelectedKeys is always treated as an array by using
-
-    `mergedSelectedKeys ?? EMPTY_LIST` fallback.
-
-    '
 checks:
 - id: test_tsc_no_errors
   type: pass_to_pass
@@ -52,14 +33,14 @@ checks:
   description: All Table component unit tests pass
 - id: test_useSelection_file_exists
   type: pass_to_pass
-  origin: structural
+  origin: pr_diff
   description: The useSelection hook file exists at expected path
 - id: test_mergedSelectedKeys_uses_empty_list_fallback
   type: fail_to_pass
   origin: agent_config
   source:
-    file: AGENTS.md
     lines: 'TypeScript Requirements: Never use `any` type'
+    path: AGENTS.md
   description: 'Verifies the specific code pattern that fixes the bug:
 
     `mergedSelectedKeys ?? EMPTY_LIST` fallback pattern. This is the core fix.
@@ -67,7 +48,7 @@ checks:
     '
 - id: test_rowSelection_regression_preserveSelectedRowKeys
   type: pass_to_pass
-  origin: upstream_test
+  origin: pr_diff
   description: 'Regression test for the crash when selectedRowKeys becomes undefined
 
     with preserveSelectedRowKeys enabled. Upstream test that validates behavior.
@@ -75,7 +56,7 @@ checks:
     '
 - id: test_rowSelection_radio_undefined_keys
   type: pass_to_pass
-  origin: upstream_test
+  origin: pr_diff
   description: 'Related test for radio selection type with undefined selectedRowKeys.
 
     Validates the fix works for radio selection type.
@@ -136,3 +117,9 @@ hierarchy_analysis: Only one config file (`AGENTS.md`) is provided, so there are
   inter-file hierarchy conflicts. The agent must balance general guidelines (like
   avoiding `any` or writing tests) against the specific constraints of the PR (fixing
   the bug without expanding scope or modifying tests).
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57547
+  base_commit: aa0594058b3735533a59c83feb5c309e88b544bd
+  merge_commit: 393c5137522116575940179201785c7840ca7f44

@@ -1,33 +1,41 @@
 source:
-  pr: gohugoio/hugo#14734
-  title: Fix RenderShortcodes leaking context markers when indented
+  repo: gohugoio/hugo
+  pr: 14734
   base_commit: 45e4596630b1372ab02634e4536d2b5a89452e0b
   merge_commit: 161d0d475773c5251ec00cc8848f1a174393155c
 checks:
 - id: dedent_markers_function_exists
   description: DedentMarkers function exists and is exported
-  origin: functional
+  origin: pr_diff
+  type: fail_to_pass
 - id: dedent_markers_strips_leading_spaces
   description: DedentMarkers strips leading spaces from context markers
-  origin: functional
+  origin: pr_diff
+  type: fail_to_pass
 - id: dedent_markers_strips_leading_tabs
   description: DedentMarkers strips leading tabs from context markers
-  origin: functional
+  origin: pr_diff
+  type: fail_to_pass
 - id: dedent_markers_preserves_non_markers
   description: DedentMarkers preserves content without context markers
-  origin: functional
+  origin: pr_diff
+  type: fail_to_pass
 - id: dedent_markers_handles_multiple_markers
   description: DedentMarkers handles multiple markers in same content
-  origin: functional
+  origin: pr_diff
+  type: fail_to_pass
 - id: hugolib_rendershortcodes_test
   description: TestRenderShortcodesCodeBlock upstream test passes
-  origin: functional
+  origin: pr_diff
+  type: fail_to_pass
 - id: assert_no_render_shortcodes_artifacts_exists
   description: AssertNoRenderShortcodesArtifacts helper exists (baseline)
-  origin: structural
+  origin: pr_diff
+  type: fail_to_pass
 - id: dedent_called_in_content_toC
   description: DedentMarkers is called in contentToC function
-  origin: structural
+  origin: pr_diff
+  type: fail_to_pass
 - id: test_repo_hugocontext_package
   description: Hugo's hugocontext package tests pass
   type: pass_to_pass
@@ -76,22 +84,6 @@ checks:
   description: Hugo's goldmark internal package tests pass
   type: pass_to_pass
   origin: repo_tests
-agent_config:
-- rule: Never export symbols that's not needed outside of the package
-  source:
-    file: AGENTS.md
-    ref: 45e4596630b1372ab02634e4536d2b5a89452e0b
-  check_id: dedent_markers_function_exists
-- rule: In tests, use qt matchers
-  source:
-    file: AGENTS.md
-    ref: 45e4596630b1372ab02634e4536d2b5a89452e0b
-  check_id: hugolib_rendershortcodes_test
-- rule: In tests, always use the latest Hugo specification
-  source:
-    file: AGENTS.md
-    ref: 45e4596630b1372ab02634e4536d2b5a89452e0b
-  check_id: hugolib_rendershortcodes_test
 rubric:
 - rule: Brevity is good. This applies to code, comments and commit messages. Don't
     write a novel.
@@ -160,3 +152,4 @@ distractors:
 hierarchy_analysis: The hierarchy consists of `CLAUDE.md` which simply includes `AGENTS.md`.
   All actionable rules are located in `AGENTS.md`, so there are no conflicts between
   different levels of the configuration hierarchy.
+version: '2.0'

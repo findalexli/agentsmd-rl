@@ -1,131 +1,87 @@
-task_name: sui-kv-rpc-remove-data-ingestion-dep
-source_pr: https://github.com/MystenLabs/sui/pull/26066
-base_commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
-merge_commit: 137b12f337d790dcae827caa3dbbd56d22732716
-
-# Repository info
-repo:
-  owner: MystenLabs
-  name: sui
-  language: rust
-
-# Task metadata
-description: |
-  Remove sui-data-ingestion-core dependency from sui-kv-rpc crate and
-  replace it with sui-storage. Update get_checkpoint.rs to use new
-  APIs from sui_storage::object_store::util instead of the old APIs
-  from sui_data_ingestion_core.
-
-difficulty: medium
-tags: [rust, dependency-management, refactoring, api-migration]
-estimated_time: 15-30 minutes
-
-# Evaluation checks (1:1 with test_outputs.py functions)
 checks:
-  # Fail-to-pass tests (behavioral changes)
-  - id: test_sui_data_ingestion_core_removed_from_cargo_toml
-    type: fail_to_pass
-    origin: behavioral
-    description: sui-data-ingestion-core dependency removed from Cargo.toml
-
-  - id: test_sui_storage_added_to_cargo_toml
-    type: fail_to_pass
-    origin: behavioral
-    description: sui-storage dependency added to Cargo.toml
-
-  - id: test_sui_data_ingestion_core_import_removed
-    type: fail_to_pass
-    origin: behavioral
-    description: sui_data_ingestion_core imports removed from get_checkpoint.rs
-
-  - id: test_sui_storage_import_added
-    type: fail_to_pass
-    origin: behavioral
-    description: sui_storage imports added to get_checkpoint.rs
-
-  - id: test_create_remote_store_client_not_used
-    type: fail_to_pass
-    origin: behavioral
-    description: create_remote_store_client function no longer used
-
-  - id: test_checkpointreader_not_used
-    type: fail_to_pass
-    origin: behavioral
-    description: CheckpointReader no longer used
-
-  - id: test_build_object_store_used
-    type: fail_to_pass
-    origin: behavioral
-    description: build_object_store function is now used
-
-  - id: test_fetch_checkpoint_used
-    type: fail_to_pass
-    origin: behavioral
-    description: fetch_checkpoint function is now used
-
-  - id: test_refactored_code_structure
-    type: fail_to_pass
-    origin: behavioral
-    description: Code uses new simplified pattern with build_object_store and fetch_checkpoint
-
-  # Pass-to-pass tests (maintain existing behavior)
-  - id: test_license_header_preserved
-    type: pass_to_pass
-    origin: repo_standards
-    description: Apache license header preserved per CLAUDE.md requirements
-
-  - id: test_repo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo code formatting passes cargo fmt check
-
-  - id: test_repo_xlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo passes license/workspace lints (cargo xlint)
-
-  - id: test_cargo_lock_consistent
-    type: pass_to_pass
-    origin: repo_tests
-    description: Cargo.lock is consistent with Cargo.toml dependencies
-
-
-  - id: test_cargo_metadata_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: Cargo.toml files produce valid metadata
-
-  - id: test_cargo_deny_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Cargo dependencies pass cargo-deny license/advisory checks
-
-# Agent configuration rules (from CLAUDE.md)
-agent_config:
-  - file: CLAUDE.md
-    rules:
-      - "All new files must start with Apache license header"
-      - "Use cargo check for quick compilation checks"
-      - "Run cargo xclippy after finishing development"
-      - "Never disable or ignore tests"
-      - "Never use #[allow(dead_code)] or #[allow(unused)]"
-
-# Rubric for soft/subjective evaluation (LLM judge)
+- id: test_sui_data_ingestion_core_removed_from_cargo_toml
+  type: fail_to_pass
+  origin: pr_diff
+  description: sui-data-ingestion-core dependency removed from Cargo.toml
+- id: test_sui_storage_added_to_cargo_toml
+  type: fail_to_pass
+  origin: pr_diff
+  description: sui-storage dependency added to Cargo.toml
+- id: test_sui_data_ingestion_core_import_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: sui_data_ingestion_core imports removed from get_checkpoint.rs
+- id: test_sui_storage_import_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: sui_storage imports added to get_checkpoint.rs
+- id: test_create_remote_store_client_not_used
+  type: fail_to_pass
+  origin: pr_diff
+  description: create_remote_store_client function no longer used
+- id: test_checkpointreader_not_used
+  type: fail_to_pass
+  origin: pr_diff
+  description: CheckpointReader no longer used
+- id: test_build_object_store_used
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_object_store function is now used
+- id: test_fetch_checkpoint_used
+  type: fail_to_pass
+  origin: pr_diff
+  description: fetch_checkpoint function is now used
+- id: test_refactored_code_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: Code uses new simplified pattern with build_object_store and fetch_checkpoint
+- id: test_license_header_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Apache license header preserved per CLAUDE.md requirements
+- id: test_repo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes cargo fmt check
+- id: test_repo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes license/workspace lints (cargo xlint)
+- id: test_cargo_lock_consistent
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.lock is consistent with Cargo.toml dependencies
+- id: test_cargo_metadata_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.toml files produce valid metadata
+- id: test_cargo_deny_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo dependencies pass cargo-deny license/advisory checks
 rubric:
-  - rule: "Do NOT comment the obvious. Comments should not simply repeat what the code does. Only comment non-obvious algorithms, temporary exclusions/timeouts, complex calculations, subtle race conditions, or assumptions about external state."
-    source:
-      path: "CLAUDE.md"
-      lines: "116-131"
-      commit: "80af79ea6b5e18a23042fc7bda481e07472c7a8d"
-
-  - rule: "Follow existing code style when modifying files. Check neighboring files for patterns around imports, error handling, and function structure."
-    source:
-      path: "CLAUDE.md"
-      lines: "5-8"
-      commit: "80af79ea6b5e18a23042fc7bda481e07472c7a8d"
-
-  - rule: "When refactoring code (such as replacing API calls), remove unnecessary complexity and prefer simplified patterns that match the new dependency's recommended usage."
-    source:
-      path: "CLAUDE.md"
-      lines: "110-114"
-      commit: "80af79ea6b5e18a23042fc7bda481e07472c7a8d"
+- rule: Do NOT comment the obvious. Comments should not simply repeat what the code
+    does. Only comment non-obvious algorithms, temporary exclusions/timeouts, complex
+    calculations, subtle race conditions, or assumptions about external state.
+  source:
+    path: CLAUDE.md
+    lines: 116-131
+    commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
+- rule: Follow existing code style when modifying files. Check neighboring files for
+    patterns around imports, error handling, and function structure.
+  source:
+    path: CLAUDE.md
+    lines: 5-8
+    commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
+- rule: When refactoring code (such as replacing API calls), remove unnecessary complexity
+    and prefer simplified patterns that match the new dependency's recommended usage.
+  source:
+    path: CLAUDE.md
+    lines: 110-114
+    commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
+version: '2.0'
+source:
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: 80af79ea6b5e18a23042fc7bda481e07472c7a8d
+  merge_commit: ''

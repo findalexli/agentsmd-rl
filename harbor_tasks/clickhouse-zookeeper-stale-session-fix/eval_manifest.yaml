@@ -1,116 +1,109 @@
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 102170
-  merge_commit: 863e3d33498f075a84659eb2c8948de69b8bc88e
-  base_commit: 6f01023e78a9e84c588068560fda778a7c11a665
-
 checks:
-  # Fail-to-pass tests - these verify the core fix
-  - id: test_fix_session_refresh_in_retry_loop
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md: retry logic requires obtaining fresh resources on retry"
-    description: "Verify that on retry, a fresh ZooKeeper session is obtained via zookeeper_getter"
-
-  - id: test_fix_object_names_inside_retry_loop
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md: retry loop must re-fetch data after transient failures"
-    description: "Verify that getObjectNamesAndSetWatch is called INSIDE the retry loop, not before"
-
-  - id: test_fix_uses_current_zookeeper_in_tryload
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md: always use the fresh session handle in retry callbacks"
-    description: "Verify that tryLoadObject uses current_zookeeper, not the original zookeeper handle"
-
-  - id: test_no_object_names_before_retry_loop
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md: avoid capturing state before retry loops that may need refresh"
-    description: "Verify that object_names is NOT fetched before the retry loop (the bug)"
-
-  # Pass-to-pass tests - these verify code quality
-  - id: test_code_compiles_syntax
-    type: pass_to_pass
-    origin: static
-    description: "Basic syntax validation - balanced braces and parentheses"
-
-  - id: test_function_structure_intact
-    type: pass_to_pass
-    origin: static
-    description: "Verify the overall function structure has required components"
-
-  # Pass-to-pass tests - repo CI/CD validation
-  - id: test_repo_git_integrity
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify the git repository is in a valid state via git status"
-
-  - id: test_repo_file_integrity
-    type: pass_to_pass
-    origin: static
-    description: "Verify the target source file is valid UTF-8 and readable"
-
-  # Pass-to-pass tests - repo CI/CD style checks (running actual CI scripts)
-  - id: test_repo_style_check_cpp
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI/CD: Run check_cpp.sh style script on the repository"
-
-  - id: test_repo_style_check_various
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI/CD: Run various_checks.sh style script on the repository"
-
-  - id: test_repo_git_attributes_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo CI/CD: Verify git attributes are valid for source files"
-
-  - id: test_repo_no_duplicate_includes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Style check: Verify no duplicate #include statements in modified file"
-
-  - id: test_repo_no_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Style check: Verify no trailing whitespace in modified source file"
-
-  - id: test_repo_no_tabs_for_indentation
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Style check: Verify no tabs used for indentation in modified source file"
-
-  - id: test_repo_header_has_include_guards
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C++ convention: Verify header files have proper include guards (#pragma once)"
-
-  - id: test_repo_cmake_configuration_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify CMakeLists.txt has balanced parentheses (basic syntax check)"
-
-  - id: test_repo_cpp_files_compile_independently
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Syntax check: Verify C++ file has valid structure for independent parsing (balanced block comments)"
-
+- id: test_fix_session_refresh_in_retry_loop
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: ''
+  description: Verify that on retry, a fresh ZooKeeper session is obtained via zookeeper_getter
+- id: test_fix_object_names_inside_retry_loop
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: ''
+  description: Verify that getObjectNamesAndSetWatch is called INSIDE the retry loop,
+    not before
+- id: test_fix_uses_current_zookeeper_in_tryload
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: ''
+  description: Verify that tryLoadObject uses current_zookeeper, not the original
+    zookeeper handle
+- id: test_no_object_names_before_retry_loop
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: ''
+  description: Verify that object_names is NOT fetched before the retry loop (the
+    bug)
+- id: test_code_compiles_syntax
+  type: pass_to_pass
+  origin: static
+  description: Basic syntax validation - balanced braces and parentheses
+- id: test_function_structure_intact
+  type: pass_to_pass
+  origin: static
+  description: Verify the overall function structure has required components
+- id: test_repo_git_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify the git repository is in a valid state via git status
+- id: test_repo_file_integrity
+  type: pass_to_pass
+  origin: static
+  description: Verify the target source file is valid UTF-8 and readable
+- id: test_repo_style_check_cpp
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI/CD: Run check_cpp.sh style script on the repository'
+- id: test_repo_style_check_various
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI/CD: Run various_checks.sh style script on the repository'
+- id: test_repo_git_attributes_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI/CD: Verify git attributes are valid for source files'
+- id: test_repo_no_duplicate_includes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Style check: Verify no duplicate #include statements in modified file'
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Style check: Verify no trailing whitespace in modified source file'
+- id: test_repo_no_tabs_for_indentation
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Style check: Verify no tabs used for indentation in modified source
+    file'
+- id: test_repo_header_has_include_guards
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'C++ convention: Verify header files have proper include guards (#pragma
+    once)'
+- id: test_repo_cmake_configuration_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify CMakeLists.txt has balanced parentheses (basic syntax check)
+- id: test_repo_cpp_files_compile_independently
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Syntax check: Verify C++ file has valid structure for independent
+    parsing (balanced block comments)'
 rubric:
-  - rule: "Code fix must obtain fresh ZooKeeper session on retry via zookeeper_getter to fix stale session bug"
-    source:
-      path: "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
-      commit: "6f01023e78a9e84c588068560fda778a7c11a665"
-
-  - rule: "Code fix must move getObjectNamesAndSetWatch inside the retry loop so object list is refreshed on each retry"
-    source:
-      path: "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
-      commit: "6f01023e78a9e84c588068560fda778a7c11a665"
-
-  - rule: "Code fix must use current_zookeeper handle instead of original zookeeper parameter inside retry loop"
-    source:
-      path: "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
-      commit: "6f01023e78a9e84c588068560fda778a7c11a665"
+- rule: Code fix must obtain fresh ZooKeeper session on retry via zookeeper_getter
+    to fix stale session bug
+  source:
+    path: src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+    commit: 6f01023e78a9e84c588068560fda778a7c11a665
+- rule: Code fix must move getObjectNamesAndSetWatch inside the retry loop so object
+    list is refreshed on each retry
+  source:
+    path: src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+    commit: 6f01023e78a9e84c588068560fda778a7c11a665
+- rule: Code fix must use current_zookeeper handle instead of original zookeeper parameter
+    inside retry loop
+  source:
+    path: src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp
+    commit: 6f01023e78a9e84c588068560fda778a7c11a665
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102170
+  base_commit: 6f01023e78a9e84c588068560fda778a7c11a665
+  merge_commit: 863e3d33498f075a84659eb2c8948de69b8bc88e

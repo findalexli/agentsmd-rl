@@ -1,50 +1,27 @@
-manifest_version: 1.0
-task:
-  name: sui-remove-simple-deserialize
-  title: Remove unused simple_deserialize methods from Move core types
-  description: 'Remove unused simple_deserialize methods from move-core-types crate.
-
-    The event.rs file already uses BoundedVisitor::deserialize_value (fixed in previous
-    PR).
-
-    This PR completes the cleanup by removing the now-unused methods.
-
-    '
-  source_pr:
-    url: https://github.com/MystenLabs/sui/pull/26160
-    number: 26160
-    merge_commit: 3a3ac018177cf71cef28be3f21957b74c6bc45be
-    base_commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
-files:
-  target:
-  - external-crates/move/crates/move-core-types/src/annotated_value.rs
-  - external-crates/move/crates/move-core-types/src/runtime_value.rs
-  test:
-  - external-crates/move/crates/move-core-types/src/unit_tests/value_test.rs
 checks:
 - id: test_move_value_simple_deserialize_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: MoveValue::simple_deserialize method should be removed from annotated_value.rs
 - id: test_move_struct_simple_deserialize_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: MoveStruct::simple_deserialize method should be removed from annotated_value.rs
 - id: test_move_variant_simple_deserialize_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: MoveVariant::simple_deserialize method should be removed from annotated_value.rs
 - id: test_runtime_struct_simple_deserialize_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: MoveStruct::simple_deserialize method should be removed from runtime_value.rs
 - id: test_runtime_variant_simple_deserialize_removed
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: MoveVariant::simple_deserialize method should be removed from runtime_value.rs
 - id: test_anyhow_result_not_imported
   type: fail_to_pass
-  origin: behavioral
+  origin: pr_diff
   description: anyhow::Result as AResult import should be removed from annotated_value.rs
 - id: test_event_rs_uses_bounded_visitor
   type: pass_to_pass
@@ -117,3 +94,9 @@ distractors:
 hierarchy_analysis: The repository has a root `CLAUDE.md` and an `AGENTS.md`. The
   root `CLAUDE.md` provides general Rust guidelines, including testing and test-only
   code annotations. `AGENTS.md` defers to `CLAUDE.md`.
+version: '2.0'
+source:
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
+  merge_commit: ''
