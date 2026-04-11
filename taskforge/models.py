@@ -75,20 +75,37 @@ class Check(BaseModel):
 
 
 class RubricRule(BaseModel):
-    """A soft rule evaluated by LLM judge.
+    """A positive rubric: convention the gold solution FOLLOWS.
 
     Must be derived from an actual agent config file (CLAUDE.md, AGENTS.md, etc.)
-    and must NOT be:
-    - Trivially inferable from linting/tooling (eslint, prettier, ruff)
-    - Inferable from existing code patterns alone
-    - A restatement of what the gold patch does (that's a hard check)
-
-    Good rubric rules capture non-obvious, human-curated knowledge from config
-    files: instructions, conventions, architectural rules, workflow requirements.
+    with specific evidence from the gold diff demonstrating compliance.
     """
     rule: str                        # What the agent should do
     source: SourceRef | None = None  # Where rule came from (required for quality)
     reference: str | None = None     # Gold answer for agentmd-edit tasks (optional)
+    evidence: str | None = None      # How the gold solution demonstrates compliance
+    category: str | None = None      # naming, style, architecture, testing, etc.
+
+
+class DistractorRule(BaseModel):
+    """A negative rubric: convention that creates a COLLISION.
+
+    Rules from config files that SEEM relevant but following them would produce
+    worse code, wasted effort, or bugs for this specific PR. Only genuine
+    collisions — not merely irrelevant rules.
+
+    Collision types:
+    - rule_conflict: two valid rules conflict, agent must choose
+    - scope_ambiguity: rule's applicability is genuinely ambiguous
+    - meta_confusion: writing ABOUT a pattern vs applying it
+    - architecture_boundary: applying a pattern beyond its intended scope
+    - would_cause_bug: following the rule introduces an error
+    """
+    rule: str                        # The distracting convention
+    source: SourceRef | None = None  # Where rule came from
+    collision_type: str = ""         # rule_conflict, scope_ambiguity, etc.
+    why_distracting: str = ""        # What goes wrong if agent follows this
+    severity: str = "medium"         # high (bug), medium (wasted effort), low (minor)
 
 
 class GoldConfigEdit(BaseModel):
@@ -119,16 +136,18 @@ class EvalManifest(BaseModel):
 
     Scoring is binary: all checks pass → reward 1.0, any fail → 0.0.
 
-    Three evaluation tracks:
+    Four evaluation tracks:
       1. checks (hard tests)  — test.sh, deterministic pass/fail
       2. config_edits         — gold config changes, Gemini semantic comparison
-      3. rubric               — style/convention rules from config files, LLM judge
+      3. rubric               — positive: conventions the gold solution follows
+      4. distractors          — negative: collision rules the gold deliberately ignores
     """
     version: Literal["2.0"] = "2.0"
     source: SourcePR
     checks: list[Check] = Field(default_factory=list)
     config_edits: list[GoldConfigEdit] = Field(default_factory=list)  # Track 2
-    rubric: list[RubricRule] = Field(default_factory=list)            # Track 3
+    rubric: list[RubricRule] = Field(default_factory=list)            # Track 3 positive
+    distractors: list[DistractorRule] = Field(default_factory=list)   # Track 4 negative
 
     # -- helpers --
 
