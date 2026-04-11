@@ -422,8 +422,8 @@ def test_list_certificates_map_keys():
 import re, sys
 src = open("/workspace/rabbitmq-server/deps/rabbitmq_trust_store/src/rabbit_trust_store.erl").read()
 func_match = re.search(
-    r"list_certificates\\(\\).*?(?=\\n-spec|\\n[a-z_]+\\(|\\n%%\\s+\\S|\\Z)",
-    src, re.DOTALL)
+    r"^list_certificates\(\).*?(?=\n-spec|\n[a-z_]+\(|\n%%\s+\S|\Z)",
+    src, re.DOTALL | re.MULTILINE)
 if not func_match:
     print("FAIL: list_certificates function body not found", file=sys.stderr)
     sys.exit(1)
