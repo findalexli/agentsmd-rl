@@ -325,8 +325,24 @@ Respond with ONLY a JSON array:
         return _call_anthropic(prompt, api_key)
 
 
+_JUDGE_RESULT_SCHEMA = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "rule_num": {"type": "integer"},
+            "rule": {"type": "string"},
+            "reasoning": {"type": "string"},
+            "pass": {"type": "boolean"},
+        },
+        "required": ["rule_num", "reasoning", "pass"],
+        "propertyOrdering": ["rule_num", "rule", "reasoning", "pass"],
+    },
+}
+
+
 def _call_gemini(prompt: str, api_key: str) -> list[dict]:
-    """Call Gemini 3.1 Pro for rubric judging. Returns per-rule results with reasoning."""
+    """Call Gemini 3.1 Pro for rubric judging with structured output."""
     import urllib.request
 
     body = json.dumps({
@@ -334,36 +350,29 @@ def _call_gemini(prompt: str, api_key: str) -> list[dict]:
         "generationConfig": {
             "temperature": 0.1,
             "maxOutputTokens": 8192,
+            "responseMimeType": "application/json",
+            "responseSchema": _JUDGE_RESULT_SCHEMA,
         },
     }).encode()
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview-customtools:generateContent?key={api_key}"
-    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview-customtools:generateContent"
+    req = urllib.request.Request(url, data=body, headers={
+        "Content-Type": "application/json",
+        "x-goog-api-key": api_key,
+    })
 
     with urllib.request.urlopen(req, timeout=120) as resp:
         data = json.loads(resp.read())
 
-    text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+    if not parts:
+        return []
 
-    # Parse JSON array from response (Gemini may wrap in markdown)
-    if "```" in text:
-        # Extract from markdown code block
-        start = text.find("```json")
-        if start >= 0:
-            start = text.find("\n", start) + 1
-        else:
-            start = text.find("```") + 3
-            start = text.find("\n", start) + 1
-        end = text.find("```", start)
-        text = text[start:end].strip()
-
-    if text.startswith("["):
+    text = parts[0].get("text", "").strip()
+    try:
         return json.loads(text)
-    start = text.find("[")
-    end = text.rfind("]") + 1
-    if start >= 0 and end > start:
-        return json.loads(text[start:end])
-    return []
+    except json.JSONDecodeError:
+        return []
 
 
 def _call_anthropic(prompt: str, api_key: str) -> list[dict]:

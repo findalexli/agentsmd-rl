@@ -1,7 +1,9 @@
-"""Gemini 3.1 Pro judge for rubric rule evaluation.
+"""Gemini judge for rubric rule evaluation (async httpx).
 
 Evaluates soft rubric rules from eval_manifest.yaml against the gold
 solution diff. Called from the orchestrator after Docker validation passes.
+
+Uses structured output (responseSchema) for guaranteed-valid JSON.
 
 Usage:
     from taskforge.gemini import judge_rubric
@@ -18,6 +20,22 @@ import httpx
 
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
 
+# Structured output schema — reasoning before verdict (propertyOrdering).
+_RUBRIC_JUDGE_SCHEMA = {
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "rule_num": {"type": "integer"},
+            "rule": {"type": "string"},
+            "reason": {"type": "string"},
+            "pass": {"type": "boolean"},
+        },
+        "required": ["rule_num", "reason", "pass"],
+        "propertyOrdering": ["rule_num", "rule", "reason", "pass"],
+    },
+}
+
 
 async def judge_rubric(
     manifest_path: Path,
@@ -25,9 +43,9 @@ async def judge_rubric(
     api_key: str | None = None,
     http: httpx.AsyncClient | None = None,
 ) -> list[dict] | None:
-    """Evaluate rubric rules via Gemini 3.1 Pro.
+    """Evaluate rubric rules via Gemini with structured output.
 
-    Returns list of {rule_num, rule, pass, reason} dicts, or None if no rubric.
+    Returns list of {rule_num, rule, reason, pass} dicts, or None if no rubric.
     """
     api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
     if not api_key:
@@ -41,7 +59,7 @@ async def judge_rubric(
 
     solve_diff = solve_sh_path.read_text()
 
-    # Build prompt
+    # Build prompt — no need to specify JSON format (schema handles it)
     rules_text = "\n".join(
         f"{i+1}. {r['rule']}" + (f" (source: {r['source']['path']}:{r['source'].get('lines', '')})" if r.get('source') else "")
         for i, r in enumerate(rubric)
@@ -58,13 +76,7 @@ async def judge_rubric(
 ```
 
 ## Task:
-For each rule, determine if the gold patch follows it. Return a JSON array:
-[
-  {{"rule_num": 1, "rule": "...", "pass": true, "reason": "..."}},
-  ...
-]
-
-Only return the JSON array, no other text."""
+For each rule, determine if the gold patch follows it. Explain your reasoning before giving the verdict."""
 
     own_client = http is None
     if own_client:
@@ -72,10 +84,16 @@ Only return the JSON array, no other text."""
 
     try:
         resp = await http.post(
-            f"{GEMINI_API_URL}?key={api_key}",
+            GEMINI_API_URL,
+            headers={"x-goog-api-key": api_key},
             json={
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.1, "maxOutputTokens": 4096},
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 4096,
+                    "responseMimeType": "application/json",
+                    "responseSchema": _RUBRIC_JUDGE_SCHEMA,
+                },
             },
         )
 
@@ -83,14 +101,11 @@ Only return the JSON array, no other text."""
             return None
 
         data = resp.json()
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
+        parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        if not parts:
+            return None
 
-        # Extract JSON from response
-        text = text.strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1].rsplit("```", 1)[0]
-
-        return json.loads(text)
+        return json.loads(parts[0].get("text", "[]"))
 
     except Exception:
         return None

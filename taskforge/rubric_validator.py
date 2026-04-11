@@ -349,57 +349,90 @@ Respond with ONLY a JSON object:
   "summary": "one-sentence overall quality assessment"
 }}"""
 
+    _VALIDATOR_SCHEMA = {
+        "type": "object",
+        "properties": {
+            "rules": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "rule_num": {"type": "integer"},
+                        "explanation": {"type": "string"},
+                        "fix_suggestion": {"type": "string"},
+                        "verdict": {
+                            "type": "string",
+                            "enum": ["accurate", "partial", "hallucinated", "redundant"],
+                        },
+                    },
+                    "required": ["rule_num", "explanation", "verdict"],
+                    "propertyOrdering": ["rule_num", "explanation", "fix_suggestion", "verdict"],
+                },
+            },
+            "recall": {
+                "type": "object",
+                "properties": {
+                    "missing_rules": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "rule": {"type": "string"},
+                                "source_path": {"type": "string"},
+                                "source_lines": {"type": "string"},
+                                "rationale": {"type": "string"},
+                            },
+                            "required": ["rule", "source_path"],
+                        },
+                    },
+                    "notes": {"type": "string"},
+                },
+            },
+            "precision_score": {"type": "number"},
+            "summary": {"type": "string"},
+        },
+        "required": ["rules", "precision_score"],
+        "propertyOrdering": ["rules", "recall", "precision_score", "summary"],
+    }
+
     body = json.dumps({
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.1,
             "maxOutputTokens": 8192,
+            "responseMimeType": "application/json",
+            "responseSchema": _VALIDATOR_SCHEMA,
         },
     }).encode()
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview-customtools:generateContent?key={gemini_key}"
-    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview-customtools:generateContent"
+    req = urllib.request.Request(url, data=body, headers={
+        "Content-Type": "application/json",
+        "x-goog-api-key": gemini_key,
+    })
 
     with urllib.request.urlopen(req, timeout=120) as resp:
         data = json.loads(resp.read())
 
-    text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+    if not parts:
+        reason = data.get("candidates", [{}])[0].get("finishReason", "unknown")
+        return {
+            "error": f"no response parts (finishReason={reason})",
+            "rules": [],
+            "precision_score": 0.0,
+        }
 
-    # Parse JSON (Gemini may wrap in markdown)
-    if "```" in text:
-        start = text.find("```json")
-        if start >= 0:
-            start = text.find("\n", start) + 1
-        else:
-            start = text.find("```") + 3
-            start = text.find("\n", start) + 1
-        end = text.find("```", start)
-        text = text[start:end].strip()
-
-    # Try to parse JSON — multiple strategies
+    text = parts[0].get("text", "").strip()
     try:
-        if text.startswith("{"):
-            return json.loads(text)
+        return json.loads(text)
     except json.JSONDecodeError:
-        pass
-
-    # Find outermost { ... }
-    start = text.find("{")
-    end = text.rfind("}") + 1
-    if start >= 0 and end > start:
-        try:
-            return json.loads(text[start:end])
-        except json.JSONDecodeError:
-            pass
-
-    # Last resort: try to find "rules" array
-    print(f"WARNING: Failed to parse Gemini JSON. Raw response: {text[:500]}", file=sys.stderr)
-    return {
-        "error": "failed to parse Gemini response",
-        "raw": text[:500],
-        "rules": [],
-        "precision_score": 0.0,
-    }
+        return {
+            "error": "structured_parse_failed",
+            "raw": text[:500],
+            "rules": [],
+            "precision_score": 0.0,
+        }
 
 
 def _get_precision(gemini_result: dict) -> float:
