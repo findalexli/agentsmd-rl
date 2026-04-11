@@ -4,32 +4,39 @@ RL training on SWE tasks from repositories with agent instruction files (AGENTS.
 
 ## Research Question
 
-> Do AI coding agents perform differently on repositories that contain human-written agent guidance files? And can we use this signal for better RL training?
+> Can we train coding agents to REASON about which repository instructions apply to a specific task, rather than blindly following all of them?
 
-Every major SWE benchmark (SWE-Gym, SWE-rebench V2, SWE-Universe, SWE-Next) mines PRs from GitHub to build training environments. None of them control for whether the repository already had agent instruction files at task time. This is an unmeasured confounder that could affect both evaluation scores and post-training outcomes.
+Repos have hierarchical config files (AGENTS.md, CLAUDE.md, SKILL.md) with 20-200+ rules at multiple directory levels. Many rules are irrelevant or even harmful for a specific PR. An agent that blindly follows everything wastes time or introduces errors.
 
-See [research/agent-manifest-confounding.md](research/agent-manifest-confounding.md) for the full analysis.
+**Key insight**: The PR author's choices — which conventions they follow vs. ignore — are the ground truth signal for instruction discrimination. We extract this signal as positive rubrics (rules the gold solution follows) and negative rubrics / distractors (rules that SEEM relevant but following them would produce worse code).
+
+Grounded in: [NoisyBench](https://arxiv.org/abs/2601.07226) (80% drop from hard distractors), [RARE](https://arxiv.org/abs/2505.18761) (rationale-aware reward), [SkillsBench](https://arxiv.org/abs/2602.12670) (skill selection with distractors), [GSM-DC](https://arxiv.org/abs/2505.18761) (distractor training improves OOD robustness).
+
+See [research/negative_rubrics_plan.md](research/negative_rubrics_plan.md) for the full research plan.
 
 ## Task Classes
 
 The benchmark has two complementary task classes, both mined from merged PRs in repos with agent instruction files:
 
-### Class A: Code Bug Fixes (`harbor_tasks/`, ~630 tasks)
+### Class A: Code Bug Fixes (`harbor_tasks/`, 775 tasks)
 
 Standard SWE-bench-style tasks. The PR fixed a bug; the agent must reproduce the fix. Evaluation is purely execution-based: fail-to-pass tests must fail on the base commit and pass after the fix, pass-to-pass tests must pass on both.
 
-### Class B: Code + Config Edits (`harbor_tasks_agentmd_edits/`, ~350 tasks)
+### Class B: Code + Config Edits (`harbor_tasks_agentmd_edits/`, 232 tasks)
 
-The PR changed both functional code AND agent instruction files (CLAUDE.md, AGENTS.md, SKILL.md, .cursorrules, etc.). These tasks test whether agents can follow and update the repo's own guidance files. Evaluation adds a rubric judge layer: an LLM checks whether the gold solution's config edits follow the style/convention rules declared in `eval_manifest.yaml`.
+The PR changed both functional code AND agent instruction files (CLAUDE.md, AGENTS.md, SKILL.md, .cursorrules, etc.). These tasks test whether agents can navigate hierarchical config files — following relevant conventions, ignoring distracting ones, and updating config files correctly.
+
+Evaluation uses 4 tracks (see below): hard tests, config edit comparison, positive rubric compliance, and distractor discrimination.
 
 | | Class A (code-only) | Class B (code + config) |
 |---|---|---|
 | **Directory** | `harbor_tasks/` | `harbor_tasks_agentmd_edits/` |
+| **Count** | 775 tasks (736 passing) | 232 tasks |
 | **PR changes** | Code only | Code + agent config files |
-| **eval_manifest checks** | `pr_diff`, `repo_tests`, `static` | Also `agent_config` with source refs |
-| **Rubric rules** | Sometimes | Almost always |
-| **Rubric judge** | Optional | Required (ICR >= 0.8) |
-| **What it measures** | Can the agent fix bugs? | Can the agent fix bugs AND maintain config files? |
+| **Eval tracks** | Track 1 only | All 4 tracks |
+| **Rubric rules** | Sometimes | 3.5/task avg (821 total) |
+| **Distractors** | None | 1.7/task avg (388 total) |
+| **What it measures** | Can the agent fix bugs? | Can the agent fix bugs AND reason about which config rules apply? |
 
 Both classes share identical file structure and are processed by the same pipeline.
 
@@ -38,10 +45,13 @@ Both classes share identical file structure and are processed by the same pipeli
 ```
 claude-code-rl-w-tinker/    # RL training library (proxy + GRPO + Tinker API)
 taskforge/                   # Task construction toolkit (models, pipeline, judge, E2B worker)
-harbor_tasks/                # Class A: code-only bug fixes (~630 tasks)
-harbor_tasks_agentmd_edits/  # Class B: code + config file edits (~350 tasks)
+  gemini_rubric_constructor.py  # Structured output rubric generation + Kimi validation loop
+  hierarchy_context.py          # Config hierarchy extractor (root → leaf AGENTS.md)
+  models.py                     # Pydantic: EvalManifest, Check, RubricRule, DistractorRule
+harbor_tasks/                # Class A: code-only bug fixes (775 tasks)
+harbor_tasks_agentmd_edits/  # Class B: code + config file edits (232 tasks)
 scripts/                     # Batch pipeline launchers
-research/                    # Research docs and analysis
+research/                    # Research docs, negative rubrics plan
 .claude/skills/              # Claude Code skills for task scaffolding/validation
 .claude/agents/              # Headless agent definitions for batch pipelines
 ```
@@ -135,12 +145,21 @@ This matches every major SWE benchmark (SWE-bench, Terminal Bench, SWE-smith, R2
 | `fail_to_pass` | Must fail on base commit, pass after fix | Bug reproduction test |
 | `pass_to_pass` | Must pass before and after fix | Regression test |
 
-### Two-tier evaluation (agentmd-edits)
+### Four-track evaluation (agentmd-edits)
 
-| Tier | Method | What |
-|------|--------|------|
-| Code tests | `test.sh` → binary reward | Did the code fix work? |
-| Config rubric | LLM judge with gold reference | Did the agent update configs correctly? |
+| Track | What | Method | Coverage |
+|-------|------|--------|----------|
+| 1. Code correctness | Did the agent fix the bug? | `test.sh` → nop=0, gold=1 | 232/232 (100%) |
+| 2. Config edits | Did the agent update config files correctly? | Gold diff vs agent diff (Gemini semantic comparison) | 223/232 (96%) |
+| 3. Positive rubric | Does the agent follow relevant conventions? | LLM judge on diff vs rubric rules | 231/232 (100%) |
+| 4. Distractors | Does the agent IGNORE irrelevant conventions? | Check agent didn't waste effort on collision rules | 185/232 (80%) |
+
+**Track 4 collision types** (388 distractors across 185 tasks):
+- `scope_ambiguity` (44%): rule's applicability is genuinely ambiguous for this PR
+- `meta_confusion` (22%): writing ABOUT a pattern vs applying it
+- `architecture_boundary` (15%): applying a pattern beyond its intended scope
+- `rule_conflict` (13%): two valid rules conflict, agent must choose
+- `would_cause_bug` (6%): following the rule introduces an error
 
 ### Design principles
 
@@ -207,9 +226,20 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 | Fail-to-pass test verification | SWE-bench (all variants) | Yes (standard) |
 | RL training from PR environments | SWE-Gym, SWE-RL, DeepSWE | Yes |
 | **Filter for repos with agent configs** | **Nobody** | **Yes (novel)** |
-| **Dual reward: execution + config adherence** | **Nobody** | **Yes (novel)** |
-| **Measure agent-config confounding** | **Nobody** | **Yes (novel)** |
+| **4-track eval: code + config + rubric + distractors** | **Nobody** | **Yes (novel)** |
+| **Negative rubrics (distractor discrimination)** | **Nobody** | **Yes (novel)** |
+| **Hierarchical config context extraction** | **Nobody** | **Yes (novel)** |
 
 ## Status
 
-~978 tasks across two classes (631 code-only + 347 code+config), 649 passing Docker oracle validation. E2B agent-chain pipeline operational. RL training loop verified end-to-end with Qwen3.5-35B-A3B on Harbor.
+**1,007 tasks** across two classes:
+- 775 code-only (736 passing, 95%)
+- 232 code+config with 4-track evaluation (175 with full 4-track coverage, 75%)
+
+**Evaluation coverage (agentmd-edits):**
+- 821 positive rubric rules (3.5/task), source-traced to config files
+- 388 negative rubric / distractors (1.7/task), collision-typed and severity-graded
+- Rubric generation via Gemini 3.1 Pro structured output (constrained decoding)
+- Rubric validation via Kimi→Gemini→Kimi cross-validation loop
+
+E2B agent-chain pipeline operational. 125 unit tests. RL training loop verified end-to-end with Qwen3.5-35B-A3B on Harbor.
