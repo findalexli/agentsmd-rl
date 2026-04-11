@@ -1179,15 +1179,20 @@ async def run_task_agents(
     pr_ref: str | None = None,
     agentmd: bool = False,
 ) -> WorkerResult:
-    """Agent-chain pipeline. Each step is a focused claude -p agent
-    with Docker access that iterates within its own scope:
+    """Agent-chain pipeline for task construction and validation.
 
-      [Scaffold] → [P2P Enrich] → [Rubric Enrich] → [Improve] → [Validate+Fix] → [Rubric Judge]
+    For agentmd tasks:
+      [Scaffold] → [Quality Gate] → [P2P Enrich] → [Rubric Enrich] →
+      [Gemini Validate] → [Fix] → [Improve Tests] → [Validate+Fix] →
+      [Rubric Judge] → [Distractor Constructor] → [Quality Classification]
 
-    P2P discovers repo CI/CD and adds pass_to_pass tests.
-    Rubric Enrich discovers agent config rules and adds rubric entries (only if empty).
-    Validate+Fix builds Docker, runs NOP/Gold tests, fixes issues.
-    Rubric Judge evaluates the enriched rubric rules against the gold solution.
+    Quality Gate (fast, programmatic): reject tasks with no config signal.
+    P2P: discovers repo CI/CD, adds pass_to_pass tests.
+    Rubric Enrich: Kimi writes rubric → Gemini validates → Kimi fixes.
+    Validate+Fix: Docker build, NOP/Gold tests, repair loop.
+    Rubric Judge: evaluates rubric rules against gold solution.
+    Distractor Constructor: Gemini structured output extracts Track 4 distractors.
+    Quality Classification: Gemini classifies HIGH/MEDIUM/LOW for research relevance.
 
     Each node stamps provenance: model, backend, time, notes.
     status.json is the inter-agent communication channel.
@@ -1322,6 +1327,25 @@ async def run_task_agents(
                     result.error = f"rate limited during {agent_name}"
                     return True
                 return False
+
+            # ── Quality gate (fast, programmatic) ────────────────────
+            # Reject tasks that obviously don't test instruction discrimination
+            if agentmd:
+                from taskforge.quality_gate import classify_task_fast
+                qg_result = classify_task_fast(Path("/workspace/task") if not dest else dest)
+                if qg_result.verdict == "DELETE":
+                    result.error = f"quality_gate: {qg_result.verdict} ({qg_result.flags})"
+                    result.valid = False
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    await update_sandbox_status(sandbox, "quality_gate", _stamp(
+                        "quality_gate", "rejected", 0, f"flags={qg_result.flags}"))
+                    logger.info("[%s] quality gate REJECTED: %s", task_name, qg_result.flags)
+                    if dest:
+                        await download_task_files(sandbox, dest)
+                        write_status_json(dest, result)
+                    return result
+                await update_sandbox_status(sandbox, "quality_gate", _stamp(
+                    "quality_gate", "passed", 0, f"flags={qg_result.flags}"))
 
             # ── Agent 1: P2P Enrich (discover CI/CD, add p2p tests) ──
             t0 = time.monotonic()
@@ -1510,6 +1534,85 @@ async def run_task_agents(
                     await download_task_files(sandbox, dest)
                     logger.info("[%s] rubric judge ICR=%.2f (%s)", task_name, icr,
                                 "pass" if judge_pass else "fail")
+
+            # ── Agent 5: Distractor construction + quality classification ──
+            # Only for agentmd tasks that passed validation, with repo cloned
+            if agentmd and result.valid and repo_url:
+                try:
+                    await sandbox.set_timeout(SANDBOX_TIMEOUT)
+                except Exception:
+                    pass
+
+                # Upload rubric constructor to sandbox
+                constructor_py = ROOT / "taskforge" / "gemini_rubric_constructor.py"
+                hierarchy_py = ROOT / "taskforge" / "hierarchy_context.py"
+                quality_gate_py = ROOT / "taskforge" / "quality_gate.py"
+                for py_file in [constructor_py, hierarchy_py, quality_gate_py]:
+                    if py_file.exists():
+                        await sandbox.files.write(
+                            f"/workspace/taskforge/{py_file.name}",
+                            py_file.read_bytes(),
+                        )
+
+                # Run distractor constructor (Gemini structured output, ~20s)
+                t0 = time.monotonic()
+                dc_code, dc_out, dc_err = await run_cmd(
+                    sandbox,
+                    "cd /workspace && python3 -c \""
+                    "from taskforge.gemini_rubric_constructor import construct_rubrics, stamp_rubrics_to_manifest; "
+                    "from pathlib import Path; import json, os; "
+                    "key = os.environ.get('GEMINI_API_KEY', ''); "
+                    "r = construct_rubrics(Path('/workspace/task'), Path('/workspace/repo'), key); "
+                    "print(json.dumps({'status': r.get('status'), "
+                    "'pos': len(r.get('positive_rubrics', [])), "
+                    "'neg': len(r.get('negative_rubrics', []))})); "
+                    "stamp_rubrics_to_manifest(Path('/workspace/task'), r) if r.get('status') == 'ok' else None"
+                    "\"",
+                    timeout=120,
+                )
+                dc_time = time.monotonic() - t0
+                dc_summary = dc_out.strip()[:200] if dc_code == 0 else (dc_err or "")[:200]
+                await update_sandbox_status(sandbox, "distractor_construction", {
+                    **_stamp("distractor_construction",
+                             "ok" if dc_code == 0 else "error", dc_time, dc_summary),
+                    "model": "gemini-3.1-pro",
+                })
+                logger.info("[%s] distractor construction: %s (%.1fs)", task_name, dc_summary, dc_time)
+
+                # Run full quality classification (Gemini structured output, ~3s)
+                t0 = time.monotonic()
+                qc_code, qc_out, qc_err = await run_cmd(
+                    sandbox,
+                    "cd /workspace && python3 -c \""
+                    "from taskforge.quality_gate import classify_task; "
+                    "from pathlib import Path; import json, os; "
+                    "key = os.environ.get('GEMINI_API_KEY', ''); "
+                    "r = classify_task(Path('/workspace/task'), key); "
+                    "print(json.dumps({'verdict': r.verdict, 'config_navigation': r.config_navigation, "
+                    "'reasoning': r.reasoning[:200]}))"
+                    "\"",
+                    timeout=60,
+                )
+                qc_time = time.monotonic() - t0
+                quality_verdict = ""
+                if qc_code == 0 and qc_out.strip():
+                    try:
+                        qc_data = json.loads(qc_out.strip().split("\n")[-1])
+                        quality_verdict = qc_data.get("verdict", "")
+                    except Exception:
+                        pass
+                await update_sandbox_status(sandbox, "quality_classification", {
+                    **_stamp("quality_classification",
+                             quality_verdict or "error", qc_time,
+                             qc_out.strip()[:200] if qc_code == 0 else ""),
+                    "model": "gemini-3.1-pro",
+                    "verdict": quality_verdict,
+                })
+                logger.info("[%s] quality verdict: %s (%.1fs)", task_name, quality_verdict, qc_time)
+
+                # Sync after distractor + quality nodes
+                if dest:
+                    await download_task_files(sandbox, dest)
 
             # ── Final status ─────────────────────────────────────
             result.total_time = round(time.monotonic() - t_start, 2)
