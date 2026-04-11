@@ -2,137 +2,99 @@ source_pr:
   owner: ClickHouse
   repo: ClickHouse
   number: 102098
-  title: "Backport #101847 to 26.1: formatDateTime: Treat %W unconditionally as a variable-length formatter"
+  title: 'Backport #101847 to 26.1: formatDateTime: Treat %W unconditionally as a
+    variable-length formatter'
   base_commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe
   merge_commit: 6f01023e78a9e84c588068560fda778a7c11a665
-
 checks:
-  # Fail-to-pass tests - these verify the fix is correctly applied
-  - id: test_w_in_variable_width_formatter_M_is_month_name_removed
-    type: fail_to_pass
-    origin: behavior
-    description: "%W must not be in variable_width_formatter_M_is_month_name array (should only have 'M')"
-
-  - id: test_w_checked_unconditionally_before_mysql_M_is_month_name
-    type: fail_to_pass
-    origin: behavior
-    description: "%W check must come BEFORE the mysql_M_is_month_name conditional (unconditional check)"
-
-  - id: test_no_else_branch_with_variable_width_formatter
-    type: fail_to_pass
-    origin: behavior
-    description: "The else branch containing variable_width_formatter check should be removed"
-
-  # Pass-to-pass tests - verify the solution doesn't break existing functionality
-  - id: test_file_has_valid_structure
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified file has valid C++ structure (balanced braces)"
-
-  - id: test_cmake_configures
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CMake configuration succeeds with the fix"
-
-  - id: test_cpp_syntax_valid
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified C++ file has valid syntax (clang -fsyntax-only)"
-
-  - id: test_git_repo_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git repository is in a valid state and file is tracked"
-
-  - id: test_file_no_trailing_whitespace
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified file has no trailing whitespace (lint check)"
-
-  # New pass-to-pass tests using real CI commands from the repo
-  - id: test_repo_file_exists_and_is_cpp
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file exists and is recognized as C++ source by 'file' command"
-
-  - id: test_repo_cpp_syntax_no_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: "C++ syntax check using clang++ shows no syntax errors in modified file"
-
-  - id: test_repo_clang_check_runs
-    type: pass_to_pass
-    origin: repo_tests
-    description: "clang-check-20 runs on modified file without crashing"
-
-  - id: test_cmake_presence
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CMake is available and reports version"
-
-  - id: test_repo_directory_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo has expected directory structure for Functions module"
-
-  - id: test_repo_file_line_count
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file has reasonable line count (not truncated/corrupted)"
-
-  - id: test_repo_clang_version
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Clang compiler version is compatible (supports C++23)"
-
-  - id: test_repo_ninja_version
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Ninja build system is available and functional"
-
-  - id: test_repo_ccache_version
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CCache compiler cache is available for CI builds"
-
-  - id: test_repo_clang_preprocess
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Clang can preprocess the modified file without syntax errors"
-
-  - id: test_repo_file_no_carriage_return
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Modified file uses Unix line endings (LF, not CRLF)"
-
-  - id: test_repo_function_syntax_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Basic C++ syntax patterns are present in modified file"
-
-rubric:
-  - rule: "Catch real problems (correctness, memory, concurrency, safety) and provide actionable feedback. Avoid noisy comments about style, typos, or minor cleanups."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "10-18"
-      commit: "23059ebe14d3e8ff8ddabbafd89edcf4071de0fe"
-
-  - rule: "Prefer high precision in code review: if not reasonably confident something is a real problem, do not flag it."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "44-46"
-      commit: "23059ebe14d3e8ff8ddabbafd89edcf4071de0fe"
-
-  - rule: "Prefer RAII types over manual new/delete. Ensure ownership and lifetime are clear and consistent with surrounding code."
-    source:
-      path: ".github/copilot-instructions.md"
-      lines: "90-94"
-      commit: "23059ebe14d3e8ff8ddabbafd89edcf4071de0fe"
-
+- id: test_w_in_variable_width_formatter_M_is_month_name_removed
+  type: fail_to_pass
+  origin: behavior
+  description: '%W must not be in variable_width_formatter_M_is_month_name array (should
+    only have ''M'')'
+- id: test_w_checked_unconditionally_before_mysql_M_is_month_name
+  type: fail_to_pass
+  origin: behavior
+  description: '%W check must come BEFORE the mysql_M_is_month_name conditional (unconditional
+    check)'
+- id: test_no_else_branch_with_variable_width_formatter
+  type: fail_to_pass
+  origin: behavior
+  description: The else branch containing variable_width_formatter check should be
+    removed
+- id: test_file_has_valid_structure
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file has valid C++ structure (balanced braces)
+- id: test_cmake_configures
+  type: pass_to_pass
+  origin: repo_tests
+  description: CMake configuration succeeds with the fix
+- id: test_cpp_syntax_valid
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified C++ file has valid syntax (clang -fsyntax-only)
+- id: test_git_repo_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is in a valid state and file is tracked
+- id: test_file_no_trailing_whitespace
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file has no trailing whitespace (lint check)
+- id: test_repo_file_exists_and_is_cpp
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file exists and is recognized as C++ source by 'file' command
+- id: test_repo_cpp_syntax_no_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ syntax check using clang++ shows no syntax errors in modified file
+- id: test_repo_clang_check_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: clang-check-20 runs on modified file without crashing
+- id: test_cmake_presence
+  type: pass_to_pass
+  origin: repo_tests
+  description: CMake is available and reports version
+- id: test_repo_directory_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has expected directory structure for Functions module
+- id: test_repo_file_line_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file has reasonable line count (not truncated/corrupted)
+- id: test_repo_clang_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clang compiler version is compatible (supports C++23)
+- id: test_repo_ninja_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ninja build system is available and functional
+- id: test_repo_ccache_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: CCache compiler cache is available for CI builds
+- id: test_repo_clang_preprocess
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clang can preprocess the modified file without syntax errors
+- id: test_repo_file_no_carriage_return
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file uses Unix line endings (LF, not CRLF)
+- id: test_repo_function_syntax_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic C++ syntax patterns are present in modified file
+rubric: []
 agent_config_refs:
-  - file: .claude/CLAUDE.md
-    lines: "1-100"
-    commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe
-  - file: .github/copilot-instructions.md
-    lines: "1-100"
-    commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe
+- file: .claude/CLAUDE.md
+  lines: 1-100
+  commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe
+- file: .github/copilot-instructions.md
+  lines: 1-100
+  commit: 23059ebe14d3e8ff8ddabbafd89edcf4071de0fe

@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T23:44:34.289959",
-  "total_time": 6326.21,
-  "sandbox_id": "iqgjzqrjgm04xecovd3ft",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:24:15.683730",
+  "total_time": 2930.3,
+  "sandbox_id": "iracjf1sw5jlhlil1c06q",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 0.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -18,9 +19,9 @@
     },
     "p2p_enrichment": {
       "status": "ok",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 56.56,
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 310.51,
       "notes": ""
     },
     "rubric_enrichment": {
@@ -32,26 +33,30 @@
     },
     "improve": {
       "status": "skipped",
-      "model": "opus",
-      "backend": "gemini",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile (added verifiers, msgspec, loguru, tomli, tomli-w, pydantic, procps). Fixed test_outputs.py (added logger setup for all subprocess tests). Docker build passes. NOP reward=0 (base code fails as expected). Gold reward=1 (fixed code passes all 16 tests).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 615.21
+      "time": 547.82
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 5.0,
+      "notes": "ICR=0.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 961.63,
-      "at": "2026-04-09T14:44:12.795588"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -83,6 +88,14 @@
       "backend": "fireworks",
       "time": 6326.21,
       "at": "2026-04-09T23:44:34.289959"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2930.3,
+      "at": "2026-04-10T18:24:15.683730"
     }
   ]
 }

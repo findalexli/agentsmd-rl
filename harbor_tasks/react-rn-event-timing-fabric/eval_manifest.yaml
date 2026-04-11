@@ -51,12 +51,20 @@ checks:
       lines: "22"
       commit: "aac12ce597b49093a5add54b00deee3d8980f874"
 
-  - id: test_repo_flow_typecheck
+  - id: test_repo_flow_fabric
     type: pass_to_pass
     origin: repo_tests
-    description: "Repos Flow typecheck passes for xplat renderer (React Native)"
+    description: "Repos Flow typecheck passes for Fabric renderer"
     source:
-      ci_command: "yarn flow xplat"
+      ci_command: "yarn flow fabric"
+      timeout: 120
+
+  - id: test_repo_flow_native
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repos Flow typecheck passes for React Native renderer"
+    source:
+      ci_command: "yarn flow native"
       timeout: 120
 
   - id: test_repo_lint
@@ -73,6 +81,14 @@ checks:
     description: "React Native renderer unit tests pass"
     source:
       ci_command: "yarn test --releaseChannel=xplat --testPathPattern=react-native-renderer --ci"
+      timeout: 120
+
+  - id: test_repo_react_fabric_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "React Fabric unit tests pass"
+    source:
+      ci_command: "yarn test --releaseChannel=xplat --testPathPattern=ReactFabric --ci"
       timeout: 120
 
 rubric:

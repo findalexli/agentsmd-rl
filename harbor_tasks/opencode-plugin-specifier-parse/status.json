@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T06:10:04.849299",
-  "total_time": 17209.27,
-  "sandbox_id": "igmwqxm7wmbvqv654sz3i",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:27:21.075817",
+  "total_time": 3505.94,
+  "sandbox_id": "iyedju5wb45qmv5o7nxse",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 16.77,
+      "time": 932.6,
       "notes": ""
     },
     "p2p_enrich": {
@@ -35,29 +35,22 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed Dockerfile (added make,g++ for native deps), fixed test_outputs.py (increased timeout 120->180s, handle pre-existing 3 test failures by checking pass count >= 1824). All 4 checks pass: Docker build OK, NOP=0 (fail-to-pass tests correctly fail), Gold=1 (all tests pass after fix). Rubric ICR=0.0 is expected since judge evaluates agent solutions, not gold patches.",
+      "attempts": 1,
+      "notes": "All 4 checks pass: Docker build OK, NOP=0 (5 fail-to-pass tests correctly fail on buggy base), Gold=1 (all 10 tests pass after fix). Rubric ICR=1.0. No fixes needed - task is properly configured.",
+      "validated_at": "2026-04-11T00:00:00",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.61
+      "time": 486.25
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.32,
+      "time": 2.13,
       "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 9033.9,
-      "at": "2026-04-09T11:42:26.661436"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +82,14 @@
       "backend": "gemini",
       "time": 17209.27,
       "at": "2026-04-10T06:10:04.849299"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3505.94,
+      "at": "2026-04-10T18:27:21.075817"
     }
   ]
 }

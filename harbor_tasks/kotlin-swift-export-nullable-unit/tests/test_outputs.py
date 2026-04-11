@@ -626,6 +626,196 @@ def test_repo_gradle_structure():
     assert os.access(str(gradlew), os.X_OK), "gradlew should be executable"
 
 
+# ============================================================================
+# PASS-TO-PASS TESTS - CI/CD Enrichment (subprocess.run() commands)
+# ============================================================================
+
+def test_repo_git_status_clean():
+    """
+    P2P: Git repository has clean status at base commit (pass_to_pass).
+
+    Runs git status to verify the repo is in a clean state.
+    """
+    result = subprocess.run(
+        ["git", "status", "--short"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Git status failed: {result.stderr}"
+    # Should have no uncommitted changes at base commit
+    assert result.stdout.strip() == "", f"Repo has uncommitted changes: {result.stdout}"
+
+
+def test_repo_kotlin_compiler_exists():
+    """
+    P2P: Kotlin compiler directory exists with expected structure (pass_to_pass).
+
+    Uses find to verify compiler source files are present.
+    """
+    result = subprocess.run(
+        ["find", f"{REPO}/compiler", "-name", "*.kt", "-type", "f"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"Find command failed: {result.stderr}"
+    # Should find many Kotlin files in compiler
+    kt_files = result.stdout.strip().split("\n")
+    assert len(kt_files) > 100, f"Expected >100 Kotlin files in compiler, found {len(kt_files)}"
+
+
+def test_repo_swift_export_module_exists():
+    """
+    P2P: Swift export module has expected source files (pass_to_pass).
+
+    Uses ls to verify the sir-providers source directory structure.
+    """
+    result = subprocess.run(
+        ["ls", "-la", f"{REPO}/native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/BridgeProvider/"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"ls command failed: {result.stderr}"
+    assert "TypeBridging.kt" in result.stdout, "TypeBridging.kt not found in BridgeProvider directory"
+
+
+def test_repo_type_bridging_has_bridge_class():
+    """
+    P2P: TypeBridging.kt contains Bridge sealed class (pass_to_pass).
+
+    Uses grep to verify the core Bridge class definition exists.
+    """
+    result = subprocess.run(
+        ["grep", "sealed class Bridge", f"{REPO}/native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/BridgeProvider/TypeBridging.kt"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"Bridge class not found in TypeBridging.kt: {result.stderr}"
+    assert "sealed class Bridge" in result.stdout, "sealed class Bridge definition not found"
+
+
+def test_repo_nullable_type_test_data_valid():
+    """
+    P2P: Nullable type test data has required markers (pass_to_pass).
+
+    Uses head and grep to verify test data file structure.
+    """
+    test_data_file = f"{REPO}/native/swift/swift-export-standalone-integration-tests/simple/testData/generation/nullable_type/nullable_type.kt"
+
+    result = subprocess.run(
+        ["head", "-5", test_data_file],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"head command failed: {result.stderr}"
+    assert "// KIND: STANDALONE" in result.stdout, "KIND marker missing from test data"
+    assert "// MODULE: main" in result.stdout, "MODULE marker missing from test data"
+
+
+def test_repo_golden_result_main_kt_exists():
+    """
+    P2P: Golden result main.kt exists with valid content (pass_to_pass).
+
+    Uses wc and grep to verify file size and content.
+    """
+    golden_file = f"{REPO}/native/swift/swift-export-standalone-integration-tests/simple/testData/generation/nullable_type/golden_result/main/main.kt"
+
+    # Check file has content
+    result = subprocess.run(
+        ["wc", "-l", golden_file],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"wc command failed: {result.stderr}"
+    line_count = int(result.stdout.strip().split()[0])
+    assert line_count > 50, f"Golden result main.kt too small: {line_count} lines"
+
+    # Check for ExportedBridge annotation
+    result = subprocess.run(
+        ["grep", "@ExportedBridge", golden_file],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"No ExportedBridge annotations found: {result.stderr}"
+
+
+def test_repo_gradle_version_valid():
+    """
+    P2P: Gradle wrapper has valid version properties (pass_to_pass).
+
+    Uses cat to verify gradle wrapper properties.
+    """
+    result = subprocess.run(
+        ["cat", f"{REPO}/gradle/wrapper/gradle-wrapper.properties"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"cat command failed: {result.stderr}"
+    assert "distributionUrl" in result.stdout, "distributionUrl not found in gradle-wrapper.properties"
+
+
+def test_repo_native_swift_build_files():
+    """
+    P2P: Native Swift modules have build.gradle.kts files (pass_to_pass).
+
+    Uses find to verify all swift modules have build files.
+    """
+    swift_dir = f"{REPO}/native/swift"
+
+    result = subprocess.run(
+        ["find", swift_dir, "-name", "build.gradle.kts", "-type", "f"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"find command failed: {result.stderr}"
+
+    build_files = [f for f in result.stdout.strip().split("\n") if f]
+    # Should have build files for sir, sir-providers, swift-export-standalone, etc.
+    assert len(build_files) >= 5, f"Expected >=5 build.gradle.kts files, found {len(build_files)}"
+
+
+def test_repo_sir_providers_has_types():
+    """
+    P2P: Sir providers module has Types.kt file (pass_to_pass).
+
+    Uses ls to verify Types.kt exists.
+    """
+    types_file = f"{REPO}/native/swift/sir-providers/src/org/jetbrains/kotlin/sir/providers/impl/BridgeProvider/Types.kt"
+
+    result = subprocess.run(
+        ["ls", "-la", types_file],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"Types.kt not found: {result.stderr}"
+
+
+def test_repo_settings_includes_swift():
+    """
+    P2P: settings.gradle includes native Swift modules (pass_to_pass).
+
+    Uses grep to verify Swift modules are included in build.
+    """
+    result = subprocess.run(
+        ["grep", "native:swift", f"{REPO}/settings.gradle"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"Swift modules not in settings.gradle: {result.stderr}"
+    assert "native:swift" in result.stdout, "native/swift not found in settings.gradle"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

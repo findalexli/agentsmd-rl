@@ -216,6 +216,69 @@ def test_set_device_calls():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands from the repo
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — From Makefile and CI
+def test_ruff_format_check():
+    """Repo CI: Modified file passes ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", TARGET],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, (
+        f"ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — From utils/check_inits.py
+def test_check_inits():
+    """Repo CI: utils/check_inits.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"check_inits failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — From utils/check_dummies.py
+def test_check_dummies():
+    """Repo CI: utils/check_dummies.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"check_dummies failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — From utils/check_copies.py
+def test_check_copies():
+    """Repo CI: utils/check_copies.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_copies.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"check_copies failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
 

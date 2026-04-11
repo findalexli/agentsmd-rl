@@ -209,3 +209,33 @@ def test_sui_display_lib_tests():
         timeout=300,
     )
     assert result.returncode == 0, f"sui-display library tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+
+
+def test_base_types_unit_tests():
+    """
+    Pass-to-pass: base_types unit tests pass (pass_to_pass).
+    Verifies base_types functionality works correctly.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "sui-types", "--lib", "base_types_tests"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"base_types unit tests failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"
+
+
+def test_rpc_visitor_json_tests():
+    """
+    Pass-to-pass: RPC visitor JSON serialization tests pass (pass_to_pass).
+    Verifies rpc_visitor module tests work correctly.
+    """
+    result = subprocess.run(
+        ["cargo", "test", "-p", "sui-types", "--lib", "rpc_visitor"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"rpc_visitor tests failed:\n{result.stdout[-500:]}{result.stderr[-500:]}"

@@ -1,26 +1,27 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:02:58.570255",
-  "total_time": 307.11,
-  "sandbox_id": "ic05pl07rcipzxrz74jzc",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:40:29.152154",
+  "total_time": 3319.27,
+  "sandbox_id": "iiypoh6kgxyx1g35ohnat",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 772.07,
-      "notes": ""
+      "notes": "Added 5 new repo_tests pass_to_pass gates: repo_version_check (node ./scripts/tasks/version-check.js), repo_react_transition_tests (yarn test ReactTransition-test), repo_react_test_renderer_tests (yarn test test-renderer), repo_react_start_transition_tests (yarn test ReactStartTransition), repo_react_dom_view_transition_tests (yarn test ReactDOMViewTransition-test). All tested and passing in Docker. Also verified existing p2p gates work: repo_eslint, repo_shared_package_tests, repo_flags_validation."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 672.89,
+      "time": 638.9,
       "notes": ""
     },
     "improve": {
@@ -31,20 +32,24 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 4,
+      "notes": "Fixed test_outputs.py to use regex-based flag evaluation instead of fragile Node.js parsing. Tests properly fail on base commit (reward=0) and pass on gold fix (reward=1). All 13 tests pass.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.79
+      "time": 740.98
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.54,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 7873.52,
-      "at": "2026-04-09T04:55:45.595670"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -76,6 +81,14 @@
       "backend": "fireworks",
       "time": 307.11,
       "at": "2026-04-09T15:02:58.570255"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3319.27,
+      "at": "2026-04-10T18:40:29.152154"
     }
   ]
 }

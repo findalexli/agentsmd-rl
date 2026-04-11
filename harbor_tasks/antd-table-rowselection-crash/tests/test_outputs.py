@@ -12,13 +12,57 @@ REPO = "/workspace/ant-design"
 
 def test_file_syntax():
     """Verify useSelection.tsx has valid TypeScript syntax."""
+    # Use the typescript package directly to parse the file
+    # Just parsing successfully means the file has valid syntax
+    parse_script = """
+const ts = require('typescript');
+const fs = require('fs');
+
+const filePath = 'components/table/hooks/useSelection.tsx';
+const sourceText = fs.readFileSync(filePath, 'utf8');
+
+try {
+    // Parse with TypeScript - this will throw/have parseDiagnostics on syntax errors
+    const sourceFile = ts.createSourceFile(
+        filePath,
+        sourceText,
+        ts.ScriptTarget.Latest,
+        true,
+        ts.ScriptKind.TSX
+    );
+
+    // Check for parse errors (syntax errors)
+    if (sourceFile.parseDiagnostics && sourceFile.parseDiagnostics.length > 0) {
+        sourceFile.parseDiagnostics.forEach(err => {
+            const { line, character } = ts.getLineAndCharacterOfPosition(sourceFile, err.start);
+            console.error(`Syntax error at ${line + 1}:${character + 1}: ${ts.flattenDiagnosticMessageText(err.messageText, '\\n')}`);
+        });
+        process.exit(1);
+    } else {
+        console.log('No syntax errors found');
+        process.exit(0);
+    }
+} catch (err) {
+    console.error(`Parse error: ${err.message}`);
+    process.exit(1);
+}
+"""
+    # Write and run the parse script
+    script_path = f"{REPO}/check_syntax.js"
+    with open(script_path, "w") as f:
+        f.write(parse_script)
+
     result = subprocess.run(
-        ["npx", "tsc", "--noEmit", "components/table/hooks/useSelection.tsx"],
+        ["node", "check_syntax.js"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=30,
     )
+
+    # Cleanup
+    os.remove(script_path)
+
     assert result.returncode == 0, f"TypeScript syntax error:\n{result.stdout}\n{result.stderr}"
 
 
@@ -35,17 +79,21 @@ def test_merged_selected_keys_coalescing():
     assert "mergedSelectedKeyList = mergedSelectedKeys ?? EMPTY_LIST" in content, \
         "Missing coalescing fix: should define mergedSelectedKeyList with nullish coalescing"
 
-    # Verify all usages of mergedSelectedKeys are replaced with mergedSelectedKeyList
-    # in the critical sections (cache update and derived keys)
+    # Verify the cache update in useEffect uses mergedSelectedKeyList (not raw mergedSelectedKeys)
     assert "updatePreserveRecordsCache(mergedSelectedKeyList)" in content, \
         "Cache update should use mergedSelectedKeyList"
 
-    # Check that updatePreserveRecordsCache is NOT called with raw mergedSelectedKeys
-    lines = content.split(chr(10))
+    # Check that updatePreserveRecordsCache in the useEffect is NOT called with raw mergedSelectedKeys
+    lines = content.split("\n")
     for i, line in enumerate(lines):
         if "updatePreserveRecordsCache(" in line and "mergedSelectedKeyList" not in line:
             # Allow the effect dependency array line
             if "updatePreserveRecordsCache" in line and ("[" in line or "]" in line):
+                continue
+            # Allow setSelectedKeys callback which passes 'keys' parameter (different context)
+            context_lines = lines[max(0, i-10):i+1]
+            context = "\n".join(context_lines)
+            if "setSelectedKeys" in context and "keys)" in line:
                 continue
             assert False, f"Line {i+1} calls updatePreserveRecordsCache without mergedSelectedKeyList: {line}"
 
@@ -90,17 +138,17 @@ def test_no_crash_on_undefined_selected_row_keys():
     """
     Integration test: Verify no crash when selectedRowKeys becomes undefined
     with preserveSelectedRowKeys enabled.
-    """
-    # Create a test script that reproduces the crash
-    test_script = """
-const React = require("react");
-const ReactDOMServer = require("react-dom/server");
 
-// Mock antd Table
-const { default: Table } = require("./components/table");
+    Uses TypeScript test file with tsx/ts-node for proper JSX/TS support.
+    """
+    # Create a TypeScript test script that reproduces the crash
+    test_script = """
+import * as React from 'react';
+import * as ReactDOMServer from 'react-dom/server';
+import Table from './components/table';
 
 // Test: Render with selectedRowKeys=[], then rerender with undefined + preserveSelectedRowKeys
-function testNoCrash() {
+function testNoCrash(): boolean {
   try {
     // First render with selectedRowKeys
     const elem1 = React.createElement(Table, {
@@ -129,7 +177,7 @@ function testNoCrash() {
 
     console.log("SUCCESS: No crash occurred");
     return true;
-  } catch (err) {
+  } catch (err: any) {
     console.error("FAILED:", err.message);
     return false;
   }
@@ -139,16 +187,16 @@ process.exit(testNoCrash() ? 0 : 1);
 """
 
     # Write and run test script
-    test_file = f"{REPO}/test_crash.js"
+    test_file = f"{REPO}/test_crash_ts.ts"
     with open(test_file, "w") as f:
         f.write(test_script)
 
     result = subprocess.run(
-        ["node", "test_crash.js"],
+        ["npx", "tsx", "test_crash_ts.ts"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=30,
+        timeout=60,
     )
 
     # Cleanup

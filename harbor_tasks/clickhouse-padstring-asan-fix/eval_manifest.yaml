@@ -15,79 +15,108 @@ checks:
   - id: "uses_padded_pod_array"
     name: "PaddingChars uses PaddedPODArray for memory safety"
     test: "test_padding_chars_uses_padded_pod_array"
-    type: functional
+    type: fail_to_pass
+    origin: pr_diff
     description: "The core fix: pad_string field must be PaddedPODArray<UInt8> instead of String"
-    source: pr_description
 
   - id: "no_string_concat"
     name: "Uses insertFromItself instead of String concatenation"
     test: "test_no_string_concatenation_in_pad_init"
-    type: functional
+    type: fail_to_pass
+    origin: pr_diff
     description: "PaddedPODArray::insertFromItself must be used for string expansion"
-    source: code_review
 
   - id: "no_reinterpret_cast"
     name: "No unsafe reinterpret_cast for pad_string data"
-    test: "test_uses_memcpy_safe_data_method"
-    type: functional
+    test: "test_no_reinterpret_cast_in_append_to"
+    type: fail_to_pass
+    origin: pr_diff
     description: "Should not use reinterpret_cast<const UInt8*>(pad_string.data())"
-    source: code_review
 
   - id: "empty_pad_handled"
     name: "Empty pad string handling moved to executeImpl"
-    test: "test_padding_chars_constructor_handles_empty_pad"
-    type: functional
+    test: "test_empty_pad_handled_in_execute_impl"
+    type: fail_to_pass
+    origin: pr_diff
     description: "Empty pad string check should be in executeImpl, not PaddingChars::init"
-    source: code_review
 
   - id: "explicit_comparison"
     name: "Uses explicit == 0 comparison"
     test: "test_explicit_num_chars_comparison"
-    type: style
+    type: fail_to_pass
+    origin: pr_diff
     description: "Uses if (num_chars == 0) instead of if (!num_chars)"
-    source: code_review
 
   - id: "digit_separator"
     name: "Modern C++ digit separator used"
     test: "test_max_new_length_digit_separator"
-    type: style
+    type: fail_to_pass
+    origin: pr_diff
     description: "MAX_NEW_LENGTH should use C++14 digit separator 1'000'000"
-    source: code_review
 
   - id: "validate_arguments"
     name: "Uses validateFunctionArguments helper"
     test: "test_validate_function_arguments_used"
-    type: functional
+    type: fail_to_pass
+    origin: pr_diff
     description: "Should use modern validateFunctionArguments for argument validation"
-    source: code_review
-
-  - id: "syntax_valid"
-    name: "Code has valid syntax"
-    test: "test_code_compiles_syntax"
-    type: structural
-    description: "C++ code should have balanced braces and parentheses"
-    source: agent_config
-
-  - id: "structure_intact"
-    name: "Core function structure preserved"
-    test: "test_namespace_and_structure_intact"
-    type: structural
-    description: "FunctionPadString, PaddingChars, and key methods should still exist"
-    source: agent_config
-
-  - id: "utf8_preserved"
-    name: "UTF-8 handling preserved"
-    test: "test_utf8_handling_preserved"
-    type: functional
-    description: "utf8_offsets and is_utf8 template parameter should still exist"
-    source: agent_config
 
   - id: "error_codes_clean"
     name: "Unused error codes removed"
     test: "test_error_codes_cleanup"
-    type: cleanup
+    type: fail_to_pass
+    origin: pr_diff
     description: "ILLEGAL_TYPE_OF_ARGUMENT and NUMBER_OF_ARGUMENTS_DOESNT_MATCH should be removed"
-    source: code_review
+
+  # Pass-to-pass tests (repo CI checks)
+  - id: "cpp_syntax_valid"
+    name: "C++ syntax is valid"
+    test: "test_cpp_compiles_syntax_valid"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "C++ file compiles without syntax errors and has balanced braces/parens"
+
+  - id: "clang_format_compliance"
+    name: "Code follows clang-format style"
+    test: "test_clang_format_compliance"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source file passes clang-format validation as required by ClickHouse CI"
+
+  - id: "required_headers_present"
+    name: "Required headers are included"
+    test: "test_required_headers_present"
+    type: pass_to_pass
+    origin: static
+    description: "PaddedPODArray and required C++ headers are present"
+
+  - id: "structure_intact"
+    name: "Core function structure preserved"
+    test: "test_namespace_and_structure_intact"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FunctionPadString, PaddingChars, and key methods should still exist"
+
+  - id: "utf8_preserved"
+    name: "UTF-8 handling preserved"
+    test: "test_utf8_handling_preserved"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "utf8_offsets and is_utf8 template parameter should still exist"
+
+  - id: "no_trailing_whitespace"
+    name: "No trailing whitespace"
+    test: "test_no_trailing_whitespace"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Code passes trailing whitespace check as per ClickHouse CI"
+
+  - id: "no_tab_characters"
+    name: "No tab characters (uses spaces)"
+    test: "test_no_tab_characters"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Code uses spaces for indentation (4 spaces) per ClickHouse style"
 
 # Agent configuration compliance checks (from ClickHouse's CLAUDE.md / AGENTS.md)
 agent_config:
@@ -106,7 +135,7 @@ agent_config:
     origin: agent_config
     source: ".claude/CLAUDE.md - line: 'When mentioning logical errors, say exception instead of crash'"
 
-  - id: "as_an_capitalization"
+  - id: "asan_capitalization"
     check: "Uses 'ASan' not 'ASAN' for Address Sanitizer"
     origin: agent_config
     source: ".claude/CLAUDE.md - line: 'say ASan, not ASAN'"
@@ -126,6 +155,6 @@ rubric:
 
 # Scoring weights
 scoring:
-  functional: 0.7
-  structural: 0.2
+  fail_to_pass: 0.7
+  pass_to_pass: 0.2
   style: 0.1

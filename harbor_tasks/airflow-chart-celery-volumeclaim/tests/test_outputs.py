@@ -103,7 +103,7 @@ class TestNotesTxt:
         with open(NOTES_TXT) as f:
             content = f.read()
 
-        assert "workers.volumeClaimTemplates has been renamed" in content, \
+        assert "`workers.volumeClaimTemplates` has been renamed" in content, \
             "Deprecation warning not found"
         assert "workers.celery.volumeClaimTemplates" in content, \
             "New field location not mentioned in warning"
@@ -239,7 +239,7 @@ class TestYamlStructure:
             values = yaml.safe_load(f)
 
         celery = values["workers"]["celery"]
-        expected_fields = ["enabled", "gracefulTermination", "persistence", "hostAliases",
+        expected_fields = ["enableDefault", "persistence", "hostAliases",
                           "volumeClaimTemplates", "schedulerName"]
 
         for field in expected_fields:

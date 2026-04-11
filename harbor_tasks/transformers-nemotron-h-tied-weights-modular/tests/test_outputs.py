@@ -207,3 +207,67 @@ def test_no_bare_type_ignore():
             f"{Path(path).name} has bare '# type: ignore' without error code — "
             f"use '# type: ignore[error-code]' instead. Found {len(bare_ignores)} occurrence(s)."
         )
+
+
+# ---------------------------------------------------------------------------
+# Repo CI checks (repo_tests) — pass_to_pass gates from actual CI
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — Makefile: 'make check-repo' includes format check
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", MODELING, MODULAR],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
+
+
+# [repo_tests] pass_to_pass — utils/check_inits.py validates __init__.py files
+def test_repo_check_inits():
+    """Repo's check_inits utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"check_inits failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass — utils/check_dummies.py validates dummy objects
+def test_repo_check_dummies():
+    """Repo's check_dummies utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"check_dummies failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass — utils/custom_init_isort.py validates init imports
+def test_repo_custom_init_isort():
+    """Repo's custom_init_isort check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/custom_init_isort.py", "--check_only"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"custom_init_isort check failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass — utils/sort_auto_mappings.py validates auto mappings
+def test_repo_sort_auto_mappings():
+    """Repo's sort_auto_mappings check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/sort_auto_mappings.py", "--check_only"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"sort_auto_mappings check failed:\n{r.stderr.decode()[-500:]}"
+
+
+# [repo_tests] pass_to_pass — utils/check_doctest_list.py validates doctest list
+def test_repo_check_doctest_list():
+    """Repo's check_doctest_list utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doctest_list.py"],
+        cwd=REPO, capture_output=True, timeout=60,
+    )
+    assert r.returncode == 0, f"check_doctest_list failed:\n{r.stderr.decode()[-500:]}"

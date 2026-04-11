@@ -67,7 +67,7 @@ checks:
     origin: repo_tests
     description: Swift export integration tests have proper directory structure
 
-  # Pass-to-pass tests - CI/CD enrichment (new)
+  # Pass-to-pass tests - CI/CD enrichment (new subprocess.run() tests)
   - id: test_nullable_type_golden_results_structure
     type: pass_to_pass
     origin: repo_tests
@@ -86,7 +86,7 @@ checks:
   - id: test_sir_module_structure
     type: pass_to_pass
     origin: repo_tests
-    description: SIR module has expected source files (SirElementBase.kt, SirType.kt, SirNominalType.kt, SirBridge.kt)
+    description: SIR module has expected source files (SirElementBase.kt, SirType.kt, SirBridge.kt)
 
   - id: test_swift_export_standalone_module
     type: pass_to_pass
@@ -98,21 +98,84 @@ checks:
     origin: repo_tests
     description: Repository has valid Gradle build structure with build.gradle.kts, settings.gradle, and executable gradlew
 
+  # New CI/CD subprocess.run() tests - using actual shell commands
+  - id: test_repo_git_status_clean
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git repository has clean status at base commit (runs git status)
+
+  - id: test_repo_kotlin_compiler_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Kotlin compiler directory exists with >100 Kotlin source files (runs find)
+
+  - id: test_repo_swift_export_module_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Swift export module has expected source files (runs ls)
+
+  - id: test_repo_type_bridging_has_bridge_class
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeBridging.kt contains Bridge sealed class (runs grep)
+
+  - id: test_repo_nullable_type_test_data_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Nullable type test data has required markers (runs head)
+
+  - id: test_repo_golden_result_main_kt_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: Golden result main.kt exists with valid content (runs wc and grep)
+
+  - id: test_repo_gradle_version_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Gradle wrapper has valid version properties (runs cat)
+
+  - id: test_repo_native_swift_build_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: Native Swift modules have build.gradle.kts files (runs find)
+
+  - id: test_repo_sir_providers_has_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: Sir providers module has Types.kt file (runs ls)
+
+  - id: test_repo_settings_includes_swift
+    type: pass_to_pass
+    origin: repo_tests
+    description: settings.gradle includes native Swift modules (runs grep)
+
 rubric:
   - rule: "Code changes should be focused and minimal - only modify files necessary for the fix."
+    reference: |
+      The gold solution modifies 5 files:
+      - TypeBridging.kt (main fix with AsOptionalVoid bridge)
+      - Test golden results (main.h, main.kt, main.swift)
+      - Test data (nullable_type.kt)
+      These are all necessary changes for the fix.
   - rule: "Bridge implementation must include proper type conversions for both Kotlin and Swift sources."
+    reference: |
+      The AsOptionalVoid bridge has correct conversions:
+      - Kotlin: (if (x) Unit else null) and (x != null)
+      - Swift: (x != nil) and (x ? () : nil)
   - rule: "Error messages should be descriptive and guide developers to correct usage."
+    reference: |
+      The error message 'AsOptionalVoid must be used for AsVoid' guides developers.
 
 agent_config_rules:
   - source: AGENTS.md
     file: compiler/AGENTS.md
     rules:
-      - "FIR prefix: When changes are mostly related to FIR (compiler/fir/), use `FIR: ` prefix in the commit subject line."
+      - "FIR prefix: When changes are mostly related to FIR compiler/fir/, use FIR prefix in the commit subject line."
       - "Test-before-fix: When fixing an issue and adding a test, commit the test data as a separate commit before the fix."
   - source: CLAUDE.md
     file: .ai/guidelines.md
     rules:
-      - "BEFORE running tests, modifying, or investigating code — identify the area and READ its docs."
-      - "Use `-q` (quiet) flag to reduce output noise when running tests."
-      - "Reference YouTrack issues (KT-XXXXX) in commit messages when applicable."
-      - "Use `^KT-XXXXX Fixed` in body to auto-close issues."
+      - "BEFORE running tests, modifying, or investigating code - identify the area and READ its docs."
+      - "Use -q quiet flag to reduce output noise when running tests."
+      - "Reference YouTrack issues KT-XXXXX in commit messages when applicable."
+      - "Use KT-XXXXX Fixed in body to auto-close issues."

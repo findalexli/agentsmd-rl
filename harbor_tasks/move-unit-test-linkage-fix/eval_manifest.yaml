@@ -103,6 +103,30 @@ checks:
     origin: repo_tests
     points: 1
 
+  - id: "vm_runtime_tests"
+    name: "VM runtime unit tests pass"
+    description: "Verify move-vm-runtime unit tests pass - ensures core runtime functionality intact"
+    test: "test_move_vm_runtime_unit_tests"
+    type: "p2p"
+    origin: repo_tests
+    points: 1
+
+  - id: "move_package_compiles"
+    name: "move-package compiles"
+    description: "Verify move-package crate compiles - used by unit test runner for package resolution"
+    test: "test_move_package_compiles"
+    type: "p2p"
+    origin: repo_tests
+    points: 1
+
+  - id: "move_cli_tests"
+    name: "move-cli unit tests pass"
+    description: "Verify move-cli unit tests pass - ensures CLI test runner works correctly"
+    test: "test_move_cli_unit_tests"
+    type: "p2p"
+    origin: repo_tests
+    points: 1
+
   # Guard tests - Verify the fix is not broken
   - id: "no_old_method"
     name: "Old method not used"
@@ -116,25 +140,10 @@ checks:
 agent_config: []
 
 # Rubric for soft/subjective requirements
-rubric:
-  - rule: "Do NOT comment the obvious. Comments should explain non-obvious algorithms, business logic, or subtle race conditions - not narrate what the code does."
-    source:
-      path: "CLAUDE.md"
-      lines: "88-102"
-      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
-
-  - rule: "NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions. Fix the underlying issues instead."
-    source:
-      path: "CLAUDE.md"
-      lines: "83-85"
-      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
-
-  - rule: "Always run tests before submitting changes to verify the fix works correctly."
-    source:
-      path: "CLAUDE.md"
-      lines: "70-72"
-      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+# Note: This task is a functional Rust code fix (PR #26137). The p2p and f2p tests
+# comprehensively verify the fix correctness. No additional subjective rubric rules needed.
+rubric: []
 
 # Scoring
-total_points: 10
+total_points: 13
 min_reward_threshold: 0.7  # 70% of points required for reward

@@ -1,68 +1,57 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "facebook/react"
+  repo: facebook/react
   pr: 36106
-  base_commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
-  merge_commit: "d594643e5e5b662f064c584018ab3773754c792d"
-
+  base_commit: b4546cd0d4db2b913d8e7503bee86e1844073b2e
+  merge_commit: d594643e5e5b662f064c584018ab3773754c792d
 checks:
-  - id: js_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: "Modified flag files must pass node --check"
-
-  - id: repo_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint passes on repo (from shared_lint.yml CI)"
-    ci_source: ".github/workflows/shared_lint.yml:eslint"
-
-  - id: repo_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Prettier formatting check passes (from shared_lint.yml CI)"
-    ci_source: ".github/workflows/shared_lint.yml:prettier"
-
-  - id: repo_license_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "License check passes - no PATENTS references (from shared_lint.yml CI)"
-    ci_source: ".github/workflows/shared_lint.yml:check_license"
-
-  - id: native_fb_view_transition_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableViewTransition must be true in ReactFeatureFlags.native-fb.js"
-
-  - id: test_renderer_native_view_transition_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableViewTransition must be true in ReactFeatureFlags.test-renderer.native-fb.js"
-
-  - id: test_renderer_www_view_transition_enabled
-    type: fail_to_pass
-    origin: pr_diff
-    description: "enableViewTransition must be true in ReactFeatureFlags.test-renderer.www.js"
-
-  - id: flag_type_annotation_preserved
-    type: pass_to_pass
-    origin: static
-    description: "Typed files retain ': boolean' annotation style"
-
-  - id: other_flags_unchanged
-    type: pass_to_pass
-    origin: static
-    description: "Adjacent flags (enableGestureTransition, enableScrollEndPolyfill) unchanged"
-
-  - id: all_rn_fork_files_updated
-    type: fail_to_pass
-    origin: agent_config
-    description: "All RN/test-renderer fork files must have enableViewTransition enabled consistently"
-    source:
-      path: ".claude/skills/feature-flags/SKILL.md"
-      lines: "50,78"
-      commit: "b4546cd0d4db2b913d8e7503bee86e1844073b2e"
-
-rubric:
-  []
+- id: js_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified flag files must pass node --check
+- id: repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on repo (from shared_lint.yml CI)
+  ci_source: .github/workflows/shared_lint.yml:eslint
+- id: repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes (from shared_lint.yml CI)
+  ci_source: .github/workflows/shared_lint.yml:prettier
+- id: repo_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: License check passes - no PATENTS references (from shared_lint.yml
+    CI)
+  ci_source: .github/workflows/shared_lint.yml:check_license
+- id: native_fb_view_transition_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableViewTransition must be true in ReactFeatureFlags.native-fb.js
+- id: test_renderer_native_view_transition_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableViewTransition must be true in ReactFeatureFlags.test-renderer.native-fb.js
+- id: test_renderer_www_view_transition_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: enableViewTransition must be true in ReactFeatureFlags.test-renderer.www.js
+- id: flag_type_annotation_preserved
+  type: pass_to_pass
+  origin: static
+  description: 'Typed files retain '': boolean'' annotation style'
+- id: other_flags_unchanged
+  type: pass_to_pass
+  origin: static
+  description: Adjacent flags (enableGestureTransition, enableScrollEndPolyfill) unchanged
+- id: all_rn_fork_files_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: All RN/test-renderer fork files must have enableViewTransition enabled
+    consistently
+  source:
+    path: .claude/skills/feature-flags/SKILL.md
+    lines: 50,78
+    commit: b4546cd0d4db2b913d8e7503bee86e1844073b2e
+rubric: []

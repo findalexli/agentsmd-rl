@@ -54,12 +54,12 @@ checks:
 
   - id: modeling_file_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Camembert modeling files have valid structure and CamembertForCausalLM class exists"
 
   - id: tied_weights_keys_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "CamembertForCausalLM has _tied_weights_keys defined in both modeling and modular files"
 
   - id: model_instantiates
@@ -79,12 +79,12 @@ checks:
 
   - id: other_camembert_models_unaffected
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: "Other Camembert model variants (CamembertModel, ForMaskedLM, ForSequenceClassification) still load"
 
   - id: modular_has_roberta_tied_key
     type: fail_to_pass
-    origin: agent_config
+    origin: static
     description: "modular_camembert.py CamembertForCausalLM defines _tied_weights_keys with roberta path"
     source:
       path: "CLAUDE.md"

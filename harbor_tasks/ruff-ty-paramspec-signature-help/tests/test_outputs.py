@@ -158,6 +158,58 @@ def test_completion_call_positional_only():
     assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_signature_help_generic_function():
+    """Signature help generic function resolves typevars test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "signature_help::tests::signature_help_generic_function_resolves_typevars", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_signature_help_overloaded_function():
+    """Signature help overloaded function test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "signature_help::tests::signature_help_overloaded_function", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_signature_help_method_call():
+    """Signature help method call test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "signature_help::tests::signature_help_method_call", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_completion_call_blank():
+    """Completion call blank test passes (repo pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_ide", "completion::tests::call_blank1", "--", "--exact"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Test failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # F2P: pr_diff — core behavioral tests (upstream Rust tests added by the PR)
 # ---------------------------------------------------------------------------

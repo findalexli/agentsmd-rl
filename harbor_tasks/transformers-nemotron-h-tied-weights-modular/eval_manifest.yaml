@@ -70,6 +70,37 @@ checks:
       lines: "185"
       commit: "2cd52c267ce4d0212eaa40c0ec7192a11654336f"
 
+  # Repo CI checks (pass_to_pass, repo_tests)
+  - id: test_repo_ruff_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff format check passes on modified files (CI: make check-repo)"
+
+  - id: test_repo_check_inits
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's check_inits utility passes (CI: validates __init__.py files)"
+
+  - id: test_repo_check_dummies
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's check_dummies utility passes (CI: validates dummy objects)"
+
+  - id: test_repo_custom_init_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's custom_init_isort check passes (CI: validates init import ordering)"
+
+  - id: test_repo_sort_auto_mappings
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's sort_auto_mappings check passes (CI: validates auto mappings)"
+
+  - id: test_repo_check_doctest_list
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's check_doctest_list utility passes (CI: validates doctest list)"
+
 rubric:
   - rule: "When a modular file is present, generated files should not be edited, as changes will be overwritten by make fix-repo. Instead, edit the modular file."
     source:

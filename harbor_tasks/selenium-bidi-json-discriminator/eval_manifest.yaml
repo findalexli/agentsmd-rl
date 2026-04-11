@@ -43,26 +43,27 @@ checks:
       guidance: Comments should explain *why*, not *what*
     description: Comments explain reader advancement logic (why the movement happens)
 
-  # Pass-to-pass tests (repo health)
-  - id: test_syntax_validity
+  # Pass-to-pass tests - repo CI commands that should pass before and after the fix
+  - id: test_repo_dotnet_format_style
     type: pass_to_pass
     origin: repo_tests
-    description: C# code compiles without syntax errors
+    description: CI - dotnet format style passes (file-scoped namespaces, using placement)
+
+  - id: test_repo_dotnet_format_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - dotnet format whitespace passes (indentation, spacing, newlines)
 
   - id: test_repo_dotnet_format
     type: pass_to_pass
     origin: repo_tests
-    description: .NET code follows editorconfig formatting conventions
+    description: CI - dotnet format passes (all formatting conventions)
 
+  # Static pass-to-pass tests (file existence/content checks)
   - id: test_repo_file_header
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: C# source files have proper copyright headers
-
-  - id: test_repo_jsonextensions_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: JsonExtensions.cs compiles without errors
 
   # Aliases for backward compatibility with test function names
   - id: test_discriminator_basic_extraction
@@ -79,11 +80,6 @@ checks:
     type: fail_to_pass
     origin: behavioral
     description: Alias for test_reader_advancement_comments - Comments explain array skipping
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: Alias for test_syntax_validity - Code syntax is valid
 
 rubric:
   - rule: "Comments should explain *why*, not *what*. Use well-named methods and variables instead of comments that merely narrate code."

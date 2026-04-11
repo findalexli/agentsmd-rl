@@ -34,12 +34,8 @@ checks:
 
   - id: ruff_lint
     type: pass_to_pass
-    origin: agent_config
-    description: "Ruff lint (E,W,F rules) passes on both affected files"
-    source:
-      path: "CLAUDE.md"
-      lines: "2"
-      commit: "0e1978c9eb69ec64b55245212dbf63deab19d25b"
+    origin: repo_tests
+    description: "Ruff lint (E,W,F rules) passes on both affected files (CI: make style)"
 
   - id: ruff_format_check
     type: pass_to_pass
@@ -55,6 +51,11 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: "SEW-D model file compiles without syntax errors"
+
+  - id: repo_check_inits
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository init structure check passes (CI: make check-repo)"
 
 rubric:
   - rule: "PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long. Aim to minimize the size of the diff."

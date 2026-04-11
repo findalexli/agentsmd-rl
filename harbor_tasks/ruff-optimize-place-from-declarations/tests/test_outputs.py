@@ -52,16 +52,18 @@ def test_or_else_method_semantics():
 #[cfg(test)]
 mod or_else_verification_test {
     use super::Truthiness;
+    use std::sync::atomic::{AtomicBool, Ordering};
 
     #[test]
     fn or_else_always_true_short_circuits() {
-        let mut called = false;
+        // Use AtomicBool for interior mutability (Fn closure, not FnMut)
+        let called = AtomicBool::new(false);
         let result = Truthiness::AlwaysTrue.or_else(|| {
-            called = true;
+            called.store(true, Ordering::SeqCst);
             Truthiness::AlwaysFalse
         });
         assert!(matches!(result, Truthiness::AlwaysTrue));
-        assert!(!called, "or_else must not call closure when self is AlwaysTrue");
+        assert!(!called.load(Ordering::SeqCst), "or_else must not call closure when self is AlwaysTrue");
     }
 
     #[test]
@@ -250,6 +252,16 @@ def test_existing_crate_tests():
 
 
 # [repo_tests] pass_to_pass
+def test_cargo_fmt():
+    """Repo's code formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "fmt", "--all", "--check"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_cargo_clippy():
     """Repo's clippy linting passes (pass_to_pass)."""
     r = subprocess.run(
@@ -257,6 +269,28 @@ def test_cargo_clippy():
         cwd=REPO, capture_output=True, text=True, timeout=120,
     )
     assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_doc():
+    """Repo's documentation builds without warnings (pass_to_pass)."""
+    env = {**os.environ, "RUSTDOCFLAGS": "-D warnings"}
+    r = subprocess.run(
+        ["cargo", "doc", "--no-deps", "-p", "ty_python_semantic", "--document-private-items"],
+        cwd=REPO, capture_output=True, text=True, timeout=300, env=env,
+    )
+    assert r.returncode == 0, f"cargo doc failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_lib_tests():
+    """ty_python_semantic library tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ty_python_semantic", "--lib", "--", "--test-threads=2"],
+        cwd=REPO, capture_output=True, text=True, timeout=600,
+        env={**os.environ, "CARGO_PROFILE_DEV_OPT_LEVEL": "1"},
+    )
+    assert r.returncode == 0, f"Library tests failed:\n{r.stderr[-2000:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -310,10 +344,13 @@ def test_no_local_imports():
 
                 # Check for use statements inside function bodies
                 if in_function and i > fn_start_line and re.match(r"\s+use\s+", line):
-                    # Allow use in test modules (cfg(test))
-                    if "use super::" not in line:
-                        assert False, (
-                            f"Local import found inside function body at "
-                            f"{rel_path}:{i}: {stripped!r}. "
-                            f"AGENTS.md requires imports at the top of the file."
-                        )
+                    # Allow use in test modules (cfg(test)) - these often have local imports for convenience
+                    if "use super::" not in line and "test" not in rel_path.lower():
+                        # Also check if we're inside a #[cfg(test)] module by looking at previous lines
+                        lines_before = "\n".join(lines[max(0, i-50):i])
+                        if "#[cfg(test)]" not in lines_before and "mod tests" not in lines_before:
+                            assert False, (
+                                f"Local import found inside function body at "
+                                f"{rel_path}:{i}: {stripped!r}. "
+                                f"AGENTS.md requires imports at the top of the file."
+                            )

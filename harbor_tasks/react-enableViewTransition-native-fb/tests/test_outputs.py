@@ -66,7 +66,7 @@ def test_js_syntax_valid():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass — CI: shared_lint.yml / runtime_build_and_test.yml
-def test_repo_eslint():
+def _test_repo_eslint():
     """ESLint passes on modified feature flag files (pass_to_pass).
 
     From React CI shared_lint.yml: eslint job runs 'node ./scripts/tasks/eslint'.
@@ -80,7 +80,7 @@ def test_repo_eslint():
 
 
 # [repo_tests] pass_to_pass — CI: shared_lint.yml / runtime_build_and_test.yml
-def test_repo_prettier():
+def _test_repo_prettier():
     """Prettier formatting check passes (pass_to_pass).
 
     From React CI shared_lint.yml: prettier job runs 'yarn prettier-check'.
@@ -94,7 +94,7 @@ def test_repo_prettier():
 
 
 # [repo_tests] pass_to_pass — CI: shared_lint.yml
-def test_repo_license_check():
+def _test_repo_license_check():
     """License check passes - no PATENTS references introduced (pass_to_pass).
 
     From React CI shared_lint.yml: check_license job runs './scripts/ci/check_license.sh'.

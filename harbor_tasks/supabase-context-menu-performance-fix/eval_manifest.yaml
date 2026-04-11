@@ -7,11 +7,74 @@ source:
   merge_commit: "fbb0770b47186ae9f3cae46f0950f63f0180c605"
 
 checks:
+  # Original pass_to_pass checks
   - id: typescript_compiles
     type: pass_to_pass
     origin: static
     description: "Modified TypeScript files must compile without errors"
 
+  # P2P enrichment - repo_tests checks using shell commands
+  - id: test_p2p_results_utils_file_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.utils.ts file exists (verified with shell test -f)"
+
+  - id: test_p2p_results_utils_has_formatresults
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.utils.ts exports formatResults function (verified with grep)"
+
+  - id: test_p2p_results_utils_has_convertresultstocsv
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.utils.ts exports convertResultsToCSV function (verified with grep)"
+
+  - id: test_p2p_results_utils_has_convertresultstomarkdown
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.utils.ts exports convertResultsToMarkdown function (verified with grep)"
+
+  - id: test_p2p_results_utils_has_convertresultstojson
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.utils.ts exports convertResultsToJSON function (verified with grep)"
+
+  - id: test_p2p_results_utils_has_getresultsheaders
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.utils.ts exports getResultsHeaders function (verified with grep)"
+
+  - id: test_p2p_results_utils_tests_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.utils.test.ts test file exists (verified with shell test -f)"
+
+  - id: test_p2p_results_component_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.tsx component file exists (verified with shell test -f)"
+
+  - id: test_p2p_results_has_component_definition
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.tsx defines the Results component (verified with grep)"
+
+  - id: test_p2p_results_has_formatclipboardvalue
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Results.tsx has formatClipboardValue function (verified with grep)"
+
+  - id: test_p2p_queryblock_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "QueryBlock.tsx component exists (verified with shell test -f)"
+
+  - id: test_p2p_queryblock_has_flex_classes
+    type: pass_to_pass
+    origin: repo_tests
+    description: "QueryBlock has flex layout classes (verified with grep)"
+
+  # Original fail_to_pass checks
   - id: single_context_menu_pattern
     type: fail_to_pass
     origin: pr_diff

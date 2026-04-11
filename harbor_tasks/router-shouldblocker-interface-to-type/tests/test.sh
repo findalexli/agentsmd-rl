@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -o pipefail
 
 # Install pytest
 pip3 install pytest --break-system-packages 2>/dev/null || pip3 install pytest

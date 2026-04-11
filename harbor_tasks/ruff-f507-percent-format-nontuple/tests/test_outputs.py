@@ -248,11 +248,22 @@ def test_repo_clippy():
     assert r.returncode == 0, f"cargo clippy failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
 
 
+
 # [repo_tests] pass_to_pass
-def test_repo_pyflakes_tests():
-    """Repo pyflakes tests pass - relevant to F507 changes (pass_to_pass)."""
+def test_repo_pyflakes_percent_format_tests():
+    """Repo percent format (F50x) tests pass - highly relevant to F507 changes (pass_to_pass)."""
     r = subprocess.run(
-        ["cargo", "test", "-p", "ruff_linter", "--", "rules::pyflakes::tests", "--test-threads=4"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["cargo", "test", "-p", "ruff_linter", "--", "rule_percentformat", "--test-threads=4"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
-    assert r.returncode == 0, f"pyflakes tests failed:\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+    assert r.returncode == 0, f"Percent format tests failed:\\n{r.stderr[-1000:]}{r.stdout[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_cargo_check_ruff_linter():
+    """Repo ruff_linter package compiles without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--package", "ruff_linter"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check failed:\\n{r.stderr[-1000:]}"

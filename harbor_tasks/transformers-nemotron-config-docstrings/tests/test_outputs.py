@@ -190,3 +190,48 @@ def test_ruff_format():
         capture_output=True, timeout=30,
     )
     assert r.returncode == 0, f"ruff format check failed:\n{r.stderr.decode()}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands from the repo
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass — from Makefile:check-repo (ruff check)
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd="/workspace/transformers",
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from Makefile:check-repo (ruff format --check)
+def test_repo_ruff_format_check():
+    """Repo's ruff format check passes on the modified file (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "ruff", "format", "--check", TARGET],
+        capture_output=True, text=True, timeout=60, cwd="/workspace/transformers",
+    )
+    assert r.returncode == 0, f"ruff format --check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from Makefile:check-repo (check_inits.py)
+def test_repo_check_inits():
+    """Repo's init file consistency check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/transformers",
+    )
+    assert r.returncode == 0, f"check_inits.py failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — from Makefile:check-repo (check_dummies.py)
+def test_repo_check_dummies():
+    """Repo's dummy objects check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        capture_output=True, text=True, timeout=120, cwd="/workspace/transformers",
+    )
+    assert r.returncode == 0, f"check_dummies.py failed:\n{r.stderr[-500:]}"

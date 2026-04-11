@@ -36,4 +36,5 @@ RUN cd react && \
 WORKDIR /workspace/react
 
 # Install minimal dependencies (only what tests need)
-RUN npm install --legacy-peer-deps 2>&1 | tail -20 || true
+# React monorepo uses yarn and link: protocol which npm doesn't handle properly
+RUN yarn install --frozen-lockfile 2>&1 | tail -20 || true

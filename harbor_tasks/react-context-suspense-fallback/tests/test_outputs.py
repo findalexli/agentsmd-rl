@@ -420,6 +420,29 @@ def test_repo_dom_server_new_context():
     )
 
 
+
+
+# [repo_tests] pass_to_pass - ReactSuspenseWithNoopRenderer tests (covers Suspense behavior relevant to context propagation)
+def test_repo_suspense_noop_renderer():
+    r = subprocess.run(
+        [
+            "yarn", "test",
+            "-r=experimental",
+            "--silent",
+            "--no-watchman",
+            "ReactSuspenseWithNoopRenderer",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert r.returncode == 0, (
+        f"ReactSuspenseWithNoopRenderer tests failed:\n"
+        f"{r.stdout[-2000:]}\n{r.stderr[-2000:]}"
+    )
+
+
 # [agent_config] pass_to_pass
 def test_prettier_formatting():
     target = "packages/react-reconciler/src/ReactFiberNewContext.js"

@@ -105,6 +105,61 @@ def test_no_session_commit_in_dags_needing_dagruns():
 
 
 # =============================================================================
+# Fail-to-Pass Test: The actual bug fix verification
+# This test should FAIL on the base commit (bug present) and PASS on fixed code.
+# =============================================================================
+
+
+def test_adrq_without_serialized_dag_is_excluded():
+    """
+    F2P: DAGs with AssetDagRunQueue but no SerializedDagModel must be excluded.
+
+    The bug: When a DAG has AssetDagRunQueue rows but no SerializedDagModel
+    (orphan ADRQ), the buggy code includes the dag_id in triggered_date_by_dag.
+    
+    The fix: The dag_id should be excluded from triggered_date_by_dag when
+    no matching SerializedDagModel exists.
+    
+    This test verifies the fix is present by checking the code logic.
+    """
+    dag_file = f"{REPO}/airflow-core/src/airflow/models/dag.py"
+
+    with open(dag_file, "r") as f:
+        content = f.read()
+
+    # Find the dags_needing_dagruns method
+    method_start = content.find("def dags_needing_dagruns")
+    if method_start == -1:
+        raise AssertionError("Method dags_needing_dagruns not found")
+
+    # Extract the method body
+    method_content = content[method_start:]
+    next_method = method_content.find("\n    def ", 1)
+    if next_method == -1:
+        method_body = method_content
+    else:
+        method_body = method_content[:next_method]
+
+    # Check that the fix is present: code should handle missing serialized dags
+    # The fix includes: missing_from_serialized := set(adrq_by_dag.keys()) - ser_dag_ids
+    has_missing_check = "missing_from_serialized" in method_body
+    has_ser_dag_ids = "ser_dag_ids" in method_body
+    has_deletion = "del adrq_by_dag[dag_id]" in method_body or "adrq_by_dag.pop" in method_body
+
+    # The fix should check for missing serialized dags and remove them
+    if not (has_missing_check and has_ser_dag_ids):
+        raise AssertionError(
+            "BUG NOT FIXED: Missing serialized dag check not found. "
+            "The code should check for dags in ADRQ but not in SerializedDagModel."
+        )
+
+    if not has_deletion:
+        raise AssertionError(
+            "BUG NOT FIXED: Code does not remove orphan dags from adrq_by_dag."
+        )
+
+
+# =============================================================================
 # Pass-to-Pass Tests: Repo CI/CD checks
 # These ensure the fix doesn't break existing repository quality checks.
 # =============================================================================

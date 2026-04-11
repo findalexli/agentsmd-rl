@@ -170,6 +170,26 @@ def test_e502_fixture_file_check():
     assert "E502" in r.stdout, f"Expected E502 violations in fixture file:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_e502_pycodestyle_preview_test():
+    """E502 pycodestyle preview test passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "--lib", "-p", "ruff_linter", "--", "preview__E502_E502.py", "--test-threads=1"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"E502 pycodestyle test failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_cargo_check_ruff_binary():
+    """Ruff binary cargo check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--bin", "ruff"],
+        cwd=REPO, capture_output=True, text=True, timeout=300,
+    )
+    assert r.returncode == 0, f"Cargo check failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

@@ -105,60 +105,6 @@ def test_ops_h_accepts_capturing_lambda():
     ops_src = OPS_H.read_text()
     shim_src = SHIM_H.read_text()
 
-    # Extract minimal type definitions needed to compile
-    cpp_code = f'''\
-// Minimal mock of the stable ABI types needed to test ops.h
-#include <cstdint>
-#include <cstdio>
-#include <functional>
-#include <type_traits>
-
-// Mock types
-struct AtenTensorHandle {{}};
-using DeleterFnPtr = void(*)(void*);
-enum class DeviceType {{ CPU }};
-struct Device {{ DeviceType type() const {{ return DeviceType::CPU; }} int index() const {{ return 0; }} }};
-enum class ScalarType {{ Float }};
-enum class Layout {{ Strided }};
-
-// Mock functions
-inline int torch::stable::detail::from(DeviceType d) {{ return 0; }}
-inline int torch::stable::detail::from(ScalarType s) {{ return 0; }}
-inline int torch::stable::detail::from(Layout l) {{ return 0; }}
-template<typename T> inline T to(int v) {{ return static_cast<T>(v); }}
-
-// Mock tensor
-namespace torch::stable {{
-struct Tensor {{
-    Tensor(AtenTensorHandle h) {{}}
-}};
-}}
-
-// Mock the C shim function with two-arg signature (as it should be after fix)
-extern "C" int torch_from_blob(
-    void* data, int64_t ndim, const int64_t* sizes, const int64_t* strides,
-    int64_t storage_offset, int32_t dtype, int32_t device_type, int32_t device_index,
-    AtenTensorHandle* ret, int32_t layout, const uint8_t* opaque_metadata,
-    int64_t opaque_metadata_size,
-    void (*deleter)(void* data, void* ctx), void* deleter_ctx) {{
-    return 0;
-}}
-
-#define TORCH_ERROR_CODE_CHECK(x) do {{ if (x) return 1; }} while(0)
-
-// Include the actual ops.h content (extract relevant parts)
-namespace torch::headeronly {{
-struct IntHeaderOnlyArrayRef {{
-    const int64_t* data_; size_t size_;
-    IntHeaderOnlyArrayRef(const int64_t* d, size_t s) : data_(d), size_(s) {{}}
-    size_t size() const {{ return size_; }}
-    const int64_t* data() const {{ return data_; }}
-}};
-}}
-
-// The key test: does ops.h have a template from_blob that accepts lambdas?
-// We check by trying to compile code that would use it.
-'''
     # Check if ops.h has the template signature
     has_template = bool(
         re.search(
@@ -318,3 +264,86 @@ def test_shim_cpp_null_callback_guard():
                 found = True
                 break
     assert found, "shim_common.cpp missing nullptr guard for deleter callback"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass — CI/CD repo tests (origin: repo_tests)
+# ---------------------------------------------------------------------------
+
+def test_repo_cpp_syntax_check():
+    """C++ header files can be preprocessed without syntax errors (pass_to_pass)."""
+    # Use gcc -E to verify the header can be preprocessed
+    # This catches basic syntax errors without requiring full compilation
+    r = subprocess.run(
+        ["gcc", "-E", "-dM", str(SHIM_H)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # If it fails, verify it's due to missing includes, not syntax errors
+    if r.returncode != 0:
+        # Allow "No such file or directory" errors but not syntax errors
+        stderr_lower = r.stderr.lower()
+        assert "expected" not in stderr_lower and "syntax" not in stderr_lower, (
+            f"shim.h has syntax errors:\n{r.stderr[:500]}"
+        )
+
+
+def test_repo_code_formatting():
+    """Modified files follow basic code formatting rules (pass_to_pass)."""
+    # Check for common formatting issues that clang-format would catch
+    for path in [SHIM_H, OPS_H, SHIM_CPP]:
+        src = path.read_text()
+
+        # Check for trailing whitespace (clang-format would catch this)
+        lines = src.split('\n')
+        for i, line in enumerate(lines, 1):
+            if line != line.rstrip():
+                assert False, f"{path.name}:{i} has trailing whitespace"
+
+        # Check for tabs (should use spaces per .clang-format)
+        if '\t' in src:
+            assert False, f"{path.name} contains tab characters, should use spaces"
+
+        # Check file ends with newline
+        if src and not src.endswith('\n'):
+            assert False, f"{path.name} does not end with a newline"
+
+
+def test_repo_file_structure():
+    """Source files have valid internal structure (pass_to_pass)."""
+    # Test shim.h has proper extern "C" guards for C linkage
+    shim_src = SHIM_H.read_text()
+    assert '#ifdef __cplusplus' in shim_src, "shim.h missing __cplusplus guard"
+    assert 'extern "C"' in shim_src, "shim.h missing extern C declaration"
+
+    # Test that ops.h has namespace declarations
+    ops_src = OPS_H.read_text()
+    has_ns = 'namespace' in ops_src or 'HIDDEN_NAMESPACE_' in ops_src
+    assert has_ns, "ops.h missing namespace declarations"
+
+    # Check brace balance (basic syntax validation)
+    for path, name in [(OPS_H, "ops.h"), (SHIM_CPP, "shim_common.cpp")]:
+        src = path.read_text()
+        open_braces = src.count('{')
+        close_braces = src.count('}')
+        assert open_braces == close_braces, (
+            f"{name} has mismatched braces: {open_braces} open, {close_braces} close"
+        )
+
+    # Check preprocessor conditional balance
+    shim_cpp_src = SHIM_CPP.read_text()
+    ifdefs = len(re.findall(r'#if(?:def|ndef)?\b', shim_cpp_src))
+    endifs = len(re.findall(r'#endif\b', shim_cpp_src))
+    assert ifdefs == endifs, (
+        f"shim_common.cpp has mismatched preprocessor: {ifdefs} if, {endifs} endif"
+    )
+
+
+def test_repo_git_history():
+    """Repo has expected git history and structure (pass_to_pass)."""
+    # Check git log works (repo has history)
+    r = subprocess.run(
+        ["git", "log", "-1", "--oneline"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git log failed: {r.stderr}"
+    assert len(r.stdout.strip()) > 0, "git log returned empty"

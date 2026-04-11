@@ -306,3 +306,27 @@ def test_repo_modified_files_parse_ast():
         timeout=60,
     )
     assert r.returncode == 0, f"AST parsing failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_copies():
+    """Repo's check_copies.py utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_copies.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_copies.py failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_check_doc_toc():
+    """Repo's check_doc_toc.py utility passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_doc_toc.py"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, f"check_doc_toc.py failed:\n{r.stderr[-500:]}"

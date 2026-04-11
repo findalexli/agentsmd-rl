@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:02:55.989191",
-  "total_time": 304.52,
-  "sandbox_id": "ing5eghjjxt5gfw064cb0",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:32:59.909949",
+  "total_time": 2908.82,
+  "sandbox_id": "izkpq03esq4kbtm88oe7w",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -17,10 +18,10 @@
       "notes": "Added 4 pass_to_pass tests: test_repo_lint (yarn lint), test_repo_flow (yarn flow dom-node), test_repo_license_check (./scripts/ci/check_license.sh), test_repo_version_check (yarn version-check). NOTE: Dockerfile uses npm install which fails due to link: protocol - should use yarn install instead. Tests pass when yarn install is used."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 732.85,
+      "time": 651.27,
       "notes": ""
     },
     "improve": {
@@ -31,20 +32,24 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.78
+      "time": 355.57,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile: changed 'npm install --legacy-peer-deps' to 'yarn install --frozen-lockfile'. React monorepo uses yarn and link: protocol which npm doesn't handle properly. All 10 tests now pass (5 fail-to-pass + 5 pass-to-pass)."
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.52,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6370.52,
-      "at": "2026-04-09T06:31:43.742495"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -76,6 +81,14 @@
       "backend": "fireworks",
       "time": 304.52,
       "at": "2026-04-09T15:02:55.989191"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2908.82,
+      "at": "2026-04-10T18:32:59.909949"
     }
   ]
 }

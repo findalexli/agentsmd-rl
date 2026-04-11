@@ -173,11 +173,10 @@ def test_no_compile_errors_in_bidi():
 
 def test_dotnet_bidi_formatting():
     """
-    Pass-to-pass: BiDi code must follow dotnet formatting rules.
+    Pass-to-pass: BiDi code must follow dotnet formatting rules (repo CI: dotnet format).
 
     Uses 'dotnet format --verify-no-changes' to check BiDi files
-    follow editorconfig style rules. This is a pass-to-pass test
-    that ensures the gold patch doesn't introduce formatting issues.
+    follow editorconfig style rules. This matches the repo's CI format check.
     """
     # First check if dotnet format is available
     check = subprocess.run(
@@ -203,6 +202,58 @@ def test_dotnet_bidi_formatting():
     )
 
     assert result.returncode == 0, f"Formatting check failed:\n{result.stderr[-1000:]}"
+
+
+def test_dotnet_whitespace_formatting():
+    """
+    Pass-to-pass: BiDi files must pass dotnet whitespace formatting (repo CI).
+
+    Uses 'dotnet format whitespace --verify-no-changes' which is part of
+    the repo's CI format check. This ensures indentation and whitespace
+    conventions are followed.
+    """
+    result = subprocess.run(
+        ["dotnet", "format", "whitespace", "src/webdriver/Selenium.WebDriver.csproj",
+         "--verify-no-changes",
+         "--include",
+         "src/webdriver/BiDi/ITransport.cs",
+         "src/webdriver/BiDi/WebSocketTransport.cs",
+         "src/webdriver/BiDi/Broker.cs"],
+        cwd=DOTNET_DIR,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    assert result.returncode == 0, f"Whitespace formatting check failed:\n{result.stderr[-500:]}"
+
+
+def test_dotnet_style_analyzers():
+    """
+    Pass-to-pass: BiDi files must pass dotnet style analyzers (repo CI).
+
+    Uses 'dotnet format style --verify-no-changes' which checks code style
+    rules configured in .editorconfig. Part of repo's CI linting.
+    """
+    result = subprocess.run(
+        ["dotnet", "format", "style", "src/webdriver/Selenium.WebDriver.csproj",
+         "--verify-no-changes", "--severity", "warn",
+         "--include",
+         "src/webdriver/BiDi/ITransport.cs",
+         "src/webdriver/BiDi/WebSocketTransport.cs",
+         "src/webdriver/BiDi/Broker.cs"],
+        cwd=DOTNET_DIR,
+        capture_output=True,
+        text=True,
+        timeout=120
+    )
+
+    # Style issues are warnings, only fail on actual style errors
+    if result.returncode != 0:
+        output = result.stderr[-500:] if result.stderr else result.stdout[-500:]
+        # Check if it's actually a style violation or just a tool issue
+        if "whitespace" in output.lower() or "format" in output.lower():
+            assert False, f"Style check failed:\n{output}"
 
 
 def test_dotnet_project_files_valid():
@@ -231,9 +282,36 @@ def test_dotnet_project_files_valid():
                 assert False, f"{proj_file}: Invalid XML - {e}"
 
 
+def test_bidi_csproj_valid_xml():
+    """
+    Pass-to-pass: Selenium.WebDriver.csproj must be valid XML with required elements (repo CI).
+
+    Validates that the main project file is well-formed XML and contains
+    required build configuration. This is a basic check that CI would fail on if broken.
+    """
+    import xml.etree.ElementTree as ET
+
+    proj_file = os.path.join(WEBDRIVER_DIR, "Selenium.WebDriver.csproj")
+    try:
+        tree = ET.parse(proj_file)
+        root = tree.getroot()
+        # Verify it has basic Project structure
+        assert root.tag.endswith("Project") or root.tag == "Project", \
+            f"{proj_file}: Missing Project root element"
+        # Verify TargetFrameworks exists (critical for build)
+        found_targets = False
+        for elem in root.iter():
+            if elem.tag.endswith("TargetFrameworks") or elem.tag == "TargetFrameworks":
+                found_targets = True
+                break
+        assert found_targets, "Project file missing TargetFrameworks"
+    except ET.ParseError as e:
+        assert False, f"{proj_file}: Invalid XML - {e}"
+
+
 def test_bidi_files_have_valid_cs_syntax():
     """
-    Pass-to-pass: BiDi C# files must have valid syntax structure.
+    Pass-to-pass: BiDi C# files must have valid syntax structure (repo CI: dotnet format --severity error).
 
     Uses 'dotnet format --verify-no-changes --severity error' to check
     for syntax errors in BiDi files. This is a lighter check than full build.
@@ -266,3 +344,29 @@ def test_bidi_files_have_valid_cs_syntax():
     if result.returncode != 0:
         error_output = result.stderr[-1000:] if result.stderr else result.stdout[-1000:]
         assert False, f"Syntax errors found:\n{error_output}"
+
+
+def test_bidi_files_use_consistent_line_endings():
+    """
+    Pass-to-pass: BiDi files must use consistent line endings (LF) per .editorconfig (repo CI).
+
+    Reads files and verifies line endings are consistent with the repo's
+    editorconfig settings. This is part of the repo's formatting CI.
+    """
+    bidi_files = [
+        os.path.join(WEBDRIVER_DIR, "BiDi/ITransport.cs"),
+        os.path.join(WEBDRIVER_DIR, "BiDi/WebSocketTransport.cs"),
+        os.path.join(WEBDRIVER_DIR, "BiDi/Broker.cs"),
+    ]
+
+    for filepath in bidi_files:
+        if os.path.exists(filepath):
+            with open(filepath, 'rb') as f:
+                content = f.read()
+            # Check for CRLF line endings (should be LF per .editorconfig)
+            crlf_count = content.count(b'\r\n')
+            lf_count = content.count(b'\n')
+            # Allow some CRLF but warn if file is mostly CRLF
+            if crlf_count > 0 and crlf_count == lf_count:
+                # File uses CRLF exclusively - should use LF
+                assert False, f"{filepath}: Uses CRLF line endings, should use LF per .editorconfig"

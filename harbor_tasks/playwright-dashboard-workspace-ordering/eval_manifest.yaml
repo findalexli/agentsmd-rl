@@ -1,49 +1,57 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "microsoft/playwright"
+  repo: microsoft/playwright
   pr: 40069
-  base_commit: "883825e4d62aac69939b8f4c0f1cf41e72882079"
-  merge_commit: "d02d38d8dade651fe36cc1d14a38b227b3d108e3"
-
+  base_commit: 883825e4d62aac69939b8f4c0f1cf41e72882079
+  merge_commit: d02d38d8dade651fe36cc1d14a38b227b3d108e3
 checks:
-  - id: grid_workspace_ordering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Grid sorts current workspace first, defaulting to 'Global' when workspaceDir is undefined"
-
-  - id: dashboard_api_sends_client_info
-    type: fail_to_pass
-    origin: pr_diff
-    description: "dashboardApp.ts imports createClientInfo and includes clientInfo in /api/sessions/list response"
-
-  - id: deps_declares_cli_client_import
-    type: fail_to_pass
-    origin: agent_config
-    description: "DEPS.list declares the new ../cli-client/registry.ts import"
-    source:
-      path: "CLAUDE.md"
-      lines: "95"
-      commit: "883825e4d62aac69939b8f4c0f1cf41e72882079"
-
-  - id: grid_alphabetical_sorting
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Non-current workspace groups remain sorted alphabetically with localeCompare"
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's npm run build passes - TypeScript compilation and vite dashboard build work"
-
-  - id: test_repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's npm run lint-packages passes - workspace package consistency"
-
-  - id: test_repo_check_deps
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's npm run check-deps passes - DEPS.list constraints"
-
-rubric: []
+- id: grid_workspace_ordering
+  type: fail_to_pass
+  origin: pr_diff
+  description: Grid sorts current workspace first, defaulting to 'Global' when workspaceDir
+    is undefined
+- id: dashboard_api_sends_client_info
+  type: fail_to_pass
+  origin: pr_diff
+  description: dashboardApp.ts imports createClientInfo and includes clientInfo in
+    /api/sessions/list response
+- id: deps_declares_cli_client_import
+  type: fail_to_pass
+  origin: agent_config
+  description: DEPS.list declares the new ../cli-client/registry.ts import
+  source:
+    path: CLAUDE.md
+    lines: '95'
+    commit: 883825e4d62aac69939b8f4c0f1cf41e72882079
+- id: grid_alphabetical_sorting
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-current workspace groups remain sorted alphabetically with localeCompare
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's npm run build passes - TypeScript compilation and vite dashboard
+    build work
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's npm run lint-packages passes - workspace package consistency
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's npm run check-deps passes - DEPS.list constraints
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's npm run tsc passes - TypeScript compilation check
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's npm run lint-tests passes - test file conventions
+rubric:
+- rule: When adding imports that cross internal package boundaries, the relevant DEPS.list
+    file must be updated to declare the allowed import path
+  source:
+    path: CLAUDE.md
+    lines: 90-96
+    commit: 883825e4d62aac69939b8f4c0f1cf41e72882079

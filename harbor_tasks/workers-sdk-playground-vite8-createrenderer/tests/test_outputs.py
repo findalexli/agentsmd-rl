@@ -88,6 +88,41 @@ def test_repo_workers_playground_check():
     assert r.returncode == 0, f"Workers-playground check failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — Workers-playground package build succeeds
+def test_repo_workers_playground_build():
+    """Workers-playground package builds successfully (pass_to_pass).
+
+    This runs the full Vite build on the workers-playground package,
+    which exercises vite.config.ts with the actual Vite 8 bundler.
+    The build would fail if the style-provider alias or assetsDir config
+    were misconfigured, causing rolldown to crash or assets to be misplaced.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm run build --filter=@cloudflare/workers-playground... 2>&1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Workers-playground build failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — Workers-editor-shared package builds
+def test_repo_workers_editor_shared_build():
+    """Workers-editor-shared package builds successfully (pass_to_pass).
+
+    This builds the @cloudflare/workers-editor-shared dependency,
+    which is a prerequisite for the workers-playground build. This
+    test ensures the shared components compile correctly.
+    """
+    r = subprocess.run(
+        ["bash", "-c",
+         "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && "
+         "pnpm run build --filter=@cloudflare/workers-editor-shared 2>&1"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Workers-editor-shared build failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------

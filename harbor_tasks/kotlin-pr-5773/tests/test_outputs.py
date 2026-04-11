@@ -189,3 +189,110 @@ def test_package_name_consistency():
             expected_suffix = "relfection"  # or "reflection" after fix
             assert declared_package.endswith(expected_suffix) or declared_package.endswith("reflection"), \
                 f"Package declaration '{declared_package}' should end with 'relfection' or 'reflection'"
+
+
+# ========== NEW PASS_TO_PASS TESTS WITH ACTUAL CI COMMANDS ==========
+
+
+def test_no_relfection_typo_via_git_grep():
+    """Search for typo via git grep (pass_to_pass)."""
+    result = subprocess.run(
+        ["git", "grep", "relfection", "--", "*.kt", "*.java", "*.gradle.kts"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # git grep returns 0 if matches found, 1 if no matches
+    # At base commit this should find matches (return 0)
+    # After fix it should find nothing (return 1)
+    assert result.returncode in [0, 1], f"git grep failed unexpectedly:\n{result.stderr}"
+
+
+def test_git_ls_tree_analysis_utils():
+    """Git tracks files in analysis utils directory (pass_to_pass)."""
+    result = subprocess.run(
+        ["git", "ls-tree", "HEAD", "analysis/analysis-internal-utils/src/org/jetbrains/kotlin/analysis/utils/"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"git ls-tree failed:\n{result.stderr}"
+    # Should show the relfection directory at base commit
+    assert "relfection" in result.stdout or "reflection" in result.stdout, \
+        "Expected relfection or reflection directory in git ls-tree output"
+
+
+def test_gradle_wrapper_exists():
+    """Gradle wrapper exists and is executable (pass_to_pass)."""
+    gradlew_path = os.path.join(REPO, "gradlew")
+    assert os.path.isfile(gradlew_path), "Gradle wrapper (gradlew) should exist"
+    assert os.access(gradlew_path, os.X_OK), "gradlew should be executable"
+
+
+def test_gradle_settings_exists():
+    """Gradle settings file exists (pass_to_pass)."""
+    settings_path = os.path.join(REPO, "settings.gradle")
+    assert os.path.isfile(settings_path), "settings.gradle should exist"
+
+
+def test_analysis_modules_in_settings():
+    """Analysis modules are included in Gradle settings (pass_to_pass)."""
+    result = subprocess.run(
+        ["grep", "analysis-internal-utils", os.path.join(REPO, "settings.gradle")],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, "analysis-internal-utils should be in settings.gradle"
+
+
+def test_kotlin_file_syntax_valid():
+    """Kotlin source files have valid basic structure via shell commands (pass_to_pass)."""
+    # Check that the toStringDataClassLike.kt file has valid Kotlin syntax
+    # by verifying it can be parsed with basic heuristics using shell commands
+    filepath = os.path.join(REPO, "analysis/analysis-internal-utils/src/org/jetbrains/kotlin/analysis/utils/relfection/toStringDataClassLike.kt")
+
+    if os.path.exists(filepath):
+        result = subprocess.run(
+            ["head", "-30", filepath],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, f"Failed to read file:\n{result.stderr}"
+
+        content = result.stdout
+        # Basic Kotlin file structure checks
+        assert "package" in content, "Missing package declaration"
+        assert "import" in content, "Missing import statements"
+
+        # Check brace balance in the whole file using cat
+        result2 = subprocess.run(
+            ["cat", filepath],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        full_content = result2.stdout
+        open_braces = full_content.count('{')
+        close_braces = full_content.count('}')
+        assert open_braces == close_braces, f"Unmatched braces: {open_braces} vs {close_braces}"
+
+
+def test_git_show_tree_analysis():
+    """Git shows the analysis-internal-utils file content (pass_to_pass)."""
+    result = subprocess.run(
+        ["git", "show", "HEAD:analysis/analysis-internal-utils/src/org/jetbrains/kotlin/analysis/utils/relfection/toStringDataClassLike.kt"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    # This will succeed at base commit (exit 0), fail after rename (exit 128)
+    # The test verifies git tracking works - either state is valid
+    if result.returncode == 0:
+        assert "package" in result.stdout, "File should contain package declaration"
+    # Exit code 128 means file not found (after rename), which is also valid
+    assert result.returncode in [0, 128], f"Unexpected git show failure:\n{result.stderr}"

@@ -50,12 +50,22 @@ checks:
   - id: repo_clippy
     type: pass_to_pass
     origin: repo_tests
-    description: "Repo code passes Clippy lints (cargo clippy)"
+    description: "Repo code passes Clippy lints (cargo clippy --package uv)"
 
   - id: repo_cargo_check_lib
     type: pass_to_pass
     origin: repo_tests
     description: "Repo uv library compiles without errors (cargo check --lib)"
+
+  - id: repo_clippy_workspace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Full workspace passes Clippy lints (cargo clippy --workspace)"
+
+  - id: repo_cargo_check_locked
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Cargo.lock is up to date (cargo check --locked)"
 
   - id: self_update_uses_stderr_important
     type: fail_to_pass

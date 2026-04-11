@@ -25,7 +25,7 @@ checks:
   - id: qwen35_think_prefix_excluded
     type: fail_to_pass
     origin: pr_diff
-    description: "qwen3_5 skips <think> prefix from supervision while supervising content after it"
+    description: "qwen3_5 skips  prefix from supervision while supervising content after it"
 
   - id: qwen35_step_loss_mask_suppression
     type: fail_to_pass
@@ -70,6 +70,22 @@ checks:
       path: ".claude/skills/add-rollout-function/SKILL.md"
       lines: "79"
       commit: "e8e4b64872a469e1c0b85653650a3f76154c88dd"
+
+  # New repo CI pass-to-pass tests
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes on modified files"
+
+  - id: test_repo_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black formatter passes on modified files"
+
+  - id: test_repo_isort_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import order passes on modified files"
 
 rubric:
   - rule: "Keep test scope small and behavior-focused"

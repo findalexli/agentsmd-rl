@@ -26,7 +26,7 @@ TEST_RENDERER    = Path(f"{REPO}/{TEST_RENDERER_REL}")
 TEST_WWW         = Path(f"{REPO}/{TEST_WWW_REL}")
 
 # Node.js script: strips Flow types, evaluates flag file in vm sandbox, checks value
-_EVAL_SCRIPT = r"""
+_EVAL_SCRIPT = r'''
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
@@ -35,30 +35,49 @@ const [,, relPath, flagName, expectedStr] = process.argv;
 const expected = expectedStr === 'true';
 
 let src = fs.readFileSync(path.resolve(relPath), 'utf8');
-// Strip all import lines (Flow type imports and value imports)
+
+// Step 1: Strip all import lines (Flow type imports and value imports)
 src = src.replace(/^import\s+.+$/gm, '');
-// Strip Flow type annotations (: boolean)
-src = src.replace(/:\s*boolean/g, '');
-// Convert 'export const X = V' to 'exports.X = V'
-src = src.replace(/export\s+const\s+(\w+)\s*=/g, 'exports.$1 =');
-// Strip remaining export lines (export type, export default, etc.)
+
+// Step 2: Strip Flow type annotations
+src = src.replace(/:\s*boolean\s*=/g, ' =');
+src = src.replace(/:\s*number\s*=/g, ' =');
+
+// Step 3: Convert 'export const X = V' to 'var X = V' (for function scope)
+src = src.replace(/export\s+const\s+(\w+)\s*=/g, 'var $1 =');
+
+// Step 4: Handle plain 'export' lines
 src = src.replace(/^export\s+.+$/gm, '');
 
-const sandbox = { exports: {}, __VARIANT__: '__VARIANT__' };
-try {
-    vm.runInNewContext(src, sandbox);
-} catch (e) {
-    console.error('Eval error:', e.message);
-    process.exit(2);
-}
+// Step 5: Remove trailing comments
+src = src.replace(/\/\/.*$/gm, '');
 
-const actual = sandbox.exports[flagName];
-if (actual !== expected) {
-    console.error(flagName + ': expected ' + expected + ', got ' + actual);
+// Step 6: Remove Flow cast expressions like "((((null: any): ExportsType): FeatureFlagsType): ExportsType);"
+src = src.replace(/\({4,}\s*null\s*:\s*any\s*\)\s*:\s*\w+Type\s*\)\s*:\s*\w+Type\s*\)\s*:\s*\w+Type\s*\);?/g, '');
+src = src.replace(/\(+\s*null\s*:\s*any\s*\)\s*[^;]*;/g, '');
+
+// Step 7: Wrap in IIFE to handle variable dependencies
+src = `(function() {\n${src}\nreturn ${flagName};\n})()`;
+
+// Create sandbox with all magic constants defined
+const sandbox = {
+  __VARIANT__: '__VARIANT__',
+  __EXPERIMENTAL__: false,
+  __PROFILE__: false
+};
+
+try {
+  const result = vm.runInNewContext(src, sandbox);
+  if (result !== expected) {
+    console.error(flagName + ': expected ' + expected + ', got ' + result);
     process.exit(1);
+  }
+  console.log('PASS: ' + flagName + ' = ' + result);
+} catch (e) {
+  console.error('Eval error:', e.message);
+  process.exit(2);
 }
-console.log('PASS: ' + flagName + ' = ' + actual);
-"""
+'''
 
 
 def _check_flag_runtime(rel_path: str, flag_name: str, expected: bool) -> subprocess.CompletedProcess:
@@ -217,3 +236,29 @@ def test_repo_version_check():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+def test_repo_prettier_check():
+    """Repo's Prettier formatting check passes (pass_to_pass).
+    
+    Note: This test may be skipped if the container has insufficient memory,
+    as the React prettier check requires significant resources.
+    """
+    import pytest
+    r = subprocess.run(
+        ["node", "./scripts/prettier/index.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Skip if out of memory - this is a resource constraint, not a code issue
+    if "out of memory" in r.stderr.lower() or "heap" in r.stderr.lower():
+        pytest.skip("Prettier check skipped due to container memory constraints")
+    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-1000:]}\n{r.stderr[-500:]}"
+
+
+def test_repo_extract_errors():
+    """Repo's error codes extraction check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/error-codes/extract-errors.js"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Extract errors failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

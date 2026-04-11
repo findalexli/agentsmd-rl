@@ -33,7 +33,7 @@ def test_repo_cargo_check_sui_types():
 
 
 def test_sui_types_testing_feature_defined():
-    """sui-types Cargo.toml must have testing = [] feature defined."""
+    """sui-types Cargo.toml must have testing = [] feature defined (origin: static)."""
     cargo_toml = f"{REPO}/crates/sui-types/Cargo.toml"
     with open(cargo_toml) as f:
         content = f.read()
@@ -43,7 +43,7 @@ def test_sui_types_testing_feature_defined():
 
 
 def test_sui_types_gasless_functions_use_testing_gate():
-    """Gasless token testing functions must use #[cfg(feature = "testing")]."""
+    """Gasless token testing functions must use #[cfg(feature = "testing")] (origin: static)."""
     transaction_rs = f"{REPO}/crates/sui-types/src/transaction.rs"
     with open(transaction_rs) as f:
         content = f.read()
@@ -58,7 +58,7 @@ def test_sui_types_gasless_functions_use_testing_gate():
 
 
 def test_apply_test_token_uses_testing_gate():
-    """apply_test_token_overrides must use #[cfg(feature = "testing")]."""
+    """apply_test_token_overrides must use #[cfg(feature = "testing")] (origin: static)."""
     transaction_rs = f"{REPO}/crates/sui-types/src/transaction.rs"
     with open(transaction_rs) as f:
         content = f.read()
@@ -73,7 +73,7 @@ def test_apply_test_token_uses_testing_gate():
 
 
 def test_transactional_test_runner_testing_feature():
-    """sui-transactional-test-runner must have testing feature defined."""
+    """sui-transactional-test-runner must have testing feature defined (origin: static)."""
     cargo_toml = f"{REPO}/crates/sui-transactional-test-runner/Cargo.toml"
     with open(cargo_toml) as f:
         content = f.read()
@@ -88,7 +88,7 @@ def test_transactional_test_runner_testing_feature():
 
 
 def test_transactional_test_runner_lib_gated():
-    """sui-transactional-test-runner lib.rs must use #[cfg(feature = "testing")]."""
+    """sui-transactional-test-runner lib.rs must use #[cfg(feature = "testing")] (origin: static)."""
     lib_rs = f"{REPO}/crates/sui-transactional-test-runner/src/lib.rs"
     with open(lib_rs) as f:
         content = f.read()
@@ -99,7 +99,7 @@ def test_transactional_test_runner_lib_gated():
 
 
 def test_transactional_test_runner_no_debug_assertions():
-    """sui-transactional-test-runner must not use debug_assertions for gating."""
+    """sui-transactional-test-runner must not use debug_assertions for gating (origin: static)."""
     lib_rs = f"{REPO}/crates/sui-transactional-test-runner/src/lib.rs"
     with open(lib_rs) as f:
         content = f.read()
@@ -108,7 +108,7 @@ def test_transactional_test_runner_no_debug_assertions():
 
 
 def test_transactional_test_runner_test_adapter():
-    """test_adapter.rs must call gasless functions without debug_assertions check."""
+    """test_adapter.rs must call gasless functions without debug_assertions check (origin: static)."""
     test_adapter_rs = f"{REPO}/crates/sui-transactional-test-runner/src/test_adapter.rs"
     with open(test_adapter_rs) as f:
         content = f.read()
@@ -122,7 +122,7 @@ def test_transactional_test_runner_test_adapter():
 
 
 def test_upstream_crates_enable_testing_feature():
-    """Upstream test crates must enable testing feature via dev-dependencies."""
+    """Upstream test crates must enable testing feature via dev-dependencies (origin: static)."""
 
     crates_to_check = [
         "crates/sui-adapter-transactional-tests/Cargo.toml",
@@ -142,7 +142,7 @@ def test_upstream_crates_enable_testing_feature():
 
 
 def test_repo_cargo_clippy_sui_types():
-    """cargo clippy -p sui-types must pass (pass_to_pass)."""
+    """cargo clippy -p sui-types must pass (pass_to_pass / origin: repo_tests)."""
     r = subprocess.run(
         ["cargo", "clippy", "-p", "sui-types", "--", "-D", "warnings"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
@@ -151,7 +151,7 @@ def test_repo_cargo_clippy_sui_types():
 
 
 def test_repo_cargo_xlint():
-    """cargo xlint must pass (pass_to_pass)."""
+    """cargo xlint must pass (pass_to_pass / origin: repo_tests)."""
     r = subprocess.run(
         ["cargo", "xlint"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -160,7 +160,7 @@ def test_repo_cargo_xlint():
 
 
 def test_cargo_check_sui_types_release():
-    """cargo check --release -p sui-types must pass."""
+    """cargo check --release -p sui-types must pass (pass_to_pass / origin: repo_tests)."""
     result = subprocess.run(
         ["cargo", "check", "--release", "-p", "sui-types"],
         cwd=REPO,
@@ -172,7 +172,7 @@ def test_cargo_check_sui_types_release():
 
 
 def test_cargo_check_transactional_test_runner_release():
-    """cargo check --release -p sui-transactional-test-runner must pass (test-only code excluded)."""
+    """cargo check --release -p sui-transactional-test-runner must pass (pass_to_pass / origin: repo_tests)."""
     result = subprocess.run(
         ["cargo", "check", "--release", "-p", "sui-transactional-test-runner"],
         cwd=REPO,
@@ -184,7 +184,7 @@ def test_cargo_check_transactional_test_runner_release():
 
 
 def test_claude_md_has_testing_guidance():
-    """CLAUDE.md must include guidance on test-only code feature usage."""
+    """CLAUDE.md must include guidance on test-only code feature usage (origin: agent_config)."""
     claude_md = f"{REPO}/CLAUDE.md"
     with open(claude_md) as f:
         content = f.read()
@@ -196,7 +196,7 @@ def test_claude_md_has_testing_guidance():
 
 
 def test_no_panic_on_gasless_in_release():
-    """test_adapter.rs must not panic for gasless tokens in release mode."""
+    """test_adapter.rs must not panic for gasless tokens in release mode (origin: static)."""
     test_adapter_rs = f"{REPO}/crates/sui-transactional-test-runner/src/test_adapter.rs"
     with open(test_adapter_rs) as f:
         content = f.read()

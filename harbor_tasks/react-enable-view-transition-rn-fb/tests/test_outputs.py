@@ -17,86 +17,70 @@ FLAG_NATIVE_FB = f"{REPO}/packages/shared/forks/ReactFeatureFlags.native-fb.js"
 FLAG_TEST_RN = f"{REPO}/packages/shared/forks/ReactFeatureFlags.test-renderer.native-fb.js"
 FLAG_TEST_WWW = f"{REPO}/packages/shared/forks/ReactFeatureFlags.test-renderer.www.js"
 
-# Node.js script that evaluates a feature flag's runtime value from a JS source file.
-# Strips Flow import lines and type annotations so the JS engine can evaluate the constants.
-_FLAG_EVAL_SCRIPT = r"""
-const fs = require('fs');
-const flagPath = process.argv[2];
-const flagName = process.argv[3];
 
-const src = fs.readFileSync(flagPath, 'utf8');
-
-// Strip Flow import/import-type lines and 'export' keyword,
-// then strip Flow type annotations (e.g. ': boolean') from const declarations.
-const cleaned = src.split('\n')
-  .filter(l => !/^\s*import\s/.test(l))
-  .map(l => l.replace(/^export\s+/, ''))
-  .map(l => l.replace(/(const\s+\w+)\s*:\s*\w+/g, '$1'))
-  .join('\n');
-
-try {
-  const fn = new Function(cleaned + '\nreturn ' + flagName + ';');
-  const val = fn();
-  console.log(JSON.stringify({ flag: flagName, value: val, type: typeof val }));
-  process.exit(val === true ? 0 : 1);
-} catch (e) {
-  console.error('Evaluation error: ' + e.message);
-  process.exit(2);
-}
-"""
-
-
-def _eval_flag(filepath: str, flag_name: str) -> subprocess.CompletedProcess:
-    """Use Node.js to evaluate a feature flag's runtime value from a JS source file."""
-    script_path = Path(REPO) / "_eval_flag.cjs"
-    script_path.write_text(_FLAG_EVAL_SCRIPT)
-    try:
-        return subprocess.run(
-            ["node", str(script_path), filepath, flag_name],
-            capture_output=True, text=True, timeout=30, cwd=REPO,
-        )
-    finally:
-        script_path.unlink(missing_ok=True)
+def _get_flag_value(filepath: str, flag_name: str) -> tuple[bool, str]:
+    """Extract flag value from a JS file using regex.
+    
+    Returns (value, error_message). If error_message is not empty, the extraction failed.
+    """
+    content = Path(filepath).read_text()
+    
+    # Find the line with the flag declaration
+    # Matches patterns like:
+    #   export const enableViewTransition: boolean = true;
+    #   export const enableViewTransition = true;
+    #   const enableViewTransition: boolean = true;
+    pattern = rf'^\s*export\s+const\s+{flag_name}(?::\s*\w+)?\s*=\s*(\w+)\s*;'
+    match = re.search(pattern, content, re.MULTILINE)
+    
+    if not match:
+        # Try without export keyword
+        pattern2 = rf'^\s*const\s+{flag_name}(?::\s*\w+)?\s*=\s*(\w+)\s*;'
+        match = re.search(pattern2, content, re.MULTILINE)
+    
+    if not match:
+        return False, f"Could not find {flag_name} declaration in {filepath}"
+    
+    value_str = match.group(1)
+    if value_str == 'true':
+        return True, ""
+    elif value_str == 'false':
+        return False, ""
+    elif value_str == '__PROFILE__':
+        # __PROFILE__ is a placeholder, treat as boolean (false for testing)
+        return False, ""
+    elif value_str == '__VARIANT__':
+        return False, ""
+    else:
+        return False, f"Unknown value {value_str} for {flag_name}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core flag changes via Node.js evaluation
+# Fail-to-pass (pr_diff) — core flag changes via regex parsing
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_enable_view_transition_native_fb():
-    """enableViewTransition evaluates to true in ReactFeatureFlags.native-fb.js."""
-    r = _eval_flag(FLAG_NATIVE_FB, "enableViewTransition")
-    assert r.returncode == 0, (
-        f"enableViewTransition is not true in native-fb.js: "
-        f"{r.stdout.strip()} {r.stderr.strip()}"
-    )
-    data = json.loads(r.stdout.strip())
-    assert data["value"] is True
+    """enableViewTransition is true in ReactFeatureFlags.native-fb.js."""
+    value, error = _get_flag_value(FLAG_NATIVE_FB, "enableViewTransition")
+    assert not error, error
+    assert value is True, f"enableViewTransition should be true in native-fb.js, got {value}"
 
 
 # [pr_diff] fail_to_pass
 def test_enable_view_transition_test_renderer_native_fb():
-    """enableViewTransition evaluates to true in ReactFeatureFlags.test-renderer.native-fb.js."""
-    r = _eval_flag(FLAG_TEST_RN, "enableViewTransition")
-    assert r.returncode == 0, (
-        f"enableViewTransition is not true in test-renderer.native-fb.js: "
-        f"{r.stdout.strip()} {r.stderr.strip()}"
-    )
-    data = json.loads(r.stdout.strip())
-    assert data["value"] is True
+    """enableViewTransition is true in ReactFeatureFlags.test-renderer.native-fb.js."""
+    value, error = _get_flag_value(FLAG_TEST_RN, "enableViewTransition")
+    assert not error, error
+    assert value is True, f"enableViewTransition should be true in test-renderer.native-fb.js, got {value}"
 
 
 # [pr_diff] fail_to_pass
 def test_enable_view_transition_test_renderer_www():
-    """enableViewTransition evaluates to true in ReactFeatureFlags.test-renderer.www.js."""
-    r = _eval_flag(FLAG_TEST_WWW, "enableViewTransition")
-    assert r.returncode == 0, (
-        f"enableViewTransition is not true in test-renderer.www.js: "
-        f"{r.stdout.strip()} {r.stderr.strip()}"
-    )
-    data = json.loads(r.stdout.strip())
-    assert data["value"] is True
+    """enableViewTransition is true in ReactFeatureFlags.test-renderer.www.js."""
+    value, error = _get_flag_value(FLAG_TEST_WWW, "enableViewTransition")
+    assert not error, error
+    assert value is True, f"enableViewTransition should be true in test-renderer.www.js, got {value}"
 
 
 # ---------------------------------------------------------------------------
@@ -160,6 +144,56 @@ def test_repo_flags_validation():
     assert r.returncode == 0, f"Flags validation failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
 
 
+# [repo_tests] pass_to_pass — Version check
+def test_repo_version_check():
+    """Version check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["node", "./scripts/tasks/version-check.js"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Version check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — React Transition tests
+def test_repo_react_transition_tests():
+    """React Transition tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactTransition-test", "--timeout=60", "--passWithNoTests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"React Transition tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — React test-renderer tests
+def test_repo_react_test_renderer_tests():
+    """React test-renderer tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=test-renderer", "--timeout=60", "--passWithNoTests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"React test-renderer tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — React StartTransition tests
+def test_repo_react_start_transition_tests():
+    """React StartTransition tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactStartTransition", "--timeout=60", "--passWithNoTests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"React StartTransition tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — React DOM ViewTransition tests
+def test_repo_react_dom_view_transition_tests():
+    """React DOM ViewTransition tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--testPathPattern=ReactDOMViewTransition-test", "--timeout=60", "--passWithNoTests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"React DOM ViewTransition tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Agent-config derived (agent_config) — .claude/skills/feature-flags/SKILL.md
 # ---------------------------------------------------------------------------
@@ -178,17 +212,13 @@ def test_all_fork_files_have_view_transition_enabled():
     }
     failures = []
     for name, filepath in files.items():
-        r = _eval_flag(filepath, "enableViewTransition")
-        if r.returncode != 0:
-            failures.append(
-                f"{name}: not true ({r.stdout.strip()} {r.stderr.strip()})"
-            )
-            continue
-        data = json.loads(r.stdout.strip())
-        if data["value"] is not True:
-            failures.append(f"{name}: {data['value']}")
+        value, error = _get_flag_value(filepath, "enableViewTransition")
+        if error:
+            failures.append(f"{name}: error - {error}")
+        elif value is not True:
+            failures.append(f"{name}: value={value}")
 
     assert not failures, (
-        "enableViewTransition must evaluate to true in ALL fork files. "
+        "enableViewTransition must be true in ALL fork files. "
         "Failed: " + ", ".join(failures)
     )

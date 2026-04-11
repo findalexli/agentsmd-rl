@@ -16,6 +16,10 @@ RUN git clone --depth=1 --single-branch \
 
 WORKDIR /workspace/react
 
+# Configure git for any potential git operations (must be before git commit)
+RUN git config --global user.email "agent@example.com" && \
+    git config --global user.name "Agent"
+
 # Sanitize snapshot (remove git history, keep snapshot)
 RUN rm -rf .git && \
     git init && \
@@ -27,10 +31,6 @@ RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 # Install dependencies (but skip heavy native build tools not needed for JS flag checking)
 RUN yarn install --frozen-lockfile --network-timeout=600000 || yarn install
-
-# Configure git for any potential git operations
-RUN git config --global user.email "agent@example.com" && \
-    git config --global user.name "Agent"
 
 # Set up logging directory
 RUN mkdir -p /logs/verifier

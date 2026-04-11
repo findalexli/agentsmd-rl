@@ -170,3 +170,48 @@ def test_isort_check():
         cwd=REPO,
     )
     assert result.returncode == 0, f"isort check failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_codespell():
+    """Codespell passes on modified file (CI standard)."""
+    # Install codespell if not present
+    subprocess.run(["pip", "install", "codespell", "-q"], check=False, capture_output=True)
+    result = subprocess.run(
+        ["codespell", "--config", f"{REPO}/.codespellrc", str(MODIFIED_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Codespell check failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_pre_commit_check_ast():
+    """Pre-commit check-ast passes on modified file (CI standard)."""
+    # Install pre-commit if not present
+    subprocess.run(["pip", "install", "pre-commit", "-q"], check=False, capture_output=True)
+    result = subprocess.run(
+        ["pre-commit", "run", "check-ast", "--files", str(MODIFIED_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Pre-commit check-ast failed:\n{result.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_pre_commit_debug_statements():
+    """Pre-commit debug-statements check passes on modified file (CI standard)."""
+    # Install pre-commit if not present
+    subprocess.run(["pip", "install", "pre-commit", "-q"], check=False, capture_output=True)
+    result = subprocess.run(
+        ["pre-commit", "run", "debug-statements", "--files", str(MODIFIED_FILE)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert result.returncode == 0, f"Pre-commit debug-statements check failed:\n{result.stderr}"

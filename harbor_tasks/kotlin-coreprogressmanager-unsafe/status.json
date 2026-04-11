@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T04:50:08.102493",
-  "total_time": 12412.17,
-  "sandbox_id": "imid2bj5z1z21diy2fgv8",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:48:09.925486",
+  "total_time": 4754.88,
+  "sandbox_id": "itdokyjiw3otwga1x4h70",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 702.43,
+      "time": 3507.96,
       "notes": ""
     },
     "improve": {
@@ -28,25 +28,24 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed: (1) Dockerfile - changed FROM openjdk:17-slim to eclipse-temurin:17-jdk, removed COPY tests/ that was breaking build context. (2) solution/solve.sh - fixed idempotency check (was checking for ConcurrentHashMap<> which exists in base, now checks for absence of ConcurrentLongObjectMap). Also replaced git apply patch with Python-based text manipulation for more robust application.",
+      "attempts": 1,
+      "notes": "Fixed Dockerfile by adding symlink /workspace/tests -> /tests for correct test path resolution. All 4 checks pass: Docker build successful, NOP test reward=0, Gold test reward=1 (24/24 tests pass), Rubric judge ICR=1.0",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 122.15
+      "time": 149.92
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.25,
-      "notes": "ICR=0.50"
+      "time": 11.18,
+      "notes": "ICR=1.00"
     },
     "rubric_enrichment": {
       "status": "ok",
       "configs_found": [
         ".ai/guidelines.md",
         "compiler/AGENTS.md",
-        "compiler/CLAUDE.md",
         "AGENTS.md",
         "CLAUDE.md"
       ],
@@ -58,14 +57,6 @@
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 794.74,
-      "at": "2026-04-09T14:41:25.810603"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -97,6 +88,14 @@
       "backend": "gemini",
       "time": 12412.17,
       "at": "2026-04-10T04:50:08.102493"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4754.88,
+      "at": "2026-04-10T18:48:09.925486"
     }
   ]
 }

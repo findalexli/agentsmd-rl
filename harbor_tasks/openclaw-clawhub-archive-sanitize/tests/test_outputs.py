@@ -177,6 +177,55 @@ def test_repo_lint_full():
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
 
+# [repo_tests] pass_to_pass
+def test_repo_check():
+    """Repo comprehensive check suite passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Check failed:\n{r.stderr[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_conflict_markers():
+    """Repo has no conflict markers (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check:no-conflict-markers"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Conflict markers check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_bundled_plugin_metadata():
+    """Repo bundled plugin metadata is up to date (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check:bundled-plugin-metadata"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Bundled plugin metadata check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_plugin_boundaries():
+    """Repo plugin extension boundaries are respected (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "lint:plugins:no-extension-imports"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Plugin boundary check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_base_config_schema():
+    """Repo base config schema is up to date (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "check:base-config-schema"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Base config schema check failed:\n{r.stderr[-500:]}"
+
 
 # ---------------------------------------------------------------------------
 # Pass-to-pass (static) — anti-stub

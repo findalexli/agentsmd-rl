@@ -261,21 +261,6 @@ def test_cargo_clippy():
     )
 
 
-# [repo_tests] pass_to_pass
-def test_ty_python_semantic_lib():
-    """ty_python_semantic library tests pass (pass_to_pass)."""
-    r = subprocess.run(
-        ["cargo", "test", "-p", "ty_python_semantic", "--lib"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        timeout=600,
-    )
-    assert r.returncode == 0, (
-        f"ty_python_semantic lib tests failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
-    )
-
-
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

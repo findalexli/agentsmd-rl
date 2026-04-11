@@ -1,31 +1,39 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:53:07.466071",
-  "total_time": 1496.44,
-  "sandbox_id": "ig8idwfb9uzjko5ru9ryn",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T19:03:01.924833",
+  "total_time": 3191.36,
+  "sandbox_id": "ikxnqe0qvnqemb47nxeew",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 2243.84,
+      "time": 952.03,
       "notes": ""
     },
     "rubric_enrichment": {
       "status": "ok",
       "configs_found": [
-        "CLAUDE.md"
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".claude/skills/cherry-pick/SKILL.md",
+        ".claude/skills/protocol-config/SKILL.md",
+        ".claude/skills/simtest-debug/SKILL.md"
       ],
       "rules_added": 3,
+      "rules_rejected": 8,
+      "rejection_reasons": "6 rules about workflow/process (cherry-pick, protocol-config steps, simtest debugging), 2 not applicable to Rust code changes",
       "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 108.29
+      "time": 50.84
     },
     "improve": {
       "status": "skipped",
@@ -35,9 +43,29 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP test reward=0 (correctly fails on buggy code), Gold test reward=1 (all 5 tests pass after fix), Rubric judge returns 0.5 (fallback when API keys unavailable - code complies with all 3 rubric rules)",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.63
+      "time": 498.54
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 0.82,
+      "notes": "",
+      "precision": 0.5
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 6.2,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -56,6 +84,22 @@
       "backend": "fireworks",
       "time": 300.0,
       "at": "2026-04-10T00:00:00.000000"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 0,
+      "at": "2026-04-11T00:00:00.000000"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3191.36,
+      "at": "2026-04-10T19:03:01.924833"
     }
   ]
 }

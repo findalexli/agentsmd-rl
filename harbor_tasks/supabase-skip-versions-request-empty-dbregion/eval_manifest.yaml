@@ -9,8 +9,8 @@ source:
 checks:
   - id: typescript_parses
     type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript file must parse without syntax errors"
+    origin: repo_tests
+    description: "Modified TypeScript file must parse without syntax errors (via Node.js TS API)"
 
   - id: no_syntax_errors
     type: pass_to_pass
@@ -74,15 +74,10 @@ checks:
     description: "The data/config directory must exist"
 
   # CI-derived repo_tests pass_to_pass checks
-  - id: typescript_file_parses
+  - id: repo_typescript_syntax_valid
     type: pass_to_pass
     origin: repo_tests
-    description: "TypeScript file must parse without syntax errors (tsx)"
-
-  - id: config_files_all_parse
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All data/config TypeScript files must parse successfully"
+    description: "Repo TypeScript files have valid syntax via Node.js TS API"
 
   - id: query_enabled_gating_rule
     type: fail_to_pass

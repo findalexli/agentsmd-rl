@@ -16,10 +16,6 @@ PKG = f"{REPO}/packages/opencode"
 RESULTS_PATH = "/tmp/_parse_specifier_results.json"
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _run_bun(code: str, timeout: int = 60) -> subprocess.CompletedProcess:
     """Write a temp TypeScript file and execute it with bun."""
     script = Path(PKG) / "_test_eval.ts"
@@ -81,10 +77,6 @@ def _get(spec: str) -> dict:
     return _results[spec]
 
 
-# ---------------------------------------------------------------------------
-# Pass-to-pass — import sanity and basic specifiers
-# ---------------------------------------------------------------------------
-
 # [static] pass_to_pass
 def test_modified_files_importable():
     """Both modified TypeScript source files must import without errors."""
@@ -140,8 +132,6 @@ def test_repo_unit_tests():
         timeout=180,
         cwd=PKG,
     )
-    # Check that tests ran and we got the expected pass count
-    # The repo has 3 pre-existing failures; we verify the fix doesn't add more
     output = r.stdout + r.stderr
     pass_count = 0
     for line in output.split("\n"):
@@ -157,17 +147,37 @@ def test_repo_unit_tests():
     )
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass — core behavioral tests
-# ---------------------------------------------------------------------------
+# [repo_tests] pass_to_pass
+def test_repo_plugin_tests():
+    """Repo's plugin-related unit tests pass (specifically tests plugin loader and shared module)."""
+    r = subprocess.run(
+        ["bun", "test", "test/plugin/loader-shared.test.ts", "--timeout", "30000"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=PKG,
+    )
+    assert r.returncode == 0, f"Plugin loader tests failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_npm_sanitize():
+    """Npm.sanitize function exists and works for Windows illegal characters (pass_to_pass)."""
+    code = (
+        'import { Npm } from "./src/npm/index"\n'
+        'const sanitized = Npm.sanitize("test:pkg<name>")\n'
+        'console.log(JSON.stringify({ sanitized }))\n'
+    )
+    r = _run_bun(code)
+    assert r.returncode == 0, f"Npm.sanitize test failed:\n{r.stderr}"
+    assert "test_pkg_name" in r.stdout or "test:pkg<name>" in r.stdout, (
+        f"Unexpected sanitize output: {r.stdout}"
+    )
+
 
 # [pr_diff] fail_to_pass
 def test_parse_git_ssh_urls():
-    """git+ssh URLs with embedded @ in the host must be correctly parsed.
-
-    The old lastIndexOf('@') approach splits at the wrong @ character,
-    producing garbage package names like 'acme@git+ssh://git'.
-    """
+    """git+ssh URLs with embedded @ in the host must be correctly parsed."""
     r = _get("acme@git+ssh://git@github.com/opencode/acme.git")
     assert r["pkg"] == "acme", f"Expected pkg='acme', got {r['pkg']!r}"
     assert r["version"] == "git+ssh://git@github.com/opencode/acme.git"
@@ -181,10 +191,7 @@ def test_parse_git_ssh_urls():
 
 # [pr_diff] fail_to_pass
 def test_parse_bare_npm_protocol():
-    """npm:@scope/pkg@version must extract the scoped package name without prefix.
-
-    The old code keeps the 'npm:' prefix in the package name.
-    """
+    """npm:@scope/pkg@version must extract the scoped package name without prefix."""
     r = _get("npm:@opencode/acme@1.0.0")
     assert r["pkg"] == "@opencode/acme", (
         f"Expected pkg='@opencode/acme', got {r['pkg']!r}"
@@ -194,10 +201,7 @@ def test_parse_bare_npm_protocol():
 
 # [pr_diff] fail_to_pass
 def test_parse_unversioned_npm_protocol():
-    """npm:@scope/pkg (no version) must return pkg='@scope/pkg' with version 'latest'.
-
-    The old lastIndexOf('@') splits at the scope @, producing pkg='npm:'.
-    """
+    """npm:@scope/pkg (no version) must return pkg='@scope/pkg' with version 'latest'."""
     r = _get("npm:@opencode/acme")
     assert r["pkg"] == "@opencode/acme", (
         f"Expected pkg='@opencode/acme', got {r['pkg']!r}"
@@ -207,10 +211,7 @@ def test_parse_unversioned_npm_protocol():
 
 # [pr_diff] fail_to_pass
 def test_parse_npm_alias():
-    """pkg@npm:@scope/pkg@version must keep the alias name as pkg.
-
-    The old code splits at the last @ and produces a garbled package name.
-    """
+    """pkg@npm:@scope/pkg@version must keep the alias name as pkg."""
     r = _get("acme@npm:@opencode/acme@1.0.0")
     assert r["pkg"] == "acme", f"Expected pkg='acme', got {r['pkg']!r}"
     assert r["version"] == "npm:@opencode/acme@1.0.0"

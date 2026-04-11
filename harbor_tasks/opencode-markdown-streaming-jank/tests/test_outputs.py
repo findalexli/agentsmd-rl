@@ -302,6 +302,17 @@ def test_repo_unit_tests_ui():
     assert r.returncode == 0, f"UI unit tests failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_build_app():
+    """App package build passes (pass_to_pass) — CI uses bun run build for publishing."""
+    _install_deps()
+    r = subprocess.run(
+        ["bun", "run", "build"],
+        capture_output=True, text=True, timeout=300, cwd=f"{REPO}/packages/app",
+    )
+    assert r.returncode == 0, f"App build failed:\n{r.stderr[-1000:] if r.stderr else r.stdout[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

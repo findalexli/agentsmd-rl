@@ -353,6 +353,78 @@ def test_upstream_vitest_passes(vitest_behavioral):
 
 
 # [repo_tests] pass_to_pass
+def test_repo_core_tests():
+    """synology-chat core tests pass via vitest (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "extensions/synology-chat/src/core.test.ts",
+         "--reporter=verbose"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    output = r.stdout + r.stderr
+    passed = r.returncode == 0 or (
+        "Tests" in output and "passed" in output and "FAIL" not in output
+    )
+    assert passed, f"Core tests failed:\n{output[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_client_tests():
+    """synology-chat client tests pass via vitest (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "extensions/synology-chat/src/client.test.ts",
+         "--reporter=verbose"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    output = r.stdout + r.stderr
+    passed = r.returncode == 0 or (
+        "Tests" in output and "passed" in output and "FAIL" not in output
+    )
+    assert passed, f"Client tests failed:\n{output[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_channel_tests():
+    """synology-chat channel tests pass via vitest (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "extensions/synology-chat/src/channel.test.ts",
+         "--reporter=verbose"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    output = r.stdout + r.stderr
+    passed = r.returncode == 0 or (
+        "Tests" in output and "passed" in output and "FAIL" not in output
+    )
+    assert passed, f"Channel tests failed:\n{output[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_approval_auth_tests():
+    """synology-chat approval-auth tests pass via vitest (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "vitest", "run", "extensions/synology-chat/src/approval-auth.test.ts",
+         "--reporter=verbose"],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    output = r.stdout + r.stderr
+    passed = r.returncode == 0 or (
+        "Tests" in output and "passed" in output and "FAIL" not in output
+    )
+    assert passed, f"Approval-auth tests failed:\n{output[-1000:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_oxlint():
+    """oxlint passes on modified synology-chat files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npx", "oxlint",
+         "extensions/synology-chat/src/webhook-handler.ts",
+         "extensions/synology-chat/src/test-http-utils.ts"],
+        cwd=REPO, capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"oxlint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_no_conflict_markers():
     """Repo has no Git conflict markers (pass_to_pass)."""
     r = subprocess.run(

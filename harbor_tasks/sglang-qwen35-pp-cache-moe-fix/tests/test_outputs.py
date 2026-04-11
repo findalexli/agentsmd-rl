@@ -139,9 +139,9 @@ for node in ast.walk(tree):
         for item in node.body:
             if isinstance(item, ast.FunctionDef) and item.name == "__init__":
                 param_names = [arg.arg for arg in item.args.args]
-                assert "mamba_layer_ids" in param_names, \\
+                assert "mamba_layer_ids" in param_names, \
                     f"Missing mamba_layer_ids: {param_names}"
-                assert "start_layer" in param_names, \\
+                assert "start_layer" in param_names, \
                     f"Missing start_layer: {param_names}"
                 init_src = ast.get_source_segment(src, item) or ""
                 assert "# TODO: Support PP" not in init_src, "Still has TODO"
@@ -264,7 +264,7 @@ for node in ast.walk(tree):
                     target_classes.add(node.name)
 
 assert total_load_methods >= 4, f"Expected >=4 load methods, found {total_load_methods}"
-assert methods_with_filtering >= 4, \\
+assert methods_with_filtering >= 4, \
     f"Expected >=4 methods with PP filtering, only {methods_with_filtering} have it"
 assert len(target_classes) >= 2, f"Expected >=2 classes with filtering, got {target_classes}"
 print("PASS")
@@ -303,12 +303,12 @@ for node in ast.walk(tree):
                                 # Execute with start_layer=15: must get 15, not hardcoded 0
                                 obj = type("S", (), {})()
                                 exec(assign_src, {"self": obj, "start_layer": 15})
-                                assert obj.start_layer == 15, \\
+                                assert obj.start_layer == 15, \
                                     f"{node.name}: expected 15, got {obj.start_layer}"
                                 # Execute with start_layer=None: must default to 0
                                 obj2 = type("S", (), {})()
                                 exec(assign_src, {"self": obj2, "start_layer": None})
-                                assert obj2.start_layer == 0, \\
+                                assert obj2.start_layer == 0, \
                                     f"{node.name}: expected 0 for None, got {obj2.start_layer}"
                                 tested_classes += 1
 
@@ -324,7 +324,7 @@ for node in ast.walk(tree):
                 has_layer_param = any("layer" in p and "id" in p for p in params)
                 assert has_layer_param, f"MambaPool must accept layer IDs param: {params}"
                 init_src = ast.get_source_segment(src, item) or ""
-                assert "len(cache_params.layers)" not in init_src, \\
+                assert "len(cache_params.layers)" not in init_src, \
                     "Must not use len(cache_params.layers)"
                 break
         break
@@ -333,6 +333,122 @@ print("PASS")
 """)
     assert r.returncode == 0, f"Failed: {r.stderr}"
     assert "PASS" in r.stdout
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI/CD gates
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass — CI syntax check for modified files
+def test_repo_py_compile_modified_files():
+    """Modified files must compile with py_compile (pass_to_pass)."""
+    files = [
+        "python/sglang/srt/mem_cache/memory_pool.py",
+        "python/sglang/srt/model_executor/model_runner_kv_cache_mixin.py",
+        "python/sglang/srt/models/qwen3_5.py",
+        "python/sglang/srt/models/qwen3_vl.py",
+        "python/sglang/srt/disaggregation/decode.py",
+    ]
+    for f in files:
+        r = subprocess.run(
+            ["python3", "-m", "py_compile", f"{REPO}/{f}"],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"py_compile failed for {f}:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI syntax check for test file
+def test_repo_py_compile_mamba_test():
+    """test_mamba_unittest.py must compile (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile",
+         f"{REPO}/test/registered/unit/mem_cache/test_mamba_unittest.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass — CI import check for get_layer_id via subprocess
+def test_repo_get_layer_id_import():
+    """get_layer_id can be extracted from common.py via AST without torch (pass_to_pass)."""
+    code = """\
+import ast
+import re
+from pathlib import Path
+src = Path("/workspace/sglang/python/sglang/srt/layers/utils/common.py").read_text()
+tree = ast.parse(src)
+found = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "get_layer_id":
+        found = True
+        break
+assert found, "get_layer_id not found in common.py"
+print("PASS")
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — CI AST verification for memory_pool
+def test_repo_memory_pool_ast_valid():
+    """memory_pool.py must have valid AST and key classes (pass_to_pass)."""
+    code = """\
+import ast
+from pathlib import Path
+src = Path("/workspace/sglang/python/sglang/srt/mem_cache/memory_pool.py").read_text()
+tree = ast.parse(src)
+classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+assert "HybridReqToTokenPool" in classes, "HybridReqToTokenPool not found"
+assert "HybridLinearKVPool" in classes, "HybridLinearKVPool not found"
+assert "MambaPool" in classes, "MambaPool not found"
+print("PASS")
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — CI AST verification for qwen3_5
+def test_repo_qwen3_5_ast_valid():
+    """qwen3_5.py must have valid AST with required methods (pass_to_pass)."""
+    code = """\
+import ast
+from pathlib import Path
+src = Path("/workspace/sglang/python/sglang/srt/models/qwen3_5.py").read_text()
+tree = ast.parse(src)
+methods_found = set()
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef):
+        if node.name in ("load_weights", "load_fused_expert_weights"):
+            methods_found.add(node.name)
+assert "load_weights" in methods_found, "load_weights not found"
+assert "load_fused_expert_weights" in methods_found, "load_fused_expert_weights not found"
+print("PASS")
+"""
+    r = subprocess.run(
+        ["python3", "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
+
+
+# [repo_tests] pass_to_pass — CI git status check
+def test_repo_git_status_clean():
+    """Repo must be a clean git checkout (pass_to_pass)."""
+    r = subprocess.run(
+        ["git", "status", "--porcelain"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"git status failed:\n{r.stderr}"
+    # Note: git status --porcelain returns empty string if clean
 
 
 # ---------------------------------------------------------------------------

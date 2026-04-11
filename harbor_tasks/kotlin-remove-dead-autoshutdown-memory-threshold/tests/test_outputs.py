@@ -168,9 +168,8 @@ def test_file_has_valid_prop_mappers():
 
 
 # ============================================================================
-# Repo CI/CD Pass-to-Pass Tests
-# These tests verify that the repository's code structure remains valid
-# after the fix, ensuring candidate solutions don't break existing functionality.
+# Pass-to-Pass Tests - Static file structure checks
+# These tests verify file content without running CI commands.
 # ============================================================================
 
 
@@ -279,3 +278,36 @@ def test_repo_no_double_commas():
     # Check for double commas (common syntax error)
     assert ", ," not in content, "Double commas detected"
     assert ",," not in content, "Adjacent commas detected"
+
+
+# ============================================================================
+# Repo CI/CD Pass-to-Pass Tests - subprocess-based
+# These tests verify the repository state using actual CI commands.
+# ============================================================================
+
+
+def test_repo_git_file_exists():
+    """Repo CI check: Verify target file exists via git ls-files (pass_to_pass)."""
+    result = subprocess.run(
+        ["git", "ls-files", "compiler/daemon/daemon-common/src/org/jetbrains/kotlin/daemon/common/DaemonParams.kt"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30
+    )
+    assert result.returncode == 0, f"git ls-files failed: {result.stderr}"
+    assert "DaemonParams.kt" in result.stdout, "DaemonParams.kt not tracked in git"
+
+
+def test_repo_kotlin_files_present():
+    """Repo CI check: Verify daemon-common Kotlin files exist (pass_to_pass)."""
+    result = subprocess.run(
+        ["find", "compiler/daemon/daemon-common/src/org/jetbrains/kotlin/daemon/common/", "-name", "*.kt"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+        timeout=30
+    )
+    assert result.returncode == 0, f"find command failed: {result.stderr}"
+    kt_files = [line for line in result.stdout.strip().split("\n") if line]
+    assert len(kt_files) >= 5, f"Expected at least 5 .kt files, found {len(kt_files)}"

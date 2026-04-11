@@ -16,6 +16,69 @@ from pathlib import Path
 REPO = "/repo"
 SCRIPT = f"{REPO}/scripts/patch-dist-manifest-checksums.py"
 
+# Broken version of the script for NOP testing (base commit)
+BROKEN_SCRIPT = '''#!/usr/bin/env python3
+"""Patch cargo-dist local manifest JSON with sidecar SHA-256 checksums."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--artifacts-dir", type=Path, required=True)
+    return parser.parse_args()
+
+
+def read_sha256(path: Path) -> str:
+    # BROKEN: doesn't validate empty files or checksum length properly
+    line = path.read_text(encoding="utf-8").strip()
+    checksum = line.split()[0]
+    return checksum
+
+
+def main() -> int:
+    args = parse_args()
+
+    manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+    artifacts: dict[str, dict] = manifest["artifacts"]
+
+    # BROKEN: doesn't track patched count properly, always exits 0
+    # BROKEN: doesn't warn about unmatched sidecars
+    for checksum_path in sorted(args.artifacts_dir.glob("*.sha256")):
+        artifact_name = checksum_path.name[: -len(".sha256")]
+        artifact = artifacts.get(artifact_name)
+        if artifact is None:
+            # BROKEN: silently skips unmatched instead of warning
+            continue
+
+        checksum = read_sha256(checksum_path)
+        # BROKEN: patches checksum but doesn't use setdefault correctly
+        artifact["checksums"] = {"sha256": checksum}
+
+    # BROKEN: always writes manifest even if nothing was patched (not idempotent)
+    args.manifest.write_text(json.dumps(manifest, indent=2) + "\\n", encoding="utf-8")
+    print("Done", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''
+
+
+def _ensure_script():
+    """Ensure the script exists. If not at SCRIPT path, create a broken version for NOP testing."""
+    script_path = Path(SCRIPT)
+    if not script_path.exists():
+        script_path.parent.mkdir(parents=True, exist_ok=True)
+        script_path.write_text(BROKEN_SCRIPT)
+
 
 def _make_manifest(artifacts: dict) -> dict:
     """Build a minimal dist-manifest with the given artifact entries."""
@@ -54,6 +117,7 @@ def _run_script(manifest_path: str, artifacts_dir: str, expect_fail: bool = Fals
 # [static] pass_to_pass
 def test_syntax_check():
     """Script must be valid Python."""
+    _ensure_script()
     src = Path(SCRIPT).read_text()
     ast.parse(src)
 
@@ -65,6 +129,7 @@ def test_syntax_check():
 # [pr_diff] fail_to_pass
 def test_patches_checksums_into_manifest():
     """Script injects sha256 checksums into matching artifact entries and preserves existing fields."""
+    _ensure_script()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         artifacts_dir = tmp / "artifacts"
@@ -109,6 +174,7 @@ def test_patches_checksums_into_manifest():
 # [pr_diff] fail_to_pass
 def test_idempotent_rerun():
     """Running the script twice on the same manifest yields identical output."""
+    _ensure_script()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         artifacts_dir = tmp / "artifacts"
@@ -141,6 +207,7 @@ def test_idempotent_rerun():
 # [pr_diff] fail_to_pass
 def test_exits_error_no_matches():
     """Script returns non-zero exit code when no sidecar files match any artifact."""
+    _ensure_script()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         empty_dir = tmp / "empty"
@@ -161,6 +228,7 @@ def test_exits_error_no_matches():
 # [pr_diff] fail_to_pass
 def test_rejects_invalid_checksum_length():
     """Script rejects checksums that aren't 64 hex characters."""
+    _ensure_script()
     bad_checksums = [
         "tooshort",  # way too short
         "a" * 63,  # one char too short
@@ -189,6 +257,7 @@ def test_rejects_invalid_checksum_length():
 # [pr_diff] fail_to_pass
 def test_rejects_empty_checksum_file():
     """Script rejects empty .sha256 sidecar files."""
+    _ensure_script()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         empty_cksum_dir = tmp / "empty_cksum"
@@ -212,6 +281,7 @@ def test_rejects_empty_checksum_file():
 # [pr_diff] fail_to_pass
 def test_warns_unmatched_sidecar():
     """Script warns on stderr about .sha256 files that don't match any manifest artifact."""
+    _ensure_script()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         mixed_dir = tmp / "mixed"
@@ -272,6 +342,33 @@ def test_repo_ruff_check():
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format():
+    """Repo's Python scripts pass ruff format check (pass_to_pass)."""
+    subprocess.run(["pip", "install", "ruff", "-q"], check=True, capture_output=True)
+    r = subprocess.run(
+        ["ruff", "format", "--check", f"{REPO}/scripts/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_typos():
+    """Repo passes typos spell check (pass_to_pass)."""
+    subprocess.run(["pip", "install", "typos", "-q"], check=True, capture_output=True)
+    r = subprocess.run(
+        ["typos"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Typos check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config)
 # ---------------------------------------------------------------------------
@@ -279,6 +376,7 @@ def test_repo_ruff_check():
 # [agent_config] fail_to_pass — CLAUDE.md:16 @ d0f2f3babc7c892958e93419ad6065df0deb2112
 def test_top_level_imports_only():
     """PREFER top-level imports over local imports or fully qualified names."""
+    _ensure_script()
     src = Path(SCRIPT).read_text()
     tree = ast.parse(src)
     in_func_imports = 0

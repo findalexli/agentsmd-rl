@@ -4,7 +4,7 @@ source:
     repo: kotlin
     number: 5736
     title: "IJ SDK: adjust CoreProgressManager to avoid using sun.misc.Unsafe"
-    base_commit: 65fee3c3cad8012a6aad5df7554a1dd20dfb8d22
+    base_commit: 65fee3c3cad8012a6aad3df7554a1dd20dfb8d22
     merge_commit: 078e58a774eb0921aa7554d41e60d011db46754d
   files:
     - compiler/cli/src/com/intellij/openapi/progress/impl/CoreProgressManager.java
@@ -61,46 +61,88 @@ checks:
     description: "The file should import from java.util.concurrent package"
     type: "p2p"  # Pass-to-pass: already present in base commit (for other types)
 
-  # Pass-to-Pass: Repo CI/CD Checks (using actual repo tooling)
+  # Pass-to-Pass: Repo CI/CD Checks (using actual repo tooling via subprocess.run)
   - id: "test_repo_java_syntax_valid"
     name: "Java syntax validation"
     description: "Java file has no syntax errors (verified via javac)"
     type: "p2p"
     origin: "repo_tests"
 
-  - id: "test_repo_file_encoding_utf8"
-    name: "UTF-8 encoding valid"
-    description: "Java file uses valid UTF-8 encoding"
+  - id: "test_repo_no_bom"
+    name: "No UTF-8 BOM marker"
+    description: "Java file does not have a UTF-8 Byte Order Mark (verified via od command)"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_no_tabs"
+    name: "No tab characters"
+    description: "Java file uses spaces for indentation, no tabs (verified via grep -P \\t)"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_trailing_whitespace"
+    name: "No trailing whitespace"
+    description: "Java file has no trailing whitespace on any line (verified via grep)"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_newline_at_eof"
+    name: "Newline at end of file"
+    description: "Java file ends with a proper newline character (verified via od command)"
     type: "p2p"
     origin: "repo_tests"
 
   - id: "test_repo_package_declaration_valid"
     name: "Package declaration valid"
-    description: "Java file has correct package declaration"
+    description: "Java file has correct package declaration (verified via grep)"
     type: "p2p"
     origin: "repo_tests"
 
   - id: "test_repo_class_structure_valid"
     name: "Class structure valid"
-    description: "CoreProgressManager class is properly declared"
+    description: "CoreProgressManager class is properly declared (verified via grep)"
     type: "p2p"
     origin: "repo_tests"
 
-  - id: "test_repo_license_header_present"
-    name: "License header present"
-    description: "Java file contains JetBrains/Apache 2.0 license header"
+  - id: "test_repo_copyright_header"
+    name: "Copyright header present"
+    description: "Java file contains JetBrains copyright header (verified via grep)"
     type: "p2p"
     origin: "repo_tests"
 
-  - id: "test_repo_imports_structure_valid"
-    name: "Imports structure valid"
-    description: "Java file has properly structured imports"
+  - id: "test_repo_license_header"
+    name: "Apache 2.0 license reference present"
+    description: "Java file contains Apache 2.0 license reference (verified via grep)"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_imports_concurrent"
+    name: "java.util.concurrent imports present"
+    description: "Java file imports from java.util.concurrent package (verified via grep)"
     type: "p2p"
     origin: "repo_tests"
 
   - id: "test_repo_no_sun_misc_unsafe"
     name: "No sun.misc.Unsafe imports"
-    description: "Java file does not directly import sun.misc.Unsafe"
+    description: "Java file does not directly import sun.misc.Unsafe (verified via grep)"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_no_windows_line_endings"
+    name: "Unix line endings only"
+    description: "Java file uses Unix-style LF line endings, no CRLF (verified via grep)"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_file_not_empty"
+    name: "File is not empty"
+    description: "Java file has substantial content (verified via wc -c)"
+    type: "p2p"
+    origin: "repo_tests"
+
+  - id: "test_repo_no_merge_conflict_markers"
+    name: "No merge conflict markers"
+    description: "Java file has no git merge conflict markers (verified via grep)"
     type: "p2p"
     origin: "repo_tests"
 
@@ -109,16 +151,16 @@ rubric:
     source:
       path: ".ai/guidelines.md"
       lines: "81"
-      commit: "65fee3c3cad8012a6aad5df7554a1dd20dfb8d22"
+      commit: "65fee3c3cad8012a6aad3df7554a1dd20dfb8d22"
 
   - rule: "Reference relevant YouTrack issues (IJ-XXXXX, KT-XXXXX) in code comments when addressing specific problems."
     source:
       path: ".ai/guidelines.md"
       lines: "78-79"
-      commit: "65fee3c3cad8012a6aad5df7554a1dd20dfb8d22"
+      commit: "65fee3c3cad8012a6aad3df7554a1dd20dfb8d22"
 
   - rule: "Follow existing code style and patterns in the file being modified. Check neighboring code for conventions."
     source:
       path: "compiler/AGENTS.md"
       lines: "35-38"
-      commit: "65fee3c3cad8012a6aad5df7554a1dd20dfb8d22"
+      commit: "65fee3c3cad8012a6aad3df7554a1dd20dfb8d22"

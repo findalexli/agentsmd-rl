@@ -256,3 +256,21 @@ def test_unit_tests_pass():
             return  # OK if no tests exist
         assert False, \
             f"Unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"
+
+
+def test_build_validation_passes():
+    """Package build validation passes (p2p).
+
+    Runs publint and @arethetypeswrong/cli to validate package exports
+    and TypeScript types are correctly configured.
+    """
+    result = subprocess.run(
+        ["pnpm", "nx", "run", "@tanstack/start-plugin-core:test:build", "--outputStyle=stream"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={**os.environ, "CI": "1", "NX_DAEMON": "false"}
+    )
+    assert result.returncode == 0, \
+        f"Build validation failed:\n{result.stdout[-1000:]}\n{result.stderr[-1000:]}"

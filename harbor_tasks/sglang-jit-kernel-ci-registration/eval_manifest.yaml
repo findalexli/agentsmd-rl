@@ -1,98 +1,135 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 21239
-  base_commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
-  merge_commit: "260abe1fb1f116ea51a72c922defccf2788197e8"
-
+  base_commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+  merge_commit: 260abe1fb1f116ea51a72c922defccf2788197e8
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "All 4 modified files must be valid Python"
-
-  - id: bench_cast_ci_registration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bench_cast.py is discoverable by ci_register AST parser and registered for benchmark suite"
-
-  - id: bench_fused_qknorm_rope_ci_registration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bench_fused_qknorm_rope.py is discoverable and registered for benchmark suite"
-
-  - id: cast_ci_registration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "test_cast.py is discoverable and registered for kernel unit suite"
-
-  - id: fused_qknorm_rope_ci_registration
-    type: fail_to_pass
-    origin: pr_diff
-    description: "test_fused_qknorm_rope.py is discoverable and registered for kernel unit suite"
-
-  - id: collect_tests_no_errors
-    type: fail_to_pass
-    origin: pr_diff
-    description: "collect_tests() succeeds on all 4 files without ValueError, all est_time values positive"
-
-  - id: literal_registration_values
-    type: fail_to_pass
-    origin: agent_config
-    description: "Registration calls use literal values for est_time and suite (AST-parseable by run_suite.py)"
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "433"
-      commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
-
-  - id: module_level_registration
-    type: fail_to_pass
-    origin: agent_config
-    description: "Registration calls are at module level, not nested inside functions or classes"
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "422"
-      commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
-
-  - id: correct_import_path
-    type: fail_to_pass
-    origin: agent_config
-    description: "Files import register_cuda_ci from sglang.test.ci.ci_register"
-    source:
-      path: ".claude/skills/add-jit-kernel/SKILL.md"
-      lines: "425"
-      commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
-
-  - id: suite_file_type_consistency
-    type: fail_to_pass
-    origin: agent_config
-    description: "Benchmark files use benchmark suite, test files use unit suite (not swapped)"
-    source:
-      path: ".claude/skills/write-sglang-test/SKILL.md"
-      lines: "8"
-      commit: "6047d2c690483224b2bb7d70288ea60b0b8e0c7d"
-
-  # Repo CI checks (pass_to_pass) — ensure repo's own CI pipeline passes
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target files pass ruff linting for F401 (unused imports) and F821 (undefined names)"
-
-  - id: test_repo_isort_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target files have correctly sorted imports"
-
-  - id: test_repo_black_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target files are correctly formatted with black"
-
-  - id: test_repo_codespell
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Target files have no spelling errors"
-
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All 4 modified files must be valid Python
+- id: bench_cast_ci_registration
+  type: fail_to_pass
+  origin: pr_diff
+  description: bench_cast.py is discoverable by ci_register AST parser and registered
+    for benchmark suite
+- id: bench_fused_qknorm_rope_ci_registration
+  type: fail_to_pass
+  origin: pr_diff
+  description: bench_fused_qknorm_rope.py is discoverable and registered for benchmark
+    suite
+- id: cast_ci_registration
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_cast.py is discoverable and registered for kernel unit suite
+- id: fused_qknorm_rope_ci_registration
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_fused_qknorm_rope.py is discoverable and registered for kernel
+    unit suite
+- id: collect_tests_no_errors
+  type: fail_to_pass
+  origin: pr_diff
+  description: collect_tests() succeeds on all 4 files without ValueError, all est_time
+    values positive
+- id: literal_registration_values
+  type: fail_to_pass
+  origin: agent_config
+  description: Registration calls use literal values for est_time and suite (AST-parseable
+    by run_suite.py)
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '433'
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+- id: module_level_registration
+  type: fail_to_pass
+  origin: agent_config
+  description: Registration calls are at module level, not nested inside functions
+    or classes
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '422'
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+- id: correct_import_path
+  type: fail_to_pass
+  origin: agent_config
+  description: Files import register_cuda_ci from sglang.test.ci.ci_register
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '425'
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+- id: suite_file_type_consistency
+  type: fail_to_pass
+  origin: agent_config
+  description: Benchmark files use benchmark suite, test files use unit suite (not
+    swapped)
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '8'
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target files pass ruff linting for F401 (unused imports) and F821 (undefined
+    names)
+- id: test_repo_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target files have correctly sorted imports
+- id: test_repo_black_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target files are correctly formatted with black
+- id: test_repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target files have no spelling errors
+- id: test_repo_ci_register_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI registration module is importable and functional
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target files compile to bytecode without errors
+- id: test_repo_precommit_hooks_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit YAML configuration is valid
+- id: test_repo_end_of_file_fixer
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target files end with exactly one newline
 rubric:
-  []
+- rule: JIT kernel test and benchmark files must use literal values for est_time and
+    suite in register_cuda_ci() calls — computed values and helper wrappers break
+    run_suite.py's AST parsing
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: 432-433
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+- rule: JIT kernel benchmark files must register for suite 'stage-b-kernel-benchmark-1-gpu-large'
+    (not unit test suites)
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '340'
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+- rule: JIT kernel test files must register for suite 'stage-b-kernel-unit-1-gpu-large'
+    (not benchmark suites), and optionally for nightly suites with nightly=True
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: 336-338
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+- rule: JIT kernel test and benchmark files must have register_cuda_ci() calls at
+    module level (not nested inside functions or classes) for AST discovery
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: 422-424
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d
+- rule: 'CI registration must use the correct import: from sglang.test.ci.ci_register
+    import register_cuda_ci'
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '425'
+    commit: 6047d2c690483224b2bb7d70288ea60b0b8e0c7d

@@ -77,6 +77,22 @@ checks:
     origin: repo_tests
     description: "test_fake_pg.py must have valid Python AST"
 
+  # Additional repo CI/CD pass_to_pass gates added during enrichment
+  - id: test_repo_internal_fake_pg_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Internal fake_pg.py module must have valid Python syntax"
+
+  - id: test_repo_header_utf8_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FakeProcessGroup.hpp must be valid UTF-8 encoded"
+
+  - id: test_repo_header_no_tabs
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FakeProcessGroup.hpp must use spaces, not tabs"
+
 rubric:
   - rule: "Minimize comments; be concise; code should be self-explanatory and self-documenting."
     source:

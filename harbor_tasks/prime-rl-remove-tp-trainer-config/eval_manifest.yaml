@@ -12,6 +12,33 @@ checks:
     origin: static
     description: "All modified files parse without syntax errors"
 
+  # New repo_tests pass_to_pass checks
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified Python files compile successfully via py_compile"
+
+  - id: test_repo_parallel_dims_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ParallelDims class has required fields (AST check)"
+
+  - id: test_repo_model_config_ast
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ModelConfig class retains required fields (AST check)"
+
+  - id: test_repo_changelog_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CHANGELOG.md exists and has substantial content"
+
+  - id: test_repo_no_stubbed_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified files are not hollowed out/stubbed"
+
+  # Existing fail_to_pass checks
   - id: non_data_parallel_size_excludes_tp
     type: fail_to_pass
     origin: pr_diff
@@ -47,6 +74,7 @@ checks:
     origin: pr_diff
     description: "CHANGELOG.md documents the removal of the tp config field"
 
+  # Existing pass_to_pass checks
   - id: parallel_dims_core_fields
     type: pass_to_pass
     origin: pr_diff
@@ -82,3 +110,4 @@ rubric:
       path: "AGENTS.md"
       lines: "6"
       commit: "80a52899ea6a74e0738c15228181ef7b9775dfe9"
+    reference: ""

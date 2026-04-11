@@ -25,4 +25,10 @@ RUN git init /workspace/openclaw && \
 RUN git config --global user.email "agent@test.com" && \
     git config --global user.name "Test Agent"
 
+
+# Install pnpm globally and install dependencies
+RUN npm install -g pnpm && \
+    cd /workspace/openclaw && \
+    pnpm install --frozen-lockfile
+
 WORKDIR /workspace/openclaw

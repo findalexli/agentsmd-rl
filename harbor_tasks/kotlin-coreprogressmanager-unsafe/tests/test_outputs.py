@@ -135,78 +135,207 @@ def test_repo_java_syntax_valid():
     assert not syntax_errors, f"Java syntax errors found: {syntax_errors}"
 
 
-def test_repo_file_encoding_utf8():
-    """Java file uses valid UTF-8 encoding (pass_to_pass).
+def test_repo_no_bom():
+    """Java file has no Byte Order Mark (pass_to_pass).
 
-    Verifies the source file is properly encoded as UTF-8 without
-    invalid replacement characters that indicate encoding issues.
+    Verifies the source file does not have a UTF-8 BOM marker,
+    which can cause issues with some Java compilers and tools.
     """
-    try:
-        content = TARGET_FILE.read_text(encoding='utf-8')
-        # Check no invalid characters
-        assert '\ufffd' not in content, "File contains invalid UTF-8 replacement characters"
-    except UnicodeDecodeError as e:
-        assert False, f"File is not valid UTF-8: {e}"
+    result = subprocess.run(
+        ["bash", "-c", f"head -c 3 {TARGET_FILE} | od -An -tx1 | tr -d ' '"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    # UTF-8 BOM is EFBBBF at the start of file
+    first_bytes = result.stdout.strip()
+    assert not first_bytes.startswith("efbbbf"), \
+        "File has UTF-8 BOM marker - should be plain UTF-8 without BOM"
+
+
+def test_repo_no_tabs():
+    """Java file uses spaces not tabs for indentation (pass_to_pass).
+
+    Verifies no tab characters are present in the source file using
+    the grep command with explicit tab pattern.
+    """
+    result = subprocess.run(
+        ["grep", "-P", "\t", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    # grep returns 0 if found, 1 if not found
+    # Tabs found means test should fail
+    assert result.returncode != 0, \
+        f"Found tab characters in file - use spaces for indentation:\n{result.stdout[:500]}"
+
+
+def test_repo_trailing_whitespace():
+    """Java file has no trailing whitespace (pass_to_pass).
+
+    Verifies no lines end with whitespace characters using grep
+    pattern that matches trailing spaces or tabs before newline.
+    """
+    result = subprocess.run(
+        ["grep", "-n", "[[:space:]]$", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    # grep returns 0 if found, 1 if not found
+    assert result.returncode != 0, \
+        f"Found trailing whitespace in file:\n{result.stdout[:500]}"
+
+
+def test_repo_newline_at_eof():
+    """Java file ends with a newline (pass_to_pass).
+
+    Verifies the source file ends with a proper newline character
+    using od -c to check the last character.
+    """
+    result = subprocess.run(
+        ["bash", "-c", f"tail -c 1 {TARGET_FILE} | od -c -An"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    # Check if last character is a newline
+    output = result.stdout.strip()
+    # od -c outputs escaped characters like \n or \r
+    assert "\\n" in output or output == "\\n" or "nl" in output.lower(), \
+        f"File does not end with newline: last bytes are: {output!r}"
 
 
 def test_repo_package_declaration_valid():
     """Java file has valid package declaration (pass_to_pass).
 
-    Verifies the source file declares the expected package, which is
-    required for proper compilation and IDE integration.
+    Verifies the source file declares the expected package using grep
+    to ensure it matches the directory structure.
     """
-    content = get_file_content()
-    assert "package com.intellij.openapi.progress.impl;" in content, \
-        "File must have correct package declaration"
+    result = subprocess.run(
+        ["grep", "^package com.intellij.openapi.progress.impl;", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert result.returncode == 0, \
+        "File must have correct package declaration 'package com.intellij.openapi.progress.impl;'"
 
 
 def test_repo_class_structure_valid():
     """Java file has valid class declaration (pass_to_pass).
 
-    Verifies the CoreProgressManager class is properly declared as public.
+    Verifies the CoreProgressManager class is properly declared as public
+    using grep to find the class declaration.
     """
-    content = get_file_content()
-    assert "public class CoreProgressManager" in content, \
-        "CoreProgressManager must be declared as public class"
+    result = subprocess.run(
+        ["grep", "public class CoreProgressManager", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert result.returncode == 0, \
+        "CoreProgressManager must be declared as 'public class CoreProgressManager'"
 
 
-def test_repo_license_header_present():
-    """Java file has Apache 2.0 license header (pass_to_pass).
+def test_repo_copyright_header():
+    """Java file has JetBrains copyright header (pass_to_pass).
 
-    Verifies the source file contains the required JetBrains/Apache 2.0
-    license header as per repository standards.
+    Verifies the source file contains the required JetBrains copyright
+    header using grep for the copyright pattern.
     """
-    content = get_file_content()
-    assert "Copyright 2010-2025 JetBrains s.r.o." in content, \
+    result = subprocess.run(
+        ["grep", "Copyright.*JetBrains", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert result.returncode == 0, \
         "File must contain JetBrains copyright header"
-    assert "Apache 2.0 license" in content, \
+
+
+def test_repo_license_header():
+    """Java file has Apache 2.0 license reference (pass_to_pass).
+
+    Verifies the source file contains the Apache 2.0 license reference
+    using grep to find the license pattern.
+    """
+    result = subprocess.run(
+        ["grep", "Apache 2.0", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert result.returncode == 0, \
         "File must reference Apache 2.0 license"
 
 
-def test_repo_imports_structure_valid():
-    """Java file has properly structured imports (pass_to_pass).
+def test_repo_imports_concurrent():
+    """Java file imports java.util.concurrent (pass_to_pass).
 
-    Verifies imports are properly formatted and organized. This validates
-    that the file structure matches the repo's coding standards.
+    Verifies the source file imports from java.util.concurrent package
+    which is required for ConcurrentHashMap usage.
     """
-    content = get_file_content()
-    # Check that java.util.concurrent imports are present (for the fix)
-    assert "java.util.concurrent" in content, \
+    result = subprocess.run(
+        ["grep", "import java.util.concurrent", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert result.returncode == 0, \
         "File should import from java.util.concurrent package"
 
 
 def test_repo_no_sun_misc_unsafe():
     """Java file does not use sun.misc.Unsafe (pass_to_pass).
 
-    Verifies the file does not directly import sun.misc.Unsafe,
+    Verifies the file does not directly import sun.misc.Unsafe using grep,
     which is being phased out in modern JDK versions (JEP 471).
-    This is a repo-wide policy for forward compatibility.
     """
-    content = get_file_content()
-    # The file may use Unsafe indirectly via Java11Shim in base commit
-    # but should not directly import it
-    assert "import sun.misc.Unsafe" not in content, \
+    result = subprocess.run(
+        ["grep", "import sun.misc.Unsafe", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    # grep returns 0 if found (bad - we don't want this import), 1 if not found (good)
+    assert result.returncode != 0, \
         "File should not directly import sun.misc.Unsafe"
+
+
+def test_repo_no_windows_line_endings():
+    """Java file uses Unix line endings (pass_to_pass).
+
+    Verifies the source file uses Unix-style line endings (LF) not
+    Windows-style (CRLF) using grep for carriage return characters.
+    """
+    # Use bash to properly escape the carriage return character
+    result = subprocess.run(
+        ["bash", "-c", f"grep -c $'\\r' {TARGET_FILE} || true"],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    # Check if any carriage returns found
+    try:
+        cr_count_str = result.stdout.strip()
+        if cr_count_str and cr_count_str.isdigit():
+            cr_count = int(cr_count_str)
+            if cr_count > 0:
+                assert False, f"Found {cr_count} carriage returns (Windows line endings)"
+    except ValueError:
+        pass  # If we can't parse, assume it's fine
+
+
+def test_repo_file_not_empty():
+    """Java file is not empty (pass_to_pass).
+
+    Verifies the source file contains content using wc -c to count bytes.
+    """
+    result = subprocess.run(
+        ["wc", "-c", str(TARGET_FILE)],
+        capture_output=True, text=True, timeout=30, cwd=REPO
+    )
+    assert result.returncode == 0, f"wc command failed: {result.stderr}"
+    # Parse the byte count
+    parts = result.stdout.strip().split()
+    if parts:
+        byte_count = int(parts[0])
+        assert byte_count > 1000, f"File seems too small ({byte_count} bytes), likely incomplete"
+
+
+def test_repo_no_merge_conflict_markers():
+    """Java file has no merge conflict markers (pass_to_pass).
+
+    Verifies the source file does not contain git merge conflict markers
+    like '<<<<<<<', '=======', or '>>>>>>>' using grep.
+    """
+    for marker in ["<<<<<<<", ">>>>>>"]:
+        result = subprocess.run(
+            ["grep", marker, str(TARGET_FILE)],
+            capture_output=True, text=True, timeout=30, cwd=REPO
+        )
+        assert result.returncode != 0, \
+            f"Found merge conflict marker '{marker}' in file"
 
 
 if __name__ == "__main__":

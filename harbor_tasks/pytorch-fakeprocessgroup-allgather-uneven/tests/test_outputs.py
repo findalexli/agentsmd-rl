@@ -63,6 +63,7 @@ def _extract_allgather_loop() -> str:
 # Gates (pass_to_pass, static)
 # -----------------------------------------------------------------------------
 
+
 def test_header_balanced_braces():
     """FakeProcessGroup.hpp must have balanced braces."""
     source = TARGET.read_text()
@@ -139,8 +140,9 @@ namespace torch {{
 
 
 # -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests via subprocess
+# Fail-to-pass (pr_diff) - behavioral tests via subprocess
 # -----------------------------------------------------------------------------
+
 
 def test_allgather_size_guard_present():
     """allgather must have a size(0) comparison guard before copy_."""
@@ -285,8 +287,9 @@ except RuntimeError as e:
 
 
 # -----------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression + anti-stub
+# Pass-to-pass (pr_diff) - regression + anti-stub
 # -----------------------------------------------------------------------------
+
 
 def test_allgather_copy_present():
     """copy_ must still be present in the allgather loop (regression check)."""
@@ -313,6 +316,7 @@ def test_allgather_loop_structure():
 # [agent_config] pass_to_pass - check from CLAUDE.md rules
 # (These are config-derived tests that ensure agent followed instructions)
 
+
 def test_no_over_engineering():
     """Change should be minimal - only add size guard and continue."""
     loop_code = _extract_allgather_loop()
@@ -335,9 +339,9 @@ def test_no_over_engineering():
 # These verify the repo's own CI checks pass on the code
 # -----------------------------------------------------------------------------
 
+
 def test_repo_fake_pg_python_syntax():
     """FakeProcessGroup test file must have valid Python syntax (pass_to_pass)."""
-    import pytest
     test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
     assert test_file.exists(), f"Test file not found: {test_file}"
 
@@ -345,7 +349,7 @@ def test_repo_fake_pg_python_syntax():
         ["python3", "-m", "py_compile", str(test_file)],
         capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"Python syntax error in test_fake_pg.py:\n{r.stderr}"
+    assert r.returncode == 0, f"Python syntax error in test_fake_pg.py: {r.stderr}"
 
 
 def test_repo_clang_format():
@@ -355,7 +359,7 @@ def test_repo_clang_format():
     the header file follows the project's formatting guidelines.
     """
     import pytest
-    # Install clang-format if not available
+
     r = subprocess.run(
         ["bash", "-c", "command -v clang-format || (apt-get update -qq && apt-get install -y -qq clang-format)"],
         capture_output=True, text=True, timeout=120,
@@ -390,6 +394,7 @@ def test_repo_test_fake_pg_ast_valid():
     valid Python code that could be executed (deps notwithstanding).
     """
     import ast
+
     test_file = Path(REPO) / "test/distributed/test_fake_pg.py"
     assert test_file.exists(), f"Test file not found: {test_file}"
 
@@ -398,3 +403,44 @@ def test_repo_test_fake_pg_ast_valid():
         ast.parse(content)
     except SyntaxError as e:
         raise AssertionError(f"Python AST parsing failed for test_fake_pg.py: {e}")
+
+
+def test_repo_internal_fake_pg_syntax():
+    """Internal fake_pg.py module must have valid Python syntax (pass_to_pass).
+
+    Verifies the FakeProcessGroup backend registration module can be parsed.
+    """
+    internal_file = Path(REPO) / "torch/testing/_internal/distributed/fake_pg.py"
+    assert internal_file.exists(), f"Internal module not found: {internal_file}"
+
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", str(internal_file)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Python syntax error in internal fake_pg.py: {r.stderr}"
+
+
+def test_repo_header_utf8_valid():
+    """FakeProcessGroup.hpp must be valid UTF-8 (pass_to_pass).
+
+    PyTorch CI requires all source files to be valid UTF-8 encoded.
+    """
+    r = subprocess.run(
+        ["python3", "-c", "import pathlib; pathlib.Path('" + str(TARGET) + "').read_text(encoding='utf-8')"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"FakeProcessGroup.hpp is not valid UTF-8: {r.stderr}"
+
+
+def test_repo_header_no_tabs():
+    """FakeProcessGroup.hpp must use spaces, not tabs (pass_to_pass).
+
+    PyTorch uses spaces for indentation per .clang-format configuration.
+    """
+    content = TARGET.read_text()
+    tab_lines = []
+    for i, line in enumerate(content.split('\n'), 1):
+        if '\t' in line:
+            tab_lines.append(i)
+
+    assert len(tab_lines) == 0, f"Found tabs on lines: {tab_lines[:10]} - PyTorch uses spaces"

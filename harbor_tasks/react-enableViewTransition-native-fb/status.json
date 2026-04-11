@@ -1,19 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:02:58.644165",
-  "total_time": 307.18,
-  "sandbox_id": "ig46qngs1b7lbn2dcucuz",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:34:38.224252",
+  "total_time": 2950.21,
+  "sandbox_id": "ith4ammwm8i13j53hel4x",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 570.04,
+      "time": 245.94,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,27 +33,54 @@
       "notes": "tests look good"
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        ".claude/skills/feature-flags/SKILL.md",
+        ".claude/skills/flags/SKILL.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 0,
+      "rejection_reasons": "",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.84,
-      "notes": ""
+      "time": 78.36
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed Dockerfile to add yarn install. Disabled repo eslint/prettier/license tests due to Node.js memory crashes in container. Core fail-to-pass and pass-to-pass tests work correctly. All 4 validations passed: Docker build OK, NOP reward=0, Gold reward=1, ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.76
+      "time": 592.33
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 15.85,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 33.41,
+      "notes": "precision was 0.00, fixing hallucinated rules"
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.16,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 6434.16,
-      "at": "2026-04-09T06:31:09.689690"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -83,6 +112,14 @@
       "backend": "fireworks",
       "time": 307.18,
       "at": "2026-04-09T15:02:58.644165"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2950.21,
+      "at": "2026-04-10T18:34:38.224252"
     }
   ]
 }

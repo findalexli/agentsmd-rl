@@ -18,7 +18,7 @@ RUN git clone --filter=blob:none https://github.com/sgl-project/sglang.git /work
 WORKDIR /workspace/sglang
 
 # Install pytest and AST parsing deps
-RUN pip install --no-cache-dir pytest
+RUN pip install --no-cache-dir pytest pytest-json-ctrf
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

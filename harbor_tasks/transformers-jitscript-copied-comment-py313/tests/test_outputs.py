@@ -169,13 +169,12 @@ def test_function_bodies_nontrivial():
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (agent_config) — rules from CLAUDE.md / copilot-instructions.md
+# Repo CI tests (repo_tests) — actual CI commands from the repo
 # ---------------------------------------------------------------------------
 
-# [agent_config] pass_to_pass — CLAUDE.md:2 @ 0e1978c9e
+# [repo_tests] pass_to_pass — CI: make style (ruff check)
 def test_ruff_lint():
-    """Ruff lint passes on both affected files (CLAUDE.md line 2:
-    'make style: runs formatters and linters (ruff)')."""
+    """Ruff lint passes on both affected files (CI: make style)."""
     # Use the repo's own pyproject.toml ruff config (which ignores E501 etc.)
     r = subprocess.run(
         ["ruff", "check", "--quiet"] + AFFECTED_FILES,
@@ -187,10 +186,6 @@ def test_ruff_lint():
         f"Ruff lint failed:\n{r.stdout.decode()}\n{r.stderr.decode()}"
     )
 
-
-# ---------------------------------------------------------------------------
-# Repo CI tests (repo_tests) — actual CI commands from the repo
-# ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
 def test_ruff_format_check():
@@ -231,4 +226,18 @@ def test_py_compile_sew_d():
     )
     assert r.returncode == 0, (
         f"Python syntax check failed for sew_d:\n{r.stderr.decode()}"
+    )
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_inits():
+    """Repository init structure check passes (CI: make check-repo)."""
+    r = subprocess.run(
+        ["python", "utils/check_inits.py"],
+        cwd=REPO,
+        capture_output=True,
+        timeout=60,
+    )
+    assert r.returncode == 0, (
+        f"Repository init check failed:\n{r.stderr.decode()[-500:]}"
     )

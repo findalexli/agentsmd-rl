@@ -1,0 +1,38 @@
+checks:
+- id: test_crash_assertion_removed
+  type: fail_to_pass
+  origin: agent_config
+  description: Crash-inducing assertion removed from execution_time_estimator.rs
+- id: test_timings_trim_logic_exists
+  type: fail_to_pass
+  origin: agent_config
+  description: Timings trimming logic exists for when timings > commands
+- id: test_early_return_preserved
+  type: fail_to_pass
+  origin: agent_config
+  description: Early return for epoch ending is preserved
+- id: test_repo_rustfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes (cargo fmt --check)
+- id: test_repo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace/license lint passes (cargo xlint)
+rubric:
+- rule: Never use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other linting
+    suppressions - fix underlying issues instead
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: 6c3a7475b6fd4aea9b9f9443a6cfad01a135c036
+- rule: Code must pass `cargo xclippy` linting checks after changes
+  source:
+    path: CLAUDE.md
+    lines: '111'
+    commit: 6c3a7475b6fd4aea9b9f9443a6cfad01a135c036
+- rule: Use `warn!` macro from the tracing crate for warning-level logging
+  source:
+    path: CLAUDE.md
+    lines: '44'
+    commit: 6c3a7475b6fd4aea9b9f9443a6cfad01a135c036

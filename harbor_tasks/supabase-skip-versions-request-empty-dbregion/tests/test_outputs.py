@@ -17,24 +17,39 @@ FULL_PATH = f"{REPO}/{TARGET_FILE}"
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, repo_tests) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 def test_typescript_parses():
-    """Modified TypeScript file must parse without errors."""
+    """Modified TypeScript file must parse without syntax errors (repo_tests)."""
+    # Use Node.js TypeScript API to parse the file - validates syntax without full typecheck
     r = subprocess.run(
-        ["npx", "tsc", "--noEmit", TARGET_FILE],
+        [
+            "node",
+            "-e",
+            f"""
+const ts = require('typescript');
+const fs = require('fs');
+const content = fs.readFileSync('{TARGET_FILE}', 'utf8');
+try {{
+  const sourceFile = ts.createSourceFile('{TARGET_FILE}', content, ts.ScriptTarget.Latest, true);
+  if (sourceFile.parseDiagnostics && sourceFile.parseDiagnostics.length > 0) {{
+    console.error('Parse errors:', sourceFile.parseDiagnostics.length);
+    process.exit(1);
+  }}
+  console.log('TypeScript file parsed successfully');
+}} catch (e) {{
+  console.error('Parse error:', e.message);
+  process.exit(1);
+}}
+""",
+        ],
         cwd=REPO,
         capture_output=True,
+        text=True,
         timeout=60,
     )
-    # If tsc fails to run (e.g., no tsconfig), check at least that file exists and has valid TS syntax
-    if r.returncode != 0:
-        # Verify file exists and can be parsed by basic regex checks
-        src = Path(FULL_PATH).read_text()
-        # Basic sanity: should have export, function name, return statement
-        assert "useProjectCreationPostgresVersionsQuery" in src, "Target function not found"
-        assert "enabled:" in src, "enabled property not found"
+    assert r.returncode == 0, f"TypeScript parsing failed:\n{r.stderr}"
 
 
 def test_no_syntax_errors():
@@ -63,13 +78,12 @@ def test_enabled_uses_truthy_check_for_dbregion():
     """
     src = Path(FULL_PATH).read_text()
 
-    # Find the enabled line and check the pattern
+    # Find the enabled line and check the pattern (multiline)
     # The fix changes: typeof dbRegion !== 'undefined'  ->  !!dbRegion
-    enabled_pattern = r'enabled:\s*([^,\n]+)'
-    match = re.search(enabled_pattern, src, re.DOTALL)
-    assert match, "Could not find enabled property in query"
+    enabled_match = re.search(r'enabled:\s*([^,\n]+(?:\n[^,}]*)*)', src, re.DOTALL)
+    assert enabled_match, "Could not find enabled property in query"
 
-    enabled_expr = match.group(1)
+    enabled_expr = enabled_match.group(1)
 
     # Must NOT have the old pattern (typeof dbRegion !== 'undefined')
     assert "typeof dbRegion !== 'undefined'" not in enabled_expr, \
@@ -89,12 +103,11 @@ def test_enabled_handles_empty_string():
     """
     src = Path(FULL_PATH).read_text()
 
-    # Get the enabled expression
-    enabled_pattern = r'enabled:\s*([^,\n]+)'
-    match = re.search(enabled_pattern, src, re.DOTALL)
-    assert match, "Could not find enabled property"
+    # Get the enabled expression (multiline)
+    enabled_match = re.search(r'enabled:\s*([^,\n]+(?:\n[^,}]*)*)', src, re.DOTALL)
+    assert enabled_match, "Could not find enabled property"
 
-    enabled_expr = match.group(1).strip()
+    enabled_expr = enabled_match.group(1).strip()
 
     # Check that enabled expression includes the necessary conditions
     # The fix: enabled && typeof organizationSlug !== 'undefined' && organizationSlug !== '_' && !!dbRegion
@@ -228,6 +241,56 @@ def test_config_directory_exists():
     config_dir = Path(f"{REPO}/apps/studio/data/config")
     assert config_dir.exists(), "data/config directory does not exist"
     assert config_dir.is_dir(), "data/config is not a directory"
+
+
+def test_repo_typescript_syntax_valid():
+    """Repo TypeScript files have valid syntax (pass_to_pass, repo_tests).
+
+    Uses Node.js TypeScript compiler API to validate syntax without full typecheck.
+    """
+    import os
+    config_dir = Path(f"{REPO}/apps/studio/data/config")
+    ts_files = list(config_dir.glob("*.ts"))
+    assert len(ts_files) > 0, "No TypeScript files found in config directory"
+
+    # Test parsing the target file specifically
+    r = subprocess.run(
+        [
+            "node",
+            "-e",
+            f"""
+const ts = require('typescript');
+const fs = require('fs');
+const path = require('path');
+
+function checkFile(filePath) {{
+  try {{
+    const content = fs.readFileSync(filePath, 'utf8');
+    const sourceFile = ts.createSourceFile(path.basename(filePath), content, ts.ScriptTarget.Latest, true);
+    if (sourceFile.parseDiagnostics && sourceFile.parseDiagnostics.length > 0) {{
+      console.error('Parse errors in ' + filePath + ':', sourceFile.parseDiagnostics.length);
+      return false;
+    }}
+    return true;
+  }} catch (e) {{
+    console.error('Error parsing ' + filePath + ':', e.message);
+    return false;
+  }}
+}}
+
+const targetFile = '{TARGET_FILE}';
+if (!checkFile(targetFile)) {{
+  process.exit(1);
+}}
+console.log('All TypeScript files have valid syntax');
+""",
+        ],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"TypeScript syntax validation failed:\n{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

@@ -1,26 +1,27 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:52:39.281528",
-  "total_time": 1468.26,
-  "sandbox_id": "ivmwvpyn76t8qfewp9m7k",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:50:03.086600",
+  "total_time": 1764.9,
+  "sandbox_id": "i8qtyk6385c81ywa086gp",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
-      "status": "rate_limited",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 611.46,
-      "notes": ""
-    },
-    "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "completed",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 134.73,
+      "notes": "Added 6 repo_tests p2p gates: test_repo_ruff_format_check, test_repo_check_inits, test_repo_check_dummies, test_repo_custom_init_isort, test_repo_sort_auto_mappings, test_repo_check_doctest_list. CI commands verified in Docker: ruff format --check, python utils/check_inits.py, python utils/check_dummies.py, python utils/custom_init_isort.py --check_only, python utils/sort_auto_mappings.py --check_only, python utils/check_doctest_list.py"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 240.5,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: (1) Docker build succeeded, (2) NOP test correctly returned reward=0 (4 fail-to-pass tests failed on buggy code), (3) Gold test correctly returned reward=1 (all 17 tests passed after fix applied), (4) Rubric judge ICR=1.0 >= 0.8 threshold. The task is properly validated.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.59
+      "time": 82.83
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.43,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -50,7 +63,7 @@
       "nop": -1.0,
       "gold": -1.0,
       "backend": "fireworks",
-      "time": 1467.96,
+      "time": 1.59,
       "at": "2026-04-09T14:52:39.096377"
     },
     {
@@ -60,6 +73,14 @@
       "backend": "fireworks",
       "time": 1468.26,
       "at": "2026-04-09T14:52:39.281528"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1764.9,
+      "at": "2026-04-10T18:50:03.086600"
     }
   ]
 }

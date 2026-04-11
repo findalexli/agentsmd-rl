@@ -75,7 +75,6 @@ checks:
     origin: repo_tests
     description: Unit tests for sui-move-natives-latest pass
 
-  # Additional pass-to-pass: CI/CD tests found from repo exploration
   - id: test_cargo_xlint_passes
     type: pass_to_pass
     origin: repo_tests
@@ -90,6 +89,22 @@ checks:
     type: pass_to_pass
     origin: repo_tests
     description: cargo fmt --check passes (code formatting)
+
+  # Additional pass-to-pass: CI/CD tests found from repo exploration
+  - id: test_cargo_doc_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: cargo doc builds for sui-protocol-config (documentation check)
+
+  - id: test_doctests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: doctests for sui-protocol-config pass
+
+  - id: test_git_checks_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: git checks script passes (whitespace/filename validation)
 
 # Rules derived from agent config files (CLAUDE.md, AGENTS.md, SKILL.md)
 # This PR touches protocol config, so relevant rules from the protocol-config skill apply

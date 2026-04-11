@@ -14,6 +14,7 @@ from pathlib import Path
 
 REPO = "/workspace/sglang"
 TARGET = f"{REPO}/python/sglang/srt/layers/attention/linear/kda_backend.py"
+TARGET_REL = "python/sglang/srt/layers/attention/linear/kda_backend.py"
 
 
 # ---------------------------------------------------------------------------
@@ -25,6 +26,44 @@ def test_syntax_valid():
     """kda_backend.py must parse without syntax errors."""
     src = Path(TARGET).read_text()
     ast.parse(src)
+
+
+# [repo_tests] pass_to_pass
+def test_repo_syntax_compile():
+    """Python syntax compilation check via py_compile (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "py_compile", TARGET],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Python syntax check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Ruff linter check on kda_backend.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", TARGET_REL],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Black formatting check on kda_backend.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "black", "-q"],
+        capture_output=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["black", "--check", TARGET_REL],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stdout}{r.stderr}"
 
 
 # ---------------------------------------------------------------------------

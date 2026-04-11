@@ -792,6 +792,145 @@ def test_compose_compiler_module_gradle_builds():
         pytest.skip("Gradle help timed out - skipping")
 
 
+
+# ========== Pass-to-pass tests: CI kotlinc validation ==========
+
+def test_compose_compiler_extension_syntax_valid():
+    """ComposeCompilerGradlePluginExtension.kt has valid Kotlin syntax (pass_to_pass).
+
+    This CI test runs kotlinc to verify the extension file has no syntax errors.
+    Ignores unresolved reference errors which are expected without full dependencies.
+    """
+    r = subprocess.run(
+        ["kotlinc", str(EXTENSION_FILE), "-d", "/tmp/kotlin-syntax-extension"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    # Only fail on syntax errors, not missing dependencies
+    if r.returncode != 0:
+        stderr_lower = r.stderr.lower()
+        syntax_error_terms = ["syntax error", "unexpected", "expecting", "premature end"]
+        if any(term in stderr_lower for term in syntax_error_terms):
+            assert False, f"Syntax error in ComposeCompilerGradlePluginExtension.kt:\n{r.stderr}"
+
+
+def test_compose_compiler_feature_flags_syntax_valid():
+    """ComposeFeatureFlags.kt has valid Kotlin syntax (pass_to_pass).
+
+    This CI test runs kotlinc to verify the feature flags file has no syntax errors.
+    """
+    r = subprocess.run(
+        ["kotlinc", str(FEATURE_FLAGS_FILE), "-d", "/tmp/kotlin-syntax-featureflags"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    if r.returncode != 0:
+        stderr_lower = r.stderr.lower()
+        syntax_error_terms = ["syntax error", "unexpected", "expecting", "premature end"]
+        if any(term in stderr_lower for term in syntax_error_terms):
+            assert False, f"Syntax error in ComposeFeatureFlags.kt:\n{r.stderr}"
+
+
+def test_compose_compiler_subplugin_syntax_valid():
+    """ComposeCompilerSubplugin.kt has valid Kotlin syntax (pass_to_pass).
+
+    This CI test runs kotlinc to verify the subplugin file has no syntax errors.
+    """
+    r = subprocess.run(
+        ["kotlinc", str(SUBPLUGIN_FILE), "-d", "/tmp/kotlin-syntax-subplugin"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    if r.returncode != 0:
+        stderr_lower = r.stderr.lower()
+        syntax_error_terms = ["syntax error", "unexpected", "expecting", "premature end"]
+        if any(term in stderr_lower for term in syntax_error_terms):
+            assert False, f"Syntax error in ComposeCompilerSubplugin.kt:\n{r.stderr}"
+
+
+def test_compose_compiler_extension_test_syntax_valid():
+    """ExtensionConfigurationTest.kt has valid Kotlin syntax (pass_to_pass).
+
+    This CI test runs kotlinc to verify the extension test file has no syntax errors.
+    """
+    r = subprocess.run(
+        ["kotlinc", str(EXTENSION_TEST_FILE), "-d", "/tmp/kotlin-syntax-test"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    if r.returncode != 0:
+        stderr_lower = r.stderr.lower()
+        syntax_error_terms = ["syntax error", "unexpected", "expecting", "premature end"]
+        if any(term in stderr_lower for term in syntax_error_terms):
+            assert False, f"Syntax error in ExtensionConfigurationTest.kt:\n{r.stderr}"
+
+
+def test_compose_compiler_compose_it_syntax_valid():
+    """ComposeIT.kt has valid Kotlin syntax (pass_to_pass).
+
+    This CI test runs kotlinc to verify the ComposeIT integration test file has no syntax errors.
+    """
+    r = subprocess.run(
+        ["kotlinc", str(COMPOSE_IT_FILE), "-d", "/tmp/kotlin-syntax-composeit"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    if r.returncode != 0:
+        stderr_lower = r.stderr.lower()
+        syntax_error_terms = ["syntax error", "unexpected", "expecting", "premature end"]
+        if any(term in stderr_lower for term in syntax_error_terms):
+            assert False, f"Syntax error in ComposeIT.kt:\n{r.stderr}"
+
+
+def test_git_repo_commit_history_accessible():
+    """Git repository has accessible commit history (pass_to_pass).
+
+    This CI test verifies the git repository is properly cloned with history.
+    """
+    r = subprocess.run(
+        ["git", "-C", str(REPO), "log", "--oneline", "-10"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Git log failed: {r.stderr}"
+    assert len(r.stdout.strip().split("\n")) > 0, "Git log should return commits"
+
+
+def test_kotlinc_can_detect_deprecation_annotations():
+    """kotlinc can parse Kotlin files with deprecation annotations (pass_to_pass).
+
+    This CI test verifies the Kotlin compiler correctly handles deprecation annotations.
+    This is relevant to the PR which changes @Deprecated annotations.
+    """
+    # Create a test file with deprecation annotations similar to the PR changes
+    test_content = """
+package test
+
+@Deprecated(
+    message = "Test deprecation. Will be removed in Kotlin 2.5.0.",
+    level = DeprecationLevel.ERROR
+)
+class TestClass {
+    @Deprecated(
+        message = "Test deprecation warning.",
+        level = DeprecationLevel.WARNING
+    )
+    fun testMethod() {}
+}
+"""
+    test_file = Path("/tmp/test_deprecation.kt")
+    test_file.write_text(test_content)
+
+    r = subprocess.run(
+        ["kotlinc", str(test_file), "-d", "/tmp/kotlin-deprecation-test"],
+        capture_output=True, text=True, timeout=60,
+    )
+
+    # This should compile without syntax errors
+    syntax_error_terms = ["syntax error", "unexpected", "expecting", "premature end"]
+    stderr_lower = r.stderr.lower()
+    if any(term in stderr_lower for term in syntax_error_terms):
+        assert False, f"Syntax error in deprecation annotation test:\n{r.stderr}"
+
 if __name__ == "__main__":
     import sys
     import pytest

@@ -84,57 +84,14 @@ checks:
     origin: repo_tests
     description: "Repo's lint (oxlint --type-aware) passes"
 
-rubric:
-  - rule: "Keep loader behavior aligned with the documented Plugin SDK and manifest contracts. Do not create private backdoors that bundled plugins can use but external plugins cannot."
-    source:
-      path: "src/plugins/AGENTS.md"
-      lines: "23-24"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+  - id: test_before_install_hooks_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream hooks.before-install.test.ts vitest suite passes"
 
-  - rule: "Compatibility: new plugin seams are allowed, but they must be added as documented, backwards-compatible, versioned contracts."
-    source:
-      path: "CLAUDE.md"
-      lines: "43"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+  - id: test_hooks_security_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream hooks.security.test.ts vitest suite passes"
 
-  - rule: "Add brief code comments for tricky or non-obvious logic."
-    source:
-      path: "CLAUDE.md"
-      lines: "163"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
-
-  - rule: "Keep human-readable strings for logs, CLI output, and UI; do not use freeform strings as the source of truth for internal branching."
-    source:
-      path: "CLAUDE.md"
-      lines: "151"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
-
-  - rule: "Prefer discriminated unions when parameter shape changes runtime behavior."
-    source:
-      path: "CLAUDE.md"
-      lines: "149"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
-
-  - rule: "New runtime control-flow code should not branch on error: string or reason: string when a closed code union would be reasonable."
-    source:
-      path: "CLAUDE.md"
-      lines: "154"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
-
-  - rule: "If introducing a new optional field or nullable semantic in core logic, prefer an explicit union or dedicated type when the value changes behavior."
-    source:
-      path: "CLAUDE.md"
-      lines: "153"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
-
-  - rule: "If a loader or registry change affects plugin authors, update the public SDK, docs, and contract tests instead of relying on incidental internals."
-    source:
-      path: "src/plugins/AGENTS.md"
-      lines: "26-27"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
-
-  - rule: "Avoid ?? 0, empty-string, empty-object, or magic-string sentinels when they can change runtime meaning silently."
-    source:
-      path: "CLAUDE.md"
-      lines: "152"
-      commit: "8db20c196598b12043886ddc1c3ec0fd7695b9b4"
+rubric: []

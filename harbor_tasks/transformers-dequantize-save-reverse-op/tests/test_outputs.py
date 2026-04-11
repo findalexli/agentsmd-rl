@@ -54,7 +54,7 @@ print("PASS: _IdentityOp exists and is correct type")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
@@ -97,7 +97,7 @@ print("PASS: _IdentityOp passthrough works correctly")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
@@ -138,7 +138,7 @@ print("PASS: Fp8Dequantize.reverse_op works correctly")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout or "SKIP" in r.stdout
@@ -178,7 +178,7 @@ print("PASS: MetalDequantize.reverse_op works correctly")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout or "SKIP" in r.stdout
@@ -215,7 +215,7 @@ print("PASS: Mxfp4Dequantize.reverse_op works correctly")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout or "SKIP" in r.stdout
@@ -250,7 +250,7 @@ print("PASS: reverse_op preserves keys, values, and dtypes")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
@@ -347,7 +347,7 @@ else:
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
@@ -377,7 +377,7 @@ print("PASS: Chunk/Concatenate reverse_op pair works correctly")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
@@ -391,7 +391,7 @@ def _get_agent_diff():
     """Get the diff of changes made by the agent (or gold patch) relative to base commit."""
     r = subprocess.run(
         ["git", "diff", BASE_COMMIT],
-        cwd=REPO, capture_output=True, text=True,
+        cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     return r.stdout
 
@@ -408,7 +408,7 @@ def test_ruff_check():
             f"{REPO}/src/transformers/integrations/mxfp4.py",
             "--quiet",
         ],
-        capture_output=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         text=True,
         timeout=30,
     )
@@ -441,7 +441,7 @@ def test_no_modular_generated_files_edited():
 
     r = subprocess.run(
         ["git", "diff", "--name-only", BASE_COMMIT],
-        cwd=REPO, capture_output=True, text=True,
+        cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     files = r.stdout.strip()
     if not files:
@@ -519,7 +519,7 @@ print("PASS: Core imports work correctly")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
@@ -536,7 +536,7 @@ def test_repo_ruff_format():
             f"{REPO}/src/transformers/integrations/metal_quantization.py",
             f"{REPO}/src/transformers/integrations/mxfp4.py",
         ],
-        capture_output=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         text=True,
         timeout=30,
     )
@@ -565,7 +565,7 @@ print("PASS: core_model_loading ops work correctly")
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30, cwd=REPO,
     )
     assert r.returncode == 0, f"Test failed:\nstdout: {r.stdout}\nstderr: {r.stderr}"
     assert "PASS" in r.stdout
@@ -586,7 +586,7 @@ sys.exit(0 if result.wasSuccessful() else 1)
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"MetalConfig tests failed:\n{r.stdout}\n{r.stderr}"
 
@@ -606,7 +606,7 @@ sys.exit(0 if result.wasSuccessful() else 1)
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"MetalQuantizerEnvironmentTest failed:\n{r.stdout}\n{r.stderr}"
 
@@ -626,7 +626,7 @@ sys.exit(0 if result.wasSuccessful() else 1)
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"AffineQuantizeDequantizeTest failed:\n{r.stdout}\n{r.stderr}"
 
@@ -646,7 +646,7 @@ sys.exit(0 if result.wasSuccessful() else 1)
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"MetalLinearTest failed:\n{r.stdout}\n{r.stderr}"
 
@@ -666,7 +666,7 @@ sys.exit(0 if result.wasSuccessful() else 1)
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"MetalConversionOpsTest failed:\n{r.stdout}\n{r.stderr}"
 
@@ -686,6 +686,98 @@ sys.exit(0 if result.wasSuccessful() else 1)
 '''
     r = subprocess.run(
         ["python3", "-c", code],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Mxfp4ConfigTest failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - core_model_loading glob matching tests
+def test_repo_core_model_loading_glob_matching():
+    """TestWeightGlobMatching from test_core_model_loading passes (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import subprocess
+subprocess.check_call([sys.executable, "-m", "pip", "install", "parameterized", "-q"],
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+import unittest
+from tests.utils.test_core_model_loading import TestWeightGlobMatching
+suite = unittest.TestLoader().loadTestsFromTestCase(TestWeightGlobMatching)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TestWeightGlobMatching failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - core_model_loading convert and load tests
+def test_repo_core_model_loading_convert():
+    """TestConvertAndLoadStateDict from test_core_model_loading passes (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import subprocess
+subprocess.check_call([sys.executable, "-m", "pip", "install", "parameterized", "-q"],
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+import unittest
+from tests.utils.test_core_model_loading import TestConvertAndLoadStateDict
+suite = unittest.TestLoader().loadTestsFromTestCase(TestConvertAndLoadStateDict)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TestConvertAndLoadStateDict failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - core_model_loading conversion mapping tests
+def test_repo_core_model_loading_mapping():
+    """TestConversionMapping from test_core_model_loading passes (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import subprocess
+subprocess.check_call([sys.executable, "-m", "pip", "install", "parameterized", "-q"],
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+import unittest
+from tests.utils.test_core_model_loading import TestConversionMapping
+suite = unittest.TestLoader().loadTestsFromTestCase(TestConversionMapping)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TestConversionMapping failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass - finegrained_fp8 config tests
+def test_repo_finegrained_fp8_config():
+    """FineGrainedFP8ConfigTest from test_fp8 passes (pass_to_pass)."""
+    code = '''
+import sys
+sys.path.insert(0, "/repo/src")
+import subprocess
+subprocess.check_call([sys.executable, "-m", "pip", "install", "parameterized", "-q"],
+                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+import unittest
+from tests.quantization.finegrained_fp8.test_fp8 import FineGrainedFP8ConfigTest
+suite = unittest.TestLoader().loadTestsFromTestCase(FineGrainedFP8ConfigTest)
+runner = unittest.TextTestRunner(verbosity=0)
+result = runner.run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+'''
+    r = subprocess.run(
+        ["python3", "-c", code],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"FineGrainedFP8ConfigTest failed:\n{r.stdout}\n{r.stderr}"

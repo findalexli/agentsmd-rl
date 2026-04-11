@@ -221,6 +221,30 @@ def test_repo_unit_tests():
     assert result.returncode == 0, f"Unit tests failed:\n{result.stderr[-500:]}"
 
 
+def test_repo_error_handling_tests():
+    """
+    PASS-TO-PASS: Error handling & recovery tests pass.
+
+    Runs the error handling tests from conversation-websocket-handler.test.tsx
+    which cover the modified WebSocket context code. These tests verify:
+    - Budget/credit error display and behavior
+    - Error clearing on various event types
+    - WebSocket connection error handling
+    - Error recovery scenarios
+
+    This is part of the repo's CI pipeline and specifically tests the code
+    being modified by the fix.
+    """
+    result = subprocess.run(
+        ["npm", "run", "test", "--", "__tests__/conversation-websocket-handler.test.tsx", "--run"],
+        cwd=FRONTEND_DIR,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    assert result.returncode == 0, f"Error handling tests failed:\n{result.stderr[-500:]}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v"]))

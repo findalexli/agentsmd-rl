@@ -1,54 +1,97 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "sgl-project/sglang"
+  repo: sgl-project/sglang
   pr: 21448
-  base_commit: "c06ca1526cb6008a8dacb4fdb06567e648134664"
-  merge_commit: "9b4dd274787ce4a778b7688c65c33598282a6559"
-
+  base_commit: c06ca1526cb6008a8dacb4fdb06567e648134664
+  merge_commit: 9b4dd274787ce4a778b7688c65c33598282a6559
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (memory_pool.py, model_runner, qwen3_5.py, qwen3_vl.py, decode.py) must parse"
-
-  - id: get_layer_id
-    type: pass_to_pass
-    origin: pr_diff
-    description: "get_layer_id must exist and correctly extract layer IDs from weight names"
-
-  - id: pp_weight_filtering
-    type: pass_to_pass
-    origin: pr_diff
-    description: "PP filtering using get_layer_id correctly skips out-of-range layers across multiple ranges"
-
-  - id: decode_pp_parameters
-    type: fail_to_pass
-    origin: pr_diff
-    description: "HybridMambaDecodeReqToTokenPool.__init__ accepts mamba_layer_ids and start_layer parameters"
-
-  - id: qwen3_vl_pp_properties
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Qwen3VLForConditionalGeneration has start_layer/end_layer properties that delegate to inner model"
-
-  - id: qwen3_5_load_weights_pp_filtering
-    type: fail_to_pass
-    origin: pr_diff
-    description: "load_weights and load_fused_expert_weights in qwen3_5.py use get_layer_id + continue for PP skip"
-
-  - id: memory_pool_pp_support
-    type: fail_to_pass
-    origin: pr_diff
-    description: "No hardcoded start_layer=0 in pool classes; MambaPool accepts mamba_layer_ids parameter"
-
-  - id: unit_test_uses_custom_test_case
-    type: pass_to_pass
-    origin: agent_config
-    description: "test_mamba_unittest.py must use CustomTestCase, not raw unittest.TestCase"
-    source:
-      path: .claude/skills/write-sglang-test/SKILL.md
-      lines: "12"
-      commit: c06ca1526cb6008a8dacb4fdb06567e648134664
-
-rubric: []
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (memory_pool.py, model_runner, qwen3_5.py, qwen3_vl.py,
+    decode.py) must parse
+- id: get_layer_id
+  type: pass_to_pass
+  origin: pr_diff
+  description: get_layer_id must exist and correctly extract layer IDs from weight
+    names
+- id: pp_weight_filtering
+  type: pass_to_pass
+  origin: pr_diff
+  description: PP filtering using get_layer_id correctly skips out-of-range layers
+    across multiple ranges
+- id: decode_pp_parameters
+  type: fail_to_pass
+  origin: pr_diff
+  description: HybridMambaDecodeReqToTokenPool.__init__ accepts mamba_layer_ids and
+    start_layer parameters
+- id: qwen3_vl_pp_properties
+  type: fail_to_pass
+  origin: pr_diff
+  description: Qwen3VLForConditionalGeneration has start_layer/end_layer properties
+    that delegate to inner model
+- id: qwen3_5_load_weights_pp_filtering
+  type: fail_to_pass
+  origin: pr_diff
+  description: load_weights and load_fused_expert_weights in qwen3_5.py use get_layer_id
+    + continue for PP skip
+- id: memory_pool_pp_support
+  type: fail_to_pass
+  origin: pr_diff
+  description: No hardcoded start_layer=0 in pool classes; MambaPool accepts mamba_layer_ids
+    parameter
+- id: unit_test_uses_custom_test_case
+  type: pass_to_pass
+  origin: agent_config
+  description: test_mamba_unittest.py must use CustomTestCase, not raw unittest.TestCase
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '12'
+    commit: c06ca1526cb6008a8dacb4fdb06567e648134664
+- id: repo_py_compile_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files must compile with py_compile
+- id: repo_py_compile_mamba_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: test_mamba_unittest.py must compile
+- id: repo_get_layer_id_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_layer_id can be extracted from common.py via AST
+- id: repo_memory_pool_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: memory_pool.py has valid AST with key classes
+- id: repo_qwen3_5_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: qwen3_5.py has valid AST with required methods
+- id: repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is a clean git checkout
+rubric:
+- rule: Unit tests must inherit from CustomTestCase, not raw unittest.TestCase
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '12'
+    commit: c06ca1526cb6008a8dacb4fdb06567e648134664
+- rule: tearDownClass must be defensive — use hasattr/null checks before accessing
+    resources that setUpClass may not have finished allocating
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 13-14
+    commit: c06ca1526cb6008a8dacb4fdb06567e648134664
+- rule: Unit tests that don't need a server/engine launch should be placed in test/registered/unit/
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 14,374
+    commit: c06ca1526cb6008a8dacb4fdb06567e648134664
+- rule: All CI-discovered test files must call a registration function at module level
+    (register_cuda_ci, register_amd_ci, register_cpu_ci, or register_npu_ci)
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 309-320
+    commit: c06ca1526cb6008a8dacb4fdb06567e648134664

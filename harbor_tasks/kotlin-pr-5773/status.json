@@ -1,20 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T23:41:34.395106",
-  "total_time": 6146.3,
-  "sandbox_id": "ijkutr0p12lwlmpt5o58o",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:24:20.739900",
+  "total_time": 3325.55,
+  "sandbox_id": "i6zo9l5mmka2ef2je3o3f",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "config_edit_precision": 0.0,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 93.79,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1900.93,
       "notes": ""
     },
     "improve": {
@@ -32,32 +33,50 @@
       "notes": "All 4 validation checks passed: Docker build successful, NOP test reward=0 (6 fail_to_pass tests correctly fail on base commit), Gold test reward=1 (all 13 tests pass after fix), Rubric ICR=1.0 (empty rubric).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.75
+      "time": 85.37
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.14,
+      "time": 0.17,
       "notes": "ICR=1.00"
     },
     "rubric_enrichment": {
-      "status": "error",
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".ai/guidelines.md",
+        ".claude/skills/analysis-extend-ka-resolver/SKILL.md",
+        "analysis/AGENTS.md",
+        "docs/code_authoring_and_core_review.md"
+      ],
+      "rules_added": 2,
+      "rules_rejected": 5,
+      "rejection_reasons": "5 rejected: 3 about MCP tooling (not evaluable), 1 about test management (process rule), 1 about commit messages (not evaluable from diff)",
+      "notes": "",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.62,
-      "notes": ""
+      "time": 119.59
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 17.7,
+      "notes": "",
+      "precision": 0.0
+    },
+    "rubric_fix": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 25.47,
+      "notes": "precision was 0.00, fixing hallucinated rules"
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 6049.24,
-      "at": "2026-04-09T10:52:42.322042"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -77,7 +96,7 @@
     {
       "verdict": "fail",
       "nop": -1.0,
-      "gold": -1.0,
+      "gold": 1.0,
       "backend": "fireworks",
       "time": 190.25,
       "at": "2026-04-09T15:01:01.726644"
@@ -89,6 +108,14 @@
       "backend": "fireworks",
       "time": 6146.3,
       "at": "2026-04-09T23:41:34.395106"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3325.55,
+      "at": "2026-04-10T18:24:20.739900"
     }
   ]
 }

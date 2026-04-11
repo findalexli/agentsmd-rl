@@ -344,3 +344,68 @@ def test_repo_pyproject_toml_valid():
     assert "build-system" in config, "Missing build-system section"
     assert "tool" in config, "Missing tool section"
     assert "pytest" in config.get("tool", {}), "Missing pytest configuration"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_check():
+    """Repo's ruff linter passes on slime/ (pass_to_pass).
+
+    This runs the repo's configured ruff check as specified in pyproject.toml.
+    The ruff tool is installed and run via subprocess to match CI behavior.
+    """
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    # Even if pip outputs warnings, we proceed
+
+    r = subprocess.run(
+        ["ruff", "check", "slime/", "--config", "pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_check():
+    """Repo's import sorting (isort) passes on slime/ (pass_to_pass).
+
+    This runs isort --check-only to verify imports are sorted according to
+    the project's pyproject.toml configuration.
+    """
+    r = subprocess.run(
+        ["pip", "install", "isort", "--quiet"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+
+    r = subprocess.run(
+        ["isort", "--check-only", "slime/", "--settings-file", "pyproject.toml"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"isort check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_syntax_errors():
+    """All Python files in slime/ have valid syntax (pass_to_pass).
+
+    Uses py_compile to verify all .py files can be parsed without errors.
+    This is a lightweight check that catches basic syntax issues.
+    """
+    import py_compile
+    import os
+
+    errors = []
+    slime_path = Path(REPO) / "slime"
+    for root, dirs, files in os.walk(slime_path):
+        # Skip hidden directories and common non-source directories
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ("__pycache__", "build", "dist")]
+        for file in files:
+            if file.endswith(".py"):
+                filepath = os.path.join(root, file)
+                try:
+                    py_compile.compile(filepath, doraise=True)
+                except py_compile.PyCompileError as e:
+                    errors.append(f"{filepath}: {e}")
+
+    assert not errors, f"Python syntax errors found in slime/:\n" + "\n".join(errors[:10])

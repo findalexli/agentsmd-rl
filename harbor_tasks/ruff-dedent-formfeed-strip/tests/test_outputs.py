@@ -153,6 +153,18 @@ def test_repo_cargo_doc():
     assert r.returncode == 0, f"cargo doc failed:\n{r.stderr.decode()[-500:]}"
 
 
+# [repo_tests] pass_to_pass — RUF072 rule tests
+def test_repo_ruf072_linter_tests():
+    """RUF072 (useless-finally) rule tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "test", "-p", "ruff_linter", "--", "useless_finally"],
+        cwd=REPO, capture_output=True, timeout=300,
+    )
+    assert r.returncode == 0, (
+        f"RUF072 linter tests failed:\n{r.stdout.decode()[-1000:]}{r.stderr.decode()[-500:]}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

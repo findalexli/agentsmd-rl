@@ -22,17 +22,9 @@ def _run_python_test(code: str, timeout: int = 60) -> subprocess.CompletedProces
 
     This ensures we're actually executing code, not just checking structure.
     """
-    # Prepend minimal mocking boilerplate - megatron-core is installed but needs some mocks
-    mocking_boilerplate = '''
-import sys
-from unittest.mock import MagicMock
-
-# Mock transformer_engine as it's not installed
-sys.modules["transformer_engine"] = MagicMock()
-sys.modules["transformer_engine"].__spec__ = None
-
-'''
-    full_code = mocking_boilerplate + code
+    # The mock transformer_engine package is already installed in site-packages.
+    # No need for additional mocking.
+    full_code = code
 
     # Write code to a temp file and execute it
     script = Path(REPO) / "_eval_test.py"
@@ -54,7 +46,7 @@ sys.modules["transformer_engine"].__spec__ = None
 
 
 # -----------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax check
+# Gates (pass_to_pass, static) -- syntax check
 # -----------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -69,10 +61,10 @@ def test_syntax_check():
 
 
 # -----------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — CI/CD checks that must pass on base and fix
+# Pass-to-pass (repo_tests) -- CI/CD checks that must pass on base and fix
 # -----------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass — Repo CI: Python syntax check for glm4moe_lite.py
+# [repo_tests] pass_to_pass -- Repo CI: Python syntax check for glm4moe_lite.py
 def test_repo_syntax_glm4moe_lite():
     """Repo CI: glm4moe_lite.py must have valid Python syntax."""
     import py_compile
@@ -80,7 +72,7 @@ def test_repo_syntax_glm4moe_lite():
     py_compile.compile(f"{REPO}/slime_plugins/mbridge/glm4moe_lite.py", doraise=True)
 
 
-# [repo_tests] pass_to_pass — Repo CI: Python syntax check for model_provider.py
+# [repo_tests] pass_to_pass -- Repo CI: Python syntax check for model_provider.py
 def test_repo_syntax_model_provider():
     """Repo CI: model_provider.py must have valid Python syntax."""
     import py_compile
@@ -90,7 +82,7 @@ def test_repo_syntax_model_provider():
     )
 
 
-# [repo_tests] pass_to_pass — Repo CI: ruff linting on modified files
+# [repo_tests] pass_to_pass -- Repo CI: ruff linting on modified files
 def test_repo_ruff():
     """Repo CI: ruff check passes on modified files."""
     # Install ruff if needed
@@ -106,7 +98,7 @@ def test_repo_ruff():
     assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# [repo_tests] pass_to_pass — Repo CI: black formatting check on modified files
+# [repo_tests] pass_to_pass -- Repo CI: black formatting check on modified files
 def test_repo_black():
     """Repo CI: black formatting check passes on modified files."""
     # Install black if needed
@@ -122,7 +114,7 @@ def test_repo_black():
     assert r.returncode == 0, f"black check failed:\n{r.stderr}"
 
 
-# [repo_tests] pass_to_pass — Repo CI: MTP bridge mapping tests pass
+# [repo_tests] pass_to_pass -- Repo CI: MTP bridge mapping tests pass
 def test_repo_mtp_bridge_mapping():
     """Repo CI: MTP bridge mapping unit tests pass.
 
@@ -143,7 +135,7 @@ def test_repo_mtp_bridge_mapping():
 
 
 # -----------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests using subprocess.run()
+# Fail-to-pass (pr_diff) -- core behavioral tests using subprocess.run()
 # -----------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass

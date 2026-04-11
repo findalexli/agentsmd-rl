@@ -66,6 +66,64 @@ def test_repo_ruff_format_configs():
     assert r.returncode == 0, f"Ruff format check failed:{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint_src():
+    """Repo's ruff lint check passes on src/prime_rl directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff==0.13.0"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "check", "--config=pyproject.toml", "src/prime_rl/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed on src:{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_format_src():
+    """Repo's ruff format check passes on src/prime_rl directory (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "-q", "ruff==0.13.0"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["ruff", "format", "--check", "--config=pyproject.toml", "src/prime_rl/"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff format check failed on src:{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_configs_importable():
+    """Configs module imports work without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import sys; sys.path.insert(0, '/workspace/prime-rl/src'); "
+         "from prime_rl.configs.trainer import ModelConfig, TrainerConfig; "
+         "from prime_rl.configs.sft import SFTConfig; "
+         "print('All config imports successful')"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Config imports failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_modelconfig_creation():
+    """ModelConfig can be instantiated for various model types (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-c",
+         "import sys; sys.path.insert(0, '/workspace/prime-rl/src'); "
+         "from prime_rl.configs.trainer import ModelConfig; "
+         "mc1 = ModelConfig(name='Qwen/Qwen3-0.6B'); "
+         "mc2 = ModelConfig(name='meta-llama/Llama-3-8B'); "
+         "mc3 = ModelConfig(name='mistralai/Mistral-7B'); "
+         "print(f'Created {mc1.name}, {mc2.name}, {mc3.name}')"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ModelConfig creation failed:\n{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
@@ -223,7 +281,7 @@ def test_trainerconfig_validator_not_stub():
                 "TrainerConfig must have vlms_require_bfloat16 validator"
             )
             body = methods["vlms_require_bfloat16"].body
-            # Must have more than just  or 
+            # Must have more than just  or
             non_trivial = [
                 s for s in body
                 if not isinstance(s, (ast.Pass, ast.Return, ast.Expr))

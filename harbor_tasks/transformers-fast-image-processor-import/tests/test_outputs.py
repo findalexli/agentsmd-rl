@@ -320,6 +320,68 @@ def test_check_inits():
     assert r.returncode == 0, f"check_inits failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass
+def test_check_dummies():
+    """Repo's dummy objects check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_dummies.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"check_dummies failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_check_copies():
+    """Repo's copies check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "utils/check_copies.py"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"check_copies failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_import_base_modules():
+    """Base transformers imports work (pass_to_pass)."""
+    script = """
+import sys
+sys.path.insert(0, '/workspace/transformers/src')
+import transformers
+assert hasattr(transformers, '__version__')
+from transformers import AutoImageProcessor
+from transformers import IMAGE_PROCESSOR_MAPPING
+print('OK: Base imports work')
+"""
+    r = subprocess.run(
+        ["python3", "-c", script],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Base imports failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_import_image_processing_modules():
+    """Image processing module imports work (pass_to_pass)."""
+    script = """
+import sys
+sys.path.insert(0, '/workspace/transformers/src')
+
+# Test core image processing modules
+from transformers.models.clip import image_processing_clip
+from transformers.models.vit import image_processing_vit
+from transformers.models.detr import image_processing_detr
+from transformers.models.llama4 import image_processing_llama4
+from transformers.models.blip import image_processing_blip
+
+print('OK: Image processing imports work')
+"""
+    r = subprocess.run(
+        ["python3", "-c", script],
+        cwd=REPO, capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"Image processing imports failed:\n{r.stdout}\n{r.stderr}"
+
+
 # [agent_config] pass_to_pass — CLAUDE.md:2 @ 29db503cdef2f00d1f0ecd5841c3a486708ed1dd
 @pytest.mark.skipif(not shutil.which("ruff"), reason="ruff not installed")
 def test_ruff_style_check():

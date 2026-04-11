@@ -1,74 +1,64 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PrimeIntellect-ai/prime-rl"
+  repo: PrimeIntellect-ai/prime-rl
   pr: 2100
-  base_commit: "b92c2128ddeb679c23954c2bf6825e4d6659d501"
-  merge_commit: "f725629e47619a4affae87dad35db1714c0571b9"
-
+  base_commit: b92c2128ddeb679c23954c2bf6825e4d6659d501
+  merge_commit: f725629e47619a4affae87dad35db1714c0571b9
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: "Modified files (utils.py, orchestrator.py, scheduler.py) parse without errors"
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ruff linting passes on modified files"
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo ruff format check passes on modified files"
-
-  - id: test_repo_mypy
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo mypy type check passes on modified utils.py"
-
-  - id: vllm_backend_gets_return_token_ids
-    type: fail_to_pass
-    origin: pr_diff
-    description: "vLLM backend receives return_token_ids=True in extra_body"
-
-  - id: non_vllm_backend_omits_vllm_keys
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Non-vLLM backend does not get return_token_ids, top_k, or min_p"
-
-  - id: logprobs_always_true
-    type: pass_to_pass
-    origin: pr_diff
-    description: "logprobs=True regardless of backend type"
-
-  - id: min_tokens_and_repetition_penalty_preserved
-    type: pass_to_pass
-    origin: pr_diff
-    description: "min_tokens and repetition_penalty still appear in extra_body when set"
-
-  - id: max_tokens_in_result
-    type: pass_to_pass
-    origin: pr_diff
-    description: "max_tokens is still passed through in the result dict"
-
-  - id: orchestrator_callers_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "orchestrator.py callers no longer pass use_token_client to get_sampling_args"
-
-  - id: scheduler_callers_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scheduler.py callers no longer pass use_token_client to get_sampling_args"
-
-  - id: explicit_vllm_parameter
-    type: fail_to_pass
-    origin: agent_config
-    description: "get_sampling_args uses an explicit vLLM flag instead of use_token_client"
-    source:
-      path: "AGENTS.md"
-      lines: "15"
-      commit: "b92c2128ddeb679c23954c2bf6825e4d6659d501"
-
-rubric: []
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (utils.py, orchestrator.py, scheduler.py) parse without
+    errors
+- id: test_repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml is valid TOML
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff linting passes on modified files
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff format check passes on modified files
+- id: test_repo_mypy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo mypy type check passes on modified utils.py
+- id: vllm_backend_gets_return_token_ids
+  type: fail_to_pass
+  origin: pr_diff
+  description: vLLM backend receives return_token_ids=True in extra_body
+- id: non_vllm_backend_omits_vllm_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-vLLM backend does not get return_token_ids, top_k, or min_p
+- id: logprobs_always_true
+  type: pass_to_pass
+  origin: pr_diff
+  description: logprobs=True regardless of backend type
+- id: min_tokens_and_repetition_penalty_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: min_tokens and repetition_penalty still appear in extra_body when set
+- id: max_tokens_in_result
+  type: pass_to_pass
+  origin: pr_diff
+  description: max_tokens is still passed through in the result dict
+- id: orchestrator_callers_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: orchestrator.py callers no longer pass use_token_client to get_sampling_args
+- id: scheduler_callers_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: scheduler.py callers no longer pass use_token_client to get_sampling_args
+- id: explicit_vllm_parameter
+  type: fail_to_pass
+  origin: agent_config
+  description: get_sampling_args uses an explicit vLLM flag instead of use_token_client
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: b92c2128ddeb679c23954c2bf6825e4d6659d501

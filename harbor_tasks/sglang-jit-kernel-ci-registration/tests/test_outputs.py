@@ -313,3 +313,93 @@ def test_repo_codespell():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"codespell check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ci_register_importable():
+    """CI registration module is importable and functional (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import importlib.util
+import sys
+_spec = importlib.util.spec_from_file_location(
+    "ci_register", "/workspace/python/sglang/test/ci/ci_register.py"
+)
+ci_register = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(ci_register)
+# Verify key functions exist
+assert hasattr(ci_register, 'ut_parse_one_file')
+assert hasattr(ci_register, 'collect_tests')
+assert hasattr(ci_register, 'register_cuda_ci')
+print("ci_register module verified")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ci_register import test failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Target files compile to bytecode without errors (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile"] + TARGET_FILES,
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_precommit_hooks_yaml():
+    """Pre-commit YAML hooks pass on target files (pass_to_pass)."""
+    # Install pre-commit and run check-yaml hook equivalent
+    r = subprocess.run(
+        ["pip", "install", "PyYAML", "-q"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed to install PyYAML: {r.stderr}"
+    r = subprocess.run(
+        ["python3", "-c", """
+import yaml
+import sys
+# Validate .pre-commit-config.yaml is valid YAML
+with open('/workspace/.pre-commit-config.yaml') as f:
+    yaml.safe_load(f)
+print('pre-commit-config.yaml is valid')
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"YAML validation failed:\n{r.stderr[-500:]}"
+
+
+
+# [repo_tests] pass_to_pass
+def test_repo_end_of_file_fixer():
+    """Target files end with exactly one newline (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+files = [
+    "/workspace/python/sglang/jit_kernel/benchmark/bench_cast.py",
+    "/workspace/python/sglang/jit_kernel/benchmark/bench_fused_qknorm_rope.py",
+    "/workspace/python/sglang/jit_kernel/tests/test_cast.py",
+    "/workspace/python/sglang/jit_kernel/tests/test_fused_qknorm_rope.py",
+]
+errors = []
+for f in files:
+    with open(f, 'rb') as fp:
+        content = fp.read()
+    if not content:
+        continue
+    if not content.endswith(b'\\n'):
+        errors.append(f"{f}: missing final newline")
+    elif content.endswith(b'\\n\\n'):
+        errors.append(f"{f}: multiple trailing newlines")
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+print("All files have proper ending newlines")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"End-of-file check failed:\n{r.stdout[-500:]}"

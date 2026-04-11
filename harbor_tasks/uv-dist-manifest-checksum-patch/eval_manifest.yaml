@@ -52,6 +52,16 @@ checks:
     origin: repo_tests
     description: "Repo's Python scripts pass ruff linting"
 
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Python scripts pass ruff format check"
+
+  - id: repo_typos
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo passes typos spell check"
+
   - id: top_level_imports_only
     type: fail_to_pass
     origin: agent_config
@@ -61,6 +71,21 @@ checks:
       lines: "16"
       commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
 
-# No rubric rules - this task is about creating a new Python script, not editing config files.
-# The style guidelines from CLAUDE.md are enforced via the test_top_level_imports_only test.
-rubric: []
+rubric:
+  - rule: "Variable names in Python scripts should not be shortened; use full descriptive names like 'version' instead of 'ver'"
+    source:
+      path: "CLAUDE.md"
+      lines: "17-18"
+      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
+
+  - rule: "Python scripts should avoid bare exception handling patterns; use specific exception types and proper error handling"
+    source:
+      path: "CLAUDE.md"
+      lines: "7-8"
+      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"
+
+  - rule: "Python scripts should include a proper module-level docstring explaining the script's purpose and usage"
+    source:
+      path: "CLAUDE.md"
+      lines: "1"
+      commit: "d0f2f3babc7c892958e93419ad6065df0deb2112"

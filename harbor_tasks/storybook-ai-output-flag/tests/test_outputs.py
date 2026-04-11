@@ -222,6 +222,36 @@ def test_uses_storybook_logger():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_formatting():
+    """Repo code formatting passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "fmt:check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_compile_cli():
+    """CLI package compiles successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "nx", "compile", "cli"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CLI compile failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_check_cli():
+    """CLI package type-checks successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "nx", "check", "cli"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CLI type check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_typescript_syntax_ai_types():
     """TypeScript files in ai/ must have valid syntax (pass_to_pass)."""
     r = subprocess.run(
@@ -264,11 +294,14 @@ def test_repo_typescript_syntax_ai_index():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     # Filter to only errors in the ai/index.ts file itself
+    # TS2307 = cannot find module, TS7016 = missing declaration file
+    # These are expected in isolated check mode without full build, but actual syntax errors are not
     real_errors = [
         line for line in (r.stderr + r.stdout).splitlines()
         if "error TS" in line
         and "src/ai/index.ts" in line
         and "TS2307" not in line  # ignore "cannot find module" errors
+        and "TS7016" not in line  # ignore "missing declaration file" errors
     ]
     assert len(real_errors) == 0, (
         f"TypeScript syntax errors in ai/index.ts:\n{chr(10).join(real_errors)}"

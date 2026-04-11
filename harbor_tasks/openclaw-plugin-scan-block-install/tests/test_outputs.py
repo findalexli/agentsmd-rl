@@ -379,3 +379,31 @@ def test_repo_lint():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — before-install hooks tests
+def test_before_install_hooks_tests_pass():
+    """Upstream hooks.before-install.test.ts vitest suite passes."""
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
+         "src/plugins/hooks.before-install.test.ts", "--pool=forks", "--reporter=verbose"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Before-install hooks tests failed (rc={r.returncode}).\n"
+        f"{(r.stdout + r.stderr)[-1500:]}"
+    )
+
+
+# [repo_tests] pass_to_pass — hooks security tests
+def test_hooks_security_tests_pass():
+    """Upstream hooks.security.test.ts vitest suite passes."""
+    r = subprocess.run(
+        ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
+         "src/plugins/hooks.security.test.ts", "--pool=forks", "--reporter=verbose"],
+        cwd=REPO, capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, (
+        f"Hooks security tests failed (rc={r.returncode}).\n"
+        f"{(r.stdout + r.stderr)[-1500:]}"
+    )

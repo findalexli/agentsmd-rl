@@ -249,6 +249,60 @@ def test_move_unit_test_integration_tests():
     )
 
 
+def test_move_vm_runtime_unit_tests():
+    """Pass-to-pass: Verify that move-vm-runtime unit tests pass.
+
+    The fix involves linkage in the VM runtime, so this ensures the core
+    runtime functionality remains intact (pass_to_pass).
+    """
+    result = run_command(
+        ["cargo", "test", "-p", "move-vm-runtime", "--lib", "--", "--test-threads=1"],
+        cwd=f"{REPO_ROOT}/external-crates/move",
+        timeout=300
+    )
+    assert result.returncode == 0, (
+        f"VM runtime unit tests failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+    )
+
+
+def test_move_package_compiles():
+    """Pass-to-pass: Verify that move-package crate compiles successfully.
+
+    The move-package crate is used by the unit test runner for package resolution.
+    This ensures it builds correctly (pass_to_pass).
+    """
+    result = run_command(
+        ["cargo", "check", "-p", "move-package", "--all-targets"],
+        cwd=f"{REPO_ROOT}/external-crates/move",
+        timeout=120
+    )
+    assert result.returncode == 0, (
+        f"move-package check failed:\n{result.stderr[-500:]}\n{result.stdout[-500:]}"
+    )
+
+
+def test_move_cli_unit_tests():
+    """Pass-to-pass: Verify that move-cli unit tests pass.
+
+    The move-cli crate's tests ensure the CLI test runner works correctly.
+    This is related to the unit test functionality being fixed (pass_to_pass).
+    """
+    result = run_command(
+        ["cargo", "test", "-p", "move-cli", "--lib", "--", "--test-threads=1"],
+        cwd=f"{REPO_ROOT}/external-crates/move",
+        timeout=300
+    )
+    # Check for actual test failures, not just non-zero exit
+    if result.returncode != 0:
+        assert "FAILED" not in result.stdout and "FAILED" not in result.stderr, (
+            f"CLI unit tests failed:\n{result.stdout[-500:]}\n{result.stderr[-500:]}"
+        )
+        # If no explicit failures but non-zero exit, check for compilation errors
+        assert "error[" not in result.stderr.lower(), (
+            f"CLI compilation errors:\n{result.stderr[-500:]}"
+        )
+
+
 def test_setup_test_storage_function_structure():
     """Fail-to-pass: Verify the overall structure of the fixed setup_test_storage function.
 

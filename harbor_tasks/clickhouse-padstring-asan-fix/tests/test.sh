@@ -7,7 +7,7 @@ echo "=== Installing pytest ==="
 pip3 install pytest -q
 
 echo "=== Running tests ==="
-cd /workspace/task/tests
+cd /tests
 python3 -m pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log
 
 # Extract results and write reward file

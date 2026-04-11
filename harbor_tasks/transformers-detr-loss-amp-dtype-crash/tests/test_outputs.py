@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import subprocess
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -224,3 +225,75 @@ def test_no_bare_type_ignore():
             assert not bare_pattern.search(line), (
                 f"{fpath}:{i} has bare '# type: ignore' without error code"
             )
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — CI-derived tests using subprocess.run()
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_import_lw_detr_loss():
+    """Repo: LwDetrImageLoss can be imported from loss_lw_detr (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from transformers.loss.loss_lw_detr import LwDetrImageLoss; print('LwDetrImageLoss import OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_rt_detr_loss():
+    """Repo: RTDetrLoss can be imported from loss_rt_detr (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from transformers.loss.loss_rt_detr import RTDetrLoss; print('RTDetrLoss import OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Import failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile_loss_files():
+    """Repo: Both modified loss files compile with py_compile (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            f"import py_compile; py_compile.compile('{LW_FILE}', doraise=True); py_compile.compile('{RT_FILE}', doraise=True); print('py_compile OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_transformers_package_imports():
+    """Repo: transformers package imports correctly from source (pass_to_pass)."""
+    r = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import transformers; print(f'transformers {transformers.__version__} OK')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"transformers import failed:\n{r.stderr}"

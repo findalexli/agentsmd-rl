@@ -7,12 +7,16 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import os
 import re
 import subprocess
 from pathlib import Path
 
 REPO = "/workspace/react"
 TARGET = REPO + "/packages/react-native-renderer/src/ReactFiberConfigFabric.js"
+
+# Set NODE_ENV for tests that need it
+os.environ["NODE_ENV"] = "development"
 
 # ---------------------------------------------------------------------------
 # JS helper: extracts event-timing functions from the file, strips Flow types,
@@ -264,13 +268,23 @@ def test_no_wildcard_imports():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
-def test_repo_flow_typecheck():
-    """Repos Flow typecheck passes on modified file (pass_to_pass)."""
+def test_repo_flow_fabric():
+    """Repos Flow typecheck passes for Fabric renderer (pass_to_pass)."""
     r = subprocess.run(
-        ["yarn", "flow", "xplat"],
+        ["yarn", "flow", "fabric"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Flow typecheck failed:\n{r.stderr[-1000:]}{r.stdout[-500:]}"
+    assert r.returncode == 0, f"Flow fabric check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_flow_native():
+    """Repos Flow typecheck passes for React Native renderer (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "flow", "native"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Flow native check failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -285,9 +299,21 @@ def test_repo_lint():
 
 # [repo_tests] pass_to_pass
 def test_repo_react_native_renderer_tests():
-    """React Native renderer tests pass (pass_to_pass)."""
+    """React Native renderer unit tests pass (pass_to_pass)."""
     r = subprocess.run(
         ["yarn", "test", "--releaseChannel=xplat", "--testPathPattern=react-native-renderer", "--ci"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "NODE_ENV": "development"},
     )
     assert r.returncode == 0, f"React Native renderer tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_react_fabric_tests():
+    """React Fabric unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["yarn", "test", "--releaseChannel=xplat", "--testPathPattern=ReactFabric", "--ci"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+        env={**os.environ, "NODE_ENV": "development"},
+    )
+    assert r.returncode == 0, f"React Fabric tests failed:\n{r.stderr[-500:]}{r.stdout[-500:]}"

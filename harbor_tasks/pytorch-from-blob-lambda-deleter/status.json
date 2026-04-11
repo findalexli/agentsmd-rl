@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:01:44.643340",
-  "total_time": 233.17,
-  "sandbox_id": "iqyrn0ln8u3vboz5yqsjl",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:20:38.037151",
+  "total_time": 2445.43,
+  "sandbox_id": "i3z0uavkw6q0gnd8h93zh",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -18,10 +18,10 @@
       "notes": "Added 3 pass_to_pass tests from repo_tests origin: test_repo_git_clean (git status check), test_repo_files_exist (file existence/non-empty), test_repo_header_structure (include guards/pragma once). PyTorch C++ repo - no standard test runner available without full build. Docker image builds successfully."
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 490.16,
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 319.65,
       "notes": ""
     },
     "improve": {
@@ -35,29 +35,21 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "Fixed two test issues: 1) Updated regex in test_shim_cpp_context_forwarded to allow parameter names. 2) Updated test_repo_git_clean to allow changes in modified source files.",
+      "attempts": 2,
+      "notes": "All validation checks passed. Docker build OK. NOP test reward=0 (3 f2p tests correctly fail on buggy code). Gold test reward=1 (all 13 tests pass after fix). Rubric judge requires API keys for LLM evaluation.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 9.15
+      "time": 85.73
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.39,
+      "time": 3.17,
       "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 8931.19,
-      "at": "2026-04-09T11:40:44.058242"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +81,14 @@
       "backend": "fireworks",
       "time": 233.17,
       "at": "2026-04-09T15:01:44.643340"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2445.43,
+      "at": "2026-04-10T18:20:38.037151"
     }
   ]
 }

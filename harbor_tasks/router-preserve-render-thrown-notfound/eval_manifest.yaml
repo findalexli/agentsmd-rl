@@ -162,11 +162,17 @@ checks:
     origin: repo_tests
     description: Vue Router build validation passes (publint + attw)
 
-# Soft/subjective rules (from agent config - LLM-judge only)
+# Rubric rules for code style validation (from PR changes)
 rubric:
-  - rule: "Use proper TypeScript type annotations (as any for routeId assignments)"
-    relevance: "Style consistency with codebase"
-  - rule: "Follow the pattern: check isNotFound(error), assign routeId if missing, then throw/rethrow"
-    relevance: "Code organization per SKILL.md patterns"
-  - rule: "For Solid, handle both direct notFound errors and Error-wrapped ones via cause property"
-    relevance: "Framework-specific behavior per SKILL.md"
+  - rule: "React Match.tsx: Add error.routeId ??= matchState.routeId as any before throwing notFound errors in onCatch and fallback"
+    relevance: "Preserves route context for component-thrown notFound"
+    reference: "error.routeId ??= matchState.routeId as any"
+  - rule: "Solid Match.tsx: Import getNotFound and use it to unwrap Solid's Error wrapping before assigning routeId"
+    relevance: "Handles Solid's special Error wrapping behavior for thrown values"
+    reference: "getNotFound, notFoundError.routeId ??= currentMatchState().routeId as any"
+  - rule: "Solid not-found.tsx: Export getNotFound helper that checks error and error.cause for isNotFound"
+    relevance: "Unwraps Solid's Error.cause to find original notFound error"
+    reference: "export function getNotFound, (error as any)?.cause"
+  - rule: "Vue Match.tsx: Add error.routeId ??= matchData.value?.routeId as any in fallback and onCatch"
+    relevance: "Preserves route context for component-thrown notFound in Vue"
+    reference: "error.routeId ??= matchData.value?.routeId as any"

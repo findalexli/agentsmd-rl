@@ -74,11 +74,14 @@ def test_server_action_guard_in_static_path_key():
     src = _read_stripped()
     region = _get_static_path_key_region(src)
 
+    # Look for server action guard specifically (variable names like isPossibleServerAction,
+    # isServerAction, etc.) - NOT just any occurrence of "Action" which could be in
+    # unrelated variables like serverActionsManifest
     has_action_ref = bool(
-        re.search(r"[Ss]erver[Aa]ction", region)
-        or (re.search(r"[Aa]ction", region) and re.search(r"[Pp]ossible", region))
+        re.search(r"is[A-Za-z]*[Ss]erver[Aa]ction", region)  # isPossibleServerAction, isServerAction
+        or re.search(r"[Aa]ctionRequest", region)
         or re.search(r"[Nn]ext-[Aa]ction", region)
-        or re.search(r"isAction", region)
+        or re.search(r"actionId", region)
         or re.search(r"actionHeader", region)
     )
     assert has_action_ref, (

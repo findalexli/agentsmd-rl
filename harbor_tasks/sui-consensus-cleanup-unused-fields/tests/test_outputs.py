@@ -235,6 +235,18 @@ def test_cargo_test_consensus():
     assert r.returncode == 0, f"Consensus tests failed:\n{r.stderr[-1000:]}"
 
 
+def test_cargo_clippy_consensus():
+    """Cargo clippy passes on modified consensus crates (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "-p", "consensus-core", "-p", "consensus-config", "--", "-D", "warnings"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Clippy failed:\n{r.stderr[-1000:]}"
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))

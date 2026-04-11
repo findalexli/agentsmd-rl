@@ -306,9 +306,19 @@ console.log(constCount > letCount ? '1' : '0');
 def test_repo_prettier_check():
     """Modified files are correctly formatted with prettier (pass_to_pass)."""
     r = subprocess.run(
-        ["bunx", "prettier", "--check", 
+        ["bunx", "prettier", "--check",
          "packages/app/src/components/prompt-input.tsx",
          "packages/app/src/components/settings-general.tsx"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass — full unit test suite
+def test_repo_unit_tests():
+    """Full unit test suite passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["bun", "test", "--preload", "./happydom.ts", "./src"],
+        capture_output=True, text=True, timeout=180, cwd=PACKAGES_APP,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

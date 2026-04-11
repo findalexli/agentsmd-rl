@@ -245,6 +245,21 @@ def test_repo_typos_discovery():
     assert r.returncode == 0, f"Typos check on discovery.rs failed:\n{r.stdout}\n{r.stderr}"
 
 
+# [repo_tests] pass_to_pass
+def test_repo_ruff_uvx():
+    """Repo Python files pass ruff via uvx (authentic CI command, pass_to_pass)."""
+    # Install uv if not present (provides uvx)
+    install = subprocess.run(
+        ["pip", "install", "-q", "uv"],
+        capture_output=True, text=True, timeout=60,
+    )
+    r = subprocess.run(
+        ["uvx", "ruff", "check", str(REPO / "python")],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert r.returncode == 0, f"uvx ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — regression guards
 # ---------------------------------------------------------------------------
@@ -354,21 +369,32 @@ def test_allows_installation_has_debug_logging():
     assert "debug!(" in body, "allows_installation should contain debug! logging statements"
 
 
+
 # [repo_tests] pass_to_pass
 def test_python_source_impl_methods_complete():
     """PythonSource impl block should have consistent method structure."""
     src = FILE.read_text()
-    # Find impl PythonSource block
-    impl_match = re.search(r"impl\s+PythonSource\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}", src, re.DOTALL)
-    if not impl_match:
+    # Find impl PythonSource block start and extract with brace counting
+    impl_start_match = re.search(r"impl\\s+PythonSource\\s*\\{", src)
+    if not impl_start_match:
         pytest.skip("Could not find impl PythonSource block")
-    impl_body = impl_match.group(1)
+    start = impl_start_match.end()
+    depth = 1
+    i = start
+    while i < len(src) and depth > 0:
+        if src[i] == "{":
+            depth += 1
+        elif src[i] == "}":
+            depth -= 1
+        i += 1
+    impl_body = src[start:i-1]
     # Check for expected methods in the impl block
     required_methods = ["is_explicit", "is_maybe_system"]
     for method in required_methods:
-        assert re.search(rf"fn\s+{method}\b", impl_body), (
+        assert re.search(rf"(?:pub\(crate\)\s+)?fn\s+{method}\\b", impl_body), (
             f"Method {method} not found in impl PythonSource block"
         )
+
 
 
 # [repo_tests] pass_to_pass
@@ -379,45 +405,15 @@ def test_discovery_rs_compiles_base():
     without needing cargo/rustc in the Docker image.
     """
     src = FILE.read_text()
-    # Check for balanced braces (basic structural validation)
-    open_count = src.count("{")
-    # Skip brace check - flawed for files with raw strings
-    close_count = src.count("}")
-    pytest.skip("Brace counting flawed for files with raw strings")  # open_count == close_count, (
-        f"Unbalanced braces in {FILE}: {open_count} open, {close_count} close"
-    )
-    # Check for balanced parentheses
-    open_paren = src.count("(")
-    close_paren = src.count(")")
-    pytest.skip("Paren counting may be affected by strings")  # open_paren == close_paren, (
-        f"Unbalanced parentheses in {FILE}: {open_paren} open, {close_paren} close"
-    )
-    # Verify no obvious syntax errors like double semicolons outside comments
-    lines = src.split("\n")
-    for i, line in enumerate(lines, 1):
-        # Skip comment lines
-        stripped = line.strip()
-        if stripped.startswith("//") or stripped.startswith("*") or stripped.startswith("/*"):
-            continue
-        # Check for double semicolons (outside string literals is complex, check simple case)
-        if ";;" in stripped and not '"' in stripped:
-            assert False, f"Potential syntax error at line {i}: double semicolon"
+    # Skip brace and paren checks - flawed for files with raw strings
+    pytest.skip("Static brace/paren counting is flawed for files with raw strings")
 
 
 # [repo_tests] pass_to_pass
 def test_clippy_expect_instead_of_allow():
     """Code should use #[expect(...)] instead of #[allow(...)] per CLAUDE.md (pass_to_pass)."""
-    src = FILE.read_text()
-    # Check for #[allow( in the file (should prefer #[expect])
-    allow_pattern = re.compile(r"#\[\s*allow\s*\(")
-    matches = list(allow_pattern.finditer(src))
-    # Some #[allow] may be necessary, but we flag them for review
-    # This is an informational check - if there are any, we pass but note it
-    # Actually, per CLAUDE.md we should expect no #[allow]
-    pytest.skip("#[allow(...)] pre-exists in base commit, not related to PR fix")  # len(matches) == 0, (
-        f"Found {len(matches)} #[allow(...)] attributes in {FILE}, "
-        "prefer #[expect(...)] per CLAUDE.md guidelines"
-    )
+    # This check is skipped as #[allow(...)] may pre-exist in base commit
+    pytest.skip("#[allow(...)] pre-exists in base commit, not related to PR fix")
 
 
 # [repo_tests] pass_to_pass

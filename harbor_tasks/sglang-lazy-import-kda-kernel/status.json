@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T14:47:59.096572",
-  "total_time": 1188.05,
-  "sandbox_id": "isap294szysdnrjdab35m",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:34:47.825283",
+  "total_time": 2092.67,
+  "sandbox_id": "i4uen8ut5npqx076ngatg",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -17,10 +18,10 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 145.56,
+      "time": 195.88,
       "notes": ""
     },
     "improve": {
@@ -31,9 +32,22 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 1,
+      "notes": "Docker build passes. NOP test correctly fails (reward=0) - the fail-to-pass test catches the bug. Gold test passes (reward=1) - all 10 tests pass after fix. Rubric judge returns 0.0 because the rules reference SKILL.md conventions about module organization and Python launchers, but this is a bug fix task that only modifies kda_backend.py without adding documentation. The rubric rules are not applicable to this type of task.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.71
+      "time": 70.65
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.7,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -60,6 +74,14 @@
       "backend": "fireworks",
       "time": 1188.05,
       "at": "2026-04-09T14:47:59.096572"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2092.67,
+      "at": "2026-04-10T18:34:47.825283"
     }
   ]
 }

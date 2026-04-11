@@ -229,3 +229,55 @@ def test_repo_check_deps():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Check deps failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_tsc():
+    """Repo's TypeScript compilation check passes (pass_to_pass). Verifies
+    tsc -p . runs without errors after build on both base and after fix."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+
+    # Build first (required for tsc to find bundle type declarations)
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+    # Run TypeScript check
+    r = subprocess.run(
+        ["npm", "run", "tsc"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_lint_tests():
+    """Repo's test file linting passes (pass_to_pass). Verifies test file
+    conventions are correct on both base and after fix."""
+    # First install dependencies
+    r = subprocess.run(
+        ["npm", "ci"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm ci failed:\n{r.stderr[-500:]}"
+
+    # Build first (required for lint-tests to load modules)
+    r = subprocess.run(
+        ["npm", "run", "build"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-1000:]}"
+
+    # Run test file linting
+    r = subprocess.run(
+        ["npm", "run", "lint-tests"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test lint failed:\n{r.stderr[-500:]}"

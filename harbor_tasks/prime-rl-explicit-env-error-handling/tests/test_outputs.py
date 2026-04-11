@@ -51,6 +51,10 @@ def test_interleave_rollout_returns_none_for_empty_trajectory():
 import sys
 sys.path.insert(0, '/workspace/prime-rl')
 
+# Setup logger to avoid initialization issues
+import prime_rl.utils.logger as logger_module
+logger_module.setup_logger("DEBUG")
+
 from prime_rl.orchestrator.trajectories import interleave_rollout
 
 # Create a mock state with empty trajectory
@@ -88,6 +92,10 @@ def test_branch_rollout_returns_none_for_empty_trajectory():
 import sys
 sys.path.insert(0, '/workspace/prime-rl')
 
+# Setup logger to avoid initialization issues
+import prime_rl.utils.logger as logger_module
+logger_module.setup_logger("DEBUG")
+
 from prime_rl.orchestrator.trajectories import branch_rollout
 
 # Create a mock state with empty trajectory
@@ -124,6 +132,10 @@ def test_interleave_rollout_zeros_completion_mask_on_error():
     code = """
 import sys
 sys.path.insert(0, '/workspace/prime-rl')
+
+# Setup logger to avoid initialization issues
+import prime_rl.utils.logger as logger_module
+logger_module.setup_logger("DEBUG")
 
 from prime_rl.orchestrator.trajectories import interleave_rollout
 
@@ -180,6 +192,10 @@ def test_branch_rollout_zeros_completion_mask_on_error():
     code = """
 import sys
 sys.path.insert(0, '/workspace/prime-rl')
+
+# Setup logger to avoid initialization issues
+import prime_rl.utils.logger as logger_module
+logger_module.setup_logger("DEBUG")
 
 from prime_rl.orchestrator.trajectories import branch_rollout
 
@@ -290,6 +306,10 @@ def test_interleave_rollout_normal_case_works():
 import sys
 sys.path.insert(0, '/workspace/prime-rl')
 
+# Setup logger to avoid initialization issues
+import prime_rl.utils.logger as logger_module
+logger_module.setup_logger("DEBUG")
+
 from prime_rl.orchestrator.trajectories import interleave_rollout
 
 # Create a mock state with NO error and non-empty trajectory
@@ -345,6 +365,10 @@ def test_branch_rollout_normal_case_works():
     code = """
 import sys
 sys.path.insert(0, '/workspace/prime-rl')
+
+# Setup logger to avoid initialization issues
+import prime_rl.utils.logger as logger_module
+logger_module.setup_logger("DEBUG")
 
 from prime_rl.orchestrator.trajectories import branch_rollout
 
@@ -459,3 +483,35 @@ def test_repo_ruff_format():
         cwd=REPO,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint_all_src():
+    """Repo's ruff linter passes on all src files (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "src/prime_rl/"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint on all src failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_import_syntax_check():
+    """All Python files in modified modules have valid syntax (pass_to_pass)."""
+    modified_files = [
+        "src/prime_rl/orchestrator/trajectories.py",
+        "src/prime_rl/orchestrator/orchestrator.py",
+        "tests/unit/orchestrator/test_trajectories.py",
+    ]
+    for file_path in modified_files:
+        r = subprocess.run(
+            ["python", "-m", "py_compile", file_path],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax error in {file_path}:\n{r.stderr}"

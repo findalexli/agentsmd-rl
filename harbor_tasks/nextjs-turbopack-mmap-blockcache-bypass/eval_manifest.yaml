@@ -45,12 +45,17 @@ checks:
   - id: test_imports_include_atomic
     type: pass_to_pass
     origin: static
-    description: "Source file imports AtomicU64 from std::sync::atomic"
+    description: "Source file imports AtomicU64 from std::sync::atomic (added in PR)"
 
   - id: test_repo_rust_syntax_valid
     type: pass_to_pass
-    origin: repo_ci
-    description: "Repo's Rust source files have valid syntax (balanced braces, valid structure)"
+    origin: repo_tests
+    description: "Repo's Rust syntax is valid (cargo check -p turbo-persistence passes)"
+
+  - id: test_repo_rust_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Rust code passes clippy lints (cargo clippy -p turbo-persistence passes)"
 
 rubric:
   - rule: "Read all README.md files in the directory path from repo root up to and including the target file's directory before editing. This identifies local patterns and conventions."

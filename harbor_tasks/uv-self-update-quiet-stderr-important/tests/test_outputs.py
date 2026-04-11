@@ -220,6 +220,24 @@ def test_repo_cargo_check_lib():
     assert r.returncode == 0, f"Cargo check --lib failed:\n{r.stderr[-1000:]}"
 
 
+def test_repo_clippy_workspace():
+    """Full workspace passes Clippy lints (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "clippy", "--workspace", "--all-targets", "--all-features", "--locked", "--", "-D", "warnings"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Workspace clippy failed:\n{r.stderr[-1000:]}"
+
+
+def test_repo_cargo_check_locked():
+    """Cargo.lock is up to date with Cargo.toml files (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "--package", "uv", "--locked"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Cargo check --locked failed (Cargo.lock out of date):\n{r.stderr[-1000:]}"
+
+
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — wiring
 # ---------------------------------------------------------------------------

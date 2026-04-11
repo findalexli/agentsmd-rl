@@ -89,6 +89,84 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_py_compile():
+    """Repo's modified Python files compile successfully (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-m", "py_compile", "src/prime_rl/configs/trainer.py",
+         "src/prime_rl/configs/rl.py", "src/prime_rl/trainer/parallel_dims.py",
+         "src/prime_rl/trainer/sft/train.py"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"py_compile failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_parallel_dims_ast():
+    """ParallelDims class structure is valid (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import ast; tree = ast.parse(open('src/prime_rl/trainer/parallel_dims.py').read()); " +
+         "cls = next(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef) and n.name == 'ParallelDims'); " +
+         "fields = [item.target.id for item in cls.body if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name)]; " +
+         "required = ['dp_replicate', 'dp_shard', 'cp', 'pp', 'ep', 'world_size']; " +
+         "missing = [f for f in required if f not in fields]; " +
+         "assert not missing, f'Missing fields: {missing}'; " +
+         "print('OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"AST check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_model_config_ast():
+    """ModelConfig class retains required fields (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import ast; tree = ast.parse(open('src/prime_rl/configs/trainer.py').read()); " +
+         "cls = next(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef) and n.name == 'ModelConfig'); " +
+         "fields = [item.target.id for item in cls.body if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name)]; " +
+         "required = ['cp', 'dp_replicate', 'ep']; " +
+         "missing = [f for f in required if f not in fields]; " +
+         "assert not missing, f'Missing required fields: {missing}'; " +
+         "print('OK')"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ModelConfig AST check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_changelog_exists():
+    """CHANGELOG.md exists and has content (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import os; size = os.path.getsize('CHANGELOG.md'); " +
+         "assert size > 1000, f'CHANGELOG.md too small: {size} bytes'; " +
+         "print(f'CHANGELOG.md: {size} bytes')"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"CHANGELOG check failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_no_stubbed_files():
+    """Key modified files are not stubbed/hollowed out (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", "-c",
+         "import os; files = ['src/prime_rl/trainer/parallel_dims.py', 'src/prime_rl/configs/trainer.py']; " +
+         "sizes = {f: os.path.getsize(f) for f in files}; " +
+         "assert sizes['src/prime_rl/trainer/parallel_dims.py'] > 5000, 'parallel_dims.py too small'; " +
+         "assert sizes['src/prime_rl/configs/trainer.py'] > 15000, 'trainer.py too small'; " +
+         "print('OK:', sizes)"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"File size check failed:\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests via subprocess
 # ---------------------------------------------------------------------------
 
@@ -234,7 +312,7 @@ def test_parallel_dims_methods_intact():
 
 # [static] pass_to_pass
 def test_model_config_retains_fields():
-    """ModelConfig must still have cp, dp_replicate, ep and >=5 total fields."""
+    """ModelConfig must still have cp, dp_replicate, ep and >=5 fields."""
     _, tree = _parse(TRAINER_CFG)
     cls = _find_class(tree, "ModelConfig")
     fields = _class_fields(cls)

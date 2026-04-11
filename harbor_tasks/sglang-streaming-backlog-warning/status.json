@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:04:38.593815",
-  "total_time": 407.14,
-  "sandbox_id": "i21eeob0355uo53i78vv0",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:39:27.371030",
+  "total_time": 2262.57,
+  "sandbox_id": "imez09lwzebzu0g5girdr",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -17,10 +18,10 @@
       "notes": ""
     },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 112.1,
+      "time": 343.8,
       "notes": ""
     },
     "rubric_enrichment": {
@@ -38,20 +39,24 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed. Docker build succeeded. NOP test correctly returns reward=0 (fails on buggy code). Gold test correctly returns reward=1 (passes after fix). Rubric judge shows ICR=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.88
+      "time": 55.41
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.75,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "glm",
-      "time": 6167.87,
-      "at": "2026-04-09T06:44:13.941866"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -83,6 +88,14 @@
       "backend": "fireworks",
       "time": 407.14,
       "at": "2026-04-09T15:04:38.593815"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2262.57,
+      "at": "2026-04-10T18:39:27.371030"
     }
   ]
 }

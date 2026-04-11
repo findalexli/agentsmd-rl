@@ -136,6 +136,28 @@ def test_syntax_check():
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass
+def test_repo_pyproject_toml_valid():
+    """Repo's pyproject.toml is valid TOML (pass_to_pass)."""
+    subprocess.run(
+        ["python", "-m", "pip", "install", "tomli", "-q"],
+        capture_output=True,
+        timeout=60,
+    )
+    r = subprocess.run(
+        [
+            "python",
+            "-c",
+            f"import tomli; tomli.load(open('{REPO}/pyproject.toml', 'rb')); print('pyproject.toml is valid')",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"pyproject.toml validation failed:\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
 def test_repo_ruff_check():
     """Repo's ruff linting passes on modified files (pass_to_pass)."""
     # Ensure ruff is installed

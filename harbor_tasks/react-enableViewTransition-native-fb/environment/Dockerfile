@@ -23,5 +23,9 @@ RUN git clone --depth=100 https://github.com/facebook/react.git /workspace/react
 
 WORKDIR /workspace/react
 
+# Install dependencies (required for eslint, prettier, and other repo tests)
+RUN yarn install --frozen-lockfile --network-timeout 600000
+
+
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier

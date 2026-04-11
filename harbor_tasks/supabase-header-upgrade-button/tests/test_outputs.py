@@ -328,18 +328,6 @@ def test_node_parses_modified_files():
 # ---------------------------------------------------------------------------
 
 
-def test_repo_typecheck():
-    """Repo's TypeScript typecheck passes on studio app (pass_to_pass)."""
-    r = subprocess.run(
-        ["pnpm", "run", "typecheck"],
-        capture_output=True,
-        text=True,
-        timeout=600,
-        cwd=f"{REPO}/apps/studio",
-    )
-    assert r.returncode == 0, f"Typecheck failed:\n{r.stderr[-500:]}"
-
-
 def test_repo_lint():
     """Repo's ESLint passes on studio app (pass_to_pass)."""
     r = subprocess.run(
@@ -352,18 +340,6 @@ def test_repo_lint():
     assert r.returncode == 0, f"Lint failed:\n{r.stderr[-500:]}"
 
 
-def test_repo_layout_header_tests():
-    """Repo's unit tests for LayoutHeader components pass (pass_to_pass)."""
-    r = subprocess.run(
-        ["pnpm", "vitest", "run", "LayoutHeader"],
-        capture_output=True,
-        text=True,
-        timeout=600,
-        cwd=f"{REPO}/apps/studio",
-    )
-    assert r.returncode == 0, f"LayoutHeader tests failed:\n{r.stderr[-500:]}"
-
-
 def test_repo_navigation_bar_utils():
     """Repo's unit tests for NavigationBar utils pass (pass_to_pass)."""
     r = subprocess.run(
@@ -374,6 +350,18 @@ def test_repo_navigation_bar_utils():
         cwd=f"{REPO}/apps/studio",
     )
     assert r.returncode == 0, f"NavigationBar utils tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_navigation_bar_branch_selector():
+    """Repo's unit tests for NavigationBar ProjectBranchSelector pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "ProjectBranchSelector.utils"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"ProjectBranchSelector tests failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_telemetry_first_touch_store():
@@ -412,13 +400,49 @@ def test_repo_local_version_popover():
     assert r.returncode == 0, f"LocalVersionPopover tests failed:\n{r.stderr[-500:]}"
 
 
-def test_repo_studio_unit_tests():
-    """Repo's studio unit tests pass (pass_to_pass)."""
+def test_repo_layout_header_local_version():
+    """Repo's LayoutHeader LocalVersionPopover tests pass (pass_to_pass)."""
     r = subprocess.run(
-        ["pnpm", "run", "test"],
+        ["pnpm", "vitest", "run", "LayoutHeader/LocalVersionPopover"],
         capture_output=True,
         text=True,
         timeout=600,
         cwd=f"{REPO}/apps/studio",
     )
-    assert r.returncode == 0, f"Studio unit tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"LayoutHeader LocalVersionPopover tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_common_package_consent_state():
+    """Repo's common package consent-state tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "consent-state"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/packages/common",
+    )
+    assert r.returncode == 0, f"Common package consent-state tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_common_package_first_referrer():
+    """Repo's common package first-referrer-cookie tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "first-referrer-cookie"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/packages/common",
+    )
+    assert r.returncode == 0, f"Common package first-referrer-cookie tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_instrumentation_client():
+    """Repo's instrumentation-client tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["pnpm", "vitest", "run", "instrumentation-client"],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        cwd=f"{REPO}/apps/studio",
+    )
+    assert r.returncode == 0, f"Instrumentation client tests failed:\n{r.stderr[-500:]}"

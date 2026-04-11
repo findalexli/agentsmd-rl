@@ -175,3 +175,21 @@ def test_repo_cargo_check_sui_framework():
         capture_output=True, text=True, timeout=300, cwd=REPO,
     )
     assert r.returncode == 0, f"cargo check -p sui-framework failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_check_sui_framework_tests():
+    """Repo's sui-framework-tests crate passes cargo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "sui-framework-tests"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p sui-framework-tests failed:\n{r.stderr[-500:]}"
+
+
+def test_repo_cargo_check_sui_move():
+    """Repo's sui-move crate passes cargo check (pass_to_pass)."""
+    r = subprocess.run(
+        ["cargo", "check", "-p", "sui-move"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"cargo check -p sui-move failed:\n{r.stderr[-500:]}"

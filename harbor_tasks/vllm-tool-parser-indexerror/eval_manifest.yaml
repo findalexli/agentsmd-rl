@@ -1,0 +1,29 @@
+version: '1.0'
+task:
+  name: Fix sum_numbers empty list handling
+  source_repo: demo/task-repo
+  source_pr: null
+  base_commit: abc123
+checks:
+- id: test_sum_numbers_returns_zero_for_empty_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: sum_numbers([]) actually returns 0 at runtime (executes code)
+- id: test_sum_numbers_with_values_still_works
+  type: fail_to_pass
+  origin: pr_diff
+  description: sum_numbers with non-empty lists still works correctly
+- id: test_python_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: mymath.py has valid Python syntax (py_compile)
+- id: test_function_exists
+  type: pass_to_pass
+  origin: static
+  description: sum_numbers function exists and is callable
+- id: test_average_function_still_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: average function works and uses sum_numbers correctly
+rubric: []
+config_edits: []

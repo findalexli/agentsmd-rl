@@ -12,6 +12,21 @@ checks:
     origin: static
     description: "kda_backend.py must parse without syntax errors"
 
+  - id: test_repo_syntax_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax compilation check via py_compile"
+
+  - id: test_repo_ruff_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linter check on kda_backend.py passes"
+
+  - id: test_repo_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Black formatting check on kda_backend.py passes"
+
   - id: import_kda_backend_no_cuda_crash
     type: fail_to_pass
     origin: pr_diff

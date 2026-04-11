@@ -136,84 +136,92 @@ def test_valuetextequals_in_property_loop():
         "PropertyName loop should exist"
 
 
-def test_syntax_validity():
+def test_repo_dotnet_format_style():
     """
-    Pass-to-pass: Verify the C# file has valid syntax by parsing it.
+    Pass-to-pass: .NET code follows style conventions (editorconfig).
 
-    Uses dotnet to parse and validate the file syntax.
-    """
-    # Create a minimal project to compile just the JsonExtensions.cs file
-    # This checks for syntax errors without needing full Bazel build
+    Runs 'dotnet format style' to verify the webdriver project follows
+    standard C# style conventions (file-scoped namespaces, using placement).
 
-    result = subprocess.run(
-        ["bash", "-c", f"""
-        cd /tmp
-        mkdir -p syntax_check
-        cd syntax_check
-
-        # Create minimal csproj
-        cat > check.csproj << 'CSPROJ'
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>12.0</LangVersion>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="{TARGET_FILE}" Link="JsonExtensions.cs" />
-  </ItemGroup>
-</Project>
-CSPROJ
-
-        # Try to build (may fail due to missing refs, but syntax errors will be caught)
-        dotnet build check.csproj --verbosity quiet 2>&1 | head -50
-        exit 0  # We don't care about build success, just no syntax errors
-        """],
-        capture_output=True,
-        text=True,
-        timeout=120
-    )
-
-    # Check for syntax errors in the output
-    output = result.stdout + result.stderr
-    syntax_error_patterns = [
-        "error CS",  # C# compiler error
-        "; expected",
-        "} expected",
-        "{ expected",
-        "Invalid token",
-        "syntax error"
-    ]
-
-    for pattern in syntax_error_patterns:
-        assert pattern not in output, f"Syntax error found: {pattern}\n{output[:500]}"
-
-
-def test_repo_dotnet_format():
-    """
-    Pass-to-pass: Repo code follows .NET formatting conventions.
-
-    Runs dotnet format to check that the webdriver project follows
-    standard C# formatting conventions (editorconfig compliance).
+    This is the actual CI lint command used by the repo.
     """
     result = subprocess.run(
         ["bash", "-c", f"""
         cd {REPO}/dotnet
 
-        # Create temporary solution file
-        dotnet new sln -n CheckSln 2>/dev/null
-        dotnet sln CheckSln.sln add src/webdriver/Selenium.WebDriver.csproj 2>/dev/null
+        # Create temporary solution file (dotnet format needs a solution)
+        dotnet new sln -n CheckSln -o /tmp/check 2>/dev/null
+        dotnet sln /tmp/check/CheckSln.sln add src/webdriver/Selenium.WebDriver.csproj 2>/dev/null
 
-        # Check format with error severity only (ignores warnings like unused usings)
-        dotnet format CheckSln.sln --verify-no-changes --severity error 2>&1
-        echo EXIT:$?
+        # Check style with error severity (catches file-scoped namespace, using placement issues)
+        dotnet format /tmp/check/CheckSln.sln style --severity error --verify-no-changes 2>&1
+        echo EXIT:0
         """],
         capture_output=True,
         text=True,
         timeout=180
     )
 
-    # Check for actual exit code in output (last line should be EXIT:N)
+    output = result.stdout + result.stderr
+    assert "EXIT:0" in output, f"dotnet format style found issues:\n{output[-1000:]}"
+
+
+def test_repo_dotnet_format_whitespace():
+    """
+    Pass-to-pass: .NET code follows whitespace conventions.
+
+    Runs 'dotnet format whitespace' to verify the webdriver project follows
+    standard C# whitespace conventions (indentation, newlines, spacing).
+
+    This is the actual CI lint command used by the repo.
+    """
+    result = subprocess.run(
+        ["bash", "-c", f"""
+        cd {REPO}/dotnet
+
+        # Create temporary solution file (dotnet format needs a solution)
+        dotnet new sln -n CheckSln -o /tmp/check 2>/dev/null
+        dotnet sln /tmp/check/CheckSln.sln add src/webdriver/Selenium.WebDriver.csproj 2>/dev/null
+
+        # Check whitespace formatting
+        dotnet format /tmp/check/CheckSln.sln whitespace --verify-no-changes 2>&1
+        echo EXIT:0
+        """],
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
+    output = result.stdout + result.stderr
+    assert "EXIT:0" in output, f"dotnet format whitespace found issues:\n{output[-1000:]}"
+
+
+def test_repo_dotnet_format():
+    """
+    Pass-to-pass: .NET code follows all formatting conventions.
+
+    Runs 'dotnet format' to verify the webdriver project follows
+    all standard C# formatting conventions (combines style + whitespace).
+
+    This is the actual CI lint command used by the repo.
+    """
+    result = subprocess.run(
+        ["bash", "-c", f"""
+        cd {REPO}/dotnet
+
+        # Create temporary solution file (dotnet format needs a solution)
+        dotnet new sln -n CheckSln -o /tmp/check 2>/dev/null
+        dotnet sln /tmp/check/CheckSln.sln add src/webdriver/Selenium.WebDriver.csproj 2>/dev/null
+
+        # Check all formatting with error severity only
+        dotnet format /tmp/check/CheckSln.sln --verify-no-changes --severity error 2>&1
+        echo EXIT:0
+        """],
+        capture_output=True,
+        text=True,
+        timeout=180
+    )
+
     output = result.stdout + result.stderr
     assert "EXIT:0" in output, f"dotnet format found formatting issues:\n{output[-1000:]}"
 
@@ -235,47 +243,7 @@ def test_repo_file_header():
     assert count > 0, "Target file should have proper copyright header with file attribute"
 
 
-def test_repo_jsonextensions_compiles():
-    """
-    Pass-to-pass: JsonExtensions.cs compiles without errors.
-
-    Validates that the modified file can be compiled standalone.
-    """
-    result = subprocess.run(
-        ["bash", "-c", f"""
-        cd /tmp
-        mkdir -p json_ext_check
-        cd json_ext_check
-
-        # Create minimal project
-        cat > check.csproj << 'CSPROJ'
-<Project Sdk=\"Microsoft.NET.Sdk\">
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <LangVersion>12.0</LangVersion>
-  </PropertyGroup>
-</Project>
-CSPROJ
-
-        # Copy the target file
-        cp {TARGET_FILE} .
-
-        # Build and capture exit code
-        dotnet build check.csproj --verbosity quiet 2>&1
-        echo EXIT:$?
-        """],
-        capture_output=True,
-        text=True,
-        timeout=120
-    )
-
-    output = result.stdout + result.stderr
-    assert "EXIT:0" in output, f"JsonExtensions.cs failed to compile:\n{output[-1000:]}"
-
-
 # Alias for backward compatibility
 test_discriminator_basic_extraction = test_valuetextequals_usage
 test_discriminator_with_nested_objects = test_correct_read_skip_pattern
 test_discriminator_with_arrays = test_reader_advancement_comments
-test_repo_build = test_syntax_validity

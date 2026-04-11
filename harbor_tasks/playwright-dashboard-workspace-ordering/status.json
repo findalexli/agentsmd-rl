@@ -1,28 +1,45 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:01:15.696558",
-  "total_time": 204.22,
-  "sandbox_id": "ij8gi5stgjupygidh5w92",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:32:45.421834",
+  "total_time": 3492.24,
+  "sandbox_id": "ivbjpxmewj7helaw29dm8",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "config_edit_precision": 1.0,
+  "rubric_icr": 1.0,
   "nodes": {
-    "p2p_enrich": {
-      "status": "completed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 44.76,
-      "notes": "Added 1 new pass_to_pass test from repo CI/CD: test_repo_check_deps (npm run check-deps after build). Discovered CI commands via package.json: build, eslint, tsc, check-deps, lint-packages, lint-tests. Tested commands in container - eslint OOM'd, tsc requires build first, check-deps works after build. Total p2p repo_tests: 3 (test_repo_build, test_repo_lint_packages, test_repo_check_deps)"
-    },
     "p2p_enrichment": {
-      "status": "rate_limited",
+      "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 117.62,
+      "time": 942.79,
       "notes": ""
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "CLAUDE.md",
+        ".github/copilot-instructions.md",
+        ".claude/skills/playwright-dev/SKILL.md"
+      ],
+      "rules_added": 1,
+      "rules_rejected": 0,
+      "rejection_reasons": "N/A",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 68.02
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 8.67,
+      "notes": "",
+      "precision": 1.0
     },
     "improve": {
       "status": "skipped",
@@ -36,24 +53,17 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed solve.sh idempotency check - the grep pattern '|| 'Global'' was matching existing code in the file, causing false positive 'Patch already applied' detection. Changed to check for the specific pattern 'const currentWorkspace = clientInfo?.workspaceDir || 'Global'' which only exists after the patch. All 4 validation checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (ICR=1.0).",
+      "notes": "All validation checks passed. Docker build OK. NOP test reward=0 (3 fail_to_pass tests correctly fail on base commit). Gold test reward=1 (all 9 tests pass after fix). Rubric judge requires API key (environment limitation); manual verification confirms gold solution satisfies the DEPS.list rule.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.57
+      "time": 580.72
     },
     "rubric_judge": {
       "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.16,
+      "time": 2.32,
       "notes": "ICR=1.00"
-    },
-    "rubric_enrichment": {
-      "status": "error",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1.77,
-      "notes": ""
     }
   },
   "history": [
@@ -62,40 +72,8 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 9467.19,
-      "at": "2026-04-09T11:49:40.020932"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 9467.45,
-      "at": "2026-04-09T11:49:40.192966"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 961.74,
-      "at": "2026-04-09T14:44:12.906117"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 962.01,
-      "at": "2026-04-09T14:44:13.075618"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 204.22,
-      "at": "2026-04-09T15:01:15.696558"
+      "time": 3492.24,
+      "at": "2026-04-10T18:32:45.421834"
     }
   ]
 }

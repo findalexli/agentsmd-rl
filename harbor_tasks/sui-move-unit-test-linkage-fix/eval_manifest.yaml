@@ -51,6 +51,21 @@ checks:
     origin: repo_tests
     description: Cargo fmt check passes for move-unit-test crate
 
+  - id: test_repo_cargo_test_move_unit_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo test for move-unit-test crate passes (CI ref external.yml)
+
+  - id: test_repo_cargo_check_move_vm_runtime
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo check for move-vm-runtime passes (PR dependency)
+
+  - id: test_repo_cargo_check_move_stdlib
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cargo check for move-stdlib passes (test dependency)
+
 # Agent config rules from CLAUDE.md that apply to this task
 agent_config_rules:
   - source: CLAUDE.md
@@ -71,16 +86,16 @@ rubric:
     source:
       path: "CLAUDE.md"
       lines: "116-131"
-      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+      commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
 
   - rule: "Always run tests before submitting changes. Do not disable or ignore tests - all tests must pass and be enabled."
     source:
       path: "CLAUDE.md"
       lines: "105-107,112"
-      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+      commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
 
   - rule: "Never use #[allow(dead_code)], #[allow(unused)], or other linting suppressions. Fix the underlying issues instead."
     source:
       path: "CLAUDE.md"
       lines: "113"
-      commit: "89286c8e52b8b358b3bd895e40ec4ee2f991c742"
+      commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742

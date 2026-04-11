@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -43,7 +44,7 @@ class FakeTokenizer:
         for msg in messages:
             role = msg["role"]
             content = msg.get("content", "")
-            parts.append(f"<|im_start|>{role}\n{content}<|im_end|>\n")
+            parts.append(f"<|im_start|>{role}\n{content}    \n")
         if add_generation_prompt:
             parts.append("<|im_start|>assistant\n")
         text = "".join(parts)
@@ -127,7 +128,7 @@ def test_qwen35_multiturn_supervision():
         {"role": "user", "content": "Q1"},
         {"role": "assistant", "content": "A1"},
         {"role": "user", "content": "Q2"},
-        {"role": "assistant", "content": "<think>\nR2\n</think>\n\nA2"},
+        {"role": "assistant", "content": "\nR2\n\n\nA2"},
     ]
     token_ids, loss_mask = gen.get_loss_mask(messages_2turn)
     assert len(token_ids) == len(loss_mask)
@@ -158,7 +159,7 @@ def test_qwen35_multiturn_supervision():
 
 # [pr_diff] fail_to_pass
 def test_qwen35_think_prefix_excluded():
-    """qwen3_5 skips <think>\\n prefix from supervision."""
+    """qwen3_5 skips \\n prefix from supervision."""
     from slime.utils.mask_utils import MultiTurnLossMaskGenerator
 
     tok = FakeTokenizer()
@@ -166,28 +167,28 @@ def test_qwen35_think_prefix_excluded():
 
     messages = [
         {"role": "user", "content": "Q"},
-        {"role": "assistant", "content": "<think>\nREASON\n</think>\n\nANSWER"},
+        {"role": "assistant", "content": "\nREASON\n\n\nANSWER"},
     ]
     token_ids, loss_mask = gen.get_loss_mask(messages)
     rendered = tok.apply_chat_template(messages, tokenize=False)
     header = "<|im_start|>assistant\n"
     header_pos = rendered.find(header)
     content_start = header_pos + len(header)
-    think_prefix = "<think>\n"
-    # Characters at content_start..content_start+len(think_prefix) are '<think>\n' — should be 0
+    think_prefix = "\n"
+    # Characters at content_start..content_start+len(think_prefix) are '\n' — should be 0
     think_prefix_mask = loss_mask[content_start:content_start + len(think_prefix)]
     assert all(m == 0 for m in think_prefix_mask), (
-        f"<think> prefix should not be supervised: {think_prefix_mask}"
+        f" prefix should not be supervised: {think_prefix_mask}"
     )
-    # Content after <think>\n should be supervised
+    # Content after \n should be supervised
     assert loss_mask[content_start + len(think_prefix)] == 1, (
-        "Content after <think> prefix should be supervised"
+        "Content after  prefix should be supervised"
     )
 
     # Also test with a different think block to verify it's not hardcoded
     messages2 = [
         {"role": "user", "content": "Explain X"},
-        {"role": "assistant", "content": "<think>\nDEEP_THOUGHT\n</think>\n\nFINAL"},
+        {"role": "assistant", "content": "\nDEEP_THOUGHT\n踏上征程\n\nFINAL"},
     ]
     _, lm2 = gen.get_loss_mask(messages2)
     sup2 = _supervised_text(_, lm2)
@@ -365,7 +366,7 @@ def test_loss_mask_binary_values():
             {"role": "user", "content": "U1"},
             {"role": "assistant", "content": "A1"},
             {"role": "user", "content": "U2"},
-            {"role": "assistant", "content": "<think>\nR\n</think>\n\nA2"},
+            {"role": "assistant", "content": "\nR\n踏上征程\n\nA2"},
         ],
         [
             {"role": "user", "content": "U"},
@@ -376,3 +377,71 @@ def test_loss_mask_binary_values():
         _, lm = gen.get_loss_mask(msgs)
         bad = [v for v in lm if v not in (0, 1)]
         assert not bad, f"Config {i}: non-binary mask values: {set(bad)}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI pass-to-pass tests — using actual repo CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_lint():
+    """Repo's ruff linter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "ruff", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install ruff: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["ruff", "check", "slime/utils/mask_utils.py", "slime/utils/arguments.py",
+         "slime/rollout/sft_rollout.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff lint failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_black_format():
+    """Repo's black formatter passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "black", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install black: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["black", "--check", "slime/utils/mask_utils.py", "slime/utils/arguments.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black format check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_isort_imports():
+    """Repo's isort import order passes on modified files (pass_to_pass)."""
+    r = subprocess.run(
+        ["pip", "install", "isort", "--quiet"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Failed to install isort: {r.stderr[-500:]}"
+
+    r = subprocess.run(
+        ["isort", "--check-only", "slime/utils/mask_utils.py", "slime/utils/arguments.py"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Isort check failed:\n{r.stderr[-500:]}\n{r.stdout[-500:]}"

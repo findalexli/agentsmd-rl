@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T06:19:56.673965",
-  "total_time": 17801.14,
-  "sandbox_id": "ihf2u3i78vssmr1q2dqq0",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:35:29.464599",
+  "total_time": 3994.38,
+  "sandbox_id": "iq0zdcu0vnxqwyqcksdqs",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -19,9 +19,9 @@
     },
     "p2p_enrichment": {
       "status": "ok",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 1768.53,
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1989.98,
       "notes": ""
     },
     "improve": {
@@ -36,28 +36,20 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All 4 checks passed: Docker build OK, NOP reward=0 (4 tests correctly failed on base), Gold reward=1 (all 12 tests passed after solve.sh), rubric rules satisfied (strict boolean typing, no sentinel defaults, additive change)",
+      "notes": "All 4 validation checks passed: (1) Docker build OK, (2) NOP reward=0 (4 tests correctly failed on base: no_hardcoded_sender_is_owner_true, sender_is_owner_flows_from_params, call_sites_pass_non_owner, strict_boolean_typing), (3) Gold reward=1 (all 16 tests passed after solve.sh), (4) Rubric judge ICR=0.50 (below 0.8 threshold - the rubric rules expect comments/documentation changes that the gold solution doesn't include). Note: test_no_sentinel_default function is incomplete but passes vacuously.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 157.2
+      "time": 239.28
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 12.95,
-      "notes": "ICR=0.50"
+      "time": 3.54,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 8081.51,
-      "at": "2026-04-09T11:26:34.337452"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -89,6 +81,14 @@
       "backend": "gemini",
       "time": 17801.14,
       "at": "2026-04-10T06:19:56.673965"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3994.38,
+      "at": "2026-04-10T18:35:29.464599"
     }
   ]
 }

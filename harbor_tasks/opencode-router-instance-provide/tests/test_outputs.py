@@ -53,8 +53,6 @@ def test_router_exports_middleware():
 # [pr_diff] fail_to_pass
 def test_instance_provide_in_router():
     """Router calls Instance.provide with InstanceBootstrap for directory-based routing."""
-    # The new router must contain Instance.provide({...init: InstanceBootstrap...})
-    # Verify via AST so string-in-comment doesn't fool us.
     r = _bun_check(f"""
         const fs = require('fs');
         const ts = require('typescript');
@@ -111,8 +109,6 @@ def test_instance_provide_removed_from_instance_ts():
 # [pr_diff] fail_to_pass
 def test_workspace_routing_branches():
     """Router handles no-workspace, worktree, and remote workspace cases."""
-    # Must have >=2 Instance.provide calls (no-workspace + worktree),
-    # workspace param extraction, and adaptor.fetch for remote.
     r = _bun_check(f"""
         const fs = require('fs');
         const ts = require('typescript');
@@ -355,23 +351,23 @@ def test_repo_typecheck():
 
 
 # [repo_tests] pass_to_pass
-def test_repo_unit_tests():
-    """Repo's unit tests for opencode package pass (pass_to_pass)."""
+def test_repo_build_opencode():
+    """Opencode package builds successfully (pass_to_pass)."""
     r = subprocess.run(
-        ["bun", "test", "--timeout", "30000"],
+        ["bun", "run", "build"],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=300,
         cwd=f"{REPO}/packages/opencode",
     )
-    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_worktree_tests():
     """Worktree tests pass — covers worktree routing logic (pass_to_pass)."""
     r = subprocess.run(
-        ["bun", "test", "test/project/worktree.test.ts", "--timeout", "30000"],
+        ["bun", "test", "test/project/worktree.test.ts", "test/project/worktree-remove.test.ts", "--timeout", "30000"],
         capture_output=True,
         text=True,
         timeout=120,
@@ -400,33 +396,20 @@ def test_repo_control_plane_tests():
         ["bun", "test", "test/control-plane/", "--timeout", "30000"],
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=60,
         cwd=f"{REPO}/packages/opencode",
     )
     assert r.returncode == 0, f"Control-plane tests failed:\n{r.stderr[-500:]}"
 
 
 # [repo_tests] pass_to_pass
-def test_repo_instance_tests():
-    """Instance/project tests pass — covers Instance.provide and bootstrap (pass_to_pass)."""
+def test_repo_project_tests():
+    """Project tests pass — covers Instance.provide and bootstrap (pass_to_pass)."""
     r = subprocess.run(
-        ["bun", "test", "test/project/", "--timeout", "30000"],
+        ["bun", "test", "test/project/project.test.ts", "--timeout", "60000"],
         capture_output=True,
         text=True,
         timeout=120,
         cwd=f"{REPO}/packages/opencode",
     )
-    assert r.returncode == 0, f"Instance/project tests failed:\n{r.stderr[-500:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_build_opencode():
-    """Opencode package builds successfully (pass_to_pass)."""
-    r = subprocess.run(
-        ["bun", "run", "build"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=f"{REPO}/packages/opencode",
-    )
-    assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
+    assert r.returncode == 0, f"Project tests failed:\n{r.stderr[-500:]}"

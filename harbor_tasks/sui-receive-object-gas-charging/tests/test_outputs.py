@@ -255,8 +255,6 @@ def test_cargo_xlint_passes():
     assert result.returncode == 0, f"cargo xlint failed:\n{result.stderr[-2000:]}"
 
 
-
-
 def test_execution_layer_cut_works():
     """
     Pass-to-pass: Execution layer cut works (repo CI check).
@@ -285,6 +283,51 @@ def test_cargo_fmt_check():
     )
 
     assert result.returncode == 0, f"cargo fmt --check failed:\n{result.stderr[-1000:]}"
+
+
+def test_cargo_doc_builds():
+    """
+    Pass-to-pass: cargo doc builds for sui-protocol-config (repo CI check).
+    """
+    result = subprocess.run(
+        ["cargo", "doc", "-p", "sui-protocol-config", "--no-deps"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=TIMEOUT
+    )
+
+    assert result.returncode == 0, f"cargo doc failed:\n{result.stderr[-2000:]}"
+
+
+def test_doctests_pass():
+    """
+    Pass-to-pass: doctests for sui-protocol-config pass (repo CI check).
+    """
+    result = subprocess.run(
+        ["cargo", "test", "--doc", "-p", "sui-protocol-config"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=TIMEOUT
+    )
+
+    assert result.returncode == 0, f"doctests failed:\n{result.stderr[-2000:]}"
+
+
+def test_git_checks_pass():
+    """
+    Pass-to-pass: git checks script passes (repo CI check).
+    """
+    result = subprocess.run(
+        ["./scripts/git-checks.sh"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=60
+    )
+
+    assert result.returncode == 0, f"git-checks.sh failed:\n{result.stderr[-1000:]}"
 
 
 if __name__ == "__main__":

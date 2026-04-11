@@ -29,46 +29,75 @@ checks:
     type: "pass_to_pass"
     origin: "repo_tests"
 
+  - id: "test_cargo_check_sui_types_release"
+    description: "cargo check --release -p sui-types passes"
+    type: "pass_to_pass"
+    origin: "repo_tests"
+
   # Fail-to-Pass tests (the actual task verification)
   - id: "test_sui_types_testing_feature_defined"
     description: "sui-types has testing feature defined in Cargo.toml"
     type: "programmatic"
+    origin: "static"
+    source:
+      file: "crates/sui-types/Cargo.toml"
 
   - id: "test_sui_types_gasless_functions_use_testing_gate"
     description: "Gasless token testing functions use #[cfg(feature = \"testing\")]"
     type: "programmatic"
+    origin: "static"
+    source:
+      file: "crates/sui-types/src/transaction.rs"
 
   - id: "test_apply_test_token_uses_testing_gate"
     description: "apply_test_token_overrides uses #[cfg(feature = \"testing\")] not debug_assertions"
     type: "programmatic"
+    origin: "static"
+    source:
+      file: "crates/sui-types/src/transaction.rs"
 
   - id: "test_transactional_test_runner_testing_feature"
     description: "sui-transactional-test-runner has testing feature with sui-types/testing dep"
     type: "programmatic"
+    origin: "static"
+    source:
+      file: "crates/sui-transactional-test-runner/Cargo.toml"
 
   - id: "test_transactional_test_runner_lib_gated"
     description: "sui-transactional-test-runner lib.rs has proper #[cfg(feature = \"testing\")] gates"
     type: "programmatic"
+    origin: "static"
+    source:
+      file: "crates/sui-transactional-test-runner/src/lib.rs"
 
   - id: "test_transactional_test_runner_no_debug_assertions"
     description: "sui-transactional-test-runner must not use debug_assertions for gating"
-    type: "programmatic"
+    type: "pass_to_pass"
+    origin: "static"
+    source:
+      file: "crates/sui-transactional-test-runner/src/lib.rs"
 
   - id: "test_transactional_test_runner_test_adapter"
     description: "test_adapter.rs calls gasless functions without debug_assertions check"
     type: "programmatic"
+    origin: "static"
+    source:
+      file: "crates/sui-transactional-test-runner/src/test_adapter.rs"
 
   - id: "test_upstream_crates_enable_testing_feature"
     description: "Upstream test crates enable testing feature via dev-dependencies"
     type: "programmatic"
-
-  - id: "test_cargo_check_sui_types_release"
-    description: "cargo check --release -p sui-types passes"
-    type: "programmatic"
+    origin: "static"
+    source:
+      files:
+        - "crates/sui-adapter-transactional-tests/Cargo.toml"
+        - "crates/sui-verifier-transactional-tests/Cargo.toml"
+        - "crates/sui-indexer-alt-e2e-tests/Cargo.toml"
 
   - id: "test_cargo_check_transactional_test_runner_release"
     description: "cargo check --release -p sui-transactional-test-runner passes"
-    type: "programmatic"
+    type: "pass_to_pass"
+    origin: "repo_tests"
 
   - id: "test_claude_md_has_testing_guidance"
     description: "CLAUDE.md includes guidance on test-only code feature usage"
@@ -82,6 +111,9 @@ checks:
   - id: "test_no_panic_on_gasless_in_release"
     description: "test_adapter.rs must not panic for gasless tokens in release mode"
     type: "programmatic"
+    origin: "static"
+    source:
+      file: "crates/sui-transactional-test-runner/src/test_adapter.rs"
 
 rubric:
   - rule: "Use #[cfg(feature = \"testing\")] for test-only code that must be callable cross-crate. Define testing = [] in the crate's Cargo.toml, and callers must propagate it via features = [\"testing\"] in their dependency declaration."

@@ -1,19 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:02:54.808142",
-  "total_time": 303.34,
-  "sandbox_id": "ifoq3w9q9u5psq5zsyno9",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:55:17.724094",
+  "total_time": 4106.24,
+  "sandbox_id": "iqanvg259h8fgdqplx4t5",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1686.85,
+      "time": 951.87,
       "notes": ""
     },
     "improve": {
@@ -24,9 +25,21 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed test.sh: added 'set -o pipefail' and removed 'set -e' so pytest exit code is correctly captured from the pipeline. Without pipefail, tee's exit code (0) was being captured instead of pytest's. All 4 checks now pass: Docker build OK, NOP reward=0 (4 fail-to-pass tests correctly fail), Gold reward=1 (all 19 tests pass), Rubric judge=1.0.",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.83
+      "time": 1186.65
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.12,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -45,6 +58,14 @@
       "backend": "fireworks",
       "time": 334.24,
       "at": "2026-04-10T06:54:00.000000"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 4106.24,
+      "at": "2026-04-10T18:55:17.724094"
     }
   ]
 }

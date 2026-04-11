@@ -140,28 +140,51 @@ def test_workspace_picker_provider_label_moved_to_tooltip():
 const fs = require('fs');
 const src = fs.readFileSync('src/vs/sessions/contrib/chat/browser/sessionWorkspacePicker.ts', 'utf8');
 
-const browseIdx = src.indexOf('workspacePicker.browse');
-if (browseIdx === -1) {
-    console.error('FAIL: workspacePicker.browse not found');
+// Find the SubmenuAction instantiation related to workspacePicker.browse
+const submenuIdx = src.indexOf('new SubmenuAction');
+if (submenuIdx === -1) {
+    console.error('FAIL: new SubmenuAction not found');
     process.exit(1);
 }
 
-const context = src.substring(browseIdx, browseIdx + 500);
+// Look for the SubmenuAction call that contains workspacePicker.browse
+let searchIdx = submenuIdx;
+let foundContext = null;
+for (let i = 0; i < 10; i++) {  // Check up to 10 occurrences
+    const endIdx = Math.min(searchIdx + 800, src.length);
+    const context = src.substring(searchIdx, endIdx);
+
+    if (context.includes('workspacePicker.browse')) {
+        foundContext = context;
+        break;
+    }
+
+    // Move to next occurrence
+    const nextIdx = src.indexOf('new SubmenuAction', searchIdx + 1);
+    if (nextIdx === -1) break;
+    searchIdx = nextIdx;
+}
+
+if (!foundContext) {
+    console.error('FAIL: Could not find SubmenuAction with workspacePicker.browse');
+    process.exit(1);
+}
 
 // SubmenuAction label arg must be '' (empty string), not provider.label
-if (!/new\s+SubmenuAction\s*\(\s*`[^`]+`,\s*''/.test(context)) {
+// The pattern: new SubmenuAction(`...`, '', ...) where second arg is the label
+if (!/new\s+SubmenuAction\s*\([^)]*`,\s*''\s*,/.test(foundContext)) {
     console.error('FAIL: SubmenuAction label should be empty string');
     process.exit(1);
 }
 
 // provider.label must appear as tooltip for first child (ci === 0)
-if (!context.includes("ci === 0 ? provider.label")) {
+if (!foundContext.includes("ci === 0 ? provider.label")) {
     console.error('FAIL: provider.label not used as tooltip for first child');
     process.exit(1);
 }
 
 // The .map callback must accept ci parameter
-if (!/\.map\s*\(\s*\([^)]*\bci\b/.test(context)) {
+if (!/\.map\s*\(\s*\([^)]*\bci\b/.test(foundContext)) {
     console.error('FAIL: .map callback missing ci index parameter');
     process.exit(1);
 }

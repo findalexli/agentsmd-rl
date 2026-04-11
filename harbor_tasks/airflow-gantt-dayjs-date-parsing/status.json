@@ -1,5 +1,13 @@
 {
-  "task_id": "airflow-helm-extra-init-containers",
+  "schema_version": 2,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-10T18:14:33.745158",
+  "total_time": 2738.59,
+  "sandbox_id": "idq3yesugw5ezb3fld05g",
+  "backend": "fireworks",
+  "pipeline": "agents",
   "nodes": {
     "extract_gold": {
       "status": "completed",
@@ -19,31 +27,28 @@
     "verify_tests": {
       "status": "completed",
       "notes": "All 7 tests pass with reward=1. Docker image builds successfully and tests run in ~22 seconds."
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 522.54
     }
   },
-  "ci_commands_found": [
-    "helm template test-release chart --namespace default",
-    "pytest helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py -v",
-    "pytest helm-tests/tests/helm_tests/airflow_core/test_worker.py -v",
-    "pytest helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py -v"
-  ],
-  "tests_added": [
-    "test_helm_tests_pod_template_extra_init_containers",
-    "test_helm_tests_pod_template_extra_init_containers_templating",
-    "test_helm_tests_worker_deployment_extra_init_containers",
-    "test_helm_tests_worker_deployment_extra_init_containers_templating",
-    "test_helm_tests_worker_sets_deployment_extra_init_containers",
-    "test_helm_chart_schema_valid",
-    "test_helm_chart_render_basic"
-  ],
-  "modified_files": [
-    "chart/values.yaml",
-    "chart/values.schema.json",
-    "chart/files/pod-template-file.kubernetes-helm-yaml",
-    "chart/templates/NOTES.txt",
-    "chart/templates/workers/worker-deployment.yaml",
-    "helm-tests/tests/helm_tests/airflow_aux/test_pod_template_file.py",
-    "helm-tests/tests/helm_tests/airflow_core/test_worker.py",
-    "helm-tests/tests/helm_tests/airflow_core/test_worker_sets.py"
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 2738.59,
+      "at": "2026-04-10T18:14:33.745158"
+    }
   ]
 }

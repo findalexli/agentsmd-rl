@@ -5,7 +5,7 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        git curl ca-certificates build-essential tmux && \
+        git curl ca-certificates build-essential tmux procps && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
@@ -21,6 +21,12 @@ ENV PYTHONPATH="/workspace/prime-rl/src"
 
 # Install minimal deps needed by test_outputs.py
 RUN pip install --no-cache-dir pytest ruff
+
+# Install verifiers package from git (needed by the codebase)
+RUN pip install --no-cache-dir git+https://github.com/PrimeIntellect-ai/verifiers.git@ca6aca7
+
+# Install core dependencies that the trajectories.py and transport modules need
+RUN pip install --no-cache-dir msgspec loguru tomli tomli-w pydantic
 
 # Verifier output directory
 RUN mkdir -p /logs/verifier

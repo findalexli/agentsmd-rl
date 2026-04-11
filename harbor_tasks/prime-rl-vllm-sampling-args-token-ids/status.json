@@ -1,19 +1,21 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T06:10:23.158286",
-  "total_time": 17227.58,
-  "sandbox_id": "ih791rvcxkdhtjnbzr248",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:19:14.273737",
+  "total_time": 2494.45,
+  "sandbox_id": "iito9vgkozgcf1m0lrnon",
   "backend": "fireworks",
   "pipeline": "agents",
+  "config_edit_precision": 0.83,
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 286.36,
+      "time": 198.97,
       "notes": ""
     },
     "p2p_enrich": {
@@ -31,20 +33,49 @@
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 139.48
+      "time": 160.4,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "Fixed rubric rules - removed source paths pointing to AGENTS.md since gold solution doesn't modify documentation. All validation checks passed: Docker build successful, NOP test reward=0 (base code correctly fails fail-to-pass tests), Gold test reward=1 (all 13 tests pass after fix), Rubric judge score=1.0."
+    },
+    "rubric_enrichment": {
+      "status": "ok",
+      "configs_found": [
+        "AGENTS.md",
+        "CLAUDE.md (symlink to AGENTS.md)",
+        "skills/inference-server/SKILL.md",
+        "skills/installation/SKILL.md",
+        "skills/toml-config/SKILL.md"
+      ],
+      "rules_added": 3,
+      "rules_rejected": 4,
+      "rejection_reasons": "4 rules rejected: 2 about TOML config structure (not touched by PR), 1 about test structure (PR doesn't touch tests), 1 about git/CLI workflow (not evaluable from diff)",
+      "notes": "",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 59.53
+    },
+    "rubric_validate": {
+      "status": "ok",
+      "model": "gemini-3.1-pro",
+      "backend": "fireworks",
+      "time": 18.29,
+      "notes": "",
+      "precision": 0.83
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.21,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 6.73,
-      "at": "2026-04-09T15:01:45.284502"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -67,7 +98,7 @@
       "gold": -1.0,
       "backend": "fireworks",
       "time": 17227.32,
-      "at": "2026-04-10T06:10:22.989339"
+      "at": "2026-04-09T23:25:47.457824"
     },
     {
       "verdict": "fail",
@@ -76,6 +107,14 @@
       "backend": "fireworks",
       "time": 17227.58,
       "at": "2026-04-10T06:10:23.158286"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2494.45,
+      "at": "2026-04-10T18:19:14.273737"
     }
   ]
 }

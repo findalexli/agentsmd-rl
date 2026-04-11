@@ -59,7 +59,7 @@ import { readFileSync } from 'fs';
 const src = readFileSync('src/vs/sessions/common/theme.ts', 'utf-8');
 
 // Extract the registerColor call for agentFeedbackInputWidget.border
-const match = src.match(/registerColor\\(\\s*['\u0060"]agentFeedbackInputWidget\\.border['\u0060"][\\s\\S]*?\\)/);
+const match = src.match(/registerColor\\(\\s*['\\u0060"]agentFeedbackInputWidget\\.border['\\u0060"][\\s\\S]*?\\)/);
 if (!match) {
     console.error('Could not find registerColor call for agentFeedbackInputWidget.border');
     process.exit(1);
@@ -332,3 +332,34 @@ if (methodBody.includes("localize('oneComment'") || methodBody.includes('localiz
 console.log('PASS');
 """)
     assert r.returncode == 0, f"Failed: {r.stderr or r.stdout}"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — actual CI commands from the repo
+# ---------------------------------------------------------------------------
+
+def test_repo_eslint():
+    """Repo's ESLint passes on all source files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "eslint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_stylelint():
+    """Repo's Stylelint passes on all CSS files (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "stylelint"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
+
+
+def test_repo_unit_tests():
+    """Repo's Node.js unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-node"],
+        capture_output=True, text=True, timeout=600, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"

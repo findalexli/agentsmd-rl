@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import subprocess
+import sys
 from pathlib import Path
 
 REPO = "/repo"
@@ -224,3 +225,57 @@ def test_method_not_stubbed():
         for n in ast.walk(method)
     )
     assert has_finished, "Completion detection ('finished' reference) is missing"
+
+
+# ---------------------------------------------------------------------------
+# Pass-to-pass (repo_tests) — repository CI checks
+# ---------------------------------------------------------------------------
+
+
+def test_repo_ruff_tokenizer_manager():
+    """Tokenizer manager passes ruff linting checks (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["ruff", "check", FILE, "--select=F401,F821,E9"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+def test_repo_black_tokenizer_manager():
+    """Tokenizer manager passes black formatting checks (pass_to_pass)."""
+    r = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "black", "-q"],
+        capture_output=True,
+        timeout=120,
+    )
+    r = subprocess.run(
+        ["black", "--check", FILE],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Black check failed:\n{r.stderr}"
+
+
+def test_repo_py_compile_managers():
+    """Managers module compiles without syntax errors (pass_to_pass)."""
+    managers_dir = Path(f"{REPO}/python/sglang/srt/managers/")
+    py_files = list(managers_dir.glob("*.py"))
+    for py_file in py_files:
+        r = subprocess.run(
+            [sys.executable, "-m", "py_compile", str(py_file)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, f"Syntax error in {py_file}:\n{r.stderr}"

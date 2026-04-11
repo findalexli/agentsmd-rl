@@ -16,13 +16,12 @@ REPO = "/workspace/biome"
 # Written once; subsequent tests reuse the cached compilation.
 _RUST_TEST_FILE = Path(REPO) / "crates/biome_markdown_parser/tests/test_multibyte_panic_check.rs"
 
-_RUST_TEST_CODE = r'''\
-use biome_markdown_parser::parse_markdown;
+_RUST_TEST_CODE = r'''use biome_markdown_parser::parse_markdown;
 
 /// Exact reproduction from PR #9775: blockquote with emoji, CJK, and inline link.
 #[test]
 fn parse_blockquote_multibyte_link() {
-    let input = ">\u{1f4a1} Biome\u{306f}\u{3001}[Prettier\u{306e}\u{30aa}\u{30d7}\u{30b7}\u{30e7}\u{30f3}\u{306b}\u{5bfe}\u{3059}\u{308b}\u{8003}\u{3048}\u{65b9}](https://example.com)\u{3068}\u{540c}\u{69d8}\u{306e}\u{30a2}\u{30d7}\u{30ed}\u{30fc}\u{30c1}\u{3092}\u{63a1}\u{7528}\u{3057}\u{3066}\u{3044}\u{307e}\u{3059}\u{3002}";
+    let input = ">💡 Biomeは、[Prettierのオプションに対する考え方](https://example.com)と同様のアプローチを採用しています。";
     let result = parse_markdown(input);
     let tree = result.tree();
     let tree_str = format!("{tree:#?}");
@@ -37,7 +36,7 @@ fn parse_blockquote_multibyte_link() {
 /// Korean text inside a blockquote with links.
 #[test]
 fn parse_korean_blockquote_link() {
-    let input = ">\u{1f4cc} \u{c774}\u{ac83}\uc740 [\ud14c\uc2a4\ud2b8](https://example.com)\uc785\ub2c8\ub2e4.";
+    let input = ">📌 이것은 [테스트](https://example.com)입니다.";
     let result = parse_markdown(input);
     let tree = result.tree();
     let tree_str = format!("{tree:#?}");
@@ -50,7 +49,7 @@ fn parse_korean_blockquote_link() {
 /// Multiple inline links with CJK text between them.
 #[test]
 fn parse_multiple_multibyte_links() {
-    let input = ">\u{1f527} \u914d\u7f6e\u306f[\u6b63\u3057\u3044\u8a2d\u5b9a}](https://example.com)\u306e\u306f\u305a\u3067\u3059\u3002\u3055\u3089\u306b[\u3082\u3046\u4e00\u3064}](https://example.com/2)\u3042\u308a\u307e\u3059\u3002";
+    let input = ">🔧 配置は[正しい設定}](https://example.com)のはずです。さらに[もう一つ}](https://example.com/2)あります。";
     let result = parse_markdown(input);
     let tree = result.tree();
     let tree_str = format!("{tree:#?}");
@@ -64,7 +63,7 @@ fn parse_multiple_multibyte_links() {
 /// Emoji-only link text in a blockquote.
 #[test]
 fn parse_emoji_only_link() {
-    let input = "> [\u{1f680}\u{1f525}\u{2728}](https://example.com) \u30c6\u30b9\u30c8";
+    let input = "> [🚀🔥✨](https://example.com) テスト";
     let result = parse_markdown(input);
     let tree = result.tree();
     let tree_str = format!("{tree:#?}");
@@ -77,9 +76,14 @@ fn parse_emoji_only_link() {
 
 
 def _ensure_test_file():
-    """Write the shared Rust test file if not already present."""
+    """Write the shared Rust test file if not already present and format it."""
     if not _RUST_TEST_FILE.exists():
         _RUST_TEST_FILE.write_text(_RUST_TEST_CODE)
+        # Format the generated file to match repo standards
+        subprocess.run(
+            ["cargo", "fmt", "--", str(_RUST_TEST_FILE)],
+            cwd=REPO, capture_output=True, timeout=60,
+        )
 
 
 # ---------------------------------------------------------------------------

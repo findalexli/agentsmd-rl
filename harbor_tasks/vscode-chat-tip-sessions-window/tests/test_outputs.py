@@ -344,6 +344,65 @@ console.log('Import check passed:', imports.length, 'imports verified');
         script.unlink(missing_ok=True)
 
 
+# [repo_tests] pass_to_pass
+def test_repo_tsec_check():
+    """TSEC security compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "tsec-compile-check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TSEC check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_vscode_dts_check():
+    """VS Code dts compile check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "vscode-dts-compile-check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"VS Code dts check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_valid_layers_check():
+    """Valid layers check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "valid-layers-check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Valid layers check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_define_class_fields_check():
+    """Define class fields check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "define-class-fields-check"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Define class fields check failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_stylelint():
+    """Stylelint check passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "stylelint"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Stylelint failed:\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_unit_tests():
+    """Node unit tests pass (pass_to_pass)."""
+    r = subprocess.run(
+        ["npm", "run", "test-node"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stderr[-500:]}"
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from .github/copilot-instructions.md
 # ---------------------------------------------------------------------------

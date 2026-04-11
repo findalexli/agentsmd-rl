@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-09T15:01:10.665544",
-  "total_time": 199.19,
-  "sandbox_id": "ilxyzd4npw4v9svufiznk",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:17:08.843955",
+  "total_time": 2463.92,
+  "sandbox_id": "ignakp1ifb2bm8k3bryfn",
   "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -19,22 +19,34 @@
     },
     "p2p_enrichment": {
       "status": "ok",
-      "model": "opus",
-      "backend": "gemini",
-      "time": 132.22,
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 294.27,
       "notes": ""
     },
     "improve": {
       "status": "skipped",
-      "model": "opus",
-      "backend": "gemini",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
       "time": 0,
       "notes": "tests look good"
     },
     "validate": {
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1.66
+      "time": 130.85,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: Docker build OK, NOP reward=0 (6 f2p tests correctly failing on base), Gold reward=1 (18 tests passing after fix), Rubric ICR=1.0. Fixed judge.py to handle behavioral rubric rules (reference: '') that don't require file modifications."
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.43,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -69,6 +81,14 @@
       "backend": "fireworks",
       "time": 199.19,
       "at": "2026-04-09T15:01:10.665544"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2463.92,
+      "at": "2026-04-10T18:17:08.843955"
     }
   ]
 }

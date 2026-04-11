@@ -65,8 +65,8 @@ def _build_extraction_preamble() -> str:
             return src.substring(idx, i);
         }
 
-        // Extract the regex constant
-        const reMatch = src.match(/const\\s+UNHANDLED_STOP_REASON_RE\\s*=\\s*\\/.*?(?<!\\)\\/[gim]*;/);
+        // Extract the regex constant - escape backslash properly in negative lookbehind
+        const reMatch = src.match(/const\\s+UNHANDLED_STOP_REASON_RE\\s*=\\s*\\/.*?(?<!\\/)\\/[gim]*;/);
         const reDecl = reMatch ? reMatch[0] : '';
 
         const formatFn = extractFn('formatUnhandledStopReasonErrorMessage');

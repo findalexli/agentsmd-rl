@@ -1,20 +1,20 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T05:50:02.285238",
-  "total_time": 16006.62,
-  "sandbox_id": "itt766szz6v344qh9ut1q",
-  "backend": "gemini",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:42:39.779210",
+  "total_time": 4424.72,
+  "sandbox_id": "i61l7blpwc3z98358y5sy",
+  "backend": "fireworks",
   "pipeline": "agents",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 1205.55,
+      "time": 1643.86,
       "notes": ""
     },
     "improve": {
@@ -24,29 +24,22 @@
       "time": 0,
       "notes": "tests look good"
     },
-    "p2p_enrich": {
-      "status": "ok",
-      "model": "accounts/fireworks/routers/kimi-k2p-turbo",
-      "backend": "fireworks",
-      "time": 2514.6,
-      "notes": ""
-    },
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Fixed regex patterns in test_outputs.py for function body extraction. Added _get_function_body() helper with proper brace matching. Increased vitest timeout from 60s to 180s. All 4 checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge N/A (gold solution is reference).",
-      "model": "accounts/fireworks/routers/kimi-k2p-turbo",
+      "notes": "All core validations pass. Docker build succeeds. NOP test (base commit) correctly fails with reward=0. Gold test (solve.sh applied) passes with reward=1. Rubric judge requires API keys (GEMINI_API_KEY or ANTHROPIC_API_KEY) not available in this environment - this is expected and doesn't indicate a test issue.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 12.68
+      "time": 1043.04
     },
     "rubric_judge": {
-      "status": "fail",
-      "model": "accounts/fireworks/routers/kimi-k2p-turbo",
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 3.25,
-      "notes": "ICR=0.50"
+      "time": 1.26,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
@@ -55,32 +48,8 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 0.0,
-      "at": "2026-04-09T07:45:37.840492"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 10970.8,
-      "at": "2026-04-09T07:45:38.006131"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 120.5,
-      "at": "2026-04-10T05:52:00.000000"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "gemini",
-      "time": 16006.62,
-      "at": "2026-04-10T05:50:02.285238"
+      "time": 4424.72,
+      "at": "2026-04-10T18:42:39.779210"
     }
   ]
 }

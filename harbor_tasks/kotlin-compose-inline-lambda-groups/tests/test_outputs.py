@@ -224,3 +224,25 @@ def test_kotlin_test_files_exist():
         full_path = os.path.join(REPO, filepath)
         assert os.path.exists(full_path), f"Test file not found: {filepath}"
         assert os.path.getsize(full_path) > 0, f"Test file is empty: {filepath}"
+
+
+
+def test_repo_gradle_version():
+    """Repo's Gradle wrapper works and returns version (pass_to_pass)."""
+    r = subprocess.run(
+        ["./gradlew", "--version", "--no-daemon"],
+        capture_output=True, text=True, timeout=120, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Gradle version check failed:\n{r.stderr[-500:]}"
+    assert "Gradle" in r.stdout, "Gradle not found in version output"
+
+
+def test_repo_compose_transformer_exists():
+    """Compose transformer source file exists with valid Kotlin structure (pass_to_pass)."""
+    transformer_path = os.path.join(REPO, TRANSFORMER_FILE)
+    assert os.path.exists(transformer_path), "Transformer file not found"
+    assert os.path.getsize(transformer_path) > 0, "Transformer file is empty"
+    # Check for valid Kotlin syntax indicators
+    content = open(transformer_path).read()
+    assert "class ComposableFunctionBodyTransformer" in content, "Transformer class not found"
+    assert "package androidx.compose.compiler.plugins.kotlin.lower" in content, "Package declaration not found"

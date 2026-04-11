@@ -94,18 +94,36 @@ def test_not_stub():
 
 
 def test_repo_lint():
-    """Repo ESLint check passes on studio app (pass_to_pass)."""
+    """Repo's ESLint check passes on modified file (pass_to_pass)."""
     r = subprocess.run(
-        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && cd apps/studio && NODE_OPTIONS='--max-old-space-size=512' pnpm run lint"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && cd apps/studio && NODE_OPTIONS='--max-old-space-size=1024' pnpm exec eslint --max-warnings=0 components/interfaces/ConnectSheet/content/steps/direct-connection/content.tsx"],
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
 
 
-def test_repo_tests_connect_sheet():
-    """Repo ConnectSheet tests pass (pass_to_pass) - tests for modified module."""
+def test_repo_tests_connect_sheet_utils():
+    """Repo's ConnectSheet utils tests pass (pass_to_pass) - tests for modified module."""
     r = subprocess.run(
-        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && cd apps/studio && NODE_OPTIONS='--max-old-space-size=1024' pnpm vitest run --reporter=verbose 'ConnectSheet'"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && cd apps/studio && NODE_OPTIONS='--max-old-space-size=1536' pnpm vitest run --reporter=verbose 'Connect.utils.test'"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    assert r.returncode == 0, f"ConnectSheet tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+    assert r.returncode == 0, f"ConnectSheet utils tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_tests_connect_sheet_schema():
+    """Repo's ConnectSheet schema tests pass (pass_to_pass) - tests for modified module."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && cd apps/studio && NODE_OPTIONS='--max-old-space-size=1536' pnpm vitest run --reporter=verbose 'connect.schema.test'"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ConnectSheet schema tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
+
+
+def test_repo_tests_connect_sheet_state():
+    """Repo's ConnectSheet state tests pass (pass_to_pass) - tests for modified module."""
+    r = subprocess.run(
+        ["bash", "-c", "npm install -g pnpm && pnpm install --frozen-lockfile >/dev/null 2>&1 && cd apps/studio && NODE_OPTIONS='--max-old-space-size=1536' pnpm vitest run --reporter=verbose 'useConnectState.test'"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"ConnectSheet state tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"

@@ -302,6 +302,39 @@ def test_repo_cargo_test_uv_python():
     assert r.returncode == 0, f"cargo test failed:\n{r.stderr[-500:]}"
 
 
+# [repo_tests] pass_to_pass — ruff check on uv-python Python files
+def test_repo_ruff_check_uv_python():
+    """Python files in uv-python crate pass ruff linting (pass_to_pass)."""
+    r = subprocess.run(
+        ["python", "-m", "pip", "install", "ruff", "-q"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    # pip install can return 0 even if already installed
+    r = subprocess.run(
+        ["ruff", "check", "crates/uv-python/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass — ruff format check on uv-python Python files
+def test_repo_ruff_format_uv_python():
+    """Python files in uv-python crate pass ruff format check (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "format", "--check", "crates/uv-python/"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
+
+
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from CLAUDE.md
 # ---------------------------------------------------------------------------

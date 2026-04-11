@@ -23,7 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpcre2-dev \
     libgoogle-perftools-dev \
     libjemalloc-dev \
-    libodbc1 \
+    libodbc2 \
+    libodbccr2 \
     libltdl7 \
     libre2-dev \
     libzstd-dev \
@@ -33,7 +34,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     protobuf-compiler \
     libcurl4-openssl-dev \
     libsqlite3-dev \
-    libhdfs3-dev \
     rapidjson-dev \
     libmsgpack-dev \
     libboost-all-dev \

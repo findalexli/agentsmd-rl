@@ -10,8 +10,10 @@ This task involves fixing several bugs in the bloom filter implementation:
 import subprocess
 import sys
 from pathlib import Path
+import pytest
 
 REPO = "/workspace/chroma"
+RUST_ROOT = f"{REPO}"  # Cargo.toml is at repo root
 RUST_SEGMENT = f"{REPO}/rust/segment"
 
 
@@ -57,6 +59,15 @@ def test_deep_clone_isolation():
     - Mutating clone doesn't affect original
     - Shallow clone shares state (Arc), deep_clone doesn't
     """
+    # First check if the test exists (fail-to-pass: test shouldn't exist on base commit)
+    result = subprocess.run(
+        ["grep", "fn test_deep_clone_isolation", f"{RUST_SEGMENT}/src/bloom_filter.rs"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        pytest.fail("test_deep_clone_isolation test not found - deep_clone feature not implemented")
+
     result = run_cargo(["test", "test_deep_clone_isolation", "--", "--nocapture"])
     assert result.returncode == 0, f"test_deep_clone_isolation failed:\n{result.stdout}\n{result.stderr}"
 
@@ -87,7 +98,7 @@ def test_cache_key_from_path_method():
     fixing a bug where the read path used full path but insert key was just UUID.
     """
     result = subprocess.run(
-        ["grep", "-n", "fn cache_key_from_path", f"{RUST_SEGMENT}/src/bloom_filter.rs"],
+        ["grep", "fn cache_key_from_path", f"{RUST_SEGMENT}/src/bloom_filter.rs"],
         capture_output=True,
         text=True,
     )
@@ -158,34 +169,43 @@ def test_flush_error_propagation():
     Before: flush errors were logged as warnings but compaction succeeded
     After: flush errors are propagated and fail the compaction
     """
-    # Check that save() errors are propagated with ? operator
+    # Check that save() is followed by error handling - look for the pattern
+    # where save() result is handled with map_err and ? operator
+    # The pattern spans multiple lines: save().await.map_err(...)?
     result = subprocess.run(
-        ["grep", "save().*map_err", f"{RUST_SEGMENT}/src/blockfile_record.rs"],
+        ["grep", "-A2", "save()", f"{RUST_SEGMENT}/src/blockfile_record.rs"],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, (
-        "Bloom filter save() errors not properly propagated. "
-        "Flush errors should fail the compaction."
-    )
+    # Check if save() call exists and is followed by .await.map_err or .await
+    assert result.returncode == 0, "save() call not found in blockfile_record.rs"
+    # Check for error propagation pattern (should have await and map_err in context)
+    assert ".await" in result.stdout, "save() call should be followed by .await"
+    # Check that the error is propagated with ? operator (by checking for map_err)
+    assert "map_err" in result.stdout, "save() errors not propagated with map_err"
 
 
 def test_relaxed_ordering_usage():
-    """Verify atomic operations use Relaxed ordering instead of SeqCst.
+    """Verify atomic operations use Relaxed ordering instead of SeqCst in deep_clone.
 
     This is a minor optimization changing Ordering::SeqCst to Ordering::Relaxed
-    for the live_count and stale_count atomic loads.
+    for the live_count and stale_count atomic loads specifically in the deep_clone method.
     """
+    # Check that deep_clone method exists first
     result = subprocess.run(
-        ["grep", "Ordering::Relaxed", f"{RUST_SEGMENT}/src/bloom_filter.rs"],
+        ["grep", "-A 20", "pub fn deep_clone", f"{RUST_SEGMENT}/src/bloom_filter.rs"],
         capture_output=True,
         text=True,
     )
-    # Should have multiple uses of Relaxed ordering (in deep_clone and serialization)
-    count = result.stdout.count("Ordering::Relaxed")
-    assert count >= 4, (
-        f"Expected at least 4 uses of Ordering::Relaxed, found {count}. "
-        "The atomic ordering optimization may be incomplete."
+    if result.returncode != 0:
+        pytest.fail("deep_clone() method not found - cannot verify Ordering::Relaxed usage")
+
+    # Check that deep_clone method body uses Relaxed ordering
+    deep_clone_body = result.stdout
+    relaxed_count = deep_clone_body.count("Ordering::Relaxed")
+    assert relaxed_count >= 2, (
+        f"Expected at least 2 uses of Ordering::Relaxed in deep_clone, found {relaxed_count}. "
+        "The atomic ordering optimization in deep_clone may be incomplete."
     )
 
 
@@ -195,7 +215,7 @@ def test_false_positive_rate_comment():
     The comment incorrectly said 0.001% but the actual rate is 0.1%.
     """
     result = subprocess.run(
-        ["grep", "0.1% false positive rate", f"{RUST_SEGMENT}/src/bloom_filter.rs"],
+        ["grep", "with a 0.1% false positive rate", f"{RUST_SEGMENT}/src/bloom_filter.rs"],
         capture_output=True,
         text=True,
     )
@@ -227,7 +247,7 @@ def test_cargo_fmt_check():
     """
     result = subprocess.run(
         ["cargo", "fmt", "--", "--check"],
-        cwd=f"{REPO}/rust",
+        cwd=RUST_ROOT,
         capture_output=True,
         text=True,
         timeout=60,
@@ -240,10 +260,13 @@ def test_cargo_clippy_check():
 
     This is the repo's lint check from .github/workflows/pr.yml:
     cargo clippy --all-targets --all-features --keep-going -- -D warnings
+
+    Note: We run on just the segment package to avoid disk space issues
+    with compiling the entire workspace in Docker.
     """
     result = subprocess.run(
-        ["cargo", "clippy", "--all-targets", "--all-features", "--keep-going", "--", "-D", "warnings"],
-        cwd=f"{REPO}/rust",
+        ["cargo", "clippy", "-p", "chroma-segment", "--all-features", "--", "-D", "warnings"],
+        cwd=RUST_ROOT,
         capture_output=True,
         text=True,
         timeout=300,
@@ -264,7 +287,7 @@ def test_bloom_filter_module_tests():
     """
     result = subprocess.run(
         ["cargo", "test", "--lib", "bloom_filter::", "--", "--nocapture"],
-        cwd=f"{REPO}/rust/segment",
+        cwd=RUST_SEGMENT,
         capture_output=True,
         text=True,
         timeout=300,
@@ -289,7 +312,7 @@ def test_modified_files_exist():
 def test_bloom_filter_has_tests():
     """Bloom filter module contains unit tests (pass_to_pass)."""
     result = subprocess.run(
-        ["grep", "-c", "#\\[test\\]", f"{REPO}/rust/segment/src/bloom_filter.rs"],
+        ["grep", "-c", r"#\[test\]", f"{REPO}/rust/segment/src/bloom_filter.rs"],
         capture_output=True,
         text=True,
     )

@@ -335,3 +335,55 @@ def test_no_bare_type_ignore():
         f"Found {len(bare)} bare '# type: ignore' without error code. "
         "Use '# type: ignore[specific-error]' instead."
     )
+
+# ---------------------------------------------------------------------------
+# Repo-derived (repo_tests) — actual CI commands
+# ---------------------------------------------------------------------------
+
+# [repo_tests] pass_to_pass
+def test_repo_modeling_linter_help():
+    """Model structure linter --help works (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", f"{REPO}/utils/check_modeling_structure.py", "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Linter --help failed:\n{r.stderr}"
+    assert "--list-rules" in r.stdout, "Expected --list-rules in help output"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_modeling_linter_list_rules():
+    """Model structure linter --list-rules works and shows TRF rules (pass_to_pass)."""
+    r = subprocess.run(
+        ["python3", f"{REPO}/utils/check_modeling_structure.py", "--list-rules"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Linter --list-rules failed:\n{r.stderr}"
+    output = r.stdout + r.stderr
+    assert "TRF001" in output, "Expected TRF001 rule in output"
+    assert "TRF002" in output, "Expected TRF002 rule in output"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_ruff_utils():
+    """Ruff lint on utils/check_modeling_structure.py passes (pass_to_pass)."""
+    r = subprocess.run(
+        ["ruff", "check", "--select=E,W,F", "--ignore=E501", "--no-fix",
+         f"{REPO}/utils/check_modeling_structure.py"],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# [repo_tests] pass_to_pass
+def test_repo_make_check_repo_dryrun():
+    """Makefile 'check-repo' target exists and references check_modeling_structure (pass_to_pass)."""
+    r = subprocess.run(
+        ["make", "-n", "check-repo"],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"make -n check-repo failed:\n{r.stderr}"
+    output = r.stdout + r.stderr
+    assert "check_modeling_structure" in output, (
+        "check-repo target must invoke check_modeling_structure"
+    )

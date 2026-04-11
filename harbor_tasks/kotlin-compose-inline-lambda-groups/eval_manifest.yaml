@@ -49,12 +49,12 @@ checks:
   # Pass-to-pass tests: These verify repo integrity
   - id: test_compose_compiler_tests_exist
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Repo test directories exist and are discoverable
 
   - id: test_transformer_file_structure
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Transformer file has expected structure
 
   - id: test_repo_git_integrity
@@ -64,23 +64,34 @@ checks:
 
   - id: test_compose_compiler_testdata_exists
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Compose compiler test data files exist
 
   - id: test_key_compose_source_files_exist
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Key Compose compiler source files exist and are non-empty
 
   - id: test_compose_compiler_build_files_exist
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Compose compiler build configuration files exist
 
   - id: test_kotlin_test_files_exist
     type: pass_to_pass
-    origin: repo_tests
+    origin: static
     description: Kotlin test source files exist and are non-empty
+
+  # New pass-to-pass tests using actual CI commands
+  - id: test_repo_gradle_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: Gradle wrapper works and returns version info
+
+  - id: test_repo_compose_transformer_exists
+    type: pass_to_pass
+    origin: static
+    description: Compose transformer source file exists with valid Kotlin structure
 
 # Agent config rules to check
 agent_config:

@@ -1,13 +1,14 @@
 {
   "schema_version": 2,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-10T05:18:04.237240",
-  "total_time": 14088.43,
-  "sandbox_id": "ihrhtlks94tkf9u1doft6",
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-10T18:13:20.156356",
+  "total_time": 2664.97,
+  "sandbox_id": "i3r4kqhsuerel6mjqu18g",
   "backend": "fireworks",
   "pipeline": "agents",
+  "rubric_icr": 1.0,
   "nodes": {
     "p2p_enrich": {
       "status": "error",
@@ -27,24 +28,28 @@
       "status": "ok",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 544.87,
+      "time": 433.81,
       "notes": ""
     },
     "validate": {
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 119.89
+      "time": 167.67,
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_score": 0.5,
+      "notes": "All 4 validation checks passed. Docker build succeeded. NOP test correctly returns reward=0 (5 tests fail on buggy code). Gold test returns reward=1 (14/14 tests pass after fix). Rubric judge requires API keys (not available) but rules are already validated by pass_to_pass tests."
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.22,
+      "notes": "ICR=1.00"
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 966.19,
-      "at": "2026-04-09T14:44:17.256065"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -76,6 +81,14 @@
       "backend": "fireworks",
       "time": 14088.43,
       "at": "2026-04-10T05:18:04.237240"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2664.97,
+      "at": "2026-04-10T18:13:20.156356"
     }
   ]
 }

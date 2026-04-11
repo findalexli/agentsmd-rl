@@ -357,3 +357,47 @@ def test_ruff_format():
         timeout=30,
     )
     assert r.returncode == 0, f"ruff format check failed:\n{r.stdout}\n{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# Repo CI-derived pass_to_pass gates (repo_tests)
+# ---------------------------------------------------------------------------
+
+
+# [repo_tests] pass_to_pass - from Makefile style target
+def test_repo_ruff_check():
+    """CI: ruff check passes on modified file (via checkers.py)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "ruff_check"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"ruff check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from Makefile style target
+def test_repo_ruff_format():
+    """CI: ruff format check passes on modified file (via checkers.py)."""
+    r = subprocess.run(
+        ["python", "utils/checkers.py", "ruff_format"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"ruff format check failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
+
+
+# [repo_tests] pass_to_pass - from repo unit tests
+def test_repo_check_docstrings_unit():
+    """CI: check_docstrings unit tests pass."""
+    r = subprocess.run(
+        ["python", "-m", "unittest", "tests.repo_utils.test_check_docstrings", "-v"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
