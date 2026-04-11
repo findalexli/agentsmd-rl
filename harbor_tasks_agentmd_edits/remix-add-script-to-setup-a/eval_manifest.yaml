@@ -64,26 +64,48 @@ rubric:
     path: README.md
     lines: 1-10
     commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
-  reference: |
-    ## Installation
+  reference: '## Installation
+
 
     ```sh
+
     npm install remix
 
+
     # Or, just install a single package
+
     npm install @remix-run/fetch-router
+
     ```
+
 
     If you want to play around with the bleeding edge, we also build the latest `main`
+
     branch every night into a `nightly` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+
     with `pnpm` (version 9+):
 
+
     ```sh
+
     pnpm install "remix-run/remix#nightly&path:packages/remix"
 
+
     # Or, just install a single package
+
     pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"
+
     ```
+
+    '
+- rule: 'Monorepo: pnpm workspace with packages in `packages/` directory'
+  source:
+    path: AGENTS.md
+    lines: 14-16
+  evidence: The `.github/workflows/nightly.yml` file correctly uses `pnpm` actions
+    and commands (`pnpm install --frozen-lockfile`, `pnpm run setup-installable-branch`)
+    to interact with the monorepo.
+  category: tooling
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -149,3 +171,33 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare
+    Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of
+    Node.js APIs'
+  collision_type: architecture_boundary
+  why_distracting: The agent is writing a repository management script (`scripts/setup-installable-branch.ts`)
+    and updating a utility (`scripts/utils/process.ts`) that need to execute git commands
+    and manipulate the filesystem. Applying the 'runtime-agnostic / avoid Node.js
+    APIs' rule here would prevent the use of necessary Node modules like `child_process`
+    and `fs`, which are required for build scripts.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a change file to document the new nightly
+    build feature. However, change files are only for published packages in `packages/*`.
+    This PR only modifies repository infrastructure and documentation, so a change
+    file is not required and would be out of scope.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-46
+hierarchy_analysis: 'The `AGENTS.md` file provides general guidelines for the repository.
+  However, some rules like ''Philosophy: Web standards-first'' and ''Adding changes''
+  are implicitly scoped to the published packages themselves, not the repository infrastructure
+  or scripts. The agent must distinguish between package source code and internal
+  tooling scripts when applying these rules.'

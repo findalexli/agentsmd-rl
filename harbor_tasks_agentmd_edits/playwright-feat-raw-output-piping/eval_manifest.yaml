@@ -53,6 +53,13 @@ rubric:
     path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
     lines: 1-10
     commit: f6e14f9d73b46ab319b334c013094d867d4ef149
+- rule: Update SKILL.md when adding new CLI commands or options.
+  source:
+    path: .claude/skills/playwright-dev
+    lines: 1-2
+  evidence: The gold solution adds a '## Raw output' section to packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    to document the new --raw CLI option.
+  category: documentation
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1
@@ -86,3 +93,18 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: docs/src/ API documentation — source of truth for public TypeScript types
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to document the new `--raw` CLI option
+    in `docs/src/` or `docs/src/api/`. However, this directory is specifically for
+    public TypeScript API classes (like `class-page.md`), whereas the `--raw` flag
+    is an internal/CLI tool option that belongs in the CLI skill documentation.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 25-26
+hierarchy_analysis: The project distinguishes between public TypeScript API documentation
+  (`docs/src/`) and internal CLI/tooling documentation (`SKILL.md`). The agent must
+  correctly identify that a CLI flag falls under the tooling documentation scope rather
+  than the public API scope.

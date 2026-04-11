@@ -96,9 +96,49 @@ rubric:
     path: packages/playwright-core/src/tools/cli-client/skill/references/video-recording.md
     lines: 1-30
     commit: a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+- rule: Assume watch is running and generated files are produced automatically.
+  source:
+    path: CLAUDE.md
+    lines: 44-45
+  evidence: The gold solution modifies the MCP tool definition in `video.ts` but does
+    not manually edit any generated validator or protocol files, relying on the watch
+    process to produce them.
+  category: tooling
+- rule: Import boundaries are enforced via DEPS.list files.
+  source:
+    path: CLAUDE.md
+    lines: 81-82
+  evidence: The gold solution implements the new tool using existing imports in `video.ts`
+    (`z` and `defineTool`), avoiding the introduction of new dependencies that might
+    violate DEPS.list boundaries.
+  category: architecture
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1
   gold_added: playwright-cli video-chapter "Chapter Title" --description="Details"
     --duration=2000
   gold_removed: ''
+distractors:
+- rule: '`tests/mcp/` is used for testing MCP tools via `client.callTool()`.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might spend time writing tests for the new `videoChapter`
+    MCP tool in `tests/mcp/`, but the PR scope is limited to adding the command and
+    updating documentation. The gold solution does not include tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 76-76
+- rule: '`docs/src/api/` contains per-class API references.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to document the underlying `page.overlay.chapter()`
+    API in `docs/src/api/class-page.md` or similar, but the task is specifically about
+    adding a CLI command and updating CLI documentation, not the public browser automation
+    API.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 32-33
+hierarchy_analysis: The config hierarchy consists of a single CLAUDE.md file at the
+  root. It provides general guidelines on testing, documentation, and tooling. The
+  prompt also mentions a skill file (.claude/skills/playwright-dev/tools.md) which
+  is not provided in the context but is referenced in the instructions.

@@ -120,6 +120,15 @@ rubric:
     path: turbopack/crates/turbo-persistence/README.md
     lines: 1-10
     commit: b2f193b0964212c3ef0213efb74fe40dfd5be43b
+- rule: Read and maintain local `README.md` files in subdirectories (e.g., `crates/*`)
+    to identify and update local patterns, conventions, and documentation.
+  source:
+    path: CLAUDE.md
+    lines: 42-49
+  evidence: 'The gold solution updates `turbopack/crates/turbo-persistence/README.md`
+    to document the new block compression format, aligning with the directive to pay
+    attention to local README files in `crates/*` '
+  category: documentation
 config_edits:
 - path: turbopack/crates/turbo-persistence/README.md
   tier: 2
@@ -130,3 +139,34 @@ config_edits:
     - **Header = 0**: Block is stored uncompressed. Actual length is derived from\
     \ block offsets."
   gold_removed: "- 4 bytes uncompressed block length\n  - compressed data"
+distractors:
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start `pnpm --filter=next dev` in a separate terminal session before making edits.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs the agent to start `pnpm --filter=next dev`
+    when changing Next.js source. However, this PR is entirely contained within a
+    low-level Rust crate (`turbo-persistence`). Running the Next.js dev server is
+    unnecessary and wastes time; the agent should instead rely on `cargo test` or
+    `cargo bench` for this Rust-specific change.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 64-66
+- rule: Run tests fast (no isolation, no packing) using `NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=dev
+    pnpm testonly test/path/to/test.ts`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule provides a fast path for running tests using `NEXT_SKIP_ISOLATE=1
+    NEXT_TEST_MODE=dev pnpm testonly test/path/to/test.ts`. An agent might try to
+    apply this testing strategy, but it is strictly for TypeScript/JavaScript integration
+    tests. Rust crate changes require `cargo test`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-79
+hierarchy_analysis: The configuration files (`CLAUDE.md` and `AGENTS.md` are identical)
+  are heavily biased towards the TypeScript/JavaScript Next.js ecosystem and high-level
+  integration testing. Because this PR modifies a low-level Rust crate (`turbo-persistence`)
+  within the Turbopack subtree, many of the default Next.js workflow rules (like running
+  `pnpm dev` or `pnpm testonly`) do not apply and create scope ambiguity. The agent
+  must recognize the architecture boundary between the JS/TS framework and the Rust
+  crates to avoid applying JS-specific tooling to Rust code.

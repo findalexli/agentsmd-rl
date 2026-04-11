@@ -78,12 +78,22 @@ rubric:
     types)
   source:
     path: packages/opencode/AGENTS.md
-  reference: '# opencode Effect guide\n\n## Schemas\n- Use `Schema.Class` for data\n    types with multiple fields.\n- Use branded schemas (`Schema.brand`) for single-value\n    types.'
+  reference: '# opencode Effect guide\n\n## Schemas\n- Use `Schema.Class` for data\n    types
+    with multiple fields.\n- Use branded schemas (`Schema.brand`) for single-value\n    types.'
 - rule: packages/opencode/AGENTS.md Effect guide must document Layer.effect pattern
     with ServiceName.of() for service implementations
   source:
     path: packages/opencode/AGENTS.md
-  reference: '## Services\n- In `Layer.effect`, always return service implementations\n    with `ServiceName.of({ ... })`, never a plain object.'
+  reference: '## Services\n- In `Layer.effect`, always return service implementations\n    with
+    `ServiceName.of({ ... })`, never a plain object.'
+- rule: tables and columns use snake_case
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 4-5
+  evidence: In `packages/opencode/src/account/account.sql.ts`, the gold solution maintains
+    snake_case column names like `access_token`, `refresh_token`, and `active_account_id`
+    when adding the `$type<...>()` anno
+  category: naming
 config_edits:
 - path: packages/opencode/AGENTS.md
   tier: 1
@@ -150,3 +160,30 @@ config_edits:
     `err`, `opts`, `dir`). - Multi-word names are allowed only when a single word
     would be unclear or ambiguous.'
   gold_removed: ''
+distractors:
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: rule_conflict
+  why_distracting: The task requires explicitly typing Drizzle columns with `$type<BrandedType>()`
+    to enforce the new branded types at the database boundary. Relying on type inference
+    would leave them as plain strings, defeating the purpose of the refactor.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 15-16
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: rule_conflict
+  why_distracting: The task explicitly requires creating multi-word branded types
+    (`RefreshToken`, `DeviceCode`, `UserCode`) and extracting multi-word helpers (`fetchOrgs`,
+    `fetchUser`). An agent strictly following the single-word rule might try to name
+    them `Token`, `Code`, `orgs`, or `user`, which would reduce domain clarity and
+    violate the prompt's explicit instructions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 23-25
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript guidelines (type
+  inference, single-word naming), but the specific task instructions to use branded
+  types and extract specific helpers override these general rules. The agent must
+  recognize that domain-specific identifiers and explicit boundary typing (like Drizzle's
+  `$type`) are exceptions to the general 'infer everything' and 'single word' rules.

@@ -73,6 +73,15 @@ rubric:
     path: AGENTS.md
     lines: 108-114
     commit: 32fb24b53c2a46971f3093eee9934c18e0f47642
+- rule: always edit `AGENTS.md` directly. When learning something new about the codebase
+    that would help with future tasks, update this file immediately.
+  source:
+    path: AGENTS.md
+    lines: 3-5
+  evidence: The gold solution adds new bullet points to AGENTS.md documenting the
+    Studio CLI compatibility patterns, import map alignment, and esm.sh React pinning,
+    fulfilling the instruction to update the file w
+  category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -91,3 +100,18 @@ config_edits:
     \ table and column are writable before assuming a keyboard regression; views/system\
     \ tables and read-only columns legitimately stay non-editable."
   gold_removed: ''
+distractors:
+- rule: Build configuration uses esbuild via `helpers/compile/build.ts` with configs
+    in `helpers/compile/configs.ts`.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to modify the esbuild configuration in
+    `helpers/compile/configs.ts` to bundle the new dependencies (`@radix-ui/react-toggle`
+    and `chart.js/auto`), but these are loaded dynamically in the browser via the
+    HTML import map in `Studio.ts`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 14-16
+hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical content, but the root
+  rule explicitly states that CLAUDE.md is a symlink and AGENTS.md must be edited
+  directly. The gold solution correctly targets AGENTS.md for the documentation update.

@@ -73,8 +73,55 @@ rubric:
     path: products/posthog_ai/skills/query-examples/SKILL.md
     lines: 19-30
     commit: 51c06f3b577793a61dd32d10b5922d8b61393118
+- rule: Please respect my formatting preferences when you provide code.
+  source:
+    path: .cursorrules
+    lines: 16-16
+  evidence: 'The gold solution perfectly matches the existing formatting and patterns
+    of `PostgresTable` definitions in `system.py`, including the specific idiom for
+    boolean fields (creating a hidden `_field` and '
+  category: style
 config_edits:
 - path: products/posthog_ai/skills/query-examples/SKILL.md
   tier: 1
   gold_added: '- [Logs](./references/models-logs.md)'
   gold_removed: ''
+distractors:
+- rule: API views should declare request/response schemas — prefer @validated_request
+    or @extend_schema
+  collision_type: architecture_boundary
+  why_distracting: The task asks to expose Django models (`LogsView` and `LogsAlertConfiguration`)
+    so they are queryable. An agent might mistakenly think it needs to expose them
+    via the REST API (views/serializers) and add `@extend_schema`, rather than adding
+    them as HogQL system tables.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 49-49
+- rule: Django migration patterns and safety workflow for PostHog. Use when creating,
+    adjusting, or reviewing Django/Postgres migrations
+  collision_type: would_cause_bug
+  why_distracting: The task involves adding tables to HogQL that are backed by existing
+    PostgreSQL Django models. The agent might mistakenly think it needs to create
+    a Django migration to create these tables in the database, which would fail or
+    cause issues since the tables already exist.
+  severity: high
+  source:
+    path: .claude/skills/django-migrations
+    lines: 1-2
+- rule: Guide for exposing PostHog product endpoints as MCP tools.
+  collision_type: meta_confusion
+  why_distracting: The task mentions updating skill documentation so agents can discover
+    the tables. The agent might think it needs to create a new MCP tool for logs using
+    this skill, but it only needs to update the `query-examples` skill documentation.
+  severity: medium
+  source:
+    path: .claude/skills/implementing-mcp-tools
+    lines: 1-3
+hierarchy_analysis: The `.cursorrules` file provides general behavioral guidelines,
+  while `AGENTS.md` provides specific architectural and tooling rules. The agent must
+  carefully distinguish between exposing models via the REST API (covered in `AGENTS.md`)
+  and exposing them via HogQL system tables (the actual task). The presence of MCP
+  tool and Django migration skills in the environment could also confuse the agent
+  into building a new tool or migration instead of just updating the `query-examples`
+  skill docs and `system.py`.

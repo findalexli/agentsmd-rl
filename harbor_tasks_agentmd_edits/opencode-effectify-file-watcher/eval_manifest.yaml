@@ -1,152 +1,160 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "anomalyco/opencode"
+  repo: anomalyco/opencode
   pr: 17827
-  base_commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
-  merge_commit: "9e740d9947e6a4c61680c8dd00cb1fd11adf12af"
-
+  base_commit: d4694d058cc590b0f05261a04460034d2fa8541d
+  merge_commit: 9e740d9947e6a4c61680c8dd00cb1fd11adf12af
 checks:
-  # -------------------------------------------------------------------------
-  # Gates (pass_to_pass, static) — syntax / compilation
-  # -------------------------------------------------------------------------
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files compile without errors"
-
-  # -------------------------------------------------------------------------
-  # Fail-to-pass (pr_diff) — core behavioral tests for the refactor
-  # -------------------------------------------------------------------------
-  - id: filewatcher_service_class_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FileWatcherService class exists with proper Effect Service structure"
-
-  - id: filewatcher_uses_instance_context
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FileWatcherService uses InstanceContext instead of Instance.* globals"
-
-  - id: filewatcher_uses_effect_finalizer
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FileWatcherService uses Effect.addFinalizer for cleanup"
-
-  - id: filewatcher_uses_instance_bind
-    type: fail_to_pass
-    origin: pr_diff
-    description: "FileWatcherService uses Instance.bind for native callbacks"
-
-  - id: instances_ts_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "instances.ts includes FileWatcherService in union and layers"
-
-  - id: bootstrap_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "bootstrap.ts calls FileWatcherService via runPromiseInstance"
-
-  # -------------------------------------------------------------------------
-  # Config/documentation update checks (pr_diff)
-  # -------------------------------------------------------------------------
-  - id: agents_md_documents_instance_services
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md documents the Instance-scoped Effect services pattern"
-
-  - id: agents_md_documents_instance_bind
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md documents Instance.bind for native callbacks"
-
-  - id: agents_md_documents_effect_callback
-    type: fail_to_pass
-    origin: pr_diff
-    description: "AGENTS.md documents Effect.callback pattern"
-
-  # -------------------------------------------------------------------------
-  # Pass-to-pass (repo_tests) — regression tests using actual CI commands
-  # -------------------------------------------------------------------------
-  - id: repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript type checking passes (bun run typecheck)"
-
-  - id: repo_file_ignore
-    type: pass_to_pass
-    origin: repo_tests
-    description: "File ignore tests pass - file module related"
-
-  - id: repo_project_state
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Project state tests pass - Instance.state lifecycle related"
-
-  - id: repo_permission_service
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Permission service tests pass - Effect service pattern related"
-
-  - id: repo_effect_zod
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Effect-zod integration tests pass - Effect patterns related"
-
-  - id: repo_util_timeout
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Timeout util tests pass - async utilities related"
-
-  # -------------------------------------------------------------------------
-  # Pass-to-pass (static) — anti-stub check
-  # -------------------------------------------------------------------------
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: "FileWatcherService layer has real implementation with subscription/cleanup logic"
-
-  # -------------------------------------------------------------------------
-  # Config-derived (agent_config) — rules from AGENTS.md
-  # -------------------------------------------------------------------------
-  - id: no_wildcard_imports
-    type: pass_to_pass
-    origin: agent_config
-    description: "No wildcard imports (per AGENTS.md Effect guide)"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "1-20"
-      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
-
-  - id: uses_effect_gen
-    type: pass_to_pass
-    origin: agent_config
-    description: "Uses Effect.gen for composition (per AGENTS.md Effects section)"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "33"
-      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
-
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files compile without errors
+- id: filewatcher_service_class_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileWatcherService class exists with proper Effect Service structure
+- id: filewatcher_uses_instance_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileWatcherService uses InstanceContext instead of Instance.* globals
+- id: filewatcher_uses_effect_finalizer
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileWatcherService uses Effect.addFinalizer for cleanup
+- id: filewatcher_uses_instance_bind
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileWatcherService uses Instance.bind for native callbacks
+- id: instances_ts_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: instances.ts includes FileWatcherService in union and layers
+- id: bootstrap_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: bootstrap.ts calls FileWatcherService via runPromiseInstance
+- id: agents_md_documents_instance_services
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents the Instance-scoped Effect services pattern
+- id: agents_md_documents_instance_bind
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents Instance.bind for native callbacks
+- id: agents_md_documents_effect_callback
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents Effect.callback pattern
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking passes (bun run typecheck)
+- id: repo_file_ignore
+  type: pass_to_pass
+  origin: repo_tests
+  description: File ignore tests pass - file module related
+- id: repo_project_state
+  type: pass_to_pass
+  origin: repo_tests
+  description: Project state tests pass - Instance.state lifecycle related
+- id: repo_permission_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Permission service tests pass - Effect service pattern related
+- id: repo_effect_zod
+  type: pass_to_pass
+  origin: repo_tests
+  description: Effect-zod integration tests pass - Effect patterns related
+- id: repo_util_timeout
+  type: pass_to_pass
+  origin: repo_tests
+  description: Timeout util tests pass - async utilities related
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: FileWatcherService layer has real implementation with subscription/cleanup
+    logic
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports (per AGENTS.md Effect guide)
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 1-20
+    commit: d4694d058cc590b0f05261a04460034d2fa8541d
+- id: uses_effect_gen
+  type: pass_to_pass
+  origin: agent_config
+  description: Uses Effect.gen for composition (per AGENTS.md Effects section)
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '33'
+    commit: d4694d058cc590b0f05261a04460034d2fa8541d
 rubric:
-  # Simplified rules with reference content for LLM judge
-  - rule: "FileWatcherService follows the same patterns as QuestionService, PermissionService, and ProviderAuthService - extends ServiceMap.Service, has static readonly layer using Layer.effect, uses Effect.gen"
-    source:
-      path: "packages/opencode/src/effect/instances.ts"
-      lines: "1-30"
-      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
-    reference: "FileWatcherService extends ServiceMap.Service<FileWatcherService, FileWatcherService.Service>() with static readonly layer = Layer.effect(FileWatcherService, Effect.gen(function* () { ... }))"
-
-  - rule: "AGENTS.md documents Instance-scoped Effect services pattern with 4 steps: 1) Define ServiceMap.Service with static layer, 2) Add to InstanceServices union, 3) Use InstanceContext inside layer, 4) Call via runPromiseInstance"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "46-77"
-      commit: "9e740d9947e6a4c61680c8dd00cb1fd11adf12af"
-    reference: "Instance-scoped Effect services section with LayerMap, FileWatcherService, QuestionService, PermissionService, ProviderAuthService examples"
-
-  - rule: "AGENTS.md documents Instance.bind with when to use it (native C/C++ addons like @parcel/watcher, node-pty) and when not needed (setTimeout, Promise.then, EventEmitter.on, Effect fibers)"
-    source:
-      path: "packages/opencode/AGENTS.md"
-      lines: "1-50"
-      commit: "d4694d058cc590b0f05261a04460034d2fa8541d"
-    reference: "Instance.bind captures ALS context for native callbacks. Use it for native C/C++ addons. Don't need it for setTimeout, Promise.then, EventEmitter.on, or Effect fibers."
+- rule: FileWatcherService follows the same patterns as QuestionService, PermissionService,
+    and ProviderAuthService - extends ServiceMap.Service, has static readonly layer
+    using Layer.effect, uses Effect.gen
+  source:
+    path: packages/opencode/src/effect/instances.ts
+    lines: 1-30
+    commit: d4694d058cc590b0f05261a04460034d2fa8541d
+  reference: FileWatcherService extends ServiceMap.Service<FileWatcherService, FileWatcherService.Service>()
+    with static readonly layer = Layer.effect(FileWatcherService, Effect.gen(function*
+    () { ... }))
+- rule: 'AGENTS.md documents Instance-scoped Effect services pattern with 4 steps:
+    1) Define ServiceMap.Service with static layer, 2) Add to InstanceServices union,
+    3) Use InstanceContext inside layer, 4) Call via runPromiseInstance'
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 46-77
+    commit: 9e740d9947e6a4c61680c8dd00cb1fd11adf12af
+  reference: Instance-scoped Effect services section with LayerMap, FileWatcherService,
+    QuestionService, PermissionService, ProviderAuthService examples
+- rule: AGENTS.md documents Instance.bind with when to use it (native C/C++ addons
+    like @parcel/watcher, node-pty) and when not needed (setTimeout, Promise.then,
+    EventEmitter.on, Effect fibers)
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 1-50
+    commit: d4694d058cc590b0f05261a04460034d2fa8541d
+  reference: Instance.bind captures ALS context for native callbacks. Use it for native
+    C/C++ addons. Don't need it for setTimeout, Promise.then, EventEmitter.on, or
+    Effect fibers.
+distractors:
+- rule: Use Bun APIs when possible, like `Bun.file()`
+  collision_type: would_cause_bug
+  why_distracting: The task explicitly mentions handling native C++ callbacks from
+    `@parcel/watcher`. An agent might try to replace `@parcel/watcher` with Bun's
+    built-in file watching APIs to follow the "Use Bun APIs" rule, which would break
+    the specific requirement to integrate with the existing `@parcel/watcher` setup.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 15-15
+- rule: Use single word names by default for new locals, params, and helper functions.
+    Multi-word names are allowed only when a single word would be unclear or ambiguous.
+  collision_type: rule_conflict
+  why_distracting: The task explicitly requires naming the new service `FileWatcherService`.
+    The strict naming enforcement rule mandates single-word names and explicitly forbids
+    multi-word names unless necessary. An agent might try to name the service `Watcher`
+    or `FileWatcher` instead of the requested `FileWatcherService` to comply with
+    the style guide.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 27-32
+- rule: Keep things in one function unless composable or reusable
+  collision_type: architecture_boundary
+  why_distracting: The task requires refactoring a namespace into a `ServiceMap.Service`
+    class with a `static readonly layer`, `Effect.gen` for composition, and `Effect.addFinalizer`
+    for cleanup. The agent might try to cram all this into a single function instead
+    of properly structuring the class and its layer definition as required by the
+    Effect service pattern.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 11-11
+hierarchy_analysis: The `AGENTS.md` file provides general guidelines that conflict
+  with the specific architectural requirements of the task. The task instructions
+  require specific naming (`FileWatcherService`) and specific library usage (`@parcel/watcher`),
+  which override the general rules to use single-word names and Bun APIs.

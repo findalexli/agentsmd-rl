@@ -50,12 +50,20 @@ checks:
   origin: pr_diff
   description: AGENTS.md recommends build-all for branch switches and Turbopack edits
 rubric:
-- rule: AGENTS.md must document pnpm build-all for building both JS and Rust code, and
-    distinguish it from pnpm build (JS only)
+- rule: AGENTS.md must document pnpm build-all for building both JS and Rust code,
+    and distinguish it from pnpm build (JS only)
   source:
     path: AGENTS.md
-    lines: '58-70'
+    lines: 58-70
     commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+- rule: '`packages/next-swc/` contains Native Rust bindings (SWC transforms)'
+  source:
+    path: AGENTS.md
+    lines: 38-39
+  evidence: 'The gold solution targets `packages/next-swc/package.json` and `packages/next-swc/turbo.jsonc`
+    to rename the build task to `build-native-auto`, correctly identifying it as the
+    package responsible for '
+  category: architecture
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -91,3 +99,27 @@ config_edits:
     - **First run after branch switch/bootstrap (or if unsure)?** → `pnpm build`
 
     - **Edited Next.js code or Turbopack (Rust)?** → `pnpm build`'
+distractors:
+- rule: '`pnpm build` is the command to ''Build everything'''
+  collision_type: meta_confusion
+  why_distracting: The config file documents `pnpm build` as the command to 'Build
+    everything'. An agent might treat this as an immutable fact about the repository
+    rather than outdated documentation that needs to be updated to `pnpm build-all`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 62-63
+- rule: Always run a full bootstrap build (`pnpm build`) after switching branches
+  collision_type: meta_confusion
+  why_distracting: The config file instructs developers to use `pnpm build` for branch
+    switches and bootstrapping. An agent might follow this instruction for its own
+    validation steps or fail to update these specific lines because it treats the
+    config as a source of truth.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 94-100
+hierarchy_analysis: The primary challenge in this PR is that the agent must modify
+  the very configuration file (`AGENTS.md`) that provides its instructions. The agent
+  must recognize that the rules regarding `pnpm build` in `AGENTS.md` are outdated
+  documentation to be updated, rather than immutable rules to be followed.

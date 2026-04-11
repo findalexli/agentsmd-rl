@@ -50,6 +50,15 @@ rubric:
     path: CONTRIBUTING.md
     lines: 1-10
     commit: a14a89ca953910e89697895dfdfb4cdf4c90a151
+- rule: Bun is written primarily in Zig with C++ for JavaScriptCore integration, powered
+    by WebKit's JavaScriptCore engine.
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+  evidence: The gold solution modifies BuildBun.cmake to add `jsc` as a dependency
+    for Bun's C++ sources, reflecting the architectural reliance on WebKit's JavaScriptCore
+    engine.
+  category: architecture
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -90,3 +99,29 @@ config_edits:
     Note that if you change make changes to our [WebKit fork](https://github.com/oven-sh/WebKit),
     you will also have to change [`SetupWebKit.cmake`](/cmake/tools/SetupWebKit.cmake)
     to point to the commit hash.'
+distractors:
+- rule: 'Build Bun: `bun bd` - Creates a debug build at `./build/debug/bun-debug`'
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that building Bun is done via `bun bd` and outputs
+    to `./build/debug/bun-debug`. An agent might try to modify the `bun bd` script
+    or document `bun bd` instead of `bun run build:local`, or incorrectly document
+    the output directory as `./build/debug` instead of `./build/debug-local`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+- rule: 'Run tests with your debug build: `bun bd test <test-file>`'
+  collision_type: would_cause_bug
+  why_distracting: The rule instructs to run tests using `bun bd test`. If an agent
+    adds testing instructions to the local WebKit build documentation, it might incorrectly
+    suggest `bun bd test`, which uses the standard debug build rather than the `debug-local`
+    build created by `bun run build:local`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 11-12
+hierarchy_analysis: CLAUDE.md and AGENTS.md provide identical guidance focused on
+  standard development workflows (`bun bd`). This PR specifically targets the local
+  WebKit/JSC build workflow (`bun run build:local`), which has different output directories
+  and commands. The agent must recognize that the standard build rules do not strictly
+  apply to this specialized build configuration.

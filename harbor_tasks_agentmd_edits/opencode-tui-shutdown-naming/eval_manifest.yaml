@@ -48,10 +48,10 @@ checks:
   description: AGENTS.md contains Naming Enforcement section with mandatory single-word
     naming rule
 rubric:
-- rule: 'AGENTS.md contains the complete Naming Enforcement section with mandatory single-word
-    naming rules, examples of preferred short names (pid, cfg, err, opts, dir, root, child,
-    state, timeout), and examples to avoid (inputPID, existingClient, connectTimeout,
-    workerPath).'
+- rule: AGENTS.md contains the complete Naming Enforcement section with mandatory
+    single-word naming rules, examples of preferred short names (pid, cfg, err, opts,
+    dir, root, child, state, timeout), and examples to avoid (inputPID, existingClient,
+    connectTimeout, workerPath).
   source:
     path: AGENTS.md
     lines: 23-42
@@ -77,6 +77,22 @@ rubric:
 
     - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
     `workerPath`.'
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 21-22
+  evidence: The gold solution renames multi-word variables to single words (`baseCwd`
+    to `root`, `workerPath` to `file`) and names the newly extracted helper functions
+    with single words (`target` and `input`).
+  category: naming
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 61-62
+  evidence: The gold solution uses multiple `if` statements with early returns in
+    the newly extracted `input()` and `target()` functions instead of using `else`
+    blocks.
+  category: style
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -102,3 +118,40 @@ config_edits:
     - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
     `workerPath`.'
   gold_removed: ''
+distractors:
+- rule: Keep things in one function unless composable or reusable
+  collision_type: rule_conflict
+  why_distracting: The PR instructions explicitly require extracting the inline logic
+    for resolving the worker path and building the prompt string into standalone helper
+    functions (`target` and `input`) for clarity. Following the general rule to keep
+    things in one function would lead the agent to ignore this instruction.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 11-12
+- rule: Avoid `try`/`catch` where possible
+  collision_type: rule_conflict
+  why_distracting: The PR instructions explicitly require using a `try/finally` block
+    around the TUI invocation to guarantee cleanup runs. Following the general rule
+    to avoid `try`/`catch` would lead the agent to omit the necessary `try/finally`
+    block.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-13
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  collision_type: rule_conflict
+  why_distracting: The PR requires making the shutdown idempotent, which is most simply
+    implemented using a mutable state flag like `let stopped = false` (as verified
+    by the gold solution's grep check). Forcing `const` and avoiding reassignment
+    would make implementing this stateful idempotency awkward or require unnecessary
+    refactoring.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 51-52
+hierarchy_analysis: The root `AGENTS.md` provides general style guidelines that directly
+  conflict with the specific PR instructions for this task. The agent must recognize
+  that explicit PR requirements (extracting functions, using try/finally, implementing
+  stateful idempotency) override the general heuristics (keeping logic in one function,
+  avoiding try/catch, preferring const).

@@ -12,7 +12,8 @@ checks:
 - id: repo_powershell_script_structure
   type: pass_to_pass
   origin: repo_tests
-  description: PowerShell script has valid structure with param block and required functions
+  description: PowerShell script has valid structure with param block and required
+    functions
 - id: repo_skill_md_structure
   type: pass_to_pass
   origin: repo_tests
@@ -188,3 +189,30 @@ config_edits:
     GitHub directly with `gh` commands or `jq` if the script fails. The script contains
     important prioritization logic (SR3 before SR4, P/0 first, etc.) that cannot be
     replicated wit'
+distractors:
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill to verify that the PR title and description accurately match
+    the actual implementation.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 11-12
+  collision_type: meta_confusion
+  why_distracting: The task is to modify a skill that finds reviewable PRs. The agent
+    might get confused by the mention of 'code review on PRs' and try to integrate
+    the pr-finalize skill into the find-reviewable-pr script, or run it unnecessarily
+    on the PRs it fetches.
+  severity: medium
+- rule: 'Testing frameworks: xUnit - Unit tests (*.UnitTests.csproj), NUnit - UI tests'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 24-27
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to write xUnit or NUnit tests for the new
+    PowerShell functions (like Get-ReadyToReviewPRNumbers), which is inappropriate
+    since those frameworks are for the C# codebase, not PowerShell scripts.
+  severity: low
+hierarchy_analysis: The repository has a single root-level copilot-instructions.md
+  file. However, its contents are heavily focused on the C#/.NET MAUI core framework
+  development (xUnit, platform-specific files, etc.) and do not provide specific guidance
+  for PowerShell script development or GitHub skills. The agent must rely on the task
+  instructions and existing script patterns rather than the C# guidelines.

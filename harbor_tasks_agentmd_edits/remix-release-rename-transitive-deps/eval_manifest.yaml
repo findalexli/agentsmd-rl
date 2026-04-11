@@ -71,6 +71,14 @@ rubric:
     path: AGENTS.md
     lines: 1-10
     commit: 130fbdc7b808a2d313363458dabc00caf036f482
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: AGENTS.md
+    lines: '28'
+  evidence: The gold solution uses single quotes for the PR title string literal (`prTitle
+    = 'Release'`) as seen in the grep check `grep -q "prTitle = 'Release'" scripts/release-pr.ts`.
+  category: style
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -114,3 +122,31 @@ config_edits:
     If needed, you can run this command manually. This will update the `package.json`
     versions, `CHANGELOG.md` files, and delete the change files. It will then commit
     the result.'
+distractors:
+- rule: 'Automated releases: When changes are pushed to main, the changes-version-pr
+    workflow automatically opens/updates a ''Version Packages'' PR.'
+  collision_type: meta_confusion
+  why_distracting: The agent might think it should preserve the 'Version Packages'
+    terminology or the `changes-version-pr` workflow name because it's documented
+    as a rule in AGENTS.md, but the PR instructions explicitly require renaming these
+    to 'Release' and `release-pr` and updating the documentation itself.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '58'
+- rule: 'Test change/release code with preview scripts: ... For the version PR script,
+    run `node ./scripts/changes-version-pr.ts --preview`.'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run or preserve the `scripts/changes-version-pr.ts`
+    script name because it's explicitly referenced in the testing instructions, but
+    the script needs to be renamed to `scripts/release-pr.ts`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '61'
+hierarchy_analysis: The `AGENTS.md` file contains documentation about the release
+  process that acts as both rules for the agent and documentation that needs to be
+  updated. This creates a meta-level conflict where the agent must recognize that
+  the instructions to rename the release PR supersede the existing documentation,
+  and that the documentation itself is a target for modification rather than a strict
+  constraint for this specific task.

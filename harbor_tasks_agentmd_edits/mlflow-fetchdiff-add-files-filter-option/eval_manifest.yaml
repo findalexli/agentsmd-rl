@@ -50,12 +50,14 @@ checks:
   origin: repo_tests
   description: Repo's mypy type check passes on modified file
 rubric:
-- rule: SKILL.md update is consistent with the style and formatting of the existing
-    documentation
+- rule: Use top-level imports (only use lazy imports when necessary)
   source:
-    path: .claude/skills/fetch-diff/SKILL.md
-    lines: 1-35
-    commit: 956ab37d911e777ce40740ab851d2d472cec2752
+    path: CLAUDE.md
+    lines: 10-10
+  category: style
+  evidence: The `import fnmatch` statement is added at the top of `fetch_diff.py`
+    alongside other standard library imports, rather than being lazily imported inside
+    the `filter_diff` function.
 config_edits:
 - path: .claude/skills/fetch-diff/SKILL.md
   tier: 1
@@ -83,3 +85,19 @@ config_edits:
   gold_removed: 'uv run skills fetch-diff <pr_url>
 
     Example:'
+distractors:
+- rule: 'fetch-diff: Fetch PR diff with filtering and line numbers for code review.'
+  source:
+    path: Skills Found in Repo
+    lines: N/A
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to execute the `fetch-diff` skill to fetch
+    a PR diff as part of its workflow, but the task is actually to modify the source
+    code of the `fetch-diff` skill itself.
+  severity: medium
+hierarchy_analysis: Only the root CLAUDE.md applies to this task. The rules in CLAUDE.md
+  are primarily focused on the main MLflow repository (e.g., tracking store, Databricks
+  backend), while this task modifies a local Claude skill script in the `.claude/skills`
+  directory. The agent must apply general Python best practices (like top-level imports)
+  from the config while recognizing that MLflow-specific architecture rules do not
+  apply to the `.claude` directory.

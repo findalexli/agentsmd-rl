@@ -131,3 +131,43 @@ rubric:
     path: CONTRIBUTING.md
     lines: '46'
     commit: 90016e313b24a05c5862a853a3b518290d9017ba
+- rule: 'Imports: ... include `.ts` extensions'
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: The updated `src/index.ts` file exports from `'./lib/interaction.ts'`,
+    explicitly including the `.ts` extension as required.
+  category: style
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope'
+  source:
+    path: AGENTS.md
+    lines: 19-19
+  evidence: In the JSDoc examples added for `createContainer`, local variables are
+    declared with `let` (e.g., `let controller = new AbortController()`, `let container
+    = createContainer(...)`) instead of `const`.
+  category: style
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  evidence: The JSDoc examples omit semicolons at the end of statements and use single
+    quotes for strings (`'Listener error:'`).
+  category: style
+distractors:
+- rule: 'Classes: Use native fields (omit `public`), `#private` for private members'
+  collision_type: meta_confusion
+  why_distracting: The instructions require using `this` context for interaction setup
+    functions and creating an `Interaction` interface. The agent might mistakenly
+    implement `Interaction` as a class to satisfy the `this` context and apply the
+    class rules (native fields, `#private`), rather than keeping it as a functional
+    context interface.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 20-20
+hierarchy_analysis: The AGENTS.md file provides clear stylistic guidelines that are
+  consistently applied in the gold solution, such as using `let` for locals, omitting
+  semicolons, and including `.ts` extensions in imports/exports. There are no conflicting
+  files in the hierarchy, but agents must be careful not to misapply class-specific
+  rules to functional patterns that use `this` context.

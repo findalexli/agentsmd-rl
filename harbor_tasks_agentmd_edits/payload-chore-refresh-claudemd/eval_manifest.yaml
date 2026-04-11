@@ -152,3 +152,35 @@ config_edits:
     \ + components + e2e)\n- `pnpm test:int` - Run integration tests (MongoDB, recommended\
     \ for"
   gold_removed: ''
+distractors:
+- rule: pnpm test - Run all tests (integration + components + e2e)
+  source:
+    path: CLAUDE.md
+    lines: 53-54
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run the full test suite after updating the
+    markdown files, which is unnecessary for a documentation-only change and wastes
+    significant time.
+  severity: medium
+- rule: pnpm lint - Run linter
+  source:
+    path: CLAUDE.md
+    lines: 76-77
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run the project-wide linter after modifying
+    the markdown files, which could be slow or fail on unrelated files.
+  severity: low
+- rule: Packages use TypeScript with strict mode
+  source:
+    path: CLAUDE.md
+    lines: 34-34
+  collision_type: meta_confusion
+  why_distracting: The agent might think it needs to write a TypeScript script to
+    perform the file operations (like symlinking and updating gitignore) instead of
+    just using standard bash commands.
+  severity: low
+hierarchy_analysis: The config files CLAUDE.md and AGENTS.md are actually the targets
+  of the modification in this PR. The agent must read them to understand the current
+  state, but must be careful not to apply the project-specific coding guidelines (like
+  running tests or using TypeScript) to its own workflow of updating the documentation
+  and symlinks.

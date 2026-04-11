@@ -33,7 +33,15 @@ checks:
   description: test/CLAUDE.md updated with guidance to prefer .toEqual over many .toBe
     assertions for nested objects
 rubric:
-- rule: "test/CLAUDE.md contains a 'Nested/complex object equality' section with .toEqual guidance and both BAD and GOOD code examples"
+- rule: test/CLAUDE.md contains a 'Nested/complex object equality' section with .toEqual
+    guidance and both BAD and GOOD code examples
+- rule: 'Modules are NOT ES modules: use string literal require() only'
+  source:
+    path: src/js/CLAUDE.md
+    lines: 16-20
+  evidence: The gold solution uses `const { ..., buildDefinedColumnsAndQuery } = require("internal/sql/shared");`
+    instead of ES module imports to load the extracted shared logic.
+  category: style
 config_edits:
 - path: test/CLAUDE.md
   tier: 1
@@ -48,3 +56,41 @@ config_edits:
     \ },\n  { optional: \"middle-value\" }, // CRITICAL: middle item's value must\
     \ be preserved\n  { optional: null },\n]);\n```\n\n</example>"
   gold_removed: const { promise, resolve, reject } = Promise.withResolvers();
+distractors:
+- rule: Zig syntax reminders and conventions
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to implement the SQL logic in Zig because the
+    root config mentions Bun is primarily written in Zig and this file provides Zig
+    conventions. However, the SQL query builder is implemented entirely in JS builtins,
+    making Zig rules irrelevant here.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 2-12
+- rule: Use .$call and .$apply, never .call or .apply
+  collision_type: scope_ambiguity
+  why_distracting: The rule strictly forbids `.call` and `.apply` to prevent user
+    tampering. An agent might incorrectly assume this applies to `.bind` as well,
+    avoiding `this.escapeIdentifier.bind(this)` (which the gold solution uses) and
+    writing convoluted workarounds like arrow functions or searching for a non-existent
+    `.$bind`.
+  severity: medium
+  source:
+    path: src/js/CLAUDE.md
+    lines: 43-52
+- rule: Spawning Bun in tests using bunExe and bunEnv
+  collision_type: meta_confusion
+  why_distracting: The testing guide heavily emphasizes using `Bun.spawn` with `bunExe`
+    and `bunEnv` for tests. An agent might try to write a complex multi-process test
+    for this SQL helper fix, whereas testing the `sql()` template tag behavior only
+    requires a simple in-process unit test.
+  severity: medium
+  source:
+    path: test/CLAUDE.md
+    lines: 23-27
+hierarchy_analysis: The repository has a deep configuration hierarchy. The root CLAUDE.md
+  provides general build instructions, while src/CLAUDE.md and src/js/CLAUDE.md provide
+  language-specific rules. Since the files being edited are in src/js/internal/sql/,
+  the rules in src/js/CLAUDE.md take precedence. The agent must recognize that despite
+  Bun being primarily a Zig project, this specific subsystem is implemented in JavaScript
+  and follows the JS builtins rules.

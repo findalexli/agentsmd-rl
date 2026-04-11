@@ -53,6 +53,13 @@ rubric:
     path: .github/copilot-instructions.md
     lines: 133-140
     commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+- rule: Android specific code is inside folders labeled Android
+  source:
+    path: .github/copilot-instructions.md
+    lines: 45-46
+  evidence: The gold solution modifies `SelectableItemsViewAdapter.cs` which is correctly
+    located in the `Android` folder under `src/Controls/src/Core/Handlers/Items/Android/Adapters/`.
+  category: architecture
 config_edits:
 - path: .github/copilot-instructions.md
   tier: 1
@@ -73,3 +80,29 @@ config_edits:
     \ '%s\\n' \"$HEADER\" > \"$f\"\n  cat /tmp/api_fix.txt >> \"$f\"\n  git add \"\
     $f\"\ndone\n```"
   gold_removed: ''
+distractors:
+- rule: Run the pr-finalize skill when performing a code review on PRs that change
+    functional code
+  collision_type: meta_confusion
+  why_distracting: The instructions tell the agent to run `pr-finalize` when performing
+    a code review. The agent might get confused about its role (fixing a bug vs reviewing
+    a PR) and attempt to invoke this skill instead of just writing the fix.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 11-13
+- rule: Use xUnit for Unit tests and NUnit for UI tests
+  collision_type: scope_ambiguity
+  why_distracting: The config lists testing frameworks (xUnit, NUnit) and the agent
+    has access to `write-ui-tests` and `write-xaml-tests` skills. The agent might
+    waste time trying to write tests for this Android-specific UI crash, which is
+    not required by the gold solution and is notoriously difficult to mock.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 25-28
+hierarchy_analysis: The repository uses a single `.github/copilot-instructions.md`
+  file for agent instructions. The gold solution updates this file to add a critical
+  rule about `#nullable enable` in `PublicAPI.Unshipped.txt` files, demonstrating
+  that the agent must not only follow existing architectural rules but also correctly
+  append new meta-rules to the config file itself.

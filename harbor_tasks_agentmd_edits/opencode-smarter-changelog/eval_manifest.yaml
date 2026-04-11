@@ -61,6 +61,30 @@ rubric:
     path: .opencode/command/commit.md
     lines: 1-30
     commit: 057848deb847d59250e7db08ab2402f4a69bfcda
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: 22-34
+  evidence: 'The gold solution uses single-word names for almost all variables and
+    functions, such as `repo`, `bot`, `team`, `order`, `sections`, `ref`, `latest`,
+    `diff`, `section`, `reverted`, `commits`, `base`, '
+  category: naming
+- rule: Use Bun APIs when possible, like `Bun.file()`
+  source:
+    path: AGENTS.md
+    lines: 15-20
+  evidence: The gold solution uses `Bun.file(new URL("../.github/TEAM_MEMBERS", import.meta.url)).text()`
+    to read the team members file instead of Node's `fs` module.
+  category: tooling
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 62-73
+  evidence: The gold solution uses early returns and continues extensively to avoid
+    deep nesting, such as `if (!release) throw new Error(...)`, `if (batch.length
+    === 0) break`, `if (!item) continue`, and `if (ite
+  category: style
 config_edits:
 - path: .opencode/command/changelog.md
   tier: 2
@@ -103,3 +127,34 @@ config_edits:
     ## Changelog Input
 
     !`bun script/changelog.ts $ARGUMENTS`'
+distractors:
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: rule_conflict
+  why_distracting: The script fetches data from external APIs (`gh api`) and parses
+    JSON, which returns `any` or `unknown`. Explicit types like `Release`, `Commit`,
+    `User`, and `Diff` are necessary to type the API responses and internal data structures,
+    even though they are not exported. An agent might try to remove these types and
+    rely on `any` or inline types, reducing type safety and readability.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 15-20
+- rule: Keep things in one function unless composable or reusable
+  collision_type: scope_ambiguity
+  why_distracting: The raw changelog generation logic is complex and involves multiple
+    distinct steps (fetching latest release, getting diffs, categorizing sections,
+    handling reverts). The gold solution breaks these into separate functions (`latest`,
+    `diff`, `section`, `reverted`, `commits`) for clarity, even though they are only
+    used once within the script. An agent might try to cram all this logic into a
+    single massive function to follow the rule.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 15-20
+hierarchy_analysis: The `AGENTS.md` file provides general style and naming guidelines.
+  The instructions require refactoring a monolithic script into two parts and updating
+  an agent command template. The agent must balance the 'Keep things in one function'
+  rule with the need to extract complex logic into readable helper functions in the
+  new `raw-changelog.ts` script. Additionally, the agent must balance the 'avoid explicit
+  type annotations' rule with the necessity of typing external API responses.

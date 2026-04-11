@@ -64,12 +64,30 @@ checks:
   origin: pr_diff
   description: rust-review-checklist.md documents instance/static method behavior
 rubric:
-- rule: Documentation updates should be consistent with the existing style and level
-    of detail in each file
+- rule: Suggest updates to AGENTS.md when you find new high-level information
   source:
     path: AGENTS.md
-    lines: '299'
-    commit: d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d
+    lines: 10-11
+  category: documentation
+  evidence: The gold solution updates `src/rust/AGENTS.md` to document the new static
+    method behavior for `#[jsg_method]`.
+- rule: 'CXX bridge: `#[cxx::bridge(namespace = "workerd::rust::<crate>")]` with companion
+    `ffi.c++`/`ffi.h` files'
+  source:
+    path: src/rust/AGENTS.md
+    lines: 24-25
+  category: architecture
+  evidence: The gold solution modifies the companion `ffi.c++` and `ffi.h` files in
+    `src/rust/jsg/` to support the new V8 FFI layer requirements for static methods.
+- rule: 'JSG resources: must include `_state: jsg::ResourceState` field; `#[jsg_method]`
+    auto-converts `snake_case` → `camelCase`'
+  source:
+    path: src/rust/AGENTS.md
+    lines: 27-28
+  category: documentation
+  evidence: The gold solution updates this specific convention in `src/rust/AGENTS.md`
+    to append the new rule that methods with receivers become instance methods, and
+    those without become static methods.
 config_edits:
 - path: src/rust/AGENTS.md
   tier: 1
@@ -101,3 +119,30 @@ config_edits:
     On struct definitions, generates `jsg::Type`, wrapper struct, and `ResourceTemplate`\
     \ implementations. On impl blocks, scans for `#[jsg_method]` attributes and generates\
     \ the `Resource` trait implementation."
+distractors:
+- rule: 'Tests: inline `#[cfg(test)]` modules; JSG tests use `jsg_test::Harness::run_in_context()`'
+  source:
+    path: src/rust/AGENTS.md
+    lines: 30-31
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write new JSG tests for the static method
+    functionality. However, the prompt strictly asks for code changes and documentation
+    updates. Attempting to write tests would waste significant effort and likely overcomplicate
+    the PR.
+  severity: medium
+- rule: 'Formatting: `rustfmt.toml` — `group_imports = "StdExternalCrate"`, `imports_granularity
+    = "Item"` (one `use` per import)'
+  source:
+    path: src/rust/AGENTS.md
+    lines: 28-29
+  collision_type: rule_conflict
+  why_distracting: The agent might try to reformat existing imports in `lib.rs` or
+    `v8.rs` to match this rule, which would introduce unnecessary diff churn unrelated
+    to the core task.
+  severity: low
+hierarchy_analysis: The root `AGENTS.md` provides general project instructions (like
+  updating AGENTS.md itself), while `src/rust/AGENTS.md` provides specific architectural
+  patterns (CXX bridges, JSG resources). The agent must synthesize these by applying
+  the CXX bridge pattern to implement the FFI changes, and then fulfilling the root
+  directive by updating the Rust-specific documentation in `src/rust/AGENTS.md` to
+  reflect the new JSG resource behavior.

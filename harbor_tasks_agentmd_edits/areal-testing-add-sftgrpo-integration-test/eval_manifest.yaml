@@ -81,11 +81,20 @@ rubric:
     lines: '261'
     commit: d64f8688833cd73648a1b06932f1fbec542694e3
 - rule: New YAML configs must use Hydra-friendly dotted names (e.g., ${experiment_name})
-    for variable substitution; model/dataset paths may be hardcoded as in existing configs
+    for variable substitution; model/dataset paths may be hardcoded as in existing
+    configs
   source:
     path: AGENTS.md
     lines: 130-131
     commit: d64f8688833cd73648a1b06932f1fbec542694e3
+- rule: Run pre-commit hooks (which include mdformat and CLI doc generation) before
+    submitting patches.
+  source:
+    path: AGENTS.md
+    lines: 11-13
+  evidence: The gold solution includes formatting updates to `docs/cli_reference.md`,
+    which aligns with the rule that pre-commit runs CLI doc generation and mdformat.
+  category: tooling
 config_edits:
 - path: examples/experimental/proxy/README.md
   tier: 2
@@ -118,3 +127,25 @@ config_edits:
 
     You may modify the configuration file to fit your needs, or override configuration
     values in the command line (see quick start above as an example).'
+distractors:
+- rule: Explain skips explicitly when you cannot access the cluster.
+  collision_type: meta_confusion
+  why_distracting: The rule asks to 'Explain skips explicitly when you cannot access
+    the cluster.' An agent might interpret this as a directive to add `@pytest.mark.skip`
+    to the new Megatron tests in the code since it (the agent) cannot run them, which
+    would incorrectly disable the tests in the repository.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 9-10
+- rule: Before editing code, outline the proposed plan and confirm it with the user.
+  collision_type: meta_confusion
+  why_distracting: The rule states 'Before editing code, outline the proposed plan
+    and confirm it with the user.' An agent might stop and ask for permission instead
+    of providing the requested patch, failing the evaluation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 20-21
+hierarchy_analysis: Only one config file (`AGENTS.md`) is provided at the root level.
+  No conflicts between multiple config files exist.

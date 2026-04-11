@@ -104,6 +104,14 @@ rubric:
     \ the full runnable syntax, including continuation blocks, `# pytest-decorator:`,\
     \ and\n   `# doc-builder: hide`, see the\n   [doc-builder runnable code blocks\
     \ guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
+- rule: Many tests are marked as 'slow' and skipped by default in the CI.
+  source:
+    path: CLAUDE.md
+    lines: 6-6
+  evidence: 'The gold solution adds `# pytest-decorator: transformers.testing_utils.slow,
+    transformers.testing_utils.require_torch` to the runnable code blocks in `glmasr.md`,
+    ensuring these new doc tests are mark'
+  category: testing
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -114,3 +122,30 @@ config_edits:
     \ continuation blocks, `# pytest-decorator:`, and\n   `# doc-builder: hide`, see\
     \ the\n   [doc-builder runnable code blocks guide](https://github.com/huggingface/doc-builder/blob/main/docs/runnable-code-blocks.md)."
   gold_removed: pip install hf-doc-builder
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to output the requested code changes because
+    there is no explicit coordination evidence or issue link provided in the prompt,
+    triggering the fail-closed behavior.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 49-52
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits (single
+    typo, isolated lint cleanup, one mutable default argument, etc.).'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might classify fixing broken documentation examples as
+    a 'low-value busywork PR' or 'tiny edit' and refuse to generate the fix, even
+    though the prompt explicitly requests a comprehensive fix involving setup.py,
+    dependency tables, and documentation updates.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 36-38
+hierarchy_analysis: The repository contains identical `CLAUDE.md` and `AGENTS.md`
+  files at the root level. The rules focus heavily on agent contribution policies
+  (coordination, avoiding busywork, fail-closed behavior) which conflict with the
+  nature of an isolated coding task prompt where the agent is expected to generate
+  the solution directly without prior issue coordination.

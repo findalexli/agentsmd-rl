@@ -1,73 +1,127 @@
-version: "2.0"
+version: '2.0'
 source:
   repo: PostHog/posthog
   pr: 53163
   base_commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
   merge_commit: 3cce0ef6d910d304d205b9b4654952b3fdc0678f
 checks:
-  - id: syntax_check
-    type: pass_to_pass
-    origin: static
-    description: Modified Python file parses without errors
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff lint check passes on products/tasks/backend/models.py
-  - id: test_repo_python_syntax
-    type: pass_to_pass
-    origin: repo_tests
-    description: All Python files in products/tasks/backend parse without syntax errors
-  - id: test_repo_ast_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: Modified Python file has valid AST structure
-  - id: test_repo_no_obvious_errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: Modified file does not contain obvious error patterns (FIXME, NotImplementedError, etc.)
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff format check passes on products/tasks/backend/models.py and constants.py
-  - id: test_repo_constants_importable
-    type: pass_to_pass
-    origin: repo_tests
-    description: DEFAULT_TRUSTED_DOMAINS constant is importable from constants module
-  - id: create_and_run_accepts_sandbox_env_id
-    type: fail_to_pass
-    origin: pr_diff
-    description: create_and_run accepts sandbox_environment_id keyword argument defaulting to None
-  - id: invalid_sandbox_env_id_raises_valueerror
-    type: fail_to_pass
-    origin: pr_diff
-    description: create_and_run validates sandbox_environment_id via SandboxEnvironment.objects.filter and raises ValueError if invalid
-  - id: sandbox_env_id_stored_in_extra_state
-    type: fail_to_pass
-    origin: pr_diff
-    description: Valid sandbox_environment_id is stored as string in extra_state dict for downstream consumption
-  - id: team_filter_in_sandbox_lookup
-    type: fail_to_pass
-    origin: agent_config
-    description: "SandboxEnvironment lookup filters by team per AGENTS.md rule: always filter querysets by team_id"
-    source:
-      path: AGENTS.md
-      lines: "87"
-      commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
-  - id: docs_parameter_table_includes_sandbox_env_id
-    type: fail_to_pass
-    origin: pr_diff
-    description: Handbook Parameters section documents sandbox_environment_id with SandboxEnvironment reference
-  - id: docs_include_usage_example
-    type: fail_to_pass
-    origin: pr_diff
-    description: Handbook includes code example showing SandboxEnvironment creation and passing ID to create_and_run
-  - id: not_stub
-    type: pass_to_pass
-    origin: static
-    description: create_and_run has substantive sandbox_environment_id logic, not just a parameter declaration
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python file parses without errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint check passes on products/tasks/backend/models.py
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in products/tasks/backend parse without syntax errors
+- id: test_repo_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python file has valid AST structure
+- id: test_repo_no_obvious_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file does not contain obvious error patterns (FIXME, NotImplementedError,
+    etc.)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on products/tasks/backend/models.py and constants.py
+- id: test_repo_constants_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: DEFAULT_TRUSTED_DOMAINS constant is importable from constants module
+- id: create_and_run_accepts_sandbox_env_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: create_and_run accepts sandbox_environment_id keyword argument defaulting
+    to None
+- id: invalid_sandbox_env_id_raises_valueerror
+  type: fail_to_pass
+  origin: pr_diff
+  description: create_and_run validates sandbox_environment_id via SandboxEnvironment.objects.filter
+    and raises ValueError if invalid
+- id: sandbox_env_id_stored_in_extra_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: Valid sandbox_environment_id is stored as string in extra_state dict
+    for downstream consumption
+- id: team_filter_in_sandbox_lookup
+  type: fail_to_pass
+  origin: agent_config
+  description: 'SandboxEnvironment lookup filters by team per AGENTS.md rule: always
+    filter querysets by team_id'
+  source:
+    path: AGENTS.md
+    lines: '87'
+    commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
+- id: docs_parameter_table_includes_sandbox_env_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: Handbook Parameters section documents sandbox_environment_id with SandboxEnvironment
+    reference
+- id: docs_include_usage_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: Handbook includes code example showing SandboxEnvironment creation
+    and passing ID to create_and_run
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: create_and_run has substantive sandbox_environment_id logic, not just
+    a parameter declaration
 rubric:
-  - rule: Documentation update in handbook is consistent with existing parameter table style
-    source:
-      path: docs/published/handbook/engineering/ai/sandboxed-agents.md
-      lines: 70-82
-      commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
+- rule: Documentation update in handbook is consistent with existing parameter table
+    style
+  source:
+    path: docs/published/handbook/engineering/ai/sandboxed-agents.md
+    lines: 70-82
+    commit: a65a8fd19c2bed0c06c111f1d65b0deb87f31313
+- rule: Use conventional commits for all commit messages and PR titles.
+  source:
+    path: AGENTS.md
+    lines: 33-44
+  evidence: 'The PR title `feat(cloud-agent): expose sandbox_environment_id for external
+    callers` strictly follows the conventional commit format `<type>(<scope>): <description>`
+    specified in the guidelines.'
+  category: style
+- rule: Please respect my formatting preferences when you provide code.
+  source:
+    path: .cursorrules
+    lines: 16-16
+  evidence: The gold solution carefully realigns the markdown table columns in `sandboxed-agents.md`
+    (e.g., padding `Parameter` to `Parameter                ` and extending the separator
+    `---`) to maintain consis
+  category: style
+distractors:
+- rule: API views should declare request/response schemas — prefer @validated_request
+    or @extend_schema.
+  collision_type: scope_ambiguity
+  why_distracting: The prompt mentions exposing the parameter for 'external callers',
+    which might mislead the agent into treating the `create_and_run` model method
+    as an API view and applying `@extend_schema` or `@validated_request` decorators
+    to it, causing invalid syntax or errors.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-58
+- rule: Django serializers are the source of truth for frontend API types — hogli
+    build:openapi generates TypeScript.
+  collision_type: scope_ambiguity
+  why_distracting: The phrase 'unavailable to external products' refers to other backend
+    products in the monorepo, but the agent might interpret 'external products' as
+    frontend or external API consumers, leading it to unnecessarily modify Django
+    serializers and run OpenAPI generation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 59-59
+hierarchy_analysis: The `.cursorrules` file provides general behavioral guidelines,
+  while `AGENTS.md` provides specific PostHog development conventions. `CLAUDE.md`
+  simply points to `AGENTS.md`. The rules in `AGENTS.md` regarding API views and serializers
+  are highly specific, but their scope must be carefully evaluated against the context
+  of the PR, which is a backend-to-backend model method update rather than a REST
+  API change.

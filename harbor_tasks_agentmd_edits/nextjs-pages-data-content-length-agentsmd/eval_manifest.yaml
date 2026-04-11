@@ -53,3 +53,30 @@ config_edits:
   tier: 1
   gold_added: pnpm new-test -- --args
   gold_removed: pnpm new-test --args
+distractors:
+- rule: Generating tests using `pnpm new-test` is mandatory.
+  source:
+    path: AGENTS.md
+    lines: 148-149
+  collision_type: scope_ambiguity
+  why_distracting: Because the agent is explicitly instructed to edit `AGENTS.md`
+    around line 148, it will read the rule stating that generating tests is 'mandatory'.
+    It might then waste significant effort trying to write an integration test for
+    the Content-Length regression, even though the prompt does not request one and
+    the gold solution does not include one.
+  severity: medium
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  source:
+    path: CLAUDE.md
+    lines: 80-85
+  collision_type: meta_confusion
+  why_distracting: The agent might try to start a background dev server before making
+    the simple string replacement in the code, wasting time and potentially hanging
+    the environment if not handled correctly.
+  severity: low
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical (symlinked). The unique
+  aspect of this PR is that the agent is asked to edit `AGENTS.md` itself. This creates
+  a meta-situation where the agent is modifying its own instructions. The agent must
+  follow the user''s prompt to update the file without getting distracted by the rules
+  within the file.'

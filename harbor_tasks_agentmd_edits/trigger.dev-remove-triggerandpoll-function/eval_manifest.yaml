@@ -20,7 +20,8 @@ checks:
 - id: repo_ts_node_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's modified TypeScript files pass Node.js 22 --experimental-strip-types --check
+  description: Repo's modified TypeScript files pass Node.js 22 --experimental-strip-types
+    --check
 - id: repo_package_json_node_valid
   type: pass_to_pass
   origin: repo_tests
@@ -96,3 +97,20 @@ config_edits:
   tier: 1
   gold_added: ''
   gold_removed: ''
+distractors:
+- rule: 'Unit tests use vitest. Run all tests: pnpm run test'
+  source:
+    path: AGENTS.md
+    lines: 34-36
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run the entire test suite or look for
+    tests specifically testing `triggerAndPoll` to remove them. While removing tests
+    for removed code is generally good practice, the instructions and gold solution
+    do not require test modifications, and running the full test suite in this monorepo
+    would waste significant time.
+  severity: low
+hierarchy_analysis: The only config file provided is AGENTS.md at the root level.
+  It provides a high-level overview of the monorepo structure (apps, packages, docs,
+  references) which helps the agent understand where to look for the files mentioned
+  in the prompt, but it does not contain specific coding guidelines that directly
+  impact how the removal should be performed.

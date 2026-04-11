@@ -107,3 +107,30 @@ config_edits:
     Note that if you change make changes to our [WebKit fork](https://github.com/oven-sh/WebKit),
     you will also have to change [`SetupWebKit.cmake`](/cmake/tools/SetupWebKit.cmake)
     to point to the commit hash.'
+distractors:
+- rule: 'Build Bun: `bun bd` - Creates a debug build at `./build/debug/bun-debug`'
+  collision_type: scope_ambiguity
+  why_distracting: The config states that building Bun uses `bun bd` and outputs to
+    `./build/debug/bun-debug`. However, this PR specifically updates the workflow
+    for local WebKit builds, which uses `bun run build:local` and outputs to `./build/debug-local`.
+    An agent might incorrectly change the documentation to use `bun bd` or the standard
+    debug path.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+- rule: Write tests using Bun's Jest-compatible test runner, preferring tempDir and
+    Bun.spawn for multi-file/process tests.
+  collision_type: scope_ambiguity
+  why_distracting: The config provides extensive instructions for writing tests using
+    Bun.spawn and tempDir. An agent might attempt to write an integration test that
+    spawns `bun run build:local` to verify the build process. This would be inappropriate
+    as compiling WebKit in a standard test suite would be prohibitively slow and complex.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 44-48
+hierarchy_analysis: CLAUDE.md and AGENTS.md are identical and provide general build
+  and test instructions. However, their build instructions (`bun bd`) apply to the
+  standard development workflow, not the specialized local WebKit build workflow (`build:local`)
+  being modified in this PR.

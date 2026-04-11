@@ -102,3 +102,41 @@ config_edits:
 
     Version resets to the new tag (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`). The bump
     type is for changelog categorization only—by convention, use `patch`.'
+distractors:
+- rule: 'Prelease mode: An optional `.changes/prerelease.json` file denotes that the
+    package is in prerelease mode and what the npm dist-tag is.'
+  source:
+    path: AGENTS.md
+    lines: 51-53
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with decoupling the prerelease channel from
+    the npm dist-tag. It must recognize that this rule in its own instructions is
+    outdated and needs to be rewritten, rather than trying to comply with the existing
+    text that couples the channel and dist-tag.
+  severity: high
+- rule: 'Transitioning between prerelease tags (e.g. alpha → beta): Update prerelease.json
+    tag and add a change file.'
+  source:
+    path: AGENTS.md
+    lines: 54-56
+  collision_type: meta_confusion
+  why_distracting: The agent must update this documentation to use the new 'channel'
+    terminology instead of 'tag'. If it treats this as a strict rule to follow, it
+    might fail to update the terminology in the documentation.
+  severity: high
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  source:
+    path: AGENTS.md
+    lines: 40-42
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think it needs to create a changeset file for this
+    PR because it modifies `packages/remix/.changes/prerelease.json`. However, this
+    is an internal tooling and documentation change, not a package source change that
+    requires a release changeset.
+  severity: medium
+hierarchy_analysis: 'The AGENTS.md file serves a dual purpose in this task: it is
+  both the system configuration providing rules to the agent AND a target file that
+  must be modified. This creates a meta-level interaction where the agent must override
+  and rewrite its own instructions regarding prerelease behavior rather than strictly
+  following them.'

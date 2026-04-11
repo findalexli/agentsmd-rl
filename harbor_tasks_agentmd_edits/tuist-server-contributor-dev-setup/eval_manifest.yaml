@@ -35,7 +35,7 @@ checks:
   description: Elixir code passes credo static analysis
   source:
     path: .github/workflows/server.yml
-    lines: '286-287'
+    lines: 286-287
     commit: 37e098781f47d8ba89bf9afe88817671dddecfc2
 rubric:
 - rule: Documentation updates are consistent with the style and tone of existing setup
@@ -155,6 +155,30 @@ rubric:
 
     > First-party developers can load encrypted secrets from `priv/secrets/dev.key`.
     External contributors don''t need this key — the server runs locally w'
+- rule: Only update `.pot` templates when adding/changing strings, and do not edit
+    `.po` files.
+  source:
+    path: server/AGENTS.md
+    lines: 74-76
+  evidence: The gold solution modifies `server/priv/gettext/dashboard_auth.pot` to
+    add the new translation string for the dev login button, without touching any
+    `.po` files.
+  category: tooling
+- rule: Local development connects to `http://localhost:8080`.
+  source:
+    path: server/AGENTS.md
+    lines: 84-85
+  evidence: The gold solution explicitly instructs users to open `http://localhost:8080`
+    in their browser to access the local development server and use the new test login
+    button.
+  category: documentation
+- rule: English is the source language; only modify English content.
+  source:
+    path: docs/AGENTS.md
+    lines: 18-19
+  evidence: The gold solution only modifies the English documentation file `docs/docs/en/contributors/code/server.md`
+    and does not attempt to manually translate the changes into other language directories.
+  category: documentation
 config_edits:
 - path: server/README.md
   tier: 2
@@ -191,3 +215,30 @@ config_edits:
     1. Seed your database with data: `mise run db:seed`.
 
     1. We already have a pre-made user account that you can use to test the server:'
+distractors:
+- rule: Private key from 1Password for `priv/secrets/dev.key` is a prerequisite.
+  collision_type: rule_conflict
+  why_distracting: The PR's explicit goal is to remove the 1Password key requirement
+    for external contributors. The config file lists it as a strict prerequisite,
+    which contradicts the new simplified setup instructions the agent is supposed
+    to implement.
+  severity: high
+  source:
+    path: server/AGENTS.md
+    lines: 24-25
+- rule: Setup Commands include `mise run db:create`, `mise run db:load`, `mise run
+    db:seed`.
+  collision_type: rule_conflict
+  why_distracting: The PR simplifies the database setup instructions in the README
+    to use `mise run db:setup`. The config file still lists the verbose individual
+    commands (`db:create`, `db:load`, `db:seed`), which might lead an agent to retain
+    them or add them back instead of simplifying.
+  severity: medium
+  source:
+    path: server/AGENTS.md
+    lines: 27-35
+hierarchy_analysis: The `server/AGENTS.md` file contains outdated setup instructions
+  that conflict with the PR's goal of simplifying the contributor experience. The
+  agent must prioritize the PR instructions over the outdated config file prerequisites.
+  The global rule to not edit `.po` files (in `CLAUDE.md` and `server/AGENTS.md`)
+  is correctly followed by only modifying the `.pot` template.

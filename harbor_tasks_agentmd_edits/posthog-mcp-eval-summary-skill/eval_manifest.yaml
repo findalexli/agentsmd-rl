@@ -164,10 +164,18 @@ rubric:
     path: products/llm_analytics/skills/README.md
     lines: 1-10
     commit: 69f47d880ee65fd3e9a769a12a7d80997dea555e
+- rule: Run `hogli build:openapi` to regenerate OpenAPI schemas, TypeScript types,
+    and tool definitions after modifying API or tool configurations.
+  source:
+    path: AGENTS.md
+    lines: 26-26
+  evidence: The gold solution includes changes to `services/mcp/schema/generated-tool-definitions.json`,
+    `services/mcp/src/generated/llm_analytics/api.ts`, and `services/mcp/src/tools/generated/llm_analytics.ts`,
+  category: tooling
 config_edits:
 - path: products/llm_analytics/skills/README.md
   tier: 2
-  gold_added: "- **exploring-llm-evaluations** \u2014 how to manage and investigate LLM\
+  gold_added: "- **exploring-llm-evaluations** — how to manage and investigate LLM\
     \ analytics\n  evaluations (both `hog` and `llm_judge` types), run them on specific\
     \ generations,\n  query individual results, and generate AI-powered summaries\
     \ of pass/fail/N/A patterns."
@@ -175,7 +183,7 @@ config_edits:
 - path: products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md
   tier: 1
   gold_added: "---\nname: exploring-llm-evaluations\ndescription: >\n  Investigate\
-    \ LLM analytics evaluations of both types \u2014 `hog` (deterministic\n  code-based)\
+    \ LLM analytics evaluations of both types — `hog` (deterministic\n  code-based)\
     \ and `llm_judge` (LLM-prompt-based). Find existing evaluations,\n  inspect their\
     \ configuration, run them against specific generations, query\n  individual pass/fail\
     \ results, and generate AI-powered summaries of patterns\n  across many runs.\
@@ -183,18 +191,18 @@ config_edits:
     \ failure modes, compare results across filters,\n  dry-run a Hog evaluator, prototype\
     \ a new LLM-judge prompt, or manage the\n  evaluation lifecycle (create, update,\
     \ enable/disable, delete).\n---\n\n# Exploring LLM evaluations\n\nPostHog evaluations\
-    \ score `$ai_generation` events. Each evaluation is one of two types,\nboth first-class:\
-    \n\n- **`hog`** \u2014 deterministic Hog code that returns `true`/`false` (and optionally\
+    \ score `$ai_generation` events. Each evaluation is one of two types,\nboth first-class:\n\
+    \n- **`hog`** — deterministic Hog code that returns `true`/`false` (and optionally\
     \ N/A).\n  Best for objective rule-based checks: format validation (JSON parses,\
     \ schema matches),\n  length limits, keyword presence/absence, regex patterns,\
     \ structural assertions, latency\n  thresholds, cost guards. Cheap, fast, reproducible\
-    \ \u2014 no LLM call per run. Prefer this\n  when the criterion can be expressed as\
-    \ code.\n- **`llm_judge`** \u2014 an LLM scores generations against a prompt you write.\
+    \ — no LLM call per run. Prefer this\n  when the criterion can be expressed as\
+    \ code.\n- **`llm_judge`** — an LLM scores generations against a prompt you write.\
     \ Best for\n  subjective or fuzzy checks: tone, helpfulness, hallucination detection,\
     \ off-topic\n  drift, instruction-following. Costs an LLM call per run and requires\
     \ AI data\n  processing approval at the org level.\n\nResults from both types\
     \ land in ClickHouse as `$ai_evaluation` events with the same\nschema, so the\
-    \ read/query/summary workflows are identical regardless of evaluator type \u2014\n\
+    \ read/query/summary workflows are identical regardless of evaluator type —\n\
     the only thing that changes is whether `$ai_evaluation_reasoning` was written\
     \ by Hog\ncode or by an LLM.\n\nThis skill covers the full lifecycle: list/inspect/manage\
     \ evaluation configs (Hog or\nLLM judge), run them on specific generations, query\
@@ -205,11 +213,43 @@ config_edits:
     \ |\n| `posthog:evaluations-get`                         | List/search evaluation\
     \ configs (filter by name, enabled flag)  |\n| `posthog:evaluation-get`      \
     \                    | Get a single evaluation config by UUID                \
-    \         |\n| `posthog:evaluation-create`                       | Create a new `llm_judge`\
-    \ or `hog` evaluation                   |\n| `posthog:evaluation-update`\
+    \         |\n| `posthog:evaluation-create`                       | Create a new\
+    \ `llm_judge` or `hog` evaluation                   |\n| `posthog:evaluation-update`\
     \                       | Update an existing evaluation (name, prompt, enabled,\
-    \ \u2026)       |\n| `posthog:evaluation-delete`                       | Soft-delete\
+    \ …)       |\n| `posthog:evaluation-delete`                       | Soft-delete\
     \ an evaluation                                      |\n| `posthog:evaluation-run`\
     \                          | Run an evaluation against a specific `$ai_generation`\
     \ event    |\n| `posthog:evaluation-test-hog`                     "
   gold_removed: ''
+distractors:
+- rule: API views should declare request/response schemas — prefer `@validated_request`
+    from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs developers to add `@validated_request` or `@extend_schema`
+    to API views. An agent might read the task about exposing an endpoint as an MCP
+    tool and attempt to locate and modify the underlying Django viewset in Python.
+    However, the endpoint already exists and is fully implemented; the task only requires
+    enabling it in the `tools.yaml` configuration.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 56-58
+- rule: Django serializers are the source of truth for frontend API types — don't
+    edit generated files manually, change serializers and rerun.
+  collision_type: architecture_boundary
+  why_distracting: The rule states that Django serializers are the source of truth
+    for API types and generated files. An agent might try to find and modify the Django
+    serializer to add the tool's title, description, and AI consent requirements.
+    However, for MCP tools, this metadata is explicitly configured in `products/llm_analytics/mcp/tools.yaml`,
+    crossing an architectural boundary between standard frontend API generation and
+    MCP tool definitions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 59-61
+hierarchy_analysis: The `.cursorrules` file provides general behavioral instructions,
+  while `AGENTS.md` provides specific PostHog development guidelines. The most relevant
+  instructions for this task come from `AGENTS.md` regarding the `hogli build:openapi`
+  command. The agent must carefully distinguish between standard Django API development
+  (modifying serializers/views) and MCP tool configuration (modifying `tools.yaml`),
+  even though both use the same `hogli build:openapi` generation pipeline.

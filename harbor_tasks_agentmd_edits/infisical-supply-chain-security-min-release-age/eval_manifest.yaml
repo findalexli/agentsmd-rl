@@ -54,13 +54,14 @@ checks:
   origin: repo_tests
   description: Frontend ESLint passes
 rubric:
-- rule: When adding cross-cutting infrastructure changes (like supply-chain security
-    policies), the root CLAUDE.md must be updated with high-level documentation explaining
-    the change and its purpose
+- rule: Update the root CLAUDE.md file with high-level findings for cross-cutting
+    concerns when making significant changes.
   source:
     path: CLAUDE.md
-    lines: 60-63
-    commit: e928398a0919194fc2efd855aaf6700424b507d9
+    lines: 61-64
+  category: documentation
+  evidence: The gold solution adds a 'Dependency Policy' section to the root CLAUDE.md
+    documenting the new npm minimum release age policy.
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -72,3 +73,29 @@ config_edits:
     will only resolve package versions published at least 7 days ago, as a supply-chain
     security measure.'
   gold_removed: ''
+distractors:
+- rule: Update `backend/CLAUDE.md` for backend changes, and `frontend/CLAUDE.md` for
+    frontend changes.
+  source:
+    path: CLAUDE.md
+    lines: 61-64
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to update the backend and frontend CLAUDE.md
+    files because the changes affect both directories. However, the instruction specifically
+    requests updating the root CLAUDE.md for this cross-cutting policy, and updating
+    all three would be redundant and waste effort.
+  severity: medium
+- rule: New backend dependencies should be evaluated carefully — they affect container
+    size, FIPS compliance, and the encryption boundary.
+  source:
+    path: CLAUDE.md
+    lines: 36-39
+  collision_type: meta_confusion
+  why_distracting: The agent might misinterpret the addition of a dependency policy
+    as adding a new dependency itself, and attempt to document FIPS compliance or
+    container size impacts, which is irrelevant to configuring npm's release age.
+  severity: low
+hierarchy_analysis: There is only one level of configuration provided (the root CLAUDE.md).
+  The rule regarding updating CLAUDE.md files is directly applicable, but the agent
+  must carefully scope its documentation updates to the root file as requested by
+  the prompt, rather than applying the rule to all child CLAUDE.md files.

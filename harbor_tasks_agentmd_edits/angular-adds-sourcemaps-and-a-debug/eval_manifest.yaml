@@ -118,6 +118,14 @@ rubric:
     right click on the
 
     Angular DevTools panel and '
+- rule: Use `pnpm` for package management.
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  evidence: The gold solution documents the new dev install command using `pnpm` (`pnpm
+    devtools:build:chrome:debug`) in the README.md, adhering to the repository's package
+    manager standard.
+  category: tooling
 config_edits:
 - path: devtools/README.md
   tier: 2
@@ -146,3 +154,18 @@ config_edits:
     \ \"Angular DevTools\" extension and the \"Inspect Views > service worker\" button\
     \ to open a debugger."
   gold_removed: ''
+distractors:
+- rule: 'Zoneless & Async-First: Assume a zoneless environment where state changes
+    schedule updates asynchronously.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write or modify tests for the new debug
+    build flag using the 'Act, Wait, Assert' pattern or look for test files to update.
+    However, this PR is strictly about build configuration (Bazel, package.json) and
+    documentation. No tests are required or modified.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 19-27
+hierarchy_analysis: Only the root AGENTS.md file applies to this PR. The rules are
+  straightforward, though the testing guidelines are out of scope for this specific
+  build configuration task.

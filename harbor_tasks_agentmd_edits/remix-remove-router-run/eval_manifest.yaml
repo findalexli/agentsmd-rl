@@ -56,13 +56,21 @@ rubric:
     path: packages/fetch-router/README.md
     lines: 55-86
     commit: 783fa46240191001e0ee2084297b5c81d78b3545
-  reference: "README.md modified to remove router.run() documentation"
+  reference: README.md modified to remove router.run() documentation
 - rule: Code deletions are clean with no syntax errors or orphaned references
   source:
     path: packages/fetch-router/src/lib/router.ts
     lines: 1-50
     commit: 783fa46240191001e0ee2084297b5c81d78b3545
-  reference: "Router.ts modified to remove run() method cleanly"
+  reference: Router.ts modified to remove run() method cleanly
+- rule: All demo servers should use port 44100 for consistency across the monorepo
+  source:
+    path: AGENTS.md
+    lines: 35-36
+  evidence: The diff for `demos/bookstore/README.md` shows the agent correctly leaving
+    the `http://localhost:44100` instruction intact in the context lines while removing
+    the `router.run()` bullet point.
+  category: documentation
 config_edits:
 - path: demos/bookstore/README.md
   tier: 2
@@ -86,3 +94,17 @@ config_edits:
     \ ({ method }) => method)\nconsole.log(method) // 'POST'\n```\n\nThis is especially\
     \ useful in tests for request-scoped services like authenticated users, database\n\
     handles, correlation IDs, and per-request feature flag"
+distractors:
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].*.md`'
+  collision_type: meta_confusion
+  why_distracting: The rule requires creating a `.changes` file for new changes. An
+    agent might create a new patch or minor changeset file to document the removal
+    of `router.run()`. However, since the feature was never released, the correct
+    action is to delete the existing unreleased changeset, not add a new one to document
+    the removal.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 41-42
+hierarchy_analysis: Only the root `AGENTS.md` config file is provided, so there are
+  no hierarchy conflicts. The rules apply globally across the monorepo.

@@ -225,3 +225,41 @@ config_edits:
 
     - `scripts/close_superseded_pr.ts`'
   gold_removed: ''
+distractors:
+- rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare
+    Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of
+    Node.js APIs'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is tasked with writing a Node.js helper script (`close_superseded_pr.ts`)
+    that interacts with the GitHub CLI (`gh pr close`). This requires Node.js-specific
+    APIs like `child_process` or `process`. The rule strictly forbids Node.js APIs
+    in favor of Web standards, but this rule is intended for the runtime-agnostic
+    core packages, not for local repo tooling and scripts.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 20-21
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch]`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might generate a changeset file to document the addition
+    of the new `supersede-pr` skill and script. However, changesets are only meant
+    for versioning and publishing the core packages in the `packages/` directory,
+    not for internal repository skills or scripts.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 43-44
+- rule: Tests run from source (no build required), using Node.js test runner
+  collision_type: scope_ambiguity
+  why_distracting: The agent might spend time writing a test file for the new helper
+    script using the Node.js test runner. However, the instructions only ask for the
+    script, the SKILL.md, and the agent config, without requesting any tests for this
+    internal tooling.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 21-22
+hierarchy_analysis: The AGENTS.md file contains rules primarily targeted at the core
+  packages in the `packages/` directory (e.g., runtime-agnostic philosophy, changesets).
+  When creating internal repository tooling like skills and scripts, these package-centric
+  rules do not apply, creating scope ambiguity.

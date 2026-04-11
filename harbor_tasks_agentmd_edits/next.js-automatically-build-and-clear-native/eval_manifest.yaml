@@ -77,12 +77,14 @@ checks:
   origin: repo_tests
   description: turbo.json files pass prettier formatting check
 rubric:
-- rule: The AGENTS.md update is consistent with the style of the surrounding rebuild
-    instructions section
+- rule: Build everything uses `pnpm build`
   source:
     path: AGENTS.md
-    lines: 364-371
-    commit: def0e3aabfa112ada22ece9297501c52471d34bd
+    lines: 55-56
+  category: tooling
+  evidence: The gold solution updates the developer instructions to point to `pnpm
+    build` for Rust/Turbopack changes, unifying the workflow under the existing 'Build
+    everything' command.
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -90,3 +92,19 @@ config_edits:
   gold_removed: '- **Edited Turbopack (Rust)?** → `pnpm swc-build-native`
 
     - **Edited both?** → `pnpm turbo build build-native`'
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  source:
+    path: AGENTS.md
+    lines: 65-67
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying build scripts and tooling (`packages/next-swc`),
+    not the core Next.js framework source (`packages/next/src`). Starting the dev
+    server would waste time and resources, as the changes need to be tested via the
+    build pipeline, not the dev server.
+  severity: medium
+hierarchy_analysis: The repository uses `CLAUDE.md` which is a symlink to `AGENTS.md`.
+  Both files contain identical high-level workflow instructions. The unique aspect
+  of this PR is that the agent must modify the very instructions it is reading (`AGENTS.md`)
+  to reflect the new, simplified build workflow it is implementing.

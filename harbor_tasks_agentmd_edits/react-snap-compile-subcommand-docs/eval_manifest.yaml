@@ -73,22 +73,31 @@ rubric:
     path: compiler/CLAUDE.md
     lines: 38-48
     commit: 3ce1316b05968d2a8cffe42a110f2726f2c44c3e
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
+  source:
+    path: compiler/CLAUDE.md
+    lines: 8-9
+  evidence: The gold solution updates `compiler/packages/babel-plugin-react-compiler/docs/passes/README.md`
+    to document the new `yarn snap compile` and `yarn snap minimize` commands, demonstrating
+    engagement with
+  category: documentation
 config_edits:
 - path: compiler/.claude/agents/investigate-error.md
   tier: 1
-  gold_added: Execute \x60yarn snap -d -p <fixture-name>\x60 to compile the fixture with
-    full debug output. This shows the state of the program after each compilation
+  gold_added: Execute \x60yarn snap -d -p <fixture-name>\x60 to compile the fixture
+    with full debug output. This shows the state of the program after each compilation
     pass. You can also use \x60yarn snap compile -d <path-to-fixture>\x60.
-  gold_removed: Execute \x60yarn snap -d -p <fixture-name>\x60 to compile the fixture with
-    full debug output. This shows the state of the program after each compilation
+  gold_removed: Execute \x60yarn snap -d -p <fixture-name>\x60 to compile the fixture
+    with full debug output. This shows the state of the program after each compilation
     pass.
 - path: compiler/CLAUDE.md
   tier: 1
   gold_added: '## Compiling Arbitrary Files
 
 
-    Use \x60yarn snap compile\x60 to compile any file (not just fixtures) with the React
-    Compiler:
+    Use \x60yarn snap compile\x60 to compile any file (not just fixtures) with the
+    React Compiler:
 
 
     \x60\x60\x60bash
@@ -100,8 +109,8 @@ config_edits:
 
     # Compile with debug logging to see the state after each compiler pass
 
-    # This is an alternative to \x60yarn snap -d -p <pattern>\x60 when you don''t have a
-    fixture file yet
+    # This is an alternative to \x60yarn snap -d -p <pattern>\x60 when you don''t
+    have a fixture file yet
 
     yarn snap compile --debug <path>
 
@@ -111,8 +120,8 @@ config_edits:
     ## Minimizing Test Cases
 
 
-    Use \x60yarn snap minimize\x60 to automatically reduce a failing test case to its minimal
-    reproduction:
+    Use \x60yarn snap minimize\x60 to automatically reduce a failing test case to
+    its minimal reproduction:
 
 
     \x60\x60\x60bash
@@ -145,3 +154,30 @@ config_edits:
 
     yarn snap minimize <path>'
   gold_removed: ''
+distractors:
+- rule: Run a single fixture in debug mode. Use the path relative to the __tests__/fixtures/compiler
+    directory
+  collision_type: would_cause_bug
+  why_distracting: The PR's explicit goal is to fix path resolution so that relative
+    paths resolve from the `compiler/` directory, and to allow compiling arbitrary
+    files (not just fixtures). Following this rule would lead the agent to maintain
+    the broken path resolution or restrict the new command to the fixtures directory.
+  severity: high
+  source:
+    path: compiler/CLAUDE.md
+    lines: 26-29
+- rule: This repository uses Sapling (`sl`) for version control... sl status, sl addremove,
+    sl commit
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use `sl` (Sapling) commands to commit
+    its changes or check status, which is unnecessary for generating the patch and
+    will likely fail in a standard git-based evaluation environment.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 38-55
+hierarchy_analysis: The repository has a root `CLAUDE.md` that correctly delegates
+  React Compiler instructions to `compiler/CLAUDE.md`. The agent must follow the compiler-specific
+  instructions. However, the compiler instructions contain legacy documentation about
+  path resolution and version control that conflict with the PR's objectives and the
+  evaluation environment.

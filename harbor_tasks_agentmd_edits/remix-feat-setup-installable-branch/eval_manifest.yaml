@@ -70,6 +70,22 @@ rubric:
     path: AGENTS.md
     lines: '25'
     commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
+- rule: Include `.ts` extensions in import paths
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  evidence: 'In the newly created `scripts/setup-installable-branch.ts`, the import
+    statement explicitly includes the `.ts` extension: `import { logAndExec } from
+    "./utils/process.ts";`.'
+  category: style
+- rule: Use regular function declarations/expressions by default
+  source:
+    path: AGENTS.md
+    lines: 23-23
+  evidence: In `scripts/utils/process.ts`, the modified `logAndExec` function is kept
+    as a regular function declaration (`export function logAndExec(...)`) rather than
+    being converted to an arrow function.
+  category: style
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -106,3 +122,19 @@ config_edits:
   tier: 2
   gold_added: ''
   gold_removed: ''
+distractors:
+- rule: Create `packages/*/.changes/[major|minor|patch].short-description.md` files
+    for changes
+  collision_type: scope_ambiguity
+  why_distracting: The PR adds a repo-level script (`scripts/setup-installable-branch.ts`),
+    a GitHub workflow, and updates root documentation. It does not modify any publishable
+    packages in the `packages/` directory. Creating a change file for this PR would
+    be incorrect since it doesn't affect package releases.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 40-40
+hierarchy_analysis: Only a single root-level `AGENTS.md` config file is present. The
+  primary challenge is correctly scoping the rules—specifically recognizing that package-level
+  release rules (like change files) do not apply to repo-level tooling and CI workflow
+  changes.

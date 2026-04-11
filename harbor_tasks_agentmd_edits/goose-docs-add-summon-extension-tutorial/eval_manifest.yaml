@@ -63,6 +63,15 @@ rubric:
     path: documentation/AGENTS.md
     lines: 5-10
     commit: e2d174ac1d4ed3304d9949f04572803467d343cb
+- rule: The product name 'goose' should ALWAYS be written in lowercase 'g' in all
+    documentation.
+  source:
+    path: documentation/AGENTS.md
+    lines: 3-10
+  evidence: The gold solution consistently uses lowercase 'goose' in the newly created
+    `summon-mcp.md` file, such as in 'goose Desktop', 'goose CLI', 'goose Prompt',
+    and 'goose Output'.
+  category: style
 config_edits:
 - path: documentation/docs/tutorials/playwright-skill.md
   tier: 1
@@ -72,3 +81,31 @@ config_edits:
   gold_removed: "### Enable Skills Extension\nIn goose, enable the [Skills extension](/docs/mcp/skills-mcp)\
     \ to load Agent Skills within sessions.\n    extensionName=\"Skills\"\n  │  ●\
     \ skills\n- [Skills Extension Documentation](/docs/mcp/skills-mcp)"
+distractors:
+- rule: 'MCP: Extensions in crates/goose-mcp/'
+  collision_type: architecture_boundary
+  why_distracting: 'The rule states ''MCP: Extensions in crates/goose-mcp/''. Since
+    the PR is about adding documentation for the Summon MCP extension, an agent might
+    mistakenly try to create or modify Rust code in `crates/goose-mcp/` instead of
+    just updating the documentation.'
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 47-47
+- rule: 'Test: When adding features, update goose-self-test.yaml, rebuild, then run
+    `goose run --recipe goose-self-test.yaml` to validate'
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires updating `goose-self-test.yaml` when adding features.
+    An agent might interpret adding documentation for the new Summon extension as
+    'adding a feature' and attempt to modify the self-test recipe, which is out of
+    scope for a pure documentation PR.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 44-44
+hierarchy_analysis: The `documentation/AGENTS.md` file provides specific style guidelines
+  for documentation (lowercase 'goose'), which is highly relevant and correctly applied.
+  The root `AGENTS.md` focuses on Rust development, which is mostly irrelevant for
+  this pure documentation PR, creating potential distractions if the agent tries to
+  apply code-level rules (like testing or MCP extension locations) to documentation
+  changes.

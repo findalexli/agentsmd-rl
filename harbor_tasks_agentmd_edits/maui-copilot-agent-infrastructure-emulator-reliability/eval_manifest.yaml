@@ -76,8 +76,9 @@ rubric:
     path: .github/scripts/shared/shared-utils.ps1
     lines: 10-30
     commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
-- rule: Agent instruction files (PLAN-TEMPLATE.md, SHARED-RULES.md, post-gate.md) must
-    reference claude-opus-4.6 (not 4.5) in the multi-model try-fix configuration table
+- rule: Agent instruction files (PLAN-TEMPLATE.md, SHARED-RULES.md, post-gate.md)
+    must reference claude-opus-4.6 (not 4.5) in the multi-model try-fix configuration
+    table
   source:
     path: .github/agents/pr/SHARED-RULES.md
     lines: 130-139
@@ -89,8 +90,8 @@ rubric:
     path: .github/agents/pr/post-gate.md
     lines: 18-26
     commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
-- rule: "post-gate.md must document mandatory cleanup steps between try-fix attempts:
-    git checkout HEAD -- . followed by git clean -fd --exclude=CustomAgentLogsTmp/"
+- rule: 'post-gate.md must document mandatory cleanup steps between try-fix attempts:
+    git checkout HEAD -- . followed by git clean -fd --exclude=CustomAgentLogsTmp/'
   source:
     path: .github/agents/pr/post-gate.md
     lines: 72-85
@@ -105,6 +106,15 @@ rubric:
   reference: Do NOT `git add` or `git commit` the state file. It lives in `CustomAgentLogsTmp/`
     which is `.gitignore`d. Committing it with `git add -f` would cause `git checkout
     HEAD -- .` (used between phases) to revert it, losing data.
+- rule: '`eng/` - Build engineering and tooling, `.github/` - GitHub workflows and
+    configuration'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 51-52
+  evidence: The gold solution correctly modifies `eng/devices/android.cake` for the
+    emulator timeout and scripts in `.github/scripts/` for the agent infrastructure,
+    adhering to the defined directory structure whe
+  category: architecture
 config_edits:
 - path: .github/skills/try-fix/SKILL.md
   tier: 1
@@ -138,3 +148,34 @@ config_edits:
 
     | Git state unrecoverable | Run `git checkout -- .` and `git clean -fd` if needed
     |'
+distractors:
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill to verify that the PR title and description accurately match
+    the actual implementation.
+  collision_type: meta_confusion
+  why_distracting: The task involves fixing the `Review-PR.ps1` script and PR review
+    agent instructions. The agent might misinterpret the instruction to 'run the pr-finalize
+    skill' as an action it needs to perform on the current PR, rather than fixing
+    the underlying infrastructure scripts that power the review process.
+  severity: high
+  source:
+    path: .github/copilot-instructions.md
+    lines: 11-11
+- rule: 'Platform-specific files use naming conventions to control compilation: .android.cs
+    - Android TFM only'
+  collision_type: scope_ambiguity
+  why_distracting: The task requires fixing Android-specific build and infrastructure
+    scripts (`eng/devices/android.cake`, `Start-Emulator.ps1`). The agent might try
+    to apply the `.android.cs` naming convention to these files or assume that Android-specific
+    logic must only reside in C# files, which is incorrect for build and PowerShell
+    scripts.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 60-62
+hierarchy_analysis: The `.github/copilot-instructions.md` file provides general repository
+  guidelines. However, this task is highly meta-referential as it involves modifying
+  the agent's own instructions (`PLAN-TEMPLATE.md`, `SHARED-RULES.md`, `post-gate.md`)
+  and the skills it uses (`try-fix/SKILL.md`). The agent must distinguish between
+  rules that apply to the code it writes for the MAUI framework versus the code it
+  writes to maintain its own infrastructure.

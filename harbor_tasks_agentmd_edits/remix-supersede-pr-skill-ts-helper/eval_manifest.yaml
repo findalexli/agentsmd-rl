@@ -96,6 +96,30 @@ rubric:
     path: skills/make-pr/SKILL.md
     lines: 1-65
     commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
+    `var`'
+  source:
+    path: AGENTS.md
+    lines: 26-26
+  evidence: The `close_superseded_pr.ts` script uses `let parsed = parseArgs(...)`
+    and `let repo = ...` instead of `const` for local variables.
+  category: style
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: AGENTS.md
+    lines: 30-30
+  evidence: The `close_superseded_pr.ts` script uses single quotes for imports (e.g.,
+    `'node:child_process'`) and omits semicolons at the end of statements.
+  category: style
+- rule: 'Functions: Use regular function declarations/expressions by default.'
+  source:
+    path: AGENTS.md
+    lines: 27-27
+  evidence: 'The `close_superseded_pr.ts` script defines its main entry point using
+    a standard function declaration (`function main(): void { ... }`) rather than
+    an arrow function.'
+  category: style
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -248,3 +272,33 @@ config_edits:
 
     - `scripts/close_superseded_pr.ts`'
   gold_removed: ''
+distractors:
+- rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare
+    Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of
+    Node.js APIs'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to avoid using `node:child_process` or `node:process`
+    to make the script runtime-agnostic, but this is a local CLI script specifically
+    meant to run in Node and execute the `gh` CLI via spawn. The rule is intended
+    for the published packages, not internal tooling scripts.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 21-21
+- rule: 'Changes and Releases: Adding changes: Create `packages/*/.changes/[major|minor|patch]/...`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to create a changeset file for these new skills,
+    but skills are internal repo tooling, not published packages in the `packages/`
+    directory.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 43-43
+hierarchy_analysis: The `AGENTS.md` file contains rules primarily targeted at the
+  published packages in the `packages/` directory (e.g., runtime-agnostic philosophy,
+  changesets). However, the task involves creating internal tooling scripts in the
+  `skills/` directory. This creates a scope ambiguity where the agent must discern
+  which rules apply to library code versus internal Node.js scripts. The gold solution
+  resolves this by explicitly adding a new rule to `AGENTS.md` that carves out an
+  exception for one-off scripts, specifying they should be executable natively with
+  modern Node.js.

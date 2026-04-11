@@ -71,30 +71,15 @@ rubric:
     path: CLAUDE.md
     lines: 44-53
     commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
-- id: instant_navigation_test_file_exists
-  type: pass_to_pass
-  origin: repo_tests
-  description: Instant navigation test file exists at base commit
-- id: next_package_structure
-  type: pass_to_pass
-  origin: repo_tests
-  description: Core next package structure is intact
-- id: root_config_files_valid
-  type: pass_to_pass
-  origin: repo_tests
-  description: Root configuration files are valid and parseable
-- id: prettier_formatting_workflows
-  type: pass_to_pass
-  origin: repo_tests
-  description: GitHub workflow files follow Prettier formatting
-- id: cargo_toml_valid
-  type: pass_to_pass
-  origin: repo_tests
-  description: Cargo.toml is valid and parseable
-- id: e2e_directory_structure
-  type: pass_to_pass
-  origin: repo_tests
-  description: E2E test directory structure is intact
+- rule: Maintain and read README.md files in subdirectories (like packages/*) to document
+    local patterns, conventions, and package details.
+  source:
+    path: CLAUDE.md
+    lines: 36-39
+  evidence: 'The gold solution creates a comprehensive README.md in the new packages/next-playwright
+    directory, aligning with the monorepo''s convention of relying on README files
+    for directory-level documentation '
+  category: documentation
 config_edits:
 - path: packages/next-playwright/README.md
   tier: 2
@@ -158,3 +143,31 @@ config_edits:
   type: pass_to_pass
   origin: repo_tests
   description: package.json has required scripts section
+distractors:
+- rule: 'Run tests fast (no isolation, no packing): NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=dev
+    pnpm testonly test/path/to/test.ts'
+  collision_type: would_cause_bug
+  why_distracting: The PR introduces a new package and modifies tsconfig.json path
+    aliases (module resolution changes). Using NEXT_SKIP_ISOLATE=1 skips packing,
+    which means the new package alias might not be resolved correctly in the test
+    runner, leading to false negative test failures. The agent must realize this falls
+    under the exception 'Drop it when testing module resolution changes'.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 65-70
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: scope_ambiguity
+  why_distracting: The agent is creating a completely new package (@next/playwright)
+    outside of the core next package. Running the dev server filtered only to next
+    (`pnpm --filter=next dev`) will not watch or build the new package, leading to
+    confusion when the test file cannot find the newly extracted package.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 58-64
+hierarchy_analysis: CLAUDE.md and AGENTS.md are identical symlinks providing root-level
+  guidance. The rules focus heavily on the core `packages/next` workflow, which creates
+  friction when an agent needs to scaffold a completely new package (`packages/next-playwright`)
+  that falls outside the standard inner-loop filters.

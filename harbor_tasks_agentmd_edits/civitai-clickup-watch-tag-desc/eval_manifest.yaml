@@ -84,5 +84,55 @@ config_edits:
 - path: .claude/skills/clickup/SKILL.md
   tier: 1
   gold_added: '| `watch <task> <user>` | Notify user via @mention comment (watchers
-    not supported in API) |\n\n    | `tag <task> "tag_name"` | Add a tag to task |\n\n    | `description <task> "text"` | Update task description (markdown supported) |\n\n    ### Notify Users (Watch)\n\n\n    ```bash\n\n    # Notify user via @mention comment (ClickUp API doesn''t support adding watchers\n    directly)\n\n    node .claude/skills/clickup/query.mjs watch 86a1b2c3d koen\n\n\n    # Notify by email\n\n    node .claude/skills/clickup/query.mjs watch 86a1b2c3d jane@example.com\n\n    ```\n\n\n    ### Add Tags\n\n\n    ```bash\n\n    # Add a tag to a task\n\n    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "DevOps"\n\n    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "bug"\n\n    ```\n\n\n    ### Update Description\n\n\n    ```bash\n\n    # Update task description with markdown\n\n    node .claude/skills/clickup/query.mjs description 86a1b2c3d "## Summary\n\n    This is a **bold** statement.\n\n\n    - Item 1\n\n    - Item 2\n\n\n    See [documentation](https://example.com) for more info."\n\n    ```\n\n\n    - **Collaboration**: View recent comments for context, add watchers\n\n    - **Task organization**: Add tags to categorize tasks'
+    not supported in API) |\n\n    | `tag <task> "tag_name"` | Add a tag to task |\n\n    |
+    `description <task> "text"` | Update task description (markdown supported) |\n\n    ###
+    Notify Users (Watch)\n\n\n    ```bash\n\n    # Notify user via @mention comment
+    (ClickUp API doesn''t support adding watchers\n    directly)\n\n    node .claude/skills/clickup/query.mjs
+    watch 86a1b2c3d koen\n\n\n    # Notify by email\n\n    node .claude/skills/clickup/query.mjs
+    watch 86a1b2c3d jane@example.com\n\n    ```\n\n\n    ### Add Tags\n\n\n    ```bash\n\n    #
+    Add a tag to a task\n\n    node .claude/skills/clickup/query.mjs tag 86a1b2c3d
+    "DevOps"\n\n    node .claude/skills/clickup/query.mjs tag 86a1b2c3d "bug"\n\n    ```\n\n\n    ###
+    Update Description\n\n\n    ```bash\n\n    # Update task description with markdown\n\n    node
+    .claude/skills/clickup/query.mjs description 86a1b2c3d "## Summary\n\n    This
+    is a **bold** statement.\n\n\n    - Item 1\n\n    - Item 2\n\n\n    See [documentation](https://example.com)
+    for more info."\n\n    ```\n\n\n    - **Collaboration**: View recent comments
+    for context, add watchers\n\n    - **Task organization**: Add tags to categorize
+    tasks'
   gold_removed: '- **Collaboration**: View recent comments for context'
+distractors:
+- rule: Documentation goes in the `docs/` folder.
+  collision_type: rule_conflict
+  why_distracting: The rule states that documentation goes in the `docs/` folder,
+    but the task explicitly requests updating the skill's documentation in `.claude/skills/clickup/SKILL.md`.
+    Moving or creating the documentation in `docs/` would violate the task instructions
+    and break the skill's expected structure.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 4-5
+- rule: 'Core Technologies - Framework: Next.js 14 with TypeScript'
+  collision_type: architecture_boundary
+  why_distracting: The rule specifies Next.js 14 with TypeScript as the core framework.
+    However, the ClickUp skill is a standalone Node.js CLI tool using `.mjs` files.
+    Attempting to convert these files to TypeScript or use Next.js features would
+    break the skill's execution environment.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 18-19
+- rule: 'Core Technologies - API: tRPC'
+  collision_type: architecture_boundary
+  why_distracting: The rule specifies tRPC for the API layer. The ClickUp skill uses
+    a custom `apiRequest` fetch wrapper for external API calls. Trying to implement
+    the new ClickUp API calls using tRPC would fail since the skill runs outside the
+    main Next.js app context.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 23-23
+hierarchy_analysis: The `CLAUDE.md` file provides global rules tailored for the main
+  Civitai web application (Next.js, TypeScript, tRPC). However, the task modifies
+  a standalone Claude CLI skill located in `.claude/skills/clickup/`, which uses vanilla
+  Node.js (`.mjs`). The agent must recognize that the global `CLAUDE.md` rules do
+  not apply to the `.claude/skills/` directory, which represents a completely separate
+  architectural boundary.

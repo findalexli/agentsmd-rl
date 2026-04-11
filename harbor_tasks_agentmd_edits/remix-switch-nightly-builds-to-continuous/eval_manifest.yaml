@@ -181,3 +181,18 @@ config_edits:
     pnpm install "remix-run/remix#nightly&path:packages/remix"
 
     pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"'
+distractors:
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies root-level configuration, workflows, scripts, and
+    documentation, not package source code. Adding a changeset for a non-package change
+    is unnecessary and out of scope.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-39
+hierarchy_analysis: The AGENTS.md file provides general guidelines for the monorepo,
+  but its rules regarding changesets are scoped to package modifications. Since this
+  PR only touches root-level workflows, scripts, and documentation, the changeset
+  rule does not apply.

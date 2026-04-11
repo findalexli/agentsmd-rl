@@ -85,6 +85,52 @@ rubric:
     commit: 848194ecde3f143b5d0d1fde9b11fa713b7c142e
 - rule: packages/response/src/lib/file.ts uses mimeTypeToContentType for Content-Type
     header
+- rule: 'Package exports: All `exports` in `package.json` have a dedicated file in
+    `src` that defines the public API by re-exporting from within `src/lib`'
+  source:
+    path: AGENTS.md
+    lines: 13-13
+  evidence: The gold solution updates `packages/mime/src/index.ts` to re-export the
+    new functions from `./lib/detect-content-type.ts` and `./lib/mime-type-to-content-type.ts`.
+  category: architecture
+- rule: 'Imports: include `.ts` extensions'
+  source:
+    path: AGENTS.md
+    lines: 17-17
+  evidence: The gold solution uses `import { detectMimeType } from './detect-mime-type.ts'`
+    and `import { mimeTypeToContentType } from './mime-type-to-content-type.ts'`,
+    explicitly including the `.ts` extension.
+  category: style
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope'
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: In `detect-content-type.ts`, the gold solution uses `let mimeType = detectMimeType(extension)`
+    instead of `const`, even though the variable is never reassigned.
+  category: style
+- rule: 'Functions: Use regular function declarations/expressions by default'
+  source:
+    path: AGENTS.md
+    lines: 19-19
+  evidence: 'The gold solution uses `export function mimeTypeToContentType(mimeType:
+    string): string` instead of an arrow function assigned to a constant.'
+  category: style
+- rule: 'Formatting: Prettier (no semicolons, single quotes)'
+  source:
+    path: AGENTS.md
+    lines: 22-22
+  evidence: The gold solution uses single quotes for strings (e.g., `'text/xml'`)
+    and omits semicolons at the end of statements.
+  category: style
+- rule: 'Versioning: Create `.changes` files using `minor` for new features and `patch`
+    for bug fixes in v0.x packages'
+  source:
+    path: AGENTS.md
+    lines: 41-44
+  evidence: The gold solution creates `.changes/minor.*.md` files for the new features
+    in the `mime` package and a `.changes/patch.*.md` file for the bug fix in the
+    `response` package.
+  category: tooling
 config_edits:
 - path: packages/mime/.changes/minor.detect-content-type.md
   tier: 2
@@ -218,3 +264,43 @@ config_edits:
   gold_added: '`createFileResponse` now includes `charset` in Content-Type for text-based
     files.'
   gold_removed: ''
+distractors:
+- rule: 'Comments: Only add non-JSDoc comments when the code is doing something surprising
+    or non-obvious'
+  collision_type: scope_ambiguity
+  why_distracting: The rule states to 'Only add non-JSDoc comments when the code is
+    doing something surprising or non-obvious'. An agent might strictly interpret
+    this and omit inline comments explaining the XML exclusion or the text-based type
+    matching, but the gold solution includes these comments because the XML spec behavior
+    is genuinely non-obvious to most developers.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 25-25
+- rule: 'Test Structure: No loops or conditionals in test suites'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see the detailed test structure guidelines and
+    assume it needs to write tests for the new functions. However, the prompt only
+    asks for code changes and documentation updates, making test creation a waste
+    of effort for this specific task.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 27-28
+- rule: 'Philosophy: Web standards-first, runtime-agnostic. Use Web Streams API, Uint8Array,
+    Web Crypto API, Blob/File instead of Node.js APIs'
+  collision_type: architecture_boundary
+  why_distracting: The rule encourages using Web standards like `Blob/File` instead
+    of Node.js APIs. An agent might try to instantiate a `File` or `Blob` object to
+    read its `.type` property to handle MIME types, but the task requires pure string
+    manipulation of the MIME type string itself.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 14-14
+hierarchy_analysis: The `AGENTS.md` file provides comprehensive monorepo guidelines.
+  The most critical and counter-intuitive rule is the preference for `let` over `const`
+  for local variables, which directly contradicts standard JavaScript/TypeScript conventions
+  but is strictly followed in the gold solution. The versioning rules for v0.x packages
+  (minor for features, patch for fixes) are also crucial for correctly generating
+  the `.changes` files.

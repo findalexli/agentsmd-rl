@@ -75,6 +75,37 @@ rubric:
     path: packages/app/e2e/AGENTS.md
     lines: '177'
     commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 31-42
+  evidence: In `actions.ts`, the gold solution uses single-word variable names like
+    `term`, `next`, `id`, `state`, `cmd`, and `token` instead of multi-word camelCase
+    alternatives like `terminalLocator` or `termin
+  category: naming
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 54-61
+  evidence: In `actions.ts`, the `terminalHas` and `waitTerminalReady` functions access
+    properties via dot notation (e.g., `input.term`, `input.token`, `input.timeout`)
+    rather than destructuring the `input` param
+  category: style
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 75-84
+  evidence: In `actions.ts`, the `terminalID` function uses an early return (`if (id)
+    return id`) followed by a `throw`, completely avoiding an `else` block.
+  category: style
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 63-73
+  evidence: In `actions.ts`, variables like `next` and `id` are declared with `const`
+    and use the nullish coalescing operator (`??`) to determine their value instead
+    of using `let` and reassignment.
+  category: style
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
@@ -98,3 +129,42 @@ config_edits:
 
     - Avoid `waitForTimeout` and custom DOM or `data-*` readiness checks.'
   gold_removed: ''
+distractors:
+- rule: Use `data-component`, `data-action`, or semantic roles
+  collision_type: rule_conflict
+  why_distracting: The rule suggests using `data-*` attributes for selectors. An agent
+    might try to implement the terminal readiness check by adding a `data-ready="true"`
+    attribute to the terminal DOM element and waiting for it via Playwright. However,
+    the PR instructions explicitly forbid custom `data-*` readiness checks and require
+    a window-level probe.
+  severity: high
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 119-124
+- rule: Test actual implementation, do not duplicate logic into tests
+  collision_type: architecture_boundary
+  why_distracting: The rule says to 'Test actual implementation, do not duplicate
+    logic into tests'. An agent might refuse to modify `packages/app/src/components/terminal.tsx`
+    to inject the `__opencode_e2e` window probe, believing that adding test-specific
+    hooks to production code violates testing the 'actual implementation'.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 101-103
+- rule: 'Variables: camelCase'
+  collision_type: rule_conflict
+  why_distracting: 'The rule specifies ''Variables: camelCase''. This directly conflicts
+    with the root `AGENTS.md` strict enforcement of single-word variable names. An
+    agent might introduce names like `terminalId` or `terminalState` instead of the
+    preferred `id` and `state`.'
+  severity: medium
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 74-78
+hierarchy_analysis: 'The root `AGENTS.md` enforces strict single-word naming conventions,
+  which overrides the generic ''Variables: camelCase'' rule found in `packages/app/e2e/AGENTS.md`.
+  Additionally, the PR''s specific instructions to avoid `data-*` readiness checks
+  override the standard E2E selector guidelines in `packages/app/e2e/AGENTS.md`. The
+  requirement to build a test-only terminal driver requires carefully crossing the
+  architecture boundary between production code and test code, which may seem to conflict
+  with the root testing philosophy.'

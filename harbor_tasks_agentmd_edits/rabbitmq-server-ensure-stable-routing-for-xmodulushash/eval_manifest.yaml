@@ -35,7 +35,6 @@ checks:
   origin: pr_diff
   description: Makefile includes rabbit_exchange_type_modulus_hash in parallel CT
     test sets
-# pass_to_pass checks (repo_tests) — CI validation via subprocess
 - id: test_repo_parallel_ct_sanity
   type: pass_to_pass
   origin: repo_tests
@@ -52,7 +51,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Makefile has parallel CT test set configuration
-# pass_to_pass checks (static) — structural validation
 - id: erlang_module_well_formed
   type: pass_to_pass
   origin: static
@@ -63,6 +61,14 @@ rubric:
     path: deps/rabbitmq_sharding/README.md
     lines: 1-10
     commit: f5c203919fe89ebe26d7a5650a58cced4ab807a6
+- rule: '`deps/rabbit`: the core RabbitMQ server, the most important part of the codebase'
+  source:
+    path: CLAUDE.md
+    lines: 32-33
+  evidence: The gold solution creates `deps/rabbit/src/rabbit_exchange_type_modulus_hash.erl`
+    and modifies `deps/rabbit/Makefile`, correctly identifying and utilizing `deps/rabbit`
+    as the destination for the core
+  category: architecture
 config_edits:
 - path: deps/rabbitmq_sharding/README.md
   tier: 2
@@ -97,3 +103,26 @@ config_edits:
     The plugin provides a new exchange type, "x-modulus-hash", that will use
 
     across a number of regular queues (shards).'
+distractors:
+- rule: '`deps/rabbit_common`: internal library for common modules'
+  collision_type: architecture_boundary
+  why_distracting: An agent might assume that since the exchange type is being extracted
+    to be used independently of the sharding plugin, it should be placed in `deps/rabbit_common`
+    as a shared module. However, the instructions explicitly require it to be moved
+    to `deps/rabbit/src/`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 33-34
+- rule: '`deps/rabbitmq_consistent_hash_exchange`: consistent hashing exchange (`x-consistent-hash`)'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might confuse `x-modulus-hash` with `x-consistent-hash`
+    or attempt to place the modulus hash exchange into the `rabbitmq_consistent_hash_exchange`
+    plugin directory because they are conceptually similar hashing exchanges.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 45-46
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical repository
+  structure definitions. The primary guidance relies on correctly interpreting the
+  architectural boundaries defined in the repository structure list.

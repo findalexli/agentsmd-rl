@@ -69,6 +69,23 @@ rubric:
     path: demos/bookstore/README.md
     lines: 1-10
     commit: b29fc874293468babb25b90e95edc208f1d652be
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
+    `var`'
+  source:
+    path: AGENTS.md
+    lines: 23-23
+  evidence: The gold solution uses `let db = get(Database)` instead of `const db =
+    get(Database)` when assigning the database handle inside the route actions in
+    `demos/bookstore/app/account.tsx`.
+  category: style
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: AGENTS.md
+    lines: 27-27
+  evidence: The newly added statements like `let db = get(Database)` omit semicolons
+    at the end of the line.
+  category: style
 config_edits:
 - path: demos/bookstore/README.md
   tier: 2
@@ -83,3 +100,32 @@ config_edits:
 
     - [`app/middleware/database.ts`](app/middleware/database.ts) attaches `context.db`
     for every request so route actions can query tables directly without AsyncLocalStorage.'
+distractors:
+- rule: 'Documentation imports/install: In package READMEs... installation instructions
+    should always include `npm i remix`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is instructed to update the README and might see this
+    rule, prompting it to add `npm i remix` installation instructions to `demos/bookstore/README.md`.
+    However, this rule specifically applies to *package* READMEs, whereas this is
+    a demo application that already has its own specific setup instructions.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 17-17
+- rule: 'write-readme: Write or rewrite package README files in the style used by
+    the Remix repository.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might invoke the `write-readme` skill to handle the requested
+    README updates. However, this skill is explicitly tailored for *package* READMEs
+    and might overwrite the demo's specific documentation structure with a standard
+    package template, causing unnecessary and incorrect changes.
+  severity: medium
+  source:
+    path: .agents/skills/write-readme
+    lines: 1-2
+hierarchy_analysis: The repository uses a flat configuration in `AGENTS.md` with supplementary
+  skills. The primary tension in this task arises from rules and skills targeting
+  'READMEs'. These guidelines are implicitly scoped to `packages/*` but might be mistakenly
+  applied to `demos/*`. The agent must distinguish between package documentation and
+  demo documentation to avoid applying package-specific boilerplate to the bookstore
+  demo.

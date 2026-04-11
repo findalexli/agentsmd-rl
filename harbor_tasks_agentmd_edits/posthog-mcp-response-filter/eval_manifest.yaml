@@ -86,6 +86,23 @@ rubric:
     path: .agents/skills/implementing-mcp-tools/SKILL.md
     lines: 120-144
     commit: 631f99184cf89fc8eef5163938c1a796a0e4af1b
+- rule: MCP tools are generated from the...
+  source:
+    path: AGENTS.md
+    lines: 58-58
+  evidence: 'The gold solution implements the filtering logic in `services/mcp/scripts/generate-tools.ts`
+    and `services/mcp/scripts/yaml-config-schema.ts`, respecting the architecture
+    that MCP tools are generated '
+  category: architecture
+- rule: 'chore: Non-production changes (docs, tests, config, CI, refactoring agents
+    instructions, etc.)'
+  source:
+    path: AGENTS.md
+    lines: 31-31
+  evidence: The gold solution updates the agent instructions in `.agents/skills/implementing-mcp-tools/SKILL.md`
+    to document the new `response` config option, treating agent instructions as maintainable
+    documenta
+  category: documentation
 config_edits:
 - path: .agents/skills/implementing-mcp-tools/SKILL.md
   tier: 1
@@ -101,3 +118,42 @@ config_edits:
     \      exclude: [filters.groups.*.properties] # remove these fields\n      # include\
     \ and exclude are mutually exclusive"
   gold_removed: ''
+distractors:
+- rule: API views should declare request/response schemas — prefer `@validated_request`
+    from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to implement the response filtering by modifying
+    the Django API views or serializers using `@extend_schema` to create a new response
+    schema, rather than implementing it in the MCP tool generation layer as requested.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 50-54
+- rule: Django serializers are the source of truth for frontend API types — `hogli
+    build:openapi` generates TypeScript via drf-spectacular + Orval.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run `hogli build:openapi` or modify serializers
+    to change the generated Orval types, but the filtering is meant to be applied
+    dynamically at runtime in the MCP tools, not by changing the underlying API types.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 55-57
+- rule: DO NOT GIVE ME HIGH LEVEL SHIT, IF I ASK FOR FIX OR EXPLANATION, I WANT ACTUAL
+    CODE OR EXPLANATION!
+  collision_type: meta_confusion
+  why_distracting: The agent might skip updating the documentation (SKILL.md, README.md,
+    handbook) because it thinks it should only provide "ACTUAL CODE" and not high-level
+    explanations or docs, despite the prompt explicitly asking for doc updates.
+  severity: medium
+  source:
+    path: .cursorrules
+    lines: 1-1
+hierarchy_analysis: The `.cursorrules` file contains general behavioral instructions,
+  while `AGENTS.md` provides specific architectural guidelines. The instruction in
+  `.cursorrules` to only provide 'ACTUAL CODE' conflicts with the prompt's explicit
+  request to update documentation and the `AGENTS.md` guideline that treats agent
+  instructions as maintainable documentation. The architectural guidelines in `AGENTS.md`
+  regarding Django serializers and API views are highly relevant to the backend but
+  must be carefully distinguished from the MCP tool generation layer, which operates
+  downstream of the API.

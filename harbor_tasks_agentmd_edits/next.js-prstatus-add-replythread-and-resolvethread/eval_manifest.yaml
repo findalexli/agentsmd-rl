@@ -71,9 +71,43 @@ rubric:
     path: .agents/skills/pr-status-triage/workflow.md
     lines: 26-28
     commit: c300a63cc9e0b9eeea6632f0b2150114de8c5d23
+- rule: Place and modify build and maintenance scripts in the `scripts/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 11-18
+  evidence: The gold solution modifies `scripts/pr-status.js` for a maintenance tool,
+    respecting the monorepo structure where `scripts/` is designated for build and
+    maintenance scripts.
+  category: architecture
 config_edits:
 - path: .agents/skills/pr-status-triage/SKILL.md
   tier: 1
   gold_added: 6. After addressing review comments, reply to the thread describing
     what was done, then resolve it. See `thread-N.md` files for ready-to-use commands.
   gold_removed: ''
+distractors:
+- rule: Start `pnpm --filter=next dev` before making edits to Next.js source or integration
+    tests.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret modifying `scripts/pr-status.js` as changing
+    'Next.js source' and unnecessarily start the Next.js dev server (`pnpm --filter=next
+    dev`), which is irrelevant for a standalone GitHub API script.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 58-60
+- rule: Always run a full bootstrap build (`pnpm build-all`) after switching branches.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `pnpm build-all` before starting work, which
+    is a heavy operation meant for core framework development, not for editing a standalone
+    Node.js script and markdown documentation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 81-85
+hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
+  at the root level. The rules are heavily focused on the core Next.js framework development
+  (e.g., `packages/next/src/`, `pnpm build-all`, `pnpm --filter=next dev`). Since
+  this PR only modifies a standalone maintenance script (`scripts/pr-status.js`) and
+  agent skill documentation, many of the core framework build and dev server rules
+  do not apply and could distract the agent.

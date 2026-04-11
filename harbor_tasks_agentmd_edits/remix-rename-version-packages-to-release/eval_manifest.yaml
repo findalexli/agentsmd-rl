@@ -78,24 +78,23 @@ checks:
   origin: pr_diff
   description: publish.ts updated to reference 'Release' instead of 'Version Packages'
 rubric:
-- rule: Prefer `let` for local variables, `const` only at module scope; never use
-    `var`
+- rule: Prefer `let` for locals, `const` only at module scope; never use `var`
   source:
     path: AGENTS.md
-    lines: '24'
-    commit: 130fbdc7b808a2d313363458dabc00caf036f482
-- rule: Use regular function declarations/expressions by default; only use arrow functions
-    as callbacks where preserving lexical `this` is beneficial
+    lines: 20-21
+  category: style
+  evidence: The idempotent check in the gold script specifically looks for `let prTitle
+    = 'Release'`, indicating the use of `let` for a local variable instead of `const`
+    when updating the PR title variable.
+- rule: Use regular function declarations/expressions by default. Only use arrow functions
+    as callbacks
   source:
     path: AGENTS.md
-    lines: 25-26
-    commit: 130fbdc7b808a2d313363458dabc00caf036f482
-- rule: Use descriptive lowercase names for type parameters (e.g., `source`, `method`,
-    `pattern`) instead of single uppercase letters like `T`, `P`, or `K`
-  source:
-    path: AGENTS.md
-    lines: '30'
-    commit: 130fbdc7b808a2d313363458dabc00caf036f482
+    lines: 21-22
+  category: style
+  evidence: The prompt requires adding new utility functions (`getPackageShortName`,
+    `getGitTag`, `getGitHubReleaseUrl`, etc.) which should be implemented as regular
+    function declarations rather than arrow functi
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -139,3 +138,33 @@ config_edits:
     If needed, you can run this command manually. This will update the `package.json`
     versions, `CHANGELOG.md` files, and delete the change files. It will then commit
     the result.'
+distractors:
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  source:
+    path: AGENTS.md
+    lines: 48-49
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to create a change file for this PR because
+    it is making significant changes to the repository. However, change files are
+    only meant for published packages in the `packages/` directory, not for internal
+    release tooling, scripts, or GitHub workflows.
+  severity: medium
+- rule: 'Test change/release code with preview scripts: When modifying any change/release
+    code, run `pnpm changes:preview` to test locally.'
+  source:
+    path: AGENTS.md
+    lines: 59-60
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run these preview commands to validate
+    its work. However, since the agent is actively rewriting the release tooling and
+    renaming the scripts themselves, running these commands mid-modification may fail
+    or lead the agent down a rabbit hole of debugging the test environment rather
+    than completing the code changes.
+  severity: low
+hierarchy_analysis: The AGENTS.md file provides the foundational rules for code style
+  and architecture, while CONTRIBUTING.md provides higher-level guidelines for contributors.
+  In this PR, the agent must apply the code style rules from AGENTS.md to the internal
+  scripts while simultaneously updating the documentation in both AGENTS.md and CONTRIBUTING.md
+  to reflect the new release terminology. The documentation updates must accurately
+  describe the new state of the tooling.

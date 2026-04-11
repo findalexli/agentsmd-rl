@@ -82,6 +82,14 @@ rubric:
     - ✅ `?` operator or `return Err(Error::new_simple("message"))`
 
     - ✅ `.expect("reason")` or `unreachable!()` only for compiler-bug invariants'
+- rule: Error messages should avoid 2nd person (you/your).
+  source:
+    path: CLAUDE.md
+    lines: 103-110
+  evidence: The gold solution adds the error message 'column references a table not
+    accessible in this context' and the hint 'join is not supported inside group',
+    which strictly avoids the use of 'you' or 'your'.
+  category: style
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -97,3 +105,33 @@ config_edits:
 
     - ✅ `.expect("reason")` or `unreachable!()` only for compiler-bug invariants'
   gold_removed: ''
+distractors:
+- rule: Use softer modal verbs like 'might' for a friendlier tone in error messages.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests using softer modal verbs like 'might' for a friendlier
+    tone. An agent might over-apply this and write 'join might not be supported inside
+    group' or 'table might not be accessible'. This makes a definitive compiler error
+    sound like a guess. The rule has an exception for hard constraints ('X requires
+    Y'), which applies here, but the primary instruction to use 'might' is a strong
+    distractor.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 103-110
+- rule: Prefer small inline `insta` snapshot tests over full integration tests.
+  collision_type: scope_ambiguity
+  why_distracting: The rule strongly prefers inline `insta` snapshot tests. An agent
+    might try to add an inline test in `lowering.rs` or `module.rs` to test the new
+    error. However, testing a full query compilation error requires the `crate::tests::compile`
+    helper, which might not be easily accessible or appropriate to use deep within
+    the semantic module's unit tests. The gold solution skips adding a test entirely
+    to focus on the core panic-to-error conversion and documentation update.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 40-55
+hierarchy_analysis: The `CLAUDE.md` file provides general guidelines for the entire
+  repository. The rules regarding error messages and testing are broadly applicable,
+  but their specific application requires contextual judgment (e.g., knowing when
+  a constraint is 'hard' vs 'soft', or knowing when an inline test is too complex
+  to set up for a specific module).

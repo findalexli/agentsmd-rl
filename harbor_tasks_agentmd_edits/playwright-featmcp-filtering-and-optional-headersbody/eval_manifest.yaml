@@ -59,6 +59,15 @@ rubric:
     path: packages/playwright-core/src/tools/backend/network.ts
     lines: 30-33
     commit: 998f35dccb1de560350765493073dec5ec2c811c
+- rule: Assume watch is running and code is up to date. Generated files (types, channels,
+    validators) are produced by watch automatically.
+  source:
+    path: CLAUDE.md
+    lines: 36-37
+  evidence: The gold solution modifies the Zod schema for the MCP tool in `network.ts`
+    but does not manually update any generated type files or validators, relying on
+    the watch process as instructed.
+  category: tooling
 config_edits:
 - path: .github/copilot-instructions.md
   tier: 1
@@ -80,3 +89,28 @@ config_edits:
 
     - Do not suggest refactors or improvements unrelated to the PR''s stated goal.'
   gold_removed: ''
+distractors:
+- rule: Write and run tests for MCP tools in `tests/mcp/` using `npm run ctest-mcp`.
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on where and how to write
+    tests for MCP tools (`tests/mcp/`). An agent might spend time writing tests for
+    the new network request parameters, but the task does not require tests and the
+    gold solution does not include them.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 48-66
+- rule: Import boundaries are enforced via `DEPS.list` files.
+  collision_type: scope_ambiguity
+  why_distracting: The config mentions that import boundaries are enforced via `DEPS.list`
+    files. An agent might try to find and update `DEPS.list` files when modifying
+    the MCP tool or CLI commands, but since no new cross-package imports are added,
+    this is unnecessary and wastes effort.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 68-70
+hierarchy_analysis: The `CLAUDE.md` file provides general repository guidelines. The
+  task instructions override the general expectation to write tests by not requesting
+  them, making the testing guidelines in `CLAUDE.md` a distractor for this specific
+  PR.

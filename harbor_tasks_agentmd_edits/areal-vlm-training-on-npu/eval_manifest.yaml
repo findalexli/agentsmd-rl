@@ -76,6 +76,22 @@ rubric:
     path: AGENTS.md
     lines: 151-152
     commit: b942ed019df2c66b851c397c0836fd31a3787b70
+- rule: Do not modify or import from the deprecated `realhf/` package; migrate uses
+    into `areal/` equivalents instead.
+  source:
+    path: AGENTS.md
+    lines: 31-32
+  evidence: The gold solution imports modules from `areal` (e.g., `areal.api.cli_args`,
+    `areal.workflow.vision_rlvr`) and does not use the deprecated `realhf` package.
+  category: architecture
+- rule: Place end-to-end wiring scripts for VLM and launcher recipes in the `examples/`
+    directory.
+  source:
+    path: AGENTS.md
+    lines: 66-67
+  evidence: The gold solution creates the new NPU training scripts and README inside
+    the `examples/vlm_npu/` directory.
+  category: architecture
 config_edits:
 - path: examples/vlm_npu/README.md
   tier: 2
@@ -99,3 +115,29 @@ config_edits:
     \ GRPO-GPU   | 35.4       | 20.9             | 55.9           | **37.4** |\n|\
     \ GRPO-NPU   | 35.3       | 20.5             | 54.7           | **36.8** |"
   gold_removed: ''
+distractors:
+- rule: Docs source lives under `docs/` (Jupyter Book). Coordinate doc edits with
+    the docs build pipeline.
+  collision_type: scope_ambiguity
+  why_distracting: The prompt explicitly requests a README documenting hardware requirements
+    and results under the new `examples/vlm_npu/` directory. If the agent strictly
+    follows the rule that all docs live under `docs/`, it might place the README in
+    the wrong location or attempt to integrate it into the Jupyter Book build pipeline
+    unnecessarily.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 29-30
+- rule: Before editing code, outline the proposed plan and confirm it with the user.
+  collision_type: meta_confusion
+  why_distracting: In an automated evaluation setting, the agent must generate the
+    complete solution in one go. If it stops to outline a plan and wait for user confirmation,
+    it will fail to produce the required files and timeout.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 33-34
+hierarchy_analysis: 'The configuration is flat, relying entirely on `AGENTS.md`. The
+  primary challenge is scope resolution: the agent must recognize that example-specific
+  documentation (a README in `examples/vlm_npu/`) is an exception to the global rule
+  that documentation belongs in `docs/`.'

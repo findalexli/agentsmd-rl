@@ -75,6 +75,14 @@ rubric:
     path: packages/playwright-core/src/tools/trace/SKILL.md
     lines: 24-28
     commit: 21268964f99d52e5a48e24c04df5f6dc9e7fa0bc
+- rule: Import boundaries are enforced via DEPS.list files.
+  source:
+    path: CLAUDE.md
+    lines: 70-71
+  evidence: The gold solution uses a dynamic import (`const { closeTrace } = await
+    import('./traceUtils');`) inside the command action rather than a top-level static
+    import. This lazy-loading pattern helps comply
+  category: architecture
 config_edits:
 - path: packages/playwright-core/src/tools/trace/SKILL.md
   tier: 1
@@ -91,3 +99,30 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: '`docs/src/` is the API documentation directory and source of truth.'
+  collision_type: scope_ambiguity
+  why_distracting: The config designates `docs/src/` as the source of truth for documentation.
+    An agent might try to document the new `trace close` CLI command there, but this
+    is an internal/tooling command that should be documented in the local `SKILL.md`
+    file as requested.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 25-26
+- rule: 'Decision rule: Does the test need browser/browserType/context -> tests/library/.
+    Just needs page + server -> tests/page/.'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides a strict decision rule for placing tests in
+    `tests/library/` vs `tests/page/`. An agent might waste time trying to write a
+    test for the CLI command and force it into these browser-centric directories,
+    which are inappropriate for CLI tooling tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 61-62
+hierarchy_analysis: The root `CLAUDE.md` provides global conventions for public APIs
+  and browser tests. However, this task involves an internal CLI tool where local
+  conventions (like `SKILL.md` for documentation) override the global `docs/src/`
+  rules. The agent must recognize that the global documentation and testing rules
+  do not apply to this specific tooling subsystem.

@@ -63,6 +63,14 @@ rubric:
     path: AGENTS.md
     lines: 1-5
     commit: 89db125c56d3b0d637a283ac9122c6cb8f5542c3
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  source:
+    path: AGENTS.md
+    lines: 38-39
+  evidence: The gold solution creates `packages/data-table/.changes/minor.table-standard-schema.md`
+    to document the new Standard Schema compatibility and validation behavior.
+  category: tooling
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -119,3 +127,32 @@ config_edits:
 
     - `createMany` -> `WriteResult` by default, rows when `returnRows: true` (RETURNING
     adapters only)'
+distractors:
+- rule: 'Package exports: All `exports` in `package.json` have a dedicated file in
+    `src` that defines the public API by re-exporting from within `src/lib`'
+  collision_type: architecture_boundary
+  why_distracting: The agent might interpret 'defines the public API by re-exporting'
+    as a mandate to continue re-exporting `DataSchema` (or `Schema`) from `data-schema`
+    so that consumers can import everything from `data-table`. This directly conflicts
+    with the PR's explicit instruction to remove the cross-package re-export.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-18
+- rule: 'Generics: Use descriptive lowercase names for type parameters (e.g., `source`,
+    `method`, `pattern`) instead of single uppercase letters like `T`, `P`, or `K`'
+  collision_type: would_cause_bug
+  why_distracting: When implementing the Standard Schema `~standard` property and
+    types, the agent might try to strictly enforce lowercase generic names (e.g.,
+    renaming `T` or `Input`/`Output` to `input`/`output`). This could break compatibility
+    with the external `StandardSchemaV1` interface which expects specific type parameter
+    structures.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 25-25
+hierarchy_analysis: The root `AGENTS.md` file contains general architectural guidelines
+  that conflict with the specific cross-package boundary changes requested in this
+  PR. The PR explicitly updates `AGENTS.md` to clarify this boundary, meaning the
+  agent must prioritize the PR instructions over the existing (and now outdated) interpretation
+  of the 'Package exports' rule.

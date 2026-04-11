@@ -58,14 +58,77 @@ checks:
   origin: repo_tests
   description: Repo CI - TypeScript typecheck passes on e2e directory
 rubric:
-- rule: E2E spec files must use shared helper functions from '../actions' rather than defining duplicate local helpers
+- rule: E2E spec files must use shared helper functions from '../actions' rather than
+    defining duplicate local helpers
   source:
     path: packages/app/e2e/AGENTS.md
     lines: '171'
     commit: be9b4d1bcde39341c7813b66c5c19150a01bb8c2
-  reference: "When validating routing, use shared helpers from `../actions`."
+  reference: When validating routing, use shared helpers from `../actions`.
+- rule: Document new helper functions in the E2E testing guide and place reusable
+    actions in `actions.ts`.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 40-50
+  evidence: The gold solution adds `slugFromUrl` and `waitSlug` to `actions.ts` and
+    documents them in `packages/app/e2e/AGENTS.md` under the Helper Functions section.
+  category: documentation
+- rule: Avoid `else` statements and prefer early returns for control flow.
+  source:
+    path: AGENTS.md
+    lines: 80-90
+  evidence: The `waitSlug` function uses multiple `if` statements with early returns
+    (`if (!slug) return ""`, `if (skip.includes(slug)) return ""`) instead of `else`
+    blocks.
+  category: style
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
-  gold_added: '- `sessionIDFromUrl(url)` - Read session ID from URL\n\n    - `slugFromUrl(url)` - Read workspace slug from URL\n\n    - `waitSlug(page, skip?)` - Wait for resolved workspace slug\n\n    4. When validating routing, use shared helpers from `../actions`. Workspace URL\n    slugs can be canonicalized on Windows, so assert against canonical or resolved\n    workspace slugs.\n\n    5. Clean up any created resources\n\n    6. Use specific selectors (avoid CSS classes)\n\n    7. Test one feature per test file'
-  gold_removed: '4. Clean up any created resources\n\n    5. Use specific selectors (avoid CSS classes)\n\n    6. Test one feature per test file'
+  gold_added: '- `sessionIDFromUrl(url)` - Read session ID from URL\n\n    - `slugFromUrl(url)`
+    - Read workspace slug from URL\n\n    - `waitSlug(page, skip?)` - Wait for resolved
+    workspace slug\n\n    4. When validating routing, use shared helpers from `../actions`.
+    Workspace URL\n    slugs can be canonicalized on Windows, so assert against canonical
+    or resolved\n    workspace slugs.\n\n    5. Clean up any created resources\n\n    6.
+    Use specific selectors (avoid CSS classes)\n\n    7. Test one feature per test
+    file'
+  gold_removed: 4. Clean up any created resources\n\n    5. Use specific selectors
+    (avoid CSS classes)\n\n    6. Test one feature per test file
+distractors:
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  collision_type: would_cause_bug
+  why_distracting: The `waitSlug` function needs to track the slug value across multiple
+    executions of the `expect.poll` callback to ensure it has settled. This inherently
+    requires mutable state (`let prev`, `let next`) outside the callback. Trying to
+    avoid `let` and reassignment would make it impossible to track consecutive identical
+    values.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 68-78
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly requests moving `slugFromUrl` and `waitSlug`.
+    Renaming them to single words like `slug` or `wait` to satisfy the naming rule
+    would violate the prompt's instructions and make the helper names ambiguous.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 28-38
+- rule: In `withProject(...)` tests that create sessions or extra workspaces, call
+    `trackSession(sessionID, directory?)` and `trackDirectory(directory)`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent is editing spec files that use `withProject` to replace
+    local helpers with shared ones. While editing these files, the agent might notice
+    missing `trackSession` calls and try to add them to satisfy this rule, expanding
+    the scope of the PR unnecessarily and potentially breaking existing test teardown
+    logic.
+  severity: medium
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 88-92
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` with general TypeScript/style
+  guidelines, an app-level `AGENTS.md` for web dev, and an e2e-specific `AGENTS.md`
+  for Playwright testing. The root rule preferring `const` over `let` conflicts with
+  the stateful polling requirement of `waitSlug`. The root naming rule conflicts with
+  the explicit multi-word function names requested in the prompt. The e2e-specific
+  rule about `trackSession` creates scope ambiguity when editing existing test files.

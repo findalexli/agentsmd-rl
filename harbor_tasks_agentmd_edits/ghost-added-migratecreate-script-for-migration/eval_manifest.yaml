@@ -130,6 +130,13 @@ rubric:
     2. The above command will create a new directory in `ghost/core/core/server/data/migrations/versions`
     if needed, create the empty migration file with the appropriate name, and bump
     the core and admin package versions to RC i'
+- rule: Always use `yarn` (v1) for all commands.
+  source:
+    path: CLAUDE.md
+    lines: 5-7
+  evidence: The gold solution updates the skill file to instruct users to run `yarn
+    migrate:create` instead of using npm or slimer directly.
+  category: tooling
 config_edits:
 - path: .claude/skills/create-database-migration/SKILL.md
   tier: 1
@@ -180,3 +187,27 @@ config_edits:
     --force`
 
     7. If adding or dropping a table, update `ghost/core/core/server'
+distractors:
+- rule: 'yarn knex-migrator migrate # Run database migrations'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use `knex-migrator` to create the migration
+    or integrate the creation logic into it, rather than building the requested standalone
+    script.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 60-61
+- rule: 'yarn test:unit # Unit tests only'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt asks to export functions 'for testability', but does
+    not request writing the tests themselves. The agent might waste time writing unit
+    tests for the new script.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 40-42
+hierarchy_analysis: The repository uses a flat configuration structure with identical
+  `CLAUDE.md` and `AGENTS.md` files at the root. The primary guidance focuses on monorepo
+  structure and yarn commands. The agent must carefully distinguish between the existing
+  `knex-migrator` tool (used for running migrations) and the new custom script (used
+  for creating migrations).

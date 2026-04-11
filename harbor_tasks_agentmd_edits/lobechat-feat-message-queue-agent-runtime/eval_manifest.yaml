@@ -72,6 +72,21 @@ rubric:
     path: .agents/skills/react/SKILL.md
     lines: 1-10
     commit: 70091935ba75208eeea880b3e5856342beabd22f
+- rule: Prefer interfaces over types for object shapes
+  source:
+    path: AGENTS.md
+    lines: 43-47
+  evidence: The gold solution defines `QueuedMessage` and `MergedQueuedMessage` as
+    interfaces in `src/store/chat/slices/operation/types.ts` as requested by the task.
+  category: style
+- rule: Implement layout and page content under `src/features/<Domain>/` and export
+    from there.
+  source:
+    path: CLAUDE.md
+    lines: 36-38
+  evidence: The gold solution places the new `QueueTray.tsx` component in `src/features/Conversation/ChatInput/`
+    instead of `src/routes/`.
+  category: architecture
 config_edits:
 - path: .agents/skills/electron-testing/SKILL.md
   tier: 1
@@ -116,3 +131,27 @@ config_edits:
     \ --cdp 9222 eval \"document.title\"\n```\n\nFor multi-line JS, use `--stdin`:\n\
     \n```bas"
   gold_removed: ''
+distractors:
+- rule: Never run `bun run test` - this runs all tests and takes ~10 minutes
+  collision_type: would_cause_bug
+  why_distracting: The agent might want to run tests to verify the new message queue
+    logic, but running the full test suite will time out or waste significant time.
+    It must use the specific vitest commands provided.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 56-59
+- rule: In `src/routes/`, add only the route segment files (layout + page) that delegate
+    to features.
+  collision_type: architecture_boundary
+  why_distracting: The agent might think it needs to modify route files to display
+    the new QueueTray UI, but the UI should be integrated directly into the existing
+    ChatInput feature component without touching routes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 42-42
+hierarchy_analysis: CLAUDE.md and AGENTS.md both provide consistent architectural
+  guidelines regarding the separation of src/features/ and src/routes/. AGENTS.md
+  provides more specific testing and TypeScript guidelines that complement the broader
+  architectural rules in CLAUDE.md.

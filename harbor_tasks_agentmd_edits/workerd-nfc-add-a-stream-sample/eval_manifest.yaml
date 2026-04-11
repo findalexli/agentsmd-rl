@@ -63,6 +63,27 @@ rubric:
     path: samples/web-streams/README.md
     lines: 14-32
     commit: 9203f22a91e65d842ad96a65fc0bc7d97f0bd76f
+- rule: Check README.md files for package/directory level information
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+  evidence: The gold solution creates `samples/web-streams/README.md` containing directory-level
+    information such as endpoints, running instructions, and testing commands.
+  category: documentation
+- rule: Sample configurations in `samples/` directory
+  source:
+    path: CLAUDE.md
+    lines: 61-62
+  evidence: The gold solution places the new sample configuration and code in the
+    `samples/web-streams/` directory.
+  category: architecture
+- rule: Uses Cap'n Proto for configuration files (.capnp format)
+  source:
+    path: CLAUDE.md
+    lines: 59-60
+  evidence: The gold solution creates `samples/web-streams/config.capnp` for the workerd
+    configuration.
+  category: architecture
 config_edits:
 - path: samples/web-streams/README.md
   tier: 2
@@ -121,3 +142,26 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: 'Unit Tests: `.wd-test` files use Cap''n Proto config format'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt mentions the sample is for 'internal testing of streams-related
+    improvements', which might lead an agent to create a `.wd-test` file. However,
+    the prompt explicitly requests HTTP endpoints for `curl` testing and lists the
+    exact files to create, none of which are `.wd-test` files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 31-32
+- rule: Suggest updates to CLAUDE.md when you find new high-level information
+  collision_type: meta_confusion
+  why_distracting: An agent might think adding a new sample directory constitutes
+    'new high-level information' and attempt to modify `CLAUDE.md`, which is unnecessary
+    and out of scope for this PR.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 10-11
+hierarchy_analysis: Only one config file (`CLAUDE.md`) is present at the root level,
+  so there are no inter-file conflicts. The rules are applied directly from the root
+  level.

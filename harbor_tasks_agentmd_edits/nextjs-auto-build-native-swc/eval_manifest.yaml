@@ -67,6 +67,14 @@ rubric:
     lines: 367-371
     commit: 9a7733ed83bce9cc1264454ddc7335fdcfb0c1eb
   reference: '- **Edited Next.js code or Turbopack (Rust)?** → `pnpm build`'
+- rule: 'Build everything: `pnpm build`'
+  source:
+    path: AGENTS.md
+    lines: 55-65
+  evidence: The gold solution adds a `build` script to `packages/next-swc/package.json`
+    and configures `turbo.json` so that running `pnpm build` at the root will now
+    automatically build the native binaries, fulfi
+  category: architecture
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -74,3 +82,32 @@ config_edits:
   gold_removed: '- **Edited Turbopack (Rust)?** → `pnpm swc-build-native`
 
     - **Edited both?** → `pnpm turbo build build-native`'
+distractors:
+- rule: '- **Edited Turbopack (Rust)?** → `pnpm swc-build-native`'
+  collision_type: meta_confusion
+  why_distracting: The agent reads `AGENTS.md` as its system instructions, which explicitly
+    tell it to use `pnpm swc-build-native` for Rust changes. However, the PR's goal
+    is to deprecate this exact workflow and update the instructions. The agent might
+    hesitate to modify its own instructions or might try to preserve the old command
+    because it's listed as a rule.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 367-370
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: scope_ambiguity
+  why_distracting: The agent is instructed to start `pnpm --filter=next dev` in a
+    separate terminal session before making edits. However, this task is about modifying
+    the build pipeline for native SWC binaries (`pnpm build`), not the Next.js dev
+    server. Starting the dev server is unnecessary and wastes time/resources for this
+    specific task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 70-75
+hierarchy_analysis: 'The `CLAUDE.md` and `AGENTS.md` files are identical symlinks.
+  The primary challenge here is meta-confusion: the agent is asked to modify the very
+  instructions (`AGENTS.md`) that it uses to guide its own behavior. It must recognize
+  that the prompt''s instructions to update the build workflow override the existing
+  static rules in the config file.'

@@ -68,6 +68,21 @@ rubric:
     path: .agents/skills/typescript/SKILL.md
     lines: '52'
     commit: 6e2613597800616e3d101e383eca88d46c791588
+- rule: 'Tech Stack: TypeScript'
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+  evidence: 'The gold solution maintains TypeScript type annotations in the CLI command
+    action handler (`id: string | undefined, opts: { json?: boolean }`).'
+  category: style
+- rule: All AI development skills are available in `.agents/skills/` directory
+  source:
+    path: AGENTS.md
+    lines: 72-73
+  evidence: The gold solution directly modifies `.agents/skills/agent-tracing/SKILL.md`
+    to document the new CLI behavior, keeping the AI development skills up to date
+    with the codebase changes.
+  category: documentation
 config_edits:
 - path: .agents/skills/agent-tracing/SKILL.md
   tier: 1
@@ -86,3 +101,42 @@ config_edits:
     agent-tracing partial inspect <operationId>
 
     agent-tracing partial inspect -j'
+distractors:
+- rule: All AI development skills are available in `.agents/skills/` directory
+  collision_type: meta_confusion
+  why_distracting: The task requires the agent to 'Update Tracing Skill Docs'. However,
+    agents often treat files in `.agents/skills/` as read-only system instructions.
+    The agent might experience meta-confusion and refuse to edit `.agents/skills/agent-tracing/SKILL.md`,
+    thinking it shouldn't modify its own prompt/skill definitions.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 72-73
+- rule: 'Testing Strategy: bunx vitest run...'
+  collision_type: scope_ambiguity
+  why_distracting: The task involves fixing error handling in a core service (`AgentRuntimeService.ts`).
+    An agent might read the Testing Strategy and decide to write Vitest tests to verify
+    the new try-catch blocks. However, testing these infrastructure calls (Redis,
+    webhooks) would require complex mocking that is out of scope, wasting time and
+    potentially causing test failures.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 50-55
+- rule: 'Skills (Auto-loaded): debug package usage guide'
+  collision_type: scope_ambiguity
+  why_distracting: The task instructs to 'catch failures, log and continue' in `AgentRuntimeService.ts`.
+    The agent might see the `debug` skill in the auto-loaded skills list and attempt
+    to import and configure the `debug` package for these error logs. This is distracting
+    because standard error logging (e.g., `console.error` or the file's existing logger)
+    is sufficient, and introducing a new debug namespace for a simple catch block
+    is unnecessary overengineering.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 72-83
+hierarchy_analysis: The project uses `CLAUDE.md` and `AGENTS.md` for general guidelines,
+  and specific skill markdown files in `.agents/skills/` for domain-specific instructions.
+  A unique aspect of this PR is that it requires modifying one of the skill files
+  (`.agents/skills/agent-tracing/SKILL.md`) as part of the task. Agents must overcome
+  the typical meta-boundary of treating their own instruction files as read-only.

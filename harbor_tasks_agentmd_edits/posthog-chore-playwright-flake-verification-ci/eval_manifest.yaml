@@ -67,13 +67,15 @@ checks:
   origin: static
   description: Verification script has real logic, not a stub
 rubric:
-- rule: Config update is consistent with the style of existing documentation in the
-    repo
+- rule: Please respect all code comments, they're usually there for a reason. Remove
+    them ONLY if they're completely irrelevant after a code change.
   source:
-    path: playwright/README.md
-    lines: 1-10
-    commit: e74eb42064ccff936e8b2039626646132a444c8d
-  reference: "### Best practices\n\n- Don't use CSS selectors — prefer accessibility roles\n  (`getByRole`) or `getByTestId()` which maps to `data-attr` in our config.\n  Add `data-attr` to components if needed.\n- Write fewer, longer tests that do multiple things. Split logical steps\n  with `test.step()`.\n- Use page object models for common tasks and accessing common elements\n  (see `page-models/`).\n- After UI interactions, assert on UI changes — don't assert on network\n  requests resolving.\n- Never put conditional logic (`if`) in a test.\n\n### Gotchas\n\n**Flaky tests are almost always due to not waiting for the right thing.**\nConsider adding a better selector, an intermediate step like waiting for URL\n  or page title to change,\nor waiting for a critical network request to complete.\n\n**Loose selectors cause strict mode violations.**\nIf a selector matches multiple elements, Playwright will show all matches — use\n  the output to narrow down:"
+    path: .cursorrules
+    lines: 16-17
+  category: style
+  evidence: 'The gold solution preserves the critical instruction ''**Keep looping
+    until all tests pass.**'' by moving it from the Instructions section to the Rules
+    section, rather than deleting it when refactoring '
 config_edits:
 - path: .agents/skills/playwright-test/SKILL.md
   tier: 1
@@ -138,3 +140,18 @@ config_edits:
 
     If you write a selector that is too loose and matches multiple elements, Playwright
     will output all the matches. With a better selector for each:'
+distractors:
+- rule: 'If flox is available: ALWAYS use `flox activate -- bash -c "<command>"` pattern'
+  source:
+    path: .cursorrules
+    lines: 19-20
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use flox inside the new GitHub Actions CI
+    script (`.github/scripts/verify-playwright-new-tests-and-snapshots.sh`). However,
+    CI scripts run in a specific runner environment where dependencies are provisioned
+    differently, and wrapping CI commands in flox could break the workflow.
+  severity: high
+hierarchy_analysis: The config hierarchy is relatively flat for this specific task.
+  `.cursorrules` provides general instructions (like flox usage) which conflict with
+  the architecture boundary of a CI script. `AGENTS.md` provides high-level PostHog
+  guidelines, but most are irrelevant to CI bash scripts and markdown documentation.

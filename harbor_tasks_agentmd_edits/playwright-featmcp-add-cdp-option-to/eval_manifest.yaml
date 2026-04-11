@@ -94,6 +94,14 @@ rubric:
     path: .claude/skills/playwright-dev/tools.md
     lines: 319-332
     commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+- rule: Import boundaries are enforced via DEPS.list files
+  source:
+    path: CLAUDE.md
+    lines: 47-49
+  evidence: The gold solution passes the `--cdp` option as a string argument in `session.ts`
+    (`args.push('--cdp=' + cliArgs.cdp)`) rather than importing types or constants
+    from the daemon or MCP packages, which w
+  category: architecture
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1
@@ -103,3 +111,40 @@ config_edits:
   gold_removed: '# Connect to browser via extension
 
     playwright-cli open --extension'
+distractors:
+- rule: docs/src/ API documentation — source of truth for public TypeScript types
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to document the new `--cdp` CLI flag in `docs/src/api/`
+    files. However, this PR is about an internal CLI tool (`playwright-cli`), and
+    the instructions specifically say to update the 'skill documentation' (`SKILL.md`),
+    not the public API docs.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 24-25
+- rule: protocol (internal) RPC protocol definitions (protocol.yml → generated channels.d.ts)
+  collision_type: architecture_boundary
+  why_distracting: Because the PR adds a `--cdp` (Chrome DevTools Protocol) option,
+    the agent might mistakenly think it needs to modify `protocol.yml` to add CDP
+    support to Playwright's internal RPC protocol. However, the CLI just passes the
+    endpoint URL as a command-line argument to the daemon.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '9'
+- rule: 'Decision rule: Does the test need browser/browserType/context → tests/library/.
+    Just needs page + server → tests/page/.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add tests for the new CLI functionality
+    in `tests/library/` or `tests/page/` based on this decision rule. However, CLI
+    and MCP tools have their own test directories (`tests/mcp/`), and the instructions
+    don't request new tests.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: '45'
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root. The
+  main challenge is distinguishing between public API documentation/protocols and
+  internal CLI/MCP tool implementations. The agent must recognize that CLI arguments
+  are passed via process arguments rather than the internal RPC protocol (`protocol.yml`),
+  and that documentation for internal tools belongs in `SKILL.md` rather than `docs/src/api/`.

@@ -56,6 +56,15 @@ rubric:
     path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
     lines: 1-10
     commit: b6f860d846146f072f5a804017d89f2deb737b39
+- rule: '`playwright-core` is the package for the browser automation engine, client,
+    server, dispatchers, and protocol.'
+  source:
+    path: CLAUDE.md
+    lines: 3-7
+  evidence: The gold solution correctly modifies the MCP tool handlers within `packages/playwright-core/src/tools/backend/`,
+    aligning with the architectural definition that `playwright-core` houses the browser
+    au
+  category: architecture
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1
@@ -63,3 +72,30 @@ config_edits:
 
     playwright-cli fill e5 "user@example.com"  --submit'
   gold_removed: playwright-cli fill e5 "user@example.com"
+distractors:
+- rule: Test Commands for MCP tools are `npm run ctest-mcp <filter>` and tests are
+    located in `tests/mcp/`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might read the test commands for MCP tools and attempt
+    to write new tests in `tests/mcp/` to verify the removal of `waitForCompletion`.
+    However, the instructions only ask to fix the code and update the skill documentation,
+    making test creation an out-of-scope waste of effort.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 58-63
+- rule: 'Decision rule: Tests needing `page` + `server` go to `tests/page/`, and tests
+    needing `browser`/`context` go to `tests/library/`.'
+  collision_type: architecture_boundary
+  why_distracting: Because the modified tools interact with `page` and `locator` objects,
+    the agent might mistakenly try to add tests in `tests/page/` or `tests/library/`
+    based on the decision rule. This crosses an architectural boundary since MCP tools
+    have their own dedicated test directory (`tests/mcp/`).
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 74-82
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
+  The guidance is straightforward, but the extensive documentation on testing could
+  distract an agent into writing tests when the prompt only requires implementation
+  fixes and documentation updates.

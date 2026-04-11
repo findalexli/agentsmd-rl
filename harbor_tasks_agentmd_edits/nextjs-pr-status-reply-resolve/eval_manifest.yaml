@@ -1,11 +1,10 @@
-version: "2.0"
+version: '2.0'
 source:
   repo: vercel/next.js
   pr: 92450
   base_commit: fea754747872122d167dd8bf1fc5581044e50521
   merge_commit: 6d572c27e01cbdb19dfbdf5bce94604229478088
 checks:
-# ---------- pass_to_pass: repo CI tests ----------
 - id: test_repo_node_available
   type: pass_to_pass
   origin: repo_tests
@@ -30,7 +29,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: scripts/pr-status.js loads as a module without syntax errors
-# ---------- pass_to_pass: static checks ----------
 - id: syntax_valid
   type: pass_to_pass
   origin: static
@@ -47,19 +45,21 @@ checks:
   type: pass_to_pass
   origin: static
   description: pr-status.js file exists
-# ---------- fail_to_pass ----------
 - id: reply_and_resolve_subcommand_exists
   type: fail_to_pass
   origin: pr_diff
-  description: reply-and-resolve-thread subcommand is handled in main() and shows usage on missing args
+  description: reply-and-resolve-thread subcommand is handled in main() and shows
+    usage on missing args
 - id: reply_to_thread_uses_rest_api
   type: fail_to_pass
   origin: pr_diff
-  description: replyToThread uses REST /comments/<id>/replies endpoint, not GraphQL mutation
+  description: replyToThread uses REST /comments/<id>/replies endpoint, not GraphQL
+    mutation
 - id: generate_thread_md_includes_combined
   type: fail_to_pass
   origin: pr_diff
-  description: generateThreadMd includes the reply-and-resolve one-step command in thread MD files
+  description: generateThreadMd includes the reply-and-resolve one-step command in
+    thread MD files
 - id: reply_to_thread_logs_html_url
   type: fail_to_pass
   origin: pr_diff
@@ -67,7 +67,8 @@ checks:
 - id: skill_md_documents_combined_command
   type: fail_to_pass
   origin: pr_diff
-  description: SKILL.md updated with Thread interaction section and reply-and-resolve-thread command
+  description: SKILL.md updated with Thread interaction section and reply-and-resolve-thread
+    command
 - id: skill_md_workflow_step_updated
   type: fail_to_pass
   origin: pr_diff
@@ -77,38 +78,78 @@ checks:
   origin: pr_diff
   description: workflow.md shows the one-step reply-and-resolve alternative
 rubric:
-- rule: Documentation updates are consistent with the existing style in SKILL.md and workflow.md
+- rule: Documentation updates are consistent with the existing style in SKILL.md and
+    workflow.md
   source:
     path: .agents/skills/pr-status-triage/SKILL.md
-    lines: "31-38"
+    lines: 31-38
     commit: fea754747872122d167dd8bf1fc5581044e50521
-- rule: When modifying skill documentation, update both SKILL.md (quick commands reference) and workflow.md (detailed procedures) consistently
+- rule: When modifying skill documentation, update both SKILL.md (quick commands reference)
+    and workflow.md (detailed procedures) consistently
   source:
     path: .agents/skills/authoring-skills/SKILL.md
-    lines: "106-113"
+    lines: 106-113
     commit: fea754747872122d167dd8bf1fc5581044e50521
-- rule: When adding a new CLI subcommand for skill tools, the documentation must include ready-to-use command templates with correct arguments in SKILL.md quick commands section
+- rule: When adding a new CLI subcommand for skill tools, the documentation must include
+    ready-to-use command templates with correct arguments in SKILL.md quick commands
+    section
   source:
     path: .agents/skills/authoring-skills/SKILL.md
-    lines: "79-86"
+    lines: 79-86
     commit: fea754747872122d167dd8bf1fc5581044e50521
-- rule: GitHub API calls in scripts should prefer REST endpoints over GraphQL mutations when the REST endpoint has more predictable behavior (e.g. always publishes immediately vs attaching to pending reviews)
+- rule: GitHub API calls in scripts should prefer REST endpoints over GraphQL mutations
+    when the REST endpoint has more predictable behavior (e.g. always publishes immediately
+    vs attaching to pending reviews)
   source:
     path: .agents/skills/pr-status-triage/SKILL.md
-    lines: "6-7"
+    lines: 6-7
     commit: fea754747872122d167dd8bf1fc5581044e50521
+- rule: Build and maintenance scripts are located in the `scripts/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 14-23
+  evidence: The gold solution modifies `scripts/pr-status.js` to add the new command,
+    aligning with the documented codebase structure that designates the `scripts/`
+    directory for maintenance scripts.
+  category: architecture
 config_edits:
 - path: .agents/skills/pr-status-triage/SKILL.md
   tier: 1
-  gold_added: |
-    6. After addressing review comments, reply to the thread describing what was done, then resolve it. Use `reply-and-resolve-thread` to do both in one step, or use `reply-thread` + `resolve-thread` separately. See `thread-N.md` files for ready-to-use commands.
+  gold_added: "6. After addressing review comments, reply to the thread describing\
+    \ what was done, then resolve it. Use `reply-and-resolve-thread` to do both in\
+    \ one step, or use `reply-thread` + `resolve-thread` separately. See `thread-N.md`\
+    \ files for ready-to-use commands.\n\n  Thread interaction:\n\n  ```bash\n  node\
+    \ scripts/pr-status.js reply-thread <threadNodeId> \"<body>\"           # reply\
+    \ to a review thread\n  node scripts/pr-status.js resolve-thread <threadNodeId>\
+    \                  # resolve a review thread\n  node scripts/pr-status.js reply-and-resolve-thread\
+    \ <threadNodeId> \"<body>\"  # reply and resolve in one step\n  ```\n"
+  gold_removed: '6. After addressing review comments, reply to the thread describing
+    what was done, then resolve it. See `thread-N.md` files for ready-to-use commands.
 
-      Thread interaction:
-
-      ```bash
-      node scripts/pr-status.js reply-thread <threadNodeId> "<body>"           # reply to a review thread
-      node scripts/pr-status.js resolve-thread <threadNodeId>                  # resolve a review thread
-      node scripts/pr-status.js reply-and-resolve-thread <threadNodeId> "<body>"  # reply and resolve in one step
-      ```
-  gold_removed: |
-    6. After addressing review comments, reply to the thread describing what was done, then resolve it. See `thread-N.md` files for ready-to-use commands.
+    '
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits to Next.js source or integration tests.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` when changing
+    Next.js source. An agent might misinterpret `scripts/pr-status.js` as Next.js
+    source and start the dev server, which is unnecessary for a standalone maintenance
+    script and wastes time.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 68-70
+- rule: Use full `pnpm build-all` before CI push or when changes span multiple packages.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests running `pnpm build-all` when changes span multiple
+    packages. An agent might trigger a full build after modifying the script and markdown
+    files, which is completely unnecessary since these files are not part of the compiled
+    Next.js output.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 86-88
+hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
+  at the root level. The rules are heavily focused on the core Next.js framework development
+  (e.g., `packages/next/src/`), which creates scope ambiguity when agents work on
+  standalone maintenance scripts in the `scripts/` directory or agent skill documentation.

@@ -72,6 +72,27 @@ rubric:
     path: AGENTS.md
     lines: 33-35
     commit: 77567b453e4de0b2706cc9fa68c8f5d14e5361b3
+- rule: Use native fields and `#private` for private members in classes
+  source:
+    path: AGENTS.md
+    lines: 27-27
+  evidence: The `PartPattern` class uses `#regexp` for its private regular expression
+    cache instead of the TypeScript `private` keyword.
+  category: style
+- rule: Prefer `let` for local variables, never use `var`
+  source:
+    path: AGENTS.md
+    lines: 24-24
+  evidence: Local variables in `PartPattern.parse` and the `params` getter are declared
+    with `let` (e.g., `let result = []`, `let span = ...`, `let tokens = []`).
+  category: style
+- rule: Include `.ts` extensions in import paths
+  source:
+    path: AGENTS.md
+    lines: 23-23
+  evidence: The new imports added to `part-pattern.ts` include the `.ts` extension
+    (`import { ParseError } from './parse.ts'`).
+  category: style
 config_edits:
 - path: packages/route-pattern/src/lib/route-pattern/AGENTS.md
   tier: 1
@@ -83,3 +104,38 @@ config_edits:
     \ URL matching\n  - [`parse.ts`](./parse.ts): Parsing patterns\n  - [`serialize.ts`](./serialize.ts):\
     \ Serializing to strings\n  - [`split.ts`](./split.ts): Splitting source strings"
   gold_removed: ''
+distractors:
+- rule: Always use `import type { X }` for types (separate from value imports)
+  collision_type: rule_conflict
+  why_distracting: The gold solution uses inline type imports (`import { HrefError,
+    type HrefParams } from './href.ts'`). An agent strictly following the rule to
+    separate type imports would split this into two separate import statements, which
+    deviates from the gold solution's approach.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 23-23
+- rule: Use regular function declarations/expressions by default, not arrow functions
+  collision_type: rule_conflict
+  why_distracting: 'The gold solution uses an arrow function for the local helper
+    `let appendText = (text: string) => { ... }` inside `PartPattern.parse`. An agent
+    following this rule would use a regular function declaration `function appendText(text:
+    string) { ... }`, causing a diff mismatch.'
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 25-25
+- rule: Create changeset files for changes
+  collision_type: scope_ambiguity
+  why_distracting: The instructions ask for a specific refactoring but do not mention
+    creating a changeset. An agent might create a `.changes/` file, which could cause
+    the evaluation to fail if it strictly checks for modified files.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-45
+hierarchy_analysis: The gold solution adds a new `AGENTS.md` file in `packages/route-pattern/src/lib/route-pattern/`
+  to document the new organization strategy ('Organize by feature (not by pattern
+  part)'). This shows that the agent is expected to not only refactor the code but
+  also update the local documentation to reflect the new architectural boundaries,
+  establishing a new leaf-level rule that overrides the previous implicit organization.

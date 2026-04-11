@@ -12,7 +12,8 @@ checks:
 - id: markdown_table_formatting
   type: pass_to_pass
   origin: static
-  description: SKILL.md files use proper markdown table formatting with spaces around separators
+  description: SKILL.md files use proper markdown table formatting with spaces around
+    separators
 - id: vue_svelte_test_specs_exist
   type: pass_to_pass
   origin: static
@@ -66,6 +67,15 @@ rubric:
     path: AGENTS.md
     lines: 350-370
     commit: c047e86583434beb33ed4fb0b49e627d26a8afbd
+- rule: Maintain and update agent guidelines with relevant technical patterns and
+    lessons learned.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+  evidence: The gold solution updates AGENTS.md to include new guidance relevant to
+    working with directives, embedded languages, and AST inspection, aligning with
+    the file's stated purpose of providing guidance s
+  category: documentation
 config_edits:
 - path: .claude/skills/README.md
   tier: 2
@@ -79,16 +89,54 @@ config_edits:
 - path: .claude/skills/biome-developer/SKILL.md
   tier: 1
   gold_added: 'Frontmatter with name: biome-developer, description, Common Gotchas,
-    String Extraction methods, Embedded Languages, Borrow Checker tips, Clippy
-    tips, Legacy Syntax guidance, Testing guidance, Table formatting guidance'
+    String Extraction methods, Embedded Languages, Borrow Checker tips, Clippy tips,
+    Legacy Syntax guidance, Testing guidance, Table formatting guidance'
   gold_removed: ''
 - path: .claude/skills/testing-codegen/SKILL.md
   tier: 1
-  gold_added: 'Parser Development section with quick_test example, just qt command,
-    biome_html_parser reference'
+  gold_added: Parser Development section with quick_test example, just qt command,
+    biome_html_parser reference
   gold_removed: ''
 - path: AGENTS.md
   tier: 1
-  gold_added: 'New do/don''t rules about widely used patterns, legacy syntax, AST
-    inspection, quick_test usage, skills reference'
+  gold_added: New do/don't rules about widely used patterns, legacy syntax, AST inspection,
+    quick_test usage, skills reference
   gold_removed: ''
+distractors:
+- rule: Before opening a PR, you MUST verify if a changeset is needed. If YES -> Changeset
+    is REQUIRED.
+  collision_type: scope_ambiguity
+  why_distracting: The rule strongly mandates creating a changeset for user-facing
+    changes (like bug fixes affecting behavior). However, the gold solution does not
+    create a changeset file. An agent following this rule would create an unnecessary
+    `.changeset/*.md` file, which is out of scope for this specific code-generation
+    task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 45-65
+- rule: 'Writing the PR Description: Use concise, precise wording... Start with GitHub''s
+    magic comment to auto-close the issue.'
+  collision_type: meta_confusion
+  why_distracting: The rule provides detailed instructions on writing PR descriptions
+    and using magic comments to close issues. The agent might try to create a PR description
+    file or modify the PR template, which is unnecessary and out of scope for the
+    code generation task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 13-40
+- rule: If you relied on AI assistance to make a pull request, you must disclose it
+    in the pull request.
+  collision_type: meta_confusion
+  why_distracting: The rule requires disclosing AI assistance in the pull request.
+    The agent might try to add a disclosure to a PR description file or commit message,
+    but there is no PR being opened in the context of this script.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 25-35
+hierarchy_analysis: The config hierarchy consists of CLAUDE.md and AGENTS.md at the
+  root level. Both files provide high-level contribution guidelines, but they heavily
+  focus on the PR process (changesets, PR descriptions, AI disclosure). For a code-generation
+  task that does not involve opening a PR, these PR-specific rules act as distractors.

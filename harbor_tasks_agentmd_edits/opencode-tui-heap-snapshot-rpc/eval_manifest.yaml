@@ -74,6 +74,22 @@ rubric:
     path: .opencode/command/changelog.md
     lines: 1-5
     commit: 1398674e531acc845e062b219f718cac1cd89a44
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 60-67
+  evidence: In `packages/opencode/src/cli/cmd/tui/app.tsx`, the `App` component is
+    updated to accept a `props` object and accesses `props.onSnapshot` using dot notation
+    rather than destructuring the props.
+  category: style
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 26-44
+  evidence: In `packages/opencode/src/cli/cmd/tui/thread.ts`, the variables storing
+    the snapshot file paths are named `tui` and `server` instead of multi-word names
+    like `tuiSnapshotPath` or `serverPath`.
+  category: naming
 config_edits:
 - path: .opencode/command/changelog.md
   tier: 2
@@ -114,3 +130,29 @@ config_edits:
 
     once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better
     readability. make sure all PR references are preserved'
+distractors:
+- rule: Use Effect.gen(function* () { ... }) for composition.
+  collision_type: architecture_boundary
+  why_distracting: The TUI worker and thread use standard Promises and async/await
+    for RPC, not the Effect framework. Trying to use `Effect.gen` or `Effect.fn` here
+    would cross an architecture boundary and break the existing RPC mechanism.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-21
+- rule: Use Bun APIs when possible, like Bun.file()
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to use Bun APIs to write the heap snapshot,
+    but `writeHeapSnapshot` is a specific `node:v8` function that handles the serialization
+    internally. Trying to use `Bun.write` or similar would not work for capturing
+    a V8 heap snapshot.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 15-15
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and style guidelines,
+  while `packages/opencode/AGENTS.md` introduces Effect-specific rules. The TUI subsystem
+  being modified predates or does not use the Effect framework, so the Effect rules
+  in the package-level config act as a distractor. The agent must recognize the architectural
+  boundary of the TUI and stick to standard async/await and React patterns, while
+  still applying the root-level naming and style rules.

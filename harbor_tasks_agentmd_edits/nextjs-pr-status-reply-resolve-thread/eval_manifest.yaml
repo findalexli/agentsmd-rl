@@ -54,6 +54,14 @@ rubric:
     path: .agents/skills/pr-status-triage/SKILL.md
     lines: 25-32
     commit: fea754747872122d167dd8bf1fc5581044e50521
+- rule: Build and maintenance scripts belong in the `scripts/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 16-24
+  evidence: The gold solution modifies the existing `scripts/pr-status.js` file to
+    add the new command, adhering to the codebase structure that designates the `scripts/`
+    directory for maintenance scripts rather t
+  category: architecture
 config_edits:
 - path: .agents/skills/pr-status-triage/SKILL.md
   tier: 1
@@ -79,3 +87,31 @@ config_edits:
     ```'
   gold_removed: 6. After addressing review comments, reply to the thread describing
     what was done, then resolve it. See `thread-N.md` files for ready-to-use commands.
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits to Next.js source or integration tests.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires starting `pnpm --filter=next dev` when changing
+    Next.js source or integration tests. An agent might mistakenly classify `scripts/pr-status.js`
+    as Next.js source and start the dev server, wasting time and resources for a standalone
+    script that does not require the framework dev server.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 60-65
+- rule: Use full `pnpm build-all` when changes span multiple packages.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests using `pnpm build-all` when changes span multiple
+    packages. An agent might interpret changes to `scripts/` and `.agents/` as spanning
+    multiple packages and trigger a full build, which is entirely unnecessary for
+    a standalone Node script and markdown documentation files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 80-85
+hierarchy_analysis: The `CLAUDE.md` and `AGENTS.md` files are identical symlinks providing
+  general Next.js framework development guidelines. However, the task involves modifying
+  a standalone maintenance script (`scripts/pr-status.js`) and agent skill documentation
+  (`.agents/skills/pr-status-triage/`). The core framework build and dev server rules
+  in `CLAUDE.md` do not apply to these files, creating scope ambiguity where an agent
+  might unnecessarily invoke heavy build commands.

@@ -77,6 +77,14 @@ rubric:
     \ colors)\n- Updated README and Flatpak metainfo to reference the launched \"\
     Meet Lotti\" blog series\n\n### Added\n- Tests for due date visibility behavior\
     \ based on task status"
+- rule: Update docs and localization as needed
+  source:
+    path: AGENTS.md
+    lines: 33-34
+  evidence: 'The gold solution updates `README.md` and `flatpak/com.matthiasn.lotti.metainfo.xml`
+    to reflect the live status of the ''Meet Lotti'' blog series, aligning with the
+    requirement to keep documentation up '
+  category: documentation
 config_edits:
 - path: CHANGELOG.md
   tier: 2
@@ -107,3 +115,29 @@ config_edits:
 
     Read more on [**Substack**](https://matthiasnehlsen.substack.com) | [**Project
     Background**](docs/BACKGROUND.md)'
+distractors:
+- rule: Update docs and localization as needed (run `make l10n`)
+  collision_type: scope_ambiguity
+  why_distracting: The rule mentions running `make l10n` alongside updating docs.
+    An agent might try to update `.arb` files or run localization generation because
+    it updated the README and metainfo, but these are external metadata files, not
+    app UI strings that require localization updates.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 34-34
+- rule: run `dart-mcp.pub` + `make build_runner` (or `dart run build_runner`) via
+    MCP when regeneration is required
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `make build_runner` assuming the changes to
+    task status handling in the UI require regenerating freezed models, wasting time
+    and potentially causing unrelated diffs, even though no data models were actually
+    changed.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 60-60
+hierarchy_analysis: The repository relies on a single `AGENTS.md` file at the root
+  level. The rules are straightforward, but the grouping of documentation and localization
+  updates in a single bullet point creates a potential trap where updating one might
+  incorrectly imply the need to update the other.

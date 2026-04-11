@@ -95,6 +95,15 @@ rubric:
     path: .agent/skills/pr_review/reference/router.md
     lines: 1-7
     commit: 2e3492464769b468b7471ee0b7d17a56f253344b
+- rule: Reference Coding Standards and Commit Guidelines for code style and commit
+    messages.
+  source:
+    path: AGENTS.md
+    lines: 11-14
+  evidence: The gold solution's SKILL.md explicitly includes review criteria for 'Commit
+    Messages' and 'Code Cleanliness' (following Angular's project standards), which
+    directly maps to the Key Documentation rule
+  category: documentation
 config_edits:
 - path: .agent/skills/pr_review/SKILL.md
   tier: 1
@@ -147,3 +156,43 @@ config_edits:
     Consider whether the change is proven to be a core developer ask, such as resolving
     a highly upvoted GitHub issue or addressing a critical bug.'
   gold_removed: ''
+distractors:
+- rule: Use `pnpm bazel test //target` to run tests.
+  collision_type: meta_confusion
+  why_distracting: 'The rule instructs to use `pnpm bazel test //target` to run tests.
+    An agent might include this instruction in the PR review skill or attempt to run
+    tests locally to verify the PR. However, the gold solution explicitly dictates:
+    ''Do NOT run tests locally as part of your review process. CI handles this automatically''.'
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 9-10
+- rule: Use the `gh` CLI (GitHub CLI) for creating and managing pull requests.
+  collision_type: scope_ambiguity
+  why_distracting: The rule says to use the `gh` CLI for managing pull requests. An
+    agent might instruct the reviewer to use `gh` CLI for reviewing, or try to use
+    it directly. However, the prompt requires creating custom helper bash scripts
+    under `scripts/` for PR review operations (fetching, staging, replying) and the
+    gold solution directs users to use 'GitHub MCP or available scripts'.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 29-30
+- rule: 'Testing: Zoneless & Async-First. Do NOT use fixture.detectChanges(). ALWAYS
+    use the ''Act, Wait, Assert'' pattern.'
+  collision_type: meta_confusion
+  why_distracting: The rule provides detailed instructions for writing Zoneless &
+    Async-First tests (e.g., using `fixture.whenStable()`, `useAutoTick()`). An agent
+    might copy these specific testing implementation details into the general PR review
+    SKILL.md. However, the PR review skill is meant to be high-level guidelines, and
+    implementation-specific details are too granular for the general review checklist.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 16-27
+hierarchy_analysis: 'The configuration consists of a single root file (`AGENTS.md`).
+  The primary challenge is meta-level: the agent is tasked with writing a guide (a
+  skill) for *other* agents. It must distinguish between rules that apply to its own
+  behavior (e.g., how to write the bash script) and rules that should be embedded
+  into the skill it is generating. The testing rules in `AGENTS.md` apply to writing
+  tests, not to reviewing PRs (where CI handles tests).'

@@ -57,12 +57,28 @@ rubric:
     path: compiler/CLAUDE.md
     lines: 21-35
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
-- rule: CLAUDE.md documentation documents compiler project structure and key concepts (HIR,
-    fixtures)
+- rule: CLAUDE.md documentation documents compiler project structure and key concepts
+    (HIR, fixtures)
   source:
     path: compiler/CLAUDE.md
     lines: 1-20
     commit: 03613cd68c9e1d7ec5cb1eceb91f27f1935a7b8b
+- rule: Document how to run tests using the snap CLI with the new flags.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 14-32
+  evidence: The gold solution creates the CLAUDE.md file with a 'Running Tests' section
+    that explicitly documents the `yarn snap` commands with the `-p`, `-d`, and `-u`
+    flags as requested.
+  category: documentation
+- rule: Document key concepts like HIR, AliasingEffects, and the compilation pipeline.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 57-94
+  evidence: The gold solution includes detailed sections on 'HIR (High-level Intermediate
+    Representation)' and the 'AliasingEffects System' in the CLAUDE.md file to fulfill
+    the knowledge base requirements.
+  category: documentation
 config_edits:
 - path: compiler/CLAUDE.md
   tier: 1
@@ -77,10 +93,10 @@ config_edits:
     \ - Test fixtures\n    - `error.todo-*.js` - Unsupported feature, correctly throws\
     \ Todo error (graceful bailout)\n    - `error.bug-*.js` - Known bug, throws wrong\
     \ error type or incorrect behavior\n    - `*.expect.md` - Expected output for\
-    \ each fixture\n\n## Running Tests\n\n```bash\n# Run all tests\nyarn snap\n\
-    \n# Run tests matching a pattern\n# Example: yarn snap -p 'error.*'\nyarn snap -p\
-    \ <pattern>\n\n# Run a single fixture in debug mode. Use the path relative to the\
-    \ __tests__/fixtures/compiler directory\n# For each step of compilation, outputs\
+    \ each fixture\n\n## Running Tests\n\n```bash\n# Run all tests\nyarn snap\n\n\
+    # Run tests matching a pattern\n# Example: yarn snap -p 'error.*'\nyarn snap -p\
+    \ <pattern>\n\n# Run a single fixture in debug mode. Use the path relative to\
+    \ the __tests__/fixtures/compiler directory\n# For each step of compilation, outputs\
     \ the step name and state of the compiled program\n# Example: yarn snap -p simple.js\
     \ -d\nyarn snap -p <file-basename> -d\n\n# Update fixture outputs (also works\
     \ with -p)\nyarn snap -u\n```\n\n## Version Control\n\nThis repository uses Sapling\
@@ -98,10 +114,41 @@ config_edits:
     \ when called\n\n- **Instruction** - A single operation\n  - `lvalue` - The place\
     \ being assigned to\n  - `value` - The instruction kind (CallExpression, FunctionExpression,\
     \ LoadLocal, etc.)\n  - `effects` - Array of AliasingEffects for this instruction\n\
-    \ \n- **Terminal** - Block terminators (return, branch, etc.)\n  - `effects` - Array\
-    \ of AliasingEffects\n\n- **Place** - A reference to a value\n  - `identifier.id`\
+    \ \n- **Terminal** - Block terminators (return, branch, etc.)\n  - `effects` -\
+    \ Array of AliasingEffects\n\n- **Place** - A reference to a value\n  - `identifier.id`\
     \ - Unique IdentifierId\n\n- **Phi nodes** - Join points for values from different\
     \ control flow paths\n  - Located at `block.phis`\n  - `phi.place` - The result\
     \ place\n  - `phi.operands` - Map of predecessor block to source place\n\n###\
-    \ AliasingEffects System\n\nEffects describe data flow and operations. Defined\n    \ in `src/Inference/AliasingEffects"
+    \ AliasingEffects System\n\nEffects describe data flow and operations. Defined\n\
+    \     in `src/Inference/AliasingEffects"
   gold_removed: ''
+distractors:
+- rule: Use Sapling (`sl`) for version control, including commands like `sl status`,
+    `sl addremove`, and `sl commit`.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to execute Sapling (`sl`) commands to commit
+    its changes or check status during the task. This is unnecessary for completing
+    the code modifications and will likely fail if `sl` is not installed in the evaluation
+    environment, causing the agent to waste time troubleshooting version control instead
+    of writing code.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 34-55
+- rule: The compiler converts source code to HIR for analysis, with specific types
+    and effects defined in `src/HIR/HIR.ts` and `src/Inference/AliasingEffects.ts`.
+  collision_type: architecture_boundary
+  why_distracting: The task is strictly about improving the CLI test runner (`packages/snap`)
+    by adding flags and interactive prompts. The detailed documentation of compiler
+    internals (HIR and AliasingEffects) might mislead the agent into thinking it needs
+    to modify the compiler's core logic or how debug information is generated, rather
+    than just passing a boolean flag to the existing runner.
+  severity: high
+  source:
+    path: compiler/CLAUDE.md
+    lines: 57-94
+hierarchy_analysis: The only config file provided is `compiler/CLAUDE.md`, which is
+  actually created by the gold solution itself as part of the task requirements. The
+  rules within it serve as documentation for the repository but act as distractors
+  for an agent that reads it during the task, as it introduces out-of-scope concepts
+  (Sapling, compiler internals).

@@ -92,6 +92,14 @@ rubric:
     lines: 68-75
     commit: 915dc42e42b4b3bf1a5350090469eb77470adb91
 - rule: Running with no arguments prints usage and exits non-zero
+- rule: Use `goimports` with the `-local` parameter to format Go files and sort imports.
+  source:
+    path: CLAUDE.md
+    lines: 32-33
+  evidence: The generated SKILL.md explicitly instructs the user/agent to run `goimports
+    -local <module_path> -w` to fix imports after splitting files, adhering to the
+    project's tooling choice.
+  category: tooling
 config_edits:
 - path: .claude/skills/split-file/SKILL.md
   tier: 1
@@ -145,28 +153,61 @@ config_edits:
 
     ```bash
 
-    # 1. Create temp branch from current branch
-    git checkout -b temp-split-SUFFIX $CURRENT_BRANCH
+    # 1. Create temp branch from current branch git checkout -b temp-split-SUFFIX
+    $CURRENT_BRANCH
 
 
-    # 2. Rename original to new filename
-    git mv path/to/original.go path/to/new_file.go
+    # 2. Rename original to new filename git mv path/to/original.go path/to/new_file.go
     git commit -m "temp: rename original.go to new_file.go"
 
 
-    # 3. Go back to working branch
-    git checkout $CURRENT_BRANCH
+    # 3. Go back to working branch git checkout $CURRENT_BRANCH
 
 
-    # 4. Rename original to a temp name (creates rename/rename conflict)
-    git mv path/to/original.go path/to/original_main_temp.go
-    git commit -m "temp: rename original.go to original_main_temp.go"
+    # 4. Rename original to a temp name (creates rename/rename conflict) git mv path/to/original.go
+    path/to/original_main_temp.go git commit -m "temp: rename original.go to original_main_temp.go"
 
 
-    # 5. Merge — this triggers a CONFLICT (rename/rename), which is what we want
-    git merge temp-split-SUFFIX --no-commit
-    git checkout --ours path/to/original_main_temp.go
-    git checkout --theirs path/to/new_file.go
-    git add path/to/original_main_temp.go path/to/new_file.go
-    git rm --cached path/to/original.go 2>/d'
+    # 5. Merge — this triggers a CONFLICT (rename/rename), which is what we want git
+    merge temp-split-SUFFIX --no-commit git checkout --ours path/to/original_main_temp.go
+    git checkout --theirs path/to/new_file.go git add path/to/original_main_temp.go
+    path/to/new_file.go git rm --cached path/to/original.go 2>/d'
   gold_removed: ''
+distractors:
+- rule: Include a CHANGELOG message if users of Grafana Mimir need to hear about what
+    you did.
+  collision_type: scope_ambiguity
+  why_distracting: The task is to add an internal developer tool (Claude skill) that
+    does not affect end users of Grafana Mimir. Adding a CHANGELOG entry would be
+    inappropriate and pollute the user-facing changelog.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '20'
+- rule: If you have made any changes to flags or config, run `make reference-help
+    doc` and commit the changed files to update the config file documentation.
+  collision_type: scope_ambiguity
+  why_distracting: The agent is creating a new CLI tool (`tools/split-file-verify/`)
+    which takes arguments, but this rule applies to the main Grafana Mimir server
+    flags/config. Running `make reference-help doc` for an internal tool's arguments
+    would be incorrect and likely fail or pollute the main docs.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '21'
+- rule: Have unit and/or integration tests for new functionality or tests that would
+    have caught the bug being fixed.
+  collision_type: meta_confusion
+  why_distracting: While the CLI tool might be testable, the primary deliverable is
+    a Claude Code skill (Markdown file) which cannot be unit tested. An agent might
+    waste time trying to write tests for the SKILL.md or over-engineer tests for a
+    simple AST verification script.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '19'
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
+  rules are geared towards main application development (Mimir server) rather than
+  internal developer tooling or AI agent skills. Agents must discern that rules regarding
+  CHANGELOGs, flag documentation (`make reference-help doc`), and testing apply to
+  the core product, not to `.claude/skills` or isolated scripts in `tools/`.

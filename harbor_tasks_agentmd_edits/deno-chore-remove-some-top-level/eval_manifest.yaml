@@ -74,6 +74,15 @@ rubric:
     path: CLAUDE.md
     lines: 1-50
     commit: 0b38d25ba7c1893757e15fbb2a68537b0191321f
+- rule: The user visible interface and high level integration is in the `deno` crate
+    (located in `./cli`).
+  source:
+    path: CLAUDE.md
+    lines: 16-17
+  evidence: The gold solution moves the `tsgo.md` documentation (which discusses the
+    CLI's tsc backend abstraction and typescript-go integration) into `cli/tsc/README.md`,
+    aligning with the rule that high-level i
+  category: architecture
 config_edits:
 - path: cli/tsc/README.md
   tier: 2
@@ -105,3 +114,39 @@ config_edits:
     \  a file is esm/cjs, etc.\n- Additional APIs exposed from the IPC server\n- Support\
     \ for deno's custom libs (`deno.window`, `deno.worker`, etc)"
   gold_removed: ''
+distractors:
+- rule: Integration tests (`cli/tests/`) - Additional integration tests
+  collision_type: scope_ambiguity
+  why_distracting: The rule mentions `cli/tests/` for integration tests. An agent
+    might try to move `bench_util` to `cli/tests/bench_util/` instead of the requested
+    `tests/bench_util/` at the repository root.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '103'
+- rule: Unit tests - Inline with source code in each module
+  collision_type: architecture_boundary
+  why_distracting: The rule states that unit tests should be inline with source code.
+    An agent might misinterpret this to mean that test utilities like `bench_util`
+    should be broken up and inlined into the modules that benchmark them, rather than
+    moved as a standalone directory to `tests/bench_util/`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '102'
+- rule: The name of the test comes from the directory the `__test__.jsonc` appears
+    in.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that the name of the test comes from the directory
+    the `__test__.jsonc` appears in. An agent might think that moving `bench_util`
+    into `tests/` requires adding a `__test__.jsonc` file to make it a valid test
+    directory, which would be incorrect for a utility crate.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '113'
+hierarchy_analysis: The `CLAUDE.md` file provides high-level architectural guidelines
+  and testing conventions. The instructions explicitly override some of the general
+  testing directory structures by specifying exact paths (e.g., `tests/bench_util/`).
+  Agents must prioritize the explicit PR instructions over the general test organization
+  rules in `CLAUDE.md` to avoid placing files in the wrong test directories.

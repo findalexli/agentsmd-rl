@@ -54,13 +54,13 @@ checks:
   origin: repo_tests
   description: No MLflow typos in .claude directory
 rubric:
-- rule: The approve.sh script should follow the same patterns as the existing poll.sh
-    script (set -euo pipefail, gh CLI usage, error handling style)
+- rule: Only add comments that explain non-obvious logic or provide additional context
   source:
-    path: .claude/skills/copilot/SKILL.md
-- rule: The approve.sh script should use gh CLI for GitHub API operations
-  source:
-    path: .claude/skills/copilot/SKILL.md
+    path: CLAUDE.md
+    lines: 13-14
+  category: documentation
+  evidence: 'The approve.sh script includes a comment explaining the non-obvious workaround:
+    "The /approve API fails with ''not a fork pull request''. Use /rerun instead."'
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -78,3 +78,28 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: Start the Full Development Environment (Recommended)
+  source:
+    path: CLAUDE.md
+    lines: 28-35
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to start the MLflow dev server to test its
+    changes, but this task is purely about creating a standalone bash script for GitHub
+    API interactions. Starting the dev server would waste time and resources.
+  severity: medium
+- rule: Testing (uv run pytest tests/)
+  source:
+    path: CLAUDE.md
+    lines: 74-85
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to write Python tests using pytest for
+    the new bash script, which is outside the scope of the task and the established
+    pattern for these Claude skill scripts.
+  severity: medium
+hierarchy_analysis: The repository has a single root-level CLAUDE.md file that is
+  heavily focused on Python development, MLflow architecture, and local dev servers.
+  Since this task involves writing a bash script for GitHub API interactions within
+  the `.claude/skills` directory, most of the root config is irrelevant. The agent
+  must rely primarily on the explicit task instructions and the patterns established
+  in the sibling `poll.sh` file rather than the Python-centric repository guidelines.

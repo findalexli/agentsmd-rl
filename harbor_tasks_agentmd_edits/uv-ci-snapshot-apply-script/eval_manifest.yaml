@@ -123,6 +123,14 @@ rubric:
     ./scripts/apply-ci-snapshots.sh
 
     ```'
+- rule: Read CONTRIBUTING.md for guidelines on how to run tools
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+  evidence: The gold solution updates `CONTRIBUTING.md` to include usage instructions
+    for the new `./scripts/apply-ci-snapshots.sh` script, ensuring the file remains
+    the central source of truth for how to run pro
+  category: documentation
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -139,3 +147,27 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The PR involves adding a developer utility bash script and modifying
+    GitHub Actions CI workflows. Attempting to write automated tests for these infrastructure/tooling
+    changes is out of scope and would lead to wasted effort.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+- rule: When making changes for Windows from Unix, use `cargo xwin clippy` to check
+    compilation
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies the Windows CI job in `.github/workflows/test.yml`
+    to upload artifacts, but does not modify any Rust source code. Running `cargo
+    xwin clippy` is unnecessary and irrelevant for YAML workflow changes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 5-5
+hierarchy_analysis: Only one config file (`CLAUDE.md`) is present. The rules are heavily
+  skewed towards Rust development, which creates scope ambiguity when the task involves
+  CI infrastructure (YAML) and shell scripting. The agent must recognize that Rust-specific
+  testing and compilation rules do not apply to these file types.

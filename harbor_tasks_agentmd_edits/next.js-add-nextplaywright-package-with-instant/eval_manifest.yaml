@@ -76,6 +76,24 @@ rubric:
     path: CLAUDE.md
     lines: 28-36
     commit: 0f851c5ecd1872a209595770c5fe8b2b24274715
+- rule: Package source code belongs in a `src/` directory and compiled output belongs
+    in a `dist/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 22-29
+  evidence: The gold solution places the TypeScript source in `packages/next-playwright/src/`
+    and configures the compiled output to go to `packages/next-playwright/dist/` in
+    the tsconfig.json and package.json, ma
+  category: architecture
+- rule: Subdirectories in `packages/*` should have `README.md` files to document local
+    patterns, conventions, and APIs.
+  source:
+    path: CLAUDE.md
+    lines: 43-48
+  evidence: The gold solution creates a `README.md` in the new `packages/next-playwright/`
+    directory to document the package's API and behavior, supporting the monorepo's
+    convention of using READMEs for local doc
+  category: documentation
 config_edits:
 - path: packages/next-playwright/README.md
   tier: 2
@@ -106,3 +124,29 @@ config_edits:
     \ to profile instantly', async ({ page }) => {\n  await page.goto('/')\n\n  await\
     \ instant(page, async () => {\n    await page.click('a[href=\"/profile\""
   gold_removed: ''
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might start the Next.js dev server (`pnpm --filter=next
+    dev`) as instructed for 'changing Next.js source', but this task creates a standalone
+    testing utility package where the Next.js dev server is unnecessary overhead.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 62-64
+- rule: Always run a full bootstrap build after switching branches.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run a full bootstrap build (`pnpm build`) after
+    creating the package, which takes significant time and isn't strictly required
+    just to author the package files and update the tsconfig paths.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 84-87
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical symlinks providing
+  root-level monorepo guidance. The instructions focus heavily on the core `packages/next`
+  workflow (dev server, fast tests, builds). When creating a new, standalone package
+  like `@next/playwright`, agents must selectively apply structural conventions (`src/`,
+  `dist/`, `README.md`) while ignoring core-specific workflow commands that don''t
+  apply to isolated tooling packages.'

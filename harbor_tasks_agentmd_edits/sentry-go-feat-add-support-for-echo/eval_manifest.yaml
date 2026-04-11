@@ -86,6 +86,23 @@ rubric:
     \napp.GET(\"/\", func(ctx *echo.Context) error {\n\treturn func(ctx *echo.Context\
     \ error {\napp.GET(\"/\", func(ctx *echo.Context) error {\napp.GET(\"/foo\", func(ctx\\\
     n *echo.Context) error {"
+- rule: 'Integration Sub-Modules: Each lives in its own directory with a separate
+    `go.mod`'
+  source:
+    path: CLAUDE.md
+    lines: 34-38
+  evidence: The gold solution correctly scopes all changes to the echo/ directory,
+    treating it as a standalone integration sub-module and updating its specific go.mod
+    and files.
+  category: architecture
+- rule: '`gofmt -s` formatting, doc comments on exports'
+  source:
+    path: CLAUDE.md
+    lines: '62'
+  evidence: The gold solution updates the doc comments for constants (valuesKey, transactionKey,
+    errorKey) in echo/sentryecho.go to accurately reflect the new *echo.Context pointer
+    type.
+  category: documentation
 config_edits:
 - path: echo/README.md
   tier: 2
@@ -97,3 +114,35 @@ config_edits:
     \napp.GET(\"/\", func(ctx echo.Context) error {\n\treturn func(ctx echo.Context)\
     \ error {\napp.GET(\"/\", func(ctx echo.Context) error {\napp.GET(\"/foo\", func(ctx\
     \ echo.Context) error {"
+distractors:
+- rule: Maintain existing Go versions and dependencies unless explicitly asked to
+    change them
+  collision_type: rule_conflict
+  why_distracting: The agent might hesitate to update the echo dependency to v5 or
+    the Go version to 1.25+ because of the instruction to maintain existing dependencies,
+    potentially missing the 'unless explicitly asked' exception.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: '61'
+- rule: When adding a new integration, mirror an existing one.
+  collision_type: architecture_boundary
+  why_distracting: Because Echo v5 introduces breaking changes, an agent might decide
+    to create a new echov5/ integration sub-module to avoid breaking existing v4 users,
+    rather than upgrading the existing echo/ module in place.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '42'
+- rule: Public API in root package; internals in `/internal`
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to move the sentryecho package into the root
+    sentry package or an internal directory, misunderstanding how integration sub-modules
+    expose their own public APIs.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: '63'
+hierarchy_analysis: CLAUDE.md and AGENTS.md are identical. The rules apply globally.
+  The agent must carefully balance the general rule to 'Maintain existing Go versions'
+  against the explicit prompt instructions to upgrade to Echo v5 and Go 1.25+.

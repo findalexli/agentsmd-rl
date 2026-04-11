@@ -58,12 +58,15 @@ checks:
     lines: '85'
     commit: 209f5d790aaee15baaf509ee15268edd932f5f23
 rubric:
-- rule: Config update is consistent with the style of the existing SKILL.md documentation and code changes follow AGENTS.md schema annotation requirements (help_text on serializer fields)
+- rule: API views should declare request/response schemas and serializers are the
+    source of truth for frontend API types
   source:
-    path: products/llm_analytics/skills/skills-store/SKILL.md
-    lines: 1-100
-    commit: 209f5d790aaee15baaf509ee15268edd932f5f23
-  reference: 'SKILL.md documents the incremental edits feature with markdown formatting consistent with existing documentation. Code changes add help_text to all new serializer fields (old, new, prompt, edits, base_version) per AGENTS.md requirements.'
+    path: AGENTS.md
+    lines: 62-64
+  category: architecture
+  evidence: 'The gold solution adds `LLMPromptEditOperationSerializer` and updates
+    `LLMPromptPublishSerializer` with detailed `help_text` for all new fields (`old`,
+    `new`, `edits`, `prompt`) to ensure the OpenAPI '
 config_edits:
 - path: products/llm_analytics/skills/skills-store/SKILL.md
   tier: 1
@@ -76,3 +79,29 @@ config_edits:
     : \"replacement text\" }\n  ],\n  \"base_version\": 1\n}\n```\n\nOnly one of `prompt`\
     \ or `edits` may be provided, not both."
   gold_removed: 'Then update using the version from the response:'
+distractors:
+- rule: Plain ViewSet methods that validate manually need @extend_schema(request=YourSerializer)
+  source:
+    path: AGENTS.md
+    lines: 62-63
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add `@extend_schema` to the `update_by_name`
+    view method. However, this method is already properly decorated or uses standard
+    DRF mechanisms that pick up the `LLMPromptPublishSerializer`. Adding it redundantly
+    would clutter the code.
+  severity: low
+- rule: Do not run mypy for type checks. It takes too long.
+  source:
+    path: AGENTS.md
+    lines: 23-24
+  collision_type: would_cause_bug
+  why_distracting: The agent is adding complex type hints and dictionary manipulations
+    in the serializers and service layer. It might be tempted to run `mypy` to verify
+    these types, which would violate the rule and waste time/hang the session.
+  severity: medium
+hierarchy_analysis: The `.cursorrules` file provides general behavioral guidelines
+  (terse, no high-level explanations), while `AGENTS.md` provides specific architectural
+  rules for PostHog, such as how to handle DRF serializers and OpenAPI schemas. The
+  agent must combine the architectural guidance from `AGENTS.md` with the specific
+  skills (`implementing-mcp-tools`, `writing-skills`) to correctly implement the feature
+  across the API, MCP tool definition, and skill documentation.

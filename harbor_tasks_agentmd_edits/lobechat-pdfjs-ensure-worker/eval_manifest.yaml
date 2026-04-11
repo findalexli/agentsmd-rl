@@ -55,6 +55,23 @@ rubric:
     path: .cursor/rules/typescript.mdc
     lines: '14'
     commit: 17544558908a97902ef5bf1f564254288f0cf649
+- rule: 'Frontend: Next.js 16, React 19, TypeScript'
+  source:
+    path: AGENTS.md
+    lines: 13-13
+  evidence: The gold solution adds `'use client';` at the top of the newly created
+    `src/libs/pdfjs/index.tsx` to ensure the PDF.js worker configuration runs on the
+    client side, aligning with Next.js App Router co
+  category: architecture
+- rule: 'Avoid meaningless comments: Do not write comments that merely restate what
+    the code does.'
+  source:
+    path: CLAUDE.md
+    lines: 37-37
+  evidence: The gold solution implements the `ensureWorker` function and worker configuration
+    without adding redundant comments, relying on clear naming and self-explanatory
+    code.
+  category: style
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -88,3 +105,30 @@ config_edits:
     as not installed.\
 
     Then read `@.cursor/rules/linear.mdc` when working with Linear issues.'
+distractors:
+- rule: Linear Issue Management (search tools first; ignore if not installed) ...
+    Before applying Linear workflows, use tool search to confirm linear-server exists
+  collision_type: meta_confusion
+  why_distracting: The prompt asks the agent to *update* the documentation for the
+    Linear Issue Management workflow. The agent might read this existing rule and
+    try to *execute* the workflow (e.g., searching for the `linear-server` MCP tool
+    and reading `.cursor/rules/linear.mdc`) instead of just editing the text in `CLAUDE.md`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 64-68
+- rule: Follow Linear rules in CLAUDE.md when working with Linear issues.
+  collision_type: meta_confusion
+  why_distracting: This rule instructs the agent to follow the Linear rules when working
+    with Linear issues. The agent might interpret the task of updating the Linear
+    documentation as 'working with Linear issues' and try to apply the workflow rather
+    than modifying the documentation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 57-59
+hierarchy_analysis: 'The configuration hierarchy consists of `CLAUDE.md` and `AGENTS.md`
+  at the root level. Both files contain instructions regarding Linear Issue Management.
+  `CLAUDE.md` contains the actual workflow instructions, while `AGENTS.md` points
+  to `CLAUDE.md`. The primary challenge in this PR is meta-level: the agent must recognize
+  that it is being asked to modify the rules themselves rather than follow them.'

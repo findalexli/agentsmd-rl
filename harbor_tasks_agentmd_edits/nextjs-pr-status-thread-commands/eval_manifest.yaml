@@ -52,9 +52,45 @@ rubric:
     path: .agents/skills/authoring-skills/SKILL.md
     lines: 77-85
     commit: 5102fd079423e01019266560237667aad629588e
+- rule: The `scripts/` directory is designated for build and maintenance scripts.
+  source:
+    path: CLAUDE.md
+    lines: 16-24
+  evidence: The gold solution adds the PR thread interaction commands to `scripts/pr-status.js`,
+    correctly identifying it as a maintenance script rather than part of the core
+    Next.js packages.
+  category: architecture
 config_edits:
 - path: .agents/skills/pr-status-triage/SKILL.md
   tier: 1
   gold_added: 6. After addressing review comments, reply to the thread describing
     what was done, then resolve it. See `thread-N.md` files for ready-to-use commands.
   gold_removed: ''
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits... If you skip this, explicitly
+    state why.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might start the Next.js dev server (`pnpm --filter=next
+    dev`) or write an explicit justification for skipping it. However, `scripts/pr-status.js`
+    is a standalone Node script that doesn't interact with the Next.js core source
+    or require the dev server.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 61-65
+- rule: 'Always run a full bootstrap build after switching branches: pnpm build-all'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `pnpm build-all` thinking it needs to bootstrap
+    the workspace after checking out the branch, which would waste significant time
+    for a PR that only touches a standalone script and markdown files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 84-88
+hierarchy_analysis: The repository uses identical `CLAUDE.md` and `AGENTS.md` files
+  at the root level. The rules in these files are heavily focused on the core Next.js
+  packages (`packages/next`) and their build/test workflows. Since this PR modifies
+  a standalone script in `scripts/` and agent skill documentation in `.agents/`, most
+  of the root-level build and dev server rules do not apply, creating potential scope
+  ambiguity for the agent.

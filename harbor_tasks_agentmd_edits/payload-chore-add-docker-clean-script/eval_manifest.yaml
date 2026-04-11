@@ -52,18 +52,68 @@ rubric:
     path: CLAUDE.md
     lines: '85'
     commit: a188556e99d94c96266671b2129e5c8cb05e46a5
+- rule: 'Commenting Guidelines: Keep comments for non-obvious ''why'' in execution
+    flow.'
+  source:
+    path: CLAUDE.md
+    lines: 55-56
+  evidence: The catch block in `scripts/docker-clean.js` contains a comment `// Some
+    or all containers don't exist` to explain the non-obvious reason for swallowing
+    the error.
+  category: documentation
+- rule: 'Top of file/module comments: Use sparingly; only for non-obvious purpose/context.'
+  source:
+    path: CLAUDE.md
+    lines: 57-57
+  evidence: '`scripts/docker-clean.js` has no file-level comment or docblock at the
+    top, starting directly with the import.'
+  category: documentation
+- rule: Use regular `import` for values.
+  source:
+    path: CLAUDE.md
+    lines: 53-53
+  evidence: The script uses `import { execSync } from 'child_process'` which correctly
+    uses a regular import for a value.
+  category: style
 config_edits:
 - path: CLAUDE.md
   tier: 1
-  gold_added: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm docker:test`'
-  gold_removed: '- Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm docker:test`'
+  gold_added: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm
+    docker:test`'
+  gold_removed: '- Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm
+    docker:test`'
 - path: CONTRIBUTING.md
   tier: 2
-  gold_added: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB, storage
-    emulators) with fresh data
+  gold_added: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB,
+    storage emulators) with fresh data
 
     pnpm docker:clean  # Stop and remove all services'
   gold_removed: 'pnpm docker:start  # Start all services (PostgreSQL, MongoDB, storage
     emulators) with fresh data
 
     pnpm docker:stop   # Stop all services'
+distractors:
+- rule: Prefer pure functions; when mutation is unavoidable, return the mutated object
+    instead of void.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to wrap the script's logic in pure functions
+    or return values, but `scripts/docker-clean.js` is a standalone Node.js script
+    meant to execute side effects (Docker commands) imperatively when run.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 50-50
+- rule: 'Organize functions top-down: exports before helpers'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to structure the script with exported functions
+    at the top, but utility scripts in `scripts/` are executed directly via `node`
+    and need imperative top-level execution, not exports.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 51-51
+hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root. The
+  rules in `CLAUDE.md` are primarily geared towards the core Next.js CMS platform
+  and packages (`packages/`). When creating utility scripts in the `scripts/` directory,
+  agents must recognize the architecture boundary and ignore rules about pure functions
+  and exports, as these scripts require imperative side-effects.

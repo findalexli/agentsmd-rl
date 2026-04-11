@@ -62,6 +62,15 @@ rubric:
     path: .claude/skills/playwright-dev/tools.md
     lines: 67-74
     commit: f6e14f9d73b46ab319b334c013094d867d4ef149
+- rule: Generated files (types, channels, validators) are produced by watch automatically
+    and should not be manually edited.
+  source:
+    path: CLAUDE.md
+    lines: 32-34
+  evidence: The gold solution only modifies TypeScript source files (`browserBackend.ts`,
+    `evaluate.ts`, `response.ts`, etc.) and documentation, avoiding any manual edits
+    to generated types, channels, or validato
+  category: tooling
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1
@@ -95,3 +104,20 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: Test Commands and Test Directories guidelines
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on test commands and
+    directories (e.g., `tests/mcp/`, `npm run ctest-mcp`). An agent might interpret
+    this as a requirement to write tests for the new `--raw` flag. However, the task
+    focuses strictly on implementation and updating skill documentation, and the gold
+    solution does not include any test files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 46-68
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
+  The instructions provide clear guidance on monorepo structure, tooling, and testing.
+  However, the extensive testing documentation may distract agents from the specific
+  scope of the task, which focuses on implementing a CLI flag and updating skill documentation
+  without requiring new tests.

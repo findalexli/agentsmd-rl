@@ -79,6 +79,28 @@ rubric:
     path: AGENTS.md
     lines: 73-87
     commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: 24-26
+  evidence: The gold solution names the boolean condition variable `question` instead
+    of a multi-word name like `enableQuestionTool` or `isQuestionEnabled`.
+  category: naming
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 42-44
+  evidence: The gold solution uses `Flag.OPENCODE_ENABLE_QUESTION_TOOL` and `Flag.OPENCODE_CLIENT`
+    instead of destructuring these properties from the `Flag` namespace.
+  category: style
+- rule: Prefer `const` over `let`.
+  source:
+    path: AGENTS.md
+    lines: 52-54
+  evidence: The gold solution uses `const question = ...` to store the boolean condition
+    instead of using `let`.
+  category: style
 config_edits:
 - path: packages/opencode/src/acp/README.md
   tier: 2
@@ -97,3 +119,21 @@ config_edits:
 
     Enable this only for ACP clients that support interactive question prompts.'
   gold_removed: ''
+distractors:
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The gold solution extracts the complex boolean logic into a `question`
+    variable even though it is only used once in the array spread. An agent strictly
+    following the 'inline when used once' rule would inline the entire condition `["app",
+    "cli", "desktop"].includes(Flag.OPENCODE_CLIENT) || Flag.OPENCODE_ENABLE_QUESTION_TOOL`
+    directly into the array spread, which would make the line excessively long and
+    harm readability.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 34-35
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript style guidelines
+  that apply to the modified files. The package-level `packages/opencode/AGENTS.md`
+  contains database-specific rules that are irrelevant to this PR. The primary tension
+  exists within the root `AGENTS.md` itself, where the rule to inline single-use variables
+  conflicts with general code readability when dealing with long boolean expressions.

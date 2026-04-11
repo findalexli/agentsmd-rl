@@ -104,7 +104,6 @@ rubric:
   source:
     path: CLAUDE.md
     lines: 73-84
-    syntax: 6b023815bc05fc3a4b4a2bc4ada5a9b9ac9b17b1
   reference: "# CLAUDE.md\n## Error Messages\n\nError messages should avoid 2nd person\
     \ (you/your). Use softer modal verbs like\n\"might\" for a friendlier tone:\n\n\
     - ❌ \"are you missing `from` statement?\" → ✅ \"`from` statement might be\n  missing?\"\
@@ -126,6 +125,14 @@ rubric:
     \n- ❌ \"did you forget to specify the column name?\" → ✅ \"column name might be\n\
     \  missing?\"\n- ❌ \"you can only use X\"  → ✅ \"X requires Y\" (for hard constraints)\n\
     - ❌ \"Have you forgotten an argument?\" → ✅ \"Argument might be missing?\""
+- rule: Prefer inline snapshots for almost all tests using `insta::assert_snapshot!`.
+  source:
+    path: CLAUDE.md
+    lines: 33-35
+  evidence: The gold solution updates the expected output strings directly within
+    the `insta::assert_snapshot!` macros in `bad_error_messages.rs` and `sql.rs`,
+    adhering to the project's preference for inline snap
+  category: testing
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -136,3 +143,31 @@ config_edits:
     \  missing?\"\n- ❌ \"you can only use X\" → ✅ \"X requires Y\" (for hard constraints)\n\
     - ❌ \"Have you forgotten an argument?\" → ✅ \"Argument might be missing?\""
   gold_removed: ''
+distractors:
+- rule: Initialize tests with empty snapshots, then run with `--accept`.
+  collision_type: meta_confusion
+  why_distracting: The rule suggests initializing tests with empty snapshots (`@""`)
+    and running with `--accept`. An agent might try to replace the existing failing
+    snapshots with empty strings and assume the test runner or environment will automatically
+    fix them, resulting in a patch that just deletes the snapshot contents instead
+    of providing the updated expected output.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 37-41
+- rule: Use focused inner loop test commands like `cargo insta test -p prqlc --lib
+    -- resolver`.
+  collision_type: scope_ambiguity
+  why_distracting: The inner loop testing examples show specific filters (`-- resolver`
+    and `-- date`). An agent might literally copy these commands to run tests, which
+    would filter out the `bad_error_messages` and `sql` integration tests that actually
+    need to be updated in this PR, causing the agent to miss failing tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 13-17
+hierarchy_analysis: The `CLAUDE.md` file provides general workflow guidelines. The
+  testing commands provided are examples, but an agent might interpret them as literal
+  commands to run, leading to missed test failures. The snapshot update workflow is
+  designed for human interactive use (`--accept`), which can confuse an agent trying
+  to generate a static patch.

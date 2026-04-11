@@ -52,6 +52,22 @@ rubric:
     path: AGENTS.md
     lines: 7-8
     commit: 31b48b8b10db390d835909a6fd976f29d9880c81
+- rule: All code should be runnable with `uv run` or `uv run <command>`.
+  source:
+    path: AGENTS.md
+    lines: 36-37
+  evidence: The examples in `skills/inference-server/SKILL.md` prefix the commands
+    with `uv run` (e.g., `uv run inference @ path/to/config.toml`) rather than just
+    calling the entry point directly.
+  category: documentation
+- rule: Config files use `@` syntax and CLI overrides use `--key value` format.
+  source:
+    path: AGENTS.md
+    lines: 42-45
+  evidence: 'The `inference-server` skill documentation correctly demonstrates the
+    `@` syntax for configs (`uv run inference @ path/to/config.toml`) and the CLI
+    override syntax (`--model.name Qwen/Qwen3-0.6B`) as '
+  category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -253,3 +269,18 @@ config_edits:
 
     - `configs/` — all config files, organized by task'
   gold_removed: ''
+distractors:
+- rule: Boolean flags don't need `true`... Override config values with CLI flags...
+  collision_type: meta_confusion
+  why_distracting: The task explicitly instructs to 'replace the detailed bullet points
+    with a reference to the skill'. An agent might hesitate to delete these existing
+    rules from its own instruction file (`AGENTS.md`), leading it to append the reference
+    while keeping the redundant bullet points.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 44-45
+hierarchy_analysis: 'The hierarchy is flat with `CLAUDE.md` simply pointing to `AGENTS.md`.
+  The primary challenge is meta-level: the agent is tasked with refactoring its own
+  instruction file (`AGENTS.md`) by moving specific CLI usage rules into a new progressively-disclosed
+  skills system.'

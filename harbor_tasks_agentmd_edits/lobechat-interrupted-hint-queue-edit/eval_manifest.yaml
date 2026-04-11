@@ -88,6 +88,30 @@ rubric:
     path: .agents/skills/react/SKILL.md
     lines: '9'
     commit: 9c08fa5cdf2116e041b63255be3e498f1ae8d1e3
+- rule: Business components by domain should be placed in `src/features/`, including
+    layout chunks, hooks, and domain-specific UI.
+  source:
+    path: CLAUDE.md
+    lines: 32-35
+  evidence: The gold solution implements the new `InterruptedHint` component and modifies
+    `QueueTray` entirely within `src/features/Conversation/`, keeping business logic
+    and UI in the features directory rather t
+  category: architecture
+- rule: 'i18n Keys: Add to `src/locales/default/namespace.ts`.'
+  source:
+    path: AGENTS.md
+    lines: 58-59
+  evidence: The gold solution adds the new translation keys for the interrupted hint
+    and queue edit button to `src/locales/default/chat.ts`.
+  category: naming
+- rule: 'TypeScript: Prefer interfaces over types for object shapes.'
+  source:
+    path: AGENTS.md
+    lines: 42-43
+  evidence: The gold solution modifies `src/features/Conversation/types/operation.ts`
+    which defines the `MessageOperationState` interface, maintaining it as an interface
+    rather than refactoring to a type when add
+  category: style
 config_edits:
 - path: .agents/skills/electron-testing/SKILL.md
   tier: 1
@@ -121,3 +145,19 @@ config_edits:
     \ -V -l<windowid>`** doesn't work reliably for video — use `ffmpeg -f avfoundation`\
     \ with crop instead (see Screen Recording section)"
   gold_removed: ''
+distractors:
+- rule: 'Dev: Translate `locales/zh-CN/namespace.json` locale file only for preview.
+    DON''T run `pnpm i18n`, let CI auto handle it.'
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly tells the developer to only translate the `zh-CN`
+    file for preview and let CI handle the rest. An agent following this rule would
+    skip updating `locales/en-US/chat.json`, but the gold solution updates both `zh-CN`
+    and `en-US` files.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 59-61
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` both provide consistent architectural
+  guidance on the `src/features/` vs `src/routes/` split. `AGENTS.md` provides more
+  specific guidance on i18n, which conflicts slightly with the gold solution''s behavior
+  of updating the `en-US` locale file directly.'

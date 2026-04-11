@@ -95,3 +95,38 @@ config_edits:
     \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
     \ no separate value block)"
   gold_removed: "- 8..255: inlined key (future)\n  - type - 8 bytes value data"
+distractors:
+- rule: Generating tests using `pnpm new-test` is mandatory.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to use `pnpm new-test` to scaffold tests
+    for the new inline value feature, but this tool is exclusively for Next.js TypeScript
+    tests, not Rust crates like `turbo-persistence`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 90-95
+- rule: 'Test commands by mode: pnpm test-dev-turbo - Development mode with Turbopack'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to run `pnpm test-dev-turbo` or `pnpm test-unit`
+    to verify its Rust changes, but these commands run Next.js Jest tests. Rust crates
+    require `cargo test`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 70-85
+- rule: 'Always rebuild after switching branches: pnpm build # Required before running
+    tests'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run the full `pnpm build` command to compile the
+    entire Next.js project before testing its Rust changes, which is a massive waste
+    of time since Rust changes can be tested directly with `cargo test` in the relevant
+    crate.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 62-65
+hierarchy_analysis: The config files (CLAUDE.md and AGENTS.md) are identical and heavily
+  focused on the Next.js TypeScript/JavaScript ecosystem (pnpm, Jest, next-test-utils).
+  However, the target task is entirely within the Turbopack Rust codebase (`turbopack/crates/turbo-persistence`).
+  This creates a strong architecture boundary where almost all testing and build rules
+  in the config are inapplicable and serve as distractors for a Rust-focused task.

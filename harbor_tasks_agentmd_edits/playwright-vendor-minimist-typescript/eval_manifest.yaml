@@ -63,7 +63,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's package.json is valid JSON with expected structure
-# New CI/CD-based pass-to-pass tests
 - id: test_repo_eslint_cli_client
   type: pass_to_pass
   origin: repo_tests
@@ -86,8 +85,40 @@ rubric:
     path: .claude/skills/playwright-dev/vendor.md
     lines: 1-10
     commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+- rule: Import boundaries are enforced via DEPS.list files
+  source:
+    path: CLAUDE.md
+    lines: 62-64
+  evidence: The gold solution updates `packages/playwright-core/src/tools/cli-client/DEPS.list`
+    to add `./minimist.ts` under `[program.ts]` and `[session.ts]`, and creates a
+    new `[minimist.ts]` section to satisfy
+  category: architecture
 config_edits:
 - path: CLAUDE.md
   tier: 1
   gold_added: Never add "Generated with" in commit message.
   gold_removed: ''
+distractors:
+- rule: Test placement decision rule based on browser/page fixtures
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write tests for the new `minimist.ts` file
+    and place them in `tests/library/` or `tests/page/` based on this rule. However,
+    this is a CLI utility that doesn't use browser fixtures, so these test directories
+    are inappropriate and no tests were requested.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 58-60
+- rule: Always run flint before committing
+  collision_type: meta_confusion
+  why_distracting: The agent might include `npm run flint` in the bash script to verify
+    the DEPS.list changes before 'committing', which could be slow or fail on unrelated
+    issues in the monorepo, whereas the gold solution just applies the patch.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 38-40
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
+  The instructions clearly specify the DEPS system which is critical for adding new
+  files and imports. The agent must recognize that adding `minimist.ts` requires updating
+  the local `DEPS.list` file in the `cli-client` directory.

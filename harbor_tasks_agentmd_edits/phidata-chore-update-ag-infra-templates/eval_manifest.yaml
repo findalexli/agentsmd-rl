@@ -74,6 +74,14 @@ rubric:
     path: CLAUDE.md
     lines: 1-10
     commit: 156d4e43e6281d0ff65a2351379df732348ffadc
+- rule: Don't use f-strings for print lines where there are no variables to format.
+  source:
+    path: .cursorrules
+    lines: 12-13
+  evidence: The gold solution updates the `print_info` call with `"Select starter
+    template or press Enter for default (agentos-docker)"` as a plain string, adhering
+    to the rule of not using f-strings when there a
+  category: style
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -103,3 +111,30 @@ config_edits:
 
     ---'
   gold_removed: ''
+distractors:
+- rule: Both sync and async — all public methods need both variants
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires all public methods to have both sync and async
+    variants. An agent might apply this to `create_infra_from_template` in `operator.py`,
+    but this is a CLI operator function, not a core framework method. Adding an async
+    variant here would be out of scope and unnecessary.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 112-113
+- rule: When testing a cookbook folder, first check for the CLAUDE.md file. If it
+    doesn't exist, ask the user if they'd like you to create it.
+  collision_type: meta_confusion
+  why_distracting: The prompt asks to update the project's `CLAUDE.md` with GitHub
+    operations guidance. The agent might get confused by the instructions about cookbook-specific
+    `CLAUDE.md` files and try to update or create one in a cookbook directory instead
+    of modifying the root file.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 36-38
+hierarchy_analysis: The `.cursorrules` file provides general Python and framework-level
+  guidelines, while `CLAUDE.md` provides project-specific workflow instructions. The
+  instruction to update `CLAUDE.md` itself creates a meta-level interaction where
+  the agent must modify its own instructions without getting confused by the nested
+  references to other `CLAUDE.md` files in cookbooks or specs.

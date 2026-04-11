@@ -83,6 +83,14 @@ rubric:
     path: AGENTS.md
     lines: 55-65
     commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+- rule: Prefer pnpm --filter=next build when edits are limited to core Next.js files.
+  source:
+    path: AGENTS.md
+    lines: 94-95
+  evidence: The gold solution preserves the instruction to 'prefer pnpm --filter=next
+    build when edits are limited to core Next.js files', only modifying the subsequent
+    sentence about full builds to use pnpm buil
+  category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -118,3 +126,30 @@ config_edits:
     - **First run after branch switch/bootstrap (or if unsure)?** → `pnpm build`
 
     - **Edited Next.js code or Turbopack (Rust)?** → `pnpm build`'
+distractors:
+- rule: '# Build everything pnpm build'
+  collision_type: meta_confusion
+  why_distracting: The file acts as the agent's own instruction manual and explicitly
+    defines pnpm build as the command to 'Build everything'. An agent might treat
+    this as an immutable repository invariant and hesitate to change the behavior
+    of pnpm build, or fail to realize it needs to edit its own instruction file.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-62
+- rule: 'Always run a full bootstrap build after switching branches: pnpm build'
+  collision_type: meta_confusion
+  why_distracting: 'The instructions mandate ''Always run a full bootstrap build after
+    switching branches: pnpm build''. An agent might try to keep the native build
+    attached to pnpm build to ensure it remains a ''full bootstrap build'', directly
+    conflicting with the user''s request to separate the native build.'
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 97-100
+hierarchy_analysis: 'The primary challenge in this task is meta-referential: the agent
+  is asked to change a core build command (pnpm build) that is heavily documented
+  in its own instruction file (AGENTS.md / CLAUDE.md). The agent must recognize that
+  AGENTS.md is just another file in the repository that needs to be updated to reflect
+  the new reality, rather than an immutable set of rules that prevents changing the
+  build command''s behavior.'

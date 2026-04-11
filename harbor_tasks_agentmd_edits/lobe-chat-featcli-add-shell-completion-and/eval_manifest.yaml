@@ -88,6 +88,20 @@ rubric:
     path: .agents/skills/testing/SKILL.md
     lines: 35-45
     commit: 12280badbdf288b7018a9d5b907898780cd31a96
+- rule: Use `bun` to run npm scripts
+  source:
+    path: AGENTS.md
+    lines: 36-37
+  evidence: The README.md documentation explicitly uses `bun run dev`, `bun run build`,
+    `bun run cli:link`, and `bun run cli:unlink` for all npm script executions.
+  category: tooling
+- rule: Use Vitest for testing
+  source:
+    path: AGENTS.md
+    lines: 12-13
+  evidence: The new test file `apps/cli/src/commands/completion.test.ts` imports testing
+    utilities (`describe`, `expect`, `it`, `vi`) directly from `vitest`.
+  category: testing
 config_edits:
 - path: apps/cli/README.md
   tier: 2
@@ -170,3 +184,40 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: Place business components and domain logic in `src/features/`
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to place the completion logic inside `src/features/completion`
+    or `src/features/cli` instead of the requested `apps/cli/src/commands/` and `apps/cli/src/utils/`
+    directories, misunderstanding that the CLI is a separate Node.js app and not part
+    of the SPA.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 38-42
+- rule: Use `pnpm` as the primary package manager
+  collision_type: rule_conflict
+  why_distracting: The agent might document the CLI commands using `pnpm run build`
+    or `pnpm run dev` in the README, conflicting with the specific instruction to
+    use `bun` for running scripts.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 35-36
+- rule: Add i18n keys to `src/locales/default/namespace.ts`
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to extract the CLI completion descriptions
+    or help text into the global i18n namespace (`src/locales/default/namespace.ts`),
+    which is only meant for the frontend SPA.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 56-57
+hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` provide global rules that are heavily
+  biased towards the Next.js/React frontend SPA. The `apps/cli` package is a separate
+  Node.js CLI tool that does not follow the SPA architecture (routes/features) or
+  the frontend i18n system. Agents must recognize the architectural boundary between
+  the web app and the CLI package to avoid applying frontend-specific rules to the
+  CLI codebase. There is also a direct rule conflict in `AGENTS.md` between using
+  `pnpm` as the primary package manager and using `bun` to run scripts, where the
+  latter takes precedence for documentation in the CLI README.'

@@ -67,6 +67,38 @@ rubric:
     path: AGENTS.md
     lines: 21-32
     commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 62-70
+  evidence: In `actions.ts`, the `terminalID` function uses an early return (`if (id)
+    return id`) followed by a throw, completely avoiding an `else` block.
+  category: style
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 44-51
+  evidence: In `actions.ts`, the `terminalHas` function accepts an `input` object
+    and accesses its properties via dot notation (`input.term`, `input.token`) rather
+    than destructuring them in the parameter list or
+  category: style
+- rule: 'Test Structure: `actions.ts` - Reusable action helpers.'
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 23-30
+  evidence: The new `waitTerminalReady` and `runTerminal` functions are added directly
+    to `packages/app/e2e/actions.ts`, adhering to the defined test structure where
+    reusable action helpers belong in this file.
+  category: architecture
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  source:
+    path: AGENTS.md
+    lines: 13-14
+  evidence: In `actions.ts`, local variables are declared without explicit type annotations
+    where the type is obvious from the assignment (e.g., `const next = term ?? ...`,
+    `const id = await terminalID(next)`).
+  category: style
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
@@ -90,3 +122,47 @@ config_edits:
 
     - Avoid `waitForTimeout` and custom DOM or `data-*` readiness checks.'
   gold_removed: ''
+distractors:
+- rule: 'Testing: Avoid mocks as much as possible. Test actual implementation, do
+    not duplicate logic into tests'
+  collision_type: architecture_boundary
+  why_distracting: The prompt requires adding a 'test-only probe system' to the production
+    terminal component (`terminal.tsx`) to expose internal state to `window`. An agent
+    might interpret the rule to 'Avoid mocks' and 'Test actual implementation' as
+    forbidding test-specific code in production components, leading it to stick to
+    flaky DOM polling instead of implementing the required probe.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 86-88
+- rule: 'Browser Automation: Use `agent-browser` for web automation.'
+  collision_type: meta_confusion
+  why_distracting: This rule instructs the agent to use the `agent-browser` CLI tool
+    for its own web automation tasks during development. An agent might confuse this
+    meta-instruction with the task of writing Playwright e2e tests, potentially trying
+    to import or invoke `agent-browser` commands inside the test files instead of
+    using Playwright's `page` API.
+  severity: high
+  source:
+    path: packages/app/AGENTS.md
+    lines: 16-24
+- rule: 'Naming Enforcement: Use single word names by default for new locals, params,
+    and helper functions.'
+  collision_type: rule_conflict
+  why_distracting: The root config mandates single-word names for functions and variables.
+    However, the prompt explicitly requests functions named `waitTerminalReady` and
+    `runTerminal`, and the e2e config specifies camelCase for variables. An agent
+    strictly following the root rule might try to name the helpers `wait` and `run`,
+    violating the prompt's explicit instructions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 20-29
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript and style guidelines
+  (e.g., single-word names, no destructuring, early returns). The `packages/app/e2e/AGENTS.md`
+  provides specific e2e testing guidelines (e.g., camelCase variables, specific file
+  structure). There is a direct conflict between the root's 'single word names' rule
+  and the e2e's 'camelCase' rule, as well as the prompt's explicit multi-word function
+  names. The prompt and deeper config (e2e) override the root config for exported
+  function names, while the root config's single-word rule is still successfully applied
+  to local variables (`term`, `id`, `next`).

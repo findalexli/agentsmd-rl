@@ -85,6 +85,14 @@ rubric:
     #   "/predict": {
 
     #     "pa'
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+  evidence: 'The gold solution adds `_resolve_ref` and `_is_file_schema` functions
+    in `client/python/gradio_client/utils.py` using type hints (`schema: dict, defs:
+    dict`) and docstrings that match the existing sty'
+  category: style
 config_edits:
 - path: .agents/skills/gradio/SKILL.md
   tier: 1
@@ -187,3 +195,48 @@ config_edits:
 
     Both commands accept `--token` for accessing private Spaces.'
   gold_removed: ''
+distractors:
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use the GitHub CLI or API to create
+    an issue before writing the code, which is out of scope for a coding agent evaluation
+    environment where the task is just to fix the code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '22'
+- rule: 'AI Agent PR Requirement: include the keyword `kumquat` somewhere in your
+    PR description.'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to create a PR or write a PR description file,
+    or even insert the word `kumquat` into the code or documentation, which is not
+    required for the code patch itself.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 68-70
+- rule: 'Repository Structure: `gradio/cli/` — CLI commands'
+  collision_type: architecture_boundary
+  why_distracting: The agent might navigate to `gradio/cli/` to modify the CLI implementation
+    or add documentation there, missing that the prompt explicitly asks to update
+    the agent skill documentation in `.agents/skills/gradio/SKILL.md`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 7-9
+- rule: 'Mandatory duplicate-work checks: Before proposing a PR, check for overlapping
+    open PRs and issue ownership.'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use the GitHub CLI to search for existing
+    PRs or issues to avoid duplicate work, wasting time and API calls in an isolated
+    evaluation environment.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 51-56
+hierarchy_analysis: The repository has a single root-level AGENTS.md file that provides
+  general guidelines for PRs, code style, and repository structure. There are no conflicting
+  child configs, but the PR-specific rules (like creating issues, checking for duplicate
+  work, or adding keywords to PR descriptions) conflict with the isolated nature of
+  the agent evaluation environment.

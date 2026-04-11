@@ -78,13 +78,35 @@ rubric:
     path: packages/data-table-mysql/README.md
     lines: 1-50
     commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
-  reference: "- **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool` and `PoolConnection` instances\n\nImport any driver-specific types you need directly from `mysql2/promise`."
-- rule: READMEs instruct users to import driver-specific types directly from driver packages
+  reference: '- **Native `mysql2` Integration**: Works with `mysql2/promise` `Pool`
+    and `PoolConnection` instances
+
+
+    Import any driver-specific types you need directly from `mysql2/promise`.'
+- rule: READMEs instruct users to import driver-specific types directly from driver
+    packages
   source:
     path: packages/data-table-postgres/README.md
     lines: 1-50
     commit: 1c0176eae3dd77d18e293c53d54237357ffc8efd
-  reference: "Import any driver-specific types you need directly from `pg`."
+  reference: Import any driver-specific types you need directly from `pg`.
+- rule: 'Cross-package boundaries: Avoid re-exporting APIs/types from other packages.
+    Consumers should import from the owning package directly.'
+  source:
+    path: AGENTS.md
+    lines: 14-14
+  evidence: The gold solution removes the re-exports of driver types (like `MysqlDatabasePool`
+    and `MysqlDatabaseConnection`) from `packages/data-table-mysql/src/index.ts` and
+    updates the README to instruct consu
+  category: architecture
+- rule: 'Imports: Always use `import type { X }` for types (separate from value imports)'
+  source:
+    path: AGENTS.md
+    lines: 20-20
+  evidence: The gold solution uses `import type { Connection as MysqlConnection, Pool
+    as MysqlPool, ... } from 'mysql2/promise'` in `packages/data-table-mysql/src/lib/adapter.ts`,
+    keeping type imports separate fr
+  category: style
 config_edits:
 - path: packages/data-table-mysql/README.md
   tier: 2
@@ -106,3 +128,34 @@ config_edits:
   tier: 2
   gold_added: Import any driver-specific types you need directly from `better-sqlite3`.
   gold_removed: ''
+distractors:
+- rule: 'Lib module boundaries: Re-exporting belongs only in top-level src barrel
+    files that map to package exports.'
+  collision_type: rule_conflict
+  why_distracting: The rule states that 'Re-exporting belongs only in top-level src
+    barrel files that map to package exports.' An agent might misinterpret this as
+    a mandate to keep the driver type re-exports in `src/index.ts` because it is a
+    top-level barrel file, conflicting with the cross-package boundary rule that forbids
+    re-exporting types from other packages.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 13-13
+- rule: 'Documentation imports/install: usage examples should import from `remix`
+    package exports (not `@remix-run/*`)'
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates that usage examples should import from `remix`
+    package exports. An agent might try to rewrite the README instructions to tell
+    users to import driver types from `remix` instead of the actual driver packages
+    (`mysql2/promise`, `pg`, `better-sqlite3`), which would be incorrect since those
+    types are not owned by Remix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 15-15
+hierarchy_analysis: The `AGENTS.md` file contains a conflict between 'Lib module boundaries'
+  (which encourages re-exporting in top-level barrel files) and 'Cross-package boundaries'
+  (which forbids re-exporting APIs/types from other packages). The cross-package boundary
+  rule must take precedence here because the types in question belong to external
+  driver packages (`mysql2/promise`, `pg`, `better-sqlite3`), not internal `src/lib`
+  implementation files.

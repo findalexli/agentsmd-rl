@@ -76,6 +76,29 @@ rubric:
     lines: '17'
     commit: 0b0ca631198af88cda1ecceef5a51d20e1b3b3e2
 - rule: JSDoc on Interaction interface describes parameter-based API, not 'this'
+- rule: Create `packages/*/.changes/[major|minor|patch].short-description.md` files
+    for changes.
+  source:
+    path: AGENTS.md
+    lines: '32'
+  evidence: Creates `packages/interaction/.changes/minor.interaction-handle-parameter.md`
+    to document the API change.
+  category: tooling
+- rule: 'For v0.x packages: Use ''minor'' for breaking changes and new features.'
+  source:
+    path: AGENTS.md
+    lines: 34-35
+  evidence: Uses the `minor.` prefix for the changeset file that documents a `BREAKING
+    CHANGE`, adhering to the v0.x convention.
+  category: tooling
+- rule: Use regular function declarations/expressions by default.
+  source:
+    path: AGENTS.md
+    lines: '17'
+  evidence: 'Retains `function Test(handle: Interaction)` and `function KeydownEnter(handle:
+    Interaction)` instead of converting them to arrow functions, despite the problem
+    description noting that the old API ''fo'
+  category: style
 config_edits:
 - path: packages/interaction/README.md
   tier: 2
@@ -85,3 +108,31 @@ config_edits:
   gold_removed: "function KeydownEnter(this: Interaction) {\n  if (!(this.target instanceof\
     \ HTMLElement)) return\n  this.on(this.target, {\n        this.target.dispatchEvent(new\
     \ KeyboardEvent(keydownEnter, { key: 'Enter' }))"
+distractors:
+- rule: When defining functions in object literals, use shorthand method syntax instead
+    of arrow functions.
+  collision_type: scope_ambiguity
+  why_distracting: The existing test code uses an arrow function for the `[hostType]`
+    callback in an object literal. An agent might try to refactor this to shorthand
+    method syntax `[hostType]() { ... }` to comply with the style guide, but this
+    is out of scope for the specific API refactoring requested.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '18'
+- rule: Only use arrow functions as callbacks where preserving lexical `this` is beneficial
+    or the syntax is more concise.
+  collision_type: scope_ambiguity
+  why_distracting: The original code used an arrow function in tests to preserve lexical
+    `this` from the outer setup function. Now that `handle` is passed as a parameter,
+    lexical `this` is no longer needed. An agent might strictly follow this rule and
+    convert the arrow function to a regular function since the 'preserving lexical
+    this' justification no longer applies, leading to unnecessary churn.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '17'
+hierarchy_analysis: Only a single root-level config file (`AGENTS.md`) is present,
+  so there are no hierarchical conflicts. The primary tension lies in applying the
+  style rules to existing code versus maintaining a strict scope for the refactoring
+  task.

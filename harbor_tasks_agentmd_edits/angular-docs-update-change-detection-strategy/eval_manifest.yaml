@@ -126,3 +126,38 @@ config_edits:
   gold_removed: '* **`ChangeDetectionStrategy.OnPush`:** Always set `changeDetection:
     ChangeDetectionStrategy.OnPush` in the `@Component` decorator for performance
     benefits by reducing unnecessary change detection cycles.'
+distractors:
+- rule: Use `pnpm bazel test //target` to run tests.
+  collision_type: scope_ambiguity
+  why_distracting: The PR only involves documentation, JSDoc comments, and markdown
+    config updates. Attempting to run Bazel tests is unnecessary for these text changes
+    and could waste time or fail if the agent guesses the wrong target.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 9-10
+- rule: '**Zoneless & Async-First:** Assume a zoneless environment where state changes
+    schedule updates asynchronously.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might confuse the transition to default `OnPush` change
+    detection with the transition to Zoneless environments. This could lead the agent
+    to erroneously modify documentation to remove `OnPush` entirely in favor of Zoneless,
+    or add Zoneless instructions where only `OnPush` updates are requested.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: Use the `gh` CLI (GitHub CLI) for creating and managing pull requests.
+  collision_type: would_cause_bug
+  why_distracting: The agent might attempt to execute `gh pr create` to submit the
+    changes at the end of its workflow, which is outside the scope of the coding task
+    and will likely fail in a headless evaluation environment.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 33-34
+hierarchy_analysis: The only config file provided in the hierarchy is `AGENTS.md`
+  at the root. The task involves editing other agent config files (`adev/src/context/*.mdc`),
+  which creates a meta-level interaction where the agent must modify its own instructions
+  rather than just following them. `AGENTS.md` itself does not contain the outdated
+  `OnPush` rules, so it correctly remains unedited.

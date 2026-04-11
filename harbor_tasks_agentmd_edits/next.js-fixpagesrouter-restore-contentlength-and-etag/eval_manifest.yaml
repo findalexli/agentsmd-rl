@@ -65,6 +65,13 @@ rubric:
     path: AGENTS.md
     lines: '403'
     commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+- rule: Source code for the main Next.js framework is located in `packages/next/src/`.
+  source:
+    path: AGENTS.md
+    lines: 31-32
+  evidence: The gold solution correctly targets the source code in `packages/next/src/server/route-modules/pages/pages-handler.ts`
+    to fix the core Next.js framework issue, adhering to the defined package structur
+  category: architecture
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -79,3 +86,30 @@ config_edits:
     # Format: pnpm new-test --args <appDir> <name> <type>
 
     pnpm new-test --args true my-feature e2e'
+distractors:
+- rule: Generating tests using `pnpm new-test` is mandatory.
+  collision_type: rule_conflict
+  why_distracting: The config states that generating tests is 'mandatory', but the
+    task instructions explicitly list only two specific changes needed (fixing the
+    handler and updating the docs). An agent might waste time trying to generate and
+    write a new test, violating the explicit scope of the task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 148-148
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits.
+  collision_type: meta_confusion
+  why_distracting: The config instructs the agent to start a background dev server
+    (`pnpm --filter=next dev`) before making edits. Since the agent is generating
+    a `solve.sh` script to be executed in a CI/evaluation environment, including this
+    interactive/background command in the script would cause it to hang or fail.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 81-85
+hierarchy_analysis: The `CLAUDE.md` and `AGENTS.md` files are identical symlinks.
+  The rules apply globally to the repository. The primary conflict arises from the
+  agent instructions in `AGENTS.md` (like mandatory test generation and starting dev
+  servers) conflicting with the specific, scoped nature of the evaluation task which
+  only requires patching two files.

@@ -71,6 +71,23 @@ rubric:
     path: AGENTS.md
     lines: '37'
     commit: 92a9b9df4ef4c7096973a6d1df040f512e7ccee2
+- rule: 'Philosophy: Web standards-first, runtime-agnostic. Use Web Streams API, Uint8Array,
+    Web Crypto API, Blob/File instead of Node.js APIs'
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: The gold solution uses the WHATWG standard `URLSearchParams` to parse
+    search parameters instead of manual decoding, aligning with the web standards-first
+    philosophy.
+  category: architecture
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: AGENTS.md
+    lines: 29-29
+  evidence: The gold solution uses single quotes for string literals in the updated
+    JSDoc examples in `route-pattern.ts` (e.g., `parseSearch('q=')`).
+  category: style
 config_edits:
 - path: packages/route-pattern/README.md
   tier: 2
@@ -106,3 +123,33 @@ config_edits:
     // More constrained search params = more specific
 
     '
+distractors:
+- rule: 'Documentation imports/install: In package READMEs, documentation, and pull
+    request code examples, installation instructions should always include `npm i
+    remix`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is editing `README.md` to update the search param documentation.
+    It might see this rule and try to inject installation instructions (`npm i remix`)
+    or change imports in the `README.md` examples, which is out of scope for this
+    specific bug fix and would clutter the PR.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 17-17
+- rule: 'Other files: Organize by feature (not by pattern part)'
+  collision_type: architecture_boundary
+  why_distracting: The agent might interpret 'Organize by feature' to mean that all
+    search parameter logic should be extracted into a new `search.ts` file. However,
+    the existing architecture splits by operation (`parse.ts`, `match.ts`, `serialize.ts`),
+    and the agent should modify the logic within those existing operation-based files
+    rather than restructuring the directory.
+  severity: high
+  source:
+    path: packages/route-pattern/src/lib/route-pattern/AGENTS.md
+    lines: 6-13
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` providing general
+  monorepo guidelines (standards, formatting, documentation) and a leaf `AGENTS.md`
+  in `route-pattern/src/lib/route-pattern/` detailing the file organization. The root
+  guidelines strongly support the use of `URLSearchParams` (web standards), while
+  the leaf guidelines could cause confusion if 'feature' is misinterpreted as 'search
+  params' rather than 'parsing/matching/serializing'.

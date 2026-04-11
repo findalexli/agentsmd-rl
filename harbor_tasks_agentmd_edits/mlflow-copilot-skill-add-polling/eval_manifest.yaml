@@ -59,12 +59,14 @@ checks:
   origin: pr_diff
   description: SKILL.md has a polling for completion section with usage instructions
 rubric:
-- rule: The added polling section in SKILL.md must clearly document how to invoke
-    the polling script and specify the required arguments (owner/repo and PR number)
+- rule: Only add comments that explain non-obvious logic or provide additional context
   source:
-    path: .claude/skills/copilot/SKILL.md
-    lines: 28-34
-    commit: 91ce5a5514917a562304c7946c9c6313b88cce40
+    path: CLAUDE.md
+    lines: 12-13
+  category: style
+  evidence: The bash script includes concise comments explaining the expected argument
+    format (`# owner/repo format (e.g., mlflow/mlflow)`) and the timeout conversion
+    (`# 30 minutes`), avoiding unnecessary commen
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -83,3 +85,20 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: Run Python tests (uv run pytest tests/)
+  source:
+    path: CLAUDE.md
+    lines: 64-75
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write Python unit tests for the new
+    polling functionality and run the test suite. However, this is a standalone bash
+    script for a Claude skill, not part of the core MLflow Python package, so standard
+    Python testing does not apply.
+  severity: medium
+hierarchy_analysis: The repository has a single CLAUDE.md file at the root. The rules
+  in CLAUDE.md are heavily focused on the core MLflow Python package (SQLAlchemy tracking,
+  Databricks backend, Python testing with uv). Since this task involves modifying
+  a Claude skill (bash script and markdown docs) in the `.claude/skills/` directory,
+  most of the root config rules are out of scope. The agent must rely primarily on
+  the task instructions rather than the Python-centric repository guidelines.

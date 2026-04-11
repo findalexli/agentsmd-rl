@@ -69,7 +69,8 @@ checks:
 - id: repo_eslint_ecommerce_template
   type: pass_to_pass
   origin: repo_tests
-  description: ESLint validation passes on modified ecommerce template files using npx
+  description: ESLint validation passes on modified ecommerce template files using
+    npx
 - id: repo_prettier_readme
   type: pass_to_pass
   origin: repo_tests
@@ -82,7 +83,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Package.json files are parseable via Python subprocess
-
 rubric:
 - rule: Documentation updates in README.md should be consistent with the existing
     style and structure of the file
@@ -118,6 +118,22 @@ rubric:
     path: templates/ecommerce/README.md
     lines: '122'
     commit: b317eaa59124eb3a1a7e26c8ccdf909bbea03f96
+- rule: 'Security-Critical: Follow all security patterns, especially access control'
+  source:
+    path: templates/ecommerce/AGENTS.md
+    lines: '8'
+  evidence: The gold solution updates the README to explicitly document the new `accessToken`
+    security model that prevents order enumeration attacks for guest users.
+  category: architecture
+- rule: Prefer pure functions; when mutation is unavoidable, return the mutated object
+    instead of void.
+  source:
+    path: CLAUDE.md
+    lines: '46'
+  evidence: 'The gold solution safely spreads the `accessToken` into the returned
+    object `...(order.accessToken ? { accessToken: order.accessToken } : {})` rather
+    than mutating an existing object.'
+  category: style
 config_edits:
 - path: templates/ecommerce/README.md
   tier: 2
@@ -180,3 +196,38 @@ config_edits:
     a record that the user who completed the transaction has access so they can keep
     track of their history. Guests can also access their own orders by providing an
     order ID and the email associated with that order.'
+distractors:
+- rule: 'Type Generation: Run `generate:types` script after schema changes'
+  collision_type: scope_ambiguity
+  why_distracting: The PR requires adding an `accessToken` field to the orders collection
+    schema. An agent following this rule would run the type generator and commit `payload-types.ts`,
+    which is out of scope for this specific PR's expected files.
+  severity: medium
+  source:
+    path: templates/ecommerce/AGENTS.md
+    lines: '9'
+- rule: Generate import maps after creating or modifying components.
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies several React components (ConfirmOrder, CheckoutForm,
+    FindOrderForm). Following this rule would lead the agent to generate and commit
+    import maps, which are not part of the expected file changes.
+  severity: low
+  source:
+    path: templates/ecommerce/AGENTS.md
+    lines: '17'
+- rule: 'Access Control: Understand Local API bypasses access control by default'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to implement the guest access restriction using
+    Payload's collection-level `access` functions. However, the requirement is to
+    verify the `accessToken` in the Next.js frontend/server action for the `/find-order`
+    flow, making database-level access control the wrong architectural layer for this
+    specific feature.
+  severity: high
+  source:
+    path: templates/ecommerce/AGENTS.md
+    lines: '11'
+hierarchy_analysis: '`templates/ecommerce/AGENTS.md` provides specific Payload CMS
+  rules that build upon the general Next.js/TypeScript rules in `CLAUDE.md`. The agent
+  must carefully distinguish between Payload''s backend access control (collections)
+  and the Next.js frontend application logic (server actions/pages) when implementing
+  the security fix.'

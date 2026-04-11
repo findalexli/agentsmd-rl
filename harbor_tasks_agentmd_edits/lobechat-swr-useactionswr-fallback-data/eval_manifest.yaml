@@ -44,6 +44,21 @@ rubric:
     path: .cursor/rules/cursor-rules.mdc
     lines: 1-5
     commit: 959c210e869803545d451c3019e178966188ef17
+- rule: Reference external rule files using the '@.cursor/rules/filename.mdc' syntax
+  source:
+    path: CLAUDE.md
+    lines: 9-15
+  evidence: The gold solution replaces the inline Linear rules with 'Read @.cursor/rules/linear.mdc',
+    following the established pattern of referencing external rule files with the
+    '@.cursor/rules/' syntax seen in
+  category: documentation
+- rule: Use SWR for state management
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution uses SWR's `useSWR` hook with `fallbackData` to fix
+    the auto-fetch bug, adhering to the project's specified state management stack.
+  category: architecture
 config_edits:
 - path: .cursor/rules/linear.mdc
   tier: 1
@@ -241,3 +256,29 @@ config_edits:
 
     - Complete Issue A -> Create PR -> Update A status to "In Review" -> Add A comment
     -> Complete Issue B -> ...'
+distractors:
+- rule: Follow [Linear rules in CLAUDE.md](CLAUDE.md#linear-issue-management-ignore-if-not-installed-linear-mcp)
+    when working with Linear issues.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to update the hardcoded link to CLAUDE.md's
+    Linear section to point to the new .mdc file, expanding the scope of the PR unnecessarily
+    since the gold solution leaves AGENTS.md untouched.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 61-63
+- rule: Retrieve issue details before starting work using mcp__linear-server__get_issue...
+    MUST add completion comment
+  collision_type: meta_confusion
+  why_distracting: The agent might interpret these instructions as active commands
+    to execute for the current task (e.g., calling mcp__linear-server__get_issue or
+    adding completion comments) rather than just text content that needs to be extracted
+    to a new file.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 66-93
+hierarchy_analysis: The configuration relies on CLAUDE.md and AGENTS.md at the root
+  level. CLAUDE.md acts as the primary entry point for rules, delegating to specific
+  .mdc files. The extraction of Linear rules into a separate .mdc file aligns perfectly
+  with this delegation pattern.

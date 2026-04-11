@@ -91,6 +91,14 @@ rubric:
     Python SDK (`internal/workers-api/`) now lives in [cloudflare/workers-py](https://github.com/cloudflare/workers-py)
     and is installed from PyPI. Keep existing code for backward compatibility; new
     features go to workers-py.'
+- rule: Suggest updates to AGENTS.md when you find new high-level information
+  source:
+    path: AGENTS.md
+    lines: 10-11
+  evidence: The gold solution updates `src/pyodide/AGENTS.md` to document the new
+    location of the Python SDK and its frozen status, fulfilling the requirement to
+    update documentation with new high-level informati
+  category: documentation
 config_edits:
 - path: src/pyodide/AGENTS.md
   tier: 1
@@ -105,3 +113,34 @@ config_edits:
     features go to workers-py.'
   gold_removed: '| `internal/workers-api/`                       | Python SDK package
     (`pyproject.toml` + `uv.lock` managed)                                             |'
+distractors:
+- rule: Tests live in `src/workerd/server/tests/python/` and use the `py_wd_test.bzl`
+    macro.
+  collision_type: rule_conflict
+  why_distracting: The config states that tests live in `src/workerd/server/tests/python/`
+    and use the `py_wd_test.bzl` macro. However, the prompt explicitly requests creating
+    the test at `src/pyodide/internal/test_frozen_sdk.py` and registering it as a
+    `py_test` in `src/pyodide/BUILD.bazel`. Following the config would violate the
+    explicit prompt instructions.
+  severity: high
+  source:
+    path: src/pyodide/AGENTS.md
+    lines: 20-22
+- rule: The `@` suffix is required in target names for test variants.
+  collision_type: scope_ambiguity
+  why_distracting: The root config states that the `@` suffix is required in target
+    names for test variants. An agent might try to name the new test target `unit-test-frozen-sdk@`
+    or similar. However, this rule applies to custom macros like `wd_test`, whereas
+    the prompt specifically asks for a standard Bazel `py_test` target, which does
+    not use the `@` suffix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 63-68
+hierarchy_analysis: The root `AGENTS.md` provides general testing guidelines (like
+  the `@` suffix for test variants), while `src/pyodide/AGENTS.md` provides specific
+  testing locations and macros for the Python runtime. Both of these testing guidelines
+  conflict with the explicit instructions in the prompt, which dictate a specific
+  file path (`src/pyodide/internal/test_frozen_sdk.py`) and a standard Bazel macro
+  (`py_test`). The prompt's explicit instructions must override the repository's general
+  testing conventions in this specific case.

@@ -65,19 +65,15 @@ checks:
   origin: repo_tests
   description: All CI shell scripts have valid bash syntax
 rubric:
-- rule: When adding the new CI / Pipeline Monitoring section to CLAUDE.md, it must
-    match the existing format shown in lines 29-60 (using Markdown headers and fenced
-    bash code blocks)
+- rule: 'Use Markdown headers (##, ###) and bash code blocks for sections and subsections
+    in CLAUDE.md'
   source:
     path: CLAUDE.md
-    lines: 29-60
-    commit: 57d1e03321fd1648889b5c3fae5261cf5a7a0217
-- rule: CLAUDE.md must be updated to include a new 'CI / Pipeline Monitoring' section
-    that documents how to use the monitor_docker.sh and monitor_pr.sh scripts
-  source:
-    path: CLAUDE.md
-    lines: N/A
-    commit: 57d1e03321fd1648889b5c3fae5261cf5a7a0217
+    lines: 29-40
+  category: documentation
+  evidence: The gold solution adds `## CI / Pipeline Monitoring` and `### Monitor
+    PR checks` to CLAUDE.md, matching the existing header hierarchy and documentation
+    style.
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -138,3 +134,26 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: 'Always validate linters pass at the end of a task: golangci-lint run ./...
+    ./tools/linter_go_routines.sh'
+  source:
+    path: CLAUDE.md
+    lines: 48-52
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run Go linters after creating the bash scripts,
+    which is unnecessary and wastes time since no Go code was changed.
+  severity: medium
+- rule: Run all unit tests (slow, use sparingly) go test -race -count 1 $(go list
+    ./... | grep -v 'test/acceptance' | grep -v 'test/modules')
+  source:
+    path: CLAUDE.md
+    lines: 36-38
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run the Go test suite to verify its
+    changes, but the task only involves bash scripts and markdown documentation.
+  severity: medium
+hierarchy_analysis: The only config file is CLAUDE.md at the root level. It primarily
+  contains Go-specific guidelines which are largely irrelevant to this task since
+  it only involves bash scripts and documentation. The agent must recognize that the
+  Go-specific rules do not apply here.

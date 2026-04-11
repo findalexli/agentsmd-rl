@@ -71,6 +71,15 @@ rubric:
     path: CLAUDE.md
     lines: '73'
     commit: bbaa7698227fcf4f7ec001af6aa5110d405ee54f
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: CLAUDE.md
+    lines: 87-87
+  evidence: The script includes comments like `# Clone (shallow if no pinned revision,
+    same as primer)` and `# Create venv (matching primer's Venv.make_venv())` which
+    explain the reasoning behind specific impleme
+  category: documentation
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -89,3 +98,30 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time writing unit tests (e.g., mocking subprocesses)
+    for a simple developer utility script, which is out of scope for this PR and not
+    done in the gold solution.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 79-79
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem. Look
+    for existing utilities first.
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly requests the creation of a new automation
+    script because the current process is manual. The agent might hesitate to write
+    the script or waste time searching for a non-existent utility.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 83-83
+hierarchy_analysis: The `CLAUDE.md` file contains general guidelines that are heavily
+  skewed towards the main Rust codebase. When working on Python utility scripts in
+  the `scripts/` directory, some of these rules (like strict testing requirements)
+  have ambiguous scope and should be overridden by the specific instructions in the
+  prompt.

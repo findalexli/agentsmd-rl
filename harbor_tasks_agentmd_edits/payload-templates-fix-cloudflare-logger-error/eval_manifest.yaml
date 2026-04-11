@@ -52,27 +52,21 @@ checks:
 - id: test_readme_logger_configuration
   type: fail_to_pass
   origin: pr_diff
-  description: README.md documents the custom logger configuration for Cloudflare Workers
+  description: README.md documents the custom logger configuration for Cloudflare
+    Workers
 - id: test_readme_diagnostic_channel
   type: fail_to_pass
   origin: pr_diff
   description: README.md documents the diagnostic channel error workaround
 rubric:
-- rule: 'Logger implementations must use object form with msg and err keys per project convention'
+- rule: Use `import type` for types, regular `import` for values, separate statements
+    even from same module (applies to exports as well)
   source:
     path: CLAUDE.md
-    lines: 69-72
-    commit: 23d52a0d7d5780954bf5b027e537cabb008b8a0a
-- rule: 'Type exports should use export type syntax for type-only exports'
-  source:
-    path: CLAUDE.md
-    lines: '63'
-    commit: 23d52a0d7d5780954bf5b027e537cabb008b8a0a
-- rule: 'After modifying TypeScript code, validate correctness with tsc --noEmit'
-  source:
-    path: templates/with-cloudflare-d1/AGENTS.md
-    lines: '16'
-    commit: 23d52a0d7d5780954bf5b027e537cabb008b8a0a
+    lines: 44-44
+  category: style
+  evidence: The gold solution adds `export type { PayloadLogger }` as a separate statement
+    from the value export `export { defaultLoggerOptions }` in `packages/payload/src/index.ts`.
 config_edits:
 - path: templates/with-cloudflare-d1/README.md
   tier: 2
@@ -113,3 +107,30 @@ config_edits:
     by default, providing built-in SSRF protection. This makes `skipSafeFetch` safe
     to use.'
   gold_removed: ''
+distractors:
+- rule: 'Logger Usage (`payload.logger.error`) - Valid: `payload.logger.error(''message'')`
+    or `payload.logger.error({ msg: ''...'', err: error })`'
+  source:
+    path: CLAUDE.md
+    lines: 49-52
+  collision_type: meta_confusion
+  why_distracting: The task is to implement and configure a custom logger for Cloudflare
+    Workers, not to fix or change how the logger is called throughout the codebase.
+    An agent might get confused and try to rewrite logger calls instead of providing
+    the logger implementation.
+  severity: medium
+- rule: Run `generate:types` script after schema changes
+  source:
+    path: templates/with-cloudflare-d1/AGENTS.md
+    lines: 9-9
+  collision_type: scope_ambiguity
+  why_distracting: The agent modifies `payload.config.ts` which contains the schema,
+    but the changes are to the logger configuration, not the schema itself. Running
+    `generate:types` is unnecessary and wastes effort.
+  severity: low
+hierarchy_analysis: The root `CLAUDE.md` provides general TypeScript and export rules
+  which apply to the core package modification (`packages/payload/src/index.ts`).
+  The template-specific `AGENTS.md` provides rules for the template, but mostly focuses
+  on schema and access control which are not the primary focus of this PR. The root
+  rules take precedence for the core package, while template rules apply to the template,
+  with no direct conflicts.

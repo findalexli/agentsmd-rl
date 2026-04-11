@@ -44,6 +44,15 @@ rubric:
     path: AGENTS.md
     lines: 61-81
     commit: e5eaa43c16c57bab977e5b53f4e57ca4418d084d
+- rule: The `@` suffix is required in target names for tests (e.g., `name@` for the
+    default variant).
+  source:
+    path: AGENTS.md
+    lines: 79-81
+  evidence: The gold solution updates the test command in `README.md` from `//src/workerd/server/tests/container-client`
+    to `//src/workerd/server/tests/container-client:container-client@`, explicitly
+    adding the r
+  category: testing
 config_edits:
 - path: src/workerd/server/tests/container-client/README.md
   tier: 2
@@ -51,3 +60,31 @@ config_edits:
     \ docker rm -f\n   just stream-test //src/workerd/server/tests/container-client:container-client@"
   gold_removed: "docker rm -f $(docker ps -aq --filter name=workerd-container-client-test\
     \ --all)\n   just stream-test //src/workerd/server/tests/container-client"
+distractors:
+- rule: Suggest updates to AGENTS.md when you find new high-level information
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the discovery of broken Docker commands
+    or missing target suffixes in the README as 'new high-level information' and attempt
+    to update `AGENTS.md`. However, these are localized fixes specific to the `container-client`
+    test suite and belong only in its specific `README.md`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 10-11
+- rule: '`.wd-test` tests: Cap''n Proto config files that define a `Workerd.Config`
+    with embedded JS/TS modules.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might see that `test.js` is being modified and attempt
+    to convert it to or treat it as a `.wd-test` Cap'n Proto config file based on
+    the primary test type documentation. However, `src/workerd/server/AGENTS.md` specifies
+    that `container-client` uses the Node.js `server-harness.mjs` E2E testing approach,
+    making the `.wd-test` rules inapplicable here.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 58-59
+hierarchy_analysis: The root `AGENTS.md` provides general testing conventions (like
+  the `@` suffix for Bazel targets) which correctly apply to the README update. However,
+  its definition of standard test types (`.wd-test` and C++ tests) is overridden/supplemented
+  by `src/workerd/server/AGENTS.md`, which explicitly lists `container-client` as
+  a subdirectory that uses the Node.js `server-harness.mjs` E2E testing pattern.

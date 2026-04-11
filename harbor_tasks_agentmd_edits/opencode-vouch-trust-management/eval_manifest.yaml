@@ -58,6 +58,29 @@ rubric:
     path: CONTRIBUTING.md
     lines: 1-50
     commit: 31f893f8cb7cbec11ae743b4ead806c201a396b7
+- rule: The default branch in this repo is `dev`.
+  source:
+    path: AGENTS.md
+    lines: 3-3
+  evidence: The close messages in `.github/workflows/compliance-close.yml` link to
+    `../blob/dev/CONTRIBUTING.md` instead of `main`.
+  category: documentation
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 54-63
+  evidence: The GitHub script in `.github/workflows/compliance-close.yml` uses `if
+    (items.length === 0) { return; }`, `if (!complianceComment) continue;`, and `if
+    (commentAge < twoHours) { continue; }` instead of
+  category: style
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 43-52
+  evidence: 'The GitHub script uses `const kind = isPR ? ''PR'' : ''issue'';` and
+    `const closeMessage = isPR ? ... : ...;` instead of declaring a `let` variable
+    and reassigning it.'
+  category: style
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -179,3 +202,40 @@ config_edits:
   type: pass_to_pass
   origin: repo_tests
   description: GitHub Actions workflows must be syntactically valid
+distractors:
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  collision_type: would_cause_bug
+  why_distracting: The GitHub script in `compliance-close.yml` uses a `for (const
+    item of items)` loop because it needs to make asynchronous API calls (`await github.rest.issues.listComments`)
+    sequentially. Forcing functional array methods like `.forEach` or `.map` with
+    `await` would either cause unhandled promises or require `Promise.all`, which
+    could trigger GitHub API rate limits.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 16-16
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  collision_type: scope_ambiguity
+  why_distracting: 'The script uses `const { data: items } = await github.rest.issues.listForRepo(...)`
+    which is the standard and expected pattern for extracting payloads from Octokit
+    responses. Strictly avoiding destructuring here would make the code less idiomatic
+    for GitHub Actions scripts.'
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 34-41
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  collision_type: scope_ambiguity
+  why_distracting: The script uses multi-word variables like `complianceComment`,
+    `commentAge`, `closeMessage`, and `twoHours` for clarity. Enforcing single-word
+    variables in this context would reduce readability.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 18-26
+hierarchy_analysis: The rules in `AGENTS.md` are primarily geared towards the TypeScript/Bun
+  application code (e.g., Drizzle schemas, Bun APIs). However, this PR involves writing
+  JavaScript within a GitHub Actions workflow (`github-script`). Some general TS/JS
+  rules apply (like early returns and ternaries), but others (like avoiding for-loops
+  or destructuring) conflict with standard Octokit/GitHub Actions idioms.

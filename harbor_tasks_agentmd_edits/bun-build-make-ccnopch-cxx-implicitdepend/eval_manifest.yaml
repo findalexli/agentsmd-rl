@@ -84,3 +84,42 @@ rubric:
     stats them before the sub-build runs — order-only lags one build. The lib itself
     is the invalidation signal. Codegen headers stay order-only: they''re declared
     outputs with restat, so depfile tracking is exact.'
+- rule: Bun is written primarily in Zig with C++ for JavaScriptCore integration, powered
+    by WebKit's JavaScriptCore engine.
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+  evidence: The gold solution modifies the build script to correctly handle implicit
+    dependencies for C++ files on WebKit/JavaScriptCore library outputs (like libJavaScriptCore.a),
+    ensuring that when WebKit rebui
+  category: architecture
+distractors:
+- rule: 'Test Organization: find the best existing file to modify instead, such as
+    test/js/bun/, test/cli/, etc.'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on how to write and organize
+    tests using Bun's test runner. An agent might try to write a TypeScript test to
+    verify the build script's dependency graph behavior. However, this PR fixes a
+    Ninja build graph issue in `scripts/build/bun.ts` that causes spurious relinks,
+    which cannot be tested via the standard runtime test suite.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 44-58
+- rule: 'Run tests with your debug build: `bun bd test <test-file>`'
+  collision_type: meta_confusion
+  why_distracting: The config instructs to run tests with `bun bd test <test-file>`.
+    An agent might try to use this command to verify its changes. However, the issue
+    specifically occurs on the second `build:release:local` run after a local WebKit
+    rebuild. Running standard tests won't reproduce the spurious relink issue or verify
+    the fix.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 9-11
+hierarchy_analysis: The repository uses a flat configuration structure with `CLAUDE.md`
+  and `AGENTS.md` providing identical root-level guidance. The guidance heavily emphasizes
+  runtime testing and standard build commands (`bun bd`), which is distracting for
+  this specific meta-build issue. The PR requires modifying the build system itself
+  (`scripts/build/bun.ts`) to fix Ninja dependency edges, meaning standard testing
+  protocols do not apply.

@@ -62,6 +62,14 @@ rubric:
     path: compiler/CLAUDE.md
     lines: 28-34
     commit: cd0c4879a2959db91f9bd51a09dafefedd95fb17
+- rule: Run a single fixture in debug mode using `yarn snap -p <file-basename> -d`
+  source:
+    path: compiler/CLAUDE.md
+    lines: 25-28
+  evidence: The gold solution explicitly references the existing `yarn snap -d -p
+    <pattern>` command (documented in the config) as the alternative when explaining
+    the new `yarn snap compile --debug <path>` comman
+  category: documentation
 config_edits:
 - path: compiler/.claude/agents/investigate-error.md
   tier: 1
@@ -134,3 +142,30 @@ config_edits:
 
     yarn snap minimize <path>'
   gold_removed: ''
+distractors:
+- rule: Use the path relative to the __tests__/fixtures/compiler directory for running
+    fixtures
+  collision_type: rule_conflict
+  why_distracting: The config states that paths for debug mode should be relative
+    to the `__tests__/fixtures/compiler` directory. However, the PR instructions explicitly
+    require the new `compile` and `minimize` commands to resolve relative paths from
+    the compiler project root. An agent might incorrectly apply the fixture path resolution
+    rule to the new commands.
+  severity: high
+  source:
+    path: compiler/CLAUDE.md
+    lines: 25-28
+- rule: Use Sapling (`sl`) for version control instead of git
+  collision_type: meta_confusion
+  why_distracting: The config instructs the use of Sapling (`sl`) for version control.
+    An agent might attempt to use `sl` commands to commit its changes or check status,
+    which would fail or waste time in a standard git-based evaluation environment.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 34-48
+hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` and a compiler-specific
+  `compiler/CLAUDE.md`. The compiler-specific config provides detailed instructions
+  on running tests and version control. The main conflict arises from the path resolution
+  rule for existing commands in `compiler/CLAUDE.md` contradicting the specific requirements
+  for the new commands in the PR instructions.

@@ -56,6 +56,14 @@ rubric:
     path: AGENTS.md
     lines: 235-265
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
+- rule: CLAUDE.md is a symlink to AGENTS.md. They are the same file.
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: The gold solution modifies AGENTS.md to add the requested rule but does
+    not attempt to separately modify CLAUDE.md, respecting the note that they are
+    the same file.
+  category: documentation
 config_edits:
 - path: .agents/skills/router-act/SKILL.md
   tier: 1
@@ -90,3 +98,32 @@ config_edits:
   tier: 1
   gold_added: ''
   gold_removed: ''
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to start a background dev server (`pnpm
+    --filter=next dev`) when changing integration tests. In an automated evaluation
+    or script-writing context, starting a long-running background process can hang
+    the execution or cause timeouts, and is unnecessary for simply updating a test
+    file and markdown docs.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 60-63
+- rule: This skill should be used when the user asks to 'update documentation for
+    my changes'...
+  collision_type: scope_ambiguity
+  why_distracting: The user asks to 'document this pattern' and 'update the agent
+    instruction files'. The agent might mistakenly trigger the `update-docs` skill,
+    which is intended for user-facing framework documentation (e.g., in the `docs/`
+    folder), rather than updating the agent's own meta-instructions (`AGENTS.md` and
+    `.agents/skills/`).
+  severity: medium
+  source:
+    path: .agents/skills/update-docs
+    lines: 1-3
+hierarchy_analysis: The config hierarchy is flat with `CLAUDE.md` and `AGENTS.md`
+  being identical (symlinked). The primary challenge is distinguishing between standard
+  framework documentation (handled by `update-docs`) and agent meta-documentation
+  (`AGENTS.md` and `.agents/skills/`), which the user explicitly requested to be updated.

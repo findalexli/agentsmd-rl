@@ -65,6 +65,22 @@ rubric:
     path: CLAUDE.md
     lines: 110-125
     commit: bf9c96b91205d17e13d9c7ea54d396005db5bc63
+- rule: Caching components are located in `litellm/caching/`
+  source:
+    path: CLAUDE.md
+    lines: 44-44
+  evidence: The gold solution correctly locates and modifies the caching logic in
+    `litellm/caching/llm_caching_handler.py`, adhering to the defined architecture
+    for caching components.
+  category: architecture
+- rule: Avoid imports within methods — place all imports at the top of the file
+  source:
+    path: CLAUDE.md
+    lines: 65-66
+  evidence: The gold solution removes the `_remove_key` method and does not introduce
+    any new inline imports to solve the problem, keeping the file compliant with the
+    import rules.
+  category: style
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -86,3 +102,41 @@ config_edits:
     the client has been closed.` after the 1-hour TTL expires. Cleanup happens at
     shutdown via `close_litellm_async_clients()`.'
   gold_removed: ''
+distractors:
+- rule: Add at least 1 test in `tests/litellm/`
+  collision_type: scope_ambiguity
+  why_distracting: The bug involves a 1-hour TTL cache eviction during an in-flight
+    streaming request, which is highly complex to simulate in a unit test. The gold
+    solution omits tests. An agent trying to follow this rule might get stuck writing
+    a complex, flaky mock test.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 26-27
+- rule: Async/await patterns throughout
+  collision_type: would_cause_bug
+  why_distracting: The original buggy code uses `asyncio.get_running_loop().create_task(close_fn())`
+    to close the client asynchronously. An agent might misinterpret the `RuntimeError`
+    as an issue with how the async task is created or awaited, and attempt to fix
+    the async pattern instead of removing the client closure logic entirely.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 63-63
+- rule: Include proper error handling with provider-specific exceptions
+  collision_type: would_cause_bug
+  why_distracting: The issue describes a `RuntimeError` during streaming requests.
+    An agent might try to add a `try/except` block to catch this error in the streaming
+    code and wrap it in a provider-specific exception, rather than fixing the root
+    cause (the eager client closure in the cache eviction).
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 34-35
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` mandate adding tests for PRs.
+  However, for this specific concurrency/TTL bug, the gold solution bypasses these
+  testing rules, indicating that for highly complex production race conditions, fixing
+  the root cause takes precedence over mandatory test coverage if the test would be
+  excessively complex. Additionally, `CLAUDE.md`'s emphasis on async/await patterns
+  could mislead an agent into fixing the async task rather than removing the invalid
+  logic.

@@ -60,6 +60,14 @@ rubric:
     path: AGENTS.md
     lines: 25-26
     commit: 40a755c50f40ed444a928363beddd75e6edc1f52
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: AGENTS.md
+    lines: 28-28
+  evidence: The modified JSON block in CONTRIBUTING.md maintains 2-space indentation,
+    adhering to the 'spaces not tabs' formatting rule.
+  category: style
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -109,3 +117,27 @@ config_edits:
 
     Version resets to the new tag (e.g. `3.0.0-alpha.7` → `3.0.0-beta.0`). The bump
     type is for changelog categorization only—by convention, use `patch`.'
+distractors:
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  collision_type: would_cause_bug
+  why_distracting: The formatting rule specifies 'single quotes', but the agent must
+    edit prerelease.json and a JSON code block in CONTRIBUTING.md. JSON strictly requires
+    double quotes, so applying this rule would create invalid JSON.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 28-28
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  collision_type: meta_confusion
+  why_distracting: The rule requires creating a change file for changes. However,
+    this PR modifies the monorepo's internal release scripts and documentation, not
+    the actual package source code that would require a changelog entry for users.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 45-45
+hierarchy_analysis: AGENTS.md is the root config file. The rules generally apply to
+  TypeScript source code, but agents might over-apply them to JSON files (causing
+  syntax errors) or meta-level repository changes (causing unnecessary change files).

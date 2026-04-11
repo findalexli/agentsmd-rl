@@ -70,16 +70,38 @@ rubric:
     path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
     lines: 1-10
     commit: 35f853d5c293c901ea66a9aa3f56f6879a94e66a
-  reference: |
-    You can also use css selectors or Playwright locators.
+  reference: 'You can also use css selectors or Playwright locators.
+
 
     # role locator
 
-    playwright-cli click "getByRole('button', { name: 'Submit' })"
+
+    playwright-cli click "getByRole(''button'', { name: ''Submit'' })"
+
 
     # test id
 
-    playwright-cli click "getByTestId('submit-button')"
+
+    playwright-cli click "getByTestId(''submit-button'')"
+
+    '
+- rule: Import boundaries are enforced via DEPS.list files
+  source:
+    path: CLAUDE.md
+    lines: 68-70
+  evidence: The gold solution imports `locatorOrSelectorAsSelector` using a relative
+    path `../../utils/isomorphic/locatorParser` within the `playwright-core` package,
+    adhering to the strict import boundaries enfo
+  category: architecture
+- rule: playwright-core is the browser automation engine containing client, server,
+    dispatchers, and protocol
+  source:
+    path: CLAUDE.md
+    lines: 3-5
+  evidence: The gold solution modifies `packages/playwright-core/src/tools/backend/tab.ts`,
+    which aligns with the config defining `playwright-core` as the package responsible
+    for the browser automation engine, in
+  category: architecture
 config_edits:
 - path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
   tier: 1
@@ -102,3 +124,33 @@ config_edits:
     # chaining css and role selectors
 
     playwright-cli click "#footer >> role=button[name=Submit]"'
+distractors:
+- rule: docs/src/ is the API documentation and source of truth for public TypeScript
+    types
+  collision_type: scope_ambiguity
+  why_distracting: The config states that `docs/src/` is the source of truth for API
+    documentation. An agent might try to update the main Playwright documentation
+    in `docs/src/` to reflect the new CLI locator support, but the prompt specifically
+    requests updating only the CLI's internal `SKILL.md` file.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 27-28
+- rule: Test placement decision rules based on required fixtures (tests/page/, tests/library/,
+    tests/mcp/)
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on where to place tests
+    (e.g., `tests/page/` or `tests/mcp/`). An agent might spend effort writing tests
+    for this CLI feature, but the gold solution does not include any test changes,
+    focusing only on the implementation and `SKILL.md`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 58-63
+hierarchy_analysis: 'The repository uses a single `CLAUDE.md` file at the root level.
+  The config provides architectural boundaries (packages, DEPS) and testing guidelines.
+  The primary challenge for an agent is scoping: the config heavily emphasizes testing
+  and main documentation (`docs/src/`), but this specific PR requires updating an
+  internal CLI skill document (`SKILL.md`) and does not require new tests. The agent
+  must follow the prompt''s explicit instructions over the general testing/documentation
+  guidelines in the config.'

@@ -47,12 +47,23 @@ checks:
   origin: repo_tests
   description: poll.sh passes shellcheck linting
 rubric:
-- rule: The SKILL.md polling instructions are clear and consistent with the new poll.sh
-    interface
+- rule: Assume the authors are referencing newer, valid resources (don't flag unfamiliar
+    names as speculative or non-existent)
   source:
-    path: .claude/skills/copilot/SKILL.md
-    lines: 1-10
-    commit: cd2cea0d7acf7d47f4fbd8f94e7da0844a89e76a
+    path: CLAUDE.md
+    lines: 7-9
+  category: tooling
+  evidence: The gold solution directly uses the `gh agent-task list` command as instructed,
+    even though it is an internal/newer GitHub CLI extension, without attempting to
+    work around it or flag it as invalid.
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  source:
+    path: CLAUDE.md
+    lines: 13-13
+  category: documentation
+  evidence: The gold solution adds a concise comment `# Find the latest session for
+    this PR` right above the complex `gh agent-task list` and `jq` pipeline, explaining
+    the non-obvious logic of the command.
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -77,3 +88,19 @@ config_edits:
     # Poll using session ID
 
     bash .claude/skills/copilot/poll.sh "$session_id" "<owner>/<repo>" <pr_number>'
+distractors:
+- rule: 'copilot: Hand off a task to GitHub Copilot.'
+  source:
+    path: CLAUDE.md
+    lines: 88-89
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with modifying the copilot skill's internal
+    scripts and documentation. Seeing the skill listed as available might confuse
+    the agent into trying to invoke the skill to solve the task, rather than directly
+    editing the skill's implementation files.
+  severity: medium
+hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root level
+  providing general guidelines. Since the task involves modifying bash scripts and
+  markdown documentation rather than Python code, most of the MLflow-specific Python
+  rules do not apply. The agent must rely primarily on the explicit task instructions
+  while adhering to the general documentation and tooling principles in `CLAUDE.md`.

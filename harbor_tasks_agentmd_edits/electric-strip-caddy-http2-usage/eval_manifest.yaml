@@ -141,3 +141,19 @@ config_edits:
     \ shapes load concurrently over a single connection\n- **Better development experience**\
     \ - No connection limits or artificial delays\n- **Production-like performance**\
     \ - Your l"
+distractors:
+- rule: Put Electric behind server/proxy – never call directly from production
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates putting Electric behind a proxy for production
+    security. An agent might confuse the local dev Caddy proxy (which was only used
+    to bypass browser HTTP/1.1 connection limits) with this required security proxy,
+    and either refuse to remove Caddy or try to replace it with a different proxy
+    instead of relying on the new client's subdomain sharding.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-20
+hierarchy_analysis: The AGENTS.md file acts as the root configuration. The PR actually
+  modifies this file to update troubleshooting steps, which means the agent needs
+  to recognize that the architectural rules about proxies in production (for security)
+  are distinct from the local development proxy (Caddy) being removed in this PR.

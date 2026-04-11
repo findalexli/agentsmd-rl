@@ -131,6 +131,14 @@ rubric:
     Use when local runs, CI, or PR logs.
 
     - Optional `make typing` or CI output showing typing fa'
+- rule: The CI will run `make check-repo` and fail if any issues are found.
+  source:
+    path: .ai/AGENTS.md
+    lines: 7-7
+  evidence: 'The gold solution updates the documentation to explicitly state that
+    `make check-repo` includes `make typing`, ensuring that the CI continues to run
+    these checks and fail on issues as required by the '
+  category: documentation
 config_edits:
 - path: .ai/AGENTS.md
   tier: 1
@@ -157,3 +165,20 @@ config_edits:
     - Optional `make style` or CI output showing typing failures.\n   - If you already\
     \ have `make style` or CI output, extract the failing file/module paths.\n   \
     \  make style\n   - Re-run `make style` to confirm the full style/type step passes"
+distractors:
+- rule: '- `make style`: runs formatters, linters and type checker, necessary to pass
+    code style checks'
+  collision_type: meta_confusion
+  why_distracting: The config file defines `make style` as running the type checker.
+    An agent might treat this as an immutable rule and either refuse to remove type
+    checking from `make style`, or fail to realize that it needs to update this documentation
+    to reflect the new `make typing` target.
+  severity: high
+  source:
+    path: .ai/AGENTS.md
+    lines: 2-2
+hierarchy_analysis: The repository contains identical agent instruction files at the
+  root (`CLAUDE.md`, `AGENTS.md`) and in the `.ai` directory (`.ai/AGENTS.md`). The
+  gold solution updates `.ai/AGENTS.md` to reflect the new Makefile targets. The primary
+  conflict arises because the agent is asked to modify the very rules that govern
+  its understanding of the repository's commands, creating a meta-level confusion.

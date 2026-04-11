@@ -54,6 +54,23 @@ rubric:
     path: AGENTS.md
     lines: 33-40
     commit: 3fd1431decb1013969c9ef061f8c391e715fe973
+- rule: When learning something new about the codebase that would help with future
+    tasks, update the agent knowledge base file immediately.
+  source:
+    path: AGENTS.md
+    lines: 3-5
+  evidence: 'The gold solution adds new bullet points to AGENTS.md detailing how `dataPath`
+    is built and unpacked, and how functional generated clients import the runtime,
+    fulfilling the instruction to update the '
+  category: documentation
+- rule: Always edit `AGENTS.md` directly, as `CLAUDE.md` and `GEMINI.md` are symlinks
+    to it.
+  source:
+    path: AGENTS.md
+    lines: 3-5
+  evidence: The gold solution applies its documentation updates directly to `AGENTS.md`
+    rather than modifying `CLAUDE.md`.
+  category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -68,3 +85,20 @@ config_edits:
     \ may need corresponding runtime bundle updates to be exercised by functional\
     \ tests."
   gold_removed: ''
+distractors:
+- rule: '`packages/client-engine-runtime` is the core part of the new Rust binary
+    free client based on Wasm query compiler, used by `ClientEngine` class in `packages/client`.'
+  collision_type: architecture_boundary
+  why_distracting: The config mentions `packages/client-engine-runtime` as the core
+    part of the client based on the Wasm query compiler. An agent might mistakenly
+    try to fix the `dataPath` unpacking or extension logic in the engine runtime or
+    query compiler, but result extensions are a Prisma Client feature handled purely
+    in `packages/client/src/runtime`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 10-11
+hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical content, but
+  the root rule explicitly states that `CLAUDE.md` is a symlink and `AGENTS.md` must
+  be edited directly. The gold solution correctly respects this hierarchy by targeting
+  `AGENTS.md` for its documentation updates.

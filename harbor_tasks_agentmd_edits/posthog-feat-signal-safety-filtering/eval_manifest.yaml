@@ -60,23 +60,23 @@ checks:
   description: safety_filter and safety_filter_activity have real implementation,
     not stubs
 rubric:
-- rule: New Python modules should use explicit typed errors for error handling (not
-    generic exceptions like ValueError)
-  source:
-    path: AGENTS.md
-    lines: '90'
-    commit: 12335b96f2209c3044a2fd623928284ab81b861d
 - rule: New features should be placed in the appropriate products/ subdirectory following
     the product structure
   source:
-    path: AGENTS.md
-    lines: '79'
-    commit: 12335b96f2209c3044a2fd623928284ab81b861d
-- rule: Python files should use type hints following mypy-strict style
+    path: Existing Rubric Rules
+    lines: '2'
+  category: architecture
+  evidence: The solve.sh script verifies the creation of the new safety filter at
+    `products/signals/backend/temporal/safety_filter.py`, adhering to the product-centric
+    architecture.
+- rule: New Python modules should use explicit typed errors for error handling (not
+    generic exceptions like ValueError)
   source:
-    path: AGENTS.md
-    lines: '85'
-    commit: 12335b96f2209c3044a2fd623928284ab81b861d
+    path: Existing Rubric Rules
+    lines: '1'
+  category: architecture
+  evidence: The task explicitly requires adding an `EmptyLLMResponseError` exception
+    to `llm.py` to replace the generic `ValueError` in `_extract_text_content`.
 config_edits:
 - path: products/signals/eval/AGENTS.md
   tier: 1
@@ -141,3 +141,28 @@ config_edits:
     \ = 'correct_match'\n  AND properties.$ai_score != 1.0\nORDER BY properties.$ai_reasoning,\
     \ item\n```\n"
   gold_removed: ''
+distractors:
+- rule: Do not run mypy for type checks. It takes too long.
+  source:
+    path: AGENTS.md
+    lines: 25-26
+  collision_type: rule_conflict
+  why_distracting: The existing rubric requires 'mypy-strict style' type hints. An
+    agent might try to run `mypy` to verify its strict typing compliance, which will
+    waste significant time and violate the explicit instruction not to run it.
+  severity: medium
+- rule: API views should declare request/response schemas — prefer @validated_request
+    from posthog.api.mixins
+  source:
+    path: AGENTS.md
+    lines: 58-60
+  collision_type: architecture_boundary
+  why_distracting: The agent is building a backend safety filter for a Temporal workflow.
+    It might mistakenly interpret this as a new endpoint and attempt to apply DRF/Django
+    schema decorators, which would cause errors in a non-API context.
+  severity: high
+hierarchy_analysis: The `.cursorrules` file provides general behavioral guidelines,
+  while `AGENTS.md` provides specific PostHog development guidelines (like avoiding
+  mypy). The new `products/signals/eval/AGENTS.md` adds specific HogQL queries for
+  evaluation. The agent must combine the Python error handling rules with the specific
+  product structure guidelines without crossing into irrelevant API or frontend rules.

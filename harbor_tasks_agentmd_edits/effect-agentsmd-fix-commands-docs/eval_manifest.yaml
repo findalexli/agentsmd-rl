@@ -126,6 +126,14 @@ rubric:
     path: AGENTS.md
     lines: '24'
     commit: 5487cfb65a69a308e7c0b29ae666c8a9ddcab159
+- rule: Run `pnpm lint-fix` after editing files
+  source:
+    path: AGENTS.md
+    lines: 19-19
+  evidence: 'The gold solution includes formatting changes in `eslint.config.mjs`
+    (such as collapsing the `packageNames` array into a single line and wrapping the
+    `selector` string), which demonstrates that `pnpm '
+  category: tooling
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -146,3 +154,30 @@ config_edits:
   gold_removed: '- Always run tests after making changes: `pnpm test <test_file.ts>`
 
     run the file with `node scratchpad/your-file.ts`.'
+distractors:
+- rule: 'Always run tests after making changes: `pnpm test <test_file.ts>`'
+  collision_type: meta_confusion
+  why_distracting: The agent is explicitly tasked with fixing this broken test command
+    in the documentation. If the agent blindly follows this instruction to run tests
+    during its workflow, the command will fail. Furthermore, the agent might get confused
+    between following the rule as an instruction versus treating the rule itself as
+    the text to be modified.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 20-20
+- rule: run the file with `node scratchpad/your-file.ts`
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing this exact scratchpad execution
+    command because `node` cannot run `.ts` files. If the agent attempts to use this
+    command to verify its own scratchpad scripts during the task, it will encounter
+    errors and might waste time debugging the environment instead of fixing the documentation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 42-44
+hierarchy_analysis: The `AGENTS.md` file acts as the root configuration. In this specific
+  task, the agent is asked to modify the very instructions it is supposed to follow.
+  This creates a meta-level paradox where the agent must recognize that certain rules
+  in its system prompt/instructions are intentionally flawed and are the target of
+  the fix, rather than absolute directives to be obeyed.

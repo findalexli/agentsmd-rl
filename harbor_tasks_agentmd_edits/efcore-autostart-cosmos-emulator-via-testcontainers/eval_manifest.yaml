@@ -90,6 +90,14 @@ rubric:
     use an existing emulator instead.
 
     - Skip tests requiring unsupported features on the Linux emulator with `[CosmosCondition(CosmosCondition.IsNotLinuxEmulator)]`.'
+- rule: Prefer minimal comments that explain *why* a solution is necessary.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+  evidence: The gold solution updates the comment in `eng/helix.proj` to `<!-- Run
+    Cosmos tests on Ubuntu with Docker support (testcontainer auto-starts the emulator)
+    -->`, which explains the *why* (testcontainer
+  category: documentation
 config_edits:
 - path: .agents/skills/cosmos-provider/SKILL.md
   tier: 1
@@ -116,3 +124,41 @@ config_edits:
 
     The `Test__Cosmos__SkipConnectionCheck=true` env var is set to prevent tests from
     being skipped when the emulator failed to start.'
+distractors:
+- rule: Don't copy code that follows the same pattern in a different context.
+  collision_type: rule_conflict
+  why_distracting: 'The prompt explicitly asks the agent to match the pattern already
+    established for SQL Server in PR #37809. If the agent strictly follows the instruction
+    not to copy code from a different context, it might try to invent a novel way
+    to manage the Cosmos DB container instead of reusing the proven SQL Server pattern.'
+  severity: high
+  source:
+    path: .github/copilot-instructions.md
+    lines: '5'
+- rule: Avoid breaking public APIs. If you need to break a public API, add a new API
+    instead and mark the old one as obsolete.
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies `TestEnvironment.cs` and `CosmosTestStore.cs`,
+    which are internal test utilities. An agent might mistakenly treat these as public
+    APIs and try to preserve the old `InitializeAsync` signature or add `[Obsolete]`
+    attributes, which is unnecessary and pollutes the test codebase.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: '22'
+- rule: Types in `.Internal` namespaces or annotated with `[EntityFrameworkInternal]`
+    require a specific XML doc comment on ALL members.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see test utilities like `TestEnvironment` and think
+    they are internal infrastructure, adding the verbose `[EntityFrameworkInternal]`
+    XML doc comment to test classes, which is only meant for the main product code.
+  severity: low
+  source:
+    path: .github/copilot-instructions.md
+    lines: 24-31
+hierarchy_analysis: The `.github/copilot-instructions.md` file provides general repository
+  guidelines. However, the prompt's specific instruction to 'match the pattern already
+  established for SQL Server' overrides the general instruction 'Don't copy code that
+  follows the same pattern in a different context.' Furthermore, rules regarding public
+  APIs and internal namespaces are scoped to the main product code and should not
+  be applied to the test utilities being modified in this PR.

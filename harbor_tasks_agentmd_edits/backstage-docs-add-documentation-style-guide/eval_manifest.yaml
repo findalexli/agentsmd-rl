@@ -80,6 +80,20 @@ rubric:
 
     If you have any questions or need help, feel free to reach out in the [Backstage
     Discord Docs Channel](https://discord.com/channels/687207715902193673/687994765559463940).'
+- rule: The `/CONTRIBUTING.md` file contains comprehensive contribution guidelines.
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution updates `CONTRIBUTING.md` to include a link to the new
+    style guide, recognizing it as the central hub for contribution guidelines.
+  category: documentation
+- rule: The `/docs` directory is the designated location for documentation files.
+  source:
+    path: AGENTS.md
+    lines: 8-9
+  evidence: The gold solution places the new documentation style guide inside the
+    `docs/contribute/` directory.
+  category: architecture
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -112,3 +126,30 @@ config_edits:
   gold_removed: Ready to get started? You can find all the documentation files in
     the [docs](docs) directory! If you have any questions or need help, feel free
     to reach out in the [Backstage Discord Docs Channel](https://discord.com/channels/687207715902193673/687994765559463940)
+distractors:
+- rule: All changes that affect the published version of packages in the `/packages`
+    and `/plugins` directories must be accompanied by a changeset.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might generate a changeset file because it is adding
+    a new feature (a style guide) to the repository. However, changesets are strictly
+    scoped to changes affecting published packages in `/packages` and `/plugins`,
+    not documentation or repository configuration.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 44-46
+- rule: Before submitting a pull request with changes to any package in the workspace,
+    run `yarn build:api-reports` in the project root to generate API reports for all
+    packages.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `yarn build:api-reports` before finishing the
+    task, assuming it is a required pre-PR step. However, this PR only modifies documentation
+    and markdown files, so no API reports need to be updated.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 36-37
+hierarchy_analysis: The only configuration file provided is `AGENTS.md` at the root
+  level. The task requires the agent to modify the configuration files themselves
+  (`AGENTS.md` and `CONTRIBUTING.md`) to establish new rules for future contributors,
+  which requires meta-awareness of the repository's governance structure.

@@ -46,7 +46,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: .gitignore includes .tuist-dev-instance
-
 - id: test_repo_workflow_yamllint
   type: pass_to_pass
   origin: repo_tests
@@ -63,7 +62,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Elixir config files have valid structure
-
 rubric:
 - rule: README updates are consistent with the documentation style of the existing
     server/README.md and cache/README.md
@@ -99,6 +97,24 @@ rubric:
     mode through mise shell env. That suffix scopes the cache port and the main server
     URL it talks to, so one repo clone can run its own paired `server/` and `cache/`
     instances without colliding with other clones.
+- rule: 'Responsibilities: Environment-specific configuration (dev, test, prod). Runtime
+    config and endpoint settings.'
+  source:
+    path: server/config/AGENTS.md
+    lines: 5-7
+  evidence: 'The gold solution correctly places the dynamic port and URL resolution
+    using `System.get_env` in `cache/config/runtime.exs` and `server/config/runtime.exs`
+    for runtime settings, and in `test.exs` for '
+  category: architecture
+- rule: 'User-Facing Changes: For changes that affect users, confirm the documentation
+    has been updated in the relevant places'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 35-35
+  evidence: The gold solution updates `cache/README.md` and `server/README.md` to
+    explain the new `.tuist-dev-instance` suffix behavior and how it dynamically scopes
+    local service ports.
+  category: documentation
 config_edits:
 - path: cache/README.md
   tier: 2
@@ -121,3 +137,41 @@ config_edits:
     pre-made test user account:
 
     1. Change the url in `Tuist/Config.swift` to `http://localhost:8080`.'
+distractors:
+- rule: Local development connects to `http://localhost:8080` for Tuist CLI integration.
+  collision_type: rule_conflict
+  why_distracting: The core objective of this PR is to allow multiple concurrent dev
+    instances by dynamically assigning ports. If an agent strictly adheres to this
+    rule, it might refuse to change the hardcoded 8080 port or fail to implement the
+    dynamic port assignment for the server.
+  severity: high
+  source:
+    path: server/AGENTS.md
+    lines: 88-88
+- rule: Use mocks/stubs/DI for environment-dependent behavior.
+  collision_type: architecture_boundary
+  why_distracting: An agent might try to use dependency injection or mocks to handle
+    the dynamic ports and database names in the application code, rather than correctly
+    using `System.get_env` in the Phoenix configuration files (`runtime.exs`, `test.exs`)
+    which is the idiomatic way to handle startup configuration in Elixir.
+  severity: medium
+  source:
+    path: server/AGENTS.md
+    lines: 64-64
+- rule: Never modify System environment variables in tests (shared state).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret this as a prohibition against *reading*
+    environment variables in `test.exs` (like `TUIST_CACHE_TEST_PORT`), or it might
+    try to avoid using environment variables entirely for the test environment setup,
+    complicating the implementation of the per-clone test databases and ports.
+  severity: medium
+  source:
+    path: server/AGENTS.md
+    lines: 63-63
+hierarchy_analysis: The hierarchy defines global rules in `CLAUDE.md` and `AGENTS.md`,
+  with specific subsystem rules in `server/AGENTS.md` and `server/config/AGENTS.md`.
+  A direct conflict arises because `server/AGENTS.md` documents the existing hardcoded
+  state (`http://localhost:8080`) as a rule, which directly opposes the PR's objective
+  to make this dynamic. The agent must recognize that the PR objective overrides this
+  specific documented constant, while still respecting the architectural boundaries
+  defined in `server/config/AGENTS.md` for where to place the new dynamic configuration.

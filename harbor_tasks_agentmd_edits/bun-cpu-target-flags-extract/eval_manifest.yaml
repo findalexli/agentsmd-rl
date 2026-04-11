@@ -1,70 +1,121 @@
-version: "2.0"
+version: '2.0'
 source:
   repo: oven-sh/bun
   pr: 28859
   base_commit: 871f660f5816a48dacc6c53e104f42d775852e6b
   merge_commit: 8effa8ca4cc880fa827cc5d4311336328e05251e
 checks:
-  - id: test_source_files_exist
-    type: pass_to_pass
-    origin: static
-    description: All three modified files (flags.ts, webkit.ts, CLAUDE.md) exist and are non-empty
-  - id: test_repo_flags_ts_module_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: flags.ts has expected module structure with exports and proper imports
-  - id: test_cpu_target_flags_table_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: flags.ts exports cpuTargetFlags array containing -march/-mcpu flag entries
-  - id: test_compute_cpu_target_flags_exported
-    type: fail_to_pass
-    origin: pr_diff
-    description: flags.ts exports computeCpuTargetFlags() that iterates cpuTargetFlags and calls resolveFlagValue
-  - id: test_webkit_imports_compute_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: webkit.ts imports computeCpuTargetFlags from flags.ts
-  - id: test_webkit_opt_flags_seeded_with_cpu_targets
-    type: fail_to_pass
-    origin: pr_diff
-    description: webkit.ts seeds optFlags with computeCpuTargetFlags(cfg) instead of empty array
-  - id: test_claude_md_documents_cpu_target_flags
-    type: fail_to_pass
-    origin: agent_config
-    description: CLAUDE.md lists cpuTargetFlags in the flag tables section
-    source:
-      path: scripts/build/CLAUDE.md
-      lines: "122"
-      commit: 871f660f5816a48dacc6c53e104f42d775852e6b
-  - id: test_claude_md_documents_compute_function
-    type: fail_to_pass
-    origin: agent_config
-    description: CLAUDE.md lists computeCpuTargetFlags in the flags.ts module inventory row
-    source:
-      path: scripts/build/CLAUDE.md
-      lines: "182"
-      commit: 871f660f5816a48dacc6c53e104f42d775852e6b
-  - id: test_global_flags_includes_cpu_targets
-    type: pass_to_pass
-    origin: pr_diff
-    description: globalFlags spreads cpuTargetFlags so backward compatibility is preserved
-  - id: test_compute_function_not_stub
-    type: pass_to_pass
-    origin: static
-    description: "computeCpuTargetFlags has real implementation: iteration, predicates, resolveFlagValue"
-  - id: test_webkit_comment_describes_forwarding
-    type: pass_to_pass
-    origin: pr_diff
-    description: webkit.ts comments explain CPU target forwarding and why WebKit needs it
+- id: test_source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All three modified files (flags.ts, webkit.ts, CLAUDE.md) exist and
+    are non-empty
+- id: test_repo_flags_ts_module_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: flags.ts has expected module structure with exports and proper imports
+- id: test_cpu_target_flags_table_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: flags.ts exports cpuTargetFlags array containing -march/-mcpu flag
+    entries
+- id: test_compute_cpu_target_flags_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: flags.ts exports computeCpuTargetFlags() that iterates cpuTargetFlags
+    and calls resolveFlagValue
+- id: test_webkit_imports_compute_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: webkit.ts imports computeCpuTargetFlags from flags.ts
+- id: test_webkit_opt_flags_seeded_with_cpu_targets
+  type: fail_to_pass
+  origin: pr_diff
+  description: webkit.ts seeds optFlags with computeCpuTargetFlags(cfg) instead of
+    empty array
+- id: test_claude_md_documents_cpu_target_flags
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md lists cpuTargetFlags in the flag tables section
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: '122'
+    commit: 871f660f5816a48dacc6c53e104f42d775852e6b
+- id: test_claude_md_documents_compute_function
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md lists computeCpuTargetFlags in the flags.ts module inventory
+    row
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: '182'
+    commit: 871f660f5816a48dacc6c53e104f42d775852e6b
+- id: test_global_flags_includes_cpu_targets
+  type: pass_to_pass
+  origin: pr_diff
+  description: globalFlags spreads cpuTargetFlags so backward compatibility is preserved
+- id: test_compute_function_not_stub
+  type: pass_to_pass
+  origin: static
+  description: 'computeCpuTargetFlags has real implementation: iteration, predicates,
+    resolveFlagValue'
+- id: test_webkit_comment_describes_forwarding
+  type: pass_to_pass
+  origin: pr_diff
+  description: webkit.ts comments explain CPU target forwarding and why WebKit needs
+    it
 rubric:
-  - rule: Config update is consistent with the style of the existing CLAUDE.md documentation
-    source:
-      path: scripts/build/CLAUDE.md
-      lines: 115-130
-      commit: 871f660f5816a48dacc6c53e104f42d775852e6b
+- rule: Config update is consistent with the style of the existing CLAUDE.md documentation
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 115-130
+    commit: 871f660f5816a48dacc6c53e104f42d775852e6b
+- rule: One flat table per flag category. Each flag has a `when` predicate and a `desc`.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 20-22
+  evidence: The gold solution extracts the CPU target flags into a separate `cpuTargetFlags`
+    array, adhering to the principle of having one flat table per flag category.
+  category: architecture
+- rule: One concern per file — see Module inventory (keep the module inventory documentation
+    up to date).
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 24-24
+  evidence: The gold solution updates the module inventory table in `scripts/build/CLAUDE.md`
+    to include the new `computeCpuTargetFlags()` function under `flags.ts`.
+  category: documentation
 config_edits:
-  - path: scripts/build/CLAUDE.md
-    tier: 1
-    gold_added: "Tables: cpuTargetFlags (-march/-mcpu/-mtune), globalFlags, bunOnlyFlags, linkFlags, stripFlags"
-    gold_removed: "Tables: globalFlags, bunOnlyFlags, linkFlags, stripFlags"
+- path: scripts/build/CLAUDE.md
+  tier: 1
+  gold_added: 'Tables: cpuTargetFlags (-march/-mcpu/-mtune), globalFlags, bunOnlyFlags,
+    linkFlags, stripFlags'
+  gold_removed: 'Tables: globalFlags, bunOnlyFlags, linkFlags, stripFlags'
+distractors:
+- rule: Write tests using Bun's Jest-compatible test runner with proper test fixtures
+    (e.g., `Bun.spawn` for multi-file tests).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a JavaScript test using `Bun.spawn`
+    to verify the build flags. However, testing local WebKit compilation flags requires
+    a full WebKit build, which is extremely heavy and entirely out of scope for the
+    standard JS test suite.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 50-70
+- rule: Vendored deps keep their native cmake/cargo... Flags forwarded via `-DCMAKE_C_FLAGS`.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to manually append the CPU target flags directly
+    to a hardcoded `-DCMAKE_C_FLAGS` string in the nested cmake arguments. However,
+    the correct approach for this specific dependency is to seed the `optFlags` array,
+    which the script later uses to construct the cmake flags safely without conflicting
+    with WebKit's own cmake machinery.
+  severity: medium
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 38-41
+hierarchy_analysis: The root `CLAUDE.md` provides general testing guidelines, while
+  `scripts/build/CLAUDE.md` provides specific architectural rules for the build system.
+  The build system rules take precedence here, and the general testing rules should
+  be ignored because build system configuration changes (especially for heavy dependencies
+  like WebKit) are not tested via the standard JS test runner.

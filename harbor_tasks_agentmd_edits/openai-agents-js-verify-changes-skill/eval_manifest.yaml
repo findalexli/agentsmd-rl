@@ -243,6 +243,21 @@ rubric:
 
 
     1. Keep this skill at `./.codex/skills'
+- rule: Check the compilation across all packages and examples using `pnpm -r build-check`
+  source:
+    path: AGENTS.md
+    lines: 49-52
+  evidence: The `run.sh` and `run.ps1` scripts include the exact command `pnpm -r
+    build-check` as part of the verification sequence.
+  category: tooling
+- rule: Maintain the numbered list format and anchor links in the Table of Contents
+  source:
+    path: AGENTS.md
+    lines: 14-25
+  evidence: The gold solution updates the Table of Contents by adding `1. [Mandatory
+    Skill Usage](#mandatory-skill-usage)` and renumbering the subsequent items, maintaining
+    the existing markdown list format.
+  category: documentation
 config_edits:
 - path: .codex/skills/verify-changes/SKILL.md
   tier: 1
@@ -376,3 +391,31 @@ config_edits:
     \n```bash\npnpm lint && pnpm build && pnpm -r build-check && pnpm test\n```\n\
     4.  Run all checks (in this order):\n    ```bash\n    pnpm lint && pnpm build\
     \ && pnpm -r build-check && pnpm test\n    ```"
+distractors:
+- rule: Add or update unit tests for any code change unless it is truly infeasible
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates adding unit tests for any code change. An agent
+    might try to write tests for the new bash and PowerShell scripts in the `.codex/skills`
+    directory, which is unnecessary and outside the standard testing framework of
+    the monorepo.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 46-47
+- rule: 'Run the full test suite: `CI=1 pnpm test`'
+  collision_type: rule_conflict
+  why_distracting: The rule suggests running the full test suite with `CI=1 pnpm test`.
+    An agent might try to include `CI=1` in the `run.sh` and `run.ps1` scripts, but
+    the task explicitly asks to run `pnpm test` and the config notes that the test
+    script already sets `CI=1`. Adding it again might be redundant or cause cross-platform
+    issues in PowerShell if not set correctly.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 53-55
+hierarchy_analysis: The repository relies on a single root-level `AGENTS.md` file
+  for contributor guidelines. The task requires updating this file to enforce a new
+  workflow while simultaneously creating the scripts that implement it. The primary
+  challenge is distinguishing between rules that apply to the monorepo's TypeScript
+  packages (like unit testing requirements) and those that apply to the repository's
+  automation scripts.

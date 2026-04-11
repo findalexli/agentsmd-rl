@@ -87,6 +87,14 @@ rubric:
     path: .cursor/rules/typescript.mdc
     lines: '14'
     commit: 08572d060270afd65fcc5efdf7cde9e5fb0b0e04
+- rule: read @.cursor/rules/project-introduce.mdc
+  source:
+    path: CLAUDE.md
+    lines: 6-8
+  evidence: The gold solution updates the project description in `.cursor/rules/project-introduce.mdc`
+    in addition to `AGENTS.md`. It follows the cross-reference in CLAUDE.md's Tech
+    Stack section to ensure the ac
+  category: documentation
 config_edits:
 - path: .cursor/rules/project-introduce.mdc
   tier: 1
@@ -136,3 +144,29 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: DON'T run pnpm i18n, let CI auto handle it
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs not to run `pnpm i18n` and that CI handles translations,
+    specifically mentioning `locales/zh-CN/namespace.json`. An agent might incorrectly
+    generalize this to the documentation files and skip manually updating `docs/self-hosting/advanced/auth.zh-CN.mdx`
+    with the new Resend environment variables, assuming CI will translate the docs
+    automatically.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 44-47
+- rule: Use pnpm as the primary package manager vs Use bun to run npm scripts
+  collision_type: rule_conflict
+  why_distracting: The rules specify using `pnpm` for dependency management but `bun`
+    for running scripts. When adding the `resend` dependency, an agent might get confused
+    by the mixed package manager instructions and attempt to use `bun add resend`
+    or `bun install resend` instead of `pnpm add resend`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 24-27
+hierarchy_analysis: CLAUDE.md and AGENTS.md act as root-level configuration files.
+  CLAUDE.md contains cross-references to specific `.mdc` files (like `project-introduce.mdc`),
+  which act as deeper, more specific guidance. The agent must follow these pointers
+  to find the true source of configuration rather than just updating the root files.

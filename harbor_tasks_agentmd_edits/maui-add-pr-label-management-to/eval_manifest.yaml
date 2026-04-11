@@ -31,13 +31,42 @@ rubric:
     path: .github/skills/verify-tests-fail-without-fix/SKILL.md
     lines: 98-114
     commit: e8f0031d821766f32bd5d1f59d73eea342061876
-  reference: "## PR Labels\n\nThe skill automatically manages two labels on the PR to indicate verification status:\n\n| Label | Color | When Applied |\n|-------|-------|--------------|\n| `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without fix (AI verified tests catch the bug) |\n| `s/ai-reproduction-failed` | 🟠 Orange (#E65100) | Tests PASS without fix (AI verified tests don't catch the bug) |"
+  reference: '## PR Labels
+
+
+    The skill automatically manages two labels on the PR to indicate verification
+    status:
+
+
+    | Label | Color | When Applied |
+
+    |-------|-------|--------------|
+
+    | `s/ai-reproduction-confirmed` | 🟢 Green (#2E7D32) | Tests correctly FAIL without
+    fix (AI verified tests catch the bug) |
+
+    | `s/ai-reproduction-failed` | 🟠 Orange (#E65100) | Tests PASS without fix (AI
+    verified tests don''t catch the bug) |'
 - rule: SKILL.md workflow steps mention updating PR labels in both modes
   source:
     path: .github/skills/verify-tests-fail-without-fix/SKILL.md
     lines: 84-95
     commit: e8f0031d821766f32bd5d1f59d73eea342061876
-  reference: "4. **Updates PR labels** based on result\n5. Reports result\n9. **Updates PR labels** based on result\n10. Reports result"
+  reference: '4. **Updates PR labels** based on result
+
+    5. Reports result
+
+    9. **Updates PR labels** based on result
+
+    10. Reports result'
+- rule: Place GitHub workflows and configuration in the `.github/` directory.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 52-52
+  evidence: The gold solution correctly implements the GitHub automation skill modifications
+    (PowerShell script and Markdown documentation) within the `.github/skills/verify-tests-fail-without-fix/`
+    directory, ad
+  category: architecture
 config_edits:
 - path: .github/skills/verify-tests-fail-without-fix/SKILL.md
   tier: 1
@@ -82,3 +111,32 @@ config_edits:
   gold_removed: '4. Reports result
 
     9. Reports result'
+distractors:
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill to verify that the PR title and description accurately match
+    the actual implementation.
+  collision_type: meta_confusion
+  why_distracting: The task involves managing PR labels. The agent might be distracted
+    by the instruction to run the `pr-finalize` skill for PR metadata management,
+    potentially trying to invoke that skill or modify PR descriptions instead of directly
+    implementing the label logic using the `gh` CLI in the PowerShell script.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 11-11
+- rule: 'Testing frameworks: xUnit - Unit tests, NUnit - UI tests, Appium WebDriver
+    - UI test automation'
+  collision_type: architecture_boundary
+  why_distracting: The task is to update a 'test verification skill'. The agent might
+    mistakenly try to write C# tests (xUnit/NUnit) to verify the skill's behavior,
+    or try to implement the label logic within the C# test projects, rather than modifying
+    the PowerShell automation script.
+  severity: low
+  source:
+    path: .github/copilot-instructions.md
+    lines: 24-27
+hierarchy_analysis: The `.github/copilot-instructions.md` file provides guidance heavily
+  focused on the C#/.NET MAUI codebase (e.g., xUnit, NUnit, platform-specific files).
+  However, this PR is entirely within the `.github/skills` directory, modifying a
+  PowerShell script and Markdown documentation. The agent must recognize that the
+  C# architectural rules do not apply to the automation scripts in the `.github` folder.

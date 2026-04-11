@@ -69,6 +69,22 @@ rubric:
     path: .agents/skills/implementing-mcp-tools/SKILL.md
     lines: '64'
     commit: d67b05b91702b8d6c5fcf03a1361d1afe7daf287
+- rule: Skills must include YAML frontmatter with name and description, and follow
+    a specific markdown structure.
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: ''
+  evidence: The gold solution creates SKILL.md with YAML frontmatter containing `name`
+    and `description`, followed by a structured markdown document with a title and
+    a 'Tools' section.
+  category: documentation
+- rule: MCP tool YAML definitions must include scopes, annotations, title, and description.
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: ''
+  evidence: In tools.yaml, the enabled tools are updated to include `scopes`, `annotations`
+    (readOnly, destructive, idempotent), `title`, and `description`.
+  category: tooling
 config_edits:
 - path: products/llm_analytics/skills/exploring-llm-clusters/SKILL.md
   tier: 1
@@ -156,3 +172,37 @@ config_edits:
   type: pass_to_pass
   origin: repo_tests
   description: Python syntax validation on llm_analytics models
+distractors:
+- rule: 'Lint: Python: `ruff check . --fix` and `ruff format .`'
+  collision_type: rule_conflict
+  why_distracting: The agent might try to format or lint the newly created print_clusters.py
+    script to comply with general Python linting rules, but the prompt explicitly
+    asks to exclude skill scripts from ruff and lint-staged checks.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-20
+- rule: API views should declare request/response schemas — prefer @validated_request
+    from posthog.api.mixins or @extend_schema from drf-spectacular.
+  collision_type: architecture_boundary
+  why_distracting: The agent might assume it needs to update the corresponding Django
+    API views for clustering jobs to add schemas or @extend_schema, crossing into
+    backend architecture when only the YAML config and skill documentation need updating.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 54-56
+- rule: MCP tools are generated from the...
+  collision_type: meta_confusion
+  why_distracting: The agent might think it needs to run a generation script to create
+    the MCP tools instead of manually editing tools.yaml, because the docs mention
+    MCP tools are generated.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 60-61
+hierarchy_analysis: The hierarchy includes general agent instructions in AGENTS.md
+  and specific skill instructions in .agents/skills/*. The specific instructions for
+  writing skills and implementing MCP tools override the general architectural guidelines.
+  The explicit prompt instruction to exclude the script from linting overrides the
+  general linting rules in AGENTS.md.

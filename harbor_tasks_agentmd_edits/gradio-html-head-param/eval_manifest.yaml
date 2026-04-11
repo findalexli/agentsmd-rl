@@ -56,6 +56,14 @@ rubric:
     path: AGENTS.md
     lines: 41-44
     commit: 0b943a4fd0d7701203f1b79b70b5afed19ee8413
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 45-45
+  evidence: The `head` parameter is added to `HTML.__init__` with the type hint `str
+    | None = None` and assigned to `self.head`, matching the existing pattern of other
+    parameters like `js_on_load` and `css_templa
+  category: style
 config_edits:
 - path: .agents/skills/gradio/SKILL.md
   tier: 1
@@ -82,3 +90,20 @@ config_edits:
     = "value", min_height: int | None = None, max_height: int | None = None, container:
     bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
     | None = None, server_functions: list[Callable] | None = None, props: Any)`'
+distractors:
+- rule: '- `js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  collision_type: architecture_boundary
+  why_distracting: The problem description states that scripts should be deduplicated
+    and injected into the `<head>`. An agent might read the repository structure and
+    attempt to implement this logic in the frontend Svelte code (`js/`). However,
+    the frontend already handles this, and the task is strictly to expose the `head`
+    parameter in the Python backend.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-12
+hierarchy_analysis: The AGENTS.md file provides high-level repository structure and
+  style guidelines. The instructions clearly scope the task to Python and Markdown
+  files, overriding any implication that frontend code needs to be modified to support
+  the new feature.

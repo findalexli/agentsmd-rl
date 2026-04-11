@@ -60,22 +60,31 @@ rubric:
     path: AGENTS.md
     lines: 370-373
     commit: fb85660ab1f70e294465af0074dc7c941e3540ca
+- rule: The main Next.js framework lives in `packages/next/` and its source code is
+    in `packages/next/src/`.
+  source:
+    path: AGENTS.md
+    lines: 28-32
+  evidence: The gold solution correctly modifies the Pages Router handler within the
+    core package's source directory at `packages/next/src/server/route-modules/pages/pages-handler.ts`.
+  category: architecture
 config_edits:
 - path: AGENTS.md
   tier: 1
   gold_added: "# Use --args for non-interactive mode (forward args to the script using\
     \ `--`)\n# Format: pnpm new-test -- --args <appDir> <name> <type>\n# appDir: true/false\
-    \ (is this for app directory?)\n# name: test name (e.g. \"my-feature\")\n# type: e2e\
-    \ | production | development | unit\n\n# When editing core Next.js files (packages/next/**),\
+    \ (is this for app directory?)\n# name: test name (e.g. \"my-feature\")\n# type:\
+    \ e2e | production | development | unit\n\n# When editing core Next.js files (packages/next/**),\
     \ run the build first:\npnpm --filter=next build\n\n# Then create the test\npnpm\
     \ new-test -- --args true my-feature e2e\n```\n\n**Analyzing test output efficiently:**\n\
-    \nNever re-run the same test suite with different grep filters. Capture output once\
-    \ to a file, then read from it:\n\n```bash\n# Run once, save everything\npnpm test-dev-turbo\
-    \ test/development/ 2>&1 | tee /tmp/test.log\n  -- **Quick smoke testing with toy\
-    \ apps**: For fast feedback, generate a minimal test fixture with `pnpm new-test\
-    \ -- --args true <name> e2e`, then run the dev server directly with `node packages/next/dist/bin/next\
-    \ dev --port <port>` and `curl --max-time 10`. This avoids the overhead of the\
-    \ full test harness and gives immediate feedback on hangs/crashes."
+    \nNever re-run the same test suite with different grep filters. Capture output\
+    \ once to a file, then read from it:\n\n```bash\n# Run once, save everything\n\
+    pnpm test-dev-turbo test/development/ 2>&1 | tee /tmp/test.log\n  -- **Quick smoke\
+    \ testing with toy apps**: For fast feedback, generate a minimal test fixture\
+    \ with `pnpm new-test -- --args true <name> e2e`, then run the dev server directly\
+    \ with `node packages/next/dist/bin/next dev --port <port>` and `curl --max-time\
+    \ 10`. This avoids the overhead of the full test harness and gives immediate feedback\
+    \ on hangs/crashes."
   gold_removed: '# Use --args for non-interactive mode
 
     # Format: pnpm new-test --args <appDir> <name> <type>
@@ -87,3 +96,32 @@ config_edits:
     directly with `node packages/next/dist/bin/next dev --port <port>` and `curl --max-time
     10`. This avoids the overhead of the full test harness and gives immediate feedback
     on hangs/crashes.'
+distractors:
+- rule: Generating tests using `pnpm new-test` is mandatory.
+  collision_type: scope_ambiguity
+  why_distracting: The rule explicitly states that generating tests is mandatory,
+    which would lead an agent to create a new test file for the Content-Length fix.
+    However, the gold solution does not include any tests, making this rule a distractor
+    that causes wasted effort.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 148-148
+- rule: For fast feedback, generate a minimal test fixture with `pnpm new-test --args
+    true <name> e2e`.
+  collision_type: meta_confusion
+  why_distracting: The rule suggests using `pnpm new-test --args true <name> e2e`
+    for quick smoke testing. However, this command syntax is broken (missing the `--`
+    separator), which is exactly what this PR is supposed to fix. An agent trying
+    to follow this advice to test its changes would encounter errors.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 403-403
+hierarchy_analysis: The repository uses `AGENTS.md` (symlinked to `CLAUDE.md`) as
+  the primary configuration file. The agent must navigate a conflict between the explicit
+  instruction in `AGENTS.md` that 'Generating tests using pnpm new-test is mandatory'
+  and the scope of the PR, which in the gold solution does not include any tests.
+  Furthermore, the PR instructions require modifying the `AGENTS.md` file itself to
+  fix the syntax of the very command used for test generation, creating a meta-level
+  confusion if the agent attempts to use the command before fixing it.

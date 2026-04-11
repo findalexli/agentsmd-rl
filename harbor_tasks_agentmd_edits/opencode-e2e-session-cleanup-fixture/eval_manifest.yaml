@@ -67,6 +67,30 @@ rubric:
     path: packages/app/e2e/AGENTS.md
     lines: 67-74
     commit: 28bb16ca2a374439973d4f3f4b71d72f7fdae9cd
+- rule: Avoid `try`/`catch` where possible
+  source:
+    path: AGENTS.md
+    lines: '13'
+  evidence: The gold solution uses `.catch(() => undefined)` on promises like `sdk.session.status()`,
+    `sdk.session.abort()`, and `sdk.session.delete()` instead of wrapping the await
+    calls in `try/catch` blocks.
+  category: style
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 66-76
+  evidence: In the `stable` function, the gold solution uses early returns (`if (!info)
+    return true` and `if (next !== prev) { ... return false } return true`) instead
+    of `if/else` blocks.
+  category: style
+- rule: 'Error Handling: Tests should clean up after themselves'
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 73-81
+  evidence: The gold solution implements a robust `cleanupSession` mechanism and updates
+    the `withProject` fixture to automatically track and clean up sessions and directories,
+    ensuring tests clean up after thems
+  category: testing
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
@@ -88,3 +112,43 @@ config_edits:
 
     - Avoid calling sdk.session.delete(...) directly'
   gold_removed: 'Tests should clean up after themselves:'
+distractors:
+- rule: Prefer single word names for variables and functions. THIS RULE IS MANDATORY
+    FOR AGENT WRITTEN CODE.
+  collision_type: scope_ambiguity
+  why_distracting: The PR explicitly requests adding specific multi-word functions
+    like `cleanupSession`, `waitSessionIdle`, `trackSession`, and `trackDirectory`.
+    An agent strictly following the mandatory single-word naming rule might name these
+    `cleanup`, `wait`, or `track`, which would fail to match the expected behavior
+    described in the prompt and be ambiguous in the context of e2e test fixtures.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 21-34
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: would_cause_bug
+  why_distracting: The new helper functions (`status`, `stable`, `waitSessionIdle`,
+    `cleanupSession`) require the `sdk` parameter to be explicitly typed as `ReturnType<typeof
+    createSdk>`. If an agent relies entirely on type inference and omits the parameter
+    type, TypeScript will throw an implicit `any` error, breaking the build.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '17'
+- rule: Keep things in one function unless composable or reusable
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to cram all the polling, status checking, and
+    aborting logic directly into `cleanupSession` or `withSession` to avoid creating
+    multiple functions. However, breaking it down into `status`, `stable`, and `waitSessionIdle`
+    makes the complex polling logic readable and reusable.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '12'
+hierarchy_analysis: The root `AGENTS.md` provides general TypeScript/style guidelines
+  (single-word names, no try/catch, type inference), while `packages/app/e2e/AGENTS.md`
+  provides specific e2e testing patterns. The agent must balance the strict root-level
+  naming and typing rules with the practical requirements of Playwright e2e fixtures,
+  where explicit types for parameters are often necessary and descriptive multi-word
+  names (like `cleanupSession`) are required by the prompt.

@@ -66,14 +66,73 @@ rubric:
     path: AGENTS.md
     lines: '29'
     commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
+- rule: 'Package exports: All `exports` in `package.json` have a dedicated file in
+    `src` that defines the public API by re-exporting from within `src/lib`'
+  source:
+    path: AGENTS.md
+    lines: 12-13
+  evidence: The gold solution updates `packages/mime/src/index.ts` to re-export the
+    new `defineMimeType` function and `MimeTypeDefinition` type from `src/lib/define-mime-type.ts`.
+  category: architecture
+- rule: 'Imports: Always use `import type { X }` for types (separate from value imports);
+    use `export type { X }` for type exports; include `.ts` extensions'
+  source:
+    path: AGENTS.md
+    lines: 18-19
+  evidence: The gold solution uses `export type { MimeTypeDefinition }` on a separate
+    line from the value export, and includes the `.ts` extension in the import path.
+  category: style
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  source:
+    path: AGENTS.md
+    lines: 31-32
+  evidence: The gold solution creates a new file `packages/mime/.changes/minor.define-mime-type.md`
+    to document the change.
+  category: tooling
+- rule: 'Versioning: For v0.x packages: Use "minor" for breaking changes and new features'
+  source:
+    path: AGENTS.md
+    lines: 34-35
+  evidence: The gold solution uses the `minor` prefix for the change file (`minor.define-mime-type.md`)
+    because adding a new feature to a v0.x package warrants a minor bump.
+  category: tooling
 config_edits:
 - path: packages/mime/README.md
   tier: 2
   gold_added: "### `defineMimeType(definition)`\n\nRegisters or overrides a MIME type\
-    \ for one or more file extensions.\n\n```ts\nimport { defineMimeType } from '\
-    @remix-run/mime'\n\ndefineMimeType({\n  extensions: ['myformat'],\n  mimeType:\
-    \ 'application/x-myformat',\n})\n```\n\nYou can also optionally configure the\
-    \ charset and whether the MIME type is compressible:\n\n```ts\ndefineMimeType({\n\
-    \  extensions: ['myformat'],\n  mimeType: 'application/x-myformat',\n  compressible:\
-    \ true,\n  charset: 'utf-8',\n})\n```"
+    \ for one or more file extensions.\n\n```ts\nimport { defineMimeType } from '@remix-run/mime'\n\
+    \ndefineMimeType({\n  extensions: ['myformat'],\n  mimeType: 'application/x-myformat',\n\
+    })\n```\n\nYou can also optionally configure the charset and whether the MIME\
+    \ type is compressible:\n\n```ts\ndefineMimeType({\n  extensions: ['myformat'],\n\
+    \  mimeType: 'application/x-myformat',\n  compressible: true,\n  charset: 'utf-8',\n\
+    })\n```"
   gold_removed: ''
+distractors:
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope'
+  collision_type: rule_conflict
+  why_distracting: The rule states 'const only at module scope', which an agent might
+    interpret as forbidding `let` at the module level. However, the gold solution
+    explicitly uses `export let` at the module scope for the custom registries (`customMimeTypeByExtension`,
+    etc.) to allow lazy initialization while avoiding function call overhead in hot
+    paths. An agent strictly following this rule might unnecessarily wrap the state
+    in a `const` object or closure, degrading performance.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 19-20
+- rule: 'Classes: Use native fields (omit `public`), `#private` for private members'
+  collision_type: architecture_boundary
+  why_distracting: An agent might read the class guidelines and decide to implement
+    the custom MIME type registry as a singleton class with `#private` fields to encapsulate
+    the state. However, the package's architecture relies on simple module-level variables
+    and functions for performance and simplicity, making a class-based approach an
+    architectural overcomplication.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 22-23
+hierarchy_analysis: The repository uses a single root-level `AGENTS.md` file. The
+  rules are generally straightforward, but the variable scoping rule ('const only
+  at module scope') creates a direct conflict with the performance-oriented design
+  of the MIME package, which requires mutable module-level exports for hot-path optimization.

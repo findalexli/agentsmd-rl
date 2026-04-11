@@ -89,8 +89,61 @@ rubric:
     sections (features, agents, MCP) into config
 
     - Copy skills, agents, scripts, and utils to `~/.codex/`'
+- rule: 做好备份，不影响现有功能 (Make backups, do not affect existing functionality)
+  source:
+    path: AGENTS.md
+    lines: '46'
+  evidence: The gold solution implements `backup_path` and `copy_file_safely` functions
+    to backup existing configurations to a `.backups/` directory before overwriting
+    them.
+  category: architecture
+- rule: 注释使用英文，命名使用英文 (Comments use English, naming uses English)
+  source:
+    path: AGENTS.md
+    lines: '52'
+  evidence: The gold solution uses English comments (e.g., `# --- Counters ---`, `#
+    --- State flags ---`) and English variable names (e.g., `BACKUP_COUNT`, `SKIP_PROVIDER`)
+    in the bash script.
+  category: style
 config_edits:
 - path: README.md
   tier: 2
   gold_added: .codex\
   gold_removed: ''
+distractors:
+- rule: 'Python 生态: 包管理: uv... 配置管理: Hydra...'
+  collision_type: would_cause_bug
+  why_distracting: The config emphasizes Python ecosystem tools (uv, Hydra), but the
+    prompt explicitly requires replacing `python3` with `node` for the installer's
+    dependency check and JSON parsing. Attempting to use Python tools would violate
+    the explicit PR instructions.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 22-25
+- rule: 复杂任务先交流意见，再拆解实施 (For complex tasks, exchange opinions first, then break down
+    and implement)
+  collision_type: meta_confusion
+  why_distracting: The rule asks to exchange opinions before implementing complex
+    tasks, but in an automated evaluation setting, the agent must complete the task
+    autonomously without waiting for user input.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '44'
+- rule: 用中文进行回答 (Answer in Chinese)
+  collision_type: rule_conflict
+  why_distracting: The rule asks to answer in Chinese, which might lead the agent
+    to write Chinese comments in the code or Chinese commit messages, conflicting
+    with the specific code style rule to use English for comments and naming.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '36'
+hierarchy_analysis: The repository has a single global configuration file `AGENTS.md`
+  that applies to the entire project. There is a direct conflict between the general
+  instruction to 'Answer in Chinese' and the specific code style rule to use English
+  for comments and naming; the agent must prioritize the code style rule for code
+  modifications. Additionally, the Python ecosystem preferences in `AGENTS.md` conflict
+  with the specific PR instruction to use Node.js instead of Python for the installer
+  script.

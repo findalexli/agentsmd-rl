@@ -51,7 +51,23 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: SKILL.md documents session ID extraction for poll.sh
-rubric: []
+rubric:
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  source:
+    path: CLAUDE.md
+    lines: 13-13
+  category: documentation
+  evidence: The gold solution adds comments in SKILL.md explaining the format of the
+    URL returned by `gh agent-task create` to justify the bash string manipulation
+    `session_id="${session_url##*/}"`.
+- rule: Assume the authors are referencing newer, valid resources
+  source:
+    path: CLAUDE.md
+    lines: 7-9
+  category: tooling
+  evidence: The gold solution uses the newly introduced `gh agent-task view` command
+    as requested, without attempting to replace it with standard `gh api` calls or
+    questioning its existence.
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -76,3 +92,28 @@ config_edits:
     finishes:
 
     bash .claude/skills/copilot/poll.sh <owner>/<repo> <pr_number>'
+distractors:
+- rule: Start the Full Development Environment (Recommended)
+  source:
+    path: CLAUDE.md
+    lines: 28-38
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time trying to start the MLflow dev server
+    (`uv run bash dev/run-dev-server.sh`) to test its changes, but the changes are
+    to a Claude skill script (`poll.sh`) that interacts with the GitHub CLI, not the
+    MLflow server.
+  severity: medium
+- rule: 'Testing: uv run pytest tests/'
+  source:
+    path: CLAUDE.md
+    lines: 70-75
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the Python test suite to verify its
+    changes, but the modifications are entirely within bash scripts and markdown files
+    for a Claude skill, which are not covered by pytest.
+  severity: low
+hierarchy_analysis: There is only one config file (`CLAUDE.md`) at the root level.
+  It provides general Python/MLflow development guidelines, but the task is modifying
+  a bash script and markdown documentation for a Claude skill. The agent must apply
+  the general documentation and knowledge cutoff rules while ignoring the MLflow-specific
+  backend/frontend testing instructions.

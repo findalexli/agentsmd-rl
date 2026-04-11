@@ -66,8 +66,42 @@ rubric:
     path: AGENTS.md
     lines: 59-63
     commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 42-43
+  evidence: The gold solution accesses the flags using dot notation (`Flag.OPENCODE_CLIENT`
+    and `Flag.OPENCODE_ENABLE_QUESTION_TOOL`) rather than destructuring them from
+    the `Flag` object.
+  category: style
 config_edits:
 - path: .opencode/agent/translator.md
   tier: 2
   gold_added: OPENCODE_ENABLE_QUESTION_TOOL' .opencode/agent/translator.md
   gold_removed: ''
+distractors:
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The gold solution explicitly extracts the condition into `const
+    question` to keep the array literal readable, even though it is only used once
+    in the subsequent ternary. Strict adherence to this rule would lead to an overly
+    complex and unreadable inline ternary.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 31-32
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  collision_type: scope_ambiguity
+  why_distracting: The environment variable and exported flag must be named `OPENCODE_ENABLE_QUESTION_TOOL`
+    to match the PR instructions and existing conventions. An agent might try to shorten
+    this to `OPENCODE_QUESTION` to comply with the single-word rule, which would violate
+    the explicit requirements.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 22-23
+hierarchy_analysis: The root `AGENTS.md` provides general style guidelines that apply
+  to this PR. The `packages/opencode/AGENTS.md` provides database-specific guidelines
+  which are irrelevant here. The main conflicts arise from the root style guidelines
+  (inlining and naming) conflicting with readability and specific PR requirements.

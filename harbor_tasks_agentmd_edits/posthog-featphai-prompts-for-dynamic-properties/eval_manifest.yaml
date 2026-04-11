@@ -74,6 +74,15 @@ rubric:
     path: products/posthog_ai/skills/query-examples/SKILL.md
     lines: 1-5
     commit: 14b7a8edebb1b574414ac9866a417fbe7c8170c0
+- rule: Write PostHog agent skills to teach agents how to use MCP tools to achieve
+    a goal when adding new product functionality.
+  source:
+    path: .agents/skills/writing-skills
+    lines: 1-3
+  evidence: The gold solution adds a new reference document `taxonomy-dynamic-properties.md`
+    under `products/posthog_ai/skills/query-examples/references/` to teach the agent
+    how to construct dynamic properties.
+  category: documentation
 config_edits:
 - path: products/posthog_ai/skills/query-examples/references/taxonomy-dynamic-properties.md
   tier: 2
@@ -188,3 +197,42 @@ config_edits:
 
     ORDER'
   gold_removed: ''
+distractors:
+- rule: API views should declare request/response schemas — prefer `@validated_request`
+    or `@extend_schema`.
+  collision_type: architecture_boundary
+  why_distracting: The agent is modifying `ee/hogai/tools/read_taxonomy/core.py` which
+    handles tool execution. It might mistakenly treat this as a Django API view and
+    try to add DRF decorators like `@extend_schema`, but it's an internal AI tool
+    function.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 60-62
+- rule: Django serializers are the source of truth for frontend API types — `hogli
+    build:openapi` generates TypeScript.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to update a Django serializer or run `hogli
+    build:openapi` to expose the dynamic properties, but these properties are intentionally
+    excluded from the standard API/schema and only need to be hinted to the AI agent
+    via prompts and tool outputs.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 63-65
+- rule: MCP tools are generated from the...
+  collision_type: meta_confusion
+  why_distracting: The agent might think the taxonomy tool (`read_taxonomy/core.py`)
+    is auto-generated and try to find a generator script or YAML config to modify,
+    but the tool execution logic is manually written Python code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 66-67
+hierarchy_analysis: The `.cursorrules` provides general behavioral guidelines, while
+  `AGENTS.md` provides PostHog-specific architectural rules. The skills directory
+  contains specific guides for agent capabilities. In this task, the agent must distinguish
+  between Django API views (which require serializers and schemas as per `AGENTS.md`)
+  and internal AI agent tools (which require prompt engineering and skill documentation
+  as per the `writing-skills` guide). The architectural boundary between the web API
+  and the AI agent's internal tool execution is crucial to respect.

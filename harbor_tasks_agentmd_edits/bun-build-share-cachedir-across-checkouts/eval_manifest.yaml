@@ -36,12 +36,31 @@ checks:
   type: pass_to_pass
   origin: repo_tests
 rubric:
-- rule: CLAUDE.md Gotchas section documents that build/ directory doesn't include the shared cache
+- rule: CLAUDE.md Gotchas section documents that build/ directory doesn't include
+    the shared cache
   source:
     path: scripts/build/CLAUDE.md
     lines: 223-240
     commit: 0d09afea645d2ecd0998fb8f5867536b264fed45
-  reference: "rm -rf build/ doesn't clear the cache locally"
+  reference: rm -rf build/ doesn't clear the cache locally
+- rule: Minimal cross-platform diffs. Platform-specific logic is abstracted once,
+    consumed everywhere.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 23-27
+  evidence: The gold solution uses `homedir()` from `node:os` and `resolve()` from
+    `node:path` in `clean.ts` to construct the `~/.bun/build-cache` path, avoiding
+    platform-specific branches for Windows vs Unix hom
+  category: architecture
+- rule: Explicit over implicit. Every decision traceable to a line of code you can
+    grep for. No hidden defaults.
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 16-18
+  evidence: The gold solution adds a detailed explanation in `scripts/build/CLAUDE.md`
+    about the new shared cache behavior, ensuring the new default is explicitly documented
+    and developers know why `rm -rf build/
+  category: documentation
 config_edits:
 - path: scripts/build/CLAUDE.md
   tier: 1
@@ -53,3 +72,43 @@ config_edits:
     nuking it just costs you a cold rebuild. CI keeps `<buildDir>/cache` so `rm -rf
     build/` is still a full reset there.'
   gold_removed: ''
+distractors:
+- rule: Idempotent. Run `bun run build` over and over — that's it. Same inputs produce
+    the same `build.ninja`... No state drift between runs, no "did I clean first?"
+  collision_type: rule_conflict
+  why_distracting: The rule emphasizes 'No state drift between runs, no "did I clean
+    first?"'. An agent might interpret this as a strict prohibition against shared
+    global caches (which inherently introduce shared state across checkouts), leading
+    them to reject the PR's core premise or over-engineer cache invalidation.
+  severity: high
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 6-9
+- rule: Configure always runs... no separate first-time configure step, no cached
+    options that persist across runs.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states 'no cached options that persist across runs'. An
+    agent might confuse build configuration state (which shouldn't be cached) with
+    build artifact caching (which the PR explicitly wants to cache globally), causing
+    them to avoid implementing the shared cache.
+  severity: medium
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 10-12
+- rule: 'Comparing builds: normally use the default `build/<profile>/` dir.'
+  collision_type: rule_conflict
+  why_distracting: The root config emphasizes using the default `build/<profile>/`
+    directory. An agent might try to keep the cache inside this directory structure
+    to comply with the rule, failing to move it to the requested `~/.bun/build-cache`
+    location.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 26-28
+hierarchy_analysis: The root `CLAUDE.md` provides general build instructions, while
+  `scripts/build/CLAUDE.md` provides specific architectural principles for the build
+  system itself. The PR's requirement to introduce a shared global cache creates a
+  tension with the build system's strict 'idempotent / no state drift' principles.
+  The agent must understand that artifact caching is an exception to the 'no cached
+  options' rule, and that the shared cache must be explicitly documented to maintain
+  the 'explicit over implicit' principle.

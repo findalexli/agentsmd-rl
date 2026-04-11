@@ -1,123 +1,143 @@
-version: "2.0"
-
+version: '2.0'
 source:
-  repo: "PostHog/posthog"
+  repo: PostHog/posthog
   pr: 53656
-  base_commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
-  merge_commit: "92dcf444055fdc6379cfd469f0d1adaab6886e55"
-
+  base_commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+  merge_commit: 92dcf444055fdc6379cfd469f0d1adaab6886e55
 checks:
-  # ---- Static pass_to_pass gates ----
-  - id: yaml_valid_syntax
-    type: pass_to_pass
-    origin: static
-    description: "tools.yaml parses as valid YAML without errors"
-
-  # ---- repo_tests pass_to_pass gates (existing) ----
-  - id: test_tools_yaml_schema
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Tools.yaml follows MCP tools schema (enabled tools have scopes, annotations, valid names)"
-
-  - id: test_skills_readme_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Skills README has required sections and references existing skills"
-
-  - id: test_existing_skills_have_frontmatter
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing SKILL.md files have valid frontmatter with name and description"
-
-  # ---- New repo_tests pass_to_pass gates (CI/CD from repo) ----
-  - id: test_no_evaluation_summary_enabled
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Baseline: llm-analytics-evaluation-summary-create is NOT enabled at base commit"
-
-  - id: test_mcp_prompts_yaml_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "MCP prompts.yaml parses as valid YAML"
-
-  - id: test_all_existing_skills_in_readme
-    type: pass_to_pass
-    origin: repo_tests
-    description: "All existing skill directories are referenced in README"
-
-  - id: test_existing_skills_valid_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing skill directories have valid SKILL.md with required frontmatter"
-
-  - id: test_enabled_tools_count
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Verify the expected number of tools are enabled at base commit"
-
-  - id: test_llm_analytics_directory_structure
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Required directories exist in llm_analytics product (mcp, skills, backend)"
-
-  # ---- Fail-to-pass gates (pr_diff) ----
-  - id: tool_enabled_in_yaml
-    type: fail_to_pass
-    origin: pr_diff
-    description: "llm-analytics-evaluation-summary-create is enabled in tools.yaml"
-
-  - id: tool_has_description_and_title
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Enabled tool has title and description metadata"
-
-  - id: skill_file_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "exploring-llm-evaluations SKILL.md exists with evaluation content"
-
-  - id: skills_readme_references_evaluations
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Skills README lists the exploring-llm-evaluations skill"
-
-  # ---- Fail-to-pass gates (agent_config) ----
-  - id: tool_has_required_yaml_fields
-    type: fail_to_pass
-    origin: agent_config
-    description: "Enabled tool has scopes and annotations per MCP tools guide"
-    source:
-      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
-      lines: "116-146"
-      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
-
-  - id: skill_has_frontmatter
-    type: fail_to_pass
-    origin: agent_config
-    description: "Skill file has name and description frontmatter per writing-skills guide"
-    source:
-      path: ".agents/skills/writing-skills/SKILL.md"
-      lines: "42-49"
-      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
-
+- id: yaml_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: tools.yaml parses as valid YAML without errors
+- id: test_tools_yaml_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tools.yaml follows MCP tools schema (enabled tools have scopes, annotations,
+    valid names)
+- id: test_skills_readme_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Skills README has required sections and references existing skills
+- id: test_existing_skills_have_frontmatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing SKILL.md files have valid frontmatter with name and description
+- id: test_no_evaluation_summary_enabled
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Baseline: llm-analytics-evaluation-summary-create is NOT enabled at
+    base commit'
+- id: test_mcp_prompts_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP prompts.yaml parses as valid YAML
+- id: test_all_existing_skills_in_readme
+  type: pass_to_pass
+  origin: repo_tests
+  description: All existing skill directories are referenced in README
+- id: test_existing_skills_valid_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing skill directories have valid SKILL.md with required frontmatter
+- id: test_enabled_tools_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify the expected number of tools are enabled at base commit
+- id: test_llm_analytics_directory_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required directories exist in llm_analytics product (mcp, skills, backend)
+- id: tool_enabled_in_yaml
+  type: fail_to_pass
+  origin: pr_diff
+  description: llm-analytics-evaluation-summary-create is enabled in tools.yaml
+- id: tool_has_description_and_title
+  type: fail_to_pass
+  origin: pr_diff
+  description: Enabled tool has title and description metadata
+- id: skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: exploring-llm-evaluations SKILL.md exists with evaluation content
+- id: skills_readme_references_evaluations
+  type: fail_to_pass
+  origin: pr_diff
+  description: Skills README lists the exploring-llm-evaluations skill
+- id: tool_has_required_yaml_fields
+  type: fail_to_pass
+  origin: agent_config
+  description: Enabled tool has scopes and annotations per MCP tools guide
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 116-146
+    commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+- id: skill_has_frontmatter
+  type: fail_to_pass
+  origin: agent_config
+  description: Skill file has name and description frontmatter per writing-skills
+    guide
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 42-49
+    commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
 rubric:
-  - rule: "MCP tool names enabled in tools.yaml must follow kebab-case format with max 52 characters"
-    source:
-      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
-      lines: "75-79"
-      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
-  - rule: "Enabled MCP tools must include scopes and annotations (readOnly, destructive, idempotent) per YAML schema"
-    source:
-      path: ".agents/skills/implementing-mcp-tools/SKILL.md"
-      lines: "127-132"
-      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
-  - rule: "Skill documents must have frontmatter with name (lowercase kebab-case) and description fields"
-    source:
-      path: ".agents/skills/writing-skills/SKILL.md"
-      lines: "43-49"
-      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
-  - rule: "Skill documents should follow the directory structure products/{product}/skills/{skill-name}/SKILL.md"
-    source:
-      path: ".agents/skills/writing-skills/SKILL.md"
-      lines: "51-62"
-      commit: "c68338921ad4d5598a9830cca90c9e1f34c2dc8f"
+- rule: MCP tool names enabled in tools.yaml must follow kebab-case format with max
+    52 characters
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 75-79
+    commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+- rule: Enabled MCP tools must include scopes and annotations (readOnly, destructive,
+    idempotent) per YAML schema
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 127-132
+    commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+- rule: Skill documents must have frontmatter with name (lowercase kebab-case) and
+    description fields
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 43-49
+    commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+- rule: Skill documents should follow the directory structure products/{product}/skills/{skill-name}/SKILL.md
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 51-62
+    commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+- rule: 'Codebase Structure - Key entry points: `products/` (product apps)'
+  source:
+    path: AGENTS.md
+    lines: 4-7
+  evidence: The gold solution correctly places the new skill document and modifies
+    the MCP tools YAML within the `products/llm_analytics/` directory, adhering to
+    the product-centric architecture.
+  category: architecture
+distractors:
+- rule: API views should declare request/response schemas — prefer `@validated_request`
+    from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
+  collision_type: scope_ambiguity
+  why_distracting: The task description mentions the backend endpoint is already fully
+    implemented with `@extend_schema`. An agent might be distracted by this rule and
+    attempt to modify or audit the Python viewset/serializers, wasting time and potentially
+    breaking existing code when only YAML and Markdown changes are needed.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 62-64
+- rule: 'OpenAPI/types: `hogli build:openapi` (regenerate after changing serializers/viewsets)'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think that exposing a new MCP tool requires regenerating
+    the OpenAPI schema, but since no serializers or viewsets are being changed (only
+    YAML config), running this command is unnecessary and wastes time.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 26-27
+hierarchy_analysis: 'The configuration hierarchy is relatively flat with `.cursorrules`
+  providing general behavioral guidelines and `AGENTS.md` providing specific PostHog
+  development rules. The primary challenge in this task is scope management: `AGENTS.md`
+  provides extensive instructions for backend API development (schemas, OpenAPI generation,
+  testing), but the task explicitly states the backend is already implemented and
+  only requires configuration (YAML) and documentation (Markdown) updates. Agents
+  must recognize that the backend rules in `AGENTS.md` do not apply to this specific
+  PR.'

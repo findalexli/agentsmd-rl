@@ -78,3 +78,26 @@ config_edits:
   gold_removed: "- 1 byte block type (1: key block)\n  - 8 bytes key hash\n  - 8 bytes\
     \ key hash\n  - 8 bytes key hash\n  - 8 bytes key hash\n  - 8 bytes key hash\n\
     TODO: 8 bytes key hash is a bit inefficient for small keys."
+distractors:
+- rule: Generating tests using `pnpm new-test` is mandatory.
+  source:
+    path: CLAUDE.md
+    lines: 92-100
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to generate a TypeScript test suite for
+    this Rust-level SST file format change using `pnpm new-test`, which would fail
+    or create useless files since Rust tests should be written in Rust using `#[test]`.
+  severity: high
+- rule: 'Always rebuild after switching branches: pnpm build'
+  source:
+    path: CLAUDE.md
+    lines: 60-65
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `pnpm build` to compile the Rust changes, which
+    builds the entire Next.js project and wastes significant time, instead of just
+    using `cargo test` or `cargo check` in the `turbopack` directory.
+  severity: medium
+hierarchy_analysis: Both CLAUDE.md and AGENTS.md are identical and focus entirely
+  on the Next.js TypeScript/JavaScript ecosystem. They provide no specific guidance
+  for the Rust `turbopack` subtree, meaning the agent must rely on general Rust knowledge
+  rather than the provided config files.

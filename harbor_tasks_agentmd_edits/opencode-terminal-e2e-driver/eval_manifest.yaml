@@ -85,6 +85,29 @@ rubric:
     path: AGENTS.md
     lines: 84-98
     commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 23-24
+  evidence: The gold solution uses single-word names for all new locals and helper
+    functions in `packages/app/src/testing/terminal.ts`, such as `seed`, `root`, `terms`,
+    `controls`, `set`, `prev`, `next`, and `sta
+  category: naming
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 68-70
+  evidence: The gold solution uses `if (!state) return` repeatedly in `packages/app/src/testing/terminal.ts`
+    to exit early, completely avoiding the use of `else` blocks.
+  category: style
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 56-58
+  evidence: The gold solution exclusively uses `const` for variable declarations in
+    `packages/app/src/testing/terminal.ts` (e.g., `const state = terms()`, `const
+    prev = state[id] ?? seed()`) and avoids reassignme
+  category: style
 config_edits:
 - path: packages/app/e2e/AGENTS.md
   tier: 1
@@ -108,4 +131,44 @@ config_edits:
 
     - Avoid `waitForTimeout` and custom DOM or `data-*` readiness checks.'
   gold_removed: ''
-
+distractors:
+- rule: Avoid mocks as much as possible. Test actual implementation, do not duplicate
+    logic into tests.
+  collision_type: rule_conflict
+  why_distracting: The instructions explicitly require creating a 'test-only terminal
+    driver/probe'. An agent might interpret this as a mock and refuse to create it,
+    instead trying to fix the flakiness by adding more `waitForTimeout` or DOM checks,
+    which the prompt explicitly forbids.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 93-96
+- rule: Use Bun APIs when possible, like `Bun.file()`
+  collision_type: architecture_boundary
+  why_distracting: The terminal probe (`packages/app/src/testing/terminal.ts`) is
+    injected into the browser environment (`window.__opencode_e2e`). If an agent tries
+    to use Bun APIs for this file because it is a testing utility, it will cause runtime
+    errors in the browser.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '14'
+- rule: Always prefer `createStore` over multiple `createSignal` calls
+  collision_type: architecture_boundary
+  why_distracting: The agent is modifying `packages/app/src/components/terminal.tsx`
+    (a SolidJS component) and creating a probe in `packages/app/src/testing/terminal.ts`.
+    It might try to use SolidJS reactivity (`createStore`) for the `window.__opencode_e2e`
+    probe state, but the probe needs to be a plain object accessible by Playwright
+    outside the SolidJS reactive root.
+  severity: medium
+  source:
+    path: packages/app/AGENTS.md
+    lines: 13-15
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` with general TypeScript/testing
+  rules, an app-level `AGENTS.md` with SolidJS/browser rules, and an e2e-level `AGENTS.md`
+  with Playwright rules. The primary conflict arises from the root testing rules ('Avoid
+  mocks') clashing with the specific PR requirement to build a test-only driver. Additionally,
+  the architectural boundary between Node.js (Bun/Playwright) and the Browser (SolidJS/window)
+  creates friction, as agents must carefully apply browser rules to the app code and
+  Node rules to the e2e code without mixing them up in the shared `testing/terminal.ts`
+  probe.

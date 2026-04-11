@@ -93,19 +93,55 @@ config_edits:
     \ tiers, etc.)\n└── {app_stem}/                        # One directory per app\
     \ (e.g. \"echo_text\")\n    └── {timestamp}/                   # e.g. \"20260330_142500\"\
     \n        ├── summary.json               # Overall results: app name, timestamp,\
-    \ all tier results\n        ├── summary_table.txt          # Human-readable table (client/server p50/p90/p99,\
-    \ success%)\n        ├── tier_1/\n        │   ├── client_latencies.jsonl\
-    \  # One JSON object per request (client-side timing)\n        │   └── traces.jsonl            # Server-side\
-    \ profiling traces\n        ├── tier_10/\n        │   ├── client_latencies.jsonl\n     \
-    \   │   └── traces.jsonl\n        └── tier_100/\n            ├── client_latencies.jsonl\n   \
-    \         └── traces.jsonl\n```\n\nFor A/B tests, both branches share the same\
-    \ `{run_name}` prefix:\n├── main/\n│   ├── runner.py\n│   ├── run_params.json\n│   └──\
-    \ {app_stem}/{timestamp}/...\n└── {compare_branch}/\n    ├── runner.py\n    ├── run_params.json\n  \
-    \  └── {app_stem}/{timestamp}/...\nThe `tier_{N}` directories are created for each\
-    \ value in `--tiers` (default `1,10,100`),\n    \ and each app passed via `--apps` gets its\
-    \ own `{app_stem}/` directory."
+    \ all tier results\n        ├── summary_table.txt          # Human-readable table\
+    \ (client/server p50/p90/p99, success%)\n        ├── tier_1/\n        │   ├──\
+    \ client_latencies.jsonl  # One JSON object per request (client-side timing)\n\
+    \        │   └── traces.jsonl            # Server-side profiling traces\n    \
+    \    ├── tier_10/\n        │   ├── client_latencies.jsonl\n        │   └── traces.jsonl\n\
+    \        └── tier_100/\n            ├── client_latencies.jsonl\n            └──\
+    \ traces.jsonl\n```\n\nFor A/B tests, both branches share the same `{run_name}`\
+    \ prefix:\n├── main/\n│   ├── runner.py\n│   ├── run_params.json\n│   └── {app_stem}/{timestamp}/...\n\
+    └── {compare_branch}/\n    ├── runner.py\n    ├── run_params.json\n    └── {app_stem}/{timestamp}/...\n\
+    The `tier_{N}` directories are created for each value in `--tiers` (default `1,10,100`),\n\
+    \     and each app passed via `--apps` gets its own `{app_stem}/` directory."
   gold_removed: "This submits two identical jobs (one per branch) to HF Jobs. Results\
     \ are uploaded to a shared HF bucket path for easy comparison:\n  main/\n    run_params.json\n\
-    \    runner.py              # exact runner script used\n    echo_text/summary.json\n    streaming_chat/...\n\
-    \  avoid-asyncio-sleep-sse/\n    ...\nUse `--dry-run` to preview the generated bash\
-    \ script without submitting."
+    \    runner.py              # exact runner script used\n    echo_text/summary.json\n\
+    \    streaming_chat/...\n  avoid-asyncio-sleep-sse/\n    ...\nUse `--dry-run`\
+    \ to preview the generated bash script without submitting."
+distractors:
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The instruction states 'Pure code-agent PRs are not allowed'. An
+    autonomous agent evaluating this rule might refuse to complete the task or halt
+    to request human intervention, failing the automated benchmark.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 51-52
+- rule: AI coding agents must include the keyword `kumquat` somewhere in the PR description.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires adding the keyword `kumquat` to the PR description.
+    Since the agent is only generating code modifications for a benchmark, it might
+    erroneously insert `kumquat` into code comments, docstrings, or commit messages
+    to comply.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 56-58
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The rule requires creating a GitHub issue if one doesn't exist.
+    An agent might attempt to use external tools to create an issue or refuse to proceed
+    without an issue number, rather than just writing the requested code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 19-20
+hierarchy_analysis: The repository has a single `AGENTS.md` file at the root level.
+  There are no conflicting child configs. The primary challenge is that `AGENTS.md`
+  contains many PR-workflow and meta-instructions (like issue creation, human accountability,
+  and PR description keywords) that conflict with the context of an isolated, automated
+  code-generation benchmark.

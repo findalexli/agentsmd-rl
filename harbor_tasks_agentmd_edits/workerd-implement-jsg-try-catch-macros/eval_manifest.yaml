@@ -62,11 +62,27 @@ checks:
   origin: repo_tests
   description: JSG module source files exist in expected locations
 rubric:
-- rule: Add documentation alongside code changes, including clear usage examples for new APIs.
+- rule: Add documentation alongside code changes, including clear usage examples for
+    new APIs.
   source:
     path: src/workerd/jsg/README.md
-    lines: '2552-2580'
+    lines: 2552-2580
     commit: bca5351754a7d3ee0568971d57435859bc3a71e6
+- rule: Require access to the JavaScript isolate and context. By convention, this
+    argument is always named `js`.
+  source:
+    path: src/workerd/jsg/README.md
+    lines: 1-3
+  evidence: The gold solution passes the `js` argument to the new `JSG_TRY(js)` macro,
+    adhering to the convention that the JavaScript isolate/context lock is named `js`.
+  category: naming
+- rule: When C++ code needs to throw a JavaScript exception, throw using `js.throwException()`.
+  source:
+    path: src/workerd/jsg/README.md
+    lines: 4-7
+  evidence: In `src/workerd/api/crypto/crypto.c++`, the gold solution uses `js.throwException(kj::mv(exception));`
+    inside the `JSG_CATCH` block to rethrow the caught exception.
+  category: style
 config_edits:
 - path: src/workerd/jsg/README.md
   tier: 2
@@ -105,3 +121,32 @@ config_edits:
     approach is
 
     more ergonomic than V8''s convention of returning `v8::Maybe` values.'
+distractors:
+- rule: Create the error object with `js.error("Error reason")` before throwing.
+  collision_type: would_cause_bug
+  why_distracting: The rule states to 'Create the error object with `js.error("Error
+    reason")`' before throwing. However, the `exception` caught by `JSG_CATCH` is
+    already converted to a `jsg::Value`. An agent strictly following this rule might
+    try to wrap the caught exception in `js.error()`, which would incorrectly double-wrap
+    the error or cause a compilation failure.
+  severity: high
+  source:
+    path: src/workerd/jsg/README.md
+    lines: 5-6
+- rule: Strong backwards compatibility commitment - features can...
+  collision_type: scope_ambiguity
+  why_distracting: The 'Strong backwards compatibility commitment' rule might cause
+    an agent to hesitate when replacing the existing `js.tryCatch()` lambda patterns
+    with the new macros, potentially leading them to leave the old pattern intact
+    or create a redundant parallel implementation instead of migrating the call sites
+    as requested.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 63-64
+hierarchy_analysis: The `CLAUDE.md` file provides high-level repository guidelines,
+  while `src/workerd/jsg/README.md` provides specific conventions for the JavaScript
+  Glue (jsg) layer. The jsg-specific rules correctly take precedence for naming (`js`)
+  and exception throwing mechanics. However, the agent must be careful not to blindly
+  apply the `js.error()` creation rule from the README when rethrowing an already-constructed
+  exception value yielded by the new `JSG_CATCH` macro.

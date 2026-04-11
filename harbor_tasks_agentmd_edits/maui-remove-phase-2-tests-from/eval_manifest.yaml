@@ -143,6 +143,15 @@ rubric:
     - **Phase badge** (🔍 Pre-Flight, 🚦 Gate, 🔧 Fix, 📋 Report)
 
     → **Phase 2: Gate** - Verifying tests catch the bug'
+- rule: Agent instruction files must be updated to reflect the simplified 4-phase
+    workflow.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-10
+  evidence: The gold solution updates the copilot-instructions.md file to redefine
+    the PR agent as a 4-phase workflow, ensuring the AI assistant's own instructions
+    are consistent with the new architecture.
+  category: documentation
 config_edits:
 - path: .github/copilot-instructions.md
   tier: 1
@@ -158,3 +167,20 @@ config_edits:
   gold_removed: '- **Phase badge** (🔍 Pre-Flight, 🧪 Tests, 🚦 Gate, 🔧 Fix, 📋 Report)
 
     → **Phase 2: Tests** - Analyzing test files and coverage'
+distractors:
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill to verify that the PR title and description accurately match
+    the actual implementation.
+  collision_type: meta_confusion
+  why_distracting: The instruction tells Copilot to run the pr-finalize skill when
+    performing a code review. An agent might get confused between its current task
+    (modifying the PR agent's workflow definitions) and the instructions meant for
+    the PR agent itself, potentially trying to invoke the skill or modify it incorrectly.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 9-12
+hierarchy_analysis: The repository contains meta-instructions for AI agents (.github/copilot-instructions.md)
+  that the agent must modify rather than follow as an active participant in this specific
+  task. The agent must distinguish between instructions for its own behavior during
+  the task and the content of the instructions it is editing.

@@ -1,4 +1,4 @@
-version: "2.0"
+version: '2.0'
 source:
   repo: openai/openai-agents-js
   pr: 746
@@ -49,6 +49,13 @@ rubric:
     commit: 5750d8a6ffe548fc799adf22de41eaf47e251415
   reference: "3. Make your changes, add or update tests, and ensure that the following\
     \ succeeds:\n   pnpm build && pnpm -r build-check && pnpm test && pnpm lint"
+- rule: Check the compilation across all packages and examples using `pnpm -r build-check`.
+  source:
+    path: AGENTS.md
+    lines: 52-56
+  evidence: The gold solution updates the build verification command in `CONTRIBUTING.md`
+    to include `pnpm -r build-check`, matching the documented requirement in `AGENTS.md`.
+  category: testing
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -56,3 +63,28 @@ config_edits:
     \ succeeds:\n   pnpm build && pnpm -r build-check && pnpm test && pnpm lint"
   gold_removed: "3. Make your changes, add or update tests, and ensure that:\n   pnpm\
     \ build && pnpm test && pnpm lint"
+distractors:
+- rule: Add or update unit tests for any code change unless it is truly infeasible
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates adding or updating unit tests for any code change.
+    However, the gold solution does not include any test modifications. An agent strictly
+    following this rule would modify test files, diverging from the expected minimal
+    fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 47-48
+- rule: When writing complex features or significant refactors, use an ExecPlan
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests using an ExecPlan for complex features or significant
+    refactors. Since this is a minor bug fix, creating an ExecPlan is unnecessary
+    and would waste agent effort.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 13-14
+hierarchy_analysis: The repository relies on `AGENTS.md` as the source of truth regarding
+  development workflows, which explicitly requires `pnpm -r build-check`. The gold
+  solution resolves a discrepancy where `CONTRIBUTING.md` had a stale command by updating
+  it to match `AGENTS.md`. The rule to add unit tests is present but implicitly scoped
+  out for this specific minimal bug fix.

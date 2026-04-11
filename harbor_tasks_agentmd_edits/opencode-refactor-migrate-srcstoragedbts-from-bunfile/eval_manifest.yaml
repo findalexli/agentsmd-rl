@@ -67,14 +67,36 @@ rubric:
     path: AGENTS.md
     lines: 73-87
     commit: 6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44
-- rule: Prefer functional array methods (flatMap, filter, map) over for loops in modified code
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops in modified
+    code
   source:
     path: AGENTS.md
     lines: '17'
     commit: 6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44
-- rule: Prefer `const` over `let` in modified code — use ternaries or early returns instead
-    of reassignment
+- rule: Prefer `const` over `let` in modified code — use ternaries or early returns
+    instead of reassignment
   source:
     path: AGENTS.md
     lines: 59-69
     commit: 6fb4f2a7a5d768c11fafdeae4aa8b5c7fcb46b44
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 71-73
+  evidence: The gold solution maintains the early return pattern `if (!existsSync(file))
+    return` instead of wrapping the subsequent code in an `else` block.
+  category: style
+distractors:
+- rule: Use Bun APIs when possible, like `Bun.file()`
+  collision_type: rule_conflict
+  why_distracting: The global style guide explicitly tells the agent to use `Bun.file()`,
+    but the PR instruction explicitly states the codebase is migrating away from it
+    to Node.js `fs` APIs. This creates a direct conflict between the global rule and
+    the specific PR instruction.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '15'
+hierarchy_analysis: The root AGENTS.md contains a rule to use Bun APIs which directly
+  conflicts with the PR's goal of migrating away from them. The PR instructions must
+  override this global rule.

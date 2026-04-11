@@ -52,6 +52,21 @@ rubric:
     path: .agents/skills/gradio/SKILL.md
     lines: 103-109
     commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
+- rule: Tests must pass. Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  source:
+    path: AGENTS.md
+    lines: 28-28
+  evidence: 'Updates `test/components/test_html.py` to include `"server_functions":
+    None` in the expected config dictionary, ensuring existing backend tests continue
+    to pass after the component signature change.'
+  category: testing
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 37-37
+  evidence: Adds the `server_functions` parameter to the docstring of `gr.HTML` matching
+    the exact indentation and style of the existing `props` parameter.
+  category: style
 config_edits:
 - path: .agents/skills/gradio/SKILL.md
   tier: 1
@@ -77,3 +92,18 @@ config_edits:
     = "value", min_height: int | None = None, max_height: int | None = None, container:
     bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
     | None = None, props: Any)`'
+distractors:
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  collision_type: architecture_boundary
+  why_distracting: The prompt mentions making functions callable from `js_on_load`
+    via a `server` object. An agent might assume it needs to modify the Svelte/TypeScript
+    frontend code in `js/` to implement this JS-side `server` object, but the gold
+    solution only modifies the Python backend component to pass the parameter.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 10-10
+hierarchy_analysis: Only `AGENTS.md` is provided, so there are no hierarchy conflicts.
+  The agent must carefully scope its changes to the Python backend and documentation,
+  despite the feature involving JavaScript interactivity.

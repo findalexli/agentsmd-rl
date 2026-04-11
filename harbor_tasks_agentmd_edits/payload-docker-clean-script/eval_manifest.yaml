@@ -72,6 +72,21 @@ rubric:
     storage emulators) with fresh data
 
     pnpm docker:clean  # Stop and remove all services'
+- rule: Keep comments for non-obvious "why" in execution flow.
+  source:
+    path: CLAUDE.md
+    lines: 62-63
+  evidence: The catch block in scripts/docker-clean.js includes the comment `// Some
+    or all containers don't exist` to explain the non-obvious reason for swallowing
+    the error.
+  category: documentation
+- rule: Monorepo uses pnpm workspaces.
+  source:
+    path: CLAUDE.md
+    lines: '43'
+  evidence: The updated docker:start script in package.json and the documentation
+    in CONTRIBUTING.md use `pnpm docker:clean` rather than npm or yarn.
+  category: tooling
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -89,3 +104,27 @@ config_edits:
     emulators) with fresh data
 
     pnpm docker:stop   # Stop all services'
+distractors:
+- rule: Prefer pure functions; when mutation is unavoidable, return the mutated object
+    instead of void.
+  collision_type: architecture_boundary
+  why_distracting: This rule applies to the core CMS platform and packages, but scripts/docker-clean.js
+    is a standalone utility script that inherently relies on side effects (executing
+    shell commands). Trying to make it pure would overcomplicate a simple script.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '57'
+- rule: Skip comments when code is self-documenting.
+  collision_type: scope_ambiguity
+  why_distracting: An agent might consider an empty catch block to be self-documenting
+    (ignoring errors) and omit the comment, but the comment is necessary to explain
+    the non-obvious 'why' (that the containers might not exist).
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: '63'
+hierarchy_analysis: The CLAUDE.md file provides general guidelines for the monorepo.
+  However, some rules like 'prefer pure functions' are intended for the core application
+  code (Next.js/React/Drizzle) and do not apply to standalone Node.js utility scripts
+  in the scripts/ directory, which inherently rely on side effects.

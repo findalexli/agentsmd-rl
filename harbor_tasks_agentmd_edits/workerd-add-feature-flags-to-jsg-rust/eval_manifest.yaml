@@ -94,6 +94,22 @@ rubric:
     path: src/rust/jsg/README.md
     lines: 1-40
     commit: d6046133f33e986f27c166556e9036efd2c1ec85
+- rule: Suggest updates to AGENTS.md when you find new high-level information
+  source:
+    path: AGENTS.md
+    lines: 10-11
+  evidence: The gold solution adds a new bullet point to `src/rust/AGENTS.md` explaining
+    how `Lock::feature_flags()` works, the schema used, and how it is passed from
+    C++, fulfilling the instruction to document n
+  category: documentation
+- rule: 'FFI pointers: functions receiving raw pointers must be `unsafe fn`'
+  source:
+    path: src/rust/AGENTS.md
+    lines: 32-33
+  evidence: 'The gold solution updates `src/rust/jsg/README.md` to document the new
+    signature `pub unsafe fn realm_create(isolate: *mut v8::ffi::Isolate, feature_flags_data:
+    &[u8]) -> Box<Realm>`, maintaining the '
+  category: architecture
 config_edits:
 - path: src/rust/AGENTS.md
   tier: 1
@@ -131,3 +147,35 @@ config_edits:
     \ (Bazel target) |"
   gold_removed: 'pub unsafe fn realm_create(isolate: *mut v8::ffi::Isolate) -> Box<Realm>
     {'
+distractors:
+- rule: 'Tests: inline `#[cfg(test)]` modules; JSG tests use `jsg_test::Harness::run_in_context()`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use `jsg_test::Harness::run_in_context()`
+    for the unit tests in `feature_flags.rs`. However, `FeatureFlags` is just a pure
+    Rust wrapper around Cap'n Proto bytes and doesn't require a V8 isolate or JSG
+    context to test. Using the harness would unnecessarily overcomplicate simple byte
+    validation tests.
+  severity: medium
+  source:
+    path: src/rust/AGENTS.md
+    lines: 31-32
+- rule: 'Errors: `thiserror` for library crates; `jsg::Error` with `ExceptionType`
+    for JSG-facing crates'
+  collision_type: architecture_boundary
+  why_distracting: Since `jsg/` is a JSG-facing crate, an agent might try to return
+    `jsg::Error` if the capnp bytes passed to `realm_create` are invalid. However,
+    `realm_create` is called from C++ during initialization, not from JS. Invalid
+    canonical bytes from the C++ host is a fatal invariant violation, not a JS exception,
+    so it should panic or return a standard Result, not a `jsg::Error`.
+  severity: medium
+  source:
+    path: src/rust/AGENTS.md
+    lines: 28-29
+hierarchy_analysis: The hierarchy correctly applies Rust-specific conventions in `src/rust/AGENTS.md`
+  over the general guidelines in the root `AGENTS.md`. The instruction to update `AGENTS.md`
+  from the root is successfully applied to the subdirectory `AGENTS.md` rather than
+  the root one, showing good contextual awareness. The testing and error handling
+  rules in `src/rust/AGENTS.md` create scope ambiguities because `feature_flags.rs`
+  sits at the boundary between C++ host initialization and the JSG runtime, meaning
+  it doesn't fully participate in the JS-facing error or testing paradigms despite
+  being in the `jsg/` crate.

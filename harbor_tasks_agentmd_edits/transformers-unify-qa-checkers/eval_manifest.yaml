@@ -98,6 +98,15 @@ rubric:
     path: .ai/AGENTS.md
     lines: 1-10
     commit: 28af8184fb00a0e9bc778c3defdec39bbe7e8839
+- rule: Hosted review agents should discover this guidance from the committed root
+    AGENTS.md / CLAUDE.md files.
+  source:
+    path: .ai/AGENTS.md
+    lines: '12'
+  evidence: The gold solution updates the command descriptions in `.ai/AGENTS.md`
+    to reflect the new unified runner structure, ensuring that the guidance discovered
+    by hosted review agents remains accurate.
+  category: documentation
 config_edits:
 - path: .ai/AGENTS.md
   tier: 1
@@ -110,3 +119,41 @@ config_edits:
 
     `make style` or `make fix-repo` should be run as the final step before opening
     a PR. The CI will run `make check-repo` and fail if any issues are found.'
+distractors:
+- rule: The CI will run `make check-repo` and fail if any issues are found.
+  collision_type: rule_conflict
+  why_distracting: The config states that the CI will run `make check-repo`. An agent
+    might try to update `.circleci/config.yml` to run `make check-repo`, conflicting
+    with the prompt's explicit instruction to use the new `check-code-quality` and
+    `check-repository-consistency` targets.
+  severity: high
+  source:
+    path: .ai/AGENTS.md
+    lines: '8'
+- rule: Fail-closed behavior for agents - If coordination evidence cannot be found,
+    do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The config mandates fail-closed behavior if coordination evidence
+    (like an issue link) is missing. Since the prompt doesn't provide an issue link,
+    an agent might refuse to generate the refactoring code.
+  severity: high
+  source:
+    path: .ai/AGENTS.md
+    lines: 49-51
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The config forbids one-off PRs for mechanical cleanups. An agent
+    might misinterpret this large-scale Makefile/CI refactoring as a 'mechanical cleanup'
+    or 'isolated lint cleanup' and refuse to proceed.
+  severity: medium
+  source:
+    path: .ai/AGENTS.md
+    lines: 35-36
+hierarchy_analysis: The project uses identical `CLAUDE.md` and `.ai/AGENTS.md` files
+  to define agent behavior and document QA commands. The prompt requires modifying
+  the very rules that govern the agent (`.ai/AGENTS.md`), creating a self-referential
+  task where the agent must update its own instructions. The agent must prioritize
+  the prompt's explicit instructions over the existing config rules (e.g., changing
+  the CI behavior instead of following the old `make check-repo` rule, and bypassing
+  the fail-closed coordination checks to complete the evaluation task).

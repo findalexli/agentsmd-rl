@@ -53,18 +53,39 @@ rubric:
 - rule: Document that Bun.file().exists() returns false for directories in SKILL.md
   source:
     path: .opencode/skill/bun-file-io/SKILL.md
-    reference: "NOTE: Bun.file(...).exists() will return false if the value is a directory."
 - rule: Update read.txt to describe directory reading capability
   source:
     path: packages/opencode/src/tool/read.txt
-    reference: "directory"
 - rule: Update edit.txt to reference the new colon-based line format
   source:
     path: packages/opencode/src/tool/edit.txt
-    reference: "colon"
+- rule: All inputs validated with Zod schemas
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 24-24
+  evidence: The gold solution updates the Zod schema descriptions for `filePath` and
+    `offset` in `read.ts` to reflect the new directory support, maintaining the existing
+    Zod validation architecture.
+  category: architecture
 config_edits:
 - path: .opencode/skill/bun-file-io/SKILL.md
   tier: 1
-  gold_added: "NOTE: Bun.file(...).exists() will return false if the value is a directory.
-    Use Filesystem.exists(...) instead if path can be file or directory"
-  gold_removed: ""
+  gold_added: 'NOTE: Bun.file(...).exists() will return false if the value is a directory.
+    Use Filesystem.exists(...) instead if path can be file or directory'
+  gold_removed: ''
+distractors:
+- rule: Use Bun APIs when possible, like `Bun.file()`
+  collision_type: would_cause_bug
+  why_distracting: The core bug is caused by `Bun.file(...).exists()` returning false
+    for directories. The agent must replace this with `Filesystem.exists(...)` (as
+    added to SKILL.md), but the global rule explicitly encourages using `Bun.file()`,
+    which would perpetuate the bug or cause the agent to struggle finding a Bun-specific
+    directory API.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 15-15
+hierarchy_analysis: The root `AGENTS.md` encourages using `Bun.file()`, which directly
+  conflicts with the specific bug fix required in this PR (where `Bun.file().exists()`
+  fails for directories). The agent must recognize that the specific requirement to
+  fix directory existence checking overrides the general guideline to use `Bun.file()`.

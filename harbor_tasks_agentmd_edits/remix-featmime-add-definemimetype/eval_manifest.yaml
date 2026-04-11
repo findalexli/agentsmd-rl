@@ -73,6 +73,45 @@ rubric:
     lines: '44'
     commit: 9c05f82591c422ffc958bd61deb1b29c181ae225
 - rule: Existing detectMimeType behavior is preserved (txt -> text/plain)
+- rule: 'Package exports: All `exports` in `package.json` have a dedicated file in
+    `src` that defines the public API by re-exporting from within `src/lib`'
+  source:
+    path: AGENTS.md
+    lines: '16'
+  evidence: The gold solution adds `export { defineMimeType } from './lib/define-mime-type.ts'`
+    to `packages/mime/src/index.ts` rather than defining the function directly in
+    the index file.
+  category: architecture
+- rule: 'Imports: Always use `import type { X }` for types (separate from value imports);
+    use `export type { X }` for type exports; include `.ts` extensions'
+  source:
+    path: AGENTS.md
+    lines: '22'
+  evidence: The gold solution uses `export type { MimeTypeDefinition } from './lib/define-mime-type.ts'`
+    in `index.ts` and includes `.ts` extensions in all imports and exports.
+  category: style
+- rule: 'Variables: Prefer `let` for locals; never use `var`'
+  source:
+    path: AGENTS.md
+    lines: '23'
+  evidence: The gold solution uses `let extensions = ...` and `let ext of extensions`
+    inside the `defineMimeType` function instead of `const`.
+  category: style
+- rule: 'Functions: Use regular function declarations/expressions by default.'
+  source:
+    path: AGENTS.md
+    lines: '24'
+  evidence: 'The gold solution defines the new feature using a regular function declaration:
+    `export function defineMimeType(definition: MimeTypeDefinition): void`.'
+  category: style
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files. For v0.x packages: Use ''minor'' for breaking changes and new features.'
+  source:
+    path: AGENTS.md
+    lines: 44-48
+  evidence: The gold solution creates a changeset file `packages/mime/.changes/minor.define-mime-type.md`
+    for the new feature.
+  category: tooling
 config_edits:
 - path: packages/mime/.changes/minor.define-mime-type.md
   tier: 2
@@ -83,3 +122,30 @@ config_edits:
     defineMimeType({\n  extensions: 'myformat',\n  mimeType: 'application/x-myformat',\n\
     })\n\ndetectMimeType('file.myformat') // 'application/x-myformat'\n```"
   gold_removed: ''
+distractors:
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope'
+  collision_type: rule_conflict
+  why_distracting: The rule states 'const only at module scope', but the gold solution
+    uses `export let customMimeTypeByExtension` at the module scope to allow lazy
+    initialization and resetting for tests. An agent strictly following 'const only
+    at module scope' might use `const` and initialize the Maps immediately, which
+    could have unintended side effects or prevent the `resetMimeTypes` test utility
+    from working.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '23'
+- rule: 'Comments: Only add non-JSDoc comments when the code is doing something surprising
+    or non-obvious'
+  collision_type: scope_ambiguity
+  why_distracting: The gold solution includes inline comments like `// Remove leading
+    dot if present` and `// Custom registries - only created when defineMimeType is
+    called.` An agent might omit these helpful comments, thinking they are 'obvious'
+    string manipulations or variable declarations, leading to less readable code.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: '30'
+hierarchy_analysis: The AGENTS.md file provides repo-wide guidelines. There are no
+  conflicting child configs, but the agent must carefully interpret the module-scope
+  variable rule to allow for mutable state when necessary for test isolation.

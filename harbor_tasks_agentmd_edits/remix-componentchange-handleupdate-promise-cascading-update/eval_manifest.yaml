@@ -88,6 +88,23 @@ rubric:
     \            // Focus the enabled button after update completes\n            stopButton.focus()\n\
     \          async click() {\n            await handle.update()\n            //\
     \ Focus the enabled button after update completes\n            playButton.focus()"
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  source:
+    path: AGENTS.md
+    lines: 31-31
+  evidence: The gold solution creates a new change file at `packages/component/.changes/minor.handle-update-promise.md`
+    to document the breaking API change.
+  category: tooling
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: The gold solution omits semicolons and uses single quotes in the newly
+    added code blocks within the `.changes` file and in the modified `state-search-page.tsx`
+    file (e.g., `let signal = await handle.u
+  category: style
 config_edits:
 - path: packages/component/AGENTS.md
   tier: 1
@@ -116,19 +133,19 @@ config_edits:
     \ signal!\n\n    let response = await fetch('/api/data', { signal }) // AbortError:\
     \ signal is aborted\n    if (signal.aborted) return\n\n    data = await response.json()\n\
     \    loading = false\n    handle.update()\n  })\n\n  return () => <div>{loading\
-    \ ? 'Loading...' : data.join(', ')}</div>\n}\n\n// ✅ Prefer: Move async work\
-    \ into a new task via handle.update(task)\nfunction GoodAsyncExample(handle: Handle)\
+    \ ? 'Loading...' : data.join(', ')}</div>\n}\n\n// ✅ Prefer: Move async work into\
+    \ a new task via handle.update(task)\nfunction GoodAsyncExample(handle: Handle)\
     \ {\n  let data: string[] = []\n  let loading = false\n\n  handle.queueTask(()\
-    \ => {\n    loading = true\n    handle.update(async (signal) => {\n      // This task\
-    \ gets a fresh signal that won't be aborted by the update above\n      let response\
-    \ = await fetch('/api/data', { signal })\n\n      data = await response.json()\n\
-    \      loading = false\n      handle.update()\n    })\n  })\n\n  return () => <div>{loading\
-    \ ? 'Loading...' : data.join(', ')}</div>\n}\n```\n\nThe key insight is that\
-    \ `handle.update(task)` queues a new task that runs after the update completes,\
+    \ => {\n    loading = true\n    handle.update(async (signal) => {\n      // This\
+    \ task gets a fresh signal that won't be aborted by the update above\n      let\
+    \ response = await fetch('/api/data', { signal })\n\n      data = await response.json()\n\
+    \      loading = false\n      handle.update()\n    })\n  })\n\n  return () =>\
+    \ <div>{loading ? 'Loading...' : data.join(', ')}</div>\n}\n```\n\nThe key insight\
+    \ is that `handle.update(task)` queues a new task that runs after the update completes,\
     \ with its own fresh signal. This allows you to:\n\n1. Update state to show loading\
-    \ UI\n2. Trigger a re-render with `handle.update(task)`\n3. Perform async work in\
-    \ the task with a signal that won't be aborted by that re-render\n\n**Signals in\
-    \ events and tasks are how you manage interruptions and disconnects:**"
+    \ UI\n2. Trigger a re-render with `handle.update(task)`\n3. Perform async work\
+    \ in the task with a signal that won't be aborted by that re-render\n\n**Signals\
+    \ in events and tasks are how you manage interruptions and disconnects:**"
 - path: packages/component/README.md
   tier: 2
   gold_added: "- **`handle.update()`** - Schedule an update and await completion to\
@@ -146,3 +163,32 @@ config_edits:
     \           stopButton.focus()\n            })\n          click: () => {\n   \
     \         handle.update(() => {\n              // Focus the enabled button after\
     \ update completes\n              playButton.focus()\n            })"
+distractors:
+- rule: '### `handle.update(task?)` Schedules a component update. Optionally accepts
+    a task to run after the update completes.'
+  collision_type: meta_confusion
+  why_distracting: This rule describes the old behavior of `handle.update(task?)`.
+    Because it is located in an agent config file (`AGENTS.md`), the agent might treat
+    it as an immutable constraint and try to preserve the task callback behavior or
+    refuse to modify the file, conflicting with the PR instructions to remove the
+    callback and update the docs.
+  severity: high
+  source:
+    path: packages/component/AGENTS.md
+    lines: 154-156
+- rule: 'Updating changes: If iterating on an unpublished change with a change file,
+    update it in place rather than creating a new one.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time looking for an existing change file
+    to modify instead of creating a new one, or might incorrectly append this major
+    API change to an unrelated unpublished change file.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 32-32
+hierarchy_analysis: The root `AGENTS.md` provides general monorepo guidelines (formatting,
+  change files), which the gold solution follows. The package-level `packages/component/AGENTS.md`
+  acts as both a rulebook and the actual documentation that needs to be updated. This
+  creates a meta-conflict where the agent must recognize that the config file itself
+  is the target of the PR and its contents regarding `handle.update` are outdated
+  and must be rewritten, rather than followed.

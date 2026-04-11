@@ -57,12 +57,14 @@ checks:
   description: SKILL.md documents the deleted file output format with mask message
     example
 rubric:
-- rule: The deleted file output example in SKILL.md is consistent with the style of
-    existing output examples in the same file
+- rule: Only add comments that explain non-obvious logic or provide additional context
   source:
-    path: .claude/skills/fetch-diff/SKILL.md
-    lines: 47-64
-    commit: dcc138b281ea230b18215dfe839c297076337adc
+    path: CLAUDE.md
+    lines: 14-14
+  category: documentation
+  evidence: The gold solution adds a comment (`# For deleted files, use the old path...`)
+    specifically to explain the non-obvious logic of using the `a/` side path for
+    pattern matching when the `b/` side is `dev/
 config_edits:
 - path: .claude/skills/fetch-diff/SKILL.md
   tier: 1
@@ -81,3 +83,19 @@ config_edits:
 
     ```'
   gold_removed: ''
+distractors:
+- rule: 'Run Python tests: uv run pytest tests/'
+  source:
+    path: CLAUDE.md
+    lines: 68-69
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the entire MLflow test suite (`uv run
+    pytest tests/`) to verify its changes. However, the changes are isolated to the
+    `.claude/skills` directory (a meta-tooling folder), and running the full MLflow
+    test suite would waste a massive amount of time and compute.
+  severity: medium
+hierarchy_analysis: 'There is only one configuration file (`CLAUDE.md` at the root
+  level). The primary challenge is scope boundary: the agent must recognize that it
+  is editing meta-tooling (`.claude/skills/`) rather than the main MLflow codebase,
+  meaning that repository-wide testing commands in `CLAUDE.md` should not be blindly
+  applied.'

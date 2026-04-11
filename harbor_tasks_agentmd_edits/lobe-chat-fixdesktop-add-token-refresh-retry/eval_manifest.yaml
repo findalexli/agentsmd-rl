@@ -95,6 +95,15 @@ rubric:
     lines: '50'
     commit: 95bc5c2e6c9cca04b584002fbd85145e3b977e1f
   reference: '- Prefer interfaces over types for object shapes'
+- rule: Maintain the structure and existing valid steps (like adding a completion
+    comment) when updating the Linear Issue Management workflow instructions.
+  source:
+    path: CLAUDE.md
+    lines: 81-95
+  evidence: The gold solution updates the Linear Issue Management section to reflect
+    the new 'In Review' status requirement while preserving the existing documentation
+    structure and the requirement to add a compl
+  category: documentation
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -123,3 +132,30 @@ config_edits:
 
     - Complete Issue A → Update A status → Add A comment → Complete Issue B → Update
     B status → Add B comment → ...'
+distractors:
+- rule: 'IMMEDIATELY update issue status to ''Done'': `mcp__linear-server__update_issue`'
+  collision_type: meta_confusion
+  why_distracting: The existing rule explicitly commands the agent to IMMEDIATELY
+    update the issue status to 'Done' using an MCP tool. The prompt asks the agent
+    to *update the documentation* to say 'In Review' instead. An agent might get confused
+    between executing the existing rule via MCP versus modifying the rule in the markdown
+    file.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 84-85
+- rule: 'Correct approach: Complete Issue A → Update A status → Add A comment'
+  collision_type: scope_ambiguity
+  why_distracting: The 'Correct approach' example reinforces setting the status to
+    'Done' implicitly ('Update A status'). The agent might leave this example as-is,
+    creating a contradiction in the documentation after updating the steps above it.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 92-93
+hierarchy_analysis: 'Both CLAUDE.md and AGENTS.md contain overlapping instructions
+  regarding package management and testing. However, the primary conflict in this
+  PR is meta-referential: the prompt asks the agent to modify the very instructions
+  (CLAUDE.md) that govern its own behavior regarding issue management. The agent must
+  recognize that the prompt''s instruction to change the workflow overrides the existing
+  written rule to mark issues as ''Done''.'

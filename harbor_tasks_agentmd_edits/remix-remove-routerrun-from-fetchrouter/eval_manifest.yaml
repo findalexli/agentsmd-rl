@@ -85,3 +85,34 @@ rubric:
     lines: 1-16
     commit: 783fa46240191001e0ee2084297b5c81d78b3545
   reference: This file should be deleted (see gold solution)
+- rule: 'Monorepo: pnpm workspace with packages in packages/ directory'
+  source:
+    path: AGENTS.md
+    lines: 16-16
+  evidence: The patch correctly targets files within the `packages/fetch-router/`
+    directory, adhering to the specified monorepo workspace structure.
+  category: architecture
+distractors:
+- rule: 'Adding changes: Create packages/*/.changes/[major|minor|patch].*.md'
+  collision_type: rule_conflict
+  why_distracting: The agent might try to create a new `.changes` file to document
+    the removal of the `router.run` API. However, the instructions explicitly state
+    that the API was never released and the existing unreleased change file should
+    just be deleted. Creating a new change file would be a mistake.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 45-45
+- rule: 'Demos: Accessible navigation and Clean shutdown'
+  collision_type: scope_ambiguity
+  why_distracting: The agent is instructed to update `demos/bookstore/README.md`.
+    Seeing rules about demo servers, the agent might start auditing or modifying the
+    bookstore demo code to ensure it complies with accessible navigation or clean
+    shutdown rules, which is out of scope for simply removing the `router.run` API.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 39-41
+hierarchy_analysis: The AGENTS.md file provides general monorepo guidelines. The specific
+  PR instructions override the general rule to create a `.changes` file, because the
+  API being removed was never released.

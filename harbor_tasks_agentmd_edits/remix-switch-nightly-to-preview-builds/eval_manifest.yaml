@@ -57,6 +57,14 @@ rubric:
     path: CONTRIBUTING.md
     lines: 1-10
     commit: 721dac4c6704d5b3e8428887af21accdcb3b23ea
+- rule: 'Monorepo: pnpm workspace with packages in packages/ directory'
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The updated comments in `.github/workflows/preview.yml` correctly reference
+    the monorepo structure by specifying `path:packages/remix` in the pnpm install
+    command (`pnpm install "remix-run/remix#previ
+  category: architecture
 config_edits:
 - path: CONTRIBUTING.md
   tier: 2
@@ -111,3 +119,20 @@ config_edits:
     pnpm install "remix-run/remix#nightly&path:packages/remix"
 
     pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"'
+distractors:
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to create a change file in `packages/*/.changes/`
+    because it is making a change to the repository. However, this PR only modifies
+    CI/CD workflows, root scripts, and root documentation. It does not touch any package
+    source code, so a change file is unnecessary and would incorrectly signal a package
+    release.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 44-45
+hierarchy_analysis: The AGENTS.md file provides general repository guidelines. However,
+  its rules are heavily focused on package development (changesets, code style, testing).
+  For infrastructure and CI/CD changes like this PR, many of these rules fall out
+  of scope.

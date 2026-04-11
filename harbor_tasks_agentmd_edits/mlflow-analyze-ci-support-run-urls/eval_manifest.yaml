@@ -1,4 +1,4 @@
-version: "2.0"
+version: '2.0'
 source:
   repo: mlflow/mlflow
   pr: 21331
@@ -55,15 +55,50 @@ rubric:
     path: .claude/skills/analyze-ci/SKILL.md
     lines: 1-42
     commit: 6469b26207d525615816a9498e849bcf4a8da75e
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  source:
+    path: CLAUDE.md
+    lines: 14-14
+  evidence: The gold solution adds the `RUN_URL_PATTERN` regex and the `elif` block
+    for run URLs without adding any inline comments, treating the regex and standard
+    GitHub API logic as obvious and adhering to the
+  category: style
 config_edits:
 - path: .claude/skills/analyze-ci/SKILL.md
   tier: 1
-  gold_added: "# Analyze all failed jobs in a workflow run
+  gold_added: '# Analyze all failed jobs in a workflow run
 
     uv run skills analyze-ci <run_url>
 
 
     # Analyze a specific workflow run
 
-    uv run skills analyze-ci https://github.com/mlflow/mlflow/actions/runs/22626454465"
-  gold_removed: ""
+    uv run skills analyze-ci https://github.com/mlflow/mlflow/actions/runs/22626454465'
+  gold_removed: ''
+distractors:
+- rule: New functionality in the tracking layer should be mirrored by workspace-aware
+    tests
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see 'New functionality' and attempt to write tests
+    for the new URL parsing logic, but this code is part of a Claude skill (.claude/skills/),
+    not the MLflow tracking layer, making workspace-aware tests completely irrelevant.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 16-16
+- rule: Run Python tests using `uv run pytest tests/`
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run `uv run pytest tests/` to test the skill
+    changes, but the skills are standalone scripts in `.claude/skills/` and are not
+    covered by the main MLflow test suite, leading to wasted effort and confusion.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 76-84
+hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root. The
+  rules in this file are heavily focused on the main MLflow application (tracking
+  layer, SQLAlchemy store, Databricks backend) and its testing/development workflow.
+  Since the PR modifies a standalone Claude skill in `.claude/skills/`, many of the
+  root-level rules are out of scope or potentially distracting. The agent must recognize
+  that the skill is a separate tool and not apply MLflow core development practices
+  to it.

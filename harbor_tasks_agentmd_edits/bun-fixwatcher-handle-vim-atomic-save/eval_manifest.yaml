@@ -53,6 +53,13 @@ rubric:
     path: src/CLAUDE.md
     lines: 8-12
     commit: dc36d5601c2c3e7aa191baed6db231d6a7ca5e04
+- rule: Decl literals in Zig are recommended.
+  source:
+    path: src/CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution uses a decl literal `.{event}` when initializing the
+    `events` array in the new `addFileDescriptorToKQueueWithoutChecks` function.
+  category: style
 config_edits:
 - path: src/CLAUDE.md
   tier: 1
@@ -63,3 +70,30 @@ config_edits:
   gold_removed: '- Prefer `@import` at the **bottom** of the file.
 
     - It''s `@import("bun")` not `@import("root").bun`'
+distractors:
+- rule: '`test/regression/issue/` - Regression tests (create one per bug fix)'
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates creating a regression test for every bug fix.
+    However, reproducing a race condition involving vim's atomic save (rename then
+    create) and macOS kqueue timing in an automated test is extremely difficult and
+    likely to result in a flaky test. The gold solution correctly skips adding a test
+    for this specific edge case.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 31-31
+- rule: Prefer `@import` at the **bottom** of the file.
+  collision_type: meta_confusion
+  why_distracting: The rule states 'Prefer `@import` at the bottom of the file.' The
+    gold solution actually updates this rule in the config file itself to note that
+    the auto-formatter handles it. An agent might waste effort trying to manually
+    move existing imports to the bottom of `src/Watcher.zig` to comply with the outdated
+    rule.
+  severity: medium
+  source:
+    path: src/CLAUDE.md
+    lines: 9-9
+hierarchy_analysis: The hierarchy includes root-level `CLAUDE.md` providing general
+  testing and architecture guidelines, and `src/CLAUDE.md` providing Zig-specific
+  syntax conventions. The gold solution updates the `src/CLAUDE.md` file itself, demonstrating
+  that agents must be capable of meta-edits to config files when conventions evolve.

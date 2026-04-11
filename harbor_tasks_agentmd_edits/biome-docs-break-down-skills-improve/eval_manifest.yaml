@@ -106,6 +106,23 @@ rubric:
     path: .claude/skills/testing-codegen/SKILL.md
     lines: '425'
     commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: 'Changeset change types: patch for bug fixes, minor for new features (targets
+    next), major for breaking changes (targets next).'
+  source:
+    path: AGENTS.md
+    lines: 76-78
+  evidence: The gold solution's new `.claude/skills/changeset/SKILL.md` file explicitly
+    lists `patch`, `minor`, and `major` change types, specifying that `minor` and
+    `major` must target the `next` branch, matchin
+  category: documentation
+- rule: 'Bug fix changesets must start with `Fixed [#NUMBER](issue link): ...`'
+  source:
+    path: AGENTS.md
+    lines: 81-81
+  evidence: 'The gold solution''s new `.claude/skills/changeset/SKILL.md` file includes
+    the exact format `Fixed [#4444](https://github.com/biomejs/biome/issues/4444):
+    ...` under the ''Bug Fixes'' section.'
+  category: documentation
 config_edits:
 - path: .claude/skills/README.md
   tier: 2
@@ -333,3 +350,31 @@ config_edits:
   tier: 1
   gold_added: '- Changeset guide: \`..'
   gold_removed: ''
+distractors:
+- rule: Create a file in `.changeset/` directory with a unique filename and front
+    matter.
+  collision_type: rule_conflict
+  why_distracting: The agent might copy the instruction to manually create a file
+    in the `.changeset/` directory into the new changeset skill. However, the task
+    explicitly requires adding a `just new-changeset-empty` command and instructing
+    agents to use that instead of manual file creation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 66-68
+- rule: Before opening a PR, verify if a changeset is needed. If UNSURE, assume YES
+    and create a changeset.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to create a changeset for this PR itself,
+    following the 'If UNSURE -> Assume YES' rule. However, this PR only updates internal
+    agent skills and documentation, which falls under 'NOT User-Facing' and should
+    not have a changeset.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-46
+hierarchy_analysis: The `AGENTS.md` file contains detailed instructions on changesets
+  and PRs that the agent needs to extract and formalize into dedicated skill files.
+  However, there is a direct conflict between the existing `AGENTS.md` instruction
+  to manually create changeset files and the task's requirement to use a new `just
+  new-changeset-empty` command. The task instructions override the existing documentation.

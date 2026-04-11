@@ -84,6 +84,22 @@ rubric:
     the bookstore bookstore database on request context with `context.set(Database,
     db)`, and request handlers read it back with `get(Database)` just like they do
     for `Session` and `FormData`.'
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
+    `var`'
+  source:
+    path: AGENTS.md
+    lines: 28-28
+  evidence: The gold solution uses `let db = get(Database)` instead of `const db =
+    get(Database)` when retrieving the database from the context in route handlers.
+  category: style
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: AGENTS.md
+    lines: 32-32
+  evidence: The gold solution omits semicolons at the end of the newly added statements,
+    such as `let db = get(Database)`.
+  category: style
 config_edits:
 - path: demos/bookstore/README.md
   tier: 2
@@ -98,3 +114,18 @@ config_edits:
 
     - [`app/middleware/database.ts`](app/middleware/database.ts) attaches `context.db`
     for every request so route actions can query tables directly without AsyncLocalStorage.'
+distractors:
+- rule: 'Documentation imports/install: In package READMEs, documentation, and pull
+    request code examples, installation instructions should always include `npm i
+    remix`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to rewrite the bookstore demo's README
+    to include `npm i remix` installation instructions. However, this rule applies
+    to package READMEs, whereas the bookstore is a demo application within the monorepo.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 16-16
+hierarchy_analysis: The repository uses a single `AGENTS.md` file at the root level.
+  The rules are straightforward, but the distinction between package READMEs and demo
+  READMEs creates a potential scope ambiguity for documentation rules.

@@ -82,6 +82,15 @@ rubric:
     to read the conversation. Do not use `WebFetch` — it cannot access Zulip
 
     message content.'
+- rule: Be consistent with existing code. Look at surrounding code and follow the
+    same patterns.
+  source:
+    path: .claude/CLAUDE.md
+    lines: 70-71
+  evidence: The gold solution updates the regex by changing `(?:/with/(\d+))?` to
+    `(?:/(?:with|near)/(\d+))?` and updates the error message by changing `[/with/MSG_ID]`
+    to `[/with|near/MSG_ID]`, perfectly matchin
+  category: style
 config_edits:
 - path: .claude/CLAUDE.md
   tier: 1
@@ -96,3 +105,27 @@ config_edits:
 
     message content.'
   gold_removed: ''
+distractors:
+- rule: Backend and API changes (with tests and API doc changes documented fully using
+    the `tools/create-api-changelog` double-entry changelog system)
+  collision_type: scope_ambiguity
+  why_distracting: The agent might classify the Python script modification as a backend
+    change and attempt to use `tools/create-api-changelog` or write backend tests,
+    but this is an internal AI tooling script, not part of the Zulip backend API.
+  severity: high
+  source:
+    path: .claude/CLAUDE.md
+    lines: 49-50
+- rule: Run tests before making a commit... ./tools/test-backend zerver.tests.test_relevant_module
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run `./tools/test-backend` for the modified
+    script, but the script is an isolated tool in `.claude/skills/` and likely doesn't
+    have standard `zerver.tests` coverage, leading to wasted effort and confusion.
+  severity: medium
+  source:
+    path: .claude/CLAUDE.md
+    lines: 58-63
+hierarchy_analysis: The only config file is `.claude/CLAUDE.md`, which provides general
+  Zulip development guidelines. However, because the PR modifies an AI skill script
+  (`.claude/skills/...`) and the config file itself, many of the standard Zulip backend/frontend
+  rules (like API changelogs and `zerver` tests) do not apply, creating scope ambiguity.
