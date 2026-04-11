@@ -186,15 +186,22 @@ Rules from the config files that the gold solution FOLLOWS. For each:
 Only include rules where you can point to SPECIFIC evidence in the gold diff.
 
 ### NEGATIVE RUBRICS (DISTRACTORS)
-Rules from the config files that SEEM relevant but the gold solution deliberately DOES NOT follow.
+Rules that create genuine COLLISIONS — where an agent would plausibly try to follow the rule, but doing so would produce WORSE code or wasted effort for this specific PR.
+
+**CRITICAL**: Only include rules that create REAL decision points. Skip rules that are obviously irrelevant (wrong programming language, clearly unrelated subsystem). We want rules where:
+- Two valid rules CONFLICT and the agent must choose (e.g., "inline single-use vars" vs readability)
+- The rule's SCOPE is ambiguous (e.g., "create changeset for changes" — but are internal docs "changes"?)
+- Following the rule would cause META-LEVEL confusion (e.g., writing ABOUT a tool vs USING that tool)
+- Following the rule would cross an ARCHITECTURE BOUNDARY (e.g., applying JSG patterns to internal utilities)
+- Following the rule would introduce a BUG or security issue in this context
+
 For each:
-- `rule`: The convention that is NOT being followed
+- `rule`: The convention that creates a collision
 - `source_file`: Which config file contains this rule
 - `source_lines`: Approximate line numbers
-- `why_not_applicable`: Specific reason this rule doesn't apply to THIS PR
-- `category`: "wrong_subsystem" | "wrong_language" | "wrong_scope" | "hierarchy_override" | "judgment_override" | "irrelevant_skill"
-
-These are the HARD NEGATIVES — an agent might waste time following these or make worse code.
+- `collision_type`: "rule_conflict" | "scope_ambiguity" | "meta_confusion" | "architecture_boundary" | "would_cause_bug"
+- `why_distracting`: WHY an agent would plausibly follow this, and what goes WRONG if it does
+- `severity`: "high" (following it causes a bug/wrong behavior) | "medium" (wastes significant effort) | "low" (minor confusion)
 
 ### SKILL RELEVANCE
 For each skill: should the agent activate it? Why / why not?
@@ -208,7 +215,7 @@ Respond with ONLY a JSON object:
     {{"rule": "...", "source_file": "...", "source_lines": "N-M", "evidence_in_gold": "...", "category": "..."}}
   ],
   "negative_rubrics": [
-    {{"rule": "...", "source_file": "...", "source_lines": "N-M", "why_not_applicable": "...", "category": "..."}}
+    {{"rule": "...", "source_file": "...", "source_lines": "N-M", "collision_type": "rule_conflict|scope_ambiguity|meta_confusion|architecture_boundary|would_cause_bug", "why_distracting": "what goes wrong if agent follows this", "severity": "high|medium|low"}}
   ],
   "skill_relevance": [
     {{"skill": "...", "relevant": true, "reason": "..."}}
@@ -298,7 +305,7 @@ def stamp_rubrics_to_manifest(task_dir: Path, result: dict) -> None:
             rubric_rules.append(rule)
         manifest["rubric"] = rubric_rules
 
-    # Negative rubrics → new section
+    # Negative rubrics → distractors section
     negative = result.get("negative_rubrics", [])
     if negative:
         distractor_rules = []
@@ -309,8 +316,9 @@ def stamp_rubrics_to_manifest(task_dir: Path, result: dict) -> None:
                     "path": nr.get("source_file", ""),
                     "lines": nr.get("source_lines", ""),
                 },
-                "why_not_applicable": nr.get("why_not_applicable", ""),
-                "category": nr.get("category", ""),
+                "collision_type": nr.get("collision_type", ""),
+                "why_distracting": nr.get("why_distracting", ""),
+                "severity": nr.get("severity", "medium"),
             })
         manifest["distractors"] = distractor_rules
 
