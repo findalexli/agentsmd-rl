@@ -106,6 +106,47 @@ RUBRIC_RESPONSE_SCHEMA = {
     "propertyOrdering": ["positive_rubrics", "negative_rubrics", "hierarchy_analysis", "summary"],
 }
 
+# Combined schema: rubric construction + quality classification in ONE call.
+# Saves ~50% latency vs two sequential calls.
+COMBINED_RUBRIC_QUALITY_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "positive_rubrics": {
+            "type": "array",
+            "items": _POSITIVE_RUBRIC_SCHEMA,
+        },
+        "negative_rubrics": {
+            "type": "array",
+            "items": _NEGATIVE_RUBRIC_SCHEMA,
+        },
+        "hierarchy_analysis": {"type": "string"},
+        "quality_verdict": {
+            "type": "string",
+            "enum": ["HIGH", "MEDIUM", "LOW", "DELETE"],
+        },
+        "quality_reasoning": {"type": "string"},
+        "meta_referential": {
+            "type": "boolean",
+            "description": "Must the agent edit/override its own instruction files?",
+        },
+        "competing_principles": {
+            "type": "boolean",
+            "description": "Do config rules conflict, requiring the agent to choose?",
+        },
+        "config_navigation": {
+            "type": "string",
+            "enum": ["deep_hierarchy", "moderate", "flat_single_file", "none"],
+        },
+    },
+    "required": ["positive_rubrics", "negative_rubrics", "quality_verdict", "quality_reasoning"],
+    "propertyOrdering": [
+        "positive_rubrics", "negative_rubrics", "hierarchy_analysis",
+        "config_navigation", "meta_referential", "competing_principles",
+        "quality_reasoning", "quality_verdict",
+    ],
+}
+
+
 # Schema for Kimi validation verdicts (Gemini follow-up).
 KIMI_VALIDATION_SCHEMA = {
     "type": "object",
@@ -501,6 +542,86 @@ def construct_rubrics(task_dir: Path, repo_dir: Path, gemini_key: str) -> dict:
             "Be precise about source files and line numbers. "
             "Think carefully about evidence before stating each rule."
         ),
+    )
+
+    if "error" in result:
+        return {"status": "gemini_error", **result}
+
+    # Add metadata
+    result["status"] = "ok"
+    result["hierarchy_depth"] = hierarchy.get("hierarchy_depth", 0)
+    result["total_config_rules"] = hierarchy.get("total_config_rules", 0)
+    result["edited_paths"] = hierarchy.get("edited_paths", [])
+    result["config_files"] = [c["path"] for c in hierarchy.get("config_hierarchy", [])]
+
+    return result
+
+
+def construct_and_classify(task_dir: Path, repo_dir: Path, gemini_key: str) -> dict:
+    """Combined rubric construction + quality classification in ONE Gemini call.
+
+    Returns everything construct_rubrics returns PLUS quality_verdict,
+    quality_reasoning, meta_referential, competing_principles, config_navigation.
+
+    ~50% faster than calling construct_rubrics + classify_task separately.
+    Designed for the E2B pipeline where both are needed.
+    """
+    # Phase 1: Extract hierarchy context
+    hierarchy = build_hierarchy_context(task_dir, repo_dir)
+
+    if not hierarchy.get("config_hierarchy"):
+        return {
+            "status": "no_config_files",
+            "positive_rubrics": [],
+            "negative_rubrics": [],
+            "quality_verdict": "DELETE",
+            "quality_reasoning": "No config files in hierarchy",
+        }
+
+    # Phase 2: Read config contents
+    config_contents = {}
+    for cfg in hierarchy.get("config_hierarchy", []):
+        path = cfg["path"]
+        full_path = repo_dir / path
+        if full_path.exists():
+            try:
+                config_contents[path] = full_path.read_text(errors="replace")[:5000]
+            except Exception:
+                pass
+
+    prompt = build_rubric_prompt(task_dir, hierarchy, config_contents)
+
+    # Append quality classification instructions to the same prompt
+    prompt += """
+
+## ADDITIONALLY: Classify this task for research relevance.
+
+After constructing rubrics, also assess:
+- quality_verdict: HIGH (agent must reason about competing instructions or config hierarchy),
+  MEDIUM (real code with shallow config signal), LOW (trivial config edit), DELETE (no config)
+- meta_referential: must the agent edit/override its own instruction files?
+- competing_principles: do config rules conflict for this task?
+- config_navigation: depth of config hierarchy traversal needed
+
+HIGH = removing config files would make the task meaningfully harder.
+LOW = config edit is mechanical or disconnected from code."""
+
+    if not gemini_key:
+        return {"status": "no_gemini_key", "prompt_length": len(prompt)}
+
+    # Single Gemini call with combined schema
+    result = call_gemini(
+        prompt,
+        gemini_key,
+        schema=COMBINED_RUBRIC_QUALITY_SCHEMA,
+        system_instruction=(
+            "You are a rubric constructor AND quality auditor for coding agent evaluation. "
+            "First extract positive rubrics and distractors. Then classify whether this task "
+            "genuinely tests instruction discrimination. Be precise about sources. "
+            "Even if the instruction mentions which file to edit, the task can be HIGH if "
+            "writing the correct content requires understanding competing conventions."
+        ),
+        max_tokens=8192,
     )
 
     if "error" in result:
