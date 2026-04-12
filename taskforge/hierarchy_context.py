@@ -134,80 +134,199 @@ def find_config_hierarchy(repo_dir: Path, edited_paths: list[str]) -> list[dict]
     return configs
 
 
+def _parse_skill_frontmatter(content: str) -> tuple[str, str, dict]:
+    """Parse SKILL.md frontmatter. Returns (name, description, all_fields).
+
+    Frontmatter fields: name, description, allowed-tools,
+    disable-model-invocation, user-invocable, argument-hint.
+    """
+    name = ""
+    description = ""
+    fields: dict = {}
+    if content.startswith("---"):
+        end = content.find("---", 3)
+        if end > 0:
+            fm_text = content[3:end]
+            for line in fm_text.splitlines():
+                line = line.strip()
+                if ":" in line:
+                    key, val = line.split(":", 1)
+                    key = key.strip()
+                    val = val.strip().strip('"\'')
+                    fields[key] = val
+                    if key == "description":
+                        description = val
+                    elif key == "name":
+                        name = val
+    return name, description, fields
+
+
+def _skill_body(content: str) -> str:
+    """Extract the body (post-frontmatter) from a SKILL.md file."""
+    if content.startswith("---"):
+        end = content.find("---", 3)
+        if end > 0:
+            return content[end + 3:].strip()
+    return content.strip()
+
+
 def find_relevant_skills(repo_dir: Path, edited_paths: list[str]) -> list[dict]:
     """Find ALL skills in the repo and classify as relevant/irrelevant.
 
-    A skill is relevant if:
-    - Its directory is in the path to an edited file
-    - Its description mentions concepts related to the edited files
-    - It's in .claude/skills/ or similar skill directories
+    Returns full skill content (body) for relevant skills so rubric constructor
+    can extract rules from them. Irrelevant skills get description-only.
+
+    Relevance is determined by:
+    - Path proximity: skill is in a parent directory of an edited file
+    - Language match: skill mentions the same language/framework as edited files
+    - Domain match: skill name/description overlaps with edited directories
+    - NOT pr_review or workflow-only skills (these are agent-internal, not code rules)
+
+    Progressive context disclosure (matching Claude Code's model):
+    - All skills: name + description (cheap, for distractor selection)
+    - Relevant skills: full body content (for rubric rule extraction)
     """
     skills = []
-    skill_dirs = [".claude/skills", ".agents/skills", ".github/skills",
-                  "skills", ".opencode/skill"]
 
-    for sd in skill_dirs:
+    # Standard skill directories at repo root
+    skill_roots = [".claude/skills", ".agents/skills", ".github/skills",
+                   "skills", ".opencode/skill", ".agent/skills"]
+
+    # Also scan for package-scoped skills: packages/*/skills/, packages/*/.claude/skills/
+    # These are common in monorepos (TanStack/router, trpc, reduxjs)
+    for pattern in ["packages/*/skills", "packages/*/.claude/skills",
+                    "packages/*/skills/*/skills"]:
+        import glob
+        for match in glob.glob(str(repo_dir / pattern)):
+            rel = str(Path(match).relative_to(repo_dir))
+            if rel not in skill_roots:
+                skill_roots.append(rel)
+
+    edited_extensions = {PurePosixPath(p).suffix for p in edited_paths}
+    edited_dirs = {str(PurePosixPath(p).parent) for p in edited_paths}
+    edited_dirs_lower = {d.lower() for d in edited_dirs}
+
+    for sd in skill_roots:
         skill_root = repo_dir / sd
         if not skill_root.exists():
             continue
 
-        for skill_dir in skill_root.iterdir():
-            if not skill_dir.is_dir():
-                continue
-            skill_md = skill_dir / SKILL_FILENAME
-            if not skill_md.exists():
-                continue
-
+        # Walk recursively — skills can be nested (skills/lifecycle/migrate-from-nextjs/)
+        for skill_md in skill_root.rglob(SKILL_FILENAME):
+            skill_dir = skill_md.parent
             try:
                 content = skill_md.read_text(errors="replace")
             except Exception:
                 continue
 
-            # Parse frontmatter
-            name = skill_dir.name
-            description = ""
-            if content.startswith("---"):
-                end = content.find("---", 3)
-                if end > 0:
-                    fm = content[3:end]
-                    for line in fm.splitlines():
-                        if line.strip().startswith("description:"):
-                            description = line.split(":", 1)[1].strip().strip('"\'')
-                        elif line.strip().startswith("name:"):
-                            name = line.split(":", 1)[1].strip().strip('"\'')
+            fm_name, description, fm_fields = _parse_skill_frontmatter(content)
+            name = fm_name or skill_dir.name
+            body = _skill_body(content)
+            rel_path = str(skill_md.relative_to(repo_dir))
 
-            rel_path = str(skill_dir.relative_to(repo_dir))
-
-            # Heuristic relevance: does the skill description/name relate to edited file types?
-            edited_extensions = {PurePosixPath(p).suffix for p in edited_paths}
-            edited_dirs = {str(PurePosixPath(p).parent) for p in edited_paths}
-
+            # ── Relevance scoring (weighted, not boolean) ──
+            # SkillRouter finding: full body text is critical, but we need to be
+            # selective about WHICH skills get full body treatment.
+            # SkillsBench finding: focused skills > broad docs; wrong skills hurt.
+            #
+            # Scoring: domain_match=3, path_proximity=2, language_match=1, testing=1
+            # Threshold: score >= 2 = relevant (gets full body sent to Gemini)
             relevance_signals = []
-            desc_lower = (description + " " + name + " " + content[:500]).lower()
-            if any(ext in desc_lower for ext in [".ts", "typescript", "javascript", ".js"]):
-                if any(e in {".ts", ".tsx", ".js", ".jsx"} for e in edited_extensions):
-                    relevance_signals.append("language_match")
-            if any(ext in desc_lower for ext in [".py", "python"]):
-                if any(e in {".py"} for e in edited_extensions):
-                    relevance_signals.append("language_match")
-            if any(ext in desc_lower for ext in [".rs", "rust", "cargo"]):
-                if any(e in {".rs"} for e in edited_extensions):
-                    relevance_signals.append("language_match")
-            if any(kw in desc_lower for kw in ["test", "testing", "spec"]):
+            relevance_score = 0
+            desc_lower = (description + " " + name).lower()
+            body_lower = body[:800].lower()
+
+            # Domain match: skill name keywords match edited directory keywords (STRONG)
+            name_words = set(re.split(r'[-_/]', name.lower())) - {"skill", "dev", "development", "guide"}
+            for ed in edited_dirs_lower:
+                ed_words = set(re.split(r'[-_/.]', ed)) - {"src", "lib", "test", "tests", "index", "crates", "packages"}
+                overlap = name_words & ed_words
+                if overlap:
+                    relevance_signals.append(f"domain_match:{','.join(overlap)}")
+                    relevance_score += 3
+                    break
+
+            # Path proximity: skill and edited file share a PACKAGE prefix
+            # (NOT just .claude/skills/ — that's the skill container, not a real package)
+            skill_parent = str(skill_dir.relative_to(repo_dir)).lower()
+            skill_parts = skill_parent.split("/")
+            # Skip root-level skill dirs (e.g., .claude/skills/foo — no package proximity)
+            if skill_parts[0] not in {".claude", ".agents", ".github", "skills", ".opencode", ".agent"}:
+                for ed in edited_dirs_lower:
+                    ed_parts = ed.split("/")
+                    if len(skill_parts) >= 2 and len(ed_parts) >= 2:
+                        if skill_parts[0] == ed_parts[0] and skill_parts[1] == ed_parts[1]:
+                            relevance_signals.append("path_proximity")
+                            relevance_score += 2
+                            break
+
+            # Description mentions specific edited file paths or modules
+            for ep in edited_paths:
+                ep_stem = PurePosixPath(ep).stem.lower().replace("_", " ").replace("-", " ")
+                if len(ep_stem) > 3 and ep_stem in desc_lower:
+                    relevance_signals.append(f"description_mentions:{ep_stem}")
+                    relevance_score += 3
+                    break
+
+            # Language match (WEAK — too broad for monorepos, only a tiebreaker)
+            lang_pairs = [
+                ([".ts", "typescript", "javascript", ".js", "react", "jsx", "tsx"],
+                 {".ts", ".tsx", ".js", ".jsx"}),
+                ([".py", "python", "django", "flask", "pytest"],
+                 {".py"}),
+                ([".rs", "rust", "cargo", "clippy"],
+                 {".rs"}),
+                ([".go", "golang"],
+                 {".go"}),
+                ([".java", "kotlin", ".kt"],
+                 {".java", ".kt", ".kts"}),
+            ]
+            for keywords, extensions in lang_pairs:
+                if any(kw in desc_lower for kw in keywords):
+                    if edited_extensions & extensions:
+                        relevance_signals.append("language_match")
+                        relevance_score += 1
+                        break
+
+            # Testing skill + test files edited (WEAK — almost everything mentions tests)
+            if any(kw in desc_lower for kw in ["test", "testing", "spec", "snapshot"]):
                 if any("test" in p.lower() for p in edited_paths):
                     relevance_signals.append("testing_match")
-            if any(kw in desc_lower for kw in ["review", "pr", "pull request"]):
-                relevance_signals.append("pr_review")
-            if any(kw in desc_lower for kw in ["build", "compile", "deploy"]):
-                relevance_signals.append("build_match")
+                    relevance_score += 1
+
+            # Filter: workflow-only skills (PR creation, commit, changelog, CI, triage)
+            # These govern agent behavior, not code conventions
+            workflow_keywords = {
+                "pull request", "pr review", "create pr", "commit msg",
+                "changelog", "cherry-pick", "release note", "triage",
+                "changeset", "pr description", "pr template",
+                "opening a pr", "ci debug", "backport",
+            }
+            code_convention_keywords = {
+                "code style", "naming", "import", "type annotation", "error handling",
+                "must", "never", "always", "prefer", "avoid", "pattern",
+            }
+            is_workflow_only = (
+                any(kw in desc_lower for kw in workflow_keywords)
+                and not any(kw in body_lower for kw in code_convention_keywords)
+            )
+
+            # Threshold: score >= 2 = relevant (domain_match alone, or path+language)
+            is_relevant = relevance_score >= 2 and not is_workflow_only
 
             skills.append({
                 "name": name,
                 "path": rel_path,
-                "description": description[:200],
+                "description": description[:300],
+                "frontmatter": fm_fields,
                 "relevance_signals": relevance_signals,
-                "is_relevant": len(relevance_signals) > 0,
-                "content_preview": content[:500],
+                "relevance_score": relevance_score,
+                "is_relevant": is_relevant,
+                "is_workflow_only": is_workflow_only,
+                # Full body for relevant skills (rubric extraction)
+                # Description-only for irrelevant (distractor selection)
+                "body": body[:6000] if is_relevant else "",
+                "body_length": len(body),
             })
 
     return skills
@@ -287,7 +406,10 @@ def build_hierarchy_context(task_dir: Path, repo_dir: Path) -> dict:
             "path": s["path"],
             "description": s["description"],
             "is_relevant": s["is_relevant"],
+            "is_workflow_only": s.get("is_workflow_only", False),
             "relevance_signals": s["relevance_signals"],
+            "body": s.get("body", ""),
+            "body_length": s.get("body_length", 0),
         } for s in skills],
         "total_config_rules": total_rules,
         "hierarchy_depth": max((c["level"] for c in config_hierarchy), default=0),

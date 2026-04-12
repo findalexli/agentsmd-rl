@@ -1,17 +1,34 @@
-"""Consolidated E2B pipeline: scaffold → improve → validate → judge.
+"""Consolidated E2B pipeline: scaffold → quality → rubric → enrich → improve → validate → lint.
 
 One E2B sandbox per task handles the full lifecycle. Only tasks that
 pass Docker oracle (nop=0, gold=1) get downloaded locally.
 
+Architecture: ONE DAG, entry point controlled by --start-at:
+
+    scaffold → qgate → rubric → enrich → improve → validate → lint → download
+      ^          ^        ^         ^         ^          ^
+      start-at controls which node the task enters the DAG
+
+Two CLI modes:
+  - pipeline: the unified DAG (requires --pool for LLM backends)
+  - docker-only: lightweight validation, no LLM (upload → Docker build → nop/gold)
+
 Usage:
-    # Validate existing tasks (no LLM needed)
-    python -m taskforge.e2b_worker --mode validate --task-dir harbor_tasks --concurrency 50
+    # Docker-only validation (no LLM needed, fast)
+    python -m taskforge.e2b_worker --mode docker-only \\
+        --task-dir harbor_tasks --concurrency 50
 
-    # Full pipeline from PRs
-    python -m taskforge.e2b_worker --mode full --input prs.jsonl --pool --concurrency 18
+    # Full pipeline from PRs (scaffold new tasks)
+    python -m taskforge.e2b_worker --mode pipeline \\
+        --input prs.jsonl --pool --concurrency 18
 
-    # Improve + validate existing tasks
-    python -m taskforge.e2b_worker --mode improve --task-dir harbor_tasks --pool --concurrency 18
+    # Re-run existing tasks from quality gate
+    python -m taskforge.e2b_worker --mode pipeline --start-at qgate \\
+        --task-dir harbor_tasks --pool --concurrency 18
+
+    # Just improve + validate existing tasks
+    python -m taskforge.e2b_worker --mode pipeline --start-at improve \\
+        --task-dir harbor_tasks --pool --concurrency 18
 """
 
 from __future__ import annotations
@@ -24,7 +41,8 @@ import os
 import re
 import sys
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
+from enum import Enum
 from pathlib import Path
 
 from e2b import AsyncSandbox, AsyncTemplate, Template
@@ -41,9 +59,36 @@ TEMPLATE_DIR = Path(__file__).resolve().parent / "e2b_template"
 TEMPLATE_ALIAS = "harbor-worker-v3"
 SANDBOX_TIMEOUT = 3600  # seconds — refreshed before each agent step
 
+
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
+
+
+class StartAt(str, Enum):
+    """DAG entry point — which node a task starts at."""
+    SCAFFOLD = "scaffold"
+    QGATE = "qgate"
+    RUBRIC = "rubric"
+    ENRICH = "enrich"
+    IMPROVE = "improve"
+    VALIDATE = "validate"
+
+    @classmethod
+    def from_str(cls, s: str) -> "StartAt":
+        try:
+            return cls(s)
+        except ValueError:
+            raise ValueError(f"Invalid start_at: {s!r}. Must be one of: {[e.value for e in cls]}")
+
+    def should_run(self, node: "StartAt") -> bool:
+        """Return True if `node` should execute given this entry point.
+
+        DAG order: scaffold < qgate < rubric < enrich < improve < validate
+        A node runs if it is >= the entry point.
+        """
+        order = list(StartAt)
+        return order.index(node) >= order.index(self)
 
 
 class _RateLimited(Exception):
@@ -55,11 +100,15 @@ class _RateLimited(Exception):
 class WorkerResult:
     task_ref: str
     task_name: str = ""
-    mode: str = ""  # "full" | "validate" | "improve" | "agents"
+    mode: str = ""  # "pipeline" | "docker-only"
+    start_at: str = ""
     backend_name: str = ""
     sandbox_id: str = ""
-    scaffold_status: str = ""  # "ok" | "error" | "skipped"
+    scaffold_status: str = ""  # "ok" | "error" | "skipped" | "abandoned"
     scaffold_time: float = 0.0
+    qgate_verdict: str = ""  # "passed" | "DELETE" | "skipped"
+    rubric_status: str = ""  # "ok" | "abandoned" | "error" | "skipped"
+    rubric_quality: str = ""  # "HIGH" | "MEDIUM" | "LOW" | "DELETE"
     improve_status: str = ""  # "ok" | "skipped" | "error"
     improve_time: float = 0.0
     nop_reward: float = -1.0
@@ -69,12 +118,10 @@ class WorkerResult:
     repair_status: str = ""
     valid: bool = False  # nop==0 and gold==1
     downloaded: bool = False
-    # Track 2: config edits precision (Gemini comparison of gold vs agent config changes)
-    config_edit_precision: float | None = None
-    # Track 3: rubric ICR (Gemini judge of convention compliance)
     rubric_icr: float | None = None
     total_time: float = 0.0
     error: str = ""
+    nodes: dict = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -173,7 +220,6 @@ async def create_worker_sandbox(
             pass
 
         # Quick IP probe: only for Fireworks backend (detect IP blocks)
-        # Skip for Gemini (localhost proxy) and other non-Fireworks backends
         is_fireworks = api_base and "fireworks" in api_base.lower()
         if is_fireworks:
             api_key = envs.get("ANTHROPIC_API_KEY", "")
@@ -209,9 +255,8 @@ async def create_worker_sandbox(
                 break
             await asyncio.sleep(2)
 
-        # Ensure worker user owns workspace (for claude -p as non-root)
+        # Ensure worker user owns workspace
         await run_cmd(sandbox, "chown -R worker:worker /workspace /logs/verifier", timeout=10)
-        # Add worker to docker group so it can run docker commands
         await run_cmd(sandbox, "usermod -aG docker worker 2>/dev/null || true", timeout=5)
 
         # Start litellm proxy if using Gemini as main backend
@@ -220,19 +265,13 @@ async def create_worker_sandbox(
 
         return sandbox
 
-    # All retries exhausted — return last sandbox anyway
+    # All retries exhausted
     logger.error("All %d IP probe retries failed, proceeding with blocked sandbox", max_ip_retries)
     return sandbox
 
 
 async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
-    """Start litellm proxy for Gemini routing if not already running.
-
-    Used to route specific agents (rubric enrichment) through Gemini 3.1 Pro
-    while keeping the main backend (Kimi) for other agents.
-    Returns True if proxy is ready.
-    """
-    # Check if already running
+    """Start litellm proxy for Gemini routing if not already running."""
     code, stdout, _ = await run_cmd(
         sandbox,
         'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health 2>/dev/null || echo 000',
@@ -270,7 +309,6 @@ async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
         "> /tmp/litellm.log 2>&1 &",
         timeout=10,
     )
-    # Poll for proxy readiness (litellm takes 10-20s to start)
     for _attempt in range(20):
         await asyncio.sleep(2)
         code, stdout, _ = await run_cmd(
@@ -287,13 +325,397 @@ async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Quality gate
+# File transfer
 # ---------------------------------------------------------------------------
 
 
-async def check_test_quality(sandbox: AsyncSandbox) -> tuple[bool, str]:
-    """Programmatic quality gate on test_outputs.py.
-    Returns (needs_improve, reason).
+async def upload_task_files(sandbox: AsyncSandbox, task_path: Path) -> None:
+    """Upload all task files from local dir to /workspace/task/ in sandbox."""
+    for f in task_path.rglob("*"):
+        if f.is_file():
+            rel = f.relative_to(task_path)
+            remote_path = f"/workspace/task/{rel}"
+            await sandbox.files.write(remote_path, f.read_bytes())
+    await run_cmd(sandbox, "chmod +x /workspace/task/solution/solve.sh /workspace/task/tests/test.sh 2>/dev/null || true")
+
+
+async def download_task_files(sandbox: AsyncSandbox, dest: Path) -> list[str]:
+    """Download all task files from /workspace/task/ to local dir."""
+    dest.mkdir(parents=True, exist_ok=True)
+
+    code, stdout, _ = await run_cmd(
+        sandbox,
+        "find /workspace/task -type f | sort",
+        timeout=10,
+    )
+    if code != 0:
+        return []
+
+    downloaded = []
+    for remote_path in stdout.strip().split("\n"):
+        if not remote_path:
+            continue
+        rel = remote_path.replace("/workspace/task/", "")
+        local_path = dest / rel
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            content = await sandbox.files.read(remote_path, format="bytes")
+            local_path.write_bytes(content)
+            downloaded.append(rel)
+        except Exception as e:
+            logger.warning("Failed to download %s: %s", remote_path, e)
+
+    return downloaded
+
+
+async def upload_taskforge_modules(sandbox: AsyncSandbox) -> None:
+    """Upload taskforge Python modules to sandbox for in-sandbox operations."""
+    await run_cmd(sandbox, "mkdir -p /workspace/taskforge")
+    await sandbox.files.write("/workspace/taskforge/__init__.py", b"")
+    for py_name in [
+        "gemini_rubric_constructor.py", "hierarchy_context.py",
+        "quality_gate.py", "models.py", "config.py", "judge.py",
+        "rubric_validator.py",
+    ]:
+        py_file = ROOT / "taskforge" / py_name
+        if py_file.exists():
+            await sandbox.files.write(
+                f"/workspace/taskforge/{py_name}", py_file.read_bytes(),
+            )
+    judge_py = ROOT / "taskforge" / "judge.py"
+    if judge_py.exists():
+        await sandbox.files.write("/workspace/judge.py", judge_py.read_bytes())
+
+
+# ---------------------------------------------------------------------------
+# Status — inter-node communication via status.json
+# ---------------------------------------------------------------------------
+
+
+async def read_sandbox_status(sandbox: AsyncSandbox) -> dict:
+    """Read status.json from sandbox, or return empty default."""
+    try:
+        raw = await sandbox.files.read("/workspace/task/status.json", format="text")
+        return json.loads(raw)
+    except Exception:
+        return {"nodes": {}}
+
+
+async def update_sandbox_status(
+    sandbox: AsyncSandbox, node: str, data: dict
+) -> None:
+    """Update one node's section in status.json inside the sandbox."""
+    status = await read_sandbox_status(sandbox)
+    if "nodes" not in status:
+        status["nodes"] = {}
+    status["nodes"][node] = data
+    await sandbox.files.write(
+        "/workspace/task/status.json",
+        json.dumps(status, indent=2).encode(),
+    )
+
+
+def write_status_json(task_path: Path, result: WorkerResult, nodes: dict | None = None) -> None:
+    """Write final validation result to local status.json."""
+    import datetime
+    now = datetime.datetime.now().isoformat()
+
+    existing: dict = {}
+    status_file = task_path / "status.json"
+    if status_file.exists():
+        try:
+            existing = json.loads(status_file.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    status: dict = {
+        "schema_version": 2,
+        "valid": result.valid,
+        "verdict": "pass" if result.valid else "fail",
+        "nop_reward": result.nop_reward,
+        "gold_reward": result.gold_reward,
+        "validated_at": now,
+        "total_time": result.total_time,
+        "sandbox_id": result.sandbox_id,
+        "backend": result.backend_name,
+        "pipeline": result.mode,
+        "start_at": result.start_at,
+    }
+    if result.error:
+        status["error"] = result.error[:500]
+    if result.rubric_icr is not None:
+        status["rubric_icr"] = result.rubric_icr
+
+    merged_nodes = existing.get("nodes", {})
+    if nodes:
+        merged_nodes.update(nodes)
+    status["nodes"] = merged_nodes
+
+    history = existing.get("history", [])
+    history.append({
+        "verdict": status["verdict"],
+        "nop": result.nop_reward,
+        "gold": result.gold_reward,
+        "backend": result.backend_name,
+        "time": result.total_time,
+        "at": now,
+    })
+    status["history"] = history[-5:]
+
+    status_file.write_text(json.dumps(status, indent=2))
+
+
+# ---------------------------------------------------------------------------
+# Pipeline node functions
+#
+# Each node has a clear contract:
+#   Input:  sandbox with files at /workspace/task/
+#   Output: modified files at /workspace/task/, status.json updated
+#   Return: node-specific result data
+#
+# File exchange: ALL files stay in the sandbox until the final download.
+# No intermediate downloads to local disk.
+# ---------------------------------------------------------------------------
+
+
+async def node_scaffold(
+    sandbox: AsyncSandbox,
+    pr_ref: str,
+    agentmd: bool = False,
+) -> tuple[str, str, str]:
+    """Node 0: Scaffold a task from a PR reference.
+
+    Reads: scaffold prompt template from local disk
+    Writes: /workspace/task/* (all task files) in the sandbox
+    Returns: (status, task_name, error)
+    """
+    if agentmd:
+        prompt_file = ROOT / "taskforge" / "prompts" / "scaffold_agentmd.md"
+    else:
+        prompt_file = ROOT / "taskforge" / "prompts" / "scaffold.md"
+    if not prompt_file.exists():
+        prompt_file = ROOT / ".claude" / "commands" / "scaffold-task.md"
+    prompt = prompt_file.read_text().replace("$ARGUMENTS", pr_ref)
+
+    task_dir_name = "harbor_tasks_agentmd_edits" if agentmd else "harbor_tasks"
+    prompt = prompt.replace("harbor_tasks/", f"{task_dir_name}/")
+
+    await sandbox.files.write("/workspace/scaffold_prompt.md", prompt.encode())
+
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cat /workspace/scaffold_prompt.md | claude -p "
+        "--dangerously-skip-permissions --model opus "
+        "--output-format json",
+        user="worker",
+    )
+
+    if code != 0:
+        combined = stdout + stderr
+        if "429" in combined or "Rate limit" in combined or "hit your limit" in combined.lower():
+            return "rate_limited", "", combined[:500]
+        return "error", "", combined[:500]
+
+    # Check if scaffold agent abandoned the task
+    try:
+        raw = await sandbox.files.read("/workspace/task/status.json", format="text")
+        status_data = json.loads(raw)
+        if status_data.get("abandoned"):
+            reason = status_data.get("reason", "no reason given")
+            return "abandoned", "", reason
+    except Exception:
+        pass
+
+    # Verify task files were created — handle nested output from scaffold agent
+    check_code, _, _ = await run_cmd(
+        sandbox,
+        "ls /workspace/task/tests/test_outputs.py /workspace/task/environment/Dockerfile "
+        "/workspace/task/solution/solve.sh 2>&1",
+        timeout=5,
+    )
+    if check_code != 0:
+        # Try to find where scaffold put the files
+        find_code, find_out, _ = await run_cmd(
+            sandbox,
+            "find /workspace -name test_outputs.py -type f -not -path '/workspace/task/*' 2>/dev/null | head -3",
+            timeout=10,
+        )
+        if find_out.strip():
+            task_root = str(Path(find_out.strip().split("\n")[0]).parent.parent)
+            await run_cmd(sandbox, f"cp -a {task_root}/* /workspace/task/ 2>/dev/null; "
+                                   f"cp -a {task_root}/.[!.]* /workspace/task/ 2>/dev/null; true")
+        else:
+            # Check if files ended up nested under /workspace/task/<name>/
+            find_code2, find_out2, _ = await run_cmd(
+                sandbox,
+                "find /workspace/task -name test_outputs.py -type f 2>/dev/null | head -3",
+                timeout=10,
+            )
+            if find_out2.strip():
+                nested_root = str(Path(find_out2.strip().split("\n")[0]).parent.parent)
+                if nested_root != "/workspace/task":
+                    await run_cmd(sandbox, f"cp -a {nested_root}/* /workspace/task/ 2>/dev/null; true")
+
+        # Final verification
+        check_code2, _, _ = await run_cmd(
+            sandbox,
+            "ls /workspace/task/tests/test_outputs.py /workspace/task/environment/Dockerfile "
+            "/workspace/task/solution/solve.sh 2>&1",
+            timeout=5,
+        )
+        if check_code2 != 0:
+            return "error", "", f"scaffold did not create expected files. stdout: {stdout[:300]}"
+
+    # Read task name from task.toml
+    task_name = await _read_task_name(sandbox, pr_ref)
+    return "ok", task_name, ""
+
+
+async def node_qgate(sandbox: AsyncSandbox) -> tuple[str, list[str]]:
+    """Node 1: Programmatic quality gate — runs INSIDE the sandbox.
+
+    Reads: /workspace/task/eval_manifest.yaml (in sandbox)
+    Returns: (verdict, flags) where verdict is "passed", "DELETE", or "error"
+
+    IMPORTANT: This runs in the sandbox, not on the host, because for new tasks
+    the files only exist in the sandbox at this point.
+    """
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cd /workspace && python3 -c \""
+        "from taskforge.quality_gate import classify_task_fast; "
+        "from pathlib import Path; import json; "
+        "r = classify_task_fast(Path('/workspace/task')); "
+        "print(json.dumps({'verdict': r.verdict, 'flags': r.flags}))\"",
+        timeout=15,
+    )
+    if code != 0:
+        logger.warning("Quality gate failed in sandbox: %s", (stderr or stdout)[:200])
+        return "error", [f"sandbox_error: {(stderr or stdout)[:100]}"]
+
+    try:
+        last_line = stdout.strip().split("\n")[-1]
+        data = json.loads(last_line)
+        verdict = data.get("verdict", "")
+        flags = data.get("flags", [])
+        if verdict == "DELETE":
+            return "DELETE", flags
+        # verdict="" means "needs Gemini" which we treat as "passed" for the fast gate
+        return "passed", flags
+    except (json.JSONDecodeError, IndexError):
+        return "error", [f"parse_error: {stdout[:100]}"]
+
+
+async def node_rubric_loop(
+    sandbox: AsyncSandbox,
+    repo_url: str,
+) -> tuple[str, str, str, int]:
+    """Node 2: Gemini↔Kimi rubric+quality loop — runs INSIDE the sandbox.
+
+    Reads: /workspace/task/eval_manifest.yaml, /workspace/repo/ (cloned repo)
+    Writes: updated eval_manifest.yaml with rubrics + distractors
+    Returns: (status, quality_verdict, abandon_reason, rounds)
+
+    status: "ok" | "abandoned" | "error"
+    """
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cd /workspace && python3 -c \""
+        "from taskforge.gemini_rubric_constructor import run_rubric_quality_loop, stamp_rubrics_to_manifest; "
+        "from pathlib import Path; import json, os; "
+        "key = os.environ.get('GEMINI_API_KEY', ''); "
+        "r = run_rubric_quality_loop(Path('/workspace/task'), Path('/workspace/repo'), key, max_rounds=3); "
+        "print(json.dumps({k: r.get(k) for k in "
+        "['status','quality_verdict','quality_reasoning','meta_referential',"
+        "'competing_principles','config_navigation','loop_metadata'] "
+        "if r.get(k) is not None}, default=str)); "
+        "stamp_rubrics_to_manifest(Path('/workspace/task'), r) if r.get('status') == 'ok' else None"
+        "\"",
+        timeout=300,  # up to 3 rounds of Gemini+Kimi
+    )
+
+    if code != 0:
+        return "error", "", f"sandbox_error: {(stderr or stdout)[:200]}", 0
+
+    try:
+        last_line = stdout.strip().split("\n")[-1]
+        data = json.loads(last_line)
+        status = data.get("status", "error")
+        quality_verdict = data.get("quality_verdict", "")
+        lm = data.get("loop_metadata", {})
+        if isinstance(lm, str):
+            import ast
+            try:
+                lm = ast.literal_eval(lm)
+            except Exception:
+                lm = {}
+        abandon_reason = lm.get("abandon_reason", "") if isinstance(lm, dict) else ""
+        rounds = lm.get("rounds", 0) if isinstance(lm, dict) else 0
+        return status, quality_verdict, abandon_reason, rounds
+    except (json.JSONDecodeError, IndexError):
+        return "error", "", f"parse_error: {stdout[:100]}", 0
+
+
+async def node_clone_repo(sandbox: AsyncSandbox, task_name: str) -> tuple[str, str]:
+    """Clone the task's source repo into /workspace/repo/ for rubric extraction.
+
+    Reads: /workspace/task/environment/Dockerfile (parses repo URL + commit)
+    Writes: /workspace/repo/ (cloned repo at base commit)
+    Returns: (repo_url, repo_commit)
+    """
+    code, repo_info, _ = await run_cmd(
+        sandbox,
+        "python3 -c \""
+        "from pathlib import Path; import re; "
+        "df = Path('/workspace/task/environment/Dockerfile').read_text(); "
+        "repo = re.search(r'github\\.com/([^/]+/[^\\s]+?)(?:\\.git|[\\s]|$)', df); "
+        "commit = re.search(r'(?:git checkout |git fetch.*origin |ARG\\s+BASE_COMMIT=)([a-f0-9]{7,})', df); "
+        "print(repo.group(1) if repo else ''); "
+        "print(commit.group(1) if commit else '')\"",
+        timeout=10,
+    )
+    repo_url = repo_commit = ""
+    if code == 0 and repo_info.strip():
+        lines = repo_info.strip().split("\n")
+        repo_url = lines[0].strip() if len(lines) > 0 else ""
+        repo_commit = lines[1].strip() if len(lines) > 1 else ""
+
+    if repo_url and repo_commit:
+        if re.match(r'^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$', repo_url):
+            clone_code, _, clone_err = await run_cmd(
+                sandbox,
+                f"git clone --filter=blob:none https://github.com/{repo_url}.git /workspace/repo "
+                f"&& cd /workspace/repo && git checkout {repo_commit}; "
+                f"chown -R worker:worker /workspace/repo 2>/dev/null || true",
+                timeout=180,
+            )
+            if clone_code == 0:
+                logger.info("[%s] repo cloned at %s", task_name, repo_commit[:8])
+            else:
+                logger.warning("[%s] repo clone failed: %s", task_name, (clone_err or "")[:200])
+                repo_url = ""  # Signal clone failed
+        else:
+            logger.warning("[%s] invalid repo_url format: %s", task_name, repo_url)
+            repo_url = ""
+
+    return repo_url, repo_commit
+
+
+async def node_enrich_p2p(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Node 3: P2P enrichment — discovers CI/CD, adds pass-to-pass tests.
+
+    Reads: /workspace/task/*, /workspace/repo/
+    Writes: updated test files, eval_manifest.yaml
+    Returns: (status, error)
+    """
+    return await _run_agent(sandbox, "enrich_p2p.md")
+
+
+async def node_check_test_quality(sandbox: AsyncSandbox) -> tuple[bool, str]:
+    """Quality check on test_outputs.py — determines if improve node should run.
+
+    Reads: /workspace/task/tests/test_outputs.py
+    Returns: (needs_improve, reason)
     """
     code, stdout, stderr = await run_cmd(
         sandbox,
@@ -328,158 +750,38 @@ async def check_test_quality(sandbox: AsyncSandbox) -> tuple[bool, str]:
     return False, "tests look good"
 
 
-# ---------------------------------------------------------------------------
-# Pipeline phases
-# ---------------------------------------------------------------------------
+async def node_improve_tests(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Node 4: Improve tests — rewrites test_outputs.py with behavioral tests.
+
+    Reads: /workspace/task/tests/test_outputs.py, /workspace/task/eval_manifest.yaml
+    Writes: updated test_outputs.py, test.sh
+    Returns: (status, error)
+    """
+    return await _run_agent(sandbox, "improve_tests.md")
 
 
-async def run_scaffold_in_sandbox(
-    sandbox: AsyncSandbox,
-    pr_ref: str,
-    agentmd: bool = False,
-) -> tuple[str, str]:
-    """Upload scaffold prompt, run claude -p. Returns (status, error)."""
-    # Read scaffold prompt template (use agentmd-specific prompt when appropriate)
-    if agentmd:
-        prompt_file = ROOT / "taskforge" / "prompts" / "scaffold_agentmd.md"
-    else:
-        prompt_file = ROOT / "taskforge" / "prompts" / "scaffold.md"
-    if not prompt_file.exists():
-        prompt_file = ROOT / ".claude" / "commands" / "scaffold-task.md"
-    prompt = prompt_file.read_text().replace("$ARGUMENTS", pr_ref)
+async def node_validate_and_fix(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Node 5: Validate + fix — Docker oracle (nop=0, gold=1) with one repair attempt.
 
-    # Determine task dir name based on mode
-    task_dir_name = "harbor_tasks_agentmd_edits" if agentmd else "harbor_tasks"
-    prompt = prompt.replace("harbor_tasks/", f"{task_dir_name}/")
-
-    # Upload prompt
-    await sandbox.files.write("/workspace/scaffold_prompt.md", prompt.encode())
-
-    # Run claude -p as non-root (refuses --dangerously-skip-permissions as root)
-    code, stdout, stderr = await run_cmd(
-        sandbox,
-        "cat /workspace/scaffold_prompt.md | claude -p "
-        "--dangerously-skip-permissions --model opus "
-        "--output-format json",
-        user="worker",
-    )
-
-    if code != 0:
-        combined = stdout + stderr
-        if "429" in combined or "Rate limit" in combined or "hit your limit" in combined.lower():
-            return "rate_limited", combined[:500]
-        return "error", combined[:500]
-
-    # Check if scaffold agent abandoned the task
-    try:
-        raw = await sandbox.files.read("/workspace/task/status.json", format="text")
-        status_data = json.loads(raw)
-        if status_data.get("abandoned"):
-            reason = status_data.get("reason", "no reason given")
-            logger.info("  Scaffold abandoned: %s", reason)
-            return "abandoned", reason
-    except Exception:
-        pass
-
-    # Check that task files were created
-    check_code, check_out, _ = await run_cmd(
-        sandbox,
-        "ls /workspace/task/tests/test_outputs.py /workspace/task/environment/Dockerfile "
-        "/workspace/task/solution/solve.sh 2>&1",
-        timeout=5,
-    )
-    if check_code != 0:
-        # Try to find where scaffold put the files
-        find_code, find_out, _ = await run_cmd(
-            sandbox,
-            "find /workspace -name test_outputs.py -type f -not -path '/workspace/task/*' 2>/dev/null | head -3",
-            timeout=10,
-        )
-        if find_out.strip():
-            # Move files to expected location using rsync/cp -a for robustness
-            task_root = str(Path(find_out.strip().split("\n")[0]).parent.parent)
-            await run_cmd(sandbox, f"cp -a {task_root}/* /workspace/task/ 2>/dev/null; "
-                                   f"cp -a {task_root}/.[!.]* /workspace/task/ 2>/dev/null; true")
-            # Re-check
-            check_code, _, _ = await run_cmd(
-                sandbox,
-                "ls /workspace/task/tests/test_outputs.py",
-                timeout=5,
-            )
-            if check_code != 0:
-                # Also check if files ended up one level deeper
-                find2_code, find2_out, _ = await run_cmd(
-                    sandbox,
-                    "find /workspace -name test_outputs.py -type f 2>/dev/null",
-                    timeout=10,
-                )
-                return "error", f"scaffold created files but not in expected location. Found at: {find2_out.strip()[:200]}"
-        else:
-            # Maybe scaffold put everything under a named subdir of /workspace/task/
-            find_code2, find_out2, _ = await run_cmd(
-                sandbox,
-                "find /workspace/task -name test_outputs.py -type f 2>/dev/null | head -3",
-                timeout=10,
-            )
-            if find_out2.strip():
-                # Files are nested under /workspace/task/<name>/tests/ — flatten
-                nested_root = str(Path(find_out2.strip().split("\n")[0]).parent.parent)
-                if nested_root != "/workspace/task":
-                    await run_cmd(sandbox, f"cp -a {nested_root}/* /workspace/task/ 2>/dev/null; true")
-                    check_code, _, _ = await run_cmd(sandbox, "ls /workspace/task/tests/test_outputs.py", timeout=5)
-                    if check_code == 0:
-                        pass  # Fixed
-                    else:
-                        return "error", f"scaffold nested files at {nested_root}, couldn't flatten"
-            else:
-                return "error", f"scaffold did not create task files. stdout: {stdout[:300]}"
-
-    return "ok", ""
+    Reads: /workspace/task/* (Dockerfile, tests, solve.sh)
+    Writes: updated status.json with nop_reward/gold_reward, possibly fixed files
+    Returns: (status, error)
+    """
+    return await _run_agent(sandbox, "validate_and_fix.md")
 
 
-async def run_improve_in_sandbox(sandbox: AsyncSandbox) -> tuple[str, str]:
-    """Upload improve prompt, run claude -p. Returns (status, error)."""
-    prompt_file = ROOT / "taskforge" / "prompts" / "improve_tests.md"
-    prompt = prompt_file.read_text()
-    # The improve prompt expects $ARGUMENTS = task name and $TASK_DIR
-    # In sandbox, task is always at /workspace/task/
-    prompt = prompt.replace("$TASK_DIR/$ARGUMENTS/", "/workspace/task/")
-    prompt = prompt.replace("$TASK_DIR/", "/workspace/")
-    prompt = prompt.replace("$ARGUMENTS", "task")
-
-    await sandbox.files.write("/workspace/improve_prompt.md", prompt.encode())
-
-    code, stdout, stderr = await run_cmd(
-        sandbox,
-        "cat /workspace/improve_prompt.md | claude -p "
-        "--dangerously-skip-permissions --model opus "
-        "--output-format json",
-        
-
-        user="worker",
-    )
-
-    if code != 0:
-        combined = stdout + stderr
-        if "429" in combined or "Rate limit" in combined or "hit your limit" in combined.lower():
-            return "rate_limited", combined[:500]
-        return "error", combined[:500]
-
-    return "ok", ""
-
-
-async def validate_docker_in_sandbox(
+async def node_validate_docker_only(
     sandbox: AsyncSandbox,
 ) -> tuple[float, float, str]:
-    """Build Docker image, run nop + gold tests.
-    Returns (nop_reward, gold_reward, error_detail).
+    """Docker-only validation: build → nop test → gold test. No LLM.
+
+    Reads: /workspace/task/environment/Dockerfile, tests/test.sh, solution/solve.sh
+    Returns: (nop_reward, gold_reward, error_detail)
     """
     # Build the task's Docker image
     code, stdout, stderr = await run_cmd(
         sandbox,
         "cd /workspace/task/environment && docker build -t task-env .",
-        
-
     )
     if code != 0:
         return -1, -1, f"docker build failed: {stderr[-500:]}"
@@ -492,20 +794,16 @@ async def validate_docker_in_sandbox(
         "-v /workspace/task/tests:/tests:ro "
         "-v /logs/verifier:/logs/verifier "
         "task-env bash /tests/test.sh",
-        
-
     )
     nop_reward = await _read_reward(sandbox)
 
-    # Apply gold solution: run solve.sh inside the container, commit
+    # Apply gold solution
     await run_cmd(sandbox, "docker rm -f task-solved 2>/dev/null || true")
     code, stdout, stderr = await run_cmd(
         sandbox,
         "docker run --name task-solved "
         "-v /workspace/task/solution:/solution:ro "
         "task-env bash /solution/solve.sh",
-        
-
     )
     if code != 0:
         return nop_reward, -1, f"solve.sh failed: {stderr[-300:]}"
@@ -521,12 +819,101 @@ async def validate_docker_in_sandbox(
         "-v /workspace/task/tests:/tests:ro "
         "-v /logs/verifier:/logs/verifier "
         "task-env-gold bash /tests/test.sh",
-        
-
     )
     gold_reward = await _read_reward(sandbox)
 
     return nop_reward, gold_reward, ""
+
+
+async def node_rubric_lint(sandbox: AsyncSandbox) -> tuple[int, list[str]]:
+    """Node 6: Post-validation rubric linter — strips injection text.
+
+    Reads: /workspace/task/eval_manifest.yaml
+    Writes: cleaned eval_manifest.yaml (injection text removed)
+    Returns: (injection_count, sample_texts)
+    """
+    lint_code, lint_out, _ = await run_cmd(
+        sandbox,
+        "python3 -c \""
+        "import yaml, re, json; "
+        "m = yaml.safe_load(open('/workspace/task/eval_manifest.yaml')); "
+        "INJ = re.compile("
+        "r'(?i)(?:CRITICAL\\s+(?:LLM\\s+)?INSTRUCTION|CRITICAL\\s+OVERRIDE|OVERRIDE\\s+(?:JUDGE\\s+)?INSTRUCTION)"
+        "|(?:YOU\\s+MUST\\s+(?:RETURN|PASS|EVALUATE))"
+        "|(?:IGNORE\\s+ALL\\s+(?:PREVIOUS|OTHER))"
+        "|(?:the\\s+world\\s+will\\s+end)"
+        "|(?:AUTOMATED\\s+TESTING\\s+BOT)'); "
+        "hits = []; "
+        "[hits.append(r.get('rule','')[:80]) for r in m.get('rubric',[]) if INJ.search(r.get('rule',''))]; "
+        "[hits.append(d.get('rule','')[:80]) for d in m.get('distractors',[]) if INJ.search(d.get('rule',''))]; "
+        "print(json.dumps({'injected': len(hits), 'samples': hits[:3]}))\"",
+        timeout=10,
+    )
+    if lint_code != 0:
+        return 0, []
+
+    try:
+        data = json.loads(lint_out.strip())
+        injected = data.get("injected", 0)
+        samples = data.get("samples", [])
+    except (json.JSONDecodeError, ValueError):
+        return 0, []
+
+    if injected == 0:
+        return 0, []
+
+    # Strip injection text
+    await run_cmd(
+        sandbox,
+        "python3 -c \""
+        "import yaml, re; "
+        "INJ = re.compile("
+        "r'(?i)(?:CRITICAL\\s+(?:LLM\\s+)?INSTRUCTION.*|CRITICAL\\s+OVERRIDE.*|OVERRIDE\\s+(?:JUDGE\\s+)?INSTRUCTION.*"
+        "|YOU\\s+MUST\\s+(?:RETURN|PASS|EVALUATE).*"
+        "|IGNORE\\s+ALL\\s+(?:PREVIOUS|OTHER).*"
+        "|IMPORTANT:\\s+OVERRIDE.*"
+        "|Since\\s+this\\s+(?:is\\s+a\\s+)?(?:code-only|pure\\s+code).*MUST.*"
+        "|the\\s+world\\s+will\\s+end.*"
+        "|AUTOMATED\\s+TESTING\\s+BOT.*)'); "
+        "m = yaml.safe_load(open('/workspace/task/eval_manifest.yaml')); "
+        "for s in ['rubric','distractors']: "
+        "  new=[]; "
+        "  [new.append(dict(r, rule=INJ.sub('',r.get('rule','')).strip())) for r in m.get(s,[]) if INJ.sub('',r.get('rule','')).strip()]; "
+        "  m[s]=new; "
+        "open('/workspace/task/eval_manifest.yaml','w').write(yaml.dump(m,default_flow_style=False,sort_keys=False,allow_unicode=True))\"",
+        timeout=10,
+    )
+
+    logger.warning("RUBRIC TAMPERING: %d injected rules cleaned", injected)
+    return injected, samples
+
+
+async def _run_agent(
+    sandbox: AsyncSandbox,
+    prompt_name: str,
+) -> tuple[str, str]:
+    """Run a claude -p agent with a prompt file. Returns (status, error)."""
+    prompt_file = ROOT / "taskforge" / "prompts" / prompt_name
+    if not prompt_file.exists():
+        return "skipped", f"prompt file missing: {prompt_name}"
+
+    prompt = prompt_file.read_text()
+    await sandbox.files.write(f"/workspace/{prompt_name}", prompt.encode())
+
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        f"cat /workspace/{prompt_name} | claude -p "
+        f"--dangerously-skip-permissions --model opus "
+        f"--output-format json",
+        user="worker",
+    )
+
+    if code != 0:
+        combined = stdout + stderr
+        if "429" in combined or "Rate limit" in combined or "hit your limit" in combined.lower():
+            return "rate_limited", combined[:500]
+        return "error", combined[:500]
+    return "ok", ""
 
 
 async def _read_reward(sandbox: AsyncSandbox) -> float:
@@ -536,492 +923,6 @@ async def _read_reward(sandbox: AsyncSandbox) -> float:
         return float(data.strip())
     except Exception:
         return -1.0
-
-
-async def run_repair_in_sandbox(
-    sandbox: AsyncSandbox,
-    failure_type: str,
-    error_detail: str,
-) -> tuple[str, str]:
-    """One-shot repair attempt. Returns (status, error)."""
-    repair_instructions = {
-        "build_error": (
-            "The Docker build failed. Fix the Dockerfile at /workspace/task/environment/Dockerfile. "
-            "Common issues: missing apt package, wrong base image, repo URL changed, "
-            "missing python3 on non-Python images."
-        ),
-        "nop_high": (
-            "The tests PASS even without applying the fix (nop reward=1). "
-            "This means test_outputs.py doesn't test the actual behavioral change. "
-            "Rewrite the fail_to_pass tests to check behavior that differs between "
-            "the base commit (broken) and the fixed code."
-        ),
-        "gold_low": (
-            "The tests FAIL after applying solve.sh (gold reward=0). "
-            "Check: (1) Is solve.sh applying the patch correctly? "
-            "(2) Are tests checking the wrong thing? "
-            "(3) Missing dependencies in Dockerfile that tests need?"
-        ),
-    }
-
-    instructions = repair_instructions.get(failure_type, "Fix the validation failure.")
-    prompt = f"""# Repair Task
-
-The task at /workspace/task/ failed validation. Read `/workspace/task/status.json` — the `nodes` section has detailed notes from each previous validation step explaining what passed, what failed, and why.
-
-## Failure type: {failure_type}
-
-## Error details:
-{error_detail[:1000]}
-
-## Instructions:
-{instructions}
-
-## Process:
-1. Read `/workspace/task/status.json` to understand the full validation history
-2. Read the relevant task files (Dockerfile, test_outputs.py, solve.sh, etc.)
-3. Diagnose the root cause based on the node notes
-4. Fix the issue
-5. Update the `repair` node in `/workspace/task/status.json` with what you changed
-
-Only modify files in /workspace/task/ — do NOT modify the Docker image directly.
-"""
-
-    await sandbox.files.write("/workspace/repair_prompt.md", prompt.encode())
-
-    code, stdout, stderr = await run_cmd(
-        sandbox,
-        "cat /workspace/repair_prompt.md | claude -p "
-        "--dangerously-skip-permissions --model opus "
-        "--output-format json",
-        
-
-        user="worker",
-    )
-
-    if code != 0:
-        return "error", (stdout + stderr)[:500]
-    return "ok", ""
-
-
-def classify_failure(nop: float, gold: float, error: str) -> str:
-    """Classify validation failure for repair targeting."""
-    if error and "docker build" in error.lower():
-        return "build_error"
-    if nop >= 0.99:
-        return "nop_high"
-    if gold < 0.99:
-        return "gold_low"
-    return "unknown"
-
-
-# ---------------------------------------------------------------------------
-# File transfer
-# ---------------------------------------------------------------------------
-
-
-async def upload_task_files(sandbox: AsyncSandbox, task_path: Path) -> None:
-    """Upload all task files from local dir to /workspace/task/ in sandbox."""
-    for f in task_path.rglob("*"):
-        if f.is_file():
-            rel = f.relative_to(task_path)
-            remote_path = f"/workspace/task/{rel}"
-            await sandbox.files.write(remote_path, f.read_bytes())
-    # Make scripts executable
-    await run_cmd(sandbox, "chmod +x /workspace/task/solution/solve.sh /workspace/task/tests/test.sh 2>/dev/null || true")
-
-
-async def download_task_files(sandbox: AsyncSandbox, dest: Path) -> list[str]:
-    """Download all task files from /workspace/task/ to local dir."""
-    dest.mkdir(parents=True, exist_ok=True)
-
-    # List files in sandbox
-    code, stdout, _ = await run_cmd(
-        sandbox,
-        "find /workspace/task -type f | sort",
-        timeout=10,
-    )
-    if code != 0:
-        return []
-
-    downloaded = []
-    for remote_path in stdout.strip().split("\n"):
-        if not remote_path:
-            continue
-        rel = remote_path.replace("/workspace/task/", "")
-        local_path = dest / rel
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            content = await sandbox.files.read(remote_path, format="bytes")
-            local_path.write_bytes(content)
-            downloaded.append(rel)
-        except Exception as e:
-            logger.warning("Failed to download %s: %s", remote_path, e)
-
-    return downloaded
-
-
-# ---------------------------------------------------------------------------
-# Status — inter-node communication via status.json
-# ---------------------------------------------------------------------------
-
-# status.json lives at /workspace/task/status.json inside the sandbox.
-# Each node reads it for context from previous nodes, then updates its section.
-# The orchestrator also reads it after the DAG completes to write the final
-# local copy. The "nodes" dict is the inter-agent communication channel.
-
-
-async def read_sandbox_status(sandbox: AsyncSandbox) -> dict:
-    """Read status.json from sandbox, or return empty default."""
-    try:
-        raw = await sandbox.files.read("/workspace/task/status.json", format="text")
-        return json.loads(raw)
-    except Exception:
-        return {"nodes": {}}
-
-
-async def update_sandbox_status(
-    sandbox: AsyncSandbox, node: str, data: dict
-) -> None:
-    """Update one node's section in status.json inside the sandbox."""
-    status = await read_sandbox_status(sandbox)
-    if "nodes" not in status:
-        status["nodes"] = {}
-    status["nodes"][node] = data
-    await sandbox.files.write(
-        "/workspace/task/status.json",
-        json.dumps(status, indent=2).encode(),
-    )
-
-
-def write_status_json(task_path: Path, result: WorkerResult, nodes: dict | None = None) -> None:
-    """Write final validation result to local status.json.
-
-    Schema v2: consistent structure with per-node provenance.
-    Each node in `nodes` records: status, model, backend, time, notes.
-    Top-level fields summarize the final outcome.
-    """
-    import datetime
-    now = datetime.datetime.now().isoformat()
-
-    # Merge existing status (preserve history from older runs)
-    existing: dict = {}
-    status_file = task_path / "status.json"
-    if status_file.exists():
-        try:
-            existing = json.loads(status_file.read_text())
-        except (json.JSONDecodeError, OSError):
-            pass
-
-    # Build normalized status
-    status: dict = {
-        "schema_version": 2,
-        "verdict": "pass" if result.valid else "fail",
-        "nop_reward": result.nop_reward,
-        "gold_reward": result.gold_reward,
-        "validated_at": now,
-        "total_time": result.total_time,
-        "sandbox_id": result.sandbox_id,
-        "backend": result.backend_name,
-        "pipeline": result.mode or "agents",
-    }
-    if result.error:
-        status["error"] = result.error[:500]
-    if result.config_edit_precision is not None:
-        status["config_edit_precision"] = result.config_edit_precision
-    if result.rubric_icr is not None:
-        status["rubric_icr"] = result.rubric_icr
-
-    # Nodes: per-step provenance (what model, what backend, what happened)
-    merged_nodes = existing.get("nodes", {})
-    if nodes:
-        merged_nodes.update(nodes)
-    status["nodes"] = merged_nodes
-
-    # History: append this run to a compact log
-    history = existing.get("history", [])
-    history.append({
-        "verdict": status["verdict"],
-        "nop": result.nop_reward,
-        "gold": result.gold_reward,
-        "backend": result.backend_name,
-        "time": result.total_time,
-        "at": now,
-    })
-    # Keep last 5 runs
-    status["history"] = history[-5:]
-
-    status_file.write_text(json.dumps(status, indent=2))
-
-
-# ---------------------------------------------------------------------------
-# Core pipeline modes
-# ---------------------------------------------------------------------------
-
-
-async def run_task_validate(
-    task_name: str,
-    task_dir: Path,
-    sandbox_sem: asyncio.Semaphore,
-) -> WorkerResult:
-    """Validate-only: upload existing task → Docker build → nop/gold test."""
-    result = WorkerResult(task_ref=task_name, task_name=task_name, mode="validate")
-    t_start = time.monotonic()
-
-    task_path = task_dir / task_name
-    if not (task_path / "environment" / "Dockerfile").exists():
-        result.error = "Missing Dockerfile"
-        result.total_time = time.monotonic() - t_start
-        return result
-
-    async with sandbox_sem:
-        sandbox = None
-        try:
-            sandbox = await create_worker_sandbox()
-            result.sandbox_id = sandbox.sandbox_id
-
-            await upload_task_files(sandbox, task_path)
-
-            t0 = time.monotonic()
-            nop, gold, err = await validate_docker_in_sandbox(sandbox)
-            result.nop_reward = nop
-            result.gold_reward = gold
-            result.validate_time = round(time.monotonic() - t0, 2)
-            if err:
-                result.error = err
-
-            result.valid = (nop == 0.0 and gold == 1.0)
-
-        except Exception as e:
-            result.error = str(e)[:500]
-        finally:
-            if sandbox:
-                try:
-                    await sandbox.kill()
-                except Exception:
-                    pass
-
-    result.total_time = round(time.monotonic() - t_start, 2)
-    status = "PASS" if result.valid else "FAIL"
-    logger.info("[%s] %s  nop=%.1f gold=%.1f  (%.1fs)%s",
-                task_name, status, result.nop_reward, result.gold_reward,
-                result.total_time, f"  err={result.error[:60]}" if result.error else "")
-    return result
-
-
-async def run_task_improve(
-    task_name: str,
-    task_dir: Path,
-    pool,  # BackendPool | None
-    sandbox_sem: asyncio.Semaphore,
-) -> WorkerResult:
-    """Improve + validate: upload → improve tests → Docker validate."""
-    result = WorkerResult(task_ref=task_name, task_name=task_name, mode="improve")
-    t_start = time.monotonic()
-
-    task_path = task_dir / task_name
-
-    async with sandbox_sem:
-        sandbox = None
-        backend = None
-        try:
-            # Acquire backend for LLM calls
-            if pool:
-                backend_ctx = pool.acquire()
-                backend = await backend_ctx.__aenter__()
-                backend_env = backend.subprocess_env()
-                result.backend_name = backend.name
-            else:
-                backend_ctx = None
-                backend_env = None
-
-            sandbox = await create_worker_sandbox(backend_env=backend_env)
-            result.sandbox_id = sandbox.sandbox_id
-
-            await upload_task_files(sandbox, task_path)
-
-            # Check if improvement needed
-            needs_improve, reason = await check_test_quality(sandbox)
-            if not needs_improve:
-                result.improve_status = "skipped"
-            else:
-                t0 = time.monotonic()
-                status, err = await run_improve_in_sandbox(sandbox)
-                result.improve_status = status
-                result.improve_time = round(time.monotonic() - t0, 2)
-                if status == "rate_limited":
-                    result.error = f"rate limited during improve: {err}"
-                    result.total_time = round(time.monotonic() - t_start, 2)
-                    if pool and backend:
-                        pool.report_429(backend)
-                    return result
-
-            # Docker validate
-            t0 = time.monotonic()
-            nop, gold, err = await validate_docker_in_sandbox(sandbox)
-            result.nop_reward = nop
-            result.gold_reward = gold
-            result.validate_time = round(time.monotonic() - t0, 2)
-            if err:
-                result.error = err
-
-            result.valid = (nop == 0.0 and gold == 1.0)
-
-            # Download improved files back if valid
-            if result.valid:
-                await download_task_files(sandbox, task_path)
-                result.downloaded = True
-
-            if pool and backend and "rate limited" not in (result.error or "").lower():
-                pool.report_success(backend)
-
-        except Exception as e:
-            result.error = str(e)[:500]
-        finally:
-            if backend_ctx and backend:
-                try:
-                    await backend_ctx.__aexit__(None, None, None)
-                except Exception:
-                    pass
-            if sandbox:
-                try:
-                    await sandbox.kill()
-                except Exception:
-                    pass
-
-    result.total_time = round(time.monotonic() - t_start, 2)
-    status = "PASS" if result.valid else "FAIL"
-    logger.info("[%s] %s  nop=%.1f gold=%.1f improve=%s (%.1fs)",
-                task_name, status, result.nop_reward, result.gold_reward,
-                result.improve_status, result.total_time)
-    return result
-
-
-async def run_task_full(
-    pr_ref: str,
-    pool,  # BackendPool | None
-    sandbox_sem: asyncio.Semaphore,
-    task_dir: Path,
-    agentmd: bool = False,
-) -> WorkerResult:
-    """Full pipeline: scaffold → improve → validate → download."""
-    result = WorkerResult(task_ref=pr_ref, mode="full")
-    t_start = time.monotonic()
-
-    async with sandbox_sem:
-        sandbox = None
-        backend = None
-        backend_ctx = None
-        try:
-            # Acquire backend
-            if pool:
-                backend_ctx = pool.acquire()
-                backend = await backend_ctx.__aenter__()
-                backend_env = backend.subprocess_env()
-                result.backend_name = backend.name
-            else:
-                backend_env = None
-
-            sandbox = await create_worker_sandbox(backend_env=backend_env)
-            result.sandbox_id = sandbox.sandbox_id
-
-            # Phase 1: Scaffold
-            t0 = time.monotonic()
-            scaffold_status, err = await run_scaffold_in_sandbox(sandbox, pr_ref, agentmd)
-            result.scaffold_status = scaffold_status
-            result.scaffold_time = round(time.monotonic() - t0, 2)
-            if scaffold_status == "rate_limited":
-                result.error = f"rate limited during scaffold: {err}"
-                result.total_time = round(time.monotonic() - t_start, 2)
-                if pool and backend:
-                    pool.report_429(backend)
-                return result
-            if scaffold_status != "ok":
-                result.error = f"scaffold failed: {err}"
-                result.total_time = round(time.monotonic() - t_start, 2)
-                return result
-
-            # Phase 2: Quality gate
-            needs_improve, reason = await check_test_quality(sandbox)
-
-            # Phase 3: Improve (conditional)
-            if needs_improve:
-                t0 = time.monotonic()
-                improve_status, err = await run_improve_in_sandbox(sandbox)
-                result.improve_status = improve_status
-                result.improve_time = round(time.monotonic() - t0, 2)
-                if improve_status == "rate_limited":
-                    result.error = f"rate limited during improve: {err}"
-                    result.total_time = round(time.monotonic() - t_start, 2)
-                    if pool and backend:
-                        pool.report_429(backend)
-                    return result
-            else:
-                result.improve_status = "skipped"
-
-            # Phase 4: Docker validate
-            t0 = time.monotonic()
-            nop, gold, err = await validate_docker_in_sandbox(sandbox)
-            result.nop_reward = nop
-            result.gold_reward = gold
-            result.validate_time = round(time.monotonic() - t0, 2)
-            if err:
-                result.error = err
-
-            # Phase 5: Repair (conditional, once)
-            if not (nop == 0.0 and gold == 1.0) and not result.error.startswith("docker build"):
-                failure_type = classify_failure(nop, gold, result.error)
-                t0 = time.monotonic()
-                repair_status, repair_err = await run_repair_in_sandbox(
-                    sandbox, failure_type, result.error or f"nop={nop}, gold={gold}"
-                )
-                result.repair_attempted = True
-                result.repair_status = repair_status
-
-                if repair_status == "ok":
-                    # Re-validate after repair
-                    nop2, gold2, err2 = await validate_docker_in_sandbox(sandbox)
-                    result.nop_reward = nop2
-                    result.gold_reward = gold2
-                    if err2:
-                        result.error = err2
-
-            result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
-
-            # Phase 6: Download (only if valid)
-            if result.valid:
-                # Read task name from task.toml or derive from pr_ref
-                task_name = await _read_task_name(sandbox, pr_ref)
-                result.task_name = task_name
-                dest = task_dir / task_name
-                await download_task_files(sandbox, dest)
-                result.downloaded = True
-                logger.info("[%s] Downloaded validated task → %s", pr_ref, dest)
-
-            if pool and backend and "rate limited" not in (result.error or "").lower():
-                pool.report_success(backend)
-
-        except Exception as e:
-            result.error = str(e)[:500]
-        finally:
-            if backend_ctx and backend:
-                try:
-                    await backend_ctx.__aexit__(None, None, None)
-                except Exception:
-                    pass
-            if sandbox:
-                try:
-                    await sandbox.kill()
-                except Exception:
-                    pass
-
-    result.total_time = round(time.monotonic() - t_start, 2)
-    status = "PASS" if result.valid else "FAIL"
-    logger.info("[%s] %s  nop=%.1f gold=%.1f scaffold=%s improve=%s repair=%s (%.1fs)",
-                pr_ref, status, result.nop_reward, result.gold_reward,
-                result.scaffold_status, result.improve_status,
-                result.repair_status or "n/a", result.total_time)
-    return result
 
 
 async def _read_task_name(sandbox: AsyncSandbox, pr_ref: str) -> str:
@@ -1038,7 +939,6 @@ async def _read_task_name(sandbox: AsyncSandbox, pr_ref: str) -> str:
         if name:
             return name
 
-    # Derive from PR ref: "owner/repo#123" → "repo-pr-123"
     if "#" in pr_ref:
         repo_part, pr_num = pr_ref.rsplit("#", 1)
         repo_name = repo_part.split("/")[-1] if "/" in repo_part else repo_part
@@ -1046,164 +946,54 @@ async def _read_task_name(sandbox: AsyncSandbox, pr_ref: str) -> str:
     return pr_ref.replace("/", "-").replace("#", "-")
 
 
-# ---------------------------------------------------------------------------
-# Gemini judge (runs from orchestrator, not inside sandbox)
-# ---------------------------------------------------------------------------
-
-
-async def run_judge_in_sandbox(
-    sandbox: AsyncSandbox,
-) -> tuple[bool, float]:
-    """Run the standardized rubric judge (taskforge/judge.py) inside the sandbox.
-
-    Uses eval_manifest.yaml rubric rules — no hardcoded prompts here.
-    The judge runs INSIDE the Docker container (where the repo lives),
-    applies the gold solution, then evaluates rubric compliance.
-
-    Returns (all_pass, icr_score). Skips if no rubric rules.
-    """
-    # First check if there are any rubric rules to evaluate
-    code, stdout_check, _ = await run_cmd(
-        sandbox,
-        "python3 -c \"import yaml; m=yaml.safe_load(open('/workspace/task/eval_manifest.yaml')); "
-        "r=m.get('rubric',[]); print(len(r) if r else 0)\"",
-        timeout=10,
-    )
-    rubric_count = int(stdout_check.strip()) if code == 0 and stdout_check.strip().isdigit() else 0
-    if rubric_count == 0:
-        return True, 1.0  # No rubric rules to evaluate
-
-    # Upload judge.py and config.py into the sandbox
-    judge_py = ROOT / "taskforge" / "judge.py"
-    config_py = ROOT / "taskforge" / "config.py"
-    if not judge_py.exists():
-        return True, 1.0
-
-    await sandbox.files.write("/workspace/judge.py", judge_py.read_bytes())
-    await sandbox.files.write("/workspace/taskforge/__init__.py", b"")
-    await sandbox.files.write("/workspace/taskforge/config.py", config_py.read_bytes())
-
-    # Find the repo workdir from the Dockerfile
-    code, stdout, _ = await run_cmd(
-        sandbox,
-        "grep WORKDIR /workspace/task/environment/Dockerfile | tail -1 | awk '{print $2}'",
-    )
-    repo_dir = stdout.strip() or "/workspace"
-
-    # Build the gold image (apply solve.sh inside Docker where the repo lives)
-    # Use the already-built task-env-gold if it exists, otherwise build it
-    code, _, _ = await run_cmd(
-        sandbox,
-        "docker image inspect task-env-gold >/dev/null 2>&1 || ("
-        "  docker rm -f task-judge 2>/dev/null; "
-        "  docker run --name task-judge "
-        "    -v /workspace/task/solution:/solution:ro "
-        "    task-env bash /solution/solve.sh && "
-        "  docker commit task-judge task-env-gold && "
-        "  docker rm task-judge"
-        ")",
-    )
-    if code != 0:
-        logger.warning("Judge: failed to build gold image")
-        return True, 1.0
-
-    # Run judge.py INSIDE the gold Docker container
-    # Mount judge.py, config.py, and eval_manifest into the container
-    code, stdout, stderr = await run_cmd(
-        sandbox,
-        "docker run --rm "
-        "  -v /workspace/judge.py:/judge.py:ro "
-        "  -v /workspace/taskforge:/taskforge:ro "
-        "  -v /workspace/task/eval_manifest.yaml:/eval_manifest.yaml:ro "
-        f"  -e GEMINI_API_KEY=$GEMINI_API_KEY "
-        f"  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY "
-        f"  task-env-gold python3 /judge.py "
-        f"  --manifest /eval_manifest.yaml "
-        f"  --repo {repo_dir}",
-    )
-
-    if code != 0:
-        logger.warning("Judge failed: %s", (stderr or stdout)[:200])
-        return True, 1.0  # Skip on error, don't block
-
+def _refresh_timeout(sandbox: AsyncSandbox) -> None:
+    """Best-effort sandbox timeout refresh (fire-and-forget)."""
     try:
-        icr = float(stdout.strip().split('\n')[-1])
-    except (ValueError, IndexError):
-        return True, 1.0
-
-    logger.info("  Rubric judge ICR: %.2f", icr)
-    return icr >= 0.8, icr  # Pass if 80%+ of rubric rules satisfied
-
+        asyncio.ensure_future(sandbox.set_timeout(SANDBOX_TIMEOUT))
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------------------
-# Agent-chain pipeline: focused agents, each with Docker access
+# Unified pipeline: run_task()
 # ---------------------------------------------------------------------------
 
 
-async def _run_agent(
-    sandbox: AsyncSandbox,
-    prompt_name: str,
-) -> tuple[str, str, str]:
-    """Run a claude -p agent with a prompt file. Returns (status, stdout, stderr).
-    No timeout — agents run until completion."""
-    prompt_file = ROOT / "taskforge" / "prompts" / prompt_name
-    if not prompt_file.exists():
-        return "skipped", "", f"prompt file missing: {prompt_name}"
-
-    prompt = prompt_file.read_text()
-    await sandbox.files.write(f"/workspace/{prompt_name}", prompt.encode())
-
-    code, stdout, stderr = await run_cmd(
-        sandbox,
-        f"cat /workspace/{prompt_name} | claude -p "
-        f"--dangerously-skip-permissions --model opus "
-        f"--output-format json",
-        user="worker",
-    )
-
-    if code != 0:
-        combined = stdout + stderr
-        logger.warning("[%s] agent error (exit %d): %s", prompt_name, code, combined[:300])
-        if "429" in combined or "Rate limit" in combined or "hit your limit" in combined.lower():
-            return "rate_limited", stdout, stderr
-        return "error", stdout, stderr
-    return "ok", stdout, stderr
-
-
-async def run_task_agents(
-    task_name: str,
+async def run_task(
+    task_ref: str,
     task_dir: Path,
     pool,  # BackendPool | None
     sandbox_sem: asyncio.Semaphore,
+    *,
+    start_at: StartAt = StartAt.SCAFFOLD,
     pr_ref: str | None = None,
-    agentmd: bool = False,
+    agentmd: bool = True,
+    force: bool = False,
 ) -> WorkerResult:
-    """Agent-chain pipeline for task construction and validation.
+    """Unified DAG pipeline — one function, entry point controlled by start_at.
 
-      [Scaffold] → [Quality Gate] → [P2P Enrich] → [Rubric Enrich] →
-      [Gemini Validate] → [Fix] → [Improve Tests] → [Validate+Fix] →
-      [Rubric Judge] → [Gemini Rubric+Quality]
+    DAG nodes (each runs only if start_at <= node position):
+      0. scaffold   — create task from PR (only if pr_ref provided)
+      1. qgate      — fast programmatic quality gate (in sandbox)
+      2. rubric     — Gemini↔Kimi rubric loop (in sandbox)
+      3. enrich     — P2P enrichment (claude -p)
+      4. improve    — test improvement (claude -p, conditional)
+      5. validate   — Docker oracle + fix (claude -p)
+      6. lint       — post-validation rubric linter (in sandbox)
+      7. download   — only if valid (nop=0, gold=1)
 
-    Quality Gate (fast, programmatic): reject agentmd tasks with no config signal.
-    P2P: discovers repo CI/CD, adds pass_to_pass tests.
-    Rubric Enrich: Kimi writes rubric → Gemini validates → Kimi fixes.
-    Validate+Fix: Docker build, NOP/Gold tests, repair loop.
-    Rubric Judge: evaluates rubric rules against gold solution.
-    Gemini Rubric+Quality: ONE combined Gemini call (structured output) that:
-      - Extracts Track 3 positive rubrics + Track 4 distractors
-      - Classifies task quality (HIGH/MEDIUM/LOW/DELETE)
-      - Reports meta_referential + competing_principles signals
-    Runs on ALL validated tasks (both agentmd and code-only).
-
-    Each node stamps provenance: model, backend, time, notes.
-    status.json is the inter-agent communication channel.
+    File exchange contract:
+      - ALL files stay in /workspace/task/ inside the sandbox
+      - NO intermediate downloads to local disk
+      - Single download at the end, only for valid tasks
+      - status.json is the inter-node communication channel
     """
     is_new = pr_ref is not None
     result = WorkerResult(
-        task_ref=pr_ref or task_name,
-        task_name=task_name,
-        mode="agents",
+        task_ref=pr_ref or task_ref,
+        task_name=task_ref if not is_new else "",
+        mode="pipeline",
+        start_at=start_at.value,
     )
     t_start = time.monotonic()
 
@@ -1211,9 +1001,12 @@ async def run_task_agents(
         sandbox = None
         backend = None
         backend_ctx = None
+        dest: Path | None = None
+
         try:
-            # Acquire backend
-            if pool:
+            # ── Acquire backend ───────────────────────────────────
+            needs_llm = start_at.should_run(StartAt.ENRICH)  # nodes 3+ need LLM
+            if pool and needs_llm:
                 backend_ctx = pool.acquire()
                 backend = await backend_ctx.__aenter__()
                 backend_env = backend.subprocess_env()
@@ -1221,98 +1014,17 @@ async def run_task_agents(
             else:
                 backend_env = None
 
-            sandbox = await create_worker_sandbox(
-                backend_env=backend_env,
-            )
+            sandbox = await create_worker_sandbox(backend_env=backend_env)
             result.sandbox_id = sandbox.sandbox_id
 
-            # Upload judge.py so validate agent can use it
-            judge_py = ROOT / "taskforge" / "judge.py"
-            config_py = ROOT / "taskforge" / "config.py"
-            if judge_py.exists():
-                await sandbox.files.write("/workspace/judge.py", judge_py.read_bytes())
-                await run_cmd(sandbox, "mkdir -p /workspace/taskforge")
-                await sandbox.files.write("/workspace/taskforge/__init__.py", b"")
-                await sandbox.files.write("/workspace/taskforge/config.py", config_py.read_bytes())
+            # Upload taskforge modules (needed for qgate + rubric nodes)
+            await upload_taskforge_modules(sandbox)
 
-            # Resolve local destination
-            dest = None if is_new else task_dir / task_name
-
-            # ── Agent 0: Scaffold (new PRs only) ─────────────────
-            if is_new:
-                t0 = time.monotonic()
-                s, err = await run_scaffold_in_sandbox(sandbox, pr_ref, agentmd)
-                result.scaffold_status = s
-                result.scaffold_time = round(time.monotonic() - t0, 2)
-                if s == "rate_limited":
-                    result.error = f"rate limited: {err}"
-                    result.total_time = round(time.monotonic() - t_start, 2)
-                    if pool and backend:
-                        pool.report_429(backend)
-                    return result
-                if s != "ok":
-                    result.error = f"scaffold failed: {err}"
-                    result.total_time = round(time.monotonic() - t_start, 2)
-                    return result
-                # Resolve dest from scaffolded task name
-                name = await _read_task_name(sandbox, pr_ref)
-                result.task_name = name
-                dest = task_dir / name
-                # Sync scaffold output
-                await download_task_files(sandbox, dest)
-                logger.info("[%s] scaffold complete, synced to %s", task_name, dest)
-            else:
-                await upload_task_files(sandbox, task_dir / task_name)
-                result.scaffold_status = "skipped"
-
-            # ── Clone repo into sandbox so agents can browse source/tests ──
-            # Extract repo URL and commit from the Dockerfile
-            code, repo_info, _ = await run_cmd(
-                sandbox,
-                "python3 -c \""
-                "from pathlib import Path; import re; "
-                "df = Path('/workspace/task/environment/Dockerfile').read_text(); "
-                "repo = re.search(r'github\\.com/([^/]+/[^\\s]+?)(?:\\.git|[\\s]|$)', df); "
-                "commit = re.search(r'(?:git checkout |git fetch.*origin |ARG\\s+BASE_COMMIT=)([a-f0-9]{7,})', df); "
-                "print(repo.group(1) if repo else ''); "
-                "print(commit.group(1) if commit else '')\"",
-                timeout=10,
-            )
-            repo_url = repo_commit = ""
-            if code == 0 and repo_info.strip():
-                lines = repo_info.strip().split("\n")
-                repo_url = lines[0].strip() if len(lines) > 0 else ""
-                repo_commit = lines[1].strip() if len(lines) > 1 else ""
-
-            if repo_url and repo_commit:
-                # Validate repo_url format
-                if re.match(r'^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$', repo_url):
-                    clone_code, _, clone_err = await run_cmd(
-                        sandbox,
-                        f"git clone --filter=blob:none https://github.com/{repo_url}.git /workspace/repo "
-                        f"&& cd /workspace/repo && git checkout {repo_commit}; "
-                        f"chown -R worker:worker /workspace/repo 2>/dev/null || true",
-                        timeout=180,
-                    )
-                    if clone_code == 0:
-                        logger.info("[%s] repo cloned at %s to /workspace/repo", task_name, repo_commit[:8])
-                    else:
-                        logger.warning("[%s] repo clone failed: %s", task_name, (clone_err or "")[:200])
-                else:
-                    logger.warning("[%s] invalid repo_url format: %s", task_name, repo_url)
-
-            # Refresh sandbox lifetime before agent chain
-            try:
-                await sandbox.set_timeout(SANDBOX_TIMEOUT)
-            except Exception:
-                pass
-
-            # Helper: stamp a node with model/backend provenance
+            # Provenance helper
             backend_label = backend.name if backend else "none"
             model_label = (backend.resolve_model("opus") if backend else "unknown")
 
             def _stamp(node_name: str, status: str, elapsed: float, notes: str = ""):
-                """Record provenance for one pipeline step."""
                 return {
                     "status": status,
                     "model": model_label,
@@ -1321,309 +1033,234 @@ async def run_task_agents(
                     "notes": notes,
                 }
 
-            # Helper: abort early on rate limit, surface for retry
-            def _check_rate_limit(agent_name: str, status: str):
-                if status == "rate_limited":
+            # ── Node 0: Scaffold (new PRs only) ───────────────────
+            if is_new and start_at == StartAt.SCAFFOLD:
+                t0 = time.monotonic()
+                s, name, err = await node_scaffold(sandbox, pr_ref, agentmd)
+                elapsed = time.monotonic() - t0
+                result.scaffold_status = s
+                result.scaffold_time = round(elapsed, 2)
+
+                if s == "rate_limited":
+                    result.error = f"rate limited: {err}"
                     if pool and backend:
                         pool.report_429(backend)
-                    result.error = f"rate limited during {agent_name}"
-                    return True
-                return False
+                    raise _RateLimited(result.error)
+                if s == "abandoned":
+                    result.error = f"scaffold abandoned: {err}"
+                    await update_sandbox_status(sandbox, "scaffold", _stamp("scaffold", s, elapsed, err))
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    return result
+                if s != "ok":
+                    result.error = f"scaffold failed: {err}"
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    return result
 
-            # ── Quality gate (fast, programmatic) ────────────────────
-            # Reject tasks that obviously don't test instruction discrimination
-            if agentmd:
-                from taskforge.quality_gate import classify_task_fast
-                qg_result = classify_task_fast(Path("/workspace/task") if not dest else dest)
-                if qg_result.verdict == "DELETE":
-                    result.error = f"quality_gate: {qg_result.verdict} ({qg_result.flags})"
+                result.task_name = name
+                dest = task_dir / name
+                await update_sandbox_status(sandbox, "scaffold", _stamp("scaffold", "ok", elapsed))
+                logger.info("[%s] scaffold ok → %s", pr_ref, name)
+
+                # Dedup check: skip if task already exists on disk (unless --force)
+                if dest.exists() and not force:
+                    result.error = "dedup: task already exists on disk"
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    logger.info("[%s] DEDUP: %s already exists, skipping", pr_ref, dest.name)
+                    return result
+            elif not is_new:
+                # Existing task: upload files to sandbox
+                dest = task_dir / task_ref
+                if not dest.exists():
+                    result.error = f"task dir not found: {dest}"
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    return result
+                await upload_task_files(sandbox, dest)
+                result.scaffold_status = "skipped"
+            else:
+                # is_new but start_at > SCAFFOLD — error, new tasks must scaffold
+                result.error = f"new PR requires start_at=scaffold, got {start_at.value}"
+                result.total_time = round(time.monotonic() - t_start, 2)
+                return result
+
+            _refresh_timeout(sandbox)
+
+            # ── Clone repo (needed for rubric node) ───────────────
+            repo_url = ""
+            if start_at.should_run(StartAt.QGATE) and agentmd:
+                repo_url, _ = await node_clone_repo(sandbox, result.task_name)
+
+            # ── Node 1: Programmatic Quality Gate ─────────────────
+            if start_at.should_run(StartAt.QGATE) and agentmd:
+                t0 = time.monotonic()
+                verdict, flags = await node_qgate(sandbox)
+                elapsed = time.monotonic() - t0
+                result.qgate_verdict = verdict
+
+                await update_sandbox_status(sandbox, "quality_gate", _stamp(
+                    "quality_gate", verdict, elapsed, f"flags={flags}"))
+
+                if verdict == "DELETE":
+                    result.error = f"quality_gate: DELETE ({flags})"
                     result.valid = False
                     result.total_time = round(time.monotonic() - t_start, 2)
-                    await update_sandbox_status(sandbox, "quality_gate", _stamp(
-                        "quality_gate", "rejected", 0, f"flags={qg_result.flags}"))
-                    logger.info("[%s] quality gate REJECTED: %s", task_name, qg_result.flags)
-                    if dest:
-                        await download_task_files(sandbox, dest)
+                    logger.info("[%s] quality gate REJECTED: %s", result.task_name, flags)
+                    # For existing tasks, write status so we know it was reviewed
+                    if not is_new and dest:
                         write_status_json(dest, result)
                     return result
-                await update_sandbox_status(sandbox, "quality_gate", _stamp(
-                    "quality_gate", "passed", 0, f"flags={qg_result.flags}"))
 
-            # ── Agent 1: P2P Enrich (discover CI/CD, add p2p tests) ──
-            t0 = time.monotonic()
-            s, stdout, stderr = await _run_agent(sandbox, "enrich_p2p.md")
-            p2p_time = time.monotonic() - t0
-            await update_sandbox_status(sandbox, "p2p_enrichment", _stamp(
-                "p2p_enrichment", s, p2p_time,
-            ))
-            if dest:
-                await download_task_files(sandbox, dest)
-                logger.info("[%s] p2p agent done (%s), synced", task_name, s)
-            if _check_rate_limit("p2p_enrich", s):
-                raise _RateLimited(result.error)
+                logger.info("[%s] quality gate: %s flags=%s", result.task_name, verdict, flags)
 
-            # Refresh sandbox lifetime between agents
-            try:
-                await sandbox.set_timeout(SANDBOX_TIMEOUT)
-            except Exception:
-                pass
+            _refresh_timeout(sandbox)
 
-            # ── Agent 1b: Rubric Enrich → Gemini Validate → Fix loop ──
-            # Kimi writes rubric → Gemini checks for hallucinations → Kimi fixes
-            code, stdout_check, _ = await run_cmd(
-                sandbox,
-                "python3 -c \"import yaml; m=yaml.safe_load(open('/workspace/task/eval_manifest.yaml')); "
-                "r=m.get('rubric',[]); print(len(r) if r else 0)\"",
-                timeout=10,
-            )
-            rubric_count = int(stdout_check.strip()) if code == 0 and stdout_check.strip().isdigit() else 0
-            if rubric_count == 0:
-                # Step 1: Kimi writes initial rubric
+            # ── Node 2: Gemini↔Kimi Rubric Loop ──────────────────
+            if start_at.should_run(StartAt.RUBRIC) and agentmd and repo_url:
                 t0 = time.monotonic()
-                s, stdout, stderr = await _run_agent(sandbox, "enrich_rubric.md")
-                rubric_time = time.monotonic() - t0
-                existing_node = (await read_sandbox_status(sandbox)).get("nodes", {}).get("rubric_enrichment", {})
-                existing_node.update(_stamp("rubric_enrichment", s, rubric_time))
-                await update_sandbox_status(sandbox, "rubric_enrichment", existing_node)
-                if dest:
-                    await download_task_files(sandbox, dest)
-                    logger.info("[%s] rubric enrich done (%s), synced", task_name, s)
-                if _check_rate_limit("rubric_enrich", s):
-                    raise _RateLimited(result.error)
+                loop_status, quality_verdict, abandon_reason, rounds = await node_rubric_loop(
+                    sandbox, repo_url)
+                elapsed = time.monotonic() - t0
 
-                try:
-                    await sandbox.set_timeout(SANDBOX_TIMEOUT)
-                except Exception:
-                    pass
+                result.rubric_status = loop_status
+                result.rubric_quality = quality_verdict
 
-                # Step 2: Gemini validates rubric (programmatic + semantic)
-                # Upload rubric_validator.py to sandbox
-                validator_py = ROOT / "taskforge" / "rubric_validator.py"
-                if validator_py.exists():
-                    await sandbox.files.write("/workspace/rubric_validator.py", validator_py.read_bytes())
-
-                    t0 = time.monotonic()
-                    val_code, val_out, val_err = await run_cmd(
-                        sandbox,
-                        "python3 /workspace/rubric_validator.py "
-                        "--task /workspace/task --repo /workspace/repo "
-                        "--output /workspace/rubric_feedback.json",
-                        timeout=120,
-                    )
-                    val_time = time.monotonic() - t0
-
-                    # Read validation result
-                    precision = 1.0
-                    try:
-                        feedback_raw = await sandbox.files.read("/workspace/rubric_feedback.json", format="text")
-                        feedback = json.loads(feedback_raw)
-                        ps = feedback.get("precision_score")
-                        precision = float(ps) if ps is not None else 0.0
-                        summary = feedback.get("summary", "")
-                        result.config_edit_precision = precision
-                        logger.info("[%s] rubric validation: precision=%.2f %s", task_name, precision, summary[:100])
-                    except Exception:
-                        feedback = {}
-
-                    await update_sandbox_status(sandbox, "rubric_validate", {
-                        **_stamp("rubric_validate", "ok" if val_code == 0 else "error", val_time),
-                        "model": "gemini-3.1-pro",
-                        "precision": precision,
-                    })
-
-                    # Step 3: If hallucinations found, Kimi fixes based on Gemini feedback
-                    has_bad_rules = any(
-                        r.get("verdict") in ("hallucinated", "redundant")
-                        for r in feedback.get("rules", [])
-                    )
-                    if has_bad_rules and precision < 0.9:
-                        try:
-                            await sandbox.set_timeout(SANDBOX_TIMEOUT)
-                        except Exception:
-                            pass
-
-                        t0 = time.monotonic()
-                        s, stdout, stderr = await _run_agent(sandbox, "fix_rubric.md")
-                        fix_time = time.monotonic() - t0
-                        await update_sandbox_status(sandbox, "rubric_fix", _stamp(
-                            "rubric_fix", s, fix_time,
-                            f"precision was {precision:.2f}, fixing hallucinated rules",
-                        ))
-                        if dest:
-                            await download_task_files(sandbox, dest)
-                            logger.info("[%s] rubric fix done (%s), synced", task_name, s)
-                        if _check_rate_limit("rubric_fix", s):
-                            raise _RateLimited(result.error)
-
-                    if dest:
-                        await download_task_files(sandbox, dest)
-
-                try:
-                    await sandbox.set_timeout(SANDBOX_TIMEOUT)
-                except Exception:
-                    pass
-
-            # ── Agent 2: Improve tests (skip if already good) ────
-            needs_improve, reason = await check_test_quality(sandbox)
-            if needs_improve:
-                t0 = time.monotonic()
-                s, stdout, stderr = await _run_agent(sandbox, "improve_tests.md")
-                improve_time = time.monotonic() - t0
-                result.improve_status = s
-                result.improve_time = round(improve_time, 2)
-                await update_sandbox_status(sandbox, "improve", _stamp(
-                    "improve", s, improve_time, reason,
-                ))
-                if dest:
-                    await download_task_files(sandbox, dest)
-                    logger.info("[%s] improve agent done (%s), synced", task_name, s)
-                if _check_rate_limit("improve", s):
-                    raise _RateLimited(result.error)
-            else:
-                result.improve_status = "skipped"
-                await update_sandbox_status(sandbox, "improve", _stamp(
-                    "improve", "skipped", 0, reason,
-                ))
-
-            try:
-                await sandbox.set_timeout(SANDBOX_TIMEOUT)
-            except Exception:
-                pass
-
-            # ── Agent 3: Validate + Fix (the core agent) ─────────
-            t0 = time.monotonic()
-            s, stdout, stderr = await _run_agent(sandbox, "validate_and_fix.md")
-            validate_time = time.monotonic() - t0
-            result.validate_time = round(validate_time, 2)
-
-            # Read validation results from status.json
-            status = await read_sandbox_status(sandbox)
-            val_node = status.get("nodes", {}).get("validate", {})
-            result.nop_reward = val_node.get("nop_reward", -1.0)
-            result.gold_reward = val_node.get("gold_reward", -1.0)
-            result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
-
-            if _check_rate_limit("validate", s):
-                raise _RateLimited(result.error)
-
-            # Merge our provenance into the validate node (agent writes its own notes)
-            val_node.update({"model": model_label, "backend": backend_label, "time": round(validate_time, 2)})
-            await update_sandbox_status(sandbox, "validate", val_node)
-
-            if dest:
-                await download_task_files(sandbox, dest)
-                logger.info("[%s] validate agent done (%s), synced", task_name, s)
-
-            # Refresh sandbox before judge
-            try:
-                await sandbox.set_timeout(SANDBOX_TIMEOUT)
-            except Exception:
-                pass
-
-            # ── Agent 4: Rubric Judge (if valid and has rubric rules) ──
-            if result.valid:
-                t0 = time.monotonic()
-                judge_pass, icr = await run_judge_in_sandbox(sandbox)
-                judge_time = time.monotonic() - t0
-                result.rubric_icr = icr
-                await update_sandbox_status(sandbox, "rubric_judge", _stamp(
-                    "rubric_judge",
-                    "pass" if judge_pass else "fail",
-                    judge_time,
-                    f"ICR={icr:.2f}",
-                ))
-                if dest:
-                    await download_task_files(sandbox, dest)
-                    logger.info("[%s] rubric judge ICR=%.2f (%s)", task_name, icr,
-                                "pass" if judge_pass else "fail")
-
-            # ── Agent 5: Combined distractor construction + quality (ONE Gemini call) ──
-            # For validated tasks with repo cloned — runs on both agentmd and code tasks
-            if result.valid and repo_url:
-                try:
-                    await sandbox.set_timeout(SANDBOX_TIMEOUT)
-                except Exception:
-                    pass
-
-                # Upload taskforge modules to sandbox
-                for py_name in ["gemini_rubric_constructor.py", "hierarchy_context.py",
-                                "quality_gate.py", "models.py"]:
-                    py_file = ROOT / "taskforge" / py_name
-                    if py_file.exists():
-                        await sandbox.files.write(
-                            f"/workspace/taskforge/{py_name}", py_file.read_bytes(),
-                        )
-
-                # Single combined Gemini call: rubrics + distractors + quality verdict
-                t0 = time.monotonic()
-                combined_code, combined_out, combined_err = await run_cmd(
-                    sandbox,
-                    "cd /workspace && python3 -c \""
-                    "from taskforge.gemini_rubric_constructor import construct_and_classify, stamp_rubrics_to_manifest; "
-                    "from pathlib import Path; import json, os; "
-                    "key = os.environ.get('GEMINI_API_KEY', ''); "
-                    "r = construct_and_classify(Path('/workspace/task'), Path('/workspace/repo'), key); "
-                    "print(json.dumps({k: r.get(k) for k in "
-                    "['status','quality_verdict','quality_reasoning','meta_referential',"
-                    "'competing_principles','config_navigation'] "
-                    "if r.get(k) is not None}, default=str)); "
-                    "stamp_rubrics_to_manifest(Path('/workspace/task'), r) if r.get('status') == 'ok' else None"
-                    "\"",
-                    timeout=120,
-                )
-                combined_time = time.monotonic() - t0
-
-                quality_verdict = ""
-                pos_count = neg_count = 0
-                if combined_code == 0 and combined_out.strip():
-                    try:
-                        last_line = combined_out.strip().split("\n")[-1]
-                        combined_data = json.loads(last_line)
-                        quality_verdict = combined_data.get("quality_verdict", "")
-                    except Exception:
-                        pass
-
-                await update_sandbox_status(sandbox, "gemini_rubric_quality", {
-                    **_stamp("gemini_rubric_quality",
-                             "ok" if combined_code == 0 else "error",
-                             combined_time,
-                             combined_out.strip()[:200] if combined_code == 0 else (combined_err or "")[:200]),
-                    "model": "gemini-3.1-pro",
+                await update_sandbox_status(sandbox, "rubric_quality_loop", {
+                    **_stamp("rubric_quality_loop", loop_status, elapsed,
+                             f"verdict={quality_verdict} rounds={rounds}"),
+                    "model": "gemini-3.1-pro + kimi-k2.5",
                     "quality_verdict": quality_verdict,
+                    "loop_rounds": rounds,
+                    "abandon_reason": abandon_reason,
                 })
-                logger.info("[%s] combined rubric+quality: verdict=%s (%.1fs)",
-                            task_name, quality_verdict, combined_time)
+                logger.info("[%s] rubric loop: verdict=%s status=%s rounds=%d (%.1fs)",
+                            result.task_name, quality_verdict, loop_status, rounds, elapsed)
 
-                if dest:
-                    await download_task_files(sandbox, dest)
+                if loop_status == "abandoned":
+                    result.error = f"abandoned: {abandon_reason}"
+                    result.valid = False
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    if not is_new and dest:
+                        write_status_json(dest, result)
+                    logger.info("[%s] ABANDONED: %s", result.task_name, abandon_reason[:100])
+                    return result
 
-            # ── Final status ─────────────────────────────────────
+            _refresh_timeout(sandbox)
+
+            # ── Node 3: P2P Enrich ────────────────────────────────
+            if start_at.should_run(StartAt.ENRICH):
+                t0 = time.monotonic()
+                s, err = await node_enrich_p2p(sandbox)
+                elapsed = time.monotonic() - t0
+
+                await update_sandbox_status(sandbox, "p2p_enrichment", _stamp(
+                    "p2p_enrichment", s, elapsed))
+                logger.info("[%s] p2p enrich: %s (%.1fs)", result.task_name, s, elapsed)
+
+                if s == "rate_limited":
+                    if pool and backend:
+                        pool.report_429(backend)
+                    result.error = f"rate limited during p2p_enrich: {err}"
+                    raise _RateLimited(result.error)
+
+            _refresh_timeout(sandbox)
+
+            # ── Node 4: Improve Tests (conditional) ───────────────
+            if start_at.should_run(StartAt.IMPROVE):
+                needs_improve, reason = await node_check_test_quality(sandbox)
+                if needs_improve:
+                    t0 = time.monotonic()
+                    s, err = await node_improve_tests(sandbox)
+                    elapsed = time.monotonic() - t0
+                    result.improve_status = s
+                    result.improve_time = round(elapsed, 2)
+
+                    await update_sandbox_status(sandbox, "improve", _stamp(
+                        "improve", s, elapsed, reason))
+                    logger.info("[%s] improve: %s (%.1fs)", result.task_name, s, elapsed)
+
+                    if s == "rate_limited":
+                        if pool and backend:
+                            pool.report_429(backend)
+                        result.error = f"rate limited during improve: {err}"
+                        raise _RateLimited(result.error)
+                else:
+                    result.improve_status = "skipped"
+                    await update_sandbox_status(sandbox, "improve", _stamp(
+                        "improve", "skipped", 0, reason))
+
+            _refresh_timeout(sandbox)
+
+            # ── Node 5: Validate + Fix ────────────────────────────
+            if start_at.should_run(StartAt.VALIDATE):
+                t0 = time.monotonic()
+                s, err = await node_validate_and_fix(sandbox)
+                elapsed = time.monotonic() - t0
+                result.validate_time = round(elapsed, 2)
+
+                # Read validation results from status.json
+                status = await read_sandbox_status(sandbox)
+                val_node = status.get("nodes", {}).get("validate", {})
+                result.nop_reward = val_node.get("nop_reward", -1.0)
+                result.gold_reward = val_node.get("gold_reward", -1.0)
+                result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
+
+                if s == "rate_limited":
+                    if pool and backend:
+                        pool.report_429(backend)
+                    result.error = f"rate limited during validate: {err}"
+                    raise _RateLimited(result.error)
+
+                val_node.update({"model": model_label, "backend": backend_label,
+                                 "time": round(elapsed, 2)})
+                await update_sandbox_status(sandbox, "validate", val_node)
+                logger.info("[%s] validate: %s nop=%.1f gold=%.1f (%.1fs)",
+                            result.task_name, s, result.nop_reward, result.gold_reward, elapsed)
+
+            # ── Node 6: Rubric Lint ───────────────────────────────
+            if result.valid and agentmd:
+                injected, samples = await node_rubric_lint(sandbox)
+                if injected > 0:
+                    await update_sandbox_status(sandbox, "rubric_lint", {
+                        "status": "cleaned",
+                        "injected_count": injected,
+                        "samples": samples,
+                    })
+                    logger.warning("[%s] RUBRIC TAMPERING: %d injected rules cleaned",
+                                   result.task_name, injected)
+
+            # ── Node 7: Download (ONCE, only if valid) ────────────
             result.total_time = round(time.monotonic() - t_start, 2)
             final_status = await read_sandbox_status(sandbox)
-            nodes = final_status.get("nodes", {})
-            if dest:
-                write_status_json(dest, result, nodes=nodes)
+            result.nodes = final_status.get("nodes", {})
+
+            if result.valid and dest:
+                await download_task_files(sandbox, dest)
+                write_status_json(dest, result, nodes=result.nodes)
+                result.downloaded = True
+                logger.info("[%s] PASS — downloaded to %s", result.task_name, dest)
+            elif dest and not is_new:
+                # Existing task: always write status even if failed
+                write_status_json(dest, result, nodes=result.nodes)
 
             if pool and backend and "rate limited" not in (result.error or "").lower():
                 pool.report_success(backend)
 
         except _RateLimited:
-            # Error already set by _check_rate_limit — sync partial progress and bail fast
             result.total_time = round(time.monotonic() - t_start, 2)
-            if dest and sandbox:
+            # On rate limit, sync partial progress for existing tasks
+            if dest and not is_new and sandbox:
                 try:
                     await download_task_files(sandbox, dest)
                     nodes = (await read_sandbox_status(sandbox)).get("nodes", {})
                     write_status_json(dest, result, nodes=nodes)
                 except Exception:
                     pass
-            logger.warning("[%s] rate limited on %s, aborting for retry", task_name, result.backend_name)
+            logger.warning("[%s] rate limited on %s, aborting for retry",
+                           result.task_name, result.backend_name)
         except Exception as e:
             result.error = str(e)[:500]
             result.total_time = round(time.monotonic() - t_start, 2)
-            if dest and sandbox:
+            if dest and not is_new and sandbox:
                 try:
-                    await download_task_files(sandbox, dest)
                     write_status_json(dest, result)
                 except Exception:
                     pass
@@ -1641,12 +1278,69 @@ async def run_task_agents(
 
     result.total_time = round(time.monotonic() - t_start, 2)
     status_str = "PASS" if result.valid else "FAIL"
-    icr_str = f" icr={result.rubric_icr:.2f}" if result.rubric_icr is not None else ""
     logger.info(
-        "[%s] %s  nop=%.1f gold=%.1f improve=%s%s backend=%s (%.1fs)",
-        task_name, status_str, result.nop_reward, result.gold_reward,
-        result.improve_status, icr_str, result.backend_name, result.total_time,
+        "[%s] %s  nop=%.1f gold=%.1f improve=%s backend=%s start=%s (%.1fs)",
+        result.task_name, status_str, result.nop_reward, result.gold_reward,
+        result.improve_status, result.backend_name, result.start_at, result.total_time,
     )
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Docker-only mode: lightweight validation, no LLM
+# ---------------------------------------------------------------------------
+
+
+async def run_task_docker_only(
+    task_name: str,
+    task_dir: Path,
+    sandbox_sem: asyncio.Semaphore,
+) -> WorkerResult:
+    """Docker-only: upload existing task → Docker build → nop/gold test. No LLM."""
+    result = WorkerResult(task_ref=task_name, task_name=task_name, mode="docker-only")
+    t_start = time.monotonic()
+
+    task_path = task_dir / task_name
+    if not (task_path / "environment" / "Dockerfile").exists():
+        result.error = "Missing Dockerfile"
+        result.total_time = time.monotonic() - t_start
+        return result
+
+    async with sandbox_sem:
+        sandbox = None
+        try:
+            sandbox = await create_worker_sandbox()
+            result.sandbox_id = sandbox.sandbox_id
+
+            await upload_task_files(sandbox, task_path)
+
+            t0 = time.monotonic()
+            nop, gold, err = await node_validate_docker_only(sandbox)
+            result.nop_reward = nop
+            result.gold_reward = gold
+            result.validate_time = round(time.monotonic() - t0, 2)
+            if err:
+                result.error = err
+
+            result.valid = (nop == 0.0 and gold == 1.0)
+
+        except Exception as e:
+            result.error = str(e)[:500]
+        finally:
+            if sandbox:
+                try:
+                    await sandbox.kill()
+                except Exception:
+                    pass
+
+    result.total_time = round(time.monotonic() - t_start, 2)
+    status_str = "PASS" if result.valid else "FAIL"
+    logger.info("[%s] %s  nop=%.1f gold=%.1f  (%.1fs)%s",
+                task_name, status_str, result.nop_reward, result.gold_reward,
+                result.total_time, f"  err={result.error[:60]}" if result.error else "")
+
+    # Write status to local disk
+    write_status_json(task_path, result)
     return result
 
 
@@ -1661,7 +1355,10 @@ async def run_batch(
     pool,
     concurrency: int,
     task_dir: Path,
-    agentmd: bool = False,
+    *,
+    start_at: StartAt = StartAt.SCAFFOLD,
+    agentmd: bool = True,
+    force: bool = False,
     max_retries: int = 2,
 ) -> list[WorkerResult]:
     """Dispatch items to E2B sandboxes via async queue with retry."""
@@ -1685,30 +1382,32 @@ async def run_batch(
                 return
 
             try:
-                if mode == "validate":
-                    task_name = item if isinstance(item, str) else item["task"]
-                    r = await run_task_validate(task_name, task_dir, sandbox_sem)
-                elif mode == "improve":
-                    task_name = item if isinstance(item, str) else item["task"]
-                    r = await run_task_improve(task_name, task_dir, pool, sandbox_sem)
-                elif mode == "full":
-                    pr_ref = item if isinstance(item, str) else item["pr_ref"]
-                    r = await run_task_full(pr_ref, pool, sandbox_sem, task_dir, agentmd)
-                elif mode == "agents":
+                if mode == "docker-only":
+                    task_name = item if isinstance(item, str) else item.get("task", str(item))
+                    r = await run_task_docker_only(task_name, task_dir, sandbox_sem)
+                elif mode == "pipeline":
                     if isinstance(item, dict) and "pr_ref" in item:
-                        r = await run_task_agents(
+                        # New PR: scaffold from scratch
+                        r = await run_task(
                             "", task_dir, pool, sandbox_sem,
-                            pr_ref=item["pr_ref"], agentmd=agentmd,
+                            start_at=start_at,
+                            pr_ref=item["pr_ref"],
+                            agentmd=agentmd,
+                            force=force,
                         )
                     else:
-                        task_name = item if isinstance(item, str) else item["task"]
-                        r = await run_task_agents(
+                        # Existing task
+                        task_name = item if isinstance(item, str) else item.get("task", str(item))
+                        r = await run_task(
                             task_name, task_dir, pool, sandbox_sem,
+                            start_at=start_at,
+                            agentmd=agentmd,
+                            force=force,
                         )
                 else:
                     raise ValueError(f"Unknown mode: {mode}")
 
-                # Check if we should retry (rate limited)
+                # Re-enqueue on rate limit
                 if "rate limited" in (r.error or "").lower() and retries < max_retries:
                     logger.info("Re-enqueueing %s (retry %d/%d)", item, retries + 1, max_retries)
                     await queue.put((item, retries + 1))
@@ -1730,7 +1429,6 @@ async def run_batch(
 
             queue.task_done()
 
-    # Launch workers (more than concurrency to keep queue drained)
     worker_count = min(concurrency * 2, len(items))
     workers = [asyncio.create_task(worker()) for _ in range(worker_count)]
     await asyncio.gather(*workers)
@@ -1782,10 +1480,9 @@ async def async_main(args):
         print("E2B_API_KEY not set. Run: set -a && source .env && set +a")
         sys.exit(1)
 
-    # Build/check template
     await ensure_template()
 
-    # Set up pool
+    # Set up pool (only needed for pipeline mode with LLM nodes)
     pool = None
     if args.pool:
         from taskforge.backends import BackendPool, backends_from_env
@@ -1798,25 +1495,39 @@ async def async_main(args):
 
     task_dir = ROOT / args.task_dir
 
-    if args.mode in ("validate", "improve", "agents"):
-        if args.tasks:
-            items = args.tasks.split(",")
-        else:
-            items = collect_tasks(task_dir, args.filter, args.limit)
-        logger.info("Mode=%s, %d tasks, concurrency=%d", args.mode, len(items), args.concurrency)
-    elif args.mode == "full":
-        if not args.input:
-            print("--input required for full mode")
-            sys.exit(1)
+    # Resolve start_at
+    start_at = StartAt.from_str(args.start_at) if args.start_at else None
+
+    # Determine items: --input (JSONL) takes priority, then --tasks, then scan dirs
+    # CRITICAL: --input MUST be checked first — the old code had a bug where
+    # mode=agents ignored --input and always scanned existing dirs.
+    if args.input:
         items = load_pr_items(Path(args.input), args.offset or 0, args.limit)
-        logger.info("Mode=full, %d PRs, concurrency=%d", len(items), args.concurrency)
+        if start_at is None:
+            start_at = StartAt.SCAFFOLD
+        logger.info("Mode=%s, start_at=%s, %d PRs from %s, concurrency=%d",
+                     args.mode, start_at.value, len(items), args.input, args.concurrency)
+    elif args.tasks:
+        items = args.tasks.split(",")
+        if start_at is None:
+            start_at = StartAt.VALIDATE
+        logger.info("Mode=%s, start_at=%s, %d tasks, concurrency=%d",
+                     args.mode, start_at.value, len(items), args.concurrency)
     else:
-        print(f"Unknown mode: {args.mode}")
+        items = collect_tasks(task_dir, args.filter, args.limit)
+        if start_at is None:
+            start_at = StartAt.VALIDATE
+        logger.info("Mode=%s, start_at=%s, %d tasks from %s, concurrency=%d",
+                     args.mode, start_at.value, len(items), task_dir, args.concurrency)
+
+    if not items:
+        print("No items to process. Check --input, --tasks, or task directory.")
         sys.exit(1)
 
     wall_start = time.monotonic()
     results = await run_batch(
-        items, args.mode, pool, args.concurrency, task_dir, args.agentmd
+        items, args.mode, pool, args.concurrency, task_dir,
+        start_at=start_at, agentmd=args.agentmd, force=args.force,
     )
     wall_time = time.monotonic() - wall_start
 
@@ -1827,7 +1538,7 @@ async def async_main(args):
 
     print()
     print("=" * 80)
-    print(f"  E2B WORKER BATCH COMPLETE ({args.mode})")
+    print(f"  E2B WORKER BATCH COMPLETE ({args.mode}, start_at={start_at.value})")
     print(f"  Tasks:     {len(results)}")
     print(f"  Valid:     {len(valid)}  (nop=0, gold=1)")
     print(f"  Invalid:   {len(failed)}")
@@ -1857,6 +1568,7 @@ async def async_main(args):
     results_file = log_dir / f"e2b_worker_{args.mode}_{ts}.json"
     output = {
         "mode": args.mode,
+        "start_at": start_at.value,
         "wall_time": round(wall_time, 2),
         "total": len(results),
         "valid": len(valid),
@@ -1870,16 +1582,21 @@ async def async_main(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Consolidated E2B pipeline")
-    parser.add_argument("--mode", choices=["validate", "improve", "full", "agents"], required=True)
+    parser.add_argument("--mode", choices=["pipeline", "docker-only"], required=True,
+                        help="pipeline: unified DAG (LLM + Docker). docker-only: no LLM, just Docker oracle")
+    parser.add_argument("--start-at", type=str, default=None,
+                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "validate"],
+                        help="DAG entry point (default: scaffold for --input, validate for existing tasks)")
     parser.add_argument("--task-dir", default="harbor_tasks")
     parser.add_argument("--tasks", type=str, default=None, help="Comma-sep task names")
     parser.add_argument("--filter", type=str, default=None, help="Glob filter")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--offset", type=int, default=None)
-    parser.add_argument("--input", type=str, default=None, help="JSONL file for full mode")
+    parser.add_argument("--input", type=str, default=None, help="JSONL file with PR refs")
     parser.add_argument("--concurrency", type=int, default=10)
     parser.add_argument("--pool", action="store_true", help="Use multi-backend pool")
-    parser.add_argument("--agentmd", action="store_true", help="AgentMD edit tasks")
+    parser.add_argument("--agentmd", action="store_true", help="Enable agentmd quality nodes (qgate, rubric, lint)")
+    parser.add_argument("--force", action="store_true", help="Force re-process even if task exists on disk")
     args = parser.parse_args()
     asyncio.run(async_main(args))
 
