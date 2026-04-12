@@ -105,6 +105,15 @@ rubric:
     --- State flags ---`) and English variable names (e.g., `BACKUP_COUNT`, `SKIP_PROVIDER`)
     in the bash script.
   category: style
+- rule: Update README ... Keep language consistent ... Preserve structure
+  source:
+    path: skills/readme-updater/SKILL.md
+    lines: 24-27
+  evidence: The gold solution updates the READMEs to reflect the new installer behavior
+    while preserving the existing structure and language consistency (English for
+    README.md, Chinese for README.zh-CN.md).
+  category: documentation
+  verification: llm_judge
 config_edits:
 - path: README.md
   tier: 2
@@ -140,6 +149,15 @@ distractors:
   source:
     path: AGENTS.md
     lines: '36'
+- rule: 'When updating README, follow this structure: [Template]'
+  source:
+    path: skills/readme-updater/SKILL.md
+    lines: 35-65
+  collision_type: would_cause_bug
+  why_distracting: The skill provides a strict 'README Structure Template'. If the
+    agent blindly applies this template, it will overwrite the existing custom structure
+    of the project's English and Chinese READMEs, causing massive unintended changes.
+  severity: medium
 hierarchy_analysis: The repository has a single global configuration file `AGENTS.md`
   that applies to the entire project. There is a direct conflict between the general
   instruction to 'Answer in Chinese' and the specific code style rule to use English

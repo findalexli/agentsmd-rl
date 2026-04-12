@@ -62,17 +62,29 @@ checks:
     commit: 4f612601f6447b3df1ee17e535ac698b5cc3d16c
 - id: test_repo_python_syntax_all
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: 'All Python files in src/ have valid syntax (CI: ruff/syntax check)'
 - id: test_repo_utils_syntax_all
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: 'Repo''s utils directory Python files have valid syntax (CI: ruff/syntax
     check)'
 - id: test_repo_configs_toml_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Repo's CI config TOML files are valid and parseable
+- id: test_repo_ruff_check_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: ruff check passes on modified files'
+- id: test_repo_ruff_format_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: ruff format --check passes on modified files'
+- id: test_repo_py_compile_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CI: python -m py_compile succeeds on modified files'
 rubric:
 - rule: Simple is better than complex.
   source:
@@ -101,18 +113,68 @@ rubric:
     without leaving any comments explaining the removal of the old `none_to_none_str`
     function or the reasoning behind
   category: documentation
+- rule: 'Zen of Python: Simple is better than complex.'
+  source:
+    path: AGENTS.md
+    lines: 13-33
+  evidence: The gold solution replaces a custom recursive dictionary traversal function
+    (`none_to_none_str`) with a single boolean flag `exclude_none=True` in Pydantic's
+    `model_dump`, adhering to the principle th
+  category: style
+- rule: Do not add unnecessary comments or refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 10-11
+  evidence: The gold solution replaces the custom helper with `exclude_none=True`
+    without adding comments explaining the removal of the old code.
+  category: style
+- rule: 'Zen of Python: Simple is better than complex. There should be one-- and preferably
+    only one --obvious way to do it.'
+  source:
+    path: AGENTS.md
+    lines: 14-34
+  evidence: The gold solution replaces the custom recursive `none_to_none_str` function
+    with Pydantic's built-in `exclude_none=True` parameter, adhering to the principle
+    that simple and built-in solutions are bet
+  category: style
+- rule: Do not add unnecessary comments. Do not try to explain code changes that reflect
+    your work process or refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 9-11
+  evidence: The gold solution cleanly swaps the implementation without leaving comments
+    explaining the removal of `none_to_none_str` or referencing the old code.
+  category: documentation
 distractors:
-- rule: Update skills when modifying the codebase to keep them accurate
+- rule: You are responsible for maintaining the skills folder... keeping the skills
+    up to date whenever you or anyone else modifies the code.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to edit `skills/toml-config` or `.claude/skills/toml-config`
+    to document the new serialization behavior for `None` values, but the gold solution
+    only modifies the Python source files.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 45-49
+- rule: Write tests as plain functions with pytest fixtures.
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs the agent to keep skills up to date whenever
-    modifying the code. Since the PR changes how TOML configs are serialized (omitting
-    None instead of writing 'None'), an agent might be tempted to update the `toml-config`
-    skill. However, this is an internal implementation detail and doesn't change the
-    user-facing workflow, so modifying the skill is out of scope and unnecessary.
+  why_distracting: The agent might try to add tests for the new config serialization
+    behavior in a test file, but the gold solution only modifies the implementation
+    files.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 46-50
-hierarchy_analysis: The hierarchy is flat. `CLAUDE.md` simply includes `AGENTS.md`,
-  which contains all the relevant rules. There are no conflicts between different
-  levels of the configuration.
+    lines: 51-52
+- rule: Use the string '"None"' in TOML to set a field to None.
+  source:
+    path: skills/toml-config/SKILL.md
+    lines: 46-52
+  collision_type: rule_conflict
+  why_distracting: The skill explicitly instructs using the literal string '"None"'
+    to represent None values in TOML. An agent might read this and believe it must
+    preserve the '"None"' string output during serialization to comply with the project's
+    TOML conventions, conflicting with the PR instruction to omit None fields entirely.
+  severity: high
+hierarchy_analysis: The config hierarchy is flat, with all rules defined in `AGENTS.md`
+  (referenced by `CLAUDE.md`). The agent must apply general Python guidelines while
+  avoiding the temptation to over-apply meta-instructions regarding skill maintenance.

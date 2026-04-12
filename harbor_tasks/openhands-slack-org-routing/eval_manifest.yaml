@@ -1,22 +1,19 @@
 rubric:
-- rule: 'Use relative imports without ''enterprise.'' prefix in enterprise code. Example:
-    ''from storage.database import a_session_maker'' not ''from enterprise.storage.database
+- rule: 'Code changes use relative imports without ''enterprise.'' prefix in enterprise
+    code. Example: ''from storage.database import a_session_maker'' not ''from enterprise.storage.database
     import a_session_maker''.'
   source:
     path: AGENTS.md
     lines: 238-241
     commit: 732a1c19911a182653556c18c4fd1c19a38ff44a
-- rule: Use AsyncMock for async operations and MagicMock for complex objects when
-    mocking in tests.
+- rule: Run `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
+    after making changes to the backend.
   source:
     path: AGENTS.md
-    lines: 249-251
-    commit: 732a1c19911a182653556c18c4fd1c19a38ff44a
-- rule: Mock all external dependencies (databases, APIs, file systems) in unit tests.
-  source:
-    path: AGENTS.md
-    lines: 251-252
-    commit: 732a1c19911a182653556c18c4fd1c19a38ff44a
+    lines: 18-19
+  evidence: The gold solution modifies `enterprise/integrations/slack/slack_view.py`,
+    which is a backend Python file, meaning the backend pre-commit hook rule applies.
+  category: tooling
 checks:
 - id: test_slack_view_imports_resolve_org_for_repo
   description: slack_view.py imports resolve_org_for_repo from integrations.resolver_org_router
@@ -92,41 +89,63 @@ checks:
   description: Agent server env override tests pass (pass_to_pass)
   type: pass_to_pass
   origin: repo_tests
+- id: test_repo_unit_tests_utils_circular_imports
+  description: Utils circular imports test passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_utils_git
+  description: Utils git tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_utils_import
+  description: Utils import tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_conversation_stats
+  description: Conversation stats unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_conversation_summary
+  description: Conversation summary unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_azure_devops
+  description: Azure DevOps service unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_forgejo
+  description: Forgejo service unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_llm_registry
+  description: LLM registry unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
 distractors:
-- rule: To set up the entire repo, including frontend and backend, run `make build`.
-    You don't need to do this unless the user asks you to, or if you're trying to
-    run the entire application.
+- rule: Store PR-specific artifacts like design documents or analysis notes in a `.pr/`
+    directory.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to run `make build` to test the Slack integration
-    changes, but the user didn't ask to run the application, and setting up the entire
-    repo is unnecessary for this specific backend logic change.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 4-6
-- rule: When working on a PR that requires design documents, scripts meant for development-only,
-    or other temporary artifacts that should NOT be merged to main, store them in
-    a `.pr/` directory at the repository root.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might create a `.pr/design.md` to plan the org routing
-    logic before implementing it, wasting time on artifacts not requested in the prompt.
+  why_distracting: The agent might interpret the instruction to modify complex routing
+    logic as requiring a design document or analysis notes, leading it to create unnecessary
+    files in a `.pr/` directory instead of just implementing the code changes.
   severity: low
   source:
     path: AGENTS.md
-    lines: 63-65
-- rule: If you've made changes to the backend, you should run `pre-commit run --config
-    ./dev_config/python/.pre-commit-config.yaml` (this will run on staged files).
-  collision_type: meta_confusion
-  why_distracting: The agent might try to stage files and run pre-commit hooks during
-    the evaluation, which could fail or complicate the simple file modification task
-    if the environment isn't fully set up for it.
-  severity: medium
+    lines: 65-80
+- rule: Use cross-repo-testing skill when testing a cross-repo feature, deploying
+    to staging, or testing SDK against OH Cloud.
   source:
-    path: AGENTS.md
-    lines: 16-17
-hierarchy_analysis: The repository has a single root-level `AGENTS.md` file containing
-  general setup, git best practices, and PR artifact guidelines. No deeper config
-  files are present to override these rules.
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task involves Slack integration, OpenHands organizations, and
+    SaaS conversation stores, which might sound like a cloud or cross-repo feature
+    requiring the cross-repo-testing skill. However, this is a purely local backend
+    logic change in `slack_view.py`.
+  severity: medium
+hierarchy_analysis: There is only a single, flat config file (`AGENTS.md`) at the
+  root level. No hierarchy traversal or conflict resolution between multiple config
+  files is required.
 version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands.git

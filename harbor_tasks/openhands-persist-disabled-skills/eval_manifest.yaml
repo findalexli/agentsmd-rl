@@ -72,22 +72,31 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: All enterprise/storage Python files compile without errors (py_compile)
-- id: test_repo_ruff_check_enterprise_storage
-  type: pass_to_pass
-  origin: repo_tests
-  description: Ruff linting passes on enterprise/storage files (CI linter)
-- id: test_repo_ruff_check_migrations
-  type: pass_to_pass
-  origin: repo_tests
-  description: Ruff linting passes on migration files (CI linter)
 - id: test_repo_py_compile_migrations
   type: pass_to_pass
   origin: repo_tests
   description: All migration files compile without errors (py_compile)
-- id: test_repo_ruff_check_user_py
+- id: test_repo_enterprise_ruff_check
   type: pass_to_pass
   origin: repo_tests
-  description: Ruff linting passes on user.py (CI linter)
+  description: Enterprise storage files pass ruff lint check with enterprise config
+- id: test_repo_enterprise_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise storage files pass ruff format check with enterprise config
+- id: test_repo_migrations_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Migration files pass ruff lint check with enterprise config
+- id: test_repo_migrations_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Migration files pass ruff format check with enterprise config
+- id: test_repo_pre_commit_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise files pass all pre-commit hooks (trailing-whitespace, end-of-file-fixer,
+    check-yaml, debug-statements, ruff, ruff-format, mypy)
 rubric:
 - rule: Add disabled_skills column to User model with JSON type
 - rule: Import JSON type from sqlalchemy in user.py
@@ -102,34 +111,45 @@ rubric:
     and modifies `user.py` ensuring proper formatting without trailing whitespace
     and with a newline at the end of the fil
   category: style
+- rule: Ensure any lint errors or simple test errors have been fixed before pushing
+    changes.
+  source:
+    path: AGENTS.md
+    lines: 18-21
+  evidence: The generated Alembic migration file uses standard Python formatting and
+    typing (e.g., `from typing import Sequence, Union`), avoiding lint errors.
+  category: style
 distractors:
-- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
-    make build && make run ...'
+- rule: Store design documents, scripts meant for development-only, or other temporary
+    artifacts in a `.pr/` directory.
   collision_type: scope_ambiguity
-  why_distracting: The root cause of the bug (missing `disabled_skills` column) is
-    explicitly provided in the task description. The agent might waste significant
-    time and resources trying to build and run the entire application to reproduce
-    or debug the issue instead of just applying the known fix.
+  why_distracting: The agent might mistakenly classify the new Alembic migration script
+    as a 'script meant for development-only' or temporary artifact and place it in
+    the `.pr/` directory instead of `enterprise/migrations/versions/`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 68-82
+- rule: Write the SDK-side changes... implement the client code
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 38-45
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think that adding a new column to the SaaS settings
+    store requires updating the SDK client to handle the new field, but this is purely
+    a backend persistence fix.
   severity: medium
+- rule: Bump SDK packages... pin them to unreleased commits for testing
   source:
-    path: AGENTS.md
-    lines: 7-12
-- rule: When working on a PR that requires design documents, scripts meant for development-only,
-    or other temporary artifacts that should NOT be merged to main, store them in
-    a `.pr/` directory at the repository root.
+    path: .agents/skills/update-sdk/SKILL.md
+    lines: 14-23
   collision_type: scope_ambiguity
-  why_distracting: The agent might mistakenly classify the Alembic migration script
-    as a 'script meant for development-only' or create unnecessary analysis documents,
-    placing them in the `.pr/` directory instead of putting the migration in the required
-    `enterprise/migrations/versions/` directory.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 66-81
-hierarchy_analysis: The `AGENTS.md` file provides general repository guidelines at
-  the root level. The instructions for debugging and PR artifacts are broad and could
-  distract an agent from the specific, targeted fix required for this issue, especially
-  since the root cause is already identified in the prompt.
+  why_distracting: The agent might think that modifying the enterprise backend requires
+    bumping the SDK version to test the changes, but this is a standalone backend
+    fix.
+  severity: low
+hierarchy_analysis: The config hierarchy consists of a single root-level AGENTS.md
+  file with generic repository instructions. There are no deep or conflicting rules.
 version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands

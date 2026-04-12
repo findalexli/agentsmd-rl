@@ -53,6 +53,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: RPC visitor JSON serialization tests pass
+- id: test_json_address
+  type: pass_to_pass
+  origin: repo_tests
+  description: RPC visitor address serialization test passes
+- id: test_json_uid
+  type: pass_to_pass
+  origin: repo_tests
+  description: RPC visitor UID serialization test passes
+- id: test_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes cargo xlint license header checks
+- id: test_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes git checks for whitespace, filenames, and submodules
 rubric:
 - source:
     path: CLAUDE.md
@@ -63,47 +79,47 @@ rubric:
 - source:
     path: CLAUDE.md
   rule: Run cargo xclippy after finishing development
+- rule: sui-types/ contains Core type definitions
+  source:
+    path: CLAUDE.md
+    lines: 56-58
+  evidence: The gold solution adds the TypeName layout and constants to crates/sui-types/src/base_types.rs,
+    aligning with the architectural definition of sui-types.
+  category: architecture
 distractors:
-- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run the full suite of e2e simtests (`cargo
-    simtest -p sui-e2e-tests`) to verify its changes. However, this PR only modifies
-    RPC serialization for a specific type (`TypeName`), which is fully covered by
-    unit tests in `sui-types` and `sui-display`. Running simtests would be a massive
-    waste of time and compute.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 28-29
-- rule: Run Rust unittests. skip simulation tests as they may cause false negatives
-    with `cargo nextest` SUI_SKIP_SIMTESTS=1 cargo nextest run
-  collision_type: scope_ambiguity
-  why_distracting: The agent might blindly run `SUI_SKIP_SIMTESTS=1 cargo nextest
-    run` across the entire workspace. Given the large codebase size mentioned in the
-    notes, this will take too long. The agent must realize it needs to combine this
-    rule with the `-p` flag rule to scope tests only to `sui-types` and `sui-display`.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 31-32
-- rule: All new files must start with the following license in comments at the top
-    of the file
-  collision_type: architecture_boundary
-  why_distracting: The agent might decide to create a new file (e.g., `crates/sui-types/src/type_name.rs`)
-    to define the `TypeName` layout in order to keep things modular, and then apply
-    this license header. However, the gold solution correctly identifies that `base_types.rs`
-    is the established location for these standard library type layouts (like `url_layout`
-    and `move_ascii_str_layout`).
+- rule: Always consult CLAUDE.md files in sub-crates.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to always consult crate-specific CLAUDE.md
+    files. Since the agent is modifying `sui-types` and `sui-display`, it might waste
+    time and API calls searching for local config files that do not exist in this
+    context.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 15-18
-hierarchy_analysis: The root `CLAUDE.md` provides general tooling and testing commands.
-  `AGENTS.md` defers to `CLAUDE.md` and crate-specific files. Since no crate-specific
-  config files are provided in the context, the agent must rely entirely on the root
-  `CLAUDE.md`. The primary challenge is filtering the broad testing commands (like
-  running all simtests or workspace-wide nextest) down to the specific crates modified
-  (`sui-types` and `sui-display`) using the `-p` flag rule.
+    lines: 8-10
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires adding a license header to all new files. The
+    agent might mistakenly create a new file for the TypeName layout instead of adding
+    it to the existing `base_types.rs` as instructed, or it might try to add a license
+    to the existing files if it misinterprets 'new files'.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 18-21
+- rule: Protocol configuration and versioning for Sui network changes
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: architecture_boundary
+  why_distracting: The agent might mistakenly believe that changing how TypeName is
+    serialized in RPC outputs requires a protocol config change or versioning, but
+    RPC/Display changes are outside the consensus protocol boundary.
+  severity: medium
+hierarchy_analysis: The hierarchy is flat, consisting only of root-level AGENTS.md
+  and CLAUDE.md. The root configs mention crate-specific configs, but none are present
+  in the context, which could lead to a wild goose chase.
 version: '2.0'
 source:
   repo: MystenLabs/sui

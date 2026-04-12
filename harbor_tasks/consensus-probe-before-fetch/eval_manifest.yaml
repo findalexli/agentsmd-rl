@@ -35,45 +35,50 @@ rubric:
     in `consensus/core/src/authority_service.rs`, which aligns with the architectural
     definition of authorities participating i
   category: architecture
+- rule: Verify that snapshots were updated when modifying configuration parameters.
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 16-19
+  evidence: The gold solution updates `consensus/config/tests/snapshots/parameters_test__parameters.snap`
+    to reflect the newly added timeout parameters, aligning with the general config
+    modification principle that snapshots must be updated.
+  category: testing
+  verification: llm_judge
 distractors:
-- rule: All new files must start with the following license in comments at the top
-    of the file
-  collision_type: architecture_boundary
-  why_distracting: The agent might create a new file for the `ObserverNetworkService`
-    trait implementation or the probe mechanism to satisfy the license header rule,
-    rather than correctly integrating the changes into the existing `authority_service.rs`
-    and `clients.rs` files.
+- rule: cargo build -p sui-core
+  collision_type: scope_ambiguity
+  why_distracting: The quick build command specifies `-p sui-core`, but the task modifies
+    the `consensus` crate. If the agent only runs this command, it will not compile
+    its changes.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 17-20
-- rule: Always consult CLAUDE.md files in sub-crates. Instructions in local CLAUDE.md
-    files override instructions in this file when they are in conflict.
-  collision_type: meta_confusion
-  why_distracting: The rule instructs to 'Always consult CLAUDE.md files in sub-crates',
-    which might cause the agent to hallucinate or search for non-existent `consensus/CLAUDE.md`
-    files, wasting time and causing confusion since none are provided in the context.
-  severity: low
-  source:
-    path: CLAUDE.md
-    lines: 5-7
-- rule: Run Rust unittests. skip simulation tests as they may cause false negatives
-    with `cargo nextest`
-  collision_type: would_cause_bug
-  why_distracting: The agent might rely solely on `cargo nextest run` as instructed,
-    which will fail the snapshot test but won't automatically update it. The agent
-    might get confused about how to update the snapshot (`cargo insta review` or `UPDATE_EXPECT=1
-    cargo test`) since it's not mentioned in the testing commands.
+    lines: 22-23
+- rule: Use multiple `-p` flags if necessary, e.g. `cargo nextest run -p sui-types
+    -p sui-core`
+  collision_type: scope_ambiguity
+  why_distracting: The testing instructions suggest using `-p sui-types -p sui-core`,
+    which would skip the tests in the `consensus` crate where the snapshot test needs
+    to be updated.
   severity: high
   source:
     path: CLAUDE.md
     lines: 38-39
-hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md` that apply
-  globally, with instructions to consult crate-specific `CLAUDE.md` files. Since no
-  crate-specific config files are provided for the `consensus` crate, the root rules
-  apply directly. The root config focuses heavily on testing commands, formatting,
-  and high-level architecture, but lacks specific guidance on snapshot testing (`cargo
-  insta`), which is required for this PR.
+- rule: Add new protocol config settings to crates/sui-protocol-config/src/lib.rs
+    and increment MAX_PROTOCOL_VERSION.
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 23-64
+  collision_type: scope_ambiguity
+  why_distracting: The skill instructs the agent to add new configuration parameters
+    to `crates/sui-protocol-config/src/lib.rs` and increment the `MAX_PROTOCOL_VERSION`.
+    However, this task specifically targets the local consensus config (`consensus/config/src/parameters.rs`).
+    Following the skill would cause the agent to modify the global Sui protocol config
+    and incorrectly bump the protocol version.
+  severity: high
+hierarchy_analysis: The hierarchy is flat with only root-level AGENTS.md and CLAUDE.md.
+  The CLAUDE.md provides generic repository commands that are scoped to sui-core/sui-types,
+  which can be misleading for a task entirely contained within the consensus crate.
 version: '2.0'
 source:
   repo: MystenLabs/sui

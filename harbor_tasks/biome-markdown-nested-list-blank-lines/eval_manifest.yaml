@@ -76,6 +76,34 @@ rubric:
     -            } else {\n-                break;\n-            }\n-        }\n-\n\
     \         // Check indent matches the list's marker indent range\n         if\
     \ expected_indent == 0 {\n             if indent > MAX_BLOCK_PREFIX_INDENT {\n"
+- rule: Check both general cases AND specific types... Verify your solution works
+    for all relevant variant types
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 18-21
+  evidence: The gold solution correctly handles both space and tab characters when
+    calculating the indent, ensuring it works for all relevant whitespace variants
+    rather than just assuming spaces.
+  category: architecture
+  verification: llm_judge
+- rule: Understand the node hierarchy and parent-child relationships
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 16-17
+  evidence: The gold solution correctly tracks the indent of the last line visited
+    to maintain the proper parent-child relationship of nested list items in the AST.
+  category: architecture
+  verification: llm_judge
+- rule: Verify your solution works for all relevant variant types, not just the first
+    one you find
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 19-20
+  evidence: The gold solution uses a loop to consume all blank lines and tracks the
+    indent of the last one, ensuring the fix works for any number of extra blank lines
+    (two, three, etc.) rather than just a specific case.
+  category: architecture
+  verification: llm_judge
 distractors:
 - rule: Create a changeset file for user-facing changes (including bug fixes that
     affect behavior).
@@ -108,6 +136,24 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 46-60
+- rule: Guide for creating high-quality, user-friendly diagnostics in Biome.
+  source:
+    path: .claude/skills/diagnostics-development/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions a 'false diagnostic', which might lead the agent
+    to look into diagnostic generation. However, the fix must be made in the parser's
+    syntax logic, not in the diagnostics infrastructure.
+  severity: medium
+- rule: Step-by-step guide for creating and implementing lint rules in Biome's analyzer.
+  source:
+    path: .claude/skills/lint-rule-development/SKILL.md
+    lines: 1-5
+  collision_type: architecture_boundary
+  why_distracting: The issue describes a false diagnostic, which an agent might misinterpret
+    as a lint rule bug. The agent might try to modify the analyzer instead of the
+    markdown parser.
+  severity: medium
 hierarchy_analysis: The config files (CLAUDE.md and AGENTS.md) are heavily focused
   on the PR lifecycle (PR templates, changesets, AI disclosures). However, the gold
   solution is a raw code patch for a specific bug. This creates a meta-level conflict

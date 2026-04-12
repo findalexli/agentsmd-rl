@@ -20,10 +20,42 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Tests for use-create-conversation pass
+- id: test_repo_tests_v1_conversation_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for V1 conversation service pass
+- id: test_repo_tests_settings_related
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for settings-related hooks pass
+- id: test_repo_tests_all_mutation_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: All mutation hook tests pass
+- id: test_repo_tests_all_query_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: All query hook tests pass
 - id: test_repo_translation_completeness
   type: pass_to_pass
   origin: repo_tests
   description: Translation completeness check passes
+- id: test_repo_tests_organization_scoped_queries
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for organization-scoped query hooks pass
+- id: test_repo_tests_new_conversation_command
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for use-new-conversation-command hook pass
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes
+- id: test_repo_tests_all_api
+  type: pass_to_pass
+  origin: repo_tests
+  description: All API service tests pass
 - id: test_default_settings_v1_enabled
   type: fail_to_pass
   origin: pr_diff
@@ -75,29 +107,26 @@ rubric:
     backend's default behavior of enabling V1 routes.
   category: architecture
 distractors:
-- rule: To run the full application to debug issues, use `make build && make run ...`
-  collision_type: meta_confusion
-  why_distracting: The bug is described as a timing-dependent race condition that
-    is hard to reproduce. An agent might waste significant time trying to spin up
-    the full application using these commands to reproduce the issue manually, instead
-    of statically analyzing the code and applying the logical fix using `ensureQueryData`.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 7-12
-- rule: Store design documents, debugging notes, or temporary artifacts in a `.pr/`
-    directory.
+- rule: Store design documents, scripts meant for development-only, or other temporary
+    artifacts in a `.pr/` directory.
   collision_type: scope_ambiguity
-  why_distracting: Because the bug involves a complex race condition and investigation,
-    the agent might decide to create a `.pr/analysis.md` or `.pr/notes.md` to document
-    its debugging process. However, this is a standard bug fix that doesn't require
-    temporary PR artifacts.
-  severity: medium
+  why_distracting: The agent might waste time creating a `.pr/analysis.md` file to
+    document the race condition investigation, which is unnecessary for this straightforward
+    bug fix and distracts from the actual code changes.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 30-32
-hierarchy_analysis: The AGENTS.md file provides general repository guidelines. The
-  rules about running the full application and creating PR artifacts are broadly applicable
-  but serve as distractors here because the fix requires targeted frontend code changes
-  rather than full-stack debugging or extensive documentation.
+    lines: 38-46
+- rule: Use this skill when changes span the SDK and OpenHands server repos and need
+    e2e testing or cross-repo feature testing.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions 'Align frontend default with backend default',
+    which might trick the agent into thinking it needs to perform cross-repo testing
+    or modify backend files, but the fix is strictly isolated to the frontend.
+  severity: medium
+hierarchy_analysis: Only a single root-level AGENTS.md file is present. No hierarchy
+  or overriding rules exist.
 version: '2.0'

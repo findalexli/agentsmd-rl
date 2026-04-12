@@ -85,44 +85,78 @@ checks:
   origin: repo_tests
   description: Repo's unit tests for configs pass (test_defaults, test_toml_partial_nested_override,
     test_cli_overrides_defaults)
+- id: ruff_check_combined
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on configs and entrypoints
+- id: ruff_format_combined
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on configs and entrypoints
+- id: test_load_configs
+  type: pass_to_pass
+  origin: repo_tests
+  description: All repo TOML config files can be loaded by their config classes
 rubric:
+- rule: 'Targeted comments: don''t explain your work process or reference old code.
+    Use targeted comments sparingly to clarify ambiguous logic.'
+  source:
+    path: AGENTS.md
+    lines: 4-5
+  evidence: The gold solution adds a clear, targeted docstring to `KVCacheOffloadConfig`
+    explaining the specific behavior for prefill vs decode nodes, without adding any
+    inline comments explaining the work proces
+  category: documentation
 - rule: 'Targeted comments: Use targeted comments sparingly to clarify ambiguous logic.'
   source:
     path: AGENTS.md
-    lines: '6'
-  evidence: 'The gold solution adds a targeted docstring to `KVCacheOffloadConfig`
-    clarifying the potentially ambiguous logic that ''prefill nodes use MultiConnector...
-    Decode nodes always use NixlConnector only'', '
+    lines: 5-6
+  evidence: The gold solution adds a detailed docstring to `KVCacheOffloadConfig`
+    explaining the specific connector logic (prefill nodes use MultiConnector, decode
+    nodes use NixlConnector only), clarifying the am
   category: documentation
-- rule: 'Zen of Python: Explicit is better than implicit.'
+- rule: Inference entrypoint uses InferenceConfig from src/prime_rl/configs/inference.py
+    and entrypoint src/prime_rl/entrypoints/inference.py
   source:
-    path: AGENTS.md
-    lines: 7-28
-  evidence: In `entrypoints/inference.py`, the gold solution explicitly extracts `kv_offload`,
-    `kv_offload_block_size`, and `kv_offload_cpu_bytes` into separate template variables
-    with explicit fallback values, r
-  category: style
+    path: .claude/skills/entrypoints/SKILL.md
+    lines: 46-47
+  evidence: The gold solution correctly modifies `InferenceConfig` in `src/prime_rl/configs/inference.py`
+    and updates the corresponding entrypoint `src/prime_rl/entrypoints/inference.py`
+    to pass the new config values to the template.
+  category: architecture
+  verification: llm_judge
 distractors:
-- rule: 'Skills: update skills when modifying code to keep implicit knowledge explicit.'
-  collision_type: scope_ambiguity
-  why_distracting: The rule explicitly states 'You are responsible for keeping the
-    skills up to date whenever you or anyone else modifies the code.' An agent might
-    waste time trying to update `skills/config` or `skills/entrypoints` to document
-    the new `enable_dbo` or `kv_cache_offload` fields, but the gold solution does
-    not modify any skills files.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 37-41
-- rule: 'Testing: Write tests as plain functions with pytest fixtures.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to write new pytest functions to verify the
-    new config fields or the SLURM script generation logic, but the gold solution
-    does not include any tests for these changes.
+- rule: 'Skills: You are responsible for keeping the skills up to date whenever you
+    or anyone else modifies the code.'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to update `skills/config` or `skills/entrypoints`
+    to document the new `enable_dbo` and `kv_cache_offload` fields. However, skills
+    are meant for high-level workflow documentation, not exhaustive API/config field
+    references.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 43-45
-hierarchy_analysis: The configuration hierarchy is flat with only `AGENTS.md` providing
-  rules. The rules are generally high-level principles (Zen of Python) and workflow
-  instructions (Skills, Testing).
+    lines: 28-32
+- rule: 'Zen of Python: Flat is better than nested.'
+  collision_type: rule_conflict
+  why_distracting: The agent might try to flatten the KV cache offload fields (`block_size`,
+    `cpu_bytes`) directly into `DisaggregatedInferenceDeploymentConfig` to avoid nesting,
+    which directly conflicts with the PR instruction to create a separate `KVCacheOffloadConfig`
+    pydantic model.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 11-11
+- rule: How the prime-rl config system works — TOML files, CLI, config composition,
+    and special patterns.
+  source:
+    path: .claude/skills/config/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to update the example TOML configs in `examples/`
+    or `configs/debug/` to demonstrate the new fields, but the gold solution only
+    modifies the Python config definitions.
+  severity: medium
+hierarchy_analysis: The configuration is a flat, single-file setup (`AGENTS.md`) that
+  applies globally to all files in the repository. There are no hierarchical overrides
+  or deep config traversals required.

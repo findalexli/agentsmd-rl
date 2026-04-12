@@ -79,47 +79,69 @@ checks:
   description: Frontend build must succeed
 rubric:
 - rule: Toast notifications should only show on successful organization switch
+  source:
+    path: frontend/src/hooks/mutation/use-switch-organization.ts
+  reference: "onSuccess: (_, { orgId, orgName, isPersonal }) => {\n  const message\
+    \ = isPersonal\n    ? t(I18nKey.ORG$SWITCHED_TO_PERSONAL_WORKSPACE)\n    : t(I18nKey.ORG$SWITCHED_TO_ORGANIZATION,\
+    \ { name: orgName });\n  displaySuccessToast(message);\n"
 - rule: Hook logic should remain clean and readable after adding toast functionality
+  source:
+    path: frontend/src/hooks/mutation/use-switch-organization.ts
+  reference: "export const useSwitchOrganization = () => {\n  const { t } = useTranslation();\n\
+    \  const queryClient = useQueryClient();\n  const { setOrganizationId } = useSelectedOrganizationId();\n\
+    \  const navigate = useNavigate();\n  const conversationMatch = useMatch(\"/conversations/:conversationId\"\
+    );\n\n  return useMutation({\n    mutationFn: ({\n      orgId,\n    }: {\n   \
+    \   orgId: string;\n      orgName: string;\n      isPersonal: boolean;\n    })\
+    \ => organizationService.switchOrganization({ orgId }),\n    onSuccess: (_, {\
+    \ orgId, orgName, isPersonal }) => {\n      const message = isPersonal\n     \
+    \   ? t(I18nKey.ORG$SWITCHED_TO_PERSONAL_WORKSPACE)\n        : t(I18nKey.ORG$SWITCHED_TO_ORGANIZATION,\
+    \ { name: orgName });\n      displaySuccessToast(message);\n"
 - rule: Tests should properly mock external dependencies and verify behavior not implementation
+  source:
+    path: frontend/__tests__/components/features/org/org-selector.test.tsx
+  reference: "const displaySuccessToastSpy = vi.spyOn(\n  ToastHandlers,\n  \"displaySuccessToast\"\
+    ,\n);\n"
 - rule: React frontend code is located in the `frontend` directory.
   source:
     path: AGENTS.md
     lines: 1-2
-  evidence: The gold solution correctly implements the React frontend changes within
-    the `frontend/` directory, specifically modifying `frontend/src/hooks/mutation/use-switch-organization.ts`
-    and `frontend/src/co
+  reference: 'frontend/src/hooks/mutation/use-switch-organization.ts
+
+    frontend/src/components/features/org/org-selector.tsx
+
+    '
   category: architecture
 distractors:
-- rule: To set up the entire repo, including frontend and backend, run `make build`.
-    You don't need to do this unless the user asks you to.
+- rule: When working on a PR that requires design documents... store them in a `.pr/`
+    directory
   collision_type: scope_ambiguity
-  why_distracting: The agent might run `make build` to set up the repo for testing
-    the frontend changes, but the rule explicitly states not to do this unless requested.
-    Running it would waste time and resources for a simple frontend UI change.
-  severity: medium
+  why_distracting: The agent might interpret adding a new user-facing feature as requiring
+    a design document or analysis notes in the `.pr/` directory, wasting time on unnecessary
+    documentation for a simple toast notification.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 41-51
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+    You don't need to do this unless the user asks you to
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run `make build` to test its frontend
+    changes, which is a heavy operation, despite the rule stating it's only needed
+    if the user asks or to run the entire application.
+  severity: low
   source:
     path: AGENTS.md
     lines: 4-6
-- rule: When working on a PR that requires design documents... store them in a `.pr/`
-    directory at the repository root.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might create a `.pr/design.md` file to document the organization
-    switching toast notification feature, but this is a simple UI addition, not a
-    complex refactoring or debugging session that warrants PR-specific artifacts.
-  severity: low
+- rule: Use this skill when testing a cross-repo feature or when changes span the
+    SDK and OpenHands server repos.
   source:
-    path: AGENTS.md
-    lines: 36-45
-- rule: If you've made changes to the backend, you should run `pre-commit run --config
-    ./dev_config/python/.pre-commit-config.yaml`
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-3
   collision_type: scope_ambiguity
-  why_distracting: The agent might run the Python backend pre-commit hooks, but this
-    PR only involves frontend TypeScript/React changes, making the backend linting
-    unnecessary.
-  severity: low
-  source:
-    path: AGENTS.md
-    lines: 20-20
-hierarchy_analysis: The AGENTS.md file provides general repository guidelines. There
-  are no conflicting rules in the hierarchy since only one config file is provided.
+  why_distracting: The agent might attempt to run cross-repo tests because organization
+    switching involves backend state, but this task is strictly a frontend visual
+    feedback addition.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat repository-level
+  file (`AGENTS.md`) containing generic boilerplate instructions.
 version: '2.0'

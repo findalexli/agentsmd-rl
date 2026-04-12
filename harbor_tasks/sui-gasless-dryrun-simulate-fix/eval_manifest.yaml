@@ -20,25 +20,18 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: Gasless path uses check_transaction_input directly without mock gas
-- id: test_repo_compiles
-  type: pass_to_pass
-  origin: repo_tests
-  description: sui-core compiles with cargo check
-- id: test_no_clippy_errors
-  type: pass_to_pass
-  origin: agent_config
-  source:
-    path: CLAUDE.md
-    lines: ''
-  description: No clippy errors in sui-core (per CLAUDE.md requirement)
 - id: test_repo_rustfmt
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's code passes rustfmt check
+  description: Repo code passes rustfmt check (cargo fmt --check)
 - id: test_repo_license_check
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's license headers pass lint check
+  description: Repo license headers pass cargo xlint
+- id: test_repo_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes git checks script
 rubric:
 - rule: 'Authority System: Each authority maintains its own state and participates
     in Byzantine consensus.'
@@ -59,38 +52,35 @@ rubric:
     the most relevant packages.
   category: tooling
 distractors:
-- rule: '`cargo xclippy does not recognize -p option`'
-  collision_type: meta_confusion
-  why_distracting: The prompt explicitly requires running `cargo clippy -p sui-core`.
-    The agent might read this rule and decide to run `cargo xclippy` without `-p`
-    on the entire workspace, which would take an excessive amount of time and potentially
-    fail on unrelated crates.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 54-55
-- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run `cargo simtest -p sui-e2e-tests` to
-    verify its changes, but this is a massive test suite that will likely time out
-    or take too long. The prompt only requires `cargo check` and `cargo clippy`.
+- rule: cargo xclippy does not recognize -p option
+  collision_type: rule_conflict
+  why_distracting: The config states that `cargo xclippy` does not recognize the `-p`
+    option, while the task instruction explicitly requires running `cargo clippy -p
+    sui-core`. This creates confusion over which linting command to use.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 30-31
-- rule: All new files must start with the following license in comments
+    lines: 48-50
+- rule: Run Rust unittests with SUI_SKIP_SIMTESTS=1 cargo nextest run
   collision_type: scope_ambiguity
-  why_distracting: The agent might mistakenly try to prepend the license header to
-    `authority.rs` if it misinterprets the file modification as a new file creation,
-    leading to duplicate license headers.
+  why_distracting: The config suggests running all Rust unittests with `SUI_SKIP_SIMTESTS=1
+    cargo nextest run`, whereas the instruction only asks for `cargo check -p sui-core`.
+    Running the full test suite would waste significant time.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 18-21
-hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md`. The root
-  `CLAUDE.md` provides general guidelines for building, testing, and linting. The
-  prompt's specific instructions to run `cargo clippy -p sui-core` conflict with the
-  `CLAUDE.md` note about `cargo xclippy` not recognizing the `-p` option, creating
-  a meta-level confusion where the agent must prioritize the prompt's explicit instructions
-  over the general config warning.
+    lines: 33-35
+- rule: Protocol configuration management and modification
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The task requires checking `protocol_config.enable_gasless()`.
+    An agent might activate the protocol-config skill thinking it needs to modify
+    or add new protocol configurations, wasting time on irrelevant domain rules instead
+    of just calling the existing method.
+  severity: medium
+hierarchy_analysis: The hierarchy is shallow. `AGENTS.md` defers to `CLAUDE.md`, which
+  contains generic repository guidelines. The task instructions override the generic
+  testing commands in `CLAUDE.md`.
 version: '2.0'

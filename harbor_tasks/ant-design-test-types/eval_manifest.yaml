@@ -90,6 +90,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI Node.js tests pass for relevant subset (npm run test:node equivalent)
+- id: test_npm_version_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: npm run version generates version file successfully
+- id: test_lint_md_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Markdown lint passes (npm run lint:md)
+- id: test_lint_changelog_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Changelog lint passes (npm run lint:changelog)
 config_edits:
 - path: tests/setupAfterEnv.ts
   tier: 1
@@ -112,31 +124,46 @@ rubric:
     `FocusableRef`) and uses generics (`querySelector<HTMLElement>`) to replace `any`
     types, aligning with the project's core TypeScr
   category: style
+- rule: 使用 TypeScript 和 React 开发
+  source:
+    path: AGENTS.md
+    lines: 7-8
+  evidence: The gold solution replaces `any` with explicit TypeScript types like `SnapshotTarget`
+    and `FocusableRef`, aligning with the project's TypeScript usage.
+  category: style
 distractors:
-- rule: 忽略用户无感知的改动（内部重构、纯测试更新、工具链优化等） (Ignore changes imperceptible to users like
-    pure test updates)
-  collision_type: meta_confusion
-  why_distracting: The agent might try to document this TypeScript fix in the Changelog
-    since it's a codebase improvement. However, the rule explicitly states to ignore
-    '纯测试更新' (pure test updates) and '内部重构' (internal refactoring). Adding a changelog
-    entry for test utility type fixes would violate this rule.
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本... 忽略用户无感知的改动（内部重构、纯测试更新、工具链优化等）'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see the extensive changelog rules and attempt to
+    document this type safety improvement in `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md`.
+    However, the rule explicitly states to ignore user-imperceptible changes ('忽略用户无感知的改动（内部重构、纯测试更新、工具链优化等）').
+    Since this is a pure test utility update, adding a changelog would violate this
+    exemption.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 111-114
-- rule: Test 导入规范 - 本规范适用于 components/**/__tests__/ 下的测试文件 (Test import rules apply
-    to components/**/__tests__/)
+    path: AGENTS.md
+    lines: 115-120
+- rule: 'Test 导入规范: 本规范适用于 `components/**/__tests__/` 下的测试文件。'
   collision_type: scope_ambiguity
-  why_distracting: The agent might see it is editing files in the `tests/` directory
-    and try to apply the 'Test 导入规范' (Test import rules) to refactor existing imports.
-    However, the rule explicitly states it only applies to `components/**/__tests__/`.
-  severity: medium
+  why_distracting: The agent might try to validate or refactor imports in the edited
+    files based on the 'Test 导入规范' (Test Import Rules). However, this rule explicitly
+    applies only to `components/**/__tests__/` directories, whereas the edited files
+    are located in the global `tests/` and `tests/shared/` directories.
+  severity: low
   source:
-    path: CLAUDE.md
-    lines: 40-45
-hierarchy_analysis: 'CLAUDE.md and AGENTS.md are identical and provide project-wide
-  guidelines. The rules focus heavily on PRs, Changelogs, and Imports. For this specific
-  task, the most critical interaction with the config is negative: the agent must
-  recognize that test utility updates fall under the ''ignored'' category for Changelogs
-  and that root `tests/` files are exempt from component test import rules.'
+    path: AGENTS.md
+    lines: 45-50
+- rule: Help maintainers reply to Ant Design GitHub issues following official guidelines.
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might activate the issue-reply skill assuming the 'Fix'
+    instruction implies an issue needs to be managed or replied to, wasting effort
+    on irrelevant workflow steps.
+  severity: low
+hierarchy_analysis: The configuration is provided in identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no complex inheritance, but the agent must correctly
+  parse the scope exemptions within the flat rules (e.g., changelog exemptions for
+  test updates).
 version: '2.0'

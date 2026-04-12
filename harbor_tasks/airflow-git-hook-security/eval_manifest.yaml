@@ -11,6 +11,14 @@ checks:
   type: pass_to_pass
   description: Git hook passes ruff format check
   origin: repo_tests
+- id: repo_flake8_check
+  type: pass_to_pass
+  description: Git hook passes flake8 linting
+  origin: repo_tests
+- id: repo_bandit_security_check
+  type: pass_to_pass
+  description: Git hook passes bandit security scan
+  origin: repo_tests
 - id: repo_git_hook_imports
   type: pass_to_pass
   description: Git hook module can be imported without errors
@@ -19,13 +27,25 @@ checks:
   type: pass_to_pass
   description: Git hook can be imported
   origin: repo_tests
-- id: repo_git_hook_has_ast_structure
+- id: repo_git_hook_unit_tests
   type: pass_to_pass
-  description: Git hook AST has expected structure
+  description: Git provider unit tests pass
   origin: repo_tests
-- id: repo_git_hook_has_expected_strings
+- id: repo_git_hook_ssh_tests
   type: pass_to_pass
-  description: Git hook source has expected strings
+  description: Git hook SSH command tests pass
+  origin: repo_tests
+- id: repo_git_hook_proxy_tests
+  type: pass_to_pass
+  description: Git hook proxy command tests pass
+  origin: repo_tests
+- id: repo_git_hook_known_hosts_tests
+  type: pass_to_pass
+  description: Git hook known hosts tests pass
+  origin: repo_tests
+- id: repo_git_hook_ssh_config_tests
+  type: pass_to_pass
+  description: Git hook SSH config tests pass
   origin: repo_tests
 - id: ssh_quotes_key_path_spaces
   type: fail_to_pass
@@ -45,7 +65,7 @@ checks:
   origin: pr_diff
 - id: ssh_quotes_proxy_cmd
   type: fail_to_pass
-  description: SSH command properly quotes host_proxy_cmd
+  description: SSH command properly quotes host_proxy_cmd path
   origin: pr_diff
 - id: strict_host_check_validation
   type: fail_to_pass
@@ -89,57 +109,66 @@ checks:
   origin: pr_diff
 rubric:
 - source:
-    path: CLAUDE.md
+    path: AGENTS.md
   reference: '- Use ValueError instead of AirflowException for invalid strict_host_key_checking
 
     '
   rule: Use ValueError instead of AirflowException for invalid strict_host_key_checking
 - source:
-    path: CLAUDE.md
+    path: AGENTS.md
   reference: '- urllib.parse import should be at top of file
 
     '
   rule: urllib.parse import should be at top of file
 - rule: providers/ — 100+ provider packages, each with its own...
   source:
-    path: CLAUDE.md
+    path: AGENTS.md
     lines: 42-42
   evidence: The gold solution correctly modifies the Git provider code in `providers/git/src/airflow/providers/git/hooks/git.py`,
     adhering to the monorepo structure where providers are isolated in the `providers/
   category: architecture
+- rule: 'Building blocks: Hooks, Operators, Sensors, Transfers.'
+  source:
+    path: providers/AGENTS.md
+    lines: 8-9
+  evidence: The gold solution modifies a file in the `hooks/` directory (`providers/git/src/airflow/providers/git/hooks/git.py`),
+    aligning with the defined provider structure building blocks.
+  category: architecture
 distractors:
 - rule: Keep provider.yaml metadata, docs, and tests in sync.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to bump the provider version or update metadata
-    in `provider.yaml` because of the security fix, but version bumps are typically
-    handled by release managers, not in individual PRs.
-  severity: high
-  source:
-    path: providers/AGENTS.md
-    lines: 16-16
-- rule: Use `version_compat.py` patterns for cross-version compatibility.
-  collision_type: meta_confusion
-  why_distracting: The agent might try to import `shlex` or `urllib.parse` through
-    a `version_compat.py` file to ensure cross-version compatibility, but these are
-    standard library modules that don't require compatibility wrappers.
+  why_distracting: The rule instructs to keep provider.yaml, docs, and tests in sync.
+    An agent might waste time trying to write tests for the new validation or update
+    documentation, whereas the gold solution strictly implements the security patches
+    requested without touching tests or docs.
   severity: medium
   source:
     path: providers/AGENTS.md
-    lines: 12-12
+    lines: 12-13
 - rule: Tests live alongside the provider — mirror source paths in test directories.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to add tests for the new validation logic,
-    but the gold solution focuses purely on the security patch without expanding test
-    coverage.
+  why_distracting: The rule mandates that tests live alongside the provider and mirror
+    source paths. An agent might try to create or modify tests for the new security
+    validations (e.g., testing the ValueError for strict_host_key_checking), but the
+    gold solution only patches the source code.
   severity: medium
   source:
     path: providers/AGENTS.md
-    lines: 18-18
-hierarchy_analysis: The config hierarchy starts with general Airflow monorepo instructions
-  in `CLAUDE.md` and `AGENTS.md`, and narrows down to provider-specific instructions
-  in `providers/AGENTS.md`. The provider-specific instructions introduce potential
-  distractions around metadata synchronization and compatibility patterns that are
-  out of scope for a targeted security patch.
+    lines: 14-15
+- rule: When adding a translation, some configuration files need to be updated before
+    translation work can begin.
+  source:
+    path: .github/skills/airflow-translations/SKILL.md
+    lines: 14-15
+  collision_type: architecture_boundary
+  why_distracting: The agent is adding a new error message ('Invalid strict_host_key_checking
+    value') and might mistakenly attempt to add it to the UI translation files, which
+    is incorrect for backend provider exceptions.
+  severity: low
+hierarchy_analysis: The hierarchy consists of root-level AGENTS.md/CLAUDE.md and provider-level
+  AGENTS.md. The provider-level config adds specific instructions for provider packages,
+  but neither level contains rules directly applicable to the specific security fixes
+  required in this task.
 version: '2.0'
 source:
   repo: apache/airflow

@@ -40,85 +40,61 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Biome format check passes on popconfirm component
-rubric:
-- source:
-    path: components/popconfirm/index.tsx
-  reference: "export type PopconfirmSemanticType = {\n  classNames?: PopoverSemanticType['classNames']\
-    \ & {\n    icon?: string;\n  };\n  styles?: PopoverSemanticType['styles'] & {\n\
-    \    icon?: React.CSSProperties;\n  };\n};\n"
-  rule: Type definitions are precise and don't use 'any' type
-- source:
-    path: components/popconfirm/PurePanel.tsx
-  reference: 'import type { PopconfirmProps, PopconfirmSemanticAllType } from ''.'';
-
-    classNames?: PopconfirmSemanticAllType[''classNames''];
-
-    styles?: PopconfirmSemanticAllType[''styles''];
-
-    '
-  rule: Props interfaces are properly named and exported
-- source:
-    path: components/popconfirm/__tests__/semantic.test.tsx
-  reference: 'icon: ''custom-icon''
-
-    icon: { color: ''blue'' }
-
-    icon: ''dynamic-icon''
-
-    '
-  rule: Unit tests verify icon semantic styling works correctly
-- source:
-    path: components/popconfirm/demo/_semantic.tsx
-  reference: '{ name: ''icon'', desc: locale.icon }
-
-    '
-  rule: Demo imports use absolute paths, test imports use relative paths
-- rule: Project structure defines `index.tsx` as the export entry for a component
-    directory.
-  source:
-    path: CLAUDE.md
-    lines: 12-24
-  evidence: In `PurePanel.tsx`, the gold solution imports `PopconfirmSemanticAllType`
-    from `.` (resolving to `index.tsx`), which aligns with the defined project structure
-    where `index.tsx` serves as the export en
-  category: architecture
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes
+- id: test_repo_popconfirm_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Popconfirm unit tests pass
+- id: test_repo_popconfirm_a11y
+  type: pass_to_pass
+  origin: repo_tests
+  description: Popconfirm accessibility tests pass
+- id: test_repo_popconfirm_demo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Popconfirm demo tests pass
+- id: test_repo_popconfirm_type
+  type: pass_to_pass
+  origin: repo_tests
+  description: Popconfirm TypeScript type tests pass
+rubric: []
 distractors:
-- rule: 'Changelog 规范: Must provide bilingual changelog entries for user-facing changes.'
+- rule: Demo 导入规范要求使用绝对路径，但明确排除了 semantic.test.tsx
   collision_type: scope_ambiguity
-  why_distracting: The agent might see that a new feature (semantic styling for icon)
-    is added and try to update `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md` according
-    to the changelog rules. However, the task instructions only specify modifying
-    files in `components/popconfirm/`, making changelog updates out of scope.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 110-115
-- rule: '文档规范: API table format for English and Chinese documentation.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to update the API tables in `components/popconfirm/index.en-US.md`
-    and `index.zh-CN.md` to document the new `icon` property. The instructions only
-    mention adding it to the semantics documentation list in `demo/_semantic.tsx`,
-    so modifying the markdown files is out of scope.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 53-70
-- rule: 'Demo 导入规范: Use absolute paths for imports, do not use relative paths.'
-  collision_type: scope_ambiguity
-  why_distracting: The rule strictly forbids relative imports (`..`, `./xxx`) and
-    mandates absolute imports for demos. An agent might mistakenly apply this rule
-    to the main component file `PurePanel.tsx` and change the valid relative import
-    `import type { ... } from '.';` to an absolute one, which violates the project's
-    internal architecture.
+  why_distracting: The agent might apply Demo import rules (which mandate absolute
+    paths) to `semantic.test.tsx` because it is closely related to the semantic demo
+    feature. However, the rule explicitly excludes `semantic.test.tsx`, meaning it
+    must follow the Test import rules (relative paths) instead.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 36-41
-hierarchy_analysis: The repository uses identical rules in `CLAUDE.md` and `AGENTS.md`.
-  The rules define strict boundaries for different file types (e.g., Demo vs Test
-  import rules). Agents must carefully check the file path before applying import
-  rules, as applying demo rules to component source files or test files will cause
-  architectural violations.
+    path: AGENTS.md
+    lines: 28-33
+- rule: Changelog 规范与 PR 规范
+  collision_type: meta_confusion
+  why_distracting: The config provides extensive rules for Changelog and PR creation.
+    Given the presence of `antd-create-pr` and `changelog-collect` skills in the repository,
+    the agent might waste time trying to generate a PR or modify CHANGELOG.md, which
+    is out of scope for this specific code-level implementation task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 85-100
+- rule: Help maintainers reply to Ant Design GitHub issues following official guidelines.
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: meta_confusion
+  why_distracting: The task description is formatted like an issue ('Problem Description...'),
+    which might trigger the issue-reply skill. The agent needs to implement code,
+    not generate a reply to a GitHub issue.
+  severity: low
+hierarchy_analysis: The configuration is flat, with identical rules duplicated in
+  AGENTS.md and CLAUDE.md. The primary challenge is scope discrimination within the
+  same file, specifically noticing the explicit exception for `semantic.test.tsx`
+  in the Demo import rules and correctly applying the contrasting Test import rules.
 version: '2.0'
 source:
   repo: ant-design/ant-design

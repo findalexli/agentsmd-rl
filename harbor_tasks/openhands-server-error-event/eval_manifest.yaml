@@ -126,32 +126,60 @@ rubric:
     to verify the new `ServerErrorEvent` handling, aligning with the requirement to
     ensu
   category: testing
-distractors:
-- rule: Run Python pre-commit hooks if changes are made to the backend.
-  collision_type: architecture_boundary
-  why_distracting: The problem description mentions 'The Agent Server has been updated'.
-    The agent might mistakenly think it needs to inspect or modify the Python backend
-    to understand the `ServerErrorEvent` structure, and subsequently try to run backend
-    pre-commit hooks, wasting time outside the frontend scope.
-  severity: high
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
   source:
     path: AGENTS.md
-    lines: 18-18
-- rule: Store PR-specific artifacts like design documents or analysis notes in a `.pr/`
-    directory.
-  collision_type: meta_confusion
-  why_distracting: The agent might interpret the task of adding a new event type as
-    requiring a design document or analysis notes, and create unnecessary files in
-    a `.pr/` directory instead of just implementing the frontend code.
+    lines: 17-18
+  evidence: The gold solution includes comprehensive tests in `frontend/__tests__/conversation-websocket-handler.test.tsx`
+    to ensure the new `ServerErrorEvent` handling works correctly, aligning with the
+    requirem
+  category: testing
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 21-22
+  evidence: The gold solution modifies frontend TypeScript and React files, ensuring
+    they are syntactically valid and properly typed to pass the required frontend
+    build and linting steps.
+  category: tooling
+distractors:
+- rule: When working on a PR that requires design documents or temporary artifacts,
+    store them in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the instruction to add a new event type
+    and type guards as requiring a design document or planning notes, prompting it
+    to create a `.pr/` directory. However, this is a straightforward feature addition
+    that does not require temporary PR artifacts.
   severity: low
   source:
     path: AGENTS.md
-    lines: 58-62
-hierarchy_analysis: The `AGENTS.md` file provides repository-wide instructions that
-  clearly separate frontend and backend workflows. The agent must correctly identify
-  that this task is strictly within the frontend scope (as specified by 'Files to
-  Modify') and ignore backend-specific rules and general PR artifact rules unless
-  explicitly requested.
+    lines: 60-70
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run `make build` to set up the entire
+    repository (including the Python backend) before starting, which is unnecessary
+    since the task only requires modifying frontend TypeScript files and running frontend
+    tests.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 5-6
+- rule: Use this skill to test a cross-repo feature or when changes span the SDK and
+    OpenHands server repos.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task involves handling an event sent by the backend in the
+    frontend, which might seem like a 'cross-repo feature' testing scenario. However,
+    the task only requires adding standard React/Jest unit tests in the frontend,
+    not cross-repo e2e testing.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat repository-level
+  file (`AGENTS.md`) containing generic boilerplate instructions. There is no complex
+  hierarchy, and no deeper file guidance overrides the root instructions.
 version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands

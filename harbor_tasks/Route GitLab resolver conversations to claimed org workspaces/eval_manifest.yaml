@@ -128,6 +128,17 @@ distractors:
   source:
     path: AGENTS.md
     lines: 8-11
+- rule: This skill should be used when the user asks to 'test a cross-repo feature',
+    'deploy a feature branch to staging', 'test SDK against OH Cloud', 'e2e test a
+    cloud workspace feature'
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task involves enterprise/SaaS features (resolver org routing)
+    which might seem like a cloud workspace feature requiring cross-repo testing,
+    but the task is strictly a backend implementation in the enterprise module.
+  severity: medium
 hierarchy_analysis: The repository has a single root-level AGENTS.md file providing
   general guidelines for setup, linting, git practices, and PR artifacts. No conflicting
   child configs exist.

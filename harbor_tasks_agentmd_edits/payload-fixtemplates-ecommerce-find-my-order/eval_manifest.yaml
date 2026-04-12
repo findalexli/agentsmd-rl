@@ -226,6 +226,17 @@ distractors:
   source:
     path: templates/ecommerce/AGENTS.md
     lines: '11'
+- rule: Use when new translation keys are added to packages to generate new translations
+    strings
+  source:
+    path: .claude/skills/generate-translations/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The task requires adding new UI text ('check your email' confirmation),
+    which might lead an agent to think it needs to add translation keys and run this
+    skill. However, generating translations is out of scope for this specific security
+    patch.
+  severity: low
 hierarchy_analysis: '`templates/ecommerce/AGENTS.md` provides specific Payload CMS
   rules that build upon the general Next.js/TypeScript rules in `CLAUDE.md`. The agent
   must carefully distinguish between Payload''s backend access control (collections)

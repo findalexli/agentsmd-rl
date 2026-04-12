@@ -1,165 +1,38 @@
-version: '2.0'
-source:
-  repo: PrimeIntellect-ai/prime-rl
-  pr: 2098
-  base_commit: ecd080928014e20d1927a4f8b0b01d399151fdba
-  merge_commit: c2b99e69ce31c71261f56c97fbd2ed467258f940
-checks:
-- id: syntax_check
+eval_id: prime-rl-qwen35-vlm-text-dispatch
+eval_groups:
+- id: syntax
+  type: static
+- id: pr_diff
+  type: pr_diff
+- id: agent_config
+  type: agent_config
+- id: repo_tests
   type: pass_to_pass
-  origin: static
-  description: Modified files (model.py, vlm.py) must parse without errors
-- id: is_vlm_architecture_classifies_configs
-  type: fail_to_pass
-  origin: pr_diff
-  description: is_vlm_architecture returns True for VLM types, False for text-only
-    types
-- id: get_model_uses_architecture_detection
-  type: fail_to_pass
-  origin: pr_diff
-  description: get_model() calls is_vlm_architecture() for model class dispatch
-- id: model_class_dispatch_uses_arch_detection
-  type: fail_to_pass
-  origin: pr_diff
-  description: AutoModelForImageTextToText dispatch uses architecture detection, not
-    training config
-- id: get_model_info_registry_lookup
-  type: pass_to_pass
-  origin: pr_diff
-  description: _get_model_info_from_config returns ModelInfo for VLM types, None otherwise
-- id: vlm_registry_entries
-  type: pass_to_pass
-  origin: pr_diff
-  description: VLM_REGISTRY has expected entries with valid attributes
-- id: is_vlm_architecture_not_stub
-  type: fail_to_pass
-  origin: static
-  description: is_vlm_architecture uses registry lookup, not hardcoded values
-- id: freeze_guarded_by_training_config
-  type: pass_to_pass
-  origin: pr_diff
-  description: freeze_vision_encoder guarded by training config, not architecture
-    detection
-- id: setup_fsdp_vision_guarded_by_training
-  type: pass_to_pass
-  origin: pr_diff
-  description: setup_fsdp vision encoder sharding guarded by training config, not
-    architecture detection
-- id: no_bare_except
-  type: pass_to_pass
-  origin: agent_config
-  description: No bare except blocks in modified files
-  source:
-    path: AGENTS.md
-    lines: '5'
-    commit: ecd080928014e20d1927a4f8b0b01d399151fdba
-- id: errors_not_silenced
-  type: pass_to_pass
-  origin: agent_config
-  description: No except-pass patterns that silently swallow errors
-  source:
-    path: AGENTS.md
-    lines: 5,23
-    commit: ecd080928014e20d1927a4f8b0b01d399151fdba
-- id: test_repo_ruff_check
-  type: pass_to_pass
-  origin: pr_diff
-  description: Repo's ruff lint check passes on modified files
-- id: test_repo_ruff_format
-  type: pass_to_pass
-  origin: pr_diff
-  description: Repo's ruff format check passes on modified files
-- id: test_repo_imports
-  type: pass_to_pass
-  origin: pr_diff
-  description: Modified files can be imported without errors
-- id: test_repo_configs_parse
-  type: pass_to_pass
-  origin: pr_diff
-  description: All repo config files are valid TOML
-- id: test_repo_readme_exists
-  type: pass_to_pass
-  origin: pr_diff
-  description: Repo README exists and is readable
-- id: test_repo_git_valid
-  type: pass_to_pass
-  origin: pr_diff
-  description: Repo has valid git structure and commit history
-- id: test_repo_vlm_registry_import
-  type: pass_to_pass
-  origin: pr_diff
-  description: VLM module imports correctly with all registry entries
-- id: test_repo_model_py_parses
-  type: pass_to_pass
-  origin: pr_diff
-  description: model.py parses as valid Python AST
-- id: test_repo_vlm_py_parses
-  type: pass_to_pass
-  origin: pr_diff
-  description: vlm.py parses as valid Python AST
+config_edits: []
 rubric:
-- rule: Do not add unnecessary comments. Use targeted comments sparingly to explain
-    ambiguous code, not to explain code changes or narrate the implementation.
+- rule: Avoid try/except blocks unless necessary for fault tolerance (retry mechanisms
+    or explicit robustness)
   source:
     path: AGENTS.md
-    lines: '7'
-    commit: ecd080928014e20d1927a4f8b0b01d399151fdba
-- rule: Simple is better than complex. Prefer clean, straightforward solutions over
-    clever or convoluted ones.
+    line: 5
+- rule: Do not add unnecessary comments explaining code changes or old code; use targeted
+    comments sparingly for ambiguous code only
   source:
     path: AGENTS.md
-    lines: '17'
-    commit: ecd080928014e20d1927a4f8b0b01d399151fdba
-- rule: Flat is better than nested. Avoid deeply nested conditionals and structures
-    when possible.
+    line: 7
+- rule: Errors should never pass silently (Zen of Python:23)
   source:
     path: AGENTS.md
-    lines: '18'
-    commit: ecd080928014e20d1927a4f8b0b01d399151fdba
-- rule: Do not add unnecessary comments. Especially do not try to explain code change
-    that reflect your work process, do not refer to old code.
-  source:
-    path: AGENTS.md
-    lines: 5-6
-  evidence: The gold solution modifies existing comments slightly (e.g., changing
-    'For VLM models' to 'For VLM training') but refrains from adding any new comments
-    explaining the bug fix, the separation of variab
-  category: style
-- rule: 'Zen of Python: Explicit is better than implicit.'
-  source:
-    path: AGENTS.md
-    lines: 11-12
-  evidence: 'The gold solution explicitly separates the overloaded `is_vlm` concept
-    into two distinct variables: `is_vlm_training` (based on config) and `is_vlm_arch`
-    (based on model architecture), making the dual'
-  category: style
+    line: 23
 distractors:
-- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
-    fails if something goes wrong.
-  collision_type: would_cause_bug
-  why_distracting: The bug description mentions that the code fails with a `ValueError`
-    when trying to load the model. An agent might be tempted to wrap the model loading
-    in a `try...except ValueError:` block to catch the error and fallback to the VLM
-    model class. This would violate the rule against unnecessary try/except blocks
-    and result in a hacky workaround rather than fixing the root cause of the overloaded
-    boolean flag.
-  severity: high
+- rule: How to write and use TOML configs in prime-rl. Use when creating config files,
+    running commands with configs...
   source:
-    path: AGENTS.md
-    lines: 3-4
-- rule: You are responsible for maintaining the skills folder. When a workflow fails
-    and you fix it... you must update the skills to make implicit knowledge explicit.
+    path: .claude/skills/toml-config/SKILL.md
+    lines: 1-2
   collision_type: scope_ambiguity
-  why_distracting: Because the bug involves how the TOML config (`[model.vlm]`) interacts
-    with model loading, an agent might believe it needs to update the `toml-config`
-    skill to document this edge case for Qwen3.5 MoE models. However, this is purely
-    an internal code logic bug, and the user-facing TOML workflow remains unchanged,
-    making skill updates out of scope.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 40-42
-hierarchy_analysis: The hierarchy is flat, with `CLAUDE.md` simply pointing to `AGENTS.md`.
-  The rules in `AGENTS.md` provide general Python and repository guidelines. The most
-  relevant rules for this PR are the Zen of Python principles (explicit over implicit)
-  and the strict guidance against unnecessary comments and try/except blocks.
+  why_distracting: The issue mentions the `[model.vlm]` section in the TOML config.
+    An agent might activate this skill and mistakenly attempt to fix the issue by
+    modifying default TOML configuration files or adding a TOML config workaround,
+    rather than fixing the underlying Python routing logic in `model.py`.
+  severity: low

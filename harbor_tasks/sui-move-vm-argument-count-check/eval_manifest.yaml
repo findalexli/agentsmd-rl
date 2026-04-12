@@ -75,58 +75,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo CI loader_tests module passes - validates VM module loading
-rubric:
-- rule: Always run cargo xclippy after finishing development to ensure code passes
-    all linting checks
-  source:
-    path: CLAUDE.md
-    lines: '111'
-    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
-- rule: Never disable or ignore tests - all tests must pass and be enabled
-  source:
-    path: CLAUDE.md
-    lines: '112'
-    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
-- rule: 'Never use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
-    - fix the underlying issues instead'
-  source:
-    path: CLAUDE.md
-    lines: '113'
-    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
-- rule: Do NOT comment the obvious - comments should not simply repeat what the code
-    does. Comment non-obvious algorithms, temporary exclusions, or subtle race conditions
-  source:
-    path: CLAUDE.md
-    lines: 118-131
-    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
-- rule: 'All new files must start with the Apache-2.0 license header: Copyright (c)
-    Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
-  source:
-    path: CLAUDE.md
-    lines: 17-20
-    commit: 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
+- id: test_repo_bad_entry_point_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI bad_entry_point_tests module passes - validates VM error handling
+    for invalid entry points
 distractors:
-- rule: For faster iteration, use -p to select only the most relevant packages for
-    testing. Use multiple `-p` flags if necessary, e.g. `cargo nextest run -p sui-types
-    -p sui-core`
-  collision_type: meta_confusion
-  why_distracting: The example suggests using `-p sui-types -p sui-core` for testing,
-    but this PR modifies `move-vm-runtime` in `external-crates`. An agent might blindly
-    copy the example and fail to run the relevant tests for the modified crate.
-  severity: medium
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The rule specifies adding a license header to new files. An agent
+    might mistakenly add it to the existing files being modified, misunderstanding
+    the scope of 'new files'.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 38-39
-- rule: sui-execution/ - Move execution layer with versions (v0, v1, v2 and latest)
-  collision_type: architecture_boundary
-  why_distracting: The architecture section describes `sui-execution/` as the 'Move
-    execution layer'. An agent might mistakenly try to implement the VM argument count
-    checks there instead of in `external-crates/move/crates/move-vm-runtime/`.
+    lines: 16-19
+- rule: Gate consensus-breaking or VM execution changes behind protocol configuration
+    flags.
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume that adding a new error (NUMBER_OF_ARGUMENTS_MISMATCH)
+    to the VM execution path requires a protocol config flag to avoid breaking consensus,
+    but this is an internal invariant check that should be applied directly.
   severity: high
-  source:
-    path: CLAUDE.md
-    lines: 63-63
-hierarchy_analysis: The root CLAUDE.md provides general repository guidelines, but
-  its examples for testing (`sui-core`, `sui-types`) and architecture descriptions
-  (`sui-execution/`) can be misleading for changes in the `external-crates/` directory.
+hierarchy_analysis: The hierarchy consists of root-level AGENTS.md and CLAUDE.md files
+  with generic repository guidelines. No crate-specific configs are present to guide
+  the Move VM modifications.
 version: '2.0'
+rubric: []

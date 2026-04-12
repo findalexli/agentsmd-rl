@@ -1,7 +1,7 @@
 checks:
 - id: test_repo_unit_tests_exist
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Repository's unit tests for the fix are present
 - id: test_repo_unit_tests_pass
   type: pass_to_pass
@@ -43,71 +43,71 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Asset-related model tests pass (related to fix)
+- id: test_shared_serialization_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shared serialization distribution tests pass (related to SerializedDagModel)
 rubric:
 - rule: Functions with a `session` parameter must not call `session.commit()`. Use
     keyword-only `session` parameters.
-  source:
-    path: CLAUDE.md
-- rule: Always format and check Python files with ruff immediately after writing or
-    editing them.
-  source:
-    path: CLAUDE.md
-- rule: No `assert` in production code.
-  source:
-    path: CLAUDE.md
-- rule: Add tests for new behavior — cover success, failure, and edge cases.
-  source:
-    path: CLAUDE.md
-- rule: Test location mirrors source structure.
-  source:
-    path: CLAUDE.md
+  reference: The dags_needing_dagruns method uses the session parameter passed to
+    it but does not call session.commit() - it only reads data and returns values,
+    leaving commit responsibility to the caller.
+- rule: Production code must not use assert statements for error handling or control
+    flow.
+  reference: The production code changes in dag.py use proper logging and conditionals
+    rather than assert statements - the fix adds a conditional check 'if missing_from_serialized'
+    with proper logging.
+- rule: Asset-triggered scheduling logic must handle missing SerializedDagModel gracefully
+    by logging and skipping rather than failing silently or crashing.
+  reference: The fix adds proper handling for Dags with AssetDagRunQueue rows but
+    no matching SerializedDagModel row - they are omitted from triggered_date_by_dag
+    with an informative log message.
+- rule: New tests should be added in the same test file as related existing tests.
+  reference: 'Two comprehensive tests added to the existing test_dag.py file alongside
+    related dags_needing_dagruns tests: test_dags_needing_dagruns_skips_adrq_when_serialized_dag_missing
+    and test_dags_needing_dagruns_missing_serialized_debug_lists_sorted_dag_ids.'
+- rule: SQLAlchemy models like DagModel are located in airflow-core/src/airflow/models/
+  reference: The DagModel class modification is in the correct location at airflow-core/src/airflow/models/dag.py,
+    following the repository structure for SQLAlchemy models.
+- rule: Code changes must include docstring updates reflecting the new behavior.
+  reference: The fix includes an updated docstring for dags_needing_dagruns explaining
+    the handling of Dags with AssetDagRunQueue rows but no matching SerializedDagModel
+    row.
 - rule: 'Repository Structure: `airflow-core/src/airflow/models/` contains SQLAlchemy
     models (DagModel, TaskInstance, DagRun, Asset, etc.)'
   source:
-    path: CLAUDE.md
-    lines: 33-34
-  evidence: The gold solution modifies `airflow-core/src/airflow/models/dag.py`, correctly
-    identifying it as the location for the `DagModel` logic as specified in the repository
-    structure.
+    path: AGENTS.md
+    lines: 34-36
+  evidence: The fix is implemented in `airflow-core/src/airflow/models/dag.py`, which
+    aligns with the repository structure documentation stating that SQLAlchemy models
+    like DagModel and Asset belong in this direc
   category: architecture
-- rule: Run a single test using `uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
-    -xvs`
-  source:
-    path: CLAUDE.md
-    lines: 14-15
-  evidence: The gold solution adds a new unit test `test_dags_needing_dagruns_skips_adrq_when_serialized_dag_missing`
-    in `airflow-core/tests/unit/models/test_dag.py`, which should be executed using
-    the provided `
-  category: testing
 distractors:
-- rule: Never run pytest, python, or airflow commands directly on the host — always
-    use `breeze`.
+- rule: Never run pytest directly on the host (use breeze) vs. Run a single test using
+    `uv run`
   collision_type: rule_conflict
-  why_distracting: The instruction explicitly states 'Never run pytest... directly
-    on the host — always use breeze', but immediately follows with `uv run` commands
-    for pytest. An agent might refuse to use `uv run` (which runs on the host) or
-    waste time setting up a full Breeze environment for a simple unit test, getting
-    stuck in a loop trying to resolve the contradiction.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 8-9
-- rule: 'If uv tests fail with missing system dependencies, run the tests with breeze:
-    `breeze run pytest <tests> -xvs`'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might preemptively use `breeze run pytest` instead of
-    `uv run` for the newly added test, assuming that database models or asset queues
-    require system dependencies. This is slower and unnecessary since this is a standard
-    unit test that runs fine with the default SQLite backend via `uv run`.
+  why_distracting: The instructions explicitly state 'Never run pytest... directly
+    on the host — always use breeze', but then immediately provide `uv run ... pytest`
+    commands as the primary way to run tests. This contradiction can confuse the agent
+    about which test execution method to use when verifying the fix.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 17-18
-hierarchy_analysis: '`CLAUDE.md` and `AGENTS.md` are identical at the root level.
-  The primary conflict exists within the file itself regarding test execution: a strict
-  rule forbids running pytest on the host, while subsequent examples explicitly use
-  `uv run` (a host command). The agent must infer that `uv run` is the preferred fast
-  path, and `breeze` is the fallback.'
+    path: AGENTS.md
+    lines: 9-15
+- rule: Translation work falls into one of two categories... run breeze ui check-translation-completeness
+  source:
+    path: .github/skills/airflow-translations/SKILL.md
+    lines: 10-20
+  collision_type: scope_ambiguity
+  why_distracting: This skill provides detailed instructions for UI translations and
+    running `breeze ui check-translation-completeness`. An agent might mistakenly
+    try to apply these UI/translation workflows or search for translation keys, which
+    is completely irrelevant to this backend scheduler bug.
+  severity: low
+hierarchy_analysis: The config hierarchy consists of identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no deep hierarchy, but there is an internal contradiction
+  within the files regarding test execution commands.
 version: '2.0'
 source:
   repo: apache/airflow

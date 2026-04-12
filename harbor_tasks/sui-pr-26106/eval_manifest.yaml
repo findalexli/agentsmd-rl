@@ -43,6 +43,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: The modified build-system-packages test compiles
+- id: test_repo_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git checks pass
 rubric:
 - rule: Do NOT comment the obvious - comments should explain invariants, not narrate
     code. Comments are for non-obvious algorithms, temporary exclusions, complex calculations,
@@ -72,28 +76,35 @@ distractors:
 - rule: Use `cargo nextest --lib` to run only library tests and skip integration tests
     for faster feedback
   collision_type: scope_ambiguity
-  why_distracting: The rule suggests using `cargo nextest --lib` for faster feedback,
-    but the modified file (`crates/sui-framework/tests/build-system-packages.rs`)
-    is an integration test. Using `--lib` would skip the test being fixed, preventing
-    the agent from verifying its changes.
+  why_distracting: The config recommends using `cargo nextest --lib` to skip integration
+    tests for faster feedback. However, the file being modified (`crates/sui-framework/tests/build-system-packages.rs`)
+    is an integration test. If the agent follows this rule, it will skip the very
+    test it is trying to fix and verify.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 36-37
-- rule: Build a specific crate. Generally don't need to do release build. cargo build
-    -p sui-core
+    lines: 39-40
+- rule: All new files must start with the following license in comments at the top
+    of the file
   collision_type: scope_ambiguity
-  why_distracting: The example build command specifies `-p sui-core`, but the agent
-    is modifying `sui-framework`. Running the example command verbatim would fail
-    to check the modified test file.
-  severity: medium
+  why_distracting: The agent might mistakenly treat the heavily modified test file
+    as a new file or create a new helper file for the temp directory logic, adding
+    the license header unnecessarily.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 24-28
-hierarchy_analysis: The repository uses a root CLAUDE.md and AGENTS.md. The root CLAUDE.md
-  provides general testing and building commands, but some of its examples (like `-p
-  sui-core` or `--lib`) are scoped to different contexts and can mislead an agent
-  working on an integration test in `sui-framework`.
+    lines: 16-19
+- rule: Use simtest-specific debugging tools and macros for tests.
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume this test is a simtest and try to apply
+    simtest-specific debugging or macros, but it is a standard tokio integration test.
+  severity: low
+hierarchy_analysis: The config hierarchy is flat, consisting of repository-level `AGENTS.md`
+  and `CLAUDE.md`. `AGENTS.md` defers to `CLAUDE.md` and crate-specific files, but
+  no crate-specific files are present in the context.
 version: '2.0'
 source:
   repo: MystenLabs/sui

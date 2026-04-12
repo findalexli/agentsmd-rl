@@ -65,6 +65,15 @@ rubric:
   category: style
   evidence: The gold solution implements the masking logic and adds `_MASKED_DIFF_MESSAGE`
     without adding any inline comments, as the code is self-explanatory.
+- rule: Output examples must demonstrate the exact diff format including git headers.
+  source:
+    path: .claude/skills/fetch-diff/SKILL.md
+    lines: 36-52
+  evidence: The gold solution adds a new output example for the masked file that includes
+    the `diff --git`, `index`, `---`, and `+++` headers, followed by the mask message,
+    matching the style of the existing example.
+  category: documentation
+  verification: llm_judge
 config_edits:
 - path: .claude/skills/fetch-diff/SKILL.md
   tier: 1
@@ -104,3 +113,12 @@ distractors:
     The rule specifically applies to tests, and the gold solution correctly updates
     the docstrings in the main code to reflect the new behavior.
   severity: low
+- rule: Fetches a pull request diff, filters out auto-generated files
+  source:
+    path: .claude/skills/fetch-diff/SKILL.md
+    lines: 8-10
+  collision_type: rule_conflict
+  why_distracting: The existing skill documentation explicitly states that auto-generated
+    files are filtered out. The agent must change this existing documented behavior
+    based on the new PR instruction to mask them instead.
+  severity: high

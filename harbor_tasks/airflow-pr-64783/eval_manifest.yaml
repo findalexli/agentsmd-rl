@@ -77,42 +77,26 @@ rubric:
     lines: '78'
     commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
 distractors:
-- rule: Never run pytest, python, or airflow commands directly on the host — always
-    use `breeze`.
-  collision_type: meta_confusion
-  why_distracting: The rule insists on using `breeze` for running python commands,
-    which might lead the agent to try testing the script via `breeze run python scripts/in_container/install_airflow_and_providers.py`.
-    However, this script is specifically designed to be executed during the Docker
-    image build process, not as a standard runtime command within the Breeze environment.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 9-9
-- rule: Place temporary scripts in `dev/` (mounted as `/opt/airflow/dev/` inside Breeze).
+- rule: 'Run scripts tests: uv run --project scripts pytest scripts/tests/ -xvs'
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to move the script to `dev/` or create
-    a temporary wrapper there to test the installation logic. This is distracting
-    because the script must remain exactly at `scripts/in_container/install_airflow_and_providers.py`
-    to be correctly copied and executed by the project's Dockerfile.
+  why_distracting: The agent might attempt to run script tests to verify the change,
+    but testing container installation scripts often requires a full container build
+    or specific environment not easily mocked, leading to wasted effort.
   severity: low
   source:
-    path: CLAUDE.md
-    lines: 10-10
-- rule: 'Run scripts tests: `uv run --project scripts pytest scripts/tests/ -xvs`'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might waste time trying to run or write unit tests for
-    this script using the `uv run --project scripts pytest scripts/tests/` command.
-    Container build scripts often lack direct unit tests and are instead validated
-    by successfully building the Docker image.
-  severity: low
+    path: AGENTS.md
+    lines: 28-28
+- rule: Apply Airflow translation guidelines to user-facing text.
   source:
-    path: CLAUDE.md
-    lines: 27-27
-hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
-  and provide general repository commands. Since the task involves modifying a Docker
-  container build script (`scripts/in_container/`), standard local testing commands
-  (like `breeze` or `uv run`) are largely inapplicable, creating potential meta-confusion
-  for an agent trying to verify its changes.
+    path: .github/skills/airflow-translations/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to apply translation guidelines to the
+    `console.print` messages added in the script, but this is an internal container
+    script that does not use Airflow's translation infrastructure.
+  severity: low
+hierarchy_analysis: Flat structure with identical AGENTS.md and CLAUDE.md files containing
+  general repository commands. No specific coding guidelines are present.
 version: '2.0'
 source:
   repo: apache/airflow

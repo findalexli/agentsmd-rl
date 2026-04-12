@@ -76,6 +76,32 @@ rubric:
     working with directives, embedded languages, and AST inspection, aligning with
     the file's stated purpose of providing guidance s
   category: documentation
+- rule: 'Naming conventions: Prefix all nodes with language name: `HtmlElement`, `CssRule`'
+  source:
+    path: .claude/skills/parser-development/SKILL.md
+    lines: 35-40
+  evidence: The gold solution creates `HtmlAttributeInitializerClause` in `crates/biome_html_syntax/src/directive_ext.rs`,
+    following the convention to prefix AST nodes with the language name (`Html`).
+  category: naming
+  verification: llm_judge
+- rule: Skill files must include a description with `<example>` tags to help the agent
+    understand when to use the skill.
+  source:
+    path: .claude/skills/lint-rule-development/SKILL.md
+    lines: 1-5
+  evidence: The newly created `.claude/skills/biome-developer/SKILL.md` includes a
+    YAML frontmatter with a `description` containing `<example>` tags, matching the
+    metadata format of existing skill files.
+  category: documentation
+  verification: llm_judge
+- rule: 'Prefix all nodes with language name: `HtmlElement`, `CssRule`'
+  source:
+    path: .claude/skills/parser-development/SKILL.md
+    lines: 44-45
+  evidence: The gold solution uses the `Html` prefix for syntax nodes, as seen in
+    the grep check for `HtmlAttributeInitializerClause` in `directive_ext.rs`.
+  category: naming
+  verification: llm_judge
 config_edits:
 - path: .claude/skills/README.md
   tier: 2
@@ -136,6 +162,36 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 25-35
+- rule: Step-by-step guide for creating and implementing lint rules in Biome's analyzer.
+    Use when implementing rules like noVar, useConst, or any custom lint/assist rule.
+  source:
+    path: .claude/skills/lint-rule-development/SKILL.md
+    lines: 1-10
+  collision_type: architecture_boundary
+  why_distracting: The task is to fix a bug where the `noUnusedVariables` linter incorrectly
+    reports variables as unused. An agent might activate this skill and attempt to
+    modify the lint rule directly. However, the issue is actually in the HTML file
+    handler failing to extract embedded JavaScript, so modifying the lint rule would
+    be the wrong architectural approach.
+  severity: high
+- rule: Guide for implementing configurable options for lint rules and assists.
+  source:
+    path: .claude/skills/rule-options/SKILL.md
+    lines: 1-3
+  collision_type: would_cause_bug
+  why_distracting: The agent might think it needs to add an option to the `noUnusedVariables`
+    rule to ignore Vue/Svelte directives, rather than fixing the underlying embedded
+    JS extraction.
+  severity: high
+- rule: Guide for implementing formatting rules using Biome's IR-based formatter infrastructure.
+  source:
+    path: .claude/skills/formatter-development/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The skill mentions HTML and AST nodes, which might lead the agent
+    to modify formatter rules for Vue/Svelte directives instead of the file handler's
+    embedded JS extraction logic.
+  severity: medium
 hierarchy_analysis: The config hierarchy consists of CLAUDE.md and AGENTS.md at the
   root level. Both files provide high-level contribution guidelines, but they heavily
   focus on the PR process (changesets, PR descriptions, AI disclosure). For a code-generation

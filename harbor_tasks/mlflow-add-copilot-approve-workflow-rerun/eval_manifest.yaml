@@ -61,6 +61,16 @@ rubric:
   category: documentation
   evidence: 'The approve.sh script includes a comment explaining the non-obvious workaround:
     "The /approve API fails with ''not a fork pull request''. Use /rerun instead."'
+- rule: Document skill usage with a markdown heading and a bash code block demonstrating
+    the command
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 18-22
+  evidence: The gold solution updates SKILL.md by adding a new section '## Approving
+    workflows' with a bash code block, exactly matching the formatting of the existing
+    '## Polling for completion' section.
+  category: documentation
+  verification: llm_judge
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -97,6 +107,15 @@ distractors:
     the new bash script, which is outside the scope of the task and the established
     pattern for these Claude skill scripts.
   severity: medium
+- rule: Analyze failed GitHub Action jobs for a pull request
+  source:
+    path: .claude/skills/analyze-ci/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The analyze-ci skill deals with GitHub Action jobs, which might
+    lead the agent to integrate the rerun logic there or use its conventions, but
+    the task explicitly requires adding the script to the copilot skill.
+  severity: low
 hierarchy_analysis: The repository has a single root-level CLAUDE.md file that is
   heavily focused on Python development, MLflow architecture, and local dev servers.
   Since this task involves writing a bash script for GitHub API interactions within

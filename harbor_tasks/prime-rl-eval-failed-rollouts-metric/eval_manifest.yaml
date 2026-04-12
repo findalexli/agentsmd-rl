@@ -72,45 +72,40 @@ rubric:
 - rule: Errors should never pass silently.
   source:
     path: AGENTS.md
-    lines: 23-24
-  evidence: The gold solution explicitly calculates and logs `failed_groups` in `vf_utils.py`
-    and tracks `failed_rollouts` in `eval_utils.py` instead of letting the missing
-    data go unnoticed.
-  category: style
+    lines: 19-20
+  evidence: The gold solution explicitly logs warnings and reports metrics to the
+    monitor for failed rollouts and failed groups, adhering to the principle that
+    errors (failed rollouts) should not pass silently.
+  category: architecture
 - rule: Do not add unnecessary comments. Especially do not try to explain code change
     that reflect your work process.
   source:
     path: AGENTS.md
-    lines: 8-10
-  evidence: The gold solution implements the failure tracking and metric logging without
-    adding any inline comments explaining the new logic.
+    lines: 7-9
+  evidence: The gold solution implements the logic without adding any explanatory
+    comments about the changes made, keeping the code clean.
   category: style
 distractors:
-- rule: It's fine that a program fails if something goes wrong as this helps us to
-    catch non-obvious bugs and unforeseen side-effects earlier.
-  collision_type: would_cause_bug
-  why_distracting: The agent might interpret 'It's fine that a program fails if something
-    goes wrong' as an instruction to raise an exception or let the program crash when
-    rollouts fail. However, the PR explicitly requests tracking the failure count
-    as a metric and reporting it to the monitoring system, which requires graceful
-    handling rather than crashing.
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
+    fails if something goes wrong as this helps us to catch non-obvious bugs.
+  collision_type: rule_conflict
+  why_distracting: The rule states 'It's fine that a program fails if something goes
+    wrong'. An agent might interpret this as an instruction to raise an exception
+    or let the program crash when rollouts fail, which directly conflicts with the
+    task's explicit instruction to gracefully track failures in metrics and continue.
   severity: high
   source:
     path: AGENTS.md
-    lines: 4-6
-- rule: Avoid try/except blocks unless it's really necessary.
-  collision_type: architecture_boundary
-  why_distracting: Because the prompt mentions failures during generation, an agent
-    might think it needs to add a try/except block to catch and count these failures.
-    However, the underlying generation code already catches exceptions and returns
-    `None` for failed groups. The agent only needs to count the `None` values, and
-    adding new exception handling would be redundant and incorrect.
-  severity: medium
+    lines: 5-7
+- rule: How to write and use TOML configs in prime-rl.
   source:
-    path: AGENTS.md
-    lines: 4-6
-hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply delegating
-  to `AGENTS.md`. The rules in `AGENTS.md` provide general Python guidelines (Zen
-  of Python) and specific instructions on error handling and comments. The Zen of
-  Python's 'Errors should never pass silently' perfectly aligns with the PR's core
-  objective of surfacing hidden failures.
+    path: .claude/skills/toml-config/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use the toml-config skill to add a configuration
+    flag for enabling/disabling failure tracking, which is unnecessary and out of
+    scope for this specific bug fix.
+  severity: low
+hierarchy_analysis: The configuration is flat, with CLAUDE.md simply pointing to AGENTS.md.
+  The rules provided are mostly generic Python guidelines (e.g., Zen of Python) rather
+  than project-specific architectural constraints.

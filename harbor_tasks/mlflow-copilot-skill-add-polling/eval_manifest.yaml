@@ -9,10 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: SKILL.md has valid YAML frontmatter with name and allowed-tools
-- id: repo_bash_syntax_poll
+- id: repo_bash_syntax_claude_scripts
   type: pass_to_pass
   origin: repo_tests
-  description: poll.sh passes bash syntax check (repo CI)
+  description: Existing .claude shell scripts pass bash syntax check
 - id: repo_yaml_valid_skill
   type: pass_to_pass
   origin: repo_tests
@@ -25,14 +25,26 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: SKILL.md frontmatter has required 'allowed-tools' field (repo CI)
-- id: repo_poll_is_executable
+- id: repo_python_syntax_hooks
   type: pass_to_pass
   origin: repo_tests
-  description: poll.sh has executable permissions (repo CI)
-- id: repo_poll_fails_without_args
+  description: .claude hooks Python files have valid syntax
+- id: repo_json_valid_settings
   type: pass_to_pass
   origin: repo_tests
-  description: poll.sh exits non-zero when called without arguments (repo CI)
+  description: .claude/settings.json is valid JSON
+- id: repo_hooks_are_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: .claude shell hooks are executable
+- id: repo_statusline_is_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: .claude/statusline.sh is executable
+- id: repo_claude_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: .claude directory structure has required files
 - id: poll_script_exists_executable
   type: fail_to_pass
   origin: pr_diff
@@ -58,15 +70,6 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: SKILL.md has a polling for completion section with usage instructions
-rubric:
-- rule: Only add comments that explain non-obvious logic or provide additional context
-  source:
-    path: CLAUDE.md
-    lines: 12-13
-  category: style
-  evidence: The bash script includes concise comments explaining the expected argument
-    format (`# owner/repo format (e.g., mlflow/mlflow)`) and the timeout conversion
-    (`# 30 minutes`), avoiding unnecessary commen
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -86,19 +89,37 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: Run Python tests (uv run pytest tests/)
+- rule: Run Python tests using pytest
+  collision_type: scope_ambiguity
+  why_distracting: The config file heavily emphasizes Python testing with pytest for
+    the MLflow backend. An agent might attempt to write Python tests for the new polling
+    script, but this is a simple bash script for a Claude skill where the MLflow Python
+    testing framework does not apply.
+  severity: medium
   source:
     path: CLAUDE.md
-    lines: 64-75
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write Python unit tests for the new
-    polling functionality and run the test suite. However, this is a standalone bash
-    script for a Claude skill, not part of the core MLflow Python package, so standard
-    Python testing does not apply.
-  severity: medium
-hierarchy_analysis: The repository has a single CLAUDE.md file at the root. The rules
-  in CLAUDE.md are heavily focused on the core MLflow Python package (SQLAlchemy tracking,
-  Databricks backend, Python testing with uv). Since this task involves modifying
-  a Claude skill (bash script and markdown docs) in the `.claude/skills/` directory,
-  most of the root config rules are out of scope. The agent must rely primarily on
-  the task instructions rather than the Python-centric repository guidelines.
+    lines: 63-75
+- rule: Use top-level imports (only use lazy imports when necessary)
+  collision_type: rule_conflict
+  why_distracting: The rule mandates top-level imports, which is a Python-specific
+    instruction. An agent might be confused and attempt to implement the polling mechanism
+    in Python to adhere to the repository's primary language conventions, conflicting
+    with the explicit instruction to write a shell script.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+hierarchy_analysis: The repository has a flat, single-file configuration (`CLAUDE.md`)
+  at the root level. The rules in `CLAUDE.md` are heavily tailored towards the MLflow
+  Python backend and Databricks integration, which are largely out of scope for this
+  meta-referential task of updating a Claude skill's bash script and markdown definition.
+rubric:
+- rule: Allowed tools for the skill must be listed under the `allowed-tools` YAML
+    frontmatter.
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 4-5
+  evidence: The gold solution appends the new polling script to the `allowed-tools`
+    list in the YAML frontmatter, respecting the existing tool declaration convention.
+  category: tooling
+  verification: llm_judge

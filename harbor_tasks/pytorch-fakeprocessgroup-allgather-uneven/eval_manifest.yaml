@@ -48,92 +48,98 @@ checks:
 - id: repo_fake_pg_python_syntax
   type: pass_to_pass
   origin: repo_tests
-  description: FakeProcessGroup test file must have valid Python syntax
+  description: FakeProcessGroup test file must have valid Python syntax (py_compile)
 - id: repo_clang_format
   type: pass_to_pass
   origin: repo_tests
   description: FakeProcessGroup.hpp must pass clang-format check per PyTorch CI
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: test_fake_pg.py must pass ruff check per PyTorch CI
+- id: repo_internal_fake_pg_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Internal fake_pg.py module must have valid Python syntax (py_compile)
 - id: repo_header_file_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: FakeProcessGroup.hpp must exist and be readable
-- id: test_repo_test_fake_pg_ast_valid
+- id: repo_test_fake_pg_ast_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: test_fake_pg.py must have valid Python AST
-- id: test_repo_internal_fake_pg_syntax
+- id: repo_header_utf8_valid
   type: pass_to_pass
-  origin: repo_tests
-  description: Internal fake_pg.py module must have valid Python syntax
-- id: test_repo_header_utf8_valid
-  type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: FakeProcessGroup.hpp must be valid UTF-8 encoded
-- id: test_repo_header_no_tabs
+- id: repo_header_no_tabs
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: FakeProcessGroup.hpp must use spaces, not tabs
 rubric:
+- rule: For code-only tasks, the agent's code changes should follow CLAUDE.md style
+    guidelines (minimal comments, matching existing patterns, no over-engineering).
+  source:
+    path: torch/csrc/distributed/c10d/FakeProcessGroup.hpp
+    lines: 99-102
+    commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
+  reference: 'Code changes follow CLAUDE.md rules: minimal 3-line fix, no comments
+    (self-documenting), uses if/continue pattern matching existing code style.'
+  category: style
 - rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
   source:
-    path: CLAUDE.md
-    lines: '54'
-    commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
+    path: torch/csrc/distributed/c10d/FakeProcessGroup.hpp
+    lines: 99-102
+  reference: The gold solution adds the size check without any explanatory comments,
+    relying on the code itself to be self-explanatory.
+  category: style
 - rule: If uncertain, choose the simpler, more concise implementation.
   source:
-    path: CLAUDE.md
-    lines: '68'
-    commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
-- rule: Match existing code style and architectural patterns.
-  source:
-    path: CLAUDE.md
-    lines: '63'
-    commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
-- rule: No over-engineering — only requested changes are made; no speculative features.
-  source:
-    path: .claude/skills/pr-review/review-checklist.md
-    lines: '11'
-    commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
-- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
-    it significantly improves code readability.
-  source:
-    path: CLAUDE.md
-    lines: 57-58
-    commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
+    path: torch/csrc/distributed/c10d/FakeProcessGroup.hpp
+    lines: 99-102
+  reference: The gold solution uses a simple continue statement to skip the copy operation,
+    avoiding complex conditional branching or helper functions.
+  category: style
 distractors:
 - rule: Once the change is passing, find an appropriate test file to add the test
     to and make sure to follow local conventions on the test file.
   collision_type: scope_ambiguity
-  why_distracting: The rule instructs the agent to find an appropriate test file and
-    add a test, but the gold solution does not include any test modifications. Attempting
-    to find and modify a test file for FakeProcessGroup would waste time and expand
-    the PR scope unnecessarily.
+  why_distracting: Instructs the agent to find an appropriate test file and add a
+    test, but the gold solution only modifies the C++ header file without adding any
+    tests. An agent might waste significant time searching for or writing a test.
   severity: medium
   source:
     path: AGENTS.md
     lines: 4-7
+- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
+  collision_type: rule_conflict
+  why_distracting: Instructs the agent to use 'lintrunner -a' for linting, which directly
+    conflicts with CLAUDE.md's instruction to 'Only use commands provided via spin
+    for linting'.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 11-11
 - rule: All build (both codegen, C++ and python) is done via `pip install -e . -v
     --no-build-isolation`.
   collision_type: rule_conflict
-  why_distracting: CLAUDE.md instructs the agent to build using `pip install -e .
-    -v --no-build-isolation`, but AGENTS.md explicitly states there is no working
-    build environment. Attempting to build the C++ changes will fail and waste time.
+  why_distracting: Instructs the agent to build via `pip install -e .`, which conflicts
+    with AGENTS.md's explicit warning that there is no working build environment.
   severity: high
   source:
     path: CLAUDE.md
     lines: 11-13
-- rule: Only use commands provided via `spin` for linting.
-  collision_type: rule_conflict
-  why_distracting: CLAUDE.md instructs the agent to use `spin lint` for linting, but
-    AGENTS.md instructs the agent to use `lintrunner -a`. This creates confusion about
-    which linting tool to use.
-  severity: low
+- rule: Convert PyTorch AT_DISPATCH macros to AT_DISPATCH_V2 format in ATen C++ code.
   source:
-    path: CLAUDE.md
-    lines: 28-31
-hierarchy_analysis: The hierarchy contains direct conflicts between `CLAUDE.md` and
-  `AGENTS.md` regarding building and linting. `CLAUDE.md` suggests building with `pip
-  install` and linting with `spin`, while `AGENTS.md` explicitly forbids building
-  due to a broken environment and mandates `lintrunner` for linting. Since `AGENTS.md`
-  contains environment-specific constraints for the agent, its rules should override
-  `CLAUDE.md`.
+    path: .claude/skills/at-dispatch-v2/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see it is modifying C++ code and attempt to apply
+    AT_DISPATCH_V2 rules, but FakeProcessGroup is a distributed backend component,
+    not an ATen kernel, making this skill out of scope.
+  severity: medium
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md are at Level 0, creating direct contradictions
+  regarding linting (`lintrunner` vs `spin`) and building (`pip install` vs no build
+  environment). The agent must navigate these conflicting instructions while fixing
+  a C++ bug, as well as decide whether to follow the instruction to add a test.

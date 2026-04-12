@@ -39,6 +39,11 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo code formatting passes (ruff format --check)
+- id: test_repo_ruff_lint_app_conversation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on app_conversation module (ASYNC240 ignored for
+    pre-existing issue)
 - id: test_repo_unit_tests_broad
   type: pass_to_pass
   origin: repo_tests
@@ -64,30 +69,60 @@ rubric:
   evidence: The gold solution modifies `openhands/app_server/app_conversation/live_status_app_conversation_service.py`,
     correctly targeting the V1 application server in the backend directory.
   category: architecture
+- rule: Do not run `make build` unless explicitly requested by the user.
+  source:
+    path: AGENTS.md
+    lines: 5-7
+  evidence: The gold solution directly applies the patch without running `make build`,
+    adhering to the instruction to only run it if the user asks.
+  category: tooling
+- rule: The current V1 application server lives in `openhands/app_server/`.
+  source:
+    path: AGENTS.md
+    lines: 57-59
+  evidence: The gold solution modifies `openhands/app_server/app_conversation/live_status_app_conversation_service.py`,
+    correctly locating the backend logic within the V1 application server directory
+    as specified
+  category: architecture
+- rule: Backend code is located in the `openhands` directory, and the V1 application
+    server lives in `openhands/app_server/`.
+  source:
+    path: AGENTS.md
+    lines: 63-66
+  evidence: The gold solution modifies `openhands/app_server/app_conversation/live_status_app_conversation_service.py`,
+    correctly locating the backend application server code as specified.
+  category: architecture
 distractors:
-- rule: Store design documents, scripts meant for development-only, or other temporary
-    artifacts in a `.pr/` directory.
+- rule: Store design documents, analysis, or debugging notes in a `.pr/` directory
+    at the repository root.
   collision_type: scope_ambiguity
-  why_distracting: The agent might create a `.pr/analysis.md` or `.pr/notes.md` to
-    document the root cause of the LiteLLM proxy key issue. This is unnecessary for
-    a simple, well-defined one-line bug fix and wastes effort.
+  why_distracting: The agent might waste time creating a `.pr/analysis.md` or `.pr/notes.md`
+    file to document its debugging of the planning agent auth error, which is unnecessary
+    for this simple one-line bug fix.
   severity: low
   source:
     path: AGENTS.md
-    lines: 36-61
-- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
-    make build && make run ...'
+    lines: 36-43
+- rule: Run `make build` to set up the entire repo, including frontend and backend.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to start the full application using `make build
-    && make run` to debug the issue. This is unnecessary and time-consuming since
-    the root cause is already explicitly identified in the instructions and the fix
-    is a simple string prefix check.
-  severity: medium
+  why_distracting: The agent might attempt to run `make build` to set up the repo
+    before making the simple python change, wasting time and compute resources.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 8-12
-hierarchy_analysis: Only the root `AGENTS.md` file applies to this task. There are
-  no conflicting rules from child configurations.
+    lines: 5-7
+- rule: Use the update-sdk skill when dealing with SDK changes or updates.
+  source:
+    path: .agents/skills/update-sdk/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The issue description mentions that 'the SDK has already transformed
+    the model name'. An agent might incorrectly assume it needs to update the SDK
+    version or modify SDK code to prevent the transformation, rather than handling
+    the transformed prefix in the server code.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the root level. There is no complex hierarchy or overriding of rules.
 version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands

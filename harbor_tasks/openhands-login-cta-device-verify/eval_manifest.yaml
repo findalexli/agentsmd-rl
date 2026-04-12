@@ -1,31 +1,19 @@
 rubric:
-- rule: 'Run linting and build before submitting frontend changes. Use: npm run lint:fix
-    && npm run build'
-  source:
-    path: AGENTS.md
-    lines: 21-22
-    commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
 - rule: Use <a> tag for external URLs, react-router <Link> for internal app routes
     only
   source:
-    path: AGENTS.md
-    lines: 100-104
+    path: frontend/src/components/features/auth/login-cta.tsx
+    lines: 71-91
     commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
-- rule: 'Follow component testing best practices: use userEvent for interactions,
-    query by role/label/testId, mock external dependencies'
+  reference: 'isDeviceVerifySource ? ( <a href={ENTERPRISE_URL} target="_blank" rel="noopener
+    noreferrer" /> ) : ( <Link to={INFORMATION_REQUEST_PATH} /> )'
+  category: code_quality
+- rule: Run `cd frontend && npm run lint:fix && npm run build` when making changes
+    to the frontend to ensure no lint errors.
   source:
-    path: frontend/README.md
-    lines: 162-181
-    commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
-- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
-    test errors have been fixed.
-  source:
-    path: AGENTS.md
-    lines: 14-15
-  evidence: The gold solution updates `frontend/__tests__/components/features/auth/login-cta.test.tsx`
-    and `frontend/__tests__/routes/device-verify.test.tsx` to ensure tests pass with
-    the new `source` prop and co
-  category: testing
+    path: frontend/src/components/features/auth/login-cta.tsx
+    lines: 1-97
+  category: tooling
 checks:
 - id: test_login_cta_has_source_prop
   type: fail_to_pass
@@ -72,29 +60,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: LoginCTA and device-verify specific tests pass
+- id: test_repo_prettier_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend code formatting follows Prettier rules
 distractors:
-- rule: Store design documents, scripts, or temporary artifacts in a `.pr/` directory.
+- rule: Store PR-specific artifacts like design documents or investigation notes in
+    a `.pr/` directory.
   collision_type: scope_ambiguity
-  why_distracting: The agent might interpret this component refactor as needing a
-    design document or analysis notes in the `.pr/` directory, wasting time on documentation
-    for a straightforward frontend change.
+  why_distracting: The agent might waste time creating a `.pr/design.md` or `.pr/notes.md`
+    to document the changes to the LoginCTA component, which is unnecessary for a
+    straightforward component update.
   severity: low
   source:
     path: AGENTS.md
-    lines: 33-35
-- rule: To set up the entire repo, including frontend and backend, run `make build`.
-  collision_type: meta_confusion
-  why_distracting: The agent might run `make build` to set up the repo, which builds
-    both frontend and backend, wasting time when the user prompt explicitly provides
-    faster, frontend-only testing commands.
-  severity: medium
+    lines: 35-42
+- rule: This skill should be used when the user asks to 'test a cross-repo feature',
+    'deploy a feature branch to staging', 'test SDK against OH Cloud', 'e2e test a
+    cloud workspace feature'...
   source:
-    path: AGENTS.md
-    lines: 5-6
-hierarchy_analysis: The AGENTS.md file provides general repository guidelines. The
-  user prompt provides specific, localized instructions for testing the frontend changes.
-  The agent must prioritize the prompt's specific frontend commands over the general
-  `make build` setup instructions in AGENTS.md.
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to invoke cross-repo testing or e2e testing
+    for this frontend component change, which is unnecessary and out of scope.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the repository root containing generic repository guidelines. There is no complex
+  hierarchy or overriding of rules.
 version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands

@@ -39,6 +39,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: service.py has valid Python syntax
+- id: test_repo_pre_commit_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit hooks pass on service.py
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise pyproject.toml is valid
 rubric:
 - rule: Run pre-commit hooks before making changes. Use `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
     for backend changes.
@@ -60,40 +68,46 @@ rubric:
     lines: 188-194
     commit: 3516c3cdbe4e3713e7e1bb9b3b5041c281f29f0a
 distractors:
-- rule: 'Backend: Located in the `openhands` directory'
-  collision_type: architecture_boundary
-  why_distracting: The rule states the backend is located in the `openhands` directory,
-    but the target file `service.py` is in the `enterprise/server/routes/` directory.
-    This could lead the agent to search in the wrong directory or refuse to edit the
-    file thinking it's outside the backend scope.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 58-59
-- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
-    make build && make run'
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
   collision_type: scope_ambiguity
-  why_distracting: The rule provides instructions to run the full application using
-    `make build && make run ...` to debug issues. The agent might attempt to start
-    the full application to verify the rename, which is unnecessary and resource-intensive
-    for a simple refactor.
+  why_distracting: The task is a simple string replacement in a single Python file.
+    Running a full build is a waste of time and resources for this specific PR.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 8-11
-- rule: When working on a PR that requires design documents... store them in a `.pr/`
-    directory
+    lines: 5-7
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
   collision_type: scope_ambiguity
-  why_distracting: The rule suggests creating a `.pr/` directory for PR-specific artifacts
-    like analysis or notes. Since this is a trivial environment variable rename, creating
-    such artifacts would be a waste of time and overcomplicate the task.
+  why_distracting: The task is a simple rename refactor that does not require running
+    the full application to debug issues.
   severity: low
   source:
     path: AGENTS.md
-    lines: 33-35
-hierarchy_analysis: The AGENTS.md file provides general repository guidelines, but
-  its architectural descriptions (e.g., backend located in `openhands/`) conflict
-  with the enterprise-specific paths required for this task.
+    lines: 9-12
+- rule: When working on a PR that requires design documents... store them in a `.pr/`
+    directory at the repository root.
+  collision_type: scope_ambiguity
+  why_distracting: This is a trivial rename task that does not require design documents,
+    analysis, or temporary artifacts.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 36-38
+- rule: This skill should be used when the user asks to 'update SDK', 'bump SDK version',
+    'pin SDK to a commit', 'test unreleased SDK', 'update agent-server image', 'bump
+    the version', 'prepare a release'
+  source:
+    path: .agents/skills/update-sdk/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task mentions updating to match helm chart configuration, which
+    might trigger the agent to look into release or SDK update skills, but this is
+    just a simple variable rename.
+  severity: low
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  containing generic repository guidelines. There is no complex hierarchy or overriding
+  of rules.
 version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands

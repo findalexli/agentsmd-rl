@@ -53,6 +53,14 @@ checks:
   description: Repo Cascader a11y tests pass
   type: pass_to_pass
   origin: repo_tests
+- id: repo_cascader_type_tests
+  description: Repo Cascader TypeScript type tests pass (npm test -- type.test.tsx)
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_cascader_semantic_tests
+  description: Repo Cascader semantic styling tests pass (npm test -- semantic.test.tsx)
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
 - rule: CSS fix follows Ant Design patterns. The fix should use CSS-in-JS patterns
     consistent with Ant Design
@@ -84,26 +92,34 @@ rubric:
     CSS files.'
   category: architecture
 distractors:
-- rule: 'Changelog 规范: 必须同时提供中英文两个版本'
+- rule: Changelog 规范：必须同时提供中英文两个版本
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to modify `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md`
-    to document the bug fix, but the instructions explicitly restrict modifications
-    to `components/cascader/style/columns.ts`.
+  why_distracting: The config mandates updating both English and Chinese changelogs
+    for bug fixes. An agent might try to edit `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md`,
+    but the task instructions explicitly restrict modifications to `columns.ts`.
   severity: high
   source:
-    path: CLAUDE.md
-    lines: 104-110
-- rule: 'PR 规范: PR 标题始终使用英文，格式：`类型: 简短描述`'
-  collision_type: meta_confusion
-  why_distracting: The agent might try to use the `antd-create-pr` skill to create
-    a pull request, but the task is only to write the code fix.
+    path: AGENTS.md
+    lines: 115-120
+- rule: PR 规范：必须使用 PR 模板并遵循分支策略
+  collision_type: scope_ambiguity
+  why_distracting: The config provides PR guidelines and templates. The agent might
+    try to use the `antd-create-pr` skill or create a PR, but the task is only to
+    fix the code locally.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 74-80
-hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical rules. The primary conflict
-  arises between the repository's strict guidelines for comprehensive PRs (including
-  changelogs and PR templates) and the prompt's explicit restriction to only modify
-  `components/cascader/style/columns.ts`. The agent must prioritize the prompt's file
-  constraints over the general repository maintenance rules.
+    path: AGENTS.md
+    lines: 84-88
+- rule: Use this skill when the user asks to handle issues, reply to issues... Also
+    use when the user mentions 'issue' in the context of antd
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The prompt contains the heading 'Issue Details', which might trigger
+    the issue-reply skill. However, the task requires fixing the actual code, not
+    generating a reply to a GitHub issue.
+  severity: low
+hierarchy_analysis: The config hierarchy is flat, with `AGENTS.md` and `CLAUDE.md`
+  containing identical content. There are no conflicts between the files.
 version: '2.0'

@@ -39,65 +39,46 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Doc tests pass for sui-indexer-alt-graphql package
-rubric:
-- rule: Comments should explain the 'why' behind non-obvious business logic, not just
-    repeat what the code does
-  source:
-    path: CLAUDE.md
-    lines: 116-124
-    commit: 4edd79bb00bb472bf7cfb56a891b7d6ab3e9db25
-- rule: sui-indexer-alt-graphql/ is the GraphQL API server
-  source:
-    path: CLAUDE.md
-    lines: 65-65
-  evidence: The fix modifies `crates/sui-indexer-alt-graphql/src/api/types/display.rs`
-    to correct the GraphQL API's display resolution logic, aligning with the directory's
-    purpose as the GraphQL API server.
-  category: architecture
-- rule: Check code without building (preferred) cargo check
-  source:
-    path: CLAUDE.md
-    lines: 30-31
-  evidence: The expected validation step `cargo check -p sui-indexer-alt-graphql`
-    follows the instruction to check code without building.
-  category: tooling
+- id: test_cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code passes clippy lints for sui-indexer-alt-graphql package
 distractors:
 - rule: All new files must start with the following license in comments at the top
     of the file
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to add the license header to `display.rs` if
-    it doesn't see one, even though the rule strictly applies only to new files.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 18-21
-- rule: '`cargo xclippy does not recognize -p option`'
-  collision_type: meta_confusion
-  why_distracting: The agent might try to run `cargo xclippy -p sui-indexer-alt-graphql`
-    to lint its changes, but the config explicitly warns that `cargo xclippy` does
-    not recognize the `-p` option. This could lead to command failures or the agent
-    running clippy on the entire massive workspace.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 54-55
-- rule: Always consult CLAUDE.md files in sub-crates.
-  collision_type: meta_confusion
-  why_distracting: The agent might attempt to read `crates/sui-indexer-alt-graphql/CLAUDE.md`
-    or `AGENTS.md`, which are not provided in the context, leading to wasted tool
-    calls or hallucinated rules.
+  why_distracting: The agent might mistakenly prepend the license header to the existing
+    `display.rs` file to ensure compliance, even though the rule explicitly states
+    it is only for 'new files'.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 10-11
-hierarchy_analysis: The root `CLAUDE.md` provides general guidelines, while `AGENTS.md`
-  reinforces checking crate-specific files. Since no crate-specific config is provided
-  for `sui-indexer-alt-graphql`, the root rules apply. The agent must be careful not
-  to over-apply the new file license rule to existing files and should heed the warning
-  about `cargo xclippy` not supporting `-p`.
+    lines: 18-21
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: rule_conflict
+  why_distracting: The agent might attempt to run the full `sui-e2e-tests` simulation
+    suite, which is slow and unnecessary for this localized GraphQL fix, conflicting
+    with the task's specific instruction to just run `cargo check -p sui-indexer-alt-graphql`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 31-33
+- rule: Use simtest for debugging and testing
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run or write simulation tests (simtests)
+    for this GraphQL API bug, which is unnecessary, time-consuming, and outside the
+    scope of the requested fix.
+  severity: medium
+hierarchy_analysis: The hierarchy is flat (only root-level AGENTS.md and CLAUDE.md
+  are present). The rules provided are generic repository guidelines that do not interact
+  deeply with the specific GraphQL scoping bug.
 version: '2.0'
 source:
   repo: MystenLabs/sui
   pr: 26077
   base_commit: 4edd79bb00bb472bf7cfb56a891b7d6ab3e9db25
   merge_commit: ''
+rubric: []

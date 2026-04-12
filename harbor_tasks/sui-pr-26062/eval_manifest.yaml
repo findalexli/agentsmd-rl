@@ -1,31 +1,3 @@
-rubric:
-- rule: Do NOT comment the obvious. Comments should explain non-obvious algorithms,
-    assumptions, or race conditions, not narrate simple code.
-  source:
-    path: CLAUDE.md
-    lines: 116-131
-    commit: 2a6083bafec7a791806866cea60f03fd2e1beb65
-- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or other linting suppressions.
-    Fix the underlying issues instead.'
-  source:
-    path: CLAUDE.md
-    lines: '113'
-    commit: 2a6083bafec7a791806866cea60f03fd2e1beb65
-- rule: 'Use #[tokio::test] for async tests, not #[test]. All unit tests must work
-    properly.'
-  source:
-    path: CLAUDE.md
-    lines: '114'
-    commit: 2a6083bafec7a791806866cea60f03fd2e1beb65
-- rule: Run Rust unittests. skip simulation tests as they may cause false negatives
-    with `cargo nextest`
-  source:
-    path: CLAUDE.md
-    lines: 31-32
-  evidence: The gold solution adds a standard Rust unittest (`#[tokio::test]`) in
-    `crates/sui-display/src/v2/mod.rs` to test the new fallback behavior, aligning
-    with the instruction to run standard Rust unittests
-  category: testing
 checks:
 - id: test_transform_enum_no_default
   type: fail_to_pass
@@ -68,6 +40,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: sui-display crate code is properly formatted
+- id: test_cargo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-display documentation builds without errors
+- id: test_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: License headers check passes
 - id: test_display_tests_pass
   type: pass_to_pass
   origin: repo_tests
@@ -76,30 +56,49 @@ distractors:
 - rule: All new files must start with the following license in comments at the top
     of the file
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to add the Mysten Labs license header to the
-    files being modified (e.g., `interpreter.rs`, `mod.rs`), but the rule explicitly
-    applies only to 'new files'. Modifying existing files to add headers would clutter
-    the PR.
-  severity: medium
-  source:
-    path: CLAUDE.md
-    lines: 15-18
-- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
-  collision_type: meta_confusion
-  why_distracting: The agent might think it needs to write a simulation test (e.g.,
-    using `#[sim_test]`) instead of a standard `#[tokio::test]` because of the prominent
-    mention of simtests for e2e testing. However, this is a simple library unit test
-    for the display parser where standard tokio tests are appropriate.
+  why_distracting: The rule specifies adding a license header to 'All new files'.
+    An agent might misinterpret this and prepend the license header to the existing
+    files it modifies (e.g., interpreter.rs or mod.rs), creating unnecessary diffs
+    and potential linting issues.
   severity: low
   source:
     path: CLAUDE.md
-    lines: 28-29
-hierarchy_analysis: The repository uses a root `CLAUDE.md` and `AGENTS.md`. The `CLAUDE.md`
-  provides general Rust and Sui-specific testing commands. There are no conflicting
-  crate-specific files provided in the context, so the root rules apply directly.
+    lines: 16-19
+- rule: simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: scope_ambiguity
+  why_distracting: The config emphasizes running simtests to avoid false negatives.
+    An agent might waste time trying to run `cargo simtest` for the `sui-display`
+    crate, which is a standard library crate where `cargo nextest` is sufficient and
+    faster.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 30-31
+- rule: Use simtest for testing blockchain interactions and debugging.
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a simtest for this display formatting
+    feature, but sui-display is a local utility that only requires standard tokio
+    tests.
+  severity: medium
+- rule: Update protocol config when introducing new features or changing behavior.
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think changing how values are displayed requires
+    a protocol config update, but this is purely a client-side/display change.
+  severity: low
+hierarchy_analysis: The hierarchy consists of two root-level files (`AGENTS.md` and
+  `CLAUDE.md`). `AGENTS.md` simply points to `CLAUDE.md` and suggests looking for
+  crate-specific files, but none exist for `sui-display` in this context. The guidance
+  is entirely generic repository defaults.
 version: '2.0'
 source:
   repo: MystenLabs/sui.git
   pr: 0
   base_commit: 2a6083bafec7a791806866cea60f03fd2e1beb65
   merge_commit: ''
+rubric: []

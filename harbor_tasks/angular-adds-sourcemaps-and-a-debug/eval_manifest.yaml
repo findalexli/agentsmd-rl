@@ -166,6 +166,24 @@ distractors:
   source:
     path: AGENTS.md
     lines: 19-27
+- rule: Use when authoring or reviewing content in adev/src/content.
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to apply Angular-specific markdown extensions
+    or Google Technical Writing standards to `devtools/README.md`, but this guide
+    is strictly scoped to `adev/src/content`.
+  severity: medium
+- rule: You can always run `npx ng build` to check for errors and repair them.
+  source:
+    path: skills/dev-skills/angular-new-app/SKILL.md
+    lines: 25-26
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to use Angular CLI (`ng build`) or suggest
+    CLI commands for the devtools build process, but devtools is built using Bazel
+    and esbuild.
+  severity: high
 hierarchy_analysis: Only the root AGENTS.md file applies to this PR. The rules are
   straightforward, though the testing guidelines are out of scope for this specific
   build configuration task.

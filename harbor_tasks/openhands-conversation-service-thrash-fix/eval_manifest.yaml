@@ -48,54 +48,66 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's conversation routes unit tests pass
-rubric:
-- rule: 'Run pre-commit hooks for backend changes and ensure they pass. Use: pre-commit
-    run --config ./dev_config/python/.pre-commit-config.yaml'
-  source:
-    path: AGENTS.md
-    lines: 16-24
-    commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
-- rule: 'Fix common lint issues: Mypy type errors, Ruff formatting issues, trailing
-    whitespace, missing newlines at end of files'
-  source:
-    path: AGENTS.md
-    lines: 28-31
-    commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
-- rule: Prefer specific 'git add <filename>' instead of 'git add .' to avoid accidentally
-    staging unintended files
-  source:
-    path: AGENTS.md
-    lines: 33-35
-    commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
-- rule: Backend code is located in the `openhands` directory.
-  source:
-    path: AGENTS.md
-    lines: 61-62
-  evidence: The gold solution modifies `openhands/server/routes/conversation.py` and
-    imports from `openhands.app_server...`, correctly working within the `openhands`
-    directory for backend code.
-  category: architecture
+- id: test_repo_unit_tests_app_conversation_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's app conversation info service unit tests pass
+- id: test_repo_unit_tests_conversation_id_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's conversation ID validation unit tests pass
 distractors:
 - rule: The current V1 application server lives in `openhands/app_server/`.
   collision_type: architecture_boundary
-  why_distracting: The rule states that the V1 application server lives in `openhands/app_server/`,
-    but the file to modify (`openhands/server/routes/conversation.py`) is in `openhands/server/`.
-    The agent might look in the wrong directory or try to move the file to align with
-    this architectural statement.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 61-64
-- rule: Store design documents, analysis, and temporary artifacts in a `.pr/` directory
-    for complex refactoring or debugging sessions.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might interpret this task as a 'complex refactoring'
-    or 'debugging session' and waste time creating `.pr/design.md` or `.pr/analysis.md`
-    files, which is unnecessary for this straightforward optimization.
+  why_distracting: The config states that the V1 application server lives in `openhands/app_server/`.
+    Since the task is about refactoring V1 conversation logic, an agent might incorrectly
+    attempt to move `openhands/server/routes/conversation.py` into `openhands/app_server/`
+    or look for the routing logic there, despite the explicit file path provided in
+    the instructions.
   severity: medium
   source:
     path: AGENTS.md
-    lines: 36-58
-hierarchy_analysis: Only a single root-level `AGENTS.md` file is provided, so there
-  are no hierarchical conflicts. All rules apply globally to the repository.
+    lines: 55-57
+- rule: Store design documents, analysis, or temporary artifacts in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might unnecessarily create a `.pr/analysis.md` or `.pr/design.md`
+    file to document the refactoring of the 3 queries down to 1, wasting time on artifacts
+    that are not requested for this straightforward code change.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 34-36
+- rule: Use cross-repo-testing when changes span the SDK and OpenHands server repos
+    and need e2e testing.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task mentions reducing queries to the 'sandbox service', which
+    might lead an agent to incorrectly assume it needs to perform cross-repo testing
+    or e2e testing of a cloud workspace feature. However, this is purely a local backend
+    refactor.
+  severity: low
+- rule: Use update-sdk when updating the SDK or agent-server image.
+  source:
+    path: .agents/skills/update-sdk/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task involves updating how the server interacts with the sandbox
+    service, which an agent might confuse with needing to update the SDK or agent-server
+    image.
+  severity: low
+hierarchy_analysis: The configuration is a flat, single-file structure (`AGENTS.md`)
+  containing general repository guidelines. There is no complex hierarchy or overriding
+  required.
 version: '2.0'
+rubric:
+- rule: Run `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
+    after making changes to the backend.
+  source:
+    path: AGENTS.md
+    lines: 16-18
+  evidence: The agent must ensure that the modified Python file passes linting and
+    formatting checks, which is typically achieved by running the specified pre-commit
+    command for backend changes.
+  category: tooling

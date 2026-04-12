@@ -4,7 +4,7 @@ source:
   base_commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
   merge_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
 checks:
-- id: test_endpoint_no_env_returns_none
+- id: test_no_env_vars_returns_none
   type: fail_to_pass
   description: _get_default_aws_endpoint_url returns None when no env vars set
   origin: pr_diff
@@ -48,7 +48,7 @@ checks:
   type: fail_to_pass
   description: AwsEventServiceInjector.endpoint_url is None when no env vars set
   origin: pr_diff
-- id: test_injector_has_endpoint_attribute
+- id: test_injector_has_endpoint_url_attribute
   type: fail_to_pass
   description: AwsEventServiceInjector has endpoint_url as a class field
   origin: pr_diff
@@ -76,52 +76,37 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Primary modified file exists and is readable
-rubric:
-- rule: Add a helper function _get_default_aws_endpoint_url() that handles protocol
-    prefixes (http/https) based on AWS_S3_SECURE environment variable.
-  source:
-    path: openhands/app_server/event/aws_event_service.py
-    pr: All-Hands-AI/OpenHands#13579
-- rule: Use Pydantic's Field with default_factory to populate endpoint_url from environment
-    variables.
-  source:
-    path: openhands/app_server/event/aws_event_service.py
-    pr: All-Hands-AI/OpenHands#13579
-- rule: Update S3 client to use self.endpoint_url instead of direct os.getenv() call.
-  source:
-    path: openhands/app_server/event/aws_event_service.py
-    pr: All-Hands-AI/OpenHands#13579
-- rule: The current V1 application server lives in `openhands/app_server/`.
-  source:
-    path: AGENTS.md
-    lines: 64-66
-  evidence: The gold solution modifies `openhands/app_server/event/aws_event_service.py`,
-    which aligns with the architectural guidance that the V1 application server lives
-    in `openhands/app_server/`.
-  category: architecture
 distractors:
-- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
-    make build && make run FRONTEND_PORT=12000 ...'
+- rule: Store PR-specific artifacts like design documents or analysis notes in a `.pr/`
+    directory.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to spin up the entire application including
-    the frontend to test this S3 endpoint change, which is unnecessary and time-consuming.
-    Testing the backend logic directly is sufficient.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 8-12
-- rule: When working on a PR that requires design documents, scripts meant for development-only,
-    or other temporary artifacts that should NOT be merged to main, store them in
-    a `.pr/` directory at the repository root.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might think it needs to create a design document in `.pr/design.md`
-    for this change, but it's a straightforward configuration fix that doesn't require
-    temporary artifacts or design docs.
+  why_distracting: The agent might waste time creating a `.pr/design.md` or `.pr/analysis.md`
+    to document its changes for this simple configuration fix, which is unnecessary
+    and not part of the requested task.
   severity: low
   source:
     path: AGENTS.md
-    lines: 36-40
-hierarchy_analysis: The repository has a single root-level `AGENTS.md` file providing
-  general setup, git practices, and PR artifact guidelines. There are no conflicting
-  child configs.
-version: '2.0'
+    lines: 36-44
+- rule: Use cross-repo-testing skill when testing a cross-repo feature or deploying
+    a feature branch to staging.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The task mentions 'feature branches' and 'testing' S3/Minio endpoints,
+    which might lead the agent to think it needs to use the cross-repo-testing skill
+    to test a cross-repo feature or deploy a feature branch to staging. However, this
+    task is purely about modifying the backend code to support these configurations,
+    not actually running cross-repo tests.
+  severity: low
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the root level containing generic repository guidelines. There is no complex
+  hierarchy or overriding rules.
+rubric:
+- rule: Backend code is located in the `openhands` directory.
+  source:
+    path: AGENTS.md
+    lines: 63-65
+  evidence: The gold solution modifies `openhands/app_server/event/aws_event_service.py`,
+    correctly placing the backend changes in the `openhands` directory.
+  category: architecture

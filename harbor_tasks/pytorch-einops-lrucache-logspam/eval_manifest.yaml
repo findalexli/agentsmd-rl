@@ -64,6 +64,34 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's delete_old_branches tests pass from .github/scripts/
+- id: test_repo_trymerge_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's trymerge tests pass from .github/scripts/
+- id: test_repo_tryrebase_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tryrebase tests pass from .github/scripts/
+- id: test_repo_filter_test_configs_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's filter_test_configs tests pass from .github/scripts/
+- id: test_repo_collect_env
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's collect_env.py runs without errors
+- id: test_repo_no_nonbreaking_spaces
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no non-breaking spaces in source files
+- id: test_repo_codegen_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's codegen tests pass from tools/test/
+- id: test_repo_test_selections_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test_selections tests pass from tools/test/
 rubric:
 - rule: Minimize comments; be concise; code should be self-explanatory. Comments explaining
     why code is TEMPORARILY DISABLED are acceptable and necessary.
@@ -90,32 +118,58 @@ rubric:
     lines: '62'
     commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
 distractors:
+- rule: Only use commands provided via `spin` for linting.
+  collision_type: rule_conflict
+  why_distracting: CLAUDE.md instructs the agent to use `spin lint` and `spin fixlint`,
+    which directly conflicts with AGENTS.md's instruction to use `lintrunner -a`.
+    The agent must choose which linting tool to use.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 23-27
+- rule: All build (both codegen, C++ and python) is done via `pip install -e . -v
+    --no-build-isolation`.
+  collision_type: rule_conflict
+  why_distracting: CLAUDE.md provides instructions for building PyTorch via `pip install
+    -e .`, but AGENTS.md explicitly warns that there is no working build environment.
+    Attempting to build will waste time and likely fail.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 7-9
 - rule: Once the change is passing, find an appropriate test file to add the test
     to and make sure to follow local conventions on the test file.
-  collision_type: would_cause_bug
-  why_distracting: The agent is instructed to find an appropriate test file to add
-    a test once the change is passing. However, this bug involves `einops`, a third-party
-    library. Since the agent is also instructed not to install dependencies (AGENTS.md
-    line 12), attempting to add a test that imports `einops` to the main PyTorch test
-    suite would likely cause CI failures or local test crashes if the dependency is
-    missing.
-  severity: high
+  collision_type: scope_ambiguity
+  why_distracting: The instruction requires finding an appropriate test file to add
+    a test once the change is passing. However, this bug involves a third-party library
+    (einops) integration, making it ambiguous and difficult to find a suitable test
+    file without expanding the scope unnecessarily.
+  severity: medium
   source:
     path: AGENTS.md
     lines: 2-6
 - rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
   collision_type: rule_conflict
-  why_distracting: The agent might interpret this rule as an instruction to simply
-    delete the problematic version check block entirely to keep the code concise.
-    However, the gold solution intentionally comments out the code and leaves a detailed
-    explanation, preserving the original logic for when the underlying `lru_cache`
-    issue is eventually fixed.
+  why_distracting: The agent might interpret 'Minimize comments; be concise' as an
+    instruction to simply delete the version check block without leaving an explanatory
+    comment, which would violate the need to document the temporary workaround for
+    the lru_cache issue.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: '48'
-hierarchy_analysis: The rules in CLAUDE.md and AGENTS.md generally complement each
-  other, but there is an implicit conflict in AGENTS.md between the requirement to
-  add a test for every bug fix and the strict prohibition against installing dependencies.
-  For bugs involving third-party integrations like `einops`, the prohibition on installing
-  dependencies must override the requirement to add a test to the main test suite.
+    lines: 41-41
+- rule: Debug AOTInductor (AOTI) errors and crashes.
+  source:
+    path: .claude/skills/aoti-debug/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions `torch.compile`, which uses AOTInductor under
+    the hood. The agent might activate this skill to debug the `lru_cache` warnings,
+    but this is a Dynamo frontend tracing issue, not an AOTI backend issue.
+  severity: low
+hierarchy_analysis: The configuration consists of two root-level files (AGENTS.md
+  and CLAUDE.md) that contain direct contradictions. AGENTS.md provides restrictive
+  environment warnings ('Do NOT run setup.py', 'run lintrunner -a'), while CLAUDE.md
+  provides standard repository workflows ('pip install -e .', 'spin lint'). The agent
+  must synthesize these flat but conflicting instructions, ideally prioritizing the
+  explicit negative constraints in AGENTS.md over the general guidelines in CLAUDE.md.

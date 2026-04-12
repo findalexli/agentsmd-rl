@@ -94,33 +94,42 @@ rubric:
     specific Helm test types (`airflow_aux`, '
   category: testing
 distractors:
-- rule: 'Run a single test: `uv run --project <PROJECT> pytest path/to/test.py::TestClass::test_method
-    -xvs`'
+- rule: 'Run a test file: `uv run --project <PROJECT> pytest path/to/test.py -xvs`'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to run helm tests using `uv run --project helm-tests
-    pytest ...` which is intended for standard Python packages. Helm tests require
-    the specific `breeze testing helm-tests` command to properly render charts and
-    set up the Kubernetes testing environment.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 16-18
-- rule: 'Determine which tests to run based on changed files: `breeze selective-checks
-    --commit-ref <commit_with_squashed_changes>`'
-  collision_type: meta_confusion
-  why_distracting: The agent might try to use `breeze selective-checks` to determine
-    which tests to run, but this requires a specific git commit state (`<commit_with_squashed_changes>`)
-    which may not exist or be properly formatted during the agent's iterative development
-    process, leading to command failures.
+  why_distracting: The general instruction for running tests suggests using `uv run
+    --project <PROJECT> pytest`, which an agent might try to use for the helm-tests.
+    However, Helm tests have a dedicated command (`breeze testing helm-tests`) that
+    must be used instead.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 36-36
-hierarchy_analysis: The config files CLAUDE.md and AGENTS.md are identical and provide
-  a flat list of commands. The primary conflict arises from general Python testing
-  commands (`uv run pytest`) versus domain-specific testing commands (`breeze testing
-  helm-tests`). The agent must recognize that Helm chart modifications fall under
-  a specialized testing domain.
+    path: AGENTS.md
+    lines: 14-16
+- rule: 'If uv tests fail with missing system dependencies, run the tests with breeze:
+    `breeze run pytest <tests> -xvs`'
+  collision_type: scope_ambiguity
+  why_distracting: The fallback instruction for failing `uv` tests suggests using
+    `breeze run pytest <tests>`, which could mislead the agent when trying to run
+    Helm tests that require the specific `breeze testing helm-tests` command.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '17'
+- rule: Translation work falls into one of two categories depending on whether the
+    target locale already exists. Check if a directory for the locale exists under
+    airflow-core/src/airflow/ui/public/i18n/locales/<locale>/
+  source:
+    path: .github/skills/airflow-translations/SKILL.md
+    lines: 10-15
+  collision_type: scope_ambiguity
+  why_distracting: The task involves adding a user-facing deprecation warning to the
+    Helm chart's NOTES.txt and values.schema.json. An agent might mistakenly attempt
+    to apply this translation skill to localize these messages, but Helm chart notes
+    are not part of the UI translation system.
+  severity: medium
+hierarchy_analysis: AGENTS.md and CLAUDE.md are identical and provide flat, repository-wide
+  instructions. The instructions focus heavily on Python development and testing,
+  with specific commands for Helm tests that override the general `uv run pytest`
+  commands.
 version: '2.0'
 source:
   repo: apache/airflow

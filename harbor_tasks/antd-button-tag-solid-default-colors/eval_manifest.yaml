@@ -55,73 +55,48 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Node.js-specific tests pass
-rubric:
-- rule: Follow test import convention - use relative paths in __tests__
-  source:
-    path: CLAUDE.md:Test import specification
-- rule: Follow demo import convention - use absolute paths in demo/
-  source:
-    path: CLAUDE.md:Demo import specification
-- rule: Follow API documentation table format
-  source:
-    path: CLAUDE.md:API Documentation format
-- rule: Default values should be documented in backticks
-  source:
-    path: CLAUDE.md:API table format
-- rule: Maintain backward compatibility
-  source:
-    path: .github/copilot-instructions.md:React Component Guidelines
-- rule: Use TypeScript with strict typing
-  source:
-    path: .github/copilot-instructions.md:TypeScript Requirements
-- rule: Use functional components with hooks exclusively
-  source:
-    path: .github/copilot-instructions.md:React Component Guidelines
-- rule: Support ref forwarding with ComponentRef pattern
-  source:
-    path: .github/copilot-instructions.md:React Component Guidelines
-- rule: 使用 TypeScript 和 React 开发，采用 CSS-in-JS 架构
-  source:
-    path: CLAUDE.md
-    lines: 7-8
-  evidence: The gold solution implements the default color logic directly within the
-    React component (`Button.tsx`) and hook (`useColor.ts`) using TypeScript, returning
-    the correct token pairs (`['primary', varia
-  category: architecture
+- id: test_repo_button_demo_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Button component demo tests pass
+- id: test_repo_tag_demo_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Tag component demo tests pass
+rubric: []
 distractors:
-- rule: Changelog 规范：必须同时提供中英文两个版本
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本，描述对开发者的影响'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to update `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md`
-    to document the new default color behavior for solid variants, but the task explicitly
-    limits modifications to `Button.tsx` and `useColor.ts`.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 114-118
-- rule: 文档规范：API 表格格式及默认值更新
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to update the API documentation tables
-    in `index.en-US.md` and `index.zh-CN.md` to reflect the new default color for
-    the solid variant, which is out of scope for this specific code-only task.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 48-68
-- rule: Test 导入规范
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to add unit tests in the `__tests__` directory
-    to verify the new default color logic, following the test import conventions,
-    but test files are not in the list of files to modify.
+  why_distracting: The config mandates updating CHANGELOG.en-US.md and CHANGELOG.zh-CN.md
+    for changes, which might prompt the agent to document the new default colors.
+    However, the task explicitly restricts modifications to just the component source
+    files.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 38-44
-hierarchy_analysis: The config hierarchy consists of `CLAUDE.md` and `AGENTS.md` which
-  contain identical rules. The rules primarily focus on meta-level repository maintenance
-  (docs, tests, changelogs, PRs). For this specific code-only task, these meta-rules
-  act as distractors, as the agent must recognize the narrow scope of the requested
-  fix (only modifying two source files) and ignore the broader repository guidelines
-  that would typically apply to a full PR submission.
+    path: AGENTS.md
+    lines: 120-135
+- rule: '文档规范: API 表格格式需包含默认值，且中英文需保持一致'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides strict rules for updating API documentation
+    tables (including default values). The agent might try to update the Button and
+    Tag docs to reflect the new default colors for solid variants, violating the 'Files
+    to Modify' constraint.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 55-75
+- rule: Help maintainers reply to Ant Design GitHub issues following official guidelines.
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might activate the issue-reply skill because the prompt
+    describes a 'Problem' and 'Expected Behavior' similar to a GitHub issue, leading
+    it to generate a reply instead of or in addition to the code fix.
+  severity: low
+hierarchy_analysis: The config files (AGENTS.md and CLAUDE.md) are identical and flat.
+  They provide repository-wide guidelines for meta-files (docs, changelog, tests)
+  but lack specific coding style rules for the components themselves.
 version: '2.0'
 source:
   repo: ant-design/ant-design.git

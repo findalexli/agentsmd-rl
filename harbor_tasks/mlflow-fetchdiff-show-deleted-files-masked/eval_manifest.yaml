@@ -57,14 +57,15 @@ checks:
   description: SKILL.md documents the deleted file output format with mask message
     example
 rubric:
-- rule: Only add comments that explain non-obvious logic or provide additional context
+- rule: Maintain consistent formatting for masked file examples in the skill documentation
   source:
-    path: CLAUDE.md
-    lines: 14-14
+    path: .claude/skills/fetch-diff/SKILL.md
+    lines: 58-63
+  evidence: The gold solution adds a new section `**Deleted file (masked):**` with
+    a markdown code block showing the diff format, perfectly mirroring the structure
+    and formatting of the existing `**Auto-generated file (masked):**` section.
   category: documentation
-  evidence: The gold solution adds a comment (`# For deleted files, use the old path...`)
-    specifically to explain the non-obvious logic of using the `a/` side path for
-    pattern matching when the `b/` side is `dev/
+  verification: llm_judge
 config_edits:
 - path: .claude/skills/fetch-diff/SKILL.md
   tier: 1
@@ -84,18 +85,16 @@ config_edits:
     ```'
   gold_removed: ''
 distractors:
-- rule: 'Run Python tests: uv run pytest tests/'
+- rule: Run Python tests using `uv run pytest tests/`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run the main MLflow test suite (`uv run
+    pytest tests/`) to verify its changes to the Claude skill. This would waste time
+    and not actually test the skill code, as the skill is located in `.claude/skills/`
+    and is separate from the main MLflow application.
+  severity: medium
   source:
     path: CLAUDE.md
-    lines: 68-69
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run the entire MLflow test suite (`uv run
-    pytest tests/`) to verify its changes. However, the changes are isolated to the
-    `.claude/skills` directory (a meta-tooling folder), and running the full MLflow
-    test suite would waste a massive amount of time and compute.
-  severity: medium
-hierarchy_analysis: 'There is only one configuration file (`CLAUDE.md` at the root
-  level). The primary challenge is scope boundary: the agent must recognize that it
-  is editing meta-tooling (`.claude/skills/`) rather than the main MLflow codebase,
-  meaning that repository-wide testing commands in `CLAUDE.md` should not be blindly
-  applied.'
+    lines: 67-70
+hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root. However,
+  the rules in this file are scoped to the main MLflow project and do not provide
+  specific guidance for the `.claude/skills` directory, creating a scope disconnect.

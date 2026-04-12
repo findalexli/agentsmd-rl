@@ -53,6 +53,30 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Menu component demo tests pass (17 tests with 34 snapshots)
+- id: test_repo_lint_biome
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome linting check passes for code quality
+- id: test_repo_theme_util_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Theme utility tests pass for shadow token support
+- id: test_repo_version_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Version file generation script works correctly
+- id: test_repo_token_statistic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Token statistics collection script works correctly
+- id: test_repo_token_meta
+  type: pass_to_pass
+  origin: repo_tests
+  description: Token metadata generation script works correctly
+- id: test_repo_changelog_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component changelog generation script works correctly
 rubric:
 - rule: Use TypeScript with strict type checking
   source:
@@ -89,31 +113,46 @@ rubric:
     system (adding `colorShadow` to `ColorMap.ts` and `colors.ts`) rather than hardcoding
     CSS values, properly supporting the dark mo
   category: architecture
-distractors:
-- rule: Changelog 规范：必须同时提供中英文两个版本，并遵循特定的 Emoji 和格式规范
-  collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to edit CHANGELOG.zh-CN.md and CHANGELOG.en-US.md
-    to document the shadow token fix, as the config provides detailed instructions
-    for changelog entries. However, this is a code-level fix task and changelog updates
-    are out of scope.
-  severity: high
+- rule: Test files in `__tests__` must use relative paths for internal imports and
+    avoid absolute paths or aliases.
   source:
-    path: CLAUDE.md
-    lines: 95-125
-- rule: PR 规范：必须使用 PR 模板，遵循特定的标题格式和分支策略
-  collision_type: meta_confusion
-  why_distracting: The agent might try to use the `antd-create-pr` skill or manually
-    create PR templates/descriptions based on the PR rules. The task only requires
-    fixing the code, not managing the PR process.
+    path: AGENTS.md
+    lines: 43-49
+  evidence: 'In `components/theme/__tests__/token.test.tsx`, the gold solution adds
+    a new test case using existing variables (`theme.darkAlgorithm`) without introducing
+    any forbidden absolute imports (like `antd` '
+  category: testing
+distractors:
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions for updating the changelog
+    when fixing bugs. An agent might waste effort modifying CHANGELOG.zh-CN.md and
+    CHANGELOG.en-US.md, but the gold solution scopes the fix strictly to the code
+    and tests.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 68-93
-hierarchy_analysis: CLAUDE.md and AGENTS.md contain identical rules. The configuration
-  provides strong architectural context (Design Tokens, CSS-in-JS) which is crucial
-  for the fix. However, it also contains extensive meta-level guidelines (PRs, Changelogs,
-  Issue handling) that are irrelevant to the immediate coding task and may distract
-  the agent.
+    path: AGENTS.md
+    lines: 100-104
+- rule: 'Demo 导入规范: 一律使用绝对路径导入'
+  collision_type: rule_conflict
+  why_distracting: The config mandates absolute imports for Demo files. An agent might
+    mistakenly apply this to the test file it modifies (`token.test.tsx`) if it needs
+    to import new utilities, conflicting with the Test import rules.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 30-32
+- rule: Help maintainers reply to Ant Design GitHub issues
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: meta_confusion
+  why_distracting: The prompt describes a 'Problem' and mentions 'verify the issue'.
+    The agent might mistakenly use the issue-reply skill to generate a comment instead
+    of implementing the code fix.
+  severity: low
+hierarchy_analysis: AGENTS.md and CLAUDE.md are identical and provide flat, repository-wide
+  guidelines. No deep hierarchy resolution is required.
 version: '2.0'
 source:
   repo: ant-design/ant-design

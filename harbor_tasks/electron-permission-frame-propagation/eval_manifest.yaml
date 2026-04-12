@@ -83,7 +83,7 @@ checks:
 - id: modified_headers_have_guards
   description: Modified header files must have proper include guards (pass_to_pass)
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
 - id: cpplint
   description: Modified C++ files must pass cpplint style checks (pass_to_pass)
   type: pass_to_pass
@@ -124,6 +124,30 @@ checks:
   description: Modified files must not have trailing whitespace (pass_to_pass)
   type: pass_to_pass
   origin: static
+- id: patches_config_valid
+  description: Patches config.json must be valid JSON with required structure (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: patches_directory_structure
+  description: Chromium patches directory must have valid .patches file (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: clang_format_shell_browser
+  description: shell/browser C++ files must pass clang-format with parallel jobs (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: cpplint_modified_files
+  description: Modified C++ files must pass cpplint with Electron's filters (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: shell_common_clang_format
+  description: shell/common C++ files must pass clang-format (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: git_no_uncommitted_changes
+  description: Git repository must have no uncommitted changes at base commit (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
 - rule: Follow Chromium coding style for all C++ code, enforced by clang-format and
     clang-tidy
@@ -147,32 +171,48 @@ rubric:
     path: CLAUDE.md
     lines: 69-69
   evidence: The gold solution correctly implements the fix entirely within the `shell/browser/`
-    directory (modifying `web_contents_permission_helper.cc`, `electron_api_web_contents.cc`,
-    etc.), adhering to the des
+    directory
   category: architecture
+- rule: Test your changes (Leave the user to do this, don't run these commands unless
+    asked)
+  source:
+    path: CLAUDE.md
+    lines: 58-60
+  evidence: The gold solution does not invoke `e test` or `e start`, adhering to the
+    instruction to leave testing to the user.
+  category: tooling
 distractors:
-- rule: 'If you modified patched files in Chromium: cd .. -> git commit -> e patches
-    chromium'
-  collision_type: architecture_boundary
-  why_distracting: Because the bug involves Chromium concepts like `RenderFrameHost`,
-    `WebContents`, and permission origins, an agent might mistakenly believe it needs
-    to modify Chromium source code and export a patch. However, the bug is entirely
-    within Electron's wrapper classes, so no Chromium patches are needed.
+- rule: Test your changes (Leave the user to do this, don't run these commands unless
+    asked)
+  collision_type: meta_confusion
+  why_distracting: An agent would naturally want to verify its C++ changes by running
+    the test suite, but the instructions explicitly forbid running `e start` or `e
+    test` unless asked.
   severity: high
   source:
     path: CLAUDE.md
-    lines: 78-83
-- rule: 'Test your changes (Leave the user to do this, don''t run these commands unless
-    asked): e start, e test'
-  collision_type: rule_conflict
-  why_distracting: An agent might naturally want to run `e test` to verify that the
-    permission origin fix works correctly for iframes, but the instructions explicitly
-    forbid running these commands autonomously.
+    lines: 73-75
+- rule: Fix existing patches 99% of the time rather than creating new ones
+  collision_type: scope_ambiguity
+  why_distracting: Because the issue involves core Chromium concepts like `RenderFrameHost`
+    and permissions, the agent might mistakenly assume it needs to modify or create
+    a Chromium patch in `patches/chromium/` rather than editing Electron's native
+    C++ code.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 74-76
-hierarchy_analysis: Only a single root-level `CLAUDE.md` file is provided, so there
-  are no hierarchical conflicts. The guidance focuses heavily on the build system
-  (`e` commands) and the boundary between Electron code and Chromium patches.
+    lines: 91-91
+- rule: Guide for performing Chromium version upgrades in the Electron project.
+  source:
+    path: .claude/skills/electron-chromium-upgrade/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might activate this skill thinking the issue is related
+    to a Chromium upgrade or patch conflict, leading it to waste time on the patch
+    application workflow instead of fixing the C++ logic in Electron.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single flat file (`CLAUDE.md`)
+  that provides workflow and tooling instructions. There are no hierarchical conflicts,
+  as the rules primarily dictate development loop constraints rather than code-level
+  styling.
 version: '2.0'

@@ -65,66 +65,61 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Package build validation passes (publint + attw)
-rubric:
-- source:
-    path: AGENTS.md
-    lines: 18-20
-  rule: TypeScript strict mode with extensive type safety
-- source:
-    path: AGENTS.md
-    lines: '23'
-  rule: Use workspace protocol for internal dependencies (workspace:*)
-- source:
-    path: AGENTS.md
-    lines: '44'
-  rule: Always prefer pnpm nx over npx nx for running commands
-- source:
-    path: AGENTS.md
-    lines: '71'
-  rule: Run test:eslint, test:types, and test:unit before committing
-- source:
-    path: AGENTS.md
-    lines: '21'
-  rule: Framework-agnostic core logic separated from framework bindings
-- source:
-    path: AGENTS.md
-    lines: '45'
-  rule: Prefer Nx targets over direct test runners for task dependencies
-- rule: TypeScript strict mode with extensive type safety
-  source:
-    path: AGENTS.md
-    lines: 16-16
-  evidence: The gold solution uses optional chaining (`?.`) when accessing deeply
-    nested properties like `viteConfig.environments?.[VITE_ENVIRONMENT_NAMES.server]?.build`
-    and `serverEnv?.build` to prevent runtime
-  category: style
 distractors:
-- rule: Framework-agnostic core logic separated from React/Solid bindings
-  collision_type: architecture_boundary
-  why_distracting: An agent might misinterpret this rule and attempt to separate the
-    Vite plugin logic into React or Solid specific packages. However, Vite plugins
-    operate at build-time and the `start-plugin-core` package is already the correct
-    architectural boundary for this framework-agnostic bundler logic.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 17-17
 - rule: Use workspace protocol for internal dependencies (`workspace:*`)
   collision_type: scope_ambiguity
-  why_distracting: An agent might try to update `package.json` to import `vite` using
-    the `workspace:*` protocol after importing it in `utils.ts`. This would fail because
-    `vite` is an external third-party dependency, not an internal monorepo package.
-  severity: high
+  why_distracting: The rule instructs to use `workspace:*` for internal dependencies.
+    An agent might mistakenly try to add `vite` to `package.json` using this protocol,
+    but `vite` is an external dependency and is already available in the environment.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 19-19
-hierarchy_analysis: The AGENTS.md file provides high-level monorepo guidelines. Since
-  there are no deeper config files provided, these root-level rules apply directly.
-  The primary challenge is distinguishing between rules meant for the runtime library
-  (like framework-agnostic bindings) versus build-time tooling (like Vite plugins).
+    lines: 18-18
+- rule: To run code exclusively on the server, use `createServerFn`.
+  source:
+    path: packages/start-client-core/skills/start-core/SKILL.md
+    lines: 6-8
+  collision_type: architecture_boundary
+  why_distracting: The agent is editing `preview-server-plugin/plugin.ts` and might
+    interpret the 'server' terminology as requiring TanStack Start's server-only APIs.
+    However, this is a Vite build plugin running in Node.js, not application runtime
+    code, so using `createServerFn` would break the build tool.
+  severity: high
+- rule: ALL code in TanStack Start is isomorphic by default... Server-only operations
+    MUST use `createServerFn`.
+  source:
+    path: packages/start-client-core/skills/start-core/execution-model/SKILL.md
+    lines: 6-8
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that all code is isomorphic by default and server-only
+    operations must use `createServerFn`. Applying this execution model to a Vite
+    plugin (which is inherently a Node.js build-time tool) represents a fundamental
+    misunderstanding of the project's architecture.
+  severity: high
+hierarchy_analysis: The config hierarchy consists of a single root-level `AGENTS.md`
+  file containing generic monorepo instructions and testing commands. There is no
+  deep hierarchy or conflicting rules.
 version: '2.0'
 source:
   repo: TanStack/router
   pr: 6955
   base_commit: 3bc18d4623459a56ae972de8ff969ebf7a994ca7
   merge_commit: 6651473d028a55c70f3f54af37a12b4379b46813
+rubric:
+- rule: TypeScript strict mode with extensive type safety
+  source:
+    path: AGENTS.md
+    lines: 15-15
+  evidence: The gold solution uses optional chaining (`?.`) and nullish coalescing
+    (`??`) when accessing deeply nested properties like `viteConfig.environments?.[VITE_ENVIRONMENT_NAMES.server]?.build`,
+    ensuring s
+  category: style
+- rule: Types are FULLY INFERRED. Never cast, never annotate inferred values.
+  source:
+    path: packages/router-core/skills/router-core/type-safety/SKILL.md
+    lines: 6-8
+  evidence: The `isRolldown` and `bundlerOptionsKey` variables in `utils.ts` are exported
+    without explicit type annotations, correctly relying on TypeScript's inference
+    as mandated by the type safety skill.
+  category: style
+  verification: llm_judge

@@ -87,6 +87,37 @@ rubric:
   evidence: The updated docker:start script in package.json and the documentation
     in CONTRIBUTING.md use `pnpm docker:clean` rather than npm or yarn.
   category: tooling
+- rule: 'Commenting Guidelines: Keep comments for non-obvious ''why'' or complex logic.'
+  source:
+    path: CLAUDE.md
+    lines: 70-73
+  evidence: The gold solution includes the comment `// Some or all containers don't
+    exist` inside the catch block of `scripts/docker-clean.js` to explain why the
+    error is swallowed, adhering to the guideline to k
+  category: documentation
+- rule: Use `import type` for types, regular `import` for values
+  source:
+    path: CLAUDE.md
+    lines: 60-60
+  evidence: The gold solution uses a regular `import { execSync } from 'child_process'`
+    for a value import in `scripts/docker-clean.js`.
+  category: style
+- rule: 'Execution flow: Skip comments when code is self-documenting. Keep for complex
+    logic, non-obvious ''why'''
+  source:
+    path: CLAUDE.md
+    lines: 63-64
+  evidence: The gold solution includes a comment `// Some or all containers don't
+    exist` in the catch block to explain the non-obvious reason for swallowing the
+    error.
+  category: documentation
+- rule: 'Execution flow: Keep comments for non-obvious ''why'''
+  source:
+    path: CLAUDE.md
+    lines: 50-50
+  evidence: The script includes a comment `// Some or all containers don't exist`
+    to explain the non-obvious 'why' of an empty catch block.
+  category: documentation
 config_edits:
 - path: CLAUDE.md
   tier: 1
@@ -107,24 +138,37 @@ config_edits:
 distractors:
 - rule: Prefer pure functions; when mutation is unavoidable, return the mutated object
     instead of void.
-  collision_type: architecture_boundary
-  why_distracting: This rule applies to the core CMS platform and packages, but scripts/docker-clean.js
-    is a standalone utility script that inherently relies on side effects (executing
-    shell commands). Trying to make it pure would overcomplicate a simple script.
+  collision_type: scope_ambiguity
+  why_distracting: The cleanup script is inherently side-effectful (running shell
+    commands to delete containers). Trying to make it pure or return mutated objects
+    makes no sense for a standalone executable script.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: '57'
-- rule: Skip comments when code is self-documenting.
+    lines: 45-45
+- rule: 'Organize functions top-down: exports before helpers'
   collision_type: scope_ambiguity
-  why_distracting: An agent might consider an empty catch block to be self-documenting
-    (ignoring errors) and omit the comment, but the comment is necessary to explain
-    the non-obvious 'why' (that the containers might not exist).
+  why_distracting: The script is a standalone executable that runs imperatively on
+    load, not a module exporting functions. Attempting to organize it with exports
+    would break its functionality as a simple script.
   severity: low
   source:
     path: CLAUDE.md
-    lines: '63'
-hierarchy_analysis: The CLAUDE.md file provides general guidelines for the monorepo.
-  However, some rules like 'prefer pure functions' are intended for the core application
-  code (Next.js/React/Drizzle) and do not apply to standalone Node.js utility scripts
-  in the scripts/ directory, which inherently rely on side effects.
+    lines: 46-46
+- rule: Use when CI tests fail on main branch after PR merge, or when investigating
+    flaky test failures in CI environments
+  source:
+    path: .claude/skills/triage-ci-flake/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task mentions 'reliability' and 'orphan container conflicts'
+    which often manifest as flaky tests in CI. An agent might mistakenly activate
+    this skill and attempt to modify CI workflows or test retry logic instead of fixing
+    the underlying local docker compose lifecycle.
+  severity: low
+hierarchy_analysis: The config hierarchy is flat, with `AGENTS.md` simply pointing
+  to `CLAUDE.md`. The primary challenge is scope ambiguity, as the rules in `CLAUDE.md`
+  are geared towards the core CMS logic (pure functions, exports, types) rather than
+  standalone imperative Node.js scripts. Additionally, the task is highly meta-referential,
+  requiring the agent to modify `CLAUDE.md` itself to update the documented Docker
+  commands.

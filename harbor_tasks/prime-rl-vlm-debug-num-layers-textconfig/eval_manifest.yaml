@@ -49,98 +49,97 @@ checks:
 - id: repo_ruff_check
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's ruff linting passes on model.py
+  description: Repo's ruff linting passes on src/prime_rl/
 - id: repo_ruff_format
   type: pass_to_pass
   origin: repo_tests
-  description: Repo's ruff format check passes on model.py
+  description: Repo's ruff format check passes on src/prime_rl/
 - id: repo_model_py_compiles
   type: pass_to_pass
   origin: repo_tests
   description: Repo's model.py compiles without syntax errors
+- id: repo_trainer_py_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in trainer directory compile without syntax errors
 rubric:
-- rule: Do not add unnecessary comments. Especially do not try to explain code change
-    that reflect your work process, do not refer to old code.
+- rule: Do not add unnecessary comments, especially those explaining work process
+    or referring to old code. Targeted comments for ambiguous code are acceptable.
   source:
-    path: AGENTS.md
-    lines: '7'
-    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+    path: src/prime_rl/trainer/model.py
+  reference: '# VLM configs nest num_hidden_layers under text_config'
+  category: documentation
 - rule: Simple is better than complex.
   source:
-    path: AGENTS.md
-    lines: '16'
-    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+    path: src/prime_rl/trainer/model.py
+  reference: target_config = getattr(model_config, "text_config", model_config)
+  category: style
 - rule: Explicit is better than implicit.
   source:
-    path: AGENTS.md
-    lines: '15'
-    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+    path: src/prime_rl/trainer/model.py
+  reference: target_config = getattr(model_config, "text_config", model_config)
+  category: style
 - rule: Readability counts.
   source:
-    path: AGENTS.md
-    lines: '20'
-    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+    path: src/prime_rl/trainer/model.py
+  reference: target_config.num_hidden_layers
+  category: style
 - rule: Flat is better than nested.
   source:
-    path: AGENTS.md
-    lines: '18'
-    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+    path: src/prime_rl/trainer/model.py
+  reference: target_config = getattr(model_config, "text_config", model_config)
+  category: style
 - rule: Errors should never pass silently. Unless explicitly silenced.
   source:
-    path: AGENTS.md
-    lines: 23-24
-    commit: c2dfc338c30d04286284b67cf87e73d534e43f3e
+    path: src/prime_rl/trainer/model.py
+  reference: target_config = getattr(model_config, "text_config", model_config)
+  category: style
 - rule: Avoid try/except blocks unless it's really necessary.
   source:
-    path: AGENTS.md
-    lines: 5-7
-  evidence: The solution uses `getattr(model_config, "text_config", model_config)`
+    path: src/prime_rl/trainer/model.py
+  reference: target_config = getattr(model_config, "text_config", model_config)
+  evidence: 'The solution uses getattr(model_config, "text_config", model_config)
     to safely access the nested configuration instead of wrapping the access in a
-    `try...except AttributeError:` block.
+    try...except AttributeError: block.'
   category: style
 - rule: Prefer to use targeted comments sparingly to explain ambiguous code, without
     referring to old code or work process.
   source:
-    path: AGENTS.md
-    lines: 9-11
-  evidence: The solution adds a single, concise comment (`# VLM configs nest num_hidden_layers
-    under text_config`) to explain the potentially ambiguous `getattr` logic, without
-    referencing the old code or the bug
+    path: src/prime_rl/trainer/model.py
+  reference: '# VLM configs nest num_hidden_layers under text_config'
+  evidence: The solution adds a single, concise comment to explain the potentially
+    ambiguous getattr logic, without referencing the old code or the bug.
   category: documentation
 distractors:
-- rule: It's fine that a program fails if something goes wrong as this helps us to
-    catch non-obvious bugs and unforeseen side-effects earlier.
+- rule: Do not add unnecessary comments.
   collision_type: scope_ambiguity
-  why_distracting: The rule states 'It's fine that a program fails if something goes
-    wrong as this helps us to catch non-obvious bugs'. An agent might misinterpret
-    this as a reason to not fix the `AttributeError` crash for VLMs, thinking the
-    crash is desirable behavior for unsupported model architectures rather than a
-    bug to be fixed.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 5-7
-- rule: Flat is better than nested.
-  collision_type: architecture_boundary
-  why_distracting: The Zen of Python rule 'Flat is better than nested' might lead
-    an agent to try and flatten the HuggingFace config object or complain about the
-    nested `text_config.num_hidden_layers`, rather than just accepting the external
-    library's nested structure and accessing it via `getattr`.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 22-22
-- rule: Special cases aren't special enough to break the rules.
-  collision_type: scope_ambiguity
-  why_distracting: The rule 'Special cases aren't special enough to break the rules'
-    might cause an agent to view VLMs as a 'special case' and try to force a unified
-    approach that doesn't check for `text_config`, or refuse to add the VLM-specific
-    `getattr` fallback.
+  why_distracting: The agent might interpret 'Do not add unnecessary comments' as
+    a strict ban on comments and omit the helpful explanation for why `getattr` is
+    needed for VLM configs.
   severity: low
   source:
     path: AGENTS.md
-    lines: 25-25
-hierarchy_analysis: The hierarchy is simple, with `CLAUDE.md` pointing to `AGENTS.md`.
-  The rules in `AGENTS.md` provide general Python guidelines. The main tension is
-  between avoiding try/except blocks and handling the missing attribute gracefully,
-  which the gold solution resolves elegantly using `getattr` with a default fallback.
+    lines: 7-8
+- rule: Flat is better than nested.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to flatten the HuggingFace config object or
+    complain about the nested `text_config`, but the HF config structure is external
+    and cannot be changed.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 15-16
+- rule: How to write and use TOML configs in prime-rl. Use when creating config files,
+    running commands with configs, or overriding config values via CLI.
+  source:
+    path: .claude/skills/toml-config/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions setting `debug.num_layers` in a config. An agent
+    might activate the TOML config skill and mistakenly attempt to fix the issue by
+    modifying TOML config files, flattening the config structure, or changing the
+    TOML parsing logic, rather than fixing the underlying model loading logic in Python.
+  severity: medium
+hierarchy_analysis: The config hierarchy is flat, with rules defined in AGENTS.md
+  and referenced by CLAUDE.md. The agent must balance the rule against unnecessary
+  comments with the allowance for targeted comments explaining ambiguous code.

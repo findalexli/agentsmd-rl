@@ -36,6 +36,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's unit tests for event service config selection pass
+- id: test_repo_mypy_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo.s mypy type checking passes on target file
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml is valid
+- id: test_repo_imports_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file can be imported without errors
 - id: test_pydantic_field_import_present
   type: fail_to_pass
   origin: pr_diff
@@ -113,28 +125,72 @@ rubric:
   evidence: The gold solution correctly targets and modifies `openhands/app_server/event/aws_event_service.py`,
     adhering to the backend directory structure.
   category: architecture
+- rule: Fix Ruff formatting issues and run linting for backend changes before pushing.
+  source:
+    path: AGENTS.md
+    lines: 15-25
+  evidence: The gold solution explicitly installs and runs `ruff format` on the target
+    file to ensure proper formatting, adhering to the requirement to fix Ruff formatting
+    issues before pushing changes.
+  category: tooling
+- rule: Fix any lint errors or simple test errors, including Ruff formatting issues,
+    before pushing changes.
+  source:
+    path: AGENTS.md
+    lines: 22-33
+  evidence: The gold solution explicitly installs and runs `ruff format` on the target
+    file to ensure proper formatting, complying with the requirement to fix Ruff formatting
+    issues.
+  category: tooling
+- rule: Run pre-commit hooks or linters (like ruff) on modified backend files to ensure
+    no lint errors remain.
+  source:
+    path: AGENTS.md
+    lines: 17-20
+  evidence: The gold solution explicitly runs `ruff format` on the modified target
+    file to ensure proper formatting, complying with the requirement to fix lint errors
+    before pushing.
+  category: tooling
+- rule: Backend application server code is located in the `openhands/app_server/`
+    directory.
+  source:
+    path: AGENTS.md
+    lines: 65-67
+  evidence: The gold solution correctly targets the `openhands/app_server/event/aws_event_service.py`
+    file, which aligns with the documented location of the V1 application server.
+  category: architecture
 distractors:
-- rule: Store design documents, analysis, or temporary artifacts in a `.pr/` directory.
+- rule: Store design documents, debugging notes, or temporary artifacts in a `.pr/`
+    directory.
   collision_type: scope_ambiguity
-  why_distracting: The agent might create a `.pr/notes.md` or `.pr/design.md` to document
-    its plan for fixing the S3 endpoint URL. This is a straightforward bug fix that
-    does not require temporary PR artifacts, and creating them would be wasted effort.
+  why_distracting: The agent might interpret this bug fix as a 'debugging session'
+    or 'complex refactoring' and create a `.pr/analysis.md` or `.pr/design.md` file
+    to document the S3 endpoint logic. This is unnecessary for a straightforward,
+    well-specified bug fix and wastes effort.
   severity: low
   source:
     path: AGENTS.md
-    lines: 36-45
-- rule: Run the full application using `make build && make run` to debug issues.
+    lines: 38-45
+- rule: Run `make build` to set up the entire repo including frontend and backend.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to run `make build && make run` to start the
-    full application and debug the URL parsing logic. This is unnecessary for a simple,
-    unit-testable string manipulation fix and would waste significant time and compute
-    resources.
-  severity: medium
+  why_distracting: The agent might attempt to run `make build` to set up the repository
+    before making changes, which is time-consuming and explicitly discouraged unless
+    requested by the user.
+  severity: low
   source:
     path: AGENTS.md
-    lines: 8-12
-hierarchy_analysis: The repository has a single root-level configuration file (`AGENTS.md`).
-  The rules are straightforward, but the agent must exercise judgment regarding the
-  scope of the task to avoid over-engineering the solution (e.g., spinning up the
-  full app or creating PR design docs for a simple URL parsing fix).
+    lines: 6-8
+- rule: Use cross-repo-testing skill when deploying a feature branch to staging or
+    testing cross-repo features.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions 'custom S3/Minio endpoint URLs for feature branches'.
+    An agent might mistakenly activate this skill to 'deploy a feature branch to staging'
+    or perform cross-repo testing, but this task only requires a local code fix in
+    the backend.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the root level. There are no hierarchical conflicts or overrides to navigate.
 version: '2.0'

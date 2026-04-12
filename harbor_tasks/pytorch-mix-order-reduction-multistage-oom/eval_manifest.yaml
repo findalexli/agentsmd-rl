@@ -4,40 +4,6 @@ source:
   pr: 176495
   base_commit: 5d919bfe0f2ba7c7aabdb75ef6a20512f163e662
   merge_commit: 3c40486f8a515b3f6f851a0cc4b3a2dc07744f6c
-rubric:
-- rule: Minimize comments; be concise. Code should be self-explanatory and self-documenting.
-  source:
-    path: CLAUDE.md
-    lines: '48'
-    commit: 5d919bfe0f2ba7c7aabdb75ef6a20512f163e662
-- rule: Match existing code style and architectural patterns in the repository.
-  source:
-    path: CLAUDE.md
-    lines: '57'
-    commit: 5d919bfe0f2ba7c7aabdb75ef6a20512f163e662
-- rule: Prefer clear abstractions with explicit state management; avoid dynamically
-    setting/getting attributes on objects.
-  source:
-    path: CLAUDE.md
-    lines: 53-56
-    commit: 5d919bfe0f2ba7c7aabdb75ef6a20512f163e662
-- rule: Match existing code style and architectural patterns.
-  source:
-    path: CLAUDE.md
-    lines: 44-44
-  evidence: The gold solution adds the new config `mix_order_reduction_allow_multi_stages`
-    to `torch/_inductor/config.py` and passes it through `inductor_meta_common` in
-    `torch/_inductor/codegen/triton.py`, match
-  category: architecture
-- rule: Comments should be useful, for example, comments that remind the reader about
-    some global context that is non-obvious and can't be inferred locally.
-  source:
-    path: CLAUDE.md
-    lines: 37-39
-  evidence: The gold solution adds a comment `# Don't allow multi-stages by default
-    to avoid out of shared memory` in `config.py` to explain the non-obvious reason
-    for the default value.
-  category: documentation
 checks:
 - id: syntax_check
   type: pass_to_pass
@@ -75,49 +41,84 @@ checks:
   origin: pr_diff
   description: inductor_meta_common includes mix_order_reduction_allow_multi_stages
     as a dict key
-- id: existing_configs_intact
+- id: test_existing_configs_intact
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: Existing mix_order_reduction config attributes still present
-- id: config_not_hardcoded_false
+- id: test_config_not_hardcoded_false
   type: pass_to_pass
   origin: static
   description: Config reads env var, not a trivial hardcoded False
-- id: test_repo_flake8
+- id: test_repo_py_compile
   type: pass_to_pass
   origin: repo_tests
-  description: Modified files pass flake8 linting
+  description: Modified files compile without syntax errors (CI py_compile check)
+- id: test_repo_config_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config module loads basic dependencies without errors (subprocess import
+    test)
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on modified files (CI lint check)
+- id: test_repo_ast_parses_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified Python files parse via AST without errors (CI syntax check)
 distractors:
-- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
-  collision_type: rule_conflict
-  why_distracting: CLAUDE.md instructs the agent to use `spin lint` and `spin fixlint`.
-    AGENTS.md instructs the agent to use `lintrunner -a`. This creates a direct conflict
-    on how to run linting.
+- rule: When you are working on a bug... find an appropriate test file to add the
+    test to and make sure to follow local conventions on the test file.
+  collision_type: scope_ambiguity
+  why_distracting: The rule demands adding a test to an appropriate test file. However,
+    this bug involves out-of-shared-memory errors on specific large model architectures
+    (16K+ sequence lengths, dual RMSNorm). Attempting to write a unit test for this
+    hardware/memory constraint would be extremely difficult, likely fail in CI, and
+    is not expected for this specific PR.
   severity: high
   source:
     path: AGENTS.md
-    lines: 9-9
-- rule: All build (both codegen, C++ and python) is done via `pip install -e . -v
-    --no-build-isolation`.
+    lines: 3-6
+- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
   collision_type: rule_conflict
-  why_distracting: AGENTS.md states 'you do not have a working build environment',
-    which conflicts with CLAUDE.md providing a specific build command (`pip install
-    -e .`). The agent might try to build and fail, or get confused about whether it
-    can test its changes.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 8-10
-- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
-  collision_type: scope_ambiguity
-  why_distracting: The agent might strictly avoid adding comments, missing the opportunity
-    to explain the 'out of shared memory' context for the new config variable, which
-    the gold solution explicitly includes.
+  why_distracting: AGENTS.md instructs the agent to use `lintrunner -a` for linting,
+    which directly conflicts with CLAUDE.md's strict instruction to 'Only use commands
+    provided via `spin` for linting'.
   severity: medium
   source:
+    path: AGENTS.md
+    lines: 11-11
+- rule: Debug AOTInductor (AOTI) errors and crashes. Use when encountering AOTI segfaults,
+    device mismatch errors, constant loading failures, or runtime errors from aot_compile.
+  source:
+    path: .claude/skills/aoti-debug/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions 'compilation failures', which might lead the
+    agent to invoke the `aoti-debug` skill. However, the issue is specifically about
+    Triton kernel autotuning heuristics in Inductor, not AOTI compilation or packaging
+    errors.
+  severity: low
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md reside at the root level (Level 0)
+  and are loaded accumulatively. They contain direct contradictions regarding linting
+  tools (`lintrunner` vs `spin`). Furthermore, the generic testing mandate in AGENTS.md
+  conflicts with the practical reality of the hardware-specific bug described in the
+  task instruction, requiring the agent to exercise judgment over rigid rule-following.
+rubric:
+- rule: Match existing code style and architectural patterns.
+  source:
     path: CLAUDE.md
-    lines: 36-36
-hierarchy_analysis: CLAUDE.md and AGENTS.md are both at Level 0. They have direct
-  conflicts regarding linting (`spin lint` vs `lintrunner -a`) and build environment
-  (`pip install -e .` vs 'you do not have a working build environment'). The agent
-  must navigate these conflicting instructions.
+    lines: 45-45
+  evidence: The gold solution adds `mix_order_reduction_allow_multi_stages` to `torch/_inductor/config.py`
+    and initializes it using `os.environ.get(...) == "1"`, perfectly matching the
+    architectural pattern of ot
+  category: style
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+    Comments should be useful.
+  source:
+    path: CLAUDE.md
+    lines: 37-39
+  evidence: 'The gold solution adds a single, concise comment (`# Don''t allow multi-stages
+    by default to avoid out of shared memory`) that provides useful global context
+    about the hardware constraint, rather than '
+  category: documentation

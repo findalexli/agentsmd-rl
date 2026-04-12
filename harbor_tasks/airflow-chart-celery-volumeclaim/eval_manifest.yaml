@@ -144,31 +144,38 @@ rubric:
 - rule: Update values.schema.json description for deprecated field
 - rule: Add examples in schema for new field
 distractors:
-- rule: Run Helm tests in parallel with xdist `breeze testing helm-tests --use-xdist`
-  collision_type: scope_ambiguity
-  why_distracting: The PR instructions explicitly provide `helm template` commands
-    to test the chart rendering locally. The agent might be distracted by this rule
-    and attempt to write or run full pytest-based Helm tests using `breeze testing
-    helm-tests`, which is unnecessary for this specific task and wastes time.
+- rule: 'Run Helm tests in parallel with xdist: `breeze testing helm-tests --use-xdist`'
+  collision_type: rule_conflict
+  why_distracting: The task instructions explicitly provide `helm template` commands
+    to test the chart rendering. The agent might try to use `breeze testing helm-tests`
+    instead, which runs the full pytest-based Helm test suite. This could take a long
+    time, fail due to environment issues, or distract the agent from the specific
+    rendering test requested.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 24-24
-- rule: Never run pytest, python, or airflow commands directly on the host — always
-    use breeze.
-  collision_type: meta_confusion
-  why_distracting: The PR instructions ask the agent to run `helm dependency build`
-    and `helm template` directly in the workspace. The agent might over-apply the
-    'always use breeze' rule to `helm` commands and try to execute them inside the
-    Breeze environment, leading to potential environment confusion or command failures.
+    path: AGENTS.md
+    lines: 24-25
+- rule: 'Lint with ruff only: `prek run ruff --from-ref <target_branch>`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to use `ruff` to lint its changes, but
+    the modifications are entirely in YAML, JSON, txt, and rst files. Ruff is a Python
+    linter and will not validate the JSON schema or Helm templates, potentially causing
+    confusion if the agent relies on it for validation.
   severity: low
   source:
-    path: CLAUDE.md
-    lines: 8-8
-hierarchy_analysis: The config files (`CLAUDE.md` and `AGENTS.md`) are identical and
-  primarily focus on Python development, testing with `breeze`, and repository structure
-  for the Airflow core and providers. Since this PR is strictly focused on modifying
-  Helm chart YAML, JSON schemas, and documentation, most of the repository-wide Python
-  tooling rules are irrelevant and serve as potential distractors if the agent tries
-  to apply Python testing workflows to Helm chart template rendering.
+    path: AGENTS.md
+    lines: 31-32
+- rule: Airflow translations
+  source:
+    path: .github/skills/airflow-translations/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to apply translation guidelines to the
+    new deprecation warning added in NOTES.txt, but Helm chart notes in Airflow are
+    not localized.
+  severity: low
+hierarchy_analysis: The config files (`AGENTS.md` and `CLAUDE.md`) are identical and
+  provide general repository commands. They do not contain specific guidance for Helm
+  chart modifications, meaning the agent must rely entirely on the task instructions
+  for the implementation details.
 version: '2.0'

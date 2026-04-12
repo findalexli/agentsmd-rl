@@ -95,43 +95,73 @@ checks:
   description: ESLint passes for VSCode extension with zero warnings
   type: pass_to_pass
   origin: repo_tests
+- id: cargo_move_clippy
+  description: cargo move-clippy passes for all move crates (external.yml CI)
+  type: pass_to_pass
+  origin: repo_tests
+- id: move_analyzer_ide_testsuite
+  description: move-analyzer IDE testsuite passes (33 tests for completion, hints,
+    etc.)
+  type: pass_to_pass
+  origin: repo_tests
 rubric:
-- rule: State machine implementation
-- rule: Code organization
-- rule: Error handling
-- rule: All new files must start with the Mysten Labs copyright and SPDX-License-Identifier
-    license comment.
+- rule: TypeScript files should follow project linting conventions
   source:
-    path: CLAUDE.md
-    lines: 15-18
-  evidence: The gold solution creates a new file `activity_monitor.ts` for the ServerActivityMonitor
-    class, which requires the Mysten Labs copyright and SPDX license header.
+    path: external-crates/move/crates/move-analyzer/editors/code/.eslintrc.json
   category: style
+- rule: 'All new files must start with the following license in comments at the top
+    of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
+  source:
+    path: CLAUDE.md
+    lines: 16-18
+  evidence: The newly created activity_monitor.ts file includes the Mysten Labs copyright
+    and Apache-2.0 license header at the top.
+  category: documentation
 distractors:
-- rule: cargo build -p sui-core
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives...
+    cargo simtest -p sui-e2e-tests
   collision_type: scope_ambiguity
-  why_distracting: The instructions suggest building `sui-core`, but the task is entirely
-    within `external-crates/move/crates/move-analyzer`. Building `sui-core` would
-    waste significant time and compute resources without validating the language server
-    changes.
-  severity: high
+  why_distracting: The root CLAUDE.md suggests running `sui-e2e-tests` and `sui-core`
+    tests, but this PR only modifies the `move-analyzer` language server and its VSCode
+    extension client. Running the root tests would waste significant time and compute.
+  severity: medium
   source:
     path: CLAUDE.md
-    lines: 22-24
-- rule: cargo simtest -p sui-e2e-tests
+    lines: 28-32
+- rule: Build a specific crate. Generally don't need to do release build. cargo build
+    -p sui-core
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to run `sui-e2e-tests` to verify its changes,
-    but these tests are for the Sui blockchain core, not the Move language server
-    or VSCode extension.
-  severity: high
+  why_distracting: The build instructions suggest running `cargo build -p sui-core`,
+    which is irrelevant to the `move-analyzer` crate being modified.
+  severity: low
   source:
     path: CLAUDE.md
-    lines: 30-32
-hierarchy_analysis: The root CLAUDE.md provides general repository guidelines focused
-  on the Sui blockchain core (sui-core, sui-e2e-tests). However, this task is isolated
-  to the Move language server and VSCode extension in `external-crates/move/crates/move-analyzer`.
-  The agent must recognize that the core build and test commands in the root CLAUDE.md
-  do not apply to this specific sub-project.
+    lines: 22-23
+- rule: Use simtest for debugging and testing Sui blockchain components
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to use the `simtest-debug` skill to test
+    the language server changes, but `simtest` is a deterministic simulation testing
+    framework for the Sui blockchain consensus and execution layers, not for the Move
+    language server or VSCode extension.
+  severity: high
+- rule: Manage protocol configurations and feature flags for Sui
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: architecture_boundary
+  why_distracting: The agent might think that adding a new feature (activity indicator)
+    requires a protocol config flag to gate the feature, but this is a purely client-side
+    and local language server enhancement that does not affect the blockchain protocol.
+  severity: medium
+hierarchy_analysis: The root CLAUDE.md and AGENTS.md provide general repository guidelines,
+  but the task is localized to `external-crates/move/crates/move-analyzer`. The root
+  config suggests running `sui-core` builds and `sui-e2e-tests`, which are out of
+  scope for this specific crate. The agent must recognize that the `move-analyzer`
+  crate is an independent component and ignore the root-level Sui blockchain testing
+  commands.
 version: '2.0'
 source:
   repo: MystenLabs/sui

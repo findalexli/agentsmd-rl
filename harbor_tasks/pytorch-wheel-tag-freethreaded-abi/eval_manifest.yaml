@@ -82,55 +82,105 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: check_wheel_tags.py is importable
+- id: test_repo_smoke_test_py_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: smoke_test.py compiles without errors
+- id: test_repo_max_autotune_py_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: max_autotune.py compiles without errors
+- id: test_repo_common_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: common.sh has valid shell syntax
+- id: test_repo_common_build_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: common-build.sh has valid shell syntax
+- id: test_repo_binary_populate_env_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: binary_populate_env.sh has valid shell syntax
+- id: test_repo_check_binary_symbols_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_binary_symbols.py compiles without errors
+- id: test_repo_check_binary_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_binary.sh has valid shell syntax
+- id: test_repo_build_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: build.sh has valid shell syntax
+- id: test_repo_run_tests_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: run_tests.sh has valid shell syntax
 rubric:
 - rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
   source:
     path: CLAUDE.md
-    lines: '58'
-    commit: 8eaba043803b82549bf4fb42d5e03099be2eb1d9
-- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
-    it significantly improves code readability.
-  source:
-    path: CLAUDE.md
-    lines: 61-62
-    commit: 8eaba043803b82549bf4fb42d5e03099be2eb1d9
+    lines: 63-64
+  evidence: The gold solution adds a complex boolean condition to check for free-threaded
+    Python (checking MATRIX_PYTHON_VERSION, Py_GIL_DISABLED, and _is_gil_enabled)
+    but includes zero comments, relying entirely
+  category: documentation
 - rule: If uncertain, choose the simpler, more concise implementation.
   source:
     path: CLAUDE.md
-    lines: '72'
-    commit: 8eaba043803b82549bf4fb42d5e03099be2eb1d9
+    lines: 84-85
+  evidence: The gold solution removes the unreachable `continue` statement immediately
+    following `raise RuntimeError(msg)` to simplify the code.
+  category: style
 distractors:
-- rule: 'Use our test class and test runner: from torch.testing._internal.common_utils
-    import run_tests, TestCase'
-  collision_type: scope_ambiguity
-  why_distracting: The bug is in a CI script (`.ci/pytorch/smoke_test/check_wheel_tags.py`),
-    not the main PyTorch library. Writing a test using `torch.testing._internal.common_utils`
-    for a CI script is inappropriate and out of scope.
-  severity: high
-  source:
-    path: CLAUDE.md
-    lines: 18-24
 - rule: Once the change is passing, find an appropriate test file to add the test
     to and make sure to follow local conventions on the test file.
   collision_type: scope_ambiguity
-  why_distracting: CI scripts in this repository typically do not have unit tests
-    in the main test suite. The agent might waste time looking for a test file or
-    creating one for `check_wheel_tags.py`.
+  why_distracting: The bug is in a CI smoke test script (`.ci/pytorch/smoke_test/check_wheel_tags.py`).
+    There is no standard test suite for the CI scripts themselves. Attempting to add
+    a test for this script would lead the agent to create misplaced tests or fail
+    to find an appropriate test file.
   severity: high
   source:
     path: AGENTS.md
-    lines: 4-6
-- rule: Only use commands provided via `spin` for linting.
+    lines: 3-7
+- rule: All build (both codegen, C++ and python) is done via `pip install -e . -v
+    --no-build-isolation`.
   collision_type: rule_conflict
-  why_distracting: This rule directly conflicts with AGENTS.md which instructs the
-    agent to use `lintrunner -a`. The agent might get confused about which linting
-    tool to use or fail if `spin` is not configured in the environment.
+  why_distracting: The bug report explicitly requires the agent to 'Build a PyTorch
+    wheel'. If the agent tries to reproduce the issue by building a wheel, it might
+    strictly use the provided command (`pip install -e .`), which creates an editable
+    install rather than a `.whl` file, thus failing to reproduce the wheel tag validation
+    issue.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 11-14
+- rule: 'Use our test class and test runner: ... from torch.testing._internal.common_utils
+    import run_tests, TestCase'
+  collision_type: architecture_boundary
+  why_distracting: If the agent attempts to write a test for the wheel tag validation
+    logic, it might try to use the core PyTorch testing framework (`torch.testing._internal.common_utils`).
+    However, CI scripts are standalone and do not use the core PyTorch testing utilities.
   severity: medium
   source:
     path: CLAUDE.md
-    lines: 33-35
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` provide instructions on testing
-  and linting. There is a direct conflict regarding linting tools (`spin` in CLAUDE.md
-  vs `lintrunner` in AGENTS.md). Additionally, the testing instructions in both files
-  assume the agent is modifying the core PyTorch library, which creates scope ambiguity
-  when modifying CI scripts.
+    lines: 16-24
+- rule: Debug PyTorch 2 compiler stack failures including Dynamo graph breaks, Inductor
+    codegen errors...
+  source:
+    path: .claude/skills/pt2-bug-basher/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions 'free-threaded Python builds' and 'wheel tag
+    validation', which might sound like a build/compiler issue, prompting the agent
+    to use this skill. However, it's a CI script bug.
+  severity: low
+hierarchy_analysis: The config hierarchy is flat (Level 0 `AGENTS.md` and `CLAUDE.md`).
+  The rules in these files are heavily biased towards core PyTorch development (C++
+  extensions, core Python APIs, standard test suite). The agent must recognize that
+  it is operating in a CI script (`.ci/pytorch/smoke_test/`) and selectively ignore
+  rules about testing frameworks, build commands, and test file placement, as they
+  do not apply to this architectural boundary.

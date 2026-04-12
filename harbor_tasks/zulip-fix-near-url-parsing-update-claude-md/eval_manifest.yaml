@@ -65,6 +65,18 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: fetch-zulip-web-public-messages imports without errors
+- id: test_repo_pycodestyle
+  type: pass_to_pass
+  origin: repo_tests
+  description: pycodestyle (PEP 8) check passes on fetch-zulip-web-public-messages
+- id: test_repo_flake8
+  type: pass_to_pass
+  origin: repo_tests
+  description: Flake8 linter passes on fetch-zulip-web-public-messages
+- id: test_script_dry_run_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Script handles URL validation without unhandled exceptions
 rubric:
 - rule: CLAUDE.md must include a "Zulip Chat Links" section documenting that agents
     should use the /fetch-zulip-messages skill for Zulip URLs, not WebFetch
@@ -91,6 +103,21 @@ rubric:
     `(?:/(?:with|near)/(\d+))?` and updates the error message by changing `[/with/MSG_ID]`
     to `[/with|near/MSG_ID]`, perfectly matchin
   category: style
+- rule: Be consistent with existing code. Look at surrounding code and follow the
+    same patterns
+  source:
+    path: .claude/CLAUDE.md
+    lines: 64-65
+  evidence: The updated error message `[/with|near/MSG_ID]` perfectly matches the
+    style of the existing error message and the new regex pattern, maintaining consistency.
+  category: style
+- rule: Comments should have a line to themself except for CSS px math.
+  source:
+    path: .claude/CLAUDE.md
+    lines: 74-75
+  evidence: 'The updated comment `# Parse the narrow fragment: narrow/channel/ID-slug/topic/encoded-topic[/with|near/ID]`
+    is kept on its own line, rather than being moved to an inline comment.'
+  category: style
 config_edits:
 - path: .claude/CLAUDE.md
   tier: 1
@@ -107,25 +134,37 @@ config_edits:
   gold_removed: ''
 distractors:
 - rule: Backend and API changes (with tests and API doc changes documented fully using
-    the `tools/create-api-changelog` double-entry changelog system)
+    the tools/create-api-changelog double-entry changelog system)
   collision_type: scope_ambiguity
-  why_distracting: The agent might classify the Python script modification as a backend
-    change and attempt to use `tools/create-api-changelog` or write backend tests,
-    but this is an internal AI tooling script, not part of the Zulip backend API.
+  why_distracting: The rule requires backend and API changes to be documented using
+    the `tools/create-api-changelog` system. An agent might mistakenly classify the
+    URL parser update as a backend/API change and attempt to generate a changelog,
+    but this script is an internal Claude skill tool, not part of the Zulip public
+    API.
   severity: high
   source:
     path: .claude/CLAUDE.md
-    lines: 49-50
+    lines: 46-48
 - rule: Run tests before making a commit... ./tools/test-backend zerver.tests.test_relevant_module
-  collision_type: scope_ambiguity
-  why_distracting: The agent might try to run `./tools/test-backend` for the modified
-    script, but the script is an isolated tool in `.claude/skills/` and likely doesn't
-    have standard `zerver.tests` coverage, leading to wasted effort and confusion.
+  collision_type: architecture_boundary
+  why_distracting: The rule instructs running specific test collections like `./tools/test-backend
+    zerver.tests.test_relevant_module`. An agent might waste time trying to find or
+    write tests in the `zerver` Django app for this script, but the script lives in
+    `.claude/skills/` and is completely separate from the main backend architecture.
   severity: medium
   source:
     path: .claude/CLAUDE.md
-    lines: 58-63
-hierarchy_analysis: The only config file is `.claude/CLAUDE.md`, which provides general
-  Zulip development guidelines. However, because the PR modifies an AI skill script
-  (`.claude/skills/...`) and the config file itself, many of the standard Zulip backend/frontend
-  rules (like API changelogs and `zerver` tests) do not apply, creating scope ambiguity.
+    lines: 58-61
+- rule: Fix backend test coverage gaps when modifying Python files.
+  source:
+    path: .claude/skills/fix-backend-coverage/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write backend tests for the modified `fetch-zulip-web-public-messages`
+    script to ensure test coverage, but this is an AI skill script outside the main
+    backend test suite.
+  severity: medium
+hierarchy_analysis: The task involves a flat single-file config (`.claude/CLAUDE.md`),
+  but it is highly meta-referential because the agent is explicitly instructed to
+  edit this exact config file to update its own future instructions. The agent must
+  apply the rules from the file while simultaneously modifying it.

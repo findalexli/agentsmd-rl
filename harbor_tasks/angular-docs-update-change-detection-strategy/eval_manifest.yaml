@@ -12,47 +12,76 @@ checks:
 - id: repo_git_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Repo is a valid git repository with expected commit checked out
+  description: Repo is a valid git repository with expected commit checked out (git
+    status, git rev-parse)
 - id: typescript_files_parseable
   type: pass_to_pass
-  origin: repo_tests
-  description: All modified TypeScript files have valid syntax structure
+  origin: static
+  description: All modified TypeScript files have valid syntax structure (brace/parentheses
+    balance, exports)
 - id: markdown_files_valid
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All modified Markdown files are valid UTF-8 and have proper structure
 - id: change_detection_files_exist
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: All change detection related files exist and have expected structure
 - id: typescript_syntax_tsc
   type: pass_to_pass
   origin: repo_tests
-  description: TypeScript files have valid syntax when checked with tsc
+  description: TypeScript files have valid syntax when checked with tsc --noEmit --skipLibCheck
 - id: jsdoc_comments_structure
   type: pass_to_pass
   origin: repo_tests
-  description: JSDoc comments in modified files are well-formed
+  description: JSDoc comments in modified files are well-formed (grep for balanced
+    /** */)
 - id: markdown_frontmatter
   type: pass_to_pass
-  origin: repo_tests
-  description: Markdown files have valid structure
+  origin: static
+  description: Markdown files have valid structure (balanced fences, no null bytes)
 - id: clang_format_check
   type: pass_to_pass
   origin: repo_tests
-  description: Modified TypeScript files conform to repo formatting rules
+  description: Modified TypeScript files checked with clang-format --dry-run (repo
+    formatting rules)
 - id: repo_copyright_headers
   type: pass_to_pass
   origin: repo_tests
-  description: Modified source files have required Google copyright headers
+  description: Modified source files have required Google copyright headers (grep)
 - id: repo_file_validity
   type: pass_to_pass
   origin: repo_tests
-  description: Modified files are valid ASCII/UTF-8 text files
+  description: Modified files are valid ASCII/UTF-8 text files (file command)
 - id: git_log_commit
   type: pass_to_pass
   origin: repo_tests
-  description: Git repository has expected commit history
+  description: Git repository has expected commit history (git log)
+- id: test_repo_tslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TSLint passes on all source files (pnpm tslint)
+- id: test_repo_check_tooling_setup
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tooling setup compiles correctly (pnpm check-tooling-setup)
+- id: test_repo_ts_circular_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no circular dependencies (pnpm ts-circular-deps:check)
+- id: test_repo_ng_dev_skills
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's agent skills configuration is valid (pnpm ng-dev ai skills validate)
+- id: test_repo_ng_dev_pullapprove
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's PullApprove configuration is valid (pnpm ng-dev pullapprove
+    verify)
+- id: test_repo_ng_dev_ngbot
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's NgBot configuration is valid (pnpm ng-dev ngbot verify)
 - id: constants_onpush_default_note
   type: fail_to_pass
   origin: pr_diff
@@ -105,6 +134,24 @@ rubric:
     path: adev/src/content/best-practices/runtime-performance/skipping-subtrees.md
     lines: 1-10
     commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+- rule: 'Sentence case for headings: Capitalize only the first word and proper nouns
+    in titles and headings.'
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 34-35
+  evidence: 'The gold solution uses sentence case for the updated heading: `### An
+    event is handled by a component with \`Eager\` change detection`.'
+  category: style
+  verification: llm_judge
+- rule: 'Code formatting: Use code font for code-related text (filenames, variables,
+    commands).'
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 42-43
+  evidence: The gold solution wraps the strategy names `Eager` and `OnPush` in backticks
+    within the markdown text.
+  category: style
+  verification: llm_judge
 config_edits:
 - path: adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md
   tier: 2
@@ -127,37 +174,28 @@ config_edits:
     ChangeDetectionStrategy.OnPush` in the `@Component` decorator for performance
     benefits by reducing unnecessary change detection cycles.'
 distractors:
-- rule: Use `pnpm bazel test //target` to run tests.
+- rule: 'Testing - Zoneless & Async-First: ALWAYS use the ''Act, Wait, Assert'' pattern'
   collision_type: scope_ambiguity
-  why_distracting: The PR only involves documentation, JSDoc comments, and markdown
-    config updates. Attempting to run Bazel tests is unnecessary for these text changes
-    and could waste time or fail if the agent guesses the wrong target.
+  why_distracting: The agent might try to write or update tests for the change detection
+    strategy using the zoneless testing rules, but this PR is strictly a documentation,
+    JSDoc, and configuration update.
   severity: low
   source:
     path: AGENTS.md
-    lines: 9-10
-- rule: '**Zoneless & Async-First:** Assume a zoneless environment where state changes
-    schedule updates asynchronously.'
-  collision_type: scope_ambiguity
-  why_distracting: The agent might confuse the transition to default `OnPush` change
-    detection with the transition to Zoneless environments. This could lead the agent
-    to erroneously modify documentation to remove `OnPush` entirely in favor of Zoneless,
-    or add Zoneless instructions where only `OnPush` updates are requested.
-  severity: medium
+    lines: 15-25
+- rule: 'Strategies: Default: Checks everything. OnPush: Checks only if inputs change,
+    events fire, or signals update.'
   source:
-    path: AGENTS.md
-    lines: 18-19
-- rule: Use the `gh` CLI (GitHub CLI) for creating and managing pull requests.
-  collision_type: would_cause_bug
-  why_distracting: The agent might attempt to execute `gh pr create` to submit the
-    changes at the end of its workflow, which is outside the scope of the coding task
-    and will likely fail in a headless evaluation environment.
-  severity: medium
-  source:
-    path: AGENTS.md
-    lines: 33-34
-hierarchy_analysis: The only config file provided in the hierarchy is `AGENTS.md`
-  at the root. The task involves editing other agent config files (`adev/src/context/*.mdc`),
-  which creates a meta-level interaction where the agent must modify its own instructions
-  rather than just following them. `AGENTS.md` itself does not contain the outdated
-  `OnPush` rules, so it correctly remains unedited.
+    path: .agent/skills/reference-core/SKILL.md
+    lines: 56-59
+  collision_type: rule_conflict
+  why_distracting: The skill document states that 'Default' checks everything and
+    'OnPush' is a specific strategy. The PR instruction explicitly changes this mental
+    model so that OnPush is the default and the old Default is now Eager. Following
+    the skill document would contradict the PR instruction.
+  severity: high
+hierarchy_analysis: The agent is instructed to modify its own configuration files
+  (e.g., `adev/src/context/angular-20.mdc`, `adev/src/context/airules.md`) to remove
+  outdated instructions about `OnPush`. This is a highly meta-referential task where
+  the agent must understand that the instructions it usually follows are the target
+  of the modification.

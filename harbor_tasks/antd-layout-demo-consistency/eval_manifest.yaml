@@ -28,6 +28,15 @@ rubric:
     line inside each of the 6 demo components instead of extracting it to a shared
     utility file.
   category: architecture
+- rule: demo 与 .dumi 文件之间不要互相相对引用；如果需要复用少量逻辑，优先内联 (No relative imports between demos
+    and .dumi files; prefer inlining for small reused logic)
+  source:
+    path: AGENTS.md
+    lines: 27-28
+  evidence: The gold solution keeps the `currentYear` variable initialization duplicated
+    across all 6 demo files rather than extracting it into a shared utility file,
+    adhering to the rule to prefer inlining for small amounts of reused logic.
+  category: architecture
 checks:
 - id: repo_tsc
   description: Repository TypeScript typecheck passes (tsc --noEmit)
@@ -95,32 +104,42 @@ checks:
     path: test_outputs.py
     lines: ''
   origin: pr_diff
+- id: test_repo_prettier_layout
+  description: Repo Prettier formatting check passes on layout demo files
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
+- id: test_repo_node_tests
+  description: Repo Node.js environment tests pass
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
 distractors:
-- rule: Changelog core principles require providing both English and Chinese versions
-    for changes.
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本 / 忽略用户无感知的改动'
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to add a changelog entry for this demo code
-    consistency fix, thinking it's a required step for PRs. However, this is an internal
-    refactor of demo code that is imperceptible to users, so adding a changelog entry
-    would violate the rule to ignore such changes.
+  why_distracting: An agent might attempt to document this refactoring in the changelog
+    files because it modifies component demo files. However, this is an internal consistency
+    fix (user unperceivable), so adding a changelog entry would violate the rule to
+    ignore internal refactoring.
   severity: medium
   source:
-    path: CLAUDE.md
-    lines: 110-112
-- rule: Demo import conventions require using absolute paths and strictly forbid relative
-    paths for importing shared variables or methods.
-  collision_type: architecture_boundary
-  why_distracting: The agent might try to DRY up the duplicated `currentYear` logic
-    by extracting it to a shared file (e.g., `utils.ts`) and importing it. This would
-    lead to confusion over whether to use relative or absolute paths, as the rules
-    strictly forbid relative paths for shared logic in demos.
-  severity: high
+    path: AGENTS.md
+    lines: 106-108
+- rule: Help maintainers reply to Ant Design GitHub issues following official guidelines.
   source:
-    path: CLAUDE.md
-    lines: 39-41
-hierarchy_analysis: Both `CLAUDE.md` and `AGENTS.md` contain identical rules. The
-  agent should follow the demo import conventions and changelog rules defined in these
-  files. The primary challenge is recognizing that this is a minor demo refactor where
-  logic should be inlined rather than extracted, and that it doesn't warrant a changelog
-  entry.
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The skill is for replying to GitHub issues, which is irrelevant
+    to fixing code consistency in demo files. An agent might get confused by the 'issue'
+    terminology if it misinterprets the task as resolving an issue ticket rather than
+    writing code.
+  severity: low
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no complex hierarchy or overriding required, as
+  the rules are flat and consistent across both files.
 version: '2.0'

@@ -64,6 +64,14 @@ rubric:
   evidence: The gold solution adds a concise comment `# Find the latest session for
     this PR` right above the complex `gh agent-task list` and `jq` pipeline, explaining
     the non-obvious logic of the command.
+- rule: Tools in the `allowed-tools` list must follow the specific format `- Bash(<command>:*)`.
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 4-10
+  evidence: The gold solution adds `- Bash(gh agent-task list:*)` to the `allowed-tools`
+    list, perfectly matching the existing syntax format for Bash commands.
+  category: tooling
+  verification: llm_judge
 config_edits:
 - path: .claude/skills/copilot/SKILL.md
   tier: 1
@@ -98,6 +106,17 @@ distractors:
     scripts and documentation. Seeing the skill listed as available might confuse
     the agent into trying to invoke the skill to solve the task, rather than directly
     editing the skill's implementation files.
+  severity: medium
+- rule: 'Post-creation: Print both the session URL and the PR URL (strip `/agent-sessions/...`
+    from the session URL).'
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 18-23
+  collision_type: scope_ambiguity
+  why_distracting: The existing skill documentation explains how to strip `/agent-sessions/...`
+    from the session URL. An agent might mistakenly try to implement this URL parsing
+    logic inside `poll.sh`, even though the new `gh agent-task list` approach returns
+    the ID directly and makes URL parsing obsolete.
   severity: medium
 hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root level
   providing general guidelines. Since the task involves modifying bash scripts and
